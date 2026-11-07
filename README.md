@@ -5,7 +5,7 @@ Single-player 3D kart time trial around a stylised Nova SBE Carcavelos campus: t
 Unity **6000.3.28f1** (6.3 LTS) · C# · Blender (FBX) · Web build on itch.io (URL: TBD, see `docs/builds.md`)
 
 ## Quick start
-1. Install Unity Hub + Editor `6000.3.28f1` with Web Build Support, Git, and accept the repo invite: [docs/setup.md](docs/setup.md).
+1. Install [Unity Hub](https://unity.com/download) (official site only), then Editor `6000.3.28f1` with Web Build Support, plus Git, and accept the repo invite: [docs/setup.md](docs/setup.md).
 2. `gh repo clone belschak/carcavelos-circuit`, then once per clone: `git config core.hooksPath .githooks`.
 3. Open [TASKS.md](TASKS.md), pick a `todo` task of your role, follow the claim steps in [AGENTS.md](AGENTS.md).
 
