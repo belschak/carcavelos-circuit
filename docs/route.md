@@ -22,6 +22,14 @@ Never give an AI a pile of photos and say "build the track". Give it this file p
 
 Photo names: `<section>_<place>_<entry|exit|front|angle|detail|ground>_<nn>.jpg`. Raw photos and videos stay in the shared drive, never in the repo; only edited textures (max 1024 px) go into `Assets/_Project/Visuals/Textures/`.
 
+## Real-world facts (OpenStreetMap, checked 2026-11-07)
+- Names on the map: `Passeio dos Fundadores` (Walk of Founders), `Praca EDP`, `Biblioteca Teresa e Alexandre Soares dos Santos` (library), `Sagres Beach Way` (footway to the beach), `Avenida Marginal` (road the tunnel passes under), `Praia de Carcavelos`.
+- Beach tunnel: **84 m** long. Walk of Founders to Praca EDP ~210 m, Praca EDP to tunnel mouth ~170 m. Closed campus footpath loop 818 m. Promenade west of the tunnel exit 637 m.
+- Lap target: 35-60 s at ~17 m/s average = **600-1000 m** centreline. The real campus loop alone is ~48 s.
+- Proposal to test: start on Walk of Founders -> learning street -> ramp D/B wing (jump) -> Praca EDP -> down Sagres Beach Way -> tunnel -> 150-200 m promenade with a hairpin -> back through the tunnel's second lane -> climb to the finish. Compress real distances to ~0.6-0.8x so the lap lands near 45 s.
+- Not on any public map: the wing letters and the D/B ramp. Confirm on site.
+- Method: trace the route over an OpenStreetMap export in Blender or Unity at 1:1 (1 unit = 1 m), then compress.
+
 Map reference for tracing the layout: OpenStreetMap (credit "© OpenStreetMap contributors" in the game credits). Google Maps / satellite images are reference only, never inside the game.
 
 ## Final route (after the walk)
