@@ -20,4 +20,4 @@ Newest on top. One line per decision: date, decision, why. Agents: never contrad
 - 2026-11-07: One scene per owner + `Main.unity` loads the track additively. Why: Unity scenes merge badly.
 - 2026-11-07: Grey box first (route, main buildings, elevation), colours and textures later. Why: Luc's point, saves time and AI tokens.
 - 2026-11-07: Original art and names only, "inspired by" arcade kart racers. No Nintendo characters, names, music or logos.
-- 2026-11-06: Unity 6.3 LTS + C#, Blender FBX, Web build on itch.io. TA approved a Unity game (per Luc).
+- 2026-11-06: Unity 6.3 LTS + C#, Blender FBX, Web build on itch.io. Teaching-team approval still pending (task G1); nobody has approved it yet.

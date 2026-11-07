@@ -54,7 +54,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 ## Course submission (official, `docs/course-requirements.md`)
 | ID | Task | Who | Due | Status |
 |---|---|---|---|---|
-| G1 | Written OK from the teaching team for a from-scratch Unity game: email from a Nova student account, whole team in CC, mention Luc's verbal TA OK; save the reply as a screenshot in the team Drive | Noah | Tue 10 | claimed (Noah, 2026-11-07) |
+| G1 | Teaching-team OK for a from-scratch Unity game: email to Prof. Ricardo Pereira + Cláudio Vieira from a Nova student account, team in CC; save the reply as a screenshot in the team Drive | Noah | Tue 10 | claimed (Noah, 2026-11-07) |
 | G2 | README Team table: your name + student number + role | each member | Fri 13 | todo |
 | G3 | At least one merged PR with your own C# code, committed from your own GitHub account | each member | Fri 13 | todo |
 | G4 | Final check (no secrets, no personal data, no raw media), then David switches the repo to public and adds a `main` ruleset | David | Sun 15 | todo |
