@@ -1,0 +1,50 @@
+# Unity: text YAML merged by UnityYAMLMerge (setup in docs/setup.md), binaries never merged.
+# Based on gitattributes/gitattributes Unity.gitattributes (MIT). No Git LFS on purpose (quota risk), see docs/decisions.md.
+* text=auto
+
+[attr]unity-json  eol=lf linguist-language=json
+[attr]unity-yaml  merge=unityyamlmerge eol=lf linguist-language=yaml
+
+*.cs              text diff=csharp
+*.shader          text
+*.md              text
+*.asmdef          unity-json
+*.asmref          unity-json
+*.inputactions    unity-json
+*.shadergraph     unity-json
+*.unity           unity-yaml
+*.prefab          unity-yaml
+*.asset           unity-yaml
+*.meta            unity-yaml
+*.mat             unity-yaml
+*.anim            unity-yaml
+*.controller      unity-yaml
+*.overrideController unity-yaml
+*.physicMaterial  unity-yaml
+*.physicsMaterial2D unity-yaml
+*.mixer           unity-yaml
+*.lighting        unity-yaml
+*.playable        unity-yaml
+*.mask            unity-yaml
+LightingData.asset binary
+
+# Binaries
+*.fbx  binary
+*.FBX  binary
+*.obj  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.tga  binary
+*.exr  binary
+*.hdr  binary
+*.wav  binary
+*.mp3  binary
+*.ogg  binary
+*.ttf  binary
+*.otf  binary
+*.zip  binary
+
+# Hooks must keep LF or sh fails on Windows checkouts
+.githooks/* text eol=lf
+*.sh text eol=lf
