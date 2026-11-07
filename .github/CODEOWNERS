@@ -1,11 +1,15 @@
-# Who owns what. Replace @belschak with each owner's GitHub handle once roles are fixed (see docs/team.md).
+# Who owns what (roles fixed 2026-11-07, see docs/team.md). GitHub asks the owner to review PRs that touch their folder.
 # Default: Role 4 (integration) reviews everything not listed.
 *                              @belschak
-/Assets/_Project/Driving/      @belschak
-/Assets/_Project/Track/        @belschak
-/Assets/_Project/Visuals/      @belschak
+/Assets/_Project/Driving/      @alessandrorossicareer-ctrl
+/Assets/_Project/Track/        @NoahSchlag1
+/docs/route.md                 @NoahSchlag1
+/Assets/_Project/Visuals/      @LucNovaSBE02
+/docs/art-style.md             @LucNovaSBE02
+/docs/builds.md                @LucNovaSBE02
 /Assets/_Project/RaceFlow/     @belschak
 /Assets/_Project/Audio/        @belschak
+/Assets/_Project/Shared/       @belschak
 /ProjectSettings/              @belschak
 /Packages/                     @belschak
 /docs/interfaces.md            @belschak

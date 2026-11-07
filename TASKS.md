@@ -11,7 +11,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | S3 | Minimal Web build (one cube, one camera) uploaded to itch.io, opened on another laptop; URL in `docs/builds.md` | 3 | Sun 8 | todo |
 | S4 | Every teammate: `docs/setup.md` done, project opens from a fresh clone, name + GitHub handle in `docs/team.md` | all | Sun 8 | todo |
 
-## Role 1: Driving + camera
+## Role 1: Driving + camera (Alessandro)
 | ID | Task | Due | Status |
 |---|---|---|---|
 | D1 | Placeholder kart prefab (box + 4 cylinders, or Kenney CC0 kart) with a sphere-based `KartController` implementing `IKartState` (approach in `docs/interfaces.md`): accelerate, brake/reverse, steer on `Driving_TestBed` | Mon 9 | todo |
@@ -21,7 +21,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | D5 | `ResetTo(position, rotation)` for recovery and retry (zero velocity, clear drift/boost) | Wed 11 | todo |
 | D6 | All tuning values in `KartTuning` ScriptableObject; tune on the grey campus track | Fri 13 | todo |
 
-## Role 2: Campus track + race rules
+## Role 2: Campus track + race rules (Noah)
 | ID | Task | Due | Status |
 |---|---|---|---|
 | T1 | Final route in `docs/route.md` from the campus walk (sketch, sections, lengths, ramp size) | Sat 7 | todo |
@@ -31,7 +31,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | T5 | `RaceRules` (plain C#) + Edit Mode tests: order, wrong way, duplicate finish, missed checkpoint | Wed 11 | todo |
 | T6 | Lap time 35-60 s check with the real kart; adjust route | Fri 13 | todo |
 
-## Role 3: Kart, visuals + web release
+## Role 3: Kart, visuals + web release (Luc)
 | ID | Task | Due | Status |
 |---|---|---|---|
 | V1 | `docs/art-style.md`: palette (5-6 colours), shape language, 1 reference image | Sun 8 | todo |
@@ -42,7 +42,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | V6 | Complete race at the itch.io URL, logged in `docs/builds.md` | Thu 12 | todo |
 | V7 | README "How to build" reproducible by a second person | Fri 13 | todo |
 
-## Role 4: Race flow, UI + sound
+## Role 4: Race flow, UI + sound (David)
 | ID | Task | Due | Status |
 |---|---|---|---|
 | R1 | `Main.unity` loads `Track_Campus` additively and spawns the kart at `SpawnPoint` | Tue 10 | todo |
@@ -54,7 +54,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 ## Course submission (official, `docs/course-requirements.md`)
 | ID | Task | Who | Due | Status |
 |---|---|---|---|---|
-| G1 | Written OK from the teaching team for a from-scratch Unity game (course question form, Category: Other); screenshot into the team Drive | Luc (got the TA's OK) | Tue 10 | todo |
+| G1 | Written OK from the teaching team for a from-scratch Unity game: email from a Nova student account, whole team in CC, mention Luc's verbal TA OK; save the reply as a screenshot in the team Drive | Noah | Tue 10 | claimed (Noah, 2026-11-07) |
 | G2 | README Team table: your name + student number + role | each member | Fri 13 | todo |
 | G3 | At least one merged PR with your own C# code, committed from your own GitHub account | each member | Fri 13 | todo |
 | G4 | Final check (no secrets, no personal data, no raw media), then David switches the repo to public and adds a `main` ruleset | David | Sun 15 | todo |

@@ -10,9 +10,9 @@ Unity **6000.3.28f1** (6.3 LTS) · C# · Blender (FBX) · Web build
 | Name | Student number | Role |
 |---|---|---|
 | David Belschak | _TBD_ | 4 Race flow, UI + sound |
-| Luc Tippmann | _TBD_ | _TBD_ |
-| Alessandro Rossi | _TBD_ | _TBD_ |
-| Noah _TBD_ | _TBD_ | _TBD_ |
+| Luc Tippmann | _TBD_ | 3 Kart, visuals + web release |
+| Alessandro Rossi | _TBD_ | 1 Driving + camera |
+| Noah _TBD_ | _TBD_ | 2 Campus track + race rules |
 
 ## Run the app
 - **Deployed:** open the URL above in Chrome, Edge or Firefox on a laptop and click to start. Keys: W/S or arrows to drive, Space to drift, R to recover.
