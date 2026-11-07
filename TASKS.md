@@ -34,7 +34,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 ## Role 3: Kart, visuals + web release (Luc)
 | ID | Task | Due | Status |
 |---|---|---|---|
-| V1 | `docs/art-style.md`: palette (5-6 colours), shape language, 1 reference image | Sun 8 | claimed (Luc, 2026-11-07) |
+| V1 | `docs/art-style.md`: palette (5-6 colours), shape language, 1 reference image | Sun 8 | in review |
 | V2 | Scale test: 1 m cube from Blender as FBX imports at 1 m, forward = +Z; record export settings in `docs/art-style.md` | Sun 8 | todo |
 | V3 | Kart + simple seated driver FBX, fits `Kart/Visual` (agree pivot/size with Role 1) | Wed 11 | todo |
 | V4 | 2-3 low-poly campus landmarks from the photos (e.g. library facade, EDP Plaza, D/B ramp) | Fri 13 | todo |
