@@ -4,13 +4,18 @@ Single-player 3D kart time trial on Nova SBE's Carcavelos campus. Unity **6000.3
 
 Deadlines: every role's part merged **Fri 13 Nov 2026**, feature freeze 17 Nov, release candidate 20 Nov, presentation 23 Nov.
 
-## Before you do anything
-1. `git switch main && git pull`.
+## Always pull first, always push after (non-negotiable)
+- **Start of every session, before reading or writing anything:** `git fetch --all`, `git switch main && git pull`, then switch to your branch and `git merge main`. Never work on a stale copy.
+- **After every finished step** (a script compiles, a test passes, a task row changes) and at the latest **before the session ends**: commit and `git push` to your branch, even if it is work in progress (`wip:` prefix). Unpushed work does not exist for the team.
+- Your draft PR is your live status: teammates see what you did without asking.
+
+## Before you start a task
+1. Pull as above.
 2. Read `TASKS.md`, `docs/team.md` (who owns what), `docs/interfaces.md` (contracts), `docs/decisions.md`. For track work also `docs/route.md`.
 3. Find the task in `TASKS.md`. If it is not `todo`, or it belongs to another role: **stop and ask your human**.
 4. Claim it: create the branch `role<N>/<task-id>-<short-name>` (e.g. `role1/D3-drift-boost`), make the first commit only the `TASKS.md` status change to `claimed (<name>, <date>)`, push, and open a **draft PR** right away (`gh pr create --draft --fill`). Open draft PRs = who is working on what. Check them (`gh pr list`) before claiming.
 
-## Ownership: only the owner (or their AI) edits these paths
+## Ownership: the owner (or their AI) edits these paths; others only via "Helping another role" below
 | Path | Role |
 |---|---|
 | `Assets/_Project/Driving/**` | 1 Driving + camera |
@@ -18,7 +23,13 @@ Deadlines: every role's part merged **Fri 13 Nov 2026**, feature freeze 17 Nov, 
 | `Assets/_Project/Visuals/**`, `docs/art-style.md`, `docs/builds.md` | 3 Kart, visuals + web release |
 | `Assets/_Project/RaceFlow/**`, `Assets/_Project/Audio/**`, `Assets/_Project/Shared/**`, `ProjectSettings/**`, `Packages/**` | 4 Race flow, UI + sound (integrator) |
 | `Assets/_Project/Tests/**` | each role adds tests for its own code only |
-Names and handles: `docs/team.md`. Need a change outside your paths? Add a row to `TASKS.md` addressed to that role. Do not do it yourself.
+Names and handles: `docs/team.md`. Need a change outside your paths? Add a row under "Requests between roles" in `TASKS.md` addressed to that role.
+
+## Helping another role (allowed, the owner stays the owner)
+Everyone does their own tasks first. Helping is welcome when the owner asked or agreed (chat or a `TASKS.md` request row):
+- Branch `help/role<N>-<task-id>-<your-name>`, commit messages start with `help(role<N>):` so everyone sees who did what for whom (AI help too: say "done by <name>'s Claude/ChatGPT" in the commit body).
+- Push, open a PR and request the owner as reviewer. **Only the owner merges it.** Never take over their task row or their scene.
+- Small fix in someone's open branch: only if they asked; push to their branch, then tell them in the group chat.
 
 ## Contracts: the only way modules talk
 Read `docs/interfaces.md`. Kart exposes `IKartState`, the track exposes `TrackInfo` + checkpoints, `RaceRules` is plain C#. RaceFlow, Visuals and Audio only read those contracts and never reach into another module's internals. Changing a contract needs the team's OK (decision in `docs/decisions.md`).

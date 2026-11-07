@@ -26,7 +26,7 @@ git switch -c role1/drift-boost      # <role>/<task>
 git push -u origin role1/drift-boost
 gh pr create --fill                   # then ask a teammate to review
 ```
-Before opening Unity: pull. Before a PR: merge `main` into your branch, open Unity, check the Console is clean, play once.
+Always: pull before you start (also before opening Unity), push after every finished step and before you stop. Before a PR is marked ready: merge `main` into your branch, open Unity, check the Console is clean, play once.
 
 ## Running Edit Mode tests from the command line (Unity must be closed)
 Windows:
