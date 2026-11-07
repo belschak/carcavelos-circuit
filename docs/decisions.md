@@ -2,6 +2,11 @@
 
 Newest on top. One line per decision: date, decision, why. Agents: never contradict a decision here without asking the team.
 
+- 2026-11-07: **Repo goes public** (official requirement, Moodle 1 Nov, `docs/course-requirements.md`). David switches visibility himself after a final check. Once public, GitHub Free allows a ruleset on `main` (PR required): add it then. Replaces the "private" decision below.
+- 2026-11-07: **Mon 23 Nov 23:59 = Moodle submission deadline**, not the presentation. Presentations are W11 (Tue 24 Nov) or W12 (Fri 4 Dec).
+- 2026-11-07: Raw media (photos, video, audio, route sketch) lives in the Google Drive folder "Carcavelos Circuit - Media" owned by David; link only in the WhatsApp group. Never in the repo.
+- 2026-11-07: Hosting on itch.io is provisional until the teaching team publishes its deploy instructions. Alternative: GitHub Pages from this public repo.
+
 - 2026-11-07: Kart controller = **our own sphere-based Rigidbody controller** (~200 lines), not WheelColliders and not the Karting Microgame. Why: the team must explain every line; a sphere cannot flip; fewest tuning values. Fallback if the kart does not drive well by Wed 11 Nov: copy UniKart (MIT) at a pinned commit and add our drift charge.
 - 2026-11-07: Placeholders = Kenney Racing Kit / Car Kit (CC0). Every external asset goes into `THIRD_PARTY.md`.
 - 2026-11-07: Board = `TASKS.md` only (no GitHub Issues). Who works on what = draft PRs.

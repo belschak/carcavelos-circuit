@@ -51,6 +51,15 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | R4 | Retry (full reset) + recovery key R (respawn at last valid checkpoint, timer keeps running) | Thu 12 | todo |
 | R5 | Audio (ElevenLabs or CC0): engine loop (pitch by speed), drift, boost, countdown beeps, finish jingle, music. WAV sources, loops tested in the Web build. Free ElevenLabs plan = credit "Sound effects: elevenlabs.io" in game + itch page. Every file listed in `THIRD_PARTY.md` | Fri 13 | todo |
 
+## Course submission (official, `docs/course-requirements.md`)
+| ID | Task | Who | Due | Status |
+|---|---|---|---|---|
+| G1 | Written OK from the teaching team for a from-scratch Unity game (course question form, Category: Other); screenshot into the team Drive | Luc (got the TA's OK) | Tue 10 | todo |
+| G2 | README Team table: your name + student number + role | each member | Fri 13 | todo |
+| G3 | At least one merged PR with your own C# code, committed from your own GitHub account | each member | Fri 13 | todo |
+| G4 | Final check (no secrets, no personal data, no raw media), then David switches the repo to public and adds a `main` ruleset | David | Sun 15 | todo |
+| G5 | Deployed URL in README, deployed build = a `main` commit in `docs/builds.md`, one member submits the repo link on Moodle | Role 3 + Role 4 | **Mon 23, 23:59** | todo |
+
 ## Requests between roles
 | ID | From -> To | Request | Status |
 |---|---|---|---|

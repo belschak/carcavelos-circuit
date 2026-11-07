@@ -20,7 +20,7 @@ Never give an AI a pile of photos and say "build the track". Give it this file p
 | 06 | Tunnel to the beach | Tunnel, light change | `06_tunnel_*` |
 | 07 | Beach promenade | Fast straight, sea view | `07_promenade_*` |
 
-Photo names: `<section>_<place>_<entry|exit|front|angle|detail|ground>_<nn>.jpg`. Raw photos and videos stay in the shared drive, never in the repo; only edited textures (max 1024 px) go into `Assets/_Project/Visuals/Textures/`.
+Photo names: `<section>_<place>_<entry|exit|front|angle|detail|ground>_<nn>.jpg`. Raw photos and videos stay in the team Google Drive folder "Carcavelos Circuit - Media" (link only in the WhatsApp group, never here: the repo becomes public), never in the repo; only edited textures (max 1024 px) go into `Assets/_Project/Visuals/Textures/`.
 
 ## Real-world facts (OpenStreetMap, checked 2026-11-07)
 - Names on the map: `Passeio dos Fundadores` (Walk of Founders), `Praca EDP`, `Biblioteca Teresa e Alexandre Soares dos Santos` (library), `Sagres Beach Way` (footway to the beach), `Avenida Marginal` (road the tunnel passes under), `Praia de Carcavelos`.
