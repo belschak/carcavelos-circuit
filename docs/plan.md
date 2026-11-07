@@ -29,18 +29,18 @@ Final presentation: **23 Nov 2026** per Luc's brief (course calendar shows W11 T
 - [ ] `RaceRules` with Edit Mode tests: order, wrong way, duplicate finish, missed checkpoint
 - [ ] Lap time on the track is 35-60 s at normal speed
 
-**3 Kart + visual direction**
+**3 Kart, visuals + web release**
 - [ ] Palette + style sheet (`docs/art-style.md`): colours, shapes, one reference image
 - [ ] Kart + simple seated driver as FBX, swapped into `Kart/Visual`, scale checked against a 1 m cube
 - [ ] 2-3 campus landmarks as low-poly FBX (from the photos), placed with Role 2
 - [ ] `KartEffects`: visible drift sparks and boost cue
+- [ ] Web build on itch.io, link in README, commit hash of each build in `docs/builds.md`
+- [ ] Build steps in README so a second person can reproduce the export
 
-**4 Race flow + release**
+**4 Race flow, UI + sound**
 - [ ] `Main.unity` loads track + kart; `RaceManager` Ready -> Countdown -> Racing -> Results -> Retry
 - [ ] HUD: countdown, timer, final time, boost cue, retry button
 - [ ] Audio: engine (pitch by speed), drift, boost, countdown beeps, finish jingle, music (ElevenLabs)
-- [ ] Web build on itch.io, link in README, commit hash of each build in `docs/builds.md`
-- [ ] Build steps in README so a second person can reproduce the export
 
 ## Stretch (only after 13 Nov and only if the core is solid)
 Local personal best, a ghost of your best lap, a second kart colour, a short intro camera fly-over of the campus. Out of scope: items, AI opponents, multiplayer/split screen, kart selection, touch controls.

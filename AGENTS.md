@@ -15,8 +15,8 @@ Deadlines: every role's part merged **Fri 13 Nov 2026**, feature freeze 17 Nov, 
 |---|---|
 | `Assets/_Project/Driving/**` | 1 Driving + camera |
 | `Assets/_Project/Track/**`, `docs/route.md` | 2 Track + race rules |
-| `Assets/_Project/Visuals/**`, `docs/art-style.md` | 3 Kart + visuals |
-| `Assets/_Project/RaceFlow/**`, `Assets/_Project/Audio/**`, `Assets/_Project/Shared/**`, `ProjectSettings/**`, `Packages/**`, `docs/builds.md` | 4 Race flow + release (integrator) |
+| `Assets/_Project/Visuals/**`, `docs/art-style.md`, `docs/builds.md` | 3 Kart, visuals + web release |
+| `Assets/_Project/RaceFlow/**`, `Assets/_Project/Audio/**`, `Assets/_Project/Shared/**`, `ProjectSettings/**`, `Packages/**` | 4 Race flow, UI + sound (integrator) |
 | `Assets/_Project/Tests/**` | each role adds tests for its own code only |
 Names and handles: `docs/team.md`. Need a change outside your paths? Add a row to `TASKS.md` addressed to that role. Do not do it yourself.
 
