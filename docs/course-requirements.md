@@ -6,7 +6,7 @@ Source: Moodle 2477 > Announcements > "Group project instructions" (Cláudio Vie
 | # | Requirement | How we meet it | Status |
 |---|---|---|---|
 | C1 | 3 to 4 members | 4: see README | done |
-| C2 | From-scratch idea "agreed with the teaching team" | TA approved a Unity/C# game (per Luc). Get it **in writing** via the course question form (Category: Other) or an email reply, save a screenshot in the team Drive | open |
+| C2 | From-scratch idea "agreed with the teaching team" | **Not approved yet.** Noah emails the teaching team (Prof. Ricardo Pereira, Cláudio Vieira) asking for confirmation; save the reply as a screenshot in the team Drive | open |
 | C3 | **Submission: Mon 23 Nov 2026, 23:59, on Moodle.** One member submits the GitHub repo link on the Moodle team project assignment | Task G5 | open |
 | C4 | **Every member contributes code to the repository** | Every role has C# tasks. Each member commits their own code from **their own GitHub account** (commit email linked to that account; check that your avatar shows on your commits). AI-written is fine, but you commit it yourself. `help(...)` commits do not replace your own | open |
 | C5 | **Repository is public** | Repo owner (David) switches visibility himself after a final check (no secrets, no personal data, no raw photos). Never an AI, never a teammate | open |
