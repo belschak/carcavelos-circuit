@@ -2,7 +2,9 @@
 
 Single-player 3D kart time trial on Nova SBE's Carcavelos campus. Unity **6000.3.28f1** (6.3 LTS, never upgrade), C#, Blender models as FBX, Web build on itch.io. Student team project (Intro to Programming): the code must stay simple enough that every teammate can explain any file in the final walkthrough.
 
-Deadlines: every role's part merged **Fri 13 Nov 2026**, feature freeze 17 Nov, release candidate 20 Nov, presentation 23 Nov.
+Deadlines: every role's part merged **Fri 13 Nov 2026**, feature freeze 17 Nov, release candidate 20 Nov, **Moodle submission Mon 23 Nov 23:59**, presentations W11/W12 (24 Nov or 4 Dec).
+
+**Official course rules we are graded against: `docs/course-requirements.md` (read it once).** The three that affect every session: the repo becomes **public** (never commit secrets or personal data), **every member must commit their own code from their own GitHub account**, and the deployed code must be on `main`.
 
 ## Always pull first, always push after (non-negotiable)
 - **Start of every session, before reading or writing anything:** `git fetch --all`, `git switch main && git pull`, then switch to your branch and `git merge main`. Never work on a stale copy.
@@ -45,6 +47,8 @@ Read `docs/interfaces.md`. Kart exposes `IKartState`, the track exposes `TrackIn
 - Never add packages, Asset Store imports, MCP servers or external code without a team OK. Record every third-party asset in `THIRD_PARTY.md` with its licence.
 - Never use Nintendo / Mario Kart names, characters, logos, music or sounds. Original or CC0 only.
 - Never publish builds, change repo settings or visibility, or spend money.
+- Never commit secrets (API keys incl. ElevenLabs, tokens, `.env`, passwords) or personal data (emails, phone numbers, photos of people; student numbers only in the README team table). This repo will be public.
+- Never commit on behalf of another teammate. Each person commits their own work from their own GitHub account (graded: "every member must contribute code").
 
 ## C# style (beginner-readable on purpose)
 - One class per file, file name = class name, namespace `CarcavelosCircuit.<Module>`.

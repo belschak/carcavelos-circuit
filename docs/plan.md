@@ -1,18 +1,19 @@
 # Plan and milestones
 
 Team goal: **every role's part is done and merged by Fri 13 Nov 2026** (team meetup). After that: integrate, polish, rehearse.
-Final presentation: **23 Nov 2026** per Luc's brief (course calendar shows W11 Tue 24 Nov / W12 Fri 4 Dec: confirm the exact slot with the TA).
+**Moodle submission: Mon 23 Nov 2026, 23:59** (official, `docs/course-requirements.md`): one member submits the public repo link. Presentations: W11 Tue 24 Nov or W12 Fri 4 Dec (slot not yet announced).
 
 | Date | Milestone | Done when |
 |---|---|---|
-| Sat 7 Nov | Campus walk + photos | Route sketch + labelled photos in the shared drive, route recorded in `docs/route.md` |
+| Sat 7 Nov | Campus walk + photos | Route sketch, photos, video, audio in the team Google Drive folder (link in the WhatsApp group, never in this repo), route recorded in `docs/route.md` |
 | Sun 8 Nov | First playable pieces | Unity project opens from a fresh clone; minimal Web build opens on another laptop; grey kart drives on a test surface; grey loop exists; one FBX imported at the right scale |
 | Thu 12 Nov | Complete race at the live URL | Countdown -> valid lap -> finish time -> retry works in the browser, placeholders allowed |
 | **Fri 13 Nov** | **Every part done** | Each role's checklist below is ticked and merged into `main` |
 | Tue 17 Nov | Feature freeze | Drift + boost tuned on the campus track, landmarks in, outside playtest done |
 | Fri 20 Nov | Release candidate | Two clean runs at the hosted URL in a fresh browser + on the presentation laptop |
-| 21-22 Nov | Rehearsal | Walkthrough drill: random file, random teammate explains it |
-| 23 Nov | Presentation | Live lap, drift, retry, then code walkthrough |
+| 21-22 Nov | Rehearsal + submission prep | Walkthrough drill: random file, random teammate explains it. README complete (URL, names, student numbers, run + test commands), every member has merged code |
+| **Mon 23 Nov 23:59** | **Moodle submission** | Repo public, deployed code on `main`, link submitted on Moodle by one member |
+| 24 Nov or 4 Dec | Presentation | Live lap, drift, retry, then code walkthrough (everyone explains code they did not write) |
 
 ## Definition of done per role (by Fri 13 Nov)
 
