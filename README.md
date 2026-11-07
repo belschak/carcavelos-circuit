@@ -36,7 +36,7 @@ Point Claude Code, Codex, Cursor or Copilot at this folder. They read [AGENTS.md
 | 23 Nov | Presentation (confirm slot with the TA) |
 
 ## How to build
-Web build steps: [docs/setup.md#web-build-role-4-or-the-build-backup](docs/setup.md#web-build-role-4-or-the-build-backup). Role 4 makes this reproducible by a second person (task R7).
+Web build steps: [docs/setup.md#web-build-role-3-or-the-build-backup](docs/setup.md#web-build-role-3-or-the-build-backup). Role 3 makes this reproducible by a second person (task V7).
 
 ## Credits
 Map data © OpenStreetMap contributors (ODbL). Third-party assets: [THIRD_PARTY.md](THIRD_PARTY.md). Original game, not affiliated with Nintendo or Nova SBE.

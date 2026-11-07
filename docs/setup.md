@@ -35,5 +35,5 @@ Windows:
 ```
 Mac: `/Applications/Unity/Hub/Editor/6000.3.28f1/Unity.app/Contents/MacOS/Unity` with the same arguments. Or in the Editor: Window > General > Test Runner > EditMode > Run All.
 
-## Web build (Role 4, or the build backup)
+## Web build (Role 3, or the build backup)
 File > Build Profiles > Web > Switch Platform. Player Settings > Web > Publishing Settings: Compression **Gzip**, Decompression Fallback **off** (turn on only if itch shows a decompression error). Build into `Build-Web/` (ignored by Git). Zip the folder contents so `index.html` is at the zip root, upload to itch.io as HTML, "This file will be played in the browser", viewport 1280x720, click-to-play on, SharedArrayBuffer off. Log it in `docs/builds.md`.

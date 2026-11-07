@@ -6,15 +6,12 @@ One owner per role. The owner is the only person (and the only AI) who edits the
 |---|---|---|---|
 | 1 Driving + camera | _TBD_ | Role 4 | `Assets/_Project/Driving/` (kart controller, input, drift/boost, recovery, chase camera, `Driving_TestBed.unity`) |
 | 2 Campus track + race rules | _TBD_ | Role 3 | `Assets/_Project/Track/` (track geometry, colliders, spawn, checkpoints, `RaceRules.cs`, `Track_Campus.unity`) |
-| 3 Kart + visual direction | _TBD_ | Role 2 | `Assets/_Project/Visuals/` (kart + driver mesh, palette, landmarks, materials, `KartEffects.cs`, `Visuals_Showroom.unity`), `art-source/` stays outside the repo |
-| 4 Race flow + release | _TBD_ | Role 1 | `Assets/_Project/RaceFlow/`, `Assets/_Project/Audio/` (audio can get its own sub-owner), `Assets/_Project/Shared/`, `Main.unity`, `ProjectSettings/`, `Packages/`, builds + itch.io page |
+| 3 Kart, visuals + web release | _TBD_ | Role 2 | `Assets/_Project/Visuals/` (kart + driver mesh, palette, landmarks, materials, `KartEffects.cs`, `Visuals_Showroom.unity`), Web build + itch.io page + `docs/builds.md`; `art-source/` stays outside the repo |
+| 4 Race flow, UI + sound | _TBD_ | Role 1 | `Assets/_Project/RaceFlow/`, `Assets/_Project/Audio/` (all sound + music), `Assets/_Project/Shared/`, `Main.unity`, `ProjectSettings/`, `Packages/` |
 | Everyone | | | `Assets/_Project/Tests/` (each owner adds tests for their own rules), `docs/` |
 
-Team: David Belschak, Luc Tippmann, Alessandro Rossi, Noah. Write your name and GitHub handle in the Owner column when roles are fixed.
+Team: David Belschak, Luc Tippmann, Alessandro Rossi, Noah. Write your name and GitHub handle in the Owner column when roles are fixed. The four roles are meant to be equal in workload.
 
-Known preferences (not yet final):
-- David: sound + music (ElevenLabs), campus photos with Alessandro on 7 Nov.
-- Luc: wrote the brief and the module split.
 
 ## Scenes: one scene per owner (avoids merge conflicts)
 
