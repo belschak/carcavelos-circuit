@@ -1,6 +1,6 @@
 # Setup (each teammate, once, ~30 min)
 
-1. **Unity Hub** from unity.com/download, sign in with a free Unity account (Personal licence).
+1. **Unity Hub**, only from the official site: https://unity.com/download . Sign in with a free Unity account (Personal licence). Never install Unity or add-ons from other sites.
 2. In Hub > Installs > Install Editor > Archive / "Install other versions": **exactly `6000.3.28f1` (Unity 6.3 LTS)**. Tick **Web Build Support** in the modules list. Already installed? Installs > Manage > Add modules > Web Build Support.
 3. **Git** (Windows: git-scm.com, Mac: `xcode-select --install`) and **GitHub Desktop** or the `gh` CLI. Accept the repo invite in your email.
 4. Clone the repo: `gh repo clone belschak/carcavelos-circuit` (or GitHub Desktop > Clone).
