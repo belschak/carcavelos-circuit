@@ -344,7 +344,6 @@ namespace CarcavelosCircuit.RaceFlow
             HasSplitDelta = false;
             HintText = "";
             HintVisibleUntil = 0f;
-            waitingCoachHint = CoachHint.None; // a tip for the old attempt
             runStats.Reset();
             stateMachine.BeginCountdown(settings.RetryCountdownStepSeconds);
             if (Restarted != null) Restarted();

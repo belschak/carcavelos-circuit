@@ -40,6 +40,7 @@ namespace CarcavelosCircuit.RaceFlow
         private bool settingsOpen;
         private bool creditsOpen;
         private float toastVisibleUntil; // unscaled time: the toast also works while the race is paused
+        private int closedFrame = -1; // frame in which a menu was closed (its click must not start the race)
 
         public bool ReducedMotion
         {
@@ -140,7 +141,7 @@ namespace CarcavelosCircuit.RaceFlow
 
             // While a menu is open, or the mouse points at a menu button on the start screen, the keys and clicks
             // belong to the menu: "press any key to start" must not fire as well.
-            raceManager.MenuUsesInput = !noMenu || (ready && MouseOnStartButton());
+            raceManager.MenuUsesInput = !noMenu || (ready && (MouseOnStartButton() || Time.frameCount - closedFrame <= 1));
         }
 
         // Which HUD element is under the mouse? Only the menu buttons can be picked on the start screen
@@ -197,6 +198,7 @@ namespace CarcavelosCircuit.RaceFlow
         {
             settingsOpen = false;
             creditsOpen = false;
+            closedFrame = Time.frameCount; // the click that closed the menu must not also start the race
             ShowMenus();
         }
 

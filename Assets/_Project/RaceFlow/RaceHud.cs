@@ -19,6 +19,7 @@ namespace CarcavelosCircuit.RaceFlow
     // A label only gets a new text when the number it shows changes (see ShownNumber): building strings every frame
     // makes garbage, and in a Web build the garbage collector cleans up all at once, which shows as a hitch.
     [RequireComponent(typeof(UIDocument))]
+    [DefaultExecutionOrder(-50)] // writes MenuUsesInput before RaceManager reads it in the same frame (task P7)
     public class RaceHud : MonoBehaviour
     {
         [SerializeField]

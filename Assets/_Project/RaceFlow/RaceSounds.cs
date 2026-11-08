@@ -162,7 +162,7 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (clip != null && source != null)
             {
-                source.PlayOneShot(clip, volume * scale);
+                source.PlayOneShot(clip, volume * scale * SoundLevels.Effects); // settings slider (P7)
             }
         }
 
@@ -177,7 +177,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             delayedSource.Stop();
             delayedSource.clip = clip;
-            delayedSource.volume = volume;
+            delayedSource.volume = volume * SoundLevels.Effects;
             delayedSource.PlayDelayed(delay);
         }
 

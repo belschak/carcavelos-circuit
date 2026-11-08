@@ -190,6 +190,7 @@ namespace CarcavelosCircuit.RaceFlow
                 raceMusic.pitch = Mathf.MoveTowards(raceMusic.pitch, targetPitch, step);
             }
             Apply();
+            UpdateListenerPause(); // every frame: follows the race pause too, so a tab return cannot blip the sound
         }
 
         // Turns the dB levels into AudioSource volumes (and kart levels).
@@ -197,11 +198,11 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (raceMusic != null)
             {
-                raceMusic.volume = Decibels.ToVolume(raceLevel.CurrentDb + duck.CurrentDb);
+                raceMusic.volume = Decibels.ToVolume(raceLevel.CurrentDb + duck.CurrentDb) * SoundLevels.Music; // settings slider (P7)
             }
             if (resultsMusic != null)
             {
-                resultsMusic.volume = Decibels.ToVolume(resultsLevel.CurrentDb + duck.CurrentDb);
+                resultsMusic.volume = Decibels.ToVolume(resultsLevel.CurrentDb + duck.CurrentDb) * SoundLevels.Music;
             }
 
             // The kart (and its KartAudio child) is spawned at runtime, so we look it up once it exists.
@@ -215,7 +216,8 @@ namespace CarcavelosCircuit.RaceFlow
             }
             if (kartAudio != null)
             {
-                kartAudio.SetMixLevels(Decibels.ToVolume(engineLevel.CurrentDb), Decibels.ToVolume(effectsLevel.CurrentDb));
+                kartAudio.SetMixLevels(Decibels.ToVolume(engineLevel.CurrentDb) * SoundLevels.Effects,
+                    Decibels.ToVolume(effectsLevel.CurrentDb) * SoundLevels.Effects);
             }
         }
 
@@ -237,7 +239,8 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (pauseWhenUnfocused)
             {
-                AudioListener.pause = !hasFocus || isPaused;
+                // Paused race (P7): stays silent after the tab comes back, until the player clicks to continue.
+                AudioListener.pause = !hasFocus || isPaused || raceManager.IsPaused;
             }
         }
     }
