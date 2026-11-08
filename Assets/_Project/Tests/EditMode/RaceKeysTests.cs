@@ -35,5 +35,13 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             Assert.IsFalse(RaceKeys.CountsAsStartKey(key));
         }
+
+        [TestCase(Key.O)] // settings
+        [TestCase(Key.C)] // credits
+        [TestCase(Key.M)] // mute
+        public void MenuKeys_DoNotStartTheRaceOrEndThePause(Key key)
+        {
+            Assert.IsFalse(RaceKeys.CountsAsStartKey(key));
+        }
     }
 }

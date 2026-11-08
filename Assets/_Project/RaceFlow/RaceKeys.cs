@@ -1,3 +1,4 @@
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 
@@ -34,8 +35,9 @@ namespace CarcavelosCircuit.RaceFlow
             return false;
         }
 
-        // False for modifier keys (Shift, Ctrl, Alt, Windows/Cmd), function keys (F1 to F24) and system keys
-        // (Escape, Tab, Caps Lock, Print Screen ...). Public so an Edit Mode test can check the list.
+        // False for modifier keys (Shift, Ctrl, Alt, Windows/Cmd), function keys (F1 to F24), system keys
+        // (Escape, Tab, Caps Lock, Print Screen ...) and the menu keys O, C, M (they open settings, credits or
+        // mute, and must not also start the race or end a pause). Public so an Edit Mode test can check the list.
         public static bool CountsAsStartKey(Key key)
         {
             if ((key >= Key.F1 && key <= Key.F12) || (key >= Key.F13 && key <= Key.F24))
@@ -61,6 +63,9 @@ namespace CarcavelosCircuit.RaceFlow
                 case Key.ScrollLock:
                 case Key.PrintScreen:
                 case Key.Pause:
+                case Key.O: // settings
+                case Key.C: // credits
+                case Key.M: // mute
                     return false;
                 default:
                     return true;
@@ -79,6 +84,65 @@ namespace CarcavelosCircuit.RaceFlow
         {
             Keyboard keyboard = Keyboard.current;
             return keyboard != null && keyboard.rKey.wasPressedThisFrame;
+        }
+    
+        // ---- Menu keys (task P7). Never Escape: in a browser it leaves fullscreen. ----
+
+        // O = open or close the settings (start and results screen).
+        public static bool SettingsPressed()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null && keyboard.oKey.wasPressedThisFrame;
+        }
+
+        // C = open or close the credits (start screen).
+        public static bool CreditsPressed()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null && keyboard.cKey.wasPressedThisFrame;
+        }
+
+        // M = sound on/off, at any time (also during the race and the pause).
+        public static bool MutePressed()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null && keyboard.mKey.wasPressedThisFrame;
+        }
+
+        // Inside a menu: W/S or up/down choose a row, A/D or left/right change it (or turn a page).
+        // -1, 0 or +1, so the menu code needs no if per key.
+        public static int MenuVertical()
+        {
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null) return 0;
+            if (keyboard.wKey.wasPressedThisFrame || keyboard.upArrowKey.wasPressedThisFrame) return -1;
+            if (keyboard.sKey.wasPressedThisFrame || keyboard.downArrowKey.wasPressedThisFrame) return 1;
+            return 0;
+        }
+
+        public static int MenuHorizontal()
+        {
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null) return 0;
+            if (keyboard.aKey.wasPressedThisFrame || keyboard.leftArrowKey.wasPressedThisFrame) return -1;
+            if (keyboard.dKey.wasPressedThisFrame || keyboard.rightArrowKey.wasPressedThisFrame) return 1;
+            return 0;
+        }
+
+        // Where the mouse is, in screen pixels (0,0 = bottom left). False without a mouse.
+        // The HUD uses it to see if the mouse points at a menu button before the click arrives.
+        public static bool TryGetMousePosition(out Vector2 position)
+        {
+            Mouse mouse = Mouse.current;
+            position = mouse != null ? mouse.position.ReadValue() : Vector2.zero;
+            return mouse != null;
+        }
+
+        // Space flips an on/off row (Enter stays retry, so it is not used in menus).
+        public static bool MenuTogglePressed()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null && keyboard.spaceKey.wasPressedThisFrame;
         }
     }
 }

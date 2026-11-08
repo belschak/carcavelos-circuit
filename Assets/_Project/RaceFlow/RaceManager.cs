@@ -12,6 +12,9 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("Countdown length, retry speed, split popup time (RaceFlow/Settings/RaceSettings.asset)")]
         private RaceSettings settings;
 
+        [SerializeField, Tooltip("Pause the countdown and the race when the browser tab or the game window loses focus (task P7)")]
+        private bool pauseOnFocusLoss = true;
+
         // ---- What the HUD and the sounds read ----
         public RaceState State { get { return stateMachine == null ? RaceState.Ready : stateMachine.State; } }
         public int CountdownNumber { get { return stateMachine == null ? 0 : stateMachine.CountdownNumber; } }
@@ -41,6 +44,12 @@ namespace CarcavelosCircuit.RaceFlow
         public Medal NextMedalTarget { get { return MedalRules.NextTarget(BestMedal); } } // None = top tier reached
         public RunStats Stats { get { return runStats; } }    // stats of the current (or just finished) lap, read only
 
+        // ---- Pause and menus (task P7) ----
+        public bool IsPaused { get { return pause.IsPaused; } } // the HUD shows "PAUSED" while this is true
+        // Set by the HUD while a menu (settings, credits) is open or the mouse points at a menu button.
+        // That key or click belongs to the menu, so it must not also start the race.
+        public bool MenuUsesInput { get; set; }
+
         // ---- Events (sounds and effects listen, the HUD mostly reads the values above) ----
         public event Action<int> CountdownStep;          // 3, 2, 1, 0 = GO
         public event Action<int> CheckpointPassed;       // index of the checkpoint that counted
@@ -50,6 +59,9 @@ namespace CarcavelosCircuit.RaceFlow
 
         private readonly RaceTimer timer = new RaceTimer();
         private readonly RunStats runStats = new RunStats();
+        private readonly RacePause pause = new RacePause();
+        private float timeScaleBeforePause = 1f;
+        private bool frozen; // true while this script holds Time.timeScale at 0
         private float[] medalThresholds;       // from RaceSettings: Bronze, Silver, Gold, Dean's List (seconds)
         private OnboardingCoach coach;
         private int savedCoachFlags;
@@ -244,6 +256,7 @@ namespace CarcavelosCircuit.RaceFlow
 
         private void OnDestroy()
         {
+            EndPause(); // never leave the game frozen (Time.timeScale is global)
             if (stateMachine != null)
             {
                 stateMachine.StateChanged -= OnStateChanged;
@@ -258,14 +271,31 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
 
+            // Paused (focus was lost): everything is frozen until a key or click. That key does nothing else,
+            // so it never also retries or recovers.
+            if (pause.IsPaused)
+            {
+                kart.InputEnabled = false;
+                if (!AudioListener.pause)
+                {
+                    AudioListener.pause = true; // RaceMusic unpauses the sound when focus comes back; we are still paused
+                }
+                if (pause.TryResume(RaceKeys.AnyKeyOrClickPressed()))
+                {
+                    EndPause();
+                }
+                return;
+            }
+
             // Every frame, not only when the state changes: if the kart switched its own input on (for example in
             // its Start), this switches it off again before it can drive in Ready, Countdown or Results.
             kart.InputEnabled = stateMachine.InputAllowed;
 
             // Ready screen: wait for the first key or click (browsers only allow sound after that).
+            // Not while the settings or credits use the keys and the mouse.
             if (State == RaceState.Ready)
             {
-                if (RaceKeys.AnyKeyOrClickPressed())
+                if (!MenuUsesInput && RaceKeys.AnyKeyOrClickPressed())
                 {
                     stateMachine.BeginCountdown(settings.CountdownStepSeconds);
                 }
@@ -306,6 +336,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 return;
             }
+            EndPause(); // only a safety net: a paused race cannot normally be retried
             PutKartOnStartGrid(); // ResetTo also clears drift and boost (temporary effects)
             rules.Reset();
             timer.Reset();
@@ -417,6 +448,53 @@ namespace CarcavelosCircuit.RaceFlow
             HintText = text;
             CurrentHintKind = kind;
             HintVisibleUntil = Time.time + seconds;
+        }
+
+        // ---- Pause on focus loss (task P7) ----
+        // Unity calls these on every MonoBehaviour: OnApplicationFocus(false) when the browser tab or the window
+        // loses focus, OnApplicationPause(true) when the app is sent to the background.
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus)
+            {
+                StartPause();
+            }
+        }
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused)
+            {
+                StartPause();
+            }
+        }
+
+        // Time.timeScale = 0 freezes physics, Time.deltaTime and Time.timeAsDouble. The lap time comes from
+        // Time.timeAsDouble timestamps, so the paused seconds never count. RacePause decides if we may pause.
+        private void StartPause()
+        {
+            if (!pauseOnFocusLoss || !IsSetUp || !pause.OnFocusLost(State))
+            {
+                return;
+            }
+            timeScaleBeforePause = Time.timeScale > 0f ? Time.timeScale : 1f;
+            Time.timeScale = 0f;
+            frozen = true;
+            kart.InputEnabled = false; // ends a drift without a boost (the kart's own rule), so resuming never surges
+            AudioListener.pause = true;
+        }
+
+        // Back to normal speed. Safe to call when not paused: then it changes nothing.
+        private void EndPause()
+        {
+            pause.Clear();
+            if (!frozen)
+            {
+                return; // we did not freeze anything, so we leave time and sound alone
+            }
+            frozen = false;
+            Time.timeScale = timeScaleBeforePause;
+            AudioListener.pause = false;
         }
 
         // The medal time for one tier in seconds (for the HUD), -1 if there is none.
