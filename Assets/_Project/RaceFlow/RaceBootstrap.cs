@@ -21,7 +21,7 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField]
         private RaceManager raceManager;
 
-        [SerializeField, Tooltip("Follows the kart. Replaced by the Role 1 chase camera later")]
+        [SerializeField, Tooltip("Follows the kart. Replaced by the Role 1 chase camera later; may be left empty then")]
         private PlaceholderChaseCamera chaseCamera;
 
         // Start can be a coroutine: Unity waits for each "yield return" without freezing the game.
@@ -34,7 +34,11 @@ namespace CarcavelosCircuit.RaceFlow
             // While the campus scene is still empty (Role 2 is building it), use our small test loop.
             if (track == null && settings.FallbackTrackSceneName != "")
             {
-                Debug.Log("RaceBootstrap: no track found in " + trackScene + ", loading " + settings.FallbackTrackSceneName + ".");
+                // A warning, not a log line: on swap day Role 2's TrackInfo may already be in the campus scene while
+                // this code still looks for PlaceholderTrack. Then we would race the test loop without noticing.
+                Debug.LogWarning("RaceBootstrap: no PlaceholderTrack found in " + trackScene + ", racing the fallback "
+                    + settings.FallbackTrackSceneName + " instead. If Role 2's TrackInfo is already in " + trackScene
+                    + ", do the swap (docs/explain/role4-walkthrough.md, section 5).");
                 // Close the unfinished campus scene so its test camera or lights do not show up in the race.
                 if (SceneManager.GetSceneByName(trackScene).isLoaded)
                 {
@@ -66,9 +70,23 @@ namespace CarcavelosCircuit.RaceFlow
                 }
             }
 
-            chaseCamera.SetTarget(kartObject.transform);
+            // The race first, the camera after: the placeholder camera is removed once Role 1's camera exists,
+            // and a missing camera must never stop the race from being set up.
             raceManager.SetUp(kartObject, track, trackScene);
-            raceManager.Restarted += chaseCamera.SnapBehindTarget;
+            if (chaseCamera != null)
+            {
+                chaseCamera.SetTarget(kartObject.transform);
+                raceManager.Restarted += chaseCamera.SnapBehindTarget;
+            }
+        }
+
+        // Symmetric to the += above: never leave a listener on the RaceManager.
+        private void OnDestroy()
+        {
+            if (chaseCamera != null && raceManager != null)
+            {
+                raceManager.Restarted -= chaseCamera.SnapBehindTarget;
+            }
         }
 
         private IEnumerator LoadSceneIfNeeded(string sceneName)

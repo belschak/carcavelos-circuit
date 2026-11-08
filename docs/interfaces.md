@@ -39,9 +39,13 @@ Unity 6 names: `Rigidbody.linearVelocity` (not `velocity`), `linearDamping` (not
 
 Prefab layout: `Kart` (root: Rigidbody, colliders, `KartController`) with a child `Visual` that Role 3 can swap. Kart forward = +Z, 1 Unity unit = 1 metre, pivot at ground level centre.
 
+How RaceFlow recognises the kart at a checkpoint (clarified 2026-11-08): every Rigidbody and collider of the kart must be on the `Kart` prefab root or one of its children when the prefab is spawned. RaceFlow remembers them right after spawning, so the kart may unparent its physics sphere later in its own `Start`. A collider counts as "the kart" if it is one of those colliders, if its `attachedRigidbody` is one of those Rigidbodies, or if it has `IKartState` on itself or a parent.
+
+`InputEnabled` belongs to RaceFlow: the kart never sets it to `true` itself. RaceFlow writes it every frame (`true` only while racing), so a kart that switches itself on in `Start` is switched off again before it can drive.
+
 ## Track (Role 2) provides
 
-- `Checkpoint` component on trigger colliders, with `int Index` (0..N-1, in driving order). The finish line is checkpoint 0 / the last crossing.
+- `Checkpoint` component with `int Index`. The indices are exactly 0..N-1, each used once: **index 0 = the start/finish line**, then 1, 2, 3 ... in driving order. The lap is finished when the kart crosses index 0 after passing 1..N-1 in order. Every checkpoint needs at least one collider with Is Trigger, on the `Checkpoint` object itself or on a child (RaceFlow adds its listener to whichever object owns the trigger collider). RaceFlow checks all of this when the race is set up and logs a red error if something is wrong.
 - `SpawnPoint` transform (start grid) and one `RespawnPoint` child per checkpoint (safe pose for recovery).
 - `TrackInfo` component on the scene root: `Checkpoint[] Checkpoints`, `Transform SpawnPoint`, `Transform GetRespawnPoint(int lastCheckpointIndex)`.
 - `RaceRules` = plain C# class (no MonoBehaviour, no scene objects, unit tested):

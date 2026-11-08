@@ -5,7 +5,9 @@ using UnityEngine.UIElements;
 namespace CarcavelosCircuit.RaceFlow
 {
     // Task R3: shows the race on screen. Layout = UI/RaceHud.uxml, look = UI/RaceHud.uss (like HTML + CSS).
-    // Every frame it reads the RaceManager and the kart and updates the labels. It never changes the race.
+    // Every frame it reads the RaceManager and the kart. It never changes the race.
+    // A label only gets a new text when the number it shows changes (see ShownNumber): building strings every frame
+    // makes garbage, and in a Web build the garbage collector cleans up all at once, which shows as a hitch.
     [RequireComponent(typeof(UIDocument))]
     public class RaceHud : MonoBehaviour
     {
@@ -33,6 +35,17 @@ namespace CarcavelosCircuit.RaceFlow
         private Button retryButton;
         private float goVisibleUntil;
 
+        // What each label shows right now, so we only rebuild its text when this number changes.
+        private readonly ShownNumber shownTimer = new ShownNumber();        // lap time in ms
+        private readonly ShownNumber shownBest = new ShownNumber();         // best time in ms, -1 = none
+        private readonly ShownNumber shownStartBest = new ShownNumber();    // same, on the start screen
+        private readonly ShownNumber shownLoading = new ShownNumber();      // 1 = still loading, 0 = ready
+        private readonly ShownNumber shownCountdown = new ShownNumber();    // 3, 2, 1, or -1 for GO!
+        private readonly ShownNumber shownSplit = new ShownNumber();        // split delta in ms
+        private readonly ShownNumber shownSpeed = new ShownNumber();        // km/h
+        private readonly ShownNumber shownBoostWidth = new ShownNumber();   // boost bar in half percent steps
+        private readonly ShownNumber shownBoostState = new ShownNumber();   // drift stage, +10 while boosting
+
         private void OnEnable()
         {
             // Find every element by the name it has in RaceHud.uxml.
@@ -54,16 +67,34 @@ namespace CarcavelosCircuit.RaceFlow
             finalDeltaLabel = root.Q<Label>("final-delta");
             retryButton = root.Q<Button>("retry-button");
 
+            // The labels are new objects after a re-enable, so every cached number must be written again.
+            ForgetShownNumbers();
+
             // Not focusable: after a mouse click the button must not keep focus, or Space/Enter while driving would press it again.
             retryButton.focusable = false;
             retryButton.clicked += OnRetryClicked;
             raceManager.CountdownStep += OnCountdownStep;
+            raceManager.LapFinished += OnLapFinished;
         }
 
         private void OnDisable()
         {
             retryButton.clicked -= OnRetryClicked;
             raceManager.CountdownStep -= OnCountdownStep;
+            raceManager.LapFinished -= OnLapFinished;
+        }
+
+        private void ForgetShownNumbers()
+        {
+            shownTimer.Forget();
+            shownBest.Forget();
+            shownStartBest.Forget();
+            shownLoading.Forget();
+            shownCountdown.Forget();
+            shownSplit.Forget();
+            shownSpeed.Forget();
+            shownBoostWidth.Forget();
+            shownBoostState.Forget();
         }
 
         private void OnRetryClicked()
@@ -79,6 +110,22 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
+        // The results screen changes only once per lap, so it is filled when the lap ends, not every frame.
+        private void OnLapFinished(float lapSeconds, bool isRecord)
+        {
+            finalTimeLabel.text = RaceTimer.Format(lapSeconds);
+            SetVisible(recordLabel, isRecord);
+            float previousBest = raceManager.PreviousBestSeconds;
+            if (previousBest > 0f)
+            {
+                finalDeltaLabel.text = RaceTimer.FormatDelta(lapSeconds - previousBest) + " to your previous best";
+            }
+            else
+            {
+                finalDeltaLabel.text = "First lap on this track";
+            }
+        }
+
         private void Update()
         {
             RaceState state = raceManager.State;
@@ -86,30 +133,30 @@ namespace CarcavelosCircuit.RaceFlow
             SetVisible(startScreen, state == RaceState.Ready);
             SetVisible(resultsScreen, state == RaceState.Results);
 
-            UpdateStartScreen();
+            if (state == RaceState.Ready)
+            {
+                UpdateStartScreen(); // hidden in every other state, so no need to update it then
+            }
             UpdateCountdown(state);
             UpdateTimes();
             UpdateSplitAndHint(state);
             UpdateKartInfo();
-            if (state == RaceState.Results)
-            {
-                UpdateResults();
-            }
         }
 
         private void UpdateStartScreen()
         {
             // Gentle blinking so the player notices "Press any key" (Time.time keeps going even before the race).
             pressAnyKeyLabel.style.opacity = 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(Time.time * 2.5f));
+
             float best = raceManager.BestSeconds;
-            startBestLabel.text = best > 0f ? "Your best: " + RaceTimer.Format(best) : "";
-            if (!raceManager.IsSetUp)
+            if (shownStartBest.Changed(best > 0f ? RaceTimer.ToMilliseconds(best) : -1))
             {
-                pressAnyKeyLabel.text = "Loading track...";
+                startBestLabel.text = best > 0f ? "Your best: " + RaceTimer.Format(best) : "";
             }
-            else
+
+            if (shownLoading.Changed(raceManager.IsSetUp ? 0 : 1))
             {
-                pressAnyKeyLabel.text = "Press any key to start";
+                pressAnyKeyLabel.text = raceManager.IsSetUp ? "Press any key to start" : "Loading track...";
             }
         }
 
@@ -118,15 +165,28 @@ namespace CarcavelosCircuit.RaceFlow
             bool showNumber = state == RaceState.Countdown && raceManager.CountdownNumber > 0;
             bool showGo = state == RaceState.Racing && Time.time < goVisibleUntil;
             SetVisible(countdownLabel, showNumber || showGo);
-            countdownLabel.text = showGo ? "GO!" : raceManager.CountdownNumber.ToString();
-            countdownLabel.EnableInClassList("countdown-go", showGo);
+            int shown = showGo ? -1 : raceManager.CountdownNumber;
+            if (shownCountdown.Changed(shown))
+            {
+                countdownLabel.text = showGo ? "GO!" : shown.ToString();
+                countdownLabel.EnableInClassList("countdown-go", showGo);
+            }
         }
 
         private void UpdateTimes()
         {
-            timerLabel.text = RaceTimer.Format(raceManager.LapSeconds);
+            int lapMilliseconds = RaceTimer.ToMilliseconds(raceManager.LapSeconds);
+            if (shownTimer.Changed(lapMilliseconds))
+            {
+                timerLabel.text = RaceTimer.FormatMilliseconds(lapMilliseconds);
+            }
+
             float best = raceManager.BestSeconds;
-            bestLabel.text = best > 0f ? RaceTimer.Format(best) : "--:--.---";
+            int bestMilliseconds = best > 0f ? RaceTimer.ToMilliseconds(best) : -1;
+            if (shownBest.Changed(bestMilliseconds))
+            {
+                bestLabel.text = best > 0f ? RaceTimer.FormatMilliseconds(bestMilliseconds) : "--:--.---";
+            }
         }
 
         private void UpdateSplitAndHint(RaceState state)
@@ -135,15 +195,22 @@ namespace CarcavelosCircuit.RaceFlow
             SetVisible(splitLabel, showSplit);
             if (showSplit)
             {
-                float delta = raceManager.LastSplitDelta;
-                splitLabel.text = RaceTimer.FormatDelta(delta);
-                splitLabel.EnableInClassList("split-ahead", delta < 0f);
-                splitLabel.EnableInClassList("split-behind", delta >= 0f);
+                int deltaMilliseconds = RaceTimer.ToMilliseconds(raceManager.LastSplitDelta);
+                if (shownSplit.Changed(deltaMilliseconds))
+                {
+                    splitLabel.text = RaceTimer.FormatDeltaMilliseconds(deltaMilliseconds);
+                    // Colour from the rounded value too, so "+0.000" is never shown in the "ahead" colour.
+                    splitLabel.EnableInClassList("split-ahead", deltaMilliseconds < 0);
+                    splitLabel.EnableInClassList("split-behind", deltaMilliseconds >= 0);
+                }
             }
 
             bool showHint = state == RaceState.Racing && Time.time < raceManager.HintVisibleUntil;
             SetVisible(hintLabel, showHint);
-            hintLabel.text = raceManager.HintText;
+            if (showHint)
+            {
+                hintLabel.text = raceManager.HintText; // the same string object every frame, nothing new is built
+            }
         }
 
         // Speed and the drift boost cue: the bar fills while drifting, blue at stage 1, orange at stage 2.
@@ -155,49 +222,51 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
             int kmh = Mathf.RoundToInt(Mathf.Abs(kart.Speed) * 3.6f); // m/s to km/h
-            speedLabel.text = kmh.ToString();
+            if (shownSpeed.Changed(kmh))
+            {
+                speedLabel.text = kmh.ToString();
+            }
 
-            boostFill.style.width = Length.Percent(kart.DriftCharge01 * 100f);
-            boostFill.EnableInClassList("boost-stage-1", kart.DriftStage == 1);
-            boostFill.EnableInClassList("boost-stage-2", kart.DriftStage == 2);
+            // Half-percent steps: finer than the eye can see, but the width is not rewritten every frame.
+            int widthSteps = Mathf.RoundToInt(kart.DriftCharge01 * 200f);
+            if (shownBoostWidth.Changed(widthSteps))
+            {
+                boostFill.style.width = Length.Percent(widthSteps * 0.5f);
+            }
 
-            if (kart.IsBoosting)
+            int stage = kart.DriftStage;
+            if (shownBoostState.Changed(kart.IsBoosting ? stage + 10 : stage))
             {
-                boostLabel.text = "BOOST!";
-            }
-            else if (kart.DriftStage == 2)
-            {
-                boostLabel.text = "DRIFT  MAX";
-            }
-            else if (kart.DriftStage == 1)
-            {
-                boostLabel.text = "DRIFT  1";
-            }
-            else
-            {
-                boostLabel.text = "DRIFT";
-            }
-            boostLabel.EnableInClassList("boost-active", kart.IsBoosting);
-        }
-
-        private void UpdateResults()
-        {
-            finalTimeLabel.text = RaceTimer.Format(raceManager.LapSeconds);
-            SetVisible(recordLabel, raceManager.LastLapWasRecord);
-            float previousBest = raceManager.PreviousBestSeconds;
-            if (previousBest > 0f)
-            {
-                finalDeltaLabel.text = RaceTimer.FormatDelta(raceManager.LapSeconds - previousBest) + " to your previous best";
-            }
-            else
-            {
-                finalDeltaLabel.text = "First lap on this track";
+                boostFill.EnableInClassList("boost-stage-1", stage == 1);
+                boostFill.EnableInClassList("boost-stage-2", stage == 2);
+                boostLabel.EnableInClassList("boost-active", kart.IsBoosting);
+                if (kart.IsBoosting)
+                {
+                    boostLabel.text = "BOOST!";
+                }
+                else if (stage == 2)
+                {
+                    boostLabel.text = "DRIFT  MAX";
+                }
+                else if (stage == 1)
+                {
+                    boostLabel.text = "DRIFT  1";
+                }
+                else
+                {
+                    boostLabel.text = "DRIFT";
+                }
             }
         }
 
+        // Only writes the style when it changes: every style write makes UI Toolkit check the layout again.
         private static void SetVisible(VisualElement element, bool visible)
         {
-            element.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            DisplayStyle wanted = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            if (element.style.display != wanted)
+            {
+                element.style.display = wanted;
+            }
         }
     }
 }

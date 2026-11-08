@@ -7,7 +7,8 @@
         "CarcavelosCircuit.Shared",
         "CarcavelosCircuit.Track",
         "CarcavelosCircuit.RaceFlow",
-        "CarcavelosCircuit.Audio"
+        "CarcavelosCircuit.Audio",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [
         "Editor"
