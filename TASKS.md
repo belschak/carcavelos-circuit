@@ -63,3 +63,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 ## Requests between roles
 | ID | From -> To | Request | Status |
 |---|---|---|---|
+| Q1 | 3 -> 1 | Drift stages: contract has 2 (`DriftStage` 1 blue, 2 orange), the effects have 4 looks. Proposal: stay at 0-2, map 0 smoke, 1 orange, 2 blue/purple (`docs/art-status.md`) | open |
+| Q2 | 3 -> 1, 4 | Add `float Steer { get; }` (-1..+1) to `IKartState` so the steering wheel, front wheels and driver can turn (contract change, team OK) | open |
+| Q3 | 3 -> 4 | Add the Animation Rigging package (Unity Registry) so the driver's hands follow the wheel (team OK) | open |
+| Q4 | 3 -> 4 | Kart sounds ready for R5 if you want them: engine per kart, drift squeal, sparks, drift start, stage-up chime (ElevenLabs Sound Effects) | open |
