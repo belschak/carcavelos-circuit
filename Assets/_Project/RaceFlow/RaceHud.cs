@@ -390,7 +390,7 @@ namespace CarcavelosCircuit.RaceFlow
             else
             {
                 resultsDeltaValue.style.display = DisplayStyle.None;
-                resultsDeltaText.text = "First lap on this track: that is your time to beat";
+                resultsDeltaText.text = "FIRST LAP: YOUR TIME TO BEAT";
                 resultsDelta.AddToClassList("res-delta--first");
                 resultsBest.text = "";
             }

@@ -958,6 +958,8 @@
 
 .card--record {
     border-bottom-color: var(--cc-sand);
+    /* Room for the NEW RECORD stamp, which hangs over the top edge: without it the stamp covers the kicker. */
+    padding-top: 58px;
 }
 
 /* Shake when the NEW RECORD stamp lands: 2 classes and after ".results--in .card", so these win.
@@ -1011,6 +1013,7 @@
 .res-delta {
     flex-direction: row;
     align-items: center;
+    max-width: 100%;
     padding: 4px 16px 6px 16px;
     border-radius: 10px;
     border-bottom-width: 4px;
@@ -1045,6 +1048,9 @@
 }
 
 .res-delta-text {
+    flex-shrink: 1;
+    white-space: normal;
+    -unity-text-align: middle-center;
     font-size: 17px;
     letter-spacing: 2px;
     color: rgba(234, 234, 236, 0.92);
@@ -1072,7 +1078,7 @@
 
 .record {
     position: absolute;
-    top: -34px;
+    top: -40px;
     align-self: center;
     padding: 6px 22px 6px 22px;
     border-radius: 10px;
