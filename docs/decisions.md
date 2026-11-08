@@ -2,6 +2,7 @@
 
 Newest on top. One line per decision: date, decision, why. Agents: never contradict a decision here without asking the team.
 
+- 2026-11-08: **S1 project = Unity 6000.3.28f1 "Universal 3D" template** (`3d-cross-platform`, URP 17.3). Removed from the template: Unity Version Control (collab-proxy), Multiplayer Center, Visual Scripting (unused, fewer packages to explain). Added: **Cinemachine 3.1.4** (camera, as decided in `docs/interfaces.md`). Settings are applied by code: `Assets/_Project/Shared/Editor/ProjectSetup.cs` (menu Carcavelos Circuit > Project Setup), so they are the same on every machine. New Input System only.
 - 2026-11-07: **Repo goes public** (official requirement, Moodle 1 Nov, `docs/course-requirements.md`). David switches visibility himself after a final check. Once public, GitHub Free allows a ruleset on `main` (PR required): add it then. Replaces the "private" decision below.
 - 2026-11-07: **Mon 23 Nov 23:59 = Moodle submission deadline**, not the presentation. Presentations are W11 (Tue 24 Nov) or W12 (Fri 4 Dec).
 - 2026-11-07: Raw media (photos, video, audio, route sketch) lives in the Google Drive folder "Carcavelos Circuit - Media" owned by David; link only in the WhatsApp group. Never in the repo.
