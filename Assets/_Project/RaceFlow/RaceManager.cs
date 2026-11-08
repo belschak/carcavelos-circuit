@@ -29,6 +29,7 @@ namespace CarcavelosCircuit.RaceFlow
         public bool IsSetUp { get { return kart != null; } }
         public int CountdownFrom { get { return settings.CountdownFrom; } }
         public Transform KartTransform { get { return kartTransform; } }
+        public string TrackName { get; private set; } = ""; // the track scene we race on (save keys, ghost check)
         public int CheckpointCount { get { return checkpointList == null ? 0 : checkpointList.Length; } } // incl. the start/finish line
         public int CheckpointsPassed { get { return rules == null ? 0 : rules.LastValidCheckpoint; } } // this lap, in order
         public int LapCount { get { return 1; } } // a time trial is one lap; the HUD shows a lap counter only if this is > 1
@@ -95,6 +96,7 @@ namespace CarcavelosCircuit.RaceFlow
             fallCheck = new FallCheck(settings.FallRecoverHeight, settings.FallCheckCooldownSeconds);
 
             // The best time is saved per track in PlayerPrefs (in the browser Unity keeps them in the site's IndexedDB storage).
+            TrackName = trackName;
             saveKey = "CarcavelosCircuit.Best." + trackName;
             personalBest = PersonalBest.FromSaveString(PlayerPrefs.GetString(saveKey, ""), checkpointCount);
 

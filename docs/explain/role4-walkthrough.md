@@ -67,6 +67,7 @@ Suggested order for the live walkthrough (about 5 minutes):
 | Every Web build setting set by `Role4WebBuild` in code | Some settings (Code Optimization) are saved per laptop in `Library/`; in code the build is the same whoever runs it. Size before/after in section 3.18. |
 | Own Web template, canvas = whole window | Unity's default is a fixed 960x600 box that is cut off in small windows (playtest F1) and tiny on a big screen. |
 | One asmdef per module | Compiler enforces who may talk to whom (no hidden dependencies), and recompiles are faster. |
+| Ghost = recorded poses replayed on the race timer, meshes only, no physics | You race your own best lap (or the team's on a fresh browser) without the ghost ever touching the kart or a checkpoint. Stretch item, logged in `docs/decisions.md`. |
 
 ---
 
@@ -278,7 +279,7 @@ Nine 2D AudioSources: five loops that always run (engine low, engine high, tyre 
 Menu **Carcavelos Circuit > Build Role 4 Scenes** (`[MenuItem("Carcavelos Circuit/Build Role 4 Scenes")]`), or batch: `-executeMethod CarcavelosCircuit.RaceFlow.Editor.Role4SceneBuilder.BuildAll`.
 
 `BuildAll()` does, in order:
-0. Safety first: `EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()` (stops if you press Cancel), then `MayRebuildMain()`: `FindHandEditsInMain()` opens Main and checks that the builder's own root objects (`Main Camera`, `PostProcessing`, `RaceSystems`, `HUD`, `Music`, listed in `BuilderComponents`) have no children and no components the builder did not add. If they do, batch mode stops with an error and exit code 1, the menu asks "Rebuild anyway / Cancel".
+0. Safety first: `EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()` (stops if you press Cancel), then `MayRebuildMain()`: `FindHandEditsInMain()` opens Main and checks that the builder's own root objects (`Main Camera`, `PostProcessing`, `RaceSystems`, `HUD`, `Music`, `Ghost`, listed in `BuilderComponents`) have no children and no components the builder did not add. If they do, batch mode stops with an error and exit code 1, the menu asks "Rebuild anyway / Cancel".
 1. Ensures folders.
 2. `CreateSettings()`: loads or creates `RaceSettings.asset` (existing values kept) and calls `EditorUtility.SetDirty`, so fields added to `RaceSettings` later (like `hintSeconds`) are written into the file with their defaults.
 3. `CreatePanelSettings()`: theme file + PanelSettings (scale with screen size, 1280x720, match 0.5).
@@ -287,7 +288,7 @@ Menu **Carcavelos Circuit > Build Role 4 Scenes** (`[MenuItem("Carcavelos Circui
 5. `FindRealKartPrefab()` (~line 199): `AssetDatabase.FindAssets("Kart t:Prefab")` under `Assets/_Project/Driving`; uses a prefab only if it is named exactly `Kart` and its root has a component implementing `IKartState`. "The kart swap is automatic: once Alessandro's prefab exists, re-running the builder puts it into Main."
 6. Only if no real kart was found: `CreatePlaceholderKartPrefab()`: Rigidbody (150 kg, interpolate, continuous collision, X/Z rotation frozen), frictionless box collider, `PlaceholderKart`, a `Visual` child made of primitives.
 7. `BuildPlaceholderTrackScene()`: a ~230 m rectangular loop around a sand "building", walls, cones, a kicker ramp, 4 checkpoint triggers (15 m wide) each with a `RespawnPoint` child 4 m after it, and a `SpawnPoint` just after the start line.
-8. `BuildMainScene()`: rebuilds Main in place: opens the existing `Main.unity`, deletes only the builder's own root objects and keeps every other root object (logged as "kept ..."), so Role 1 can add a camera rig as its own root object. Then camera + AudioListener + chase camera, with `GetUniversalAdditionalCameraData().renderPostProcessing = true`; a global `Volume` object "PostProcessing" using `CreateVolumeProfile()`; `RaceSystems` (RaceManager, RaceBootstrap, two AudioSources, RaceSounds), `HUD` (UIDocument + RaceHud), `Music` (race music + results music AudioSources, RaceMusic). All references wired.
+8. `BuildMainScene()`: rebuilds Main in place: opens the existing `Main.unity`, deletes only the builder's own root objects and keeps every other root object (logged as "kept ..."), so Role 1 can add a camera rig as its own root object. Then camera + AudioListener + chase camera, with `GetUniversalAdditionalCameraData().renderPostProcessing = true`; a global `Volume` object "PostProcessing" using `CreateVolumeProfile()`; `RaceSystems` (RaceManager, RaceBootstrap, two AudioSources, RaceSounds), `HUD` (UIDocument + RaceHud), `Music` (race music + results music AudioSources, RaceMusic), `Ghost` (GhostRecorder + GhostPlayer, see 3.17b). All references wired.
 9. `CreateVolumeProfile()` (called from step 8): `RaceFlow/Settings/RaceCameraVolume.asset` with Bloom (threshold 0.9 = only very bright pixels glow, intensity 0.6, scatter 0.6). If the asset already exists it is returned unchanged, so Role 3's tuning survives a rebuild.
 10. `MergeBuildScenes()`: Main, Track_Campus, RaceFlow_PlaceholderTrack first (ticked), then every other scene that was already in the build list, with its tick box. Merged, never replaced. (`ProjectSetup.SetBuildScenes` in Shared/Editor still writes only the three; run the builder after it if someone added scenes.)
 
@@ -296,6 +297,12 @@ The editor asmdef references `Shared`, `Shared.Editor`, `RaceFlow`, `Audio` and,
 - How I would explain it: "Scene files are huge YAML that merge badly in Git and nobody can review. So the scene is the output of code: anyone can rebuild it identically, and the code is what we review."
 - Concept: `SerializedObject` is how editor code sets `[SerializeField] private` fields, the same way the Inspector does.
 - Concept: post-processing in URP = the camera must allow it, and a `Volume` (global = everywhere) applies a `VolumeProfile` asset with effects such as Bloom.
+
+### 3.17b `RaceFlow/Editor/DeansGhostExporter.cs` (editor only)
+
+Menu **Carcavelos Circuit > Save My Best Ghost As Dean's Ghost**. Reads the ghost the game saved in the Editor's PlayerPrefs (campus track first, then the test loop) and writes it into `RaceFlow/Settings/DeansGhost.txt`, the `TextAsset` that `Main.unity` already points to (the builder creates the file with a placeholder line, so the reference always exists). Recording the Dean's ghost: play Main in the Editor, set a personal best, stop Play Mode, click the menu, commit the `.txt`. Re-record after every track change.
+
+The builder (3.17) also makes the `Ghost` root object in Main (`GhostRecorder` + `GhostPlayer`, listed in `BuilderComponents`) and `RaceFlow/Materials/Ghost.mat` (`CreateGhostMaterial()`: URP Lit with `_Surface` = 1 transparent, alpha blending, no depth write, no shadows, the same properties and keywords URP's material Inspector sets).
 
 ### 3.18 `RaceFlow/Editor/Role4WebBuild.cs` + `Role4WebQuality.cs` + the Web template
 
@@ -374,6 +381,26 @@ python tools/serve_web_build.py
 - `CoachHint` values are bit flags (1, 2, 4), so "already shown" fits in one int: `PlayerPrefs` key `CarcavelosCircuit.CoachDone`, saved the moment it changes. Returning players get no tips.
 - A tip waits while another hint is on screen ("Missed a checkpoint!" wins) and uses the same `ShowHint`, so `HintText`/`HintVisibleUntil` stay the only hint channel. `HintKind` (Warning, Tip, Praise) picks the chip colour: orange "!", blue "i", sand "+".
 - How I would explain it: "Three if-statements on the kart's flags, each tip once, a saved bit per tip."
+### 3.24 `RaceFlow/GhostRecording.cs` (plain C#)
+
+One recorded lap: the kart's position and rotation every 0.05 s (20 Hz) from GO.
+- `Record(time, position, rotation)` is called every frame while racing, with the race timer. Frames come at uneven times but samples must be exactly 0.05 s apart, so each sample mark between the last frame and this one gets a pose blended between the two frames (`Vector3.Lerp`, `Quaternion.Slerp`). Max 2400 samples (120 s); a longer lap is not kept.
+- `Sample(time, out position, out rotation)`: index = time / 0.05, blend between that sample and the next. Before the start = first pose, after the end = last pose, empty = `false`. If two samples are more than 8 m apart (a teleport after R or a fall; 8 m in 0.05 s = 576 km/h), it jumps instead of gliding through a wall.
+- `EndVelocity()`: the last step per second, so the ghost can roll on past the line while fading out.
+- `ToSaveString()` / `static FromSaveString(text, track, checkpointCount)`: `"G1|Track_Campus|8|41.250|840|120,30,-450,0,900,0;95,0,12,0,4,0;..."` = format, track, checkpoint count, lap time, sample count, then per sample the position in whole cm and pitch/yaw/roll in whole tenths of a degree. Only the first sample is the real value, later ones are the change since the sample before (yaw the short way round: 359.5 to 0.5 degrees is +10, not -3590). About 20 characters per sample, a 60 s lap about 23 KB. InvariantCulture everywhere. Wrong format, other track or other checkpoint count = `null` (ignored).
+- How I would explain it: "A ghost is a list of where the kart was, 20 times a second. To show it at 12.37 s we take the two samples around that time and blend between them, so it moves smoothly at any frame rate."
+- Concepts: interpolation (lerp/slerp), quantising (store 12.34 m as the whole number 1234), delta encoding (store the changes, they are small numbers).
+
+### 3.25 `RaceFlow/GhostLoader.cs` + `RaceFlow/GhostFade.cs` (static, plain C#)
+
+- `GhostLoader.Choose(ownSave, shippedText, track, checkpointCount, out isShipped)`: the player's own ghost if valid, else the shipped Dean's ghost, else `null`. `SaveKey(track)` = `CarcavelosCircuit.Ghost.<track>`, next to `CarcavelosCircuit.Best.<track>`.
+- `GhostFade.ByDistance(distance, hide, full)`: 0 closer than `hide`, 1 further than `full`, a smooth S-curve (`Mathf.SmoothStep`) in between. `ByEnd(secondsPastEnd, fadeSeconds)`: 1 while driving, then down to 0. `Combined(...)`: the smallest of the three (near the kart, near the camera, after the lap).
+
+### 3.26 `RaceFlow/GhostRecorder.cs` + `RaceFlow/GhostPlayer.cs` (MonoBehaviours on the `Ghost` object in Main)
+
+- `GhostRecorder.LateUpdate()`: on the first racing frame (GO, also after a retry) `Clear()`, then `Record(raceManager.LapSeconds, kart pose)` every frame. `LateUpdate` so it stores the pose the player sees. `OnLapFinished(time, newRecord)`: only on a record, save `ToSaveString()` in PlayerPrefs (a lap over 120 s deletes the old ghost instead, so the ghost never belongs to a slower lap than the best time).
+- `GhostPlayer.LateUpdate()`: once the race is set up, `BuildBody()` copies only the meshes of the kart's `Visual` child into a new `GhostKart` object (same place relative to the kart, every sub-mesh with our copy of `Ghost.mat`, no shadows). No Rigidbody, no collider, no script, so it can never hit the kart or count a checkpoint; no meshes = a kart-sized box. The ghost's clock: 0 in Ready and Countdown, exactly `LapSeconds` while racing (the same clock as the recording, so it is in sync), keeps counting in Results. After its last sample it rolls on, slowing to a stop, while fading out. Alpha = `maxAlpha` (0.4) x `GhostFade.Combined(distance to kart, distance to camera, time after the end)`: at GO it stands on your kart and is invisible, it appears as you separate, and it never fills the screen in front of the camera. Your own ghost is light blue, the Dean's ghost warm gold. `Restarted` reloads (a record from the lap before drives along from now on); the save text is only parsed again when it changed.
+- How I would explain it: "The recorder writes, PlayerPrefs is the hand-over, the player reads. The ghost has no physics at all, it is only a picture we move every frame."
 
 ---
 
@@ -402,6 +429,9 @@ All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceF
 | `RunStatsTests` | A 3 s drift counts once, two drifts twice; boosts on the rising edge; top speed keeps the max (reverse counts); air time sums only airborne frames, longest jump keeps the max; recoveries counted and end the jump; negative frame time ignored; Reset clears everything. |
 | `OnboardingCoachTests` | "How to drift" after 5 s, once; not at all if the player drifted first; "hold longer" on a stage 0 release, once, not after a stage 1 release; praise on the first stage 2 boost (also one frame late), once, and no "hold longer" after it; nothing while not racing and that time does not count; a drift ended by the finish gives no tip; saved flags stop all tips; every tip has text and a kind. |
 | `PersonalBestTests` (P5 additions) | Best medal only goes up; survives the save string; a save from before medals loads with no medal; a broken medal number keeps the time but no medal. `HudFormatTests` adds `OneDecimal` (0.84 -> "0.8", 1.25 -> "1.3", negative -> "0.0"). |
+| `GhostRecordingTests` | Empty recording has no pose; uneven frames still give samples exactly every 0.05 s; halfway between two samples = halfway position and rotation; clamped before the start and after the end; one sample works at any time; a teleport jumps instead of gliding (also inside one frame); repeated or old times add nothing; stops at 120 s; `Clear` starts over; end velocity; save text round trip (under 1 cm, under 0.2 degrees); yaw across 360 stays a small change; same text on a Portuguese laptop; a 60 s lap stays under 40 KB; other track or checkpoint count = ignored; broken texts = no ghost. |
+| `GhostLoaderTests` | Own ghost wins over the shipped one; fresh browser races the shipped ghost; broken or outdated own ghost falls back to the shipped one; nothing valid (or a shipped ghost from the old layout) = no ghost; save key next to the personal best. |
+| `GhostFadeTests` | Hidden close, full far away, half in the middle, never weaker further away; bad settings do not break it; end fade 1 to 0; the strongest fade wins (camera, kart, end). |
 
 Run: Unity Editor, Window > General > Test Runner > EditMode > Run All. Command line (Unity closed), Windows:
 
@@ -464,6 +494,7 @@ Do it on a branch `role4/<task-id>-swap-contract`, after `git pull` of `main` wi
 19. **How can an engine without gears "shift"?** The sound pretends: the speed range is split into 4 gears; inside a gear the pitch climbs, at the top it drops back to 60 % and climbs again, with a 0.07 s volume cut and a pop. The kart itself has no gears.
 20. **How does the drift counter not count every frame?** Rising edge: `RunStats` remembers last frame's `IsDrifting` and counts only the frame it turns from false to true.
 21. **How are the coach tips remembered?** Each tip is one bit (1, 2, 4) of an int saved in PlayerPrefs. `(DoneFlags & 2) != 0` means tip 2 was already shown.
+22. **How does the ghost stay in sync with you?** Recording and replay use the same clock, the race timer `LapSeconds` (0 at GO). At 12.3 s on your timer the ghost shows where the recorded kart was at 12.3 s, blended between the two nearest of its 20-per-second samples. It has no Rigidbody or collider, so it cannot push you or count a checkpoint.
 
 ---
 
@@ -481,4 +512,5 @@ Fixed on 2026-11-08 and no longer weak spots: drift boost after the finish, drif
 - **P4 audio not yet heard in a real build** (written without opening Unity): gear-change feel, ducking amounts, music start on GO and gapless loops (smpl + 2048 pad) must be checked in the Web build with headphones (`audio-polish-plan.md` section 7).
 - **Medal times are placeholders** (12.0 / 11.0 / 10.2 / 9.6 s on the placeholder track). Re-tune them in `RaceSettings.asset` once the campus track lands; the personal-best key is per track scene, so the new track starts fresh anyway.
 - **Coach tips are not yet playtested** with a first-time player (5 s trigger, wording). Medal colours, like coral, still need Luc's OK in `docs/art-style.md`.
+- **Ghost (stretch item) not yet seen in Unity**: the code compiles and has tests, but the look (alpha 0.4, fade 1.5 to 8 m, colours), the transparent material in the Web build and the copy of Role 3's real kart meshes still need a Play Mode and a Web build check. The Dean's ghost must be recorded on the final track (after T6/D6) and again after every track change, otherwise the game ignores it (no error, simply no ghost). If the real kart's `Visual` child has effect meshes that are switched on at spawn, they are copied into the ghost too.
 - **By design, worth remembering**: the builder rewrites its own root objects in `Main.unity` on every run (values set by hand on them are lost; added components or children make it stop and ask); other root objects, the Volume profile and `RaceSettings` values are kept.

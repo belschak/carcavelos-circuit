@@ -33,6 +33,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         private const string TrackScenePath = Root + "RaceFlow/Scenes/RaceFlow_PlaceholderTrack.unity";
         private const string VolumeProfilePath = Root + "RaceFlow/Settings/RaceCameraVolume.asset";
         private const string CampusScenePath = Root + "Track/Scenes/Track_Campus.unity";
+        private const string DeansGhostPath = Root + "RaceFlow/Settings/DeansGhost.txt"; // shipped team ghost (DeansGhostExporter)
 
         [MenuItem("Carcavelos Circuit/Build Role 4 Scenes")]
         public static void BuildAll()
@@ -110,6 +111,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 case "Music":
                     // MusicPlayer = the old music script (before P4), still allowed so an old Main.unity can be rebuilt.
                     return new[] { typeof(Transform), typeof(AudioSource), typeof(RaceMusic), typeof(MusicPlayer) };
+                case "Ghost":
+                    return new[] { typeof(Transform), typeof(GhostRecorder), typeof(GhostPlayer) };
                 default:
                     return null;
             }
@@ -614,6 +617,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             hso.FindProperty("raceManager").objectReferenceValue = manager;
             hso.ApplyModifiedPropertiesWithoutUndo();
 
+            BuildGhost(manager);
+
             EditorSceneManager.SaveScene(scene, MainScenePath);
 
             // Fail loudly instead of shipping a Main.unity with empty references (the Web build hides null errors).
@@ -621,6 +626,81 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             {
                 throw new System.Exception("Role4SceneBuilder: a Main.unity reference is missing (settings, panel or a prefab).");
             }
+        }
+
+        // ---------- ghost (stretch item, docs/decisions.md) ----------
+
+        // The "Ghost" root object: records every lap, replays the best one as a see-through kart. Called while
+        // Main.unity is open, so the material and the text file are loaded after the scene switch (live references).
+        private static void BuildGhost(RaceManager manager)
+        {
+            Material ghostMaterial = CreateGhostMaterial();
+            TextAsset deansGhost = CreateDeansGhostFile();
+
+            GameObject ghostObject = new GameObject("Ghost");
+            GhostRecorder recorder = ghostObject.AddComponent<GhostRecorder>();
+            GhostPlayer player = ghostObject.AddComponent<GhostPlayer>();
+
+            SerializedObject rso = new SerializedObject(recorder);
+            rso.FindProperty("raceManager").objectReferenceValue = manager;
+            rso.ApplyModifiedPropertiesWithoutUndo();
+
+            SerializedObject pso = new SerializedObject(player);
+            pso.FindProperty("raceManager").objectReferenceValue = manager;
+            pso.FindProperty("ghostMaterial").objectReferenceValue = ghostMaterial;
+            pso.FindProperty("shippedGhost").objectReferenceValue = deansGhost;
+            pso.ApplyModifiedPropertiesWithoutUndo();
+
+            if (ghostMaterial == null || deansGhost == null)
+            {
+                throw new System.Exception("Role4SceneBuilder: the ghost material or DeansGhost.txt is missing.");
+            }
+        }
+
+        // URP Lit, "Surface Type: Transparent, Blending: Alpha", set the same way URP's material Inspector does.
+        // The Main scene points to this material, so the Web build includes it together with its transparent
+        // shader variant (a material looked up by name at runtime would be missing there).
+        private static Material CreateGhostMaterial()
+        {
+            string path = MaterialsFolder + "Ghost.mat";
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.SetFloat("_Surface", 1f); // 1 = transparent
+            material.SetFloat("_Blend", 0f);   // 0 = alpha blending
+            material.SetFloat("_AlphaClip", 0f);
+            material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+            material.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_ZWrite", 0f);
+            material.SetFloat("_ReceiveShadows", 0f);
+            material.SetFloat("_Smoothness", 0.8f);
+            material.SetColor("_BaseColor", new Color(0.55f, 0.8f, 1f, 0.4f)); // GhostPlayer sets colour + alpha at runtime
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            material.EnableKeyword("_RECEIVE_SHADOWS_OFF");
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.renderQueue = (int)RenderQueue.Transparent;
+            material.SetShaderPassEnabled("DepthOnly", false);   // see-through: never hide what is behind it
+            material.SetShaderPassEnabled("ShadowCaster", false);
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        // The shipped Dean's ghost. A placeholder text until the team records one (menu Carcavelos Circuit >
+        // Save My Best Ghost As Dean's Ghost); the game ignores text that is not a valid ghost. Never overwritten here.
+        private static TextAsset CreateDeansGhostFile()
+        {
+            if (!System.IO.File.Exists(DeansGhostPath))
+            {
+                System.IO.File.WriteAllText(DeansGhostPath, "no ghost recorded yet\n");
+                AssetDatabase.ImportAsset(DeansGhostPath);
+            }
+            return AssetDatabase.LoadAssetAtPath<TextAsset>(DeansGhostPath);
         }
     }
 }
