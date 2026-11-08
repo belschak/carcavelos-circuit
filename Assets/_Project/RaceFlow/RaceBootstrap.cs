@@ -27,6 +27,10 @@ namespace CarcavelosCircuit.RaceFlow
         // Start can be a coroutine: Unity waits for each "yield return" without freezing the game.
         private IEnumerator Start()
         {
+            // -1 = no fixed frame rate. On the Web the browser then draws in step with the screen (vsync), which is
+            // the smoothest; a fixed number would switch to a timer and judder.
+            Application.targetFrameRate = -1;
+
             string trackScene = settings.TrackSceneName;
             yield return LoadSceneIfNeeded(trackScene);
             PlaceholderTrack track = FindTrackIn(trackScene);
