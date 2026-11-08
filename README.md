@@ -37,7 +37,12 @@ macOS: `/Applications/Unity/Hub/Editor/6000.3.28f1/Unity.app/Contents/MacOS/Unit
 S1 (the Unity project) is merged: pull `main`, then open the folder in Unity `6000.3.28f1` (no other version, otherwise `.meta` and settings files change).
 
 ## Working with an AI assistant
-Point Claude Code, Codex, Cursor or Copilot at this folder. They read [AGENTS.md](AGENTS.md) (Claude via `CLAUDE.md`): ownership, contracts, what never to touch, definition of done.
+Point Claude Code, Codex, Cursor, Copilot or Gemini CLI at this folder. They read [AGENTS.md](AGENTS.md) (Claude via `CLAUDE.md`, Gemini via `GEMINI.md`, Copilot via `.github/copilot-instructions.md`): the Git workflow, ownership, contracts, what never to touch, definition of done. A chat AI that cannot see the folder (ChatGPT or Claude in the browser) does not know these rules: paste `AGENTS.md` into the chat first.
+
+Start every AI session with this message (copy it as it is):
+```
+Read AGENTS.md and follow its Git workflow section A before anything else: check the hook and my Git identity, pull main, show me in 2-3 lines what the others merged since my last session and how it affects my task, then merge main into my branch. Only work on files my role owns, push after every finished step, never push to main or force-push.
+```
 
 ## Where things are
 | File | What |
