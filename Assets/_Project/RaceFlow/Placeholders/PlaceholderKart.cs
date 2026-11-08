@@ -143,12 +143,25 @@ namespace CarcavelosCircuit.RaceFlow
             }
 
             // Remove part of the sideways speed so the kart goes where it points. Drifting keeps more slide.
+            float speedBeforeGrip = FlatSpeed(velocity);
             float sidewaysSpeed = Vector3.Dot(velocity, transform.right);
             float grip = IsDrifting ? sideGrip * 0.3f : sideGrip;
             velocity -= transform.right * sidewaysSpeed * Mathf.Clamp01(grip * dt);
 
+            // While drifting the slide turns into forward speed instead of disappearing,
+            // so a long drift does not stop the kart (only a little drag).
+            if (IsDrifting)
+            {
+                float speedAfterGrip = FlatSpeed(velocity);
+                if (speedAfterGrip > 0.1f)
+                {
+                    float keep = speedBeforeGrip * (1f - 0.1f * dt) / speedAfterGrip;
+                    velocity = new Vector3(velocity.x * keep, velocity.y, velocity.z * keep);
+                }
+            }
+
             // Never faster than the top speed.
-            float flatSpeed = new Vector3(velocity.x, 0f, velocity.z).magnitude;
+            float flatSpeed = FlatSpeed(velocity);
             if (flatSpeed > topSpeed)
             {
                 float scale = topSpeed / flatSpeed;
@@ -161,7 +174,7 @@ namespace CarcavelosCircuit.RaceFlow
             float turn = steerInput * turnDegreesPerSecond * speedFactor * dt;
             if (IsDrifting)
             {
-                turn = turn * 1.3f;
+                turn = turn * 0.8f; // wider arc, so the drift can last long enough for orange sparks
             }
             body.MoveRotation(body.rotation * Quaternion.Euler(0f, turn, 0f));
         }
@@ -169,7 +182,10 @@ namespace CarcavelosCircuit.RaceFlow
         // Drift: hold Space while steering at speed. Let go when charged = boost.
         private void UpdateDrift(float dt)
         {
-            bool fastEnough = Speed > maxSpeed * 0.4f;
+            // Use the real speed over the ground: in a drift the kart points into the corner,
+            // so its forward speed (Speed) drops even though it is still fast.
+            float groundSpeed = body == null ? 0f : FlatSpeed(body.linearVelocity);
+            bool fastEnough = groundSpeed > maxSpeed * 0.4f;
             if (!IsDrifting)
             {
                 if (driftHeld && Mathf.Abs(steerInput) > 0.5f && fastEnough && IsGrounded)
@@ -180,7 +196,7 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
 
-            if (!IsGrounded || Speed < maxSpeed * 0.3f)
+            if (!IsGrounded || groundSpeed < maxSpeed * 0.3f)
             {
                 IsDrifting = false; // too slow or airborne: cancel, no boost
                 return;
@@ -204,6 +220,12 @@ namespace CarcavelosCircuit.RaceFlow
             IsDrifting = false;
             if (stage == 2) boostSecondsLeft = stage2BoostSeconds;
             else if (stage == 1) boostSecondsLeft = stage1BoostSeconds;
+        }
+
+        // Speed over the ground, ignoring up/down movement.
+        private static float FlatSpeed(Vector3 velocity)
+        {
+            return new Vector3(velocity.x, 0f, velocity.z).magnitude;
         }
 
         public void ResetTo(Vector3 position, Quaternion rotation)
