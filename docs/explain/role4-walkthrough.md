@@ -409,7 +409,7 @@ One recorded lap: the kart's position and rotation every 0.05 s (20 Hz) from GO.
 `GameSettings` is plain C#: `MasterVolume`, `MusicVolume`, `EffectsVolume` (0..1), `Muted`, `ReducedMotion`. `SettingsItem` is the enum of the five rows (Master, Music, Effects, Sound, ReducedMotion).
 
 - Volumes move in 10 % steps: `Level(volume)` = 0..10, `SetVolumeLevel(item, level)` clamps to 0..10, `Change(item, direction)` is one step left or right (on/off rows: left = off, right = on), `Toggle(item)` flips an on/off row. Each returns `true` only if something changed, so the HUD saves only then.
-- Mute keeps the master volume: `ListenerVolume` = 0 while muted, else `MasterVolume`. Turning the master up also unmutes ("I want to hear it").
+- Mute keeps the master volume: `ListenerVolume` = 0 while muted, else `MasterVolume`. Turning the master up (also at 100 %) or clicking a diamond of the master bar unmutes ("I want to hear it"); turning it down while muted stays muted.
 - `ToSaveString()` -> `"0.8|0.3|0|1|1"`, `FromSaveString(text)`: InvariantCulture, every broken or missing part keeps its default, NaN and out-of-range values are clamped.
 - `SettingsStore` (static, the Unity glue): `Load()` / `Save()` with PlayerPrefs key `CarcavelosCircuit.Settings`; `Apply()` sets `AudioListener.volume` (master + mute for every sound at once) and `SoundLevels.Music` / `.Effects`.
 - `SoundLevels` (static, two floats): read by `RaceMusic` and `RaceSounds` (P4) to scale music and effects. Static, because they are on other objects and need no extra Inspector reference.

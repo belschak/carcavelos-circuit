@@ -56,11 +56,17 @@ namespace CarcavelosCircuit.RaceFlow
         // Returns true if something changed, so the caller only saves and redraws then.
         public bool Change(SettingsItem item, int direction)
         {
-            if (IsVolume(item))
+            if (!IsVolume(item))
             {
-                return SetVolumeLevel(item, Level(VolumeOf(item)) + direction);
+                return SetOn(item, direction > 0);
             }
-            return SetOn(item, direction > 0);
+            bool changed = SetLevel(item, Level(VolumeOf(item)) + direction);
+            if (item == SettingsItem.Master && direction > 0 && Muted)
+            {
+                Muted = false; // turning the master up means "I want to hear it" (also when it is already at 100 %)
+                changed = true;
+            }
+            return changed;
         }
 
         // A click on an on/off row flips it.
@@ -69,19 +75,27 @@ namespace CarcavelosCircuit.RaceFlow
             return SetOn(item, !IsOn(item));
         }
 
-        // Sets a volume to "level" tenths (clamped to 0..10). Turning the master volume up also unmutes:
-        // it means "I want to hear this".
+        // A click on diamond "level" of a volume bar (clamped to 0..10). A click on the master bar also unmutes:
+        // it means "this loud, please".
         public bool SetVolumeLevel(SettingsItem item, int level)
+        {
+            bool changed = SetLevel(item, level);
+            if (item == SettingsItem.Master && level > 0 && Muted)
+            {
+                Muted = false;
+                changed = true;
+            }
+            return changed;
+        }
+
+        private bool SetLevel(SettingsItem item, int level)
         {
             if (level < 0) level = 0;
             if (level > MaxLevel) level = MaxLevel;
             float volume = level * VolumeStep;
             float before = VolumeOf(item);
-            bool wasMuted = Muted;
-
             if (item == SettingsItem.Master)
             {
-                if (volume > before) Muted = false;
                 MasterVolume = volume;
             }
             else if (item == SettingsItem.Music)
@@ -96,7 +110,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 return false;
             }
-            return volume != before || Muted != wasMuted;
+            return volume != before;
         }
 
         private bool SetOn(SettingsItem item, bool on)

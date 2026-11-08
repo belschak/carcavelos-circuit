@@ -73,6 +73,18 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void MutedAtFullVolume_RightOrAClickOnTheMasterBar_Unmutes()
+        {
+            GameSettings settings = new GameSettings();
+            settings.ToggleMute();
+            Assert.IsTrue(settings.Change(SettingsItem.Master, 1), "nothing louder than 100 %, but it unmutes");
+            Assert.IsFalse(settings.Muted);
+            settings.ToggleMute();
+            Assert.IsTrue(settings.SetVolumeLevel(SettingsItem.Master, 10));
+            Assert.IsFalse(settings.Muted);
+        }
+
+        [Test]
         public void MusicAndEffects_DoNotTouchMute()
         {
             GameSettings settings = new GameSettings();
