@@ -20,7 +20,7 @@
     --cc-blue: #2D8CD6;
     --cc-blue-deep: #123B5E;   /* UI only: darker step of Atlantic Blue */
     --cc-orange: #FF8A1F;
-    --cc-coral: #E6463C;       /* UI only: split "behind" (Luc can veto, docs/decisions.md) */
+    --cc-coral: #E6463C;       /* UI only: split "behind" (waiting for Luc's OK in docs/art-style.md) */
     --cc-panel: rgba(29, 29, 31, 0.82);
     --cc-lip: rgba(0, 0, 0, 0.45);
     --drift-s1: #2D8CD6;       /* swap these two if the drift colour mapping changes */

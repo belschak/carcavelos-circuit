@@ -451,9 +451,9 @@ namespace CarcavelosCircuit.RaceFlow
 
             if (state == RaceState.Ready)
             {
-                // Title rows slide in: add "intro-in" one frame after the screen is there, so the transition can play.
+                // Title rows slide in: add "intro-in" a few frames after the screen is there (its first style must exist), so the transition can play.
                 startScreen.RemoveFromClassList("intro-in");
-                startScreen.schedule.Execute(() => startScreen.AddToClassList("intro-in")).ExecuteLater(16);
+                startScreen.schedule.Execute(() => startScreen.AddToClassList("intro-in")).ExecuteLater(100);
             }
             else
             {
@@ -466,7 +466,7 @@ namespace CarcavelosCircuit.RaceFlow
                 resultsStartTime = Time.time;
                 tickerDone = false;
                 resultsScreen.RemoveFromClassList("results--in");
-                resultsScreen.schedule.Execute(() => resultsScreen.AddToClassList("results--in")).ExecuteLater(16);
+                resultsScreen.schedule.Execute(() => resultsScreen.AddToClassList("results--in")).ExecuteLater(33);
             }
             else
             {
@@ -688,7 +688,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 nextShineTime = Time.time + 0.55f;
                 driftShine.RemoveFromClassList("drift-shine--run"); // jumps back (the base class has no transition)
-                driftShine.schedule.Execute(() => driftShine.AddToClassList("drift-shine--run")).ExecuteLater(16);
+                driftShine.schedule.Execute(() => driftShine.AddToClassList("drift-shine--run")).ExecuteLater(33);
             }
             bool glow = boosting && state == RaceState.Racing && Mathf.Abs(kart.Speed) > 3f;
             HudFx.SetShown(edgeGlowLeft, glow);
