@@ -76,6 +76,21 @@ namespace CarcavelosCircuit.RaceFlow
             return new string(Buffer, 0, n);
         }
 
+        // 0.84 -> "0.8" with fixed-width digits (air time on the results card). Always a dot, never a comma.
+        // Halves round up (1.25 -> "1.3"), negative values show as "0.0".
+        public static string OneDecimal(float value)
+        {
+            if (value < 0f)
+            {
+                value = 0f;
+            }
+            int tenths = (int)System.Math.Round(value * 10.0, System.MidpointRounding.AwayFromZero);
+            int n = Digits(tenths / 10, 1, 0);
+            Buffer[n++] = '.';
+            n = Digits(tenths % 10, 1, n);
+            return new string(Buffer, 0, n);
+        }
+
         // Removes the <...> tags, e.g. for tests or a plain-text log: "<mspace=0.6em>1</mspace>:..." -> "1:...".
         public static string StripTags(string text)
         {

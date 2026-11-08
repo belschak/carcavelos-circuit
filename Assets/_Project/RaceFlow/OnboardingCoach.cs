@@ -116,7 +116,7 @@ namespace CarcavelosCircuit.RaceFlow
             switch (hint)
             {
                 case CoachHint.HowToDrift: return "Hold SPACE while steering to drift";
-                case CoachHint.HoldLonger: return "Hold the drift until the sparks, then let go";
+                case CoachHint.HoldLonger: return "Hold longer: let go when sparks fly";
                 case CoachHint.BigBoost: return "Nice! Orange sparks = the big boost";
                 default: return "";
             }

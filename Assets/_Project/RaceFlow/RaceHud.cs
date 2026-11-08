@@ -79,6 +79,19 @@ namespace CarcavelosCircuit.RaceFlow
         private Label resultsDeltaText;
         private Label resultsBest;
         private Button retryButton;
+        private VisualElement medalTarget;     // next-medal chip under the time panel (task P5)
+        private Label medalTargetName;
+        private Label medalTargetTime;
+        private Label hintIcon;
+        private VisualElement resultsMedalBadge;
+        private Label resultsMedalName;
+        private Label resultsMedalNext;
+        private VisualElement statDrifts;
+        private VisualElement statBoosts;
+        private Label statSpeedValue;
+        private Label statDriftsValue;
+        private Label statBoostsValue;
+        private Label statAirValue;
         private VisualElement[] pips = new VisualElement[0];
 
         // Gradient textures made at runtime (USS has no gradients). Destroyed in OnDisable.
@@ -106,6 +119,8 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly ShownNumber shownDriftFill = new ShownNumber();    // drift bar in half percent steps
         private readonly ShownNumber shownDriftState = new ShownNumber();   // drift stage, +10 while boosting
         private readonly ShownNumber shownFinal = new ShownNumber();        // results time in ms (count-up)
+        private readonly ShownNumber shownTarget = new ShownNumber();       // next medal (Medal as int), -1 = no chip
+        private readonly ShownNumber shownHintKind = new ShownNumber();     // HintKind as int
 
         private float resultsStartTime;
         private bool tickerDone;
@@ -116,6 +131,8 @@ namespace CarcavelosCircuit.RaceFlow
         private bool hintWasShown;
         private int lastStage;      // drift stage last frame, to spot a stage-up
         private bool lastBoosting;  // boost last frame, to spot the boost start
+        private int targetMilliseconds = -1; // lap time the next medal needs, -1 = none
+        private bool targetMissed;  // the lap is already slower than the target medal
 
         private void OnEnable()
         {
@@ -204,6 +221,19 @@ namespace CarcavelosCircuit.RaceFlow
             resultsDeltaText = root.Q<Label>("res-delta-text");
             resultsBest = root.Q<Label>("res-best");
             retryButton = root.Q<Button>("retry-button");
+            medalTarget = root.Q<VisualElement>("medal-target");
+            medalTargetName = root.Q<Label>("medal-target-name");
+            medalTargetTime = root.Q<Label>("medal-target-time");
+            hintIcon = root.Q<Label>("hint-icon");
+            resultsMedalBadge = root.Q<VisualElement>("res-medal-badge");
+            resultsMedalName = root.Q<Label>("res-medal-name");
+            resultsMedalNext = root.Q<Label>("res-medal-next");
+            statDrifts = root.Q<VisualElement>("stat-drifts");
+            statBoosts = root.Q<VisualElement>("stat-boosts");
+            statSpeedValue = root.Q<Label>("stat-speed-value");
+            statDriftsValue = root.Q<Label>("stat-drifts-value");
+            statBoostsValue = root.Q<Label>("stat-boosts-value");
+            statAirValue = root.Q<Label>("stat-air-value");
 
             driftFill.style.scale = new Scale(new Vector3(0f, 1f, 1f));
             root.Q<VisualElement>("drift-tick").style.left = Length.Percent(stage1At * 100f);
@@ -264,6 +294,8 @@ namespace CarcavelosCircuit.RaceFlow
             shownDriftFill.Forget();
             shownDriftState.Forget();
             shownFinal.Forget();
+            shownTarget.Forget();
+            shownHintKind.Forget();
         }
 
         private void OnRetryClicked()
@@ -396,6 +428,58 @@ namespace CarcavelosCircuit.RaceFlow
             }
             finalTime.text = HudFormat.Time(0);
             shownFinal.Forget();
+            ShowMedal(raceManager.LastMedal, raceManager.PreviousBestMedal);
+            ShowLapReport(raceManager.Stats);
+        }
+
+        // The medal stamp (USS animates it in) and the line under it: what to aim for next.
+        private void ShowMedal(Medal medal, Medal bestBefore)
+        {
+            SetMedalClass(resultsMedalBadge, medal);
+            resultsMedalName.text = MedalRules.Name(medal);
+            bool isNew = medal != Medal.None && medal > bestBefore;
+            resultsMedalNext.EnableInClassList("res-medal-next--new", isNew);
+
+            Medal best = raceManager.BestMedal; // already includes this lap
+            Medal next = MedalRules.NextTarget(medal);
+            float nextSeconds = raceManager.MedalSeconds(next);
+            if (medal < best)
+            {
+                resultsMedalNext.text = "YOUR BEST MEDAL  " + MedalRules.Name(best);
+            }
+            else if (medal == Medal.DeansList)
+            {
+                resultsMedalNext.text = isNew ? "NEW MEDAL!  TOP TIER REACHED" : "TOP TIER: BEAT YOUR OWN TIME";
+            }
+            else if (nextSeconds > 0f)
+            {
+                string start = isNew ? "NEW MEDAL!  NEXT  " : "NEXT  ";
+                resultsMedalNext.text = start + MedalRules.Name(next) + "  " + HudFormat.Time(RaceTimer.ToMilliseconds(nextSeconds));
+            }
+            else
+            {
+                resultsMedalNext.text = ""; // medal times broken (RaceManager logs the error)
+            }
+        }
+
+        // Lap report: four numbers from RunStats. A zero drift or boost count is dimmed (the coach explains how).
+        private void ShowLapReport(RunStats stats)
+        {
+            statSpeedValue.text = HudFormat.Whole(Mathf.RoundToInt(stats.TopSpeed * 3.6f)); // m/s to km/h
+            statDriftsValue.text = HudFormat.Whole(stats.Drifts);
+            statBoostsValue.text = HudFormat.Whole(stats.Boosts);
+            statAirValue.text = HudFormat.OneDecimal(stats.AirSeconds) + " s";
+            statDrifts.EnableInClassList("stat--zero", stats.Drifts == 0);
+            statBoosts.EnableInClassList("stat--zero", stats.Boosts == 0);
+        }
+
+        // Exactly one medal colour class (medal--bronze ... medal--none) on the element.
+        private static void SetMedalClass(VisualElement element, Medal medal)
+        {
+            for (int i = (int)Medal.None; i <= (int)Medal.DeansList; i++)
+            {
+                element.EnableInClassList(MedalRules.ColourClass((Medal)i), i == (int)medal);
+            }
         }
 
         private void OnRestarted()
@@ -427,6 +511,7 @@ namespace CarcavelosCircuit.RaceFlow
                 UpdateStartScreen(); // hidden in every other state, so no need to update it then
             }
             UpdateTimes();
+            UpdateMedalTarget(state);
             UpdateCheckpoints(state);
             UpdateSplit(state);
             UpdateCallouts(state);
@@ -532,6 +617,36 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
+        // Next-medal chip: "GOLD 0:10.200" during countdown and racing. Texts change only when the target changes
+        // (after a lap). Once the running lap is slower than the target, the chip dims and gives one small punch.
+        private void UpdateMedalTarget(RaceState state)
+        {
+            Medal target = raceManager.NextMedalTarget;
+            bool topTier = target == Medal.None && raceManager.BestMedal == Medal.DeansList;
+            float seconds = raceManager.MedalSeconds(target);
+            bool hasChip = raceManager.IsSetUp && (topTier || seconds > 0f);
+            if (shownTarget.Changed(hasChip ? (int)target : -1))
+            {
+                SetMedalClass(medalTarget, topTier ? Medal.DeansList : target);
+                medalTargetName.text = topTier ? MedalRules.Name(Medal.DeansList) : MedalRules.Name(target);
+                targetMilliseconds = seconds > 0f ? RaceTimer.ToMilliseconds(seconds) : -1;
+                medalTargetTime.text = topTier ? "EARNED" : HudFormat.Time(targetMilliseconds);
+            }
+            HudFx.SetShown(medalTarget, hasChip);
+
+            bool missed = state == RaceState.Racing && targetMilliseconds > 0 && !topTier
+                && RaceTimer.ToMilliseconds(raceManager.LapSeconds) > targetMilliseconds;
+            if (missed != targetMissed)
+            {
+                targetMissed = missed;
+                medalTarget.EnableInClassList("medal-target--missed", missed);
+                if (missed)
+                {
+                    HudFx.Punch(medalTarget, "medal-target--pop");
+                }
+            }
+        }
+
         // Checkpoint pips: passed = white, next = pulsing outline, later = dim. The last pip is the finish line.
         private void UpdateCheckpoints(RaceState state)
         {
@@ -624,9 +739,24 @@ namespace CarcavelosCircuit.RaceFlow
             if (showHint)
             {
                 hintText.text = raceManager.HintText; // the same string object every frame, nothing new is built
-                if (!hintWasShown)
+                HintKind kind = raceManager.CurrentHintKind;
+                bool kindChanged = shownHintKind.Changed((int)kind);
+                if (kindChanged)
                 {
-                    Shake(hintChip);
+                    hint.EnableInClassList("hint--tip", kind == HintKind.Tip);
+                    hint.EnableInClassList("hint--praise", kind == HintKind.Praise);
+                    hintIcon.text = HintIcon(kind);
+                }
+                if (!hintWasShown || kindChanged)
+                {
+                    if (kind == HintKind.Warning)
+                    {
+                        Shake(hintChip);
+                    }
+                    else
+                    {
+                        Bounce(hintChip);
+                    }
                 }
             }
             hintWasShown = showHint;
@@ -638,7 +768,23 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        // Two quick left-right jolts (60 ms each), then back to rest. Only used when a hint appears.
+        private static string HintIcon(HintKind kind)
+        {
+            switch (kind)
+            {
+                case HintKind.Tip: return "i";
+                case HintKind.Praise: return "+";
+                default: return "!";
+            }
+        }
+
+        // A friendly entry for coach tips and praise: one small scale punch once the chip has slid in.
+        private static void Bounce(VisualElement element)
+        {
+            element.schedule.Execute(() => HudFx.Punch(element, "callout-chip--pop")).ExecuteLater(160);
+        }
+
+        // Two quick left-right jolts (60 ms each), then back to rest. Used when a warning hint appears.
         private static void Shake(VisualElement element)
         {
             element.schedule.Execute(() => element.AddToClassList("callout-chip--shake-l")).ExecuteLater(160);

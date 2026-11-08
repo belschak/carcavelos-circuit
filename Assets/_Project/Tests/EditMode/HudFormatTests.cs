@@ -87,5 +87,15 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual("1:23", HudFormat.StripTags("<mspace=0.6em>1</mspace>:<b>23</b>"));
             Assert.AreEqual("no tags", HudFormat.StripTags("no tags"));
         }
+
+        [TestCase(0.84f, "0.8")]
+        [TestCase(0.04f, "0.0")]
+        [TestCase(1.25f, "1.3")]
+        [TestCase(12.96f, "13.0")]
+        [TestCase(-1f, "0.0")]
+        public void OneDecimal_RoundsToTenths_WithADot(float value, string expected)
+        {
+            Assert.AreEqual(expected, HudFormat.StripTags(HudFormat.OneDecimal(value)));
+        }
     }
 }
