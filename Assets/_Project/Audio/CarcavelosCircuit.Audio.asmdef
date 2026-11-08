@@ -1,0 +1,14 @@
+{
+    "name": "CarcavelosCircuit.Audio",
+    "rootNamespace": "CarcavelosCircuit.Audio",
+    "references": ["CarcavelosCircuit.Shared"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

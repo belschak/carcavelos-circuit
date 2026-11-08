@@ -1,6 +1,7 @@
 # Setup (each teammate, once, ~30 min)
 
 1. **Unity Hub**, only from the official site: https://unity.com/download . Sign in with a free Unity account (Personal licence). Never install Unity or add-ons from other sites.
+   Command-line runs (tests, builds) say "No valid Unity Editor license found" although Hub is signed in? Then Hub is the Microsoft Store/winget version, which keeps its licence in a sandbox. Copy `%LOCALAPPDATA%\Packages\UnityTechnologies.UnityHub_2vrhnee42bhxm\LocalCache\Local\Unity\licenses\UnityEntitlementLicense.xml` to `%LOCALAPPDATA%\Unity\licenses\`.
 2. In Hub > Installs > Install Editor > Archive / "Install other versions": **exactly `6000.3.28f1` (Unity 6.3 LTS)**. Tick **Web Build Support** in the modules list. Already installed? Installs > Manage > Add modules > Web Build Support.
 3. **Git** (Windows: git-scm.com, Mac: `xcode-select --install`) and **GitHub Desktop** or the `gh` CLI. Accept the repo invite in your email.
    Set your commit email to one that is on your GitHub account (`git config --global user.email <that email>`), otherwise your commits are not counted as yours. Every member must contribute code (graded).
