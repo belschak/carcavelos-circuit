@@ -21,3 +21,9 @@ MonoBehaviour:
   hintSeconds: 2.5
   fallRecoverHeight: -20
   fallCheckCooldownSeconds: 0.5
+  bronzeSeconds: 12
+  silverSeconds: 11
+  goldSeconds: 10.2
+  deansListSeconds: 9.6
+  coachNoDriftSeconds: 5
+  coachHintSeconds: 3.5

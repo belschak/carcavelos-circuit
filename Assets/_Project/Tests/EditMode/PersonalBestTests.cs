@@ -106,5 +106,46 @@ namespace CarcavelosCircuit.Tests.EditMode
             float delta;
             Assert.IsFalse(loaded.RecordSplit(1, 10f, out delta));
         }
+
+        [Test]
+        public void BestMedal_OnlyGoesUp()
+        {
+            PersonalBest best = new PersonalBest(3);
+            Assert.AreEqual(Medal.None, best.BestMedal);
+            Assert.IsTrue(best.NoteMedal(Medal.Silver));
+            Assert.IsFalse(best.NoteMedal(Medal.Bronze), "a worse medal does not replace a better one");
+            Assert.IsFalse(best.NoteMedal(Medal.Silver), "the same medal is not an improvement");
+            Assert.IsTrue(best.NoteMedal(Medal.DeansList));
+            Assert.AreEqual(Medal.DeansList, best.BestMedal);
+        }
+
+        [Test]
+        public void BestMedal_SurvivesTheSaveString()
+        {
+            PersonalBest best = new PersonalBest(3);
+            best.FinishRun(10.1f);
+            best.NoteMedal(Medal.Gold);
+            PersonalBest loaded = PersonalBest.FromSaveString(best.ToSaveString(), 3);
+            Assert.AreEqual(Medal.Gold, loaded.BestMedal);
+            Assert.AreEqual(10.1f, loaded.BestSeconds, 0.0001f);
+        }
+
+        [Test]
+        public void SaveFromBeforeMedals_LoadsWithNoMedal()
+        {
+            PersonalBest loaded = PersonalBest.FromSaveString("41.25|10.5;22.25;-1", 3);
+            Assert.AreEqual(41.25f, loaded.BestSeconds, 0.0001f);
+            Assert.AreEqual(Medal.None, loaded.BestMedal);
+        }
+
+        [TestCase("41.25|10.5;22.25;-1|9")]
+        [TestCase("41.25|10.5;22.25;-1|-3")]
+        [TestCase("41.25|10.5;22.25;-1|gold")]
+        public void BrokenMedalNumber_MeansNoMedal_ButKeepsTheTime(string text)
+        {
+            PersonalBest loaded = PersonalBest.FromSaveString(text, 3);
+            Assert.AreEqual(Medal.None, loaded.BestMedal);
+            Assert.IsTrue(loaded.HasRecord);
+        }
     }
 }

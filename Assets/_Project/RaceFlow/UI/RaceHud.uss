@@ -25,6 +25,13 @@
     --cc-lip: rgba(0, 0, 0, 0.45);
     --drift-s1: #2D8CD6;       /* swap these two if the drift colour mapping changes */
     --drift-s2: #FF8A1F;
+    /* Medal tiers (UI only, task P5). Like coral, they need a row in docs/art-style.md (Luc's OK).
+       Gold is warmer than sand on purpose, so a GOLD medal never looks like the sand NEW RECORD stamp.
+       Dean's List = azulejo blue and white (same hex as --cc-blue, written out: one token per tier). */
+    --medal-bronze: #C98A55;
+    --medal-silver: #C5CCD6;
+    --medal-gold: #F2B33D;
+    --medal-deans: #2D8CD6;
 }
 
 /* Reset Unity's default label spacing. One class = same weight as the theme's rule, and this sheet wins because it
@@ -181,6 +188,76 @@
 
 .best--none {
     color: rgba(234, 234, 236, 0.45);
+}
+
+/* ---------- A2. Medal target chip (under the time panel) ---------- */
+.top-left {
+    align-items: flex-start;
+}
+
+.medal-target {
+    flex-direction: row;
+    align-items: center;
+    height: 32px;
+    margin-top: 8px;
+    padding: 0 14px 0 12px;
+    border-radius: 16px; /* half the height = a true pill */
+    background-color: var(--cc-panel);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--cc-lip);
+    opacity: 0;
+    transform-origin: left;
+    transition-property: opacity, scale;
+    transition-duration: 300ms, 160ms;
+    transition-timing-function: ease-out, ease-out-back;
+}
+
+.medal-target.is-shown {
+    opacity: 1;
+}
+
+/* The lap is already slower than the target: the chip stays (you still see what you missed) but steps back. */
+.medal-target.is-shown.medal-target--missed {
+    opacity: 0.45;
+}
+
+.medal-target--pop {
+    scale: 1.12 1.12;
+    transition-duration: 0s;
+}
+
+.medal-target-name {
+    margin-left: 10px;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: rgba(234, 234, 236, 0.85);
+}
+
+.medal-target-time {
+    margin-left: 10px;
+    font-size: 18px;
+    color: var(--cc-white);
+}
+
+/* Medal gem: a small diamond tile (same shape as the checkpoint pips), coloured by the medal class on a parent. */
+.medal-gem {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    rotate: 45deg;
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(234, 234, 236, 0.22);
+}
+
+.medal--bronze .medal-gem { background-color: var(--medal-bronze); }
+.medal--silver .medal-gem { background-color: var(--medal-silver); }
+.medal--gold .medal-gem { background-color: var(--medal-gold); }
+.medal--deans .medal-gem { background-color: var(--medal-deans); border-color: var(--cc-white); }
+
+.medal-target--missed .medal-gem {
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgba(234, 234, 236, 0.55); /* hollow gem = not reachable this lap */
 }
 
 /* ---------- B. Checkpoint pips ---------- */
@@ -370,6 +447,15 @@
     letter-spacing: 1px;
     color: var(--cc-black);
 }
+
+/* Coach tip: Atlantic blue chip, white text. Coach praise: sand chip. Only warnings shake; tips and praise bounce. */
+.hint--tip .hint-chip { background-color: var(--cc-blue); }
+.hint--tip .hint-text { color: var(--cc-white); }
+.hint--tip .hint-icon { color: var(--cc-blue); background-color: var(--cc-white); }
+.hint--praise .hint-chip { background-color: var(--cc-sand); }
+.hint--praise .hint-icon { color: var(--cc-sand); }
+
+.callout.is-shown .callout-chip--pop { scale: 1.1 1.1; transition-duration: 0s; }
 
 .wrong-way-chip {
     flex-direction: column;
@@ -997,7 +1083,7 @@
 
 .final-time {
     margin-top: 2px;
-    font-size: 104px;
+    font-size: 96px; /* was 104px: room for the medal stamp and the lap report at 720 px height */
     color: var(--cc-white);
     text-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
     transition-property: scale;
@@ -1024,7 +1110,7 @@
     transition-property: opacity, translate;
     transition-duration: 240ms;
     transition-timing-function: ease-out-back;
-    transition-delay: 900ms;
+    transition-delay: 1000ms; /* after the medal stamp (900 ms) */
 }
 
 .results--in .res-delta {
@@ -1069,11 +1155,145 @@
     opacity: 0;
     transition-property: opacity;
     transition-duration: 200ms;
-    transition-delay: 1000ms;
+    transition-delay: 1100ms;
 }
 
 .results--in .res-best {
     opacity: 1;
+}
+
+/* Medal stamp: a pill badge in its own row (never over other text). It slams in like the NEW RECORD stamp,
+   just before it: medal at 900 ms, delta 1000 ms, record 1050 ms, best 1100 ms, lap report 1150 ms. */
+.res-medal {
+    align-items: center;
+    margin: 4px 0 2px 0;
+}
+
+.medal-badge {
+    flex-direction: row;
+    align-items: center;
+    height: 46px;
+    padding: 0 24px 0 20px;
+    border-radius: 23px; /* half the height = a true pill */
+    background-color: var(--cc-black);
+    border-width: 3px;
+    border-bottom-width: 5px;
+    border-color: rgba(234, 234, 236, 0.25);
+    opacity: 0;
+    scale: 2.2 2.2;
+    rotate: -14deg;
+    transition-property: opacity, scale, rotate;
+    transition-duration: 160ms, 260ms, 260ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back;
+    transition-delay: 900ms;
+}
+
+.results--in .medal-badge {
+    opacity: 1;
+    scale: 1 1;
+    rotate: -3deg;
+}
+
+/* No medal: no stamp, just a quiet fade (3 classes, so it beats the two rules above in both states). */
+.res-medal .medal-badge.medal--none,
+.results--in .medal-badge.medal--none {
+    scale: 1 1;
+    rotate: 0deg;
+}
+
+.medal-badge.medal--bronze { border-color: var(--medal-bronze); }
+.medal-badge.medal--silver { border-color: var(--medal-silver); }
+.medal-badge.medal--gold { border-color: var(--medal-gold); }
+.medal-badge.medal--deans { border-color: var(--cc-white); background-color: var(--cc-blue-deep); }
+
+.medal-gem--big {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border-width: 3px;
+}
+
+.medal-badge-name {
+    margin-left: 14px;
+    font-size: 26px;
+    letter-spacing: 3px;
+    color: rgba(234, 234, 236, 0.55);
+}
+
+.medal--bronze .medal-badge-name { color: var(--medal-bronze); }
+.medal--silver .medal-badge-name { color: var(--medal-silver); }
+.medal--gold .medal-badge-name { color: var(--medal-gold); }
+.medal--deans .medal-badge-name { color: var(--cc-white); }
+
+.res-medal-next {
+    margin-top: 6px;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.70);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-delay: 1150ms;
+}
+
+.results--in .res-medal-next {
+    opacity: 1;
+}
+
+.res-medal-next--new {
+    color: var(--cc-sand);
+}
+
+/* Lap report: one tile strip, four equal cells. 480 px inside the card = 120 px per cell. */
+.res-stats {
+    flex-direction: row;
+    width: 100%;
+    margin-top: 14px;
+    padding: 8px 0 9px 0;
+    border-radius: 14px;
+    background-color: rgba(234, 234, 236, 0.07);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--cc-lip);
+    opacity: 0;
+    translate: 0 12px;
+    transition-property: opacity, translate;
+    transition-duration: 240ms;
+    transition-timing-function: ease-out-cubic;
+    transition-delay: 1150ms;
+}
+
+.results--in .res-stats {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.stat {
+    flex-grow: 1;
+    flex-basis: 0;
+    align-items: center;
+    border-right-width: 1px;
+    border-right-color: rgba(234, 234, 236, 0.14);
+}
+
+.stat--last {
+    border-right-width: 0;
+}
+
+.stat-value {
+    font-size: 26px;
+    color: var(--cc-white);
+}
+
+.stat-caption {
+    margin-top: 1px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.60);
+}
+
+/* 0 drifts or 0 boosts: dimmed, a quiet "try this next time" (the coach explains how). */
+.stat--zero .stat-value {
+    color: rgba(234, 234, 236, 0.35);
 }
 
 .record {
@@ -1107,11 +1327,11 @@
 .res-actions {
     flex-direction: row;
     align-items: center;
-    margin-top: 26px;
+    margin-top: 20px;
     opacity: 0;
     transition-property: opacity;
     transition-duration: 200ms;
-    transition-delay: 1250ms;
+    transition-delay: 1300ms;
 }
 
 .results--in .res-actions {

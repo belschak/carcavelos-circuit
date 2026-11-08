@@ -59,6 +59,7 @@ Suggested order for the live walkthrough (about 5 minutes):
 | Track scenes may keep their own test cameras; `RaceBootstrap` switches them off | Each owner can test their scene alone, and the race still has exactly one camera and one AudioListener (Main's). |
 | Bloom via one global Volume in Main | Luc's request: drift sparks and boost flames should glow. The profile asset is created once and then left alone, so Role 3 can tune it. |
 | `RaceSettings` ScriptableObject | All tuning numbers in one asset, no magic numbers in code (team rule). |
+| Medals, lap report and coach tips (task P5) | A fresh browser has no personal best, no splits, nothing to beat. Medal times give the first lap a goal, the lap report shows the drift system was used, and the coach teaches drifting without anyone explaining it at the demo. Each is one small plain C# class with tests. |
 | Countdown 1 s per step on the first start, 0.5 s on retry | Time-trial players retry a lot, a quick restart feels better. |
 | "Press any key to start" screen | Browsers block sound until the first click or key press; our start screen forces that press before the race. |
 | Enter = retry, not Escape | In a browser Escape leaves fullscreen. |
@@ -343,6 +344,37 @@ Tiny local web server for `Build-Web/` on `http://127.0.0.1:8000`, standard libr
 python tools/serve_web_build.py
 ```
 
+### 3.21 `RaceFlow/MedalRules.cs` + `Medal.cs` (plain C#, task P5)
+
+`Medal` enum: `None = 0, Bronze, Silver, Gold, DeansList = 4` (bigger number = better medal, the number is what gets saved). `MedalRules` is static:
+
+- `AreValid(thresholds)`: exactly 4 positive times, each strictly faster than the one before (Bronze 12.0 > Silver 11.0 > Gold 10.2 > Dean's List 9.6, from `RaceSettings.MedalThresholds()`). If not, `RaceManager.SetUp` logs a red error and there are no medals.
+- `For(lapSeconds, thresholds)`: loops over the tiers and keeps the best one the lap is fast enough for. Compares whole milliseconds (`RaceTimer.ToMilliseconds`), so "exactly on the time" counts and a lap that reads 0:10.200 always earns a medal that reads 0:10.200.
+- `NextTarget(medal)` (one tier up, `None` at the top), `ThresholdFor`, `Name` ("DEAN'S LIST"), `ColourClass` ("medal--gold").
+- Saved by `PersonalBest`: `BestMedal`, `NoteMedal(medal)` (only goes up), save text `"10.1|splits|3"`. A save from before medals had no third part, so it loads as `None` and `SetUp` gives it the medal its best time is worth.
+- HUD: pill under the time panel "GOLD 0:10.200" during countdown and racing (the next tier above your best medal); once the running time passes it, the pill dims and the gem turns hollow. Results: the medal badge stamps in at 900 ms in its own row (never over other text), with "NEXT  DEAN'S LIST  0:09.600" or "NEW MEDAL!" under it.
+- How I would explain it: "Four numbers in the settings, one loop that finds the best tier you beat. The HUD only shows the result."
+
+### 3.22 `RaceFlow/RunStats.cs` (plain C#, lap report)
+
+`RaceManager.Update` calls `Tick(deltaTime, Speed, IsDrifting, IsBoosting, IsGrounded)` every racing frame, all from `IKartState`. `Reset()` at GO and on Retry, `NoteRecovery()` in `Recover()`.
+
+- Rising edge: `if (drifting && !wasDrifting) Drifts++;`, same for boosts. A 3 s drift is one drift, not 180 frames.
+- `TopSpeed` keeps the maximum of `|Speed|`; `AirSeconds` adds frame time while not grounded; `LongestJumpSeconds` keeps the longest single jump (reset on landing or a recover).
+- Results card row: TOP KM/H, DRIFTS, BOOSTS, AIR TIME (`HudFormat.OneDecimal`, always a dot). 0 drifts or 0 boosts are dimmed.
+- Concept: rising-edge detection (compare with last frame), the same idea as `wasPressedThisFrame` for keys.
+
+### 3.23 `RaceFlow/OnboardingCoach.cs` + `CoachHint.cs` + `HintKind.cs` (plain C#, smart hints)
+
+`RaceManager.UpdateCoach()` feeds it every frame: `Tick(deltaTime, racing, IsDrifting, DriftStage, IsBoosting)` returns a `CoachHint` or `None`.
+
+- `HowToDrift`: 5 s of racing (`RaceSettings.coachNoDriftSeconds`, counted across retries, never during countdown or results) without a drift. A drift before that marks it done without showing it.
+- `HoldLonger`: a drift ended while its highest stage was 0 (no sparks, no boost). The kart's `DriftStage` drops to 0 when the drift ends, so the coach remembers the highest stage while drifting.
+- `BigBoost` (praise): a boost starts within 0.25 s after a stage 2 drift ended. It also marks `HoldLonger` done (they have learned it).
+- `CoachHint` values are bit flags (1, 2, 4), so "already shown" fits in one int: `PlayerPrefs` key `CarcavelosCircuit.CoachDone`, saved the moment it changes. Returning players get no tips.
+- A tip waits while another hint is on screen ("Missed a checkpoint!" wins) and uses the same `ShowHint`, so `HintText`/`HintVisibleUntil` stay the only hint channel. `HintKind` (Warning, Tip, Praise) picks the chip colour: orange "!", blue "i", sand "+".
+- How I would explain it: "Three if-statements on the kart's flags, each tip once, a saved bit per tip."
+
 ---
 
 ## 4. Tests
@@ -366,6 +398,10 @@ All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceF
 | `ThrottleGuessTests` | Speeding up = load 1, braking = 0, cruising = 0.55; one hard frame does not jump; zero frame time changes nothing; Reset forgets a teleport. |
 | `MixLevelTests` | dB to volume (0 dB = 1, -6 = 0.5, -80 = exactly 0); a fade takes the given time and stays; 0 s jumps; a new target starts from where it is. |
 | `DuckEnvelopeTests` | No duck at the start; down at the attack rate and stops at the depth; held, then back at the release rate; the deeper duck wins; Clear is immediate. |
+| `MedalRulesTests` | Default times valid; each tier from 13 s (none) to 9.1 s (Dean's List); exactly on a threshold earns it, 1 ms slower does not; a time that reads the same on screen earns it; no lap = no medal; out of order, equal, missing or zero times rejected (and give no medal); next target one tier up, none at the top; names and colour classes. |
+| `RunStatsTests` | A 3 s drift counts once, two drifts twice; boosts on the rising edge; top speed keeps the max (reverse counts); air time sums only airborne frames, longest jump keeps the max; recoveries counted and end the jump; negative frame time ignored; Reset clears everything. |
+| `OnboardingCoachTests` | "How to drift" after 5 s, once; not at all if the player drifted first; "hold longer" on a stage 0 release, once, not after a stage 1 release; praise on the first stage 2 boost (also one frame late), once, and no "hold longer" after it; nothing while not racing and that time does not count; a drift ended by the finish gives no tip; saved flags stop all tips; every tip has text and a kind. |
+| `PersonalBestTests` (P5 additions) | Best medal only goes up; survives the save string; a save from before medals loads with no medal; a broken medal number keeps the time but no medal. `HudFormatTests` adds `OneDecimal` (0.84 -> "0.8", 1.25 -> "1.3", negative -> "0.0"). |
 
 Run: Unity Editor, Window > General > Test Runner > EditMode > Run All. Command line (Unity closed), Windows:
 
@@ -426,6 +462,8 @@ Do it on a branch `role4/<task-id>-swap-contract`, after `git pull` of `main` wi
 17. **Why is the canvas not just 1280x720?** Players have different window sizes. The canvas fills the window and the HUD scales from a 1280x720 reference (PanelSettings "scale with screen size").
 18. **Why no limiter or AudioMixer effects?** Unity's Web build only supports volume changes. We gain-stage instead: every file has a loudness target, Normalize is off, peaks stay under -1 dBFS, and music ducks in script under the important sounds.
 19. **How can an engine without gears "shift"?** The sound pretends: the speed range is split into 4 gears; inside a gear the pitch climbs, at the top it drops back to 60 % and climbs again, with a 0.07 s volume cut and a pop. The kart itself has no gears.
+20. **How does the drift counter not count every frame?** Rising edge: `RunStats` remembers last frame's `IsDrifting` and counts only the frame it turns from false to true.
+21. **How are the coach tips remembered?** Each tip is one bit (1, 2, 4) of an int saved in PlayerPrefs. `(DoneFlags & 2) != 0` means tip 2 was already shown.
 
 ---
 
@@ -441,4 +479,6 @@ Fixed on 2026-11-08 and no longer weak spots: drift boost after the finish, drif
 - **Kart prefab name is strict** (`Role4SceneBuilder.FindRealKartPrefab`): exactly `Kart`, under `Driving/`, `IKartState` on the root. A prefab called "Kart Variant" or with the controller on a child is ignored and the placeholder stays, silently apart from the missing Console line.
 - **Bloom not yet checked in a Web build with real effects**: it depends on Role 3's sparks and flames being bright enough (above threshold 0.9). Check it looks right and the frame rate stays fine on a normal laptop.
 - **P4 audio not yet heard in a real build** (written without opening Unity): gear-change feel, ducking amounts, music start on GO and gapless loops (smpl + 2048 pad) must be checked in the Web build with headphones (`audio-polish-plan.md` section 7).
+- **Medal times are placeholders** (12.0 / 11.0 / 10.2 / 9.6 s on the placeholder track). Re-tune them in `RaceSettings.asset` once the campus track lands; the personal-best key is per track scene, so the new track starts fresh anyway.
+- **Coach tips are not yet playtested** with a first-time player (5 s trigger, wording). Medal colours, like coral, still need Luc's OK in `docs/art-style.md`.
 - **By design, worth remembering**: the builder rewrites its own root objects in `Main.unity` on every run (values set by hand on them are lost; added components or children make it stop and ask); other root objects, the Volume profile and `RaceSettings` values are kept.

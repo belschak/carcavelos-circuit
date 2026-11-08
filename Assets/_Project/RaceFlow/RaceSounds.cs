@@ -54,6 +54,9 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("On a retry the first beep waits this long, so the retry click is not hidden under it")]
         private float retryBeepDelay = 0.1f;
 
+        [SerializeField, Range(0f, 1f), Tooltip("Coach tips and praise reuse the retry click this much quieter (a gentle 'look here', not an alarm)")]
+        private float coachClickVolume = 0.4f;
+
         private RaceState stateLastFrame = RaceState.Ready;
         private float lastHintUntil;
 
@@ -77,12 +80,20 @@ namespace CarcavelosCircuit.RaceFlow
 
         private void Update()
         {
-            // The hint ("Missed a checkpoint! Press R to go back") has no event, but RaceManager pushes its end time
-            // forward every time it shows a hint. A later end time = a new hint = play the warning once.
+            // A hint has no event, but RaceManager pushes its end time forward every time it shows one.
+            // A later end time = a new hint = one sound. Only a real warning ("Missed a checkpoint!") gets the
+            // two falling notes; a coach tip or praise gets a soft click, so a friendly tip never sounds like an error.
             if (raceManager.HintText != "" && raceManager.HintVisibleUntil > lastHintUntil)
             {
-                Play(hintWarning);
-                Duck(-4f, hintWarning);
+                if (raceManager.CurrentHintKind == HintKind.Warning)
+                {
+                    Play(hintWarning);
+                    Duck(-4f, hintWarning);
+                }
+                else
+                {
+                    Play(retryClick, coachClickVolume);
+                }
             }
             lastHintUntil = raceManager.HintVisibleUntil;
 
@@ -147,11 +158,11 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // PlayOneShot lets several sounds overlap on one AudioSource. A missing clip is simply skipped.
-        private void Play(AudioClip clip)
+        private void Play(AudioClip clip, float scale = 1f)
         {
             if (clip != null && source != null)
             {
-                source.PlayOneShot(clip, volume);
+                source.PlayOneShot(clip, volume * scale);
             }
         }
 
