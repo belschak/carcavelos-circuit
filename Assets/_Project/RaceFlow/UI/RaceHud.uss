@@ -609,8 +609,9 @@
     bottom: 34px;
     flex-direction: row;
     align-items: center;
-    padding: 7px 16px 7px 12px;
-    border-radius: 999px;
+    height: 44px;
+    padding: 0 16px 0 12px;
+    border-radius: 22px; /* half the height = a true pill (999px draws an ellipse in UI Toolkit) */
     background-color: rgba(29, 29, 31, 0.70);
     opacity: 0;
     transition-property: opacity;
@@ -872,8 +873,9 @@
 
 .pill {
     margin-top: 44px;
-    padding: 10px 32px 10px 32px;
-    border-radius: 999px;
+    height: 58px;
+    padding: 0 34px 0 34px;
+    border-radius: 29px; /* half the height = a true pill (999px draws an ellipse in UI Toolkit) */
     background-color: var(--cc-orange);
     border-bottom-width: 4px;
     border-bottom-color: #B35C0E;
@@ -1112,11 +1114,12 @@
 
 .retry-button {
     margin: 0 10px 0 0;
-    padding: 10px 40px 10px 40px;
+    height: 54px;
+    padding: 0 40px 0 40px;
     border-width: 0;
     border-bottom-width: 4px;
     border-bottom-color: #B35C0E;
-    border-radius: 999px;
+    border-radius: 27px; /* half the height = a true pill */
     background-image: none;
     background-color: var(--cc-orange);
     font-size: 24px;
