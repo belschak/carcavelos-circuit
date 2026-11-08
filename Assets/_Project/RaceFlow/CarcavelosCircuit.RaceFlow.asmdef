@@ -1,0 +1,14 @@
+{
+    "name": "CarcavelosCircuit.RaceFlow",
+    "rootNamespace": "CarcavelosCircuit.RaceFlow",
+    "references": ["CarcavelosCircuit.Shared", "CarcavelosCircuit.Track", "Unity.InputSystem"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
