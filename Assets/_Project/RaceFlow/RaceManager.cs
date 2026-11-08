@@ -49,6 +49,8 @@ namespace CarcavelosCircuit.RaceFlow
         // Set by the HUD while a menu (settings, credits) is open or the mouse points at a menu button.
         // That key or click belongs to the menu, so it must not also start the race.
         public bool MenuUsesInput { get; set; }
+        // Set by the HUD from the settings: with reduced motion the finish has no slow motion (task P6b).
+        public bool ReducedMotion { get; set; }
 
         // ---- Events (sounds and effects listen, the HUD mostly reads the values above) ----
         public event Action<int> CountdownStep;          // 3, 2, 1, 0 = GO
@@ -62,6 +64,7 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly RacePause pause = new RacePause();
         private float timeScaleBeforePause = 1f;
         private bool frozen; // true while this script holds Time.timeScale at 0
+        private float slowMotionStart = -1f; // Time.unscaledTime when the finish slow motion began, -1 = none (task P6b)
         private float[] medalThresholds;       // from RaceSettings: Bronze, Silver, Gold, Dean's List (seconds)
         private OnboardingCoach coach;
         private int savedCoachFlags;
@@ -254,9 +257,17 @@ namespace CarcavelosCircuit.RaceFlow
             return other.GetComponentInParent<IKartState>() != null;
         }
 
+        // Time.timeScale is global and survives a scene load, so a slow motion that is cut off (scene unloaded,
+        // object switched off) must hand back full speed, or the next scene would run at 30 %.
+        private void OnDisable()
+        {
+            StopSlowMotion();
+        }
+
         private void OnDestroy()
         {
             EndPause(); // never leave the game frozen (Time.timeScale is global)
+            StopSlowMotion();
             if (stateMachine != null)
             {
                 stateMachine.StateChanged -= OnStateChanged;
@@ -270,6 +281,9 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 return;
             }
+
+            // Before the pause check: the slow motion must notice a pause (it then leaves Time.timeScale at 0).
+            UpdateSlowMotion();
 
             // Paused (focus was lost): everything is frozen until a key or click. That key does nothing else,
             // so it never also retries or recovers.
@@ -337,6 +351,7 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
             EndPause(); // only a safety net: a paused race cannot normally be retried
+            StopSlowMotion(); // Enter during the finish slow motion: the new attempt runs at full speed at once
             PutKartOnStartGrid(); // ResetTo also clears drift and boost (temporary effects)
             rules.Reset();
             timer.Reset();
@@ -416,7 +431,53 @@ namespace CarcavelosCircuit.RaceFlow
                 PlayerPrefs.SetString(saveKey, personalBest.ToSaveString());
                 PlayerPrefs.Save(); // in a Web build this writes to the browser right away
             }
+            // The finish slow motion (task P6b) starts in the same physics step as the official time, which is
+            // already taken, so slowing the game can never change the lap time.
+            if (!ReducedMotion)
+            {
+                slowMotionStart = Time.unscaledTime;
+            }
             if (LapFinished != null) LapFinished(lapTime, LastLapWasRecord);
+        }
+
+        // ---- Finish slow motion (task P6b) ----
+        // Time.timeScale follows FinishMoment.TimeScaleAt over real time (Time.unscaledTime): the scene slows to
+        // 30 % and comes back to full speed after 1.2 s. The HUD runs on real time, so it never slows down.
+        // A pause wins: while frozen this leaves Time.timeScale at 0 and the curve simply goes on in real time.
+        private void UpdateSlowMotion()
+        {
+            if (slowMotionStart < 0f || frozen)
+            {
+                return;
+            }
+            float seconds = Time.unscaledTime - slowMotionStart;
+            if (FinishMoment.IsSlowMotionRunning(seconds))
+            {
+                Time.timeScale = FinishMoment.TimeScaleAt(seconds);
+            }
+            else
+            {
+                Time.timeScale = 1f;
+                slowMotionStart = -1f;
+            }
+        }
+
+        // Ends the slow motion at once (retry, scene unload). Safe to call when none is running.
+        private void StopSlowMotion()
+        {
+            if (slowMotionStart < 0f)
+            {
+                return;
+            }
+            slowMotionStart = -1f;
+            if (frozen)
+            {
+                timeScaleBeforePause = 1f; // a pause that ends later must come back at full speed, not at 30 %
+            }
+            else
+            {
+                Time.timeScale = 1f;
+            }
         }
 
         // The kart may only drive while racing (rule from docs/interfaces.md).

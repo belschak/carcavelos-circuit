@@ -239,6 +239,7 @@ namespace CarcavelosCircuit.RaceFlow
         private void ShowSettingsEverywhere()
         {
             hudRoot.EnableInClassList("reduce-motion", settings.ReducedMotion);
+            raceManager.ReducedMotion = settings.ReducedMotion; // no finish slow motion with reduced motion (task P6b)
             startSoundText.text = settings.Muted ? "SOUND OFF" : "SOUND ON";
             startSound.EnableInClassList("menu-pill--muted", settings.Muted);
         }
