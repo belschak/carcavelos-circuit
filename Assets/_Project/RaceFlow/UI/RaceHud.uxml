@@ -168,6 +168,7 @@
                 <ui:Label text="TIME TRIAL  ·  1 LAP" class="res-kicker f-ui" />
                 <ui:Label text="FINISH" class="res-headline f-display" />
                 <ui:Label name="final-time" text="0:00.000" class="final-time f-num" />
+                <ui:VisualElement name="results-wave-host" class="wave-host wave-host--small" />
                 <!-- Medal stamp: its own row, so it never covers other text (the NEW RECORD stamp hangs over the top edge instead) -->
                 <ui:VisualElement name="res-medal" class="res-medal">
                     <ui:VisualElement name="res-medal-badge" class="medal-badge medal--none">
@@ -176,7 +177,6 @@
                     </ui:VisualElement>
                     <ui:Label name="res-medal-next" text="" class="res-medal-next f-ui" />
                 </ui:VisualElement>
-                <ui:VisualElement name="results-wave-host" class="wave-host wave-host--small" />
                 <ui:VisualElement name="res-delta" class="res-delta">
                     <ui:Label name="res-delta-value" text="+0.000 s" class="res-delta-value f-num" />
                     <ui:Label name="res-delta-text" text="vs your best" class="res-delta-text f-ui" />

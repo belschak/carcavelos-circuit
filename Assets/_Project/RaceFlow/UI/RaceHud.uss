@@ -708,6 +708,17 @@
     opacity: 1;
 }
 
+/* Narrow windows (RaceHud sets hud--narrow below 1230 reference px, e.g. 4:3 and 16:10). The hint chip drops
+   below the medal pill so it never covers the lap time, and the key bar moves right, into the gap between the
+   drift panel (ends at 366 px) and the speed gauge (starts 210 px from the right). */
+.hud--narrow .callout {
+    top: 228px;
+}
+
+.hud--narrow .controls-hint {
+    translate: 78px 0;
+}
+
 /* Keycaps (also used on the start and results screens). */
 .keycap {
     min-width: 30px;
@@ -1166,7 +1177,7 @@
    just before it: medal at 900 ms, delta 1000 ms, record 1050 ms, best 1100 ms, lap report 1150 ms. */
 .res-medal {
     align-items: center;
-    margin: 4px 0 2px 0;
+    margin: 0 0 12px 0; /* sits under the wave that underlines the final time */
 }
 
 .medal-badge {
