@@ -1,0 +1,199 @@
+/* HUD styles. Like CSS, with "-unity-" names for Unity-only properties.
+   Colours from docs/art-style.md: Kart White #EAEAEC, Gloss Black #1D1D1F, Atlantic Blue #2D8CD6, Boost Orange #FF8A1F.
+   Sizes are for a 1280x720 reference screen (PanelSettings scales them). */
+
+.hud-root {
+    flex-grow: 1;
+    padding: 24px;
+    justify-content: space-between;
+}
+
+.top-bar, .bottom-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.panel {
+    background-color: rgba(29, 29, 31, 0.65);
+    border-radius: 10px;
+    padding: 8px 18px;
+    min-width: 200px;
+}
+
+.panel-right {
+    align-items: flex-end;
+}
+
+.caption {
+    color: rgba(234, 234, 236, 0.75);
+    font-size: 18px;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+}
+
+.timer {
+    color: rgb(234, 234, 236);
+    font-size: 52px;
+    -unity-font-style: bold;
+    min-width: 230px;
+}
+
+.best {
+    color: rgb(234, 234, 236);
+    font-size: 30px;
+}
+
+.speed {
+    color: rgb(234, 234, 236);
+    font-size: 44px;
+    -unity-font-style: bold;
+}
+
+.split {
+    position: absolute;
+    top: 130px;
+    left: 0;
+    right: 0;
+    -unity-text-align: middle-center;
+    font-size: 40px;
+    -unity-font-style: bold;
+    color: rgb(234, 234, 236);
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgb(29, 29, 31);
+}
+
+.split-ahead { color: rgb(45, 140, 214); }
+.split-behind { color: rgb(230, 70, 60); }
+
+.hint {
+    position: absolute;
+    top: 190px;
+    left: 0;
+    right: 0;
+    -unity-text-align: middle-center;
+    font-size: 28px;
+    color: rgb(255, 138, 31);
+    -unity-font-style: bold;
+}
+
+.countdown {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    -unity-text-align: middle-center;
+    font-size: 200px;
+    -unity-font-style: bold;
+    color: rgb(234, 234, 236);
+    -unity-text-outline-width: 3px;
+    -unity-text-outline-color: rgb(29, 29, 31);
+}
+
+.countdown-go { color: rgb(255, 138, 31); }
+
+.boost-panel {
+    min-width: 280px;
+}
+
+.boost-bar {
+    height: 18px;
+    margin-top: 6px;
+    background-color: rgba(234, 234, 236, 0.2);
+    border-radius: 9px;
+    overflow: hidden;
+}
+
+.boost-fill {
+    height: 100%;
+    width: 0%;
+    background-color: rgb(234, 234, 236);
+    border-radius: 9px;
+}
+
+.boost-stage-1 { background-color: rgb(45, 140, 214); }
+.boost-stage-2 { background-color: rgb(255, 138, 31); }
+.boost-active { color: rgb(255, 138, 31); }
+
+.controls-hint {
+    position: absolute;
+    bottom: 8px;
+    left: 0;
+    right: 0;
+    -unity-text-align: middle-center;
+    font-size: 16px;
+    color: rgba(234, 234, 236, 0.7);
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(29, 29, 31, 0.72);
+    align-items: center;
+    justify-content: center;
+}
+
+.title {
+    color: rgb(234, 234, 236);
+    font-size: 72px;
+    -unity-font-style: bold;
+    letter-spacing: 4px;
+}
+
+.subtitle {
+    color: rgb(227, 196, 141);
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.press-key {
+    color: rgb(255, 138, 31);
+    font-size: 36px;
+    -unity-font-style: bold;
+    margin-top: 40px;
+    margin-bottom: 24px;
+}
+
+.controls {
+    color: rgba(234, 234, 236, 0.8);
+    font-size: 18px;
+    margin-bottom: 16px;
+}
+
+.record {
+    color: rgb(255, 138, 31);
+    font-size: 54px;
+    -unity-font-style: bold;
+    margin-bottom: 16px;
+}
+
+.final-time {
+    color: rgb(234, 234, 236);
+    font-size: 96px;
+    -unity-font-style: bold;
+}
+
+.final-delta {
+    color: rgba(234, 234, 236, 0.85);
+    font-size: 30px;
+    margin-bottom: 30px;
+}
+
+.retry-button {
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: rgb(29, 29, 31);
+    background-color: rgb(255, 138, 31);
+    border-width: 0;
+    border-radius: 12px;
+    padding: 12px 40px;
+}
+
+.retry-button:hover {
+    background-color: rgb(255, 165, 80);
+}
+

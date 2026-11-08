@@ -1,0 +1,61 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!-- The whole HUD. Works like HTML: elements with names (RaceHud.cs finds them by name) and classes (RaceHud.uss styles them). -->
+    <Style src="RaceHud.uss" />
+    <ui:VisualElement name="hud-root" class="hud-root">
+
+        <!-- Top bar: lap time on the left, best time on the right -->
+        <ui:VisualElement class="top-bar">
+            <ui:VisualElement class="panel">
+                <ui:Label text="TIME" class="caption" />
+                <ui:Label name="timer" text="0:00.000" class="timer" />
+            </ui:VisualElement>
+            <ui:VisualElement class="panel panel-right">
+                <ui:Label text="BEST" class="caption" />
+                <ui:Label name="best" text="--:--.---" class="best" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Checkpoint split, e.g. "-0.412" in blue (ahead) or "+1.030" in red (behind) -->
+        <ui:Label name="split" text="+0.000" class="split" />
+
+        <!-- Short hints like "Missed a checkpoint!" -->
+        <ui:Label name="hint" text="" class="hint" />
+
+        <!-- 3, 2, 1, GO! -->
+        <ui:Label name="countdown" text="3" class="countdown" />
+
+        <!-- Bottom: drift boost cue on the left, speed on the right -->
+        <ui:VisualElement class="bottom-bar">
+            <ui:VisualElement class="panel boost-panel">
+                <ui:Label name="boost-label" text="DRIFT" class="caption" />
+                <ui:VisualElement name="boost-bar" class="boost-bar">
+                    <ui:VisualElement name="boost-fill" class="boost-fill" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="panel panel-right">
+                <ui:Label name="speed" text="0" class="speed" />
+                <ui:Label text="KM/H" class="caption" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:Label name="controls-hint" text="R = recover    Enter = retry" class="controls-hint" />
+
+        <!-- Start screen (state Ready) -->
+        <ui:VisualElement name="start-screen" class="overlay">
+            <ui:Label text="CARCAVELOS CIRCUIT" class="title" />
+            <ui:Label text="Time trial" class="subtitle" />
+            <ui:Label name="press-any-key" text="Press any key to start" class="press-key" />
+            <ui:Label text="W A S D / arrows = drive    Space = drift (let go for a boost)    R = recover    Enter = retry" class="controls" />
+            <ui:Label name="start-best" text="" class="subtitle" />
+        </ui:VisualElement>
+
+        <!-- Results screen (state Results) -->
+        <ui:VisualElement name="results-screen" class="overlay">
+            <ui:Label name="record" text="NEW RECORD!" class="record" />
+            <ui:Label text="LAP TIME" class="caption" />
+            <ui:Label name="final-time" text="0:00.000" class="final-time" />
+            <ui:Label name="final-delta" text="" class="final-delta" />
+            <ui:Button name="retry-button" text="Retry (Enter)" class="retry-button" />
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>
