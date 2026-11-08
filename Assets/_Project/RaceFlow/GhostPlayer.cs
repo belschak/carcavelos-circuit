@@ -228,7 +228,9 @@ namespace CarcavelosCircuit.RaceFlow
             for (int i = 0; i < filters.Length; i++)
             {
                 MeshRenderer meshRenderer = filters[i].GetComponent<MeshRenderer>();
-                if (meshRenderer != null && meshRenderer.enabled && filters[i].sharedMesh != null)
+                // Effect meshes (sparks, flames) sit under a ParticleSystem: they are not part of the kart body.
+                if (meshRenderer != null && meshRenderer.enabled && filters[i].sharedMesh != null
+                    && filters[i].GetComponentInParent<ParticleSystem>() == null)
                 {
                     AddPart(filters[i].sharedMesh, filters[i].transform, kart);
                     parts++;
