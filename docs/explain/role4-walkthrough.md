@@ -28,7 +28,7 @@ RaceManager.Update()  every frame
   |  checkpoint triggers -> CheckpointRelay -> OnCheckpointEntered -> lap rules
   |
   +--> RaceHud (UI Toolkit)  polls State, LapSeconds, BestSeconds, Kart ... every frame
-  +--> RaceSounds            listens to events CountdownStep, CheckpointPassed, LapFinished
+  +--> RaceSounds            listens to events CountdownStep, CheckpointPassed, LapFinished, Restarted, Recovered
   '--> KartAudio (Audio)     reads IKartState of its parent kart every frame; MusicPlayer loops music
 ```
 
@@ -144,7 +144,7 @@ Lives on `RaceSystems` in `Main.unity`. Owns a `RaceTimer`, a `RaceStateMachine`
 
 Public read-only values for the HUD: `State`, `CountdownNumber`, `LapSeconds`, `BestSeconds`, `PreviousBestSeconds`, `LastLapWasRecord`, `HasSplitDelta`, `LastSplitDelta`, `SplitVisibleUntil`, `HintText`, `HintVisibleUntil`, `Kart`, `IsSetUp`. "`{ get; private set; }`: everyone can read, only the RaceManager can write."
 
-Events: `CountdownStep`, `CheckpointPassed`, `LapFinished(float time, bool record)`, `Restarted` (the camera listens to snap behind the kart).
+Events: `CountdownStep`, `CheckpointPassed`, `LapFinished(float time, bool record)`, `Restarted` (the camera snaps behind the kart, RaceSounds clicks), `Recovered` (RaceSounds plays the respawn whoosh).
 
 - `SetUp(kartObject, track, trackName)` (~line 47): gets `IKartState` from the kart (error if missing); creates the lap rules with the number of checkpoints; loads the best time from `PlayerPrefs` with key `"CarcavelosCircuit.Best." + trackName`; creates the state machine and subscribes `OnStateChanged` and `OnCountdownStep` with `+=`; adds a `CheckpointRelay` to every checkpoint; puts the kart on the grid; `InputEnabled = false`. "Called once by the bootstrap, not in Start, because the kart does not exist yet when the scene starts."
 - `OnDestroy()`: unsubscribes with `-=`. "Always remove listeners you added, otherwise a destroyed object can still be called."
@@ -155,7 +155,7 @@ Events: `CountdownStep`, `CheckpointPassed`, `LapFinished(float time, bool recor
   4. Racing or Results + Enter: `Retry()`.
   5. Racing + R or kart below `FallRecoverHeight`: `Recover()`.
 - `Retry()` (public, also called by the HUD button): ignored in Ready; kart back to the grid (`ResetTo` also clears drift/boost), `rules.Reset()`, `timer.Reset()`, clears record/split/hint flags, quick countdown, fires `Restarted`.
-- `Recover()`: `track.GetRespawnPoint(rules.LastValidCheckpoint)` then `kart.ResetTo(...)`. Timer keeps running, no checkpoint awarded. "Recovering costs you time, that is the penalty."
+- `Recover()`: `track.GetRespawnPoint(rules.LastValidCheckpoint)` then `kart.ResetTo(...)`, fires `Recovered`. Timer keeps running, no checkpoint awarded. "Recovering costs you time, that is the penalty."
 - `OnCheckpointEntered(index)`: only while Racing. Index 0 = start/finish: `rules.TryFinish()` -> `FinishLap()`; if it fails after at least one checkpoint, hint "Missed a checkpoint! Press R to go back". Other index: `rules.PassCheckpoint(index)`; if valid, record the split, show it for `SplitPopupSeconds`, fire `CheckpointPassed`.
 - `FinishLap()` (private): `stateMachine.Finish()` (guards double finish), stop the timer, remember `PreviousBestSeconds`, `personalBest.FinishRun`; if record: `PlayerPrefs.SetString` + `PlayerPrefs.Save()`; fire `LapFinished`.
 - `OnStateChanged(newState)`: `kart.InputEnabled = stateMachine.InputAllowed`; when entering Racing: `rules.StartLap()`, `personalBest.StartRun()`, `timer.Start()`.
@@ -176,10 +176,10 @@ Entry point of `Main.unity` (task R1). Serialized: `settings`, `kartPrefab`, `ka
 
 ### 3.11 `RaceFlow/RaceSounds.cs` (MonoBehaviour)
 
-Race interface sounds on one 2D `AudioSource`. `OnEnable` subscribes to `CountdownStep`, `CheckpointPassed`, `LapFinished`; `OnDisable` unsubscribes.
+Race interface sounds on one 2D `AudioSource`. `OnEnable` subscribes to `CountdownStep`, `CheckpointPassed`, `LapFinished`, `Restarted`, `Recovered`; `OnDisable` unsubscribes.
 
 - `OnCountdownStep(n)`: low beep for 3, 2, 1, high GO beep for 0.
-- `OnCheckpointPassed`: chime. `OnLapFinished`: jingle, plus a sting if new record.
+- `OnCheckpointPassed`: chime. `OnLapFinished`: jingle, plus a sting if new record. `OnRestarted`: click (`ui_click`). `OnRecovered`: whoosh (`sfx_respawn`).
 - `Play(clip)`: `source.PlayOneShot(clip, volume)`, skips missing clips. "PlayOneShot lets sounds overlap on the same source."
 - Concept: `OnEnable`/`OnDisable` are the right pair for subscribing, they also run when the component is switched on and off.
 
@@ -214,19 +214,26 @@ Race interface sounds on one 2D `AudioSource`. `OnEnable` subscribes to `Countdo
   - "Unity 6 renamed `velocity` to `linearVelocity`."
 - `PlaceholderChaseCamera` with `[RequireComponent(typeof(Camera))]`: `Awake` caches the Camera; `SetTarget` + `SnapBehindTarget`; `LateUpdate` follows with `1 - Mathf.Exp(-sharpness * Time.deltaTime)` (frame-rate independent), snaps if more than 20 m away (teleport), widens FOV 65 to 80 with speed. "LateUpdate runs after all Updates, so the kart has already moved when the camera follows it."
 
-### 3.14 `Audio/EnginePitch.cs` (static, plain C#)
+### 3.14 `Audio/EnginePitch.cs` and `Audio/DriftSound.cs` (static, plain C#)
 
-- `Speed01(speed, maxSpeed)`: `|speed| / maxSpeed` capped at 1, 0 if `maxSpeed <= 0` (no divide by zero).
-- `FromSpeed01(s, min, max)`: straight line from min pitch (0.8) to max pitch (1.8).
-- `Smooth(current, target, sharpness, dt)`: moves by `1 - exp(-sharpness * dt)` of the gap. "Two small frames land in the same place as one big frame, so the engine sounds the same at 30 and 144 FPS." (This is tested.)
+The sound maths, kept out of MonoBehaviours so it can be unit tested. All numbers come from Luc's audio handoff (8 Nov).
+
+- `EnginePitch.Speed01(speed, maxSpeed)`: `|speed| / maxSpeed` capped at 1, 0 if `maxSpeed <= 0` (no divide by zero).
+- `EnginePitch.MoveLimited(current, target, rise, fall, dt)`: moves towards the target but at most `rise` (1.4) per second up and `fall` (2.2) per second down. "The revs never jump, and they drop a bit faster than they rise, like a real engine."
+- `EnginePitch.HighLoopMix(r)`: share of the high engine loop. 0 below r = 0.2, 1 above 0.7, smoothstep `t * t * (3 - 2t)` in between. "Smoothstep starts and ends flat, so you never hear where the fade begins."
+- `EnginePitch.LowLoopPitch(r) = 0.75 + 0.85r`, `HighLoopPitch(r) = 0.8 + 0.55r`.
+- `DriftSound.StageUpPitch(stage) = 1 + 0.12 (stage - 1)`, `SparksVolume(stage) = 0.55 + 0.15 stage` (0 without sparks, capped at 1), `SparksPitch(stage) = 0.95 + 0.07 stage`. "Written for any number of stages, so it still works if Role 1 changes the drift to three stages (Luc's request Q1)."
 
 ### 3.15 `Audio/KartAudio.cs` (MonoBehaviour, on the KartAudio prefab under the kart)
 
-Three AudioSources: engine loop, drift screech loop, one-shot effects.
+Seven 2D AudioSources: five loops that always run (engine low, engine high, tyre squeal, sparks, wind; only their volume changes, because starting a loop late can click) and two one-shot sources (stage chime with its own pitch, and effects).
 
-- `Start()`: `GetComponentInParent<IKartState>()`; if none, warn and `enabled = false`. Starts the engine and the drift loop (drift at volume 0).
-- `Update()`: engine pitch = smoothed `FromSpeed01` (+0.15 while boosting or airborne), volume 0.35 to 0.7 with speed; drift loop fades in/out with `Mathf.MoveTowards`; stage ping when `DriftStage` goes up; whoosh on the first frame of a boost (`IsBoosting && !wasBoosting`); landing thud after at least 0.3 s in the air.
-- How I would explain it: "One engine recording played faster sounds like higher revs, like a tape. I remember last frame's values (`wasBoosting`, `lastDriftStage`, `wasGrounded`) to detect the moment something starts."
+- `Start()`: `GetComponentInParent<IKartState>()`; if none, warn and `enabled = false`. Starts every loop at volume 0.
+- `UpdateEngine`: target revs = `Speed01`, or 0 while `InputEnabled` is false (idle during countdown and results); `MoveLimited`; pitch of both loops from revs (+0.1 while boosting or airborne); volume 0.45 to 0.75 with revs, split by `HighLoopMix`.
+- `UpdateDrift`: chirp on the frame a drift starts; squeal fades in/out with `Mathf.MoveTowards`; sparks volume/pitch from `DriftSound` by stage; chime each time the stage goes up, pitched higher per stage.
+- `UpdateWind`: volume `0.35 * speed01^2` (only audible when fast), pitch 0.8 to 1.2. "The cheapest way to make speed feel fast."
+- `UpdateBoostAndLanding`: whoosh on the first frame of a boost (`IsBoosting && !wasBoosting`); landing thud after at least 0.3 s in the air.
+- How I would explain it: "Two engine recordings, low and high revs. Playing a recording faster raises its pitch like a tape, and between low and high revs one fades into the other. I remember last frame's values (`wasDrifting`, `wasBoosting`, `lastDriftStage`, `wasGrounded`) to detect the moment something starts."
 - Concept: edge detection with a 'was' flag; `Audio` asmdef only references `Shared`.
 
 ### 3.16 `Audio/MusicPlayer.cs`
@@ -241,7 +248,7 @@ Menu **Carcavelos Circuit > Build Role 4 Scenes** (`[MenuItem("Carcavelos Circui
 1. Ensures folders.
 2. `CreateSettings()`: loads or creates `RaceSettings.asset` (existing values kept) and calls `EditorUtility.SetDirty`, so fields added to `RaceSettings` later (like `hintSeconds`) are written into the file with their defaults.
 3. `CreatePanelSettings()`: theme file + PanelSettings (scale with screen size, 1280x720, match 0.5).
-4. `CreateKartAudioPrefab()`: 3 AudioSources + `KartAudio`, clips `el_engine_loop`, `el_drift_loop`, `el_boost_whoosh`, `sfx_drift_stage1/2`, `sfx_landing_thud`. Private fields are filled with `SerializedObject.FindProperty(...)`.
+4. `CreateKartAudioPrefab()`: 7 AudioSources + `KartAudio`, clips `kart_engine_low/high`, `kart_drift_squeal/sparks/start/stage_up` (Luc's), `amb_wind_loop`, `el_boost_whoosh`, `sfx_landing_thud`. Private fields are filled with `SerializedObject.FindProperty(...)`.
 5. `FindRealKartPrefab()` (~line 199): `AssetDatabase.FindAssets("Kart t:Prefab")` under `Assets/_Project/Driving`; uses a prefab only if it is named exactly `Kart` and its root has a component implementing `IKartState`. "The kart swap is automatic: once Alessandro's prefab exists, re-running the builder puts it into Main."
 6. Only if no real kart was found: `CreatePlaceholderKartPrefab()`: Rigidbody (150 kg, interpolate, continuous collision, X/Z rotation frozen), frictionless box collider, `PlaceholderKart`, a `Visual` child made of primitives.
 7. `BuildPlaceholderTrackScene()`: a ~230 m rectangular loop around a sand "building", walls, cones, a kicker ramp, 4 checkpoint triggers (15 m wide) each with a `RespawnPoint` child 4 m after it, and a `SpawnPoint` just after the start line.
@@ -261,7 +268,7 @@ Menu **Carcavelos Circuit > Web Smoke Build**: `BuildPipeline.BuildPlayer` for W
 
 ### 3.19 `tools/audio-synth/synth_sfx.py`
 
-Pure Python (only standard library: `math`, `random`, `wave`, `array`). Builds sounds from sine partials, filtered noise and envelopes and writes 16-bit mono 44.1 kHz WAV. `SOUNDS` maps file names to functions: countdown beep (440 Hz), GO beep (880 Hz), checkpoint chime, finish jingle, new-record sting, drift pings, plus synth versions of boost/engine/drift loops (`sfx_boost_whoosh`, `loop_engine`, `loop_drift`, kept as CC0 backups; the prefab uses the ElevenLabs `el_*` files) and a 32 s music loop (120 BPM, A minor). `loop_crossfade()` fades the extra tail over the start, so loops have no click. Seeded `random.Random(seed)` = the same output every run.
+Pure Python (only standard library: `math`, `random`, `wave`, `array`). Builds sounds from sine partials, filtered noise and envelopes and writes 16-bit mono 44.1 kHz WAV. `SOUNDS` maps file names to functions: countdown beep (440 Hz), GO beep (880 Hz), checkpoint chime, finish jingle, new-record sting, drift pings, `ui_click`, `sfx_respawn`, the `amb_wind_loop`, plus synth versions of boost/engine/drift sounds (`sfx_boost_whoosh`, `loop_engine`, `loop_drift`, `sfx_drift_stage1/2`, kept as CC0 backups; the prefab uses Luc's `kart_*` files and the ElevenLabs boost) and a 32 s music loop (120 BPM, A minor). `loop_crossfade()` fades the extra tail over the start, so loops have no click. Seeded `random.Random(seed)` = the same output every run.
 
 ```
 python tools/audio-synth/synth_sfx.py Assets/_Project/Audio/Clips
@@ -287,7 +294,8 @@ All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceF
 | `RaceStateMachineTests` | Starts in Ready with input off; countdown fires 3, 2, 1, 0 then Racing with input on; not over at 2.9 s; one 10 s frame still fires every step; Finish only while racing, no double finish, input off in Results; retry countdown at 0.5 s per step; StateChanged reports Countdown, Racing, Results; bad settings (0 steps, 0 s) cannot freeze the race. |
 | `PersonalBestTests` | First lap is a record; slower or equal is not, faster is; no split delta without a best lap; deltas ahead (-0.5) and behind (+1); out-of-range index ignored; save string round trip; dot not comma; broken saves = no record; other checkpoint count keeps time, drops splits. |
 | `PlaceholderLapRulesTests` | In order then finish works; skipped checkpoint cannot finish; same checkpoint twice counts once; no double finish; `LastValidCheckpoint` for recovery; Reset starts over. |
-| `EnginePitchTests` | `Speed01` in 0..1 (capped while boosting, reverse counts, `MaxSpeed` 0 safe); pitch maps 0 -> 0.8, 1 -> 1.8; Smooth does not overshoot and is frame-rate independent. |
+| `EnginePitchTests` | `Speed01` in 0..1 (capped while boosting, reverse counts, `MaxSpeed` 0 safe); `MoveLimited` respects rise/fall rates and stops at the target; `HighLoopMix` 0 / 0.5 / 1 at r 0.2 / 0.45 / 0.7 and flat near the edges; loop pitches match Luc's numbers. |
+| `DriftSoundTests` | Stage-up chime 12 % higher per stage; sparks silent at stage 0, louder per stage, capped at 1; sparks pitch rises per stage. |
 
 Run: Unity Editor, Window > General > Test Runner > EditMode > Run All. Command line (Unity closed), Windows:
 
@@ -349,7 +357,7 @@ Do it on a branch `role4/<task-id>-swap-contract`, after `git pull` of `main` wi
 
 ## 7. Still open (be honest if asked)
 
-Fixed on 2026-11-08 and no longer weak spots: drift boost after the finish, unused `Recovered` event, hard-coded hint time, campus scene staying loaded on fallback, the two build lists disagreeing, Retry button focus, manual kart swap.
+Fixed on 2026-11-08 and no longer weak spots: drift boost after the finish, drift cancelling itself on the placeholder kart, hard-coded hint time, campus scene staying loaded on fallback, the two build lists disagreeing, Retry button focus, manual kart swap.
 
 - **Sphere kart and checkpoints** (`CheckpointRelay.cs:23`): checkpoints only count if the collider that enters the trigger has the `IKartState` component on itself or a parent. If Alessandro's physics sphere is a separate object that is not a child of `KartController`, no checkpoint ever counts. Check this the day D1 lands (checklist step 7).
 - **Checkpoint 0 meaning not yet confirmed with Noah**: `docs/interfaces.md` only says "the finish line is checkpoint 0 / the last crossing". My code assumes the `PlaceholderLapRules` meaning (checklist step 2). Confirm before T5 is merged.

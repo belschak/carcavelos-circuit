@@ -2,6 +2,7 @@
 
 Newest on top. One line per decision: date, decision, why. Agents: never contradict a decision here without asking the team.
 
+- 2026-11-08: **Kart sounds = Luc's kart set** (two engine loops crossfaded by speed, drift squeal, sparks, start chirp, stage-up chime) with the numbers from his handoff; replaces our ElevenLabs engine/drift loops. The 4-kart layered engine is a stretch goal after 13 Nov. Why: Luc already made and levelled them, and the two-loop engine is simple enough to explain line by line.
 - 2026-11-08: **RaceFlow builds against placeholders until Role 2's code exists.** `RaceFlow/Placeholders/` has `PlaceholderTrack`, `PlaceholderCheckpoint`, `PlaceholderLapRules` with exactly the API of `TrackInfo`, `Checkpoint`, `RaceRules` in `docs/interfaces.md`, plus `PlaceholderKart : IKartState` and a simple chase camera. Swap day: rename the types in `RaceManager`/`RaceBootstrap`, delete the placeholders. Why: Role 4 can finish and test R1-R5 now without writing Role 2's graded code.
 - 2026-11-08: **Race sounds live in RaceFlow, kart sounds in Audio.** `Audio` may only reference `Shared`, so countdown/checkpoint/finish sounds are played by `RaceFlow/RaceSounds`; engine/drift/boost/landing are `Audio/KartAudio` on a prefab that `RaceBootstrap` attaches under the kart at spawn.
 - 2026-11-08: **HUD = UI Toolkit** (`RaceHud.uxml` + `.uss`, HTML/CSS-like text files, no TextMesh Pro import step). PanelSettings scale with screen size, reference 1280x720.

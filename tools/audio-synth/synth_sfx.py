@@ -310,6 +310,48 @@ def drift_loop():
     return normalise(out, -4.0)
 
 
+def ui_click():
+    # Soft, short interface tick: a quick high blip with a tiny bit of noise for the "tap".
+    seconds = 0.1
+    n = int(seconds * SR)
+    blip = tone(1500.0, seconds, partials=((1, 1.0), (2, 0.25)), glide_to=1100.0)
+    blip = mul(blip, exp_decay(n, 0.035))
+    tap = highpass(noise(n, 21), 2500.0)
+    tap = mul(tap, exp_decay(n, 0.008))
+    out = [b + t * 0.4 for b, t in zip(blip, tap)]
+    out = mul(out, envelope(n, 0.001, 0.02))
+    return normalise(out, -6.0)
+
+
+def respawn_whoosh():
+    # Airy whoosh that rises, plus a soft sparkle on top: "you are back on the track".
+    seconds = 0.6
+    n = int(seconds * SR)
+    centers = [600.0 + 4000.0 * (i / n) ** 1.5 for i in range(n)]
+    air = bandpass(noise(n, 31), centers, q=2.0)
+    air = mul(air, envelope(n, 0.12, 0.3))
+    sparkle = [0.0] * n
+    for k, (start, freq) in enumerate(((0.18, 1760.0), (0.26, 2217.0), (0.34, 2637.0))):
+        note = mul(tone(freq, 0.25, partials=((1, 1.0), (3, 0.2))), exp_decay(int(0.25 * SR), 0.08))
+        mix_into(sparkle, note, start, 0.25)
+    out = [a * 1.4 + s for a, s in zip(air, sparkle)]
+    return normalise(soft_clip(out, 1.3), -4.0)
+
+
+def wind_loop():
+    # Steady wind rush for speed feel. KartAudio raises its volume and pitch with speed.
+    seconds = 3.0
+    fade = 0.4
+    n = int((seconds + fade) * SR)
+    # A slow sweep (exactly one cycle per loop) so it breathes instead of sounding like static.
+    centers = [700.0 + 250.0 * math.sin(TAU * (i / SR) / seconds) for i in range(n)]
+    rush = bandpass(noise(n, 41), centers, q=0.8)
+    low = lowpass(noise(n, 43), 250.0)
+    out = [r + l * 2.0 for r, l in zip(rush, low)]
+    out = loop_crossfade(out, fade)
+    return normalise(out, -6.0)
+
+
 # ---------- music ----------
 
 def music_loop():
@@ -397,6 +439,9 @@ SOUNDS = {
     "loop_engine": engine_loop,
     "loop_drift": drift_loop,
     "music_campus_loop": music_loop,
+    "ui_click": ui_click,
+    "sfx_respawn": respawn_whoosh,
+    "amb_wind_loop": wind_loop,
 }
 
 

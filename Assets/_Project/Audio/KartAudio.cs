@@ -3,25 +3,40 @@ using UnityEngine;
 
 namespace CarcavelosCircuit.Audio
 {
-    // Task R5 (kart part): engine loop with pitch by speed, drift screech loop, drift-stage pings, boost whoosh, landing thud.
+    // Task R5 (kart part): engine, drift, boost, landing and wind sounds.
     // Lives on the KartAudio prefab, which RaceBootstrap spawns as a child of the kart.
     // It only READS IKartState from its parent, so it works with any kart that follows the contract.
+    // Engine and drift recordings are Luc's (Role 3), the rules for pitch and volume follow his handoff.
     public class KartAudio : MonoBehaviour
     {
-        [SerializeField, Tooltip("Looping engine sound")]
-        private AudioSource engineSource;
+        [Header("Looping sounds (one AudioSource each)")]
+        [SerializeField, Tooltip("Engine at low revs (kart_engine_low)")]
+        private AudioSource engineLowSource;
 
-        [SerializeField, Tooltip("Looping tyre screech, faded in while drifting")]
-        private AudioSource driftSource;
+        [SerializeField, Tooltip("Engine at high revs (kart_engine_high)")]
+        private AudioSource engineHighSource;
 
-        [SerializeField, Tooltip("One-shot sounds: stage pings, boost, landing")]
+        [SerializeField, Tooltip("Tyre squeal while drifting (kart_drift_squeal)")]
+        private AudioSource squealSource;
+
+        [SerializeField, Tooltip("Spark crackle while the drift has sparks (kart_drift_sparks)")]
+        private AudioSource sparksSource;
+
+        [SerializeField, Tooltip("Wind rush that grows with speed (amb_wind_loop)")]
+        private AudioSource windSource;
+
+        [Header("One-shot sounds")]
+        [SerializeField, Tooltip("Own source for the stage-up chime, because its pitch changes per stage")]
+        private AudioSource stageSource;
+
+        [SerializeField, Tooltip("Drift start chirp, boost, landing")]
         private AudioSource effectSource;
 
         [SerializeField]
-        private AudioClip driftStage1Clip;
+        private AudioClip driftStartClip;
 
         [SerializeField]
-        private AudioClip driftStage2Clip;
+        private AudioClip stageUpClip;
 
         [SerializeField]
         private AudioClip boostClip;
@@ -29,31 +44,34 @@ namespace CarcavelosCircuit.Audio
         [SerializeField]
         private AudioClip landClip;
 
-        [SerializeField, Tooltip("Engine pitch standing still and at top speed")]
-        private float minPitch = 0.8f;
+        [Header("Mix")]
+        [SerializeField, Tooltip("How fast the revs may rise and fall, in 'full range' per second")]
+        private float revRisePerSecond = 1.4f;
 
         [SerializeField]
-        private float maxPitch = 1.8f;
+        private float revFallPerSecond = 2.2f;
 
         [SerializeField, Tooltip("Extra pitch while boosting or in the air (engine revs freely)")]
-        private float revBonus = 0.15f;
-
-        [SerializeField, Tooltip("Higher = the engine follows speed changes faster")]
-        private float pitchSharpness = 6f;
+        private float revBonus = 0.1f;
 
         [SerializeField, Range(0f, 1f)]
-        private float idleVolume = 0.35f;
+        private float engineIdleVolume = 0.45f;
 
         [SerializeField, Range(0f, 1f)]
-        private float fullVolume = 0.7f;
+        private float engineFullVolume = 0.75f;
 
         [SerializeField, Range(0f, 1f)]
-        private float driftVolume = 0.45f;
+        private float squealVolume = 0.6f;
+
+        [SerializeField, Range(0f, 1f)]
+        private float windFullVolume = 0.35f;
 
         [SerializeField, Tooltip("Air time needed before landing makes a thud")]
         private float minAirSeconds = 0.3f;
 
         private IKartState kart;
+        private float revs; // smoothed 0..1, drives the engine
+        private bool wasDrifting;
         private bool wasBoosting;
         private bool wasGrounded = true;
         private int lastDriftStage;
@@ -68,10 +86,12 @@ namespace CarcavelosCircuit.Audio
                 enabled = false;
                 return;
             }
-            engineSource.pitch = minPitch;
-            engineSource.Play();
-            driftSource.volume = 0f;
-            driftSource.Play();
+            // All loops run all the time; we only change their volume. Starting a loop late can click.
+            StartSilent(engineLowSource);
+            StartSilent(engineHighSource);
+            StartSilent(squealSource);
+            StartSilent(sparksSource);
+            StartSilent(windSource);
         }
 
         private void Update()
@@ -79,31 +99,71 @@ namespace CarcavelosCircuit.Audio
             float dt = Time.deltaTime;
             float speed01 = EnginePitch.Speed01(kart.Speed, kart.MaxSpeed);
 
-            // Engine: pitch and volume follow speed, smoothed so gear-less jumps do not sound robotic.
-            float targetPitch = EnginePitch.FromSpeed01(speed01, minPitch, maxPitch);
-            if (kart.IsBoosting || !kart.IsGrounded)
+            UpdateEngine(speed01, dt);
+            UpdateDrift(dt);
+            UpdateWind(speed01);
+            UpdateBoostAndLanding(dt);
+        }
+
+        // Two loops crossfaded by revs. Idle while the player cannot drive (countdown, results).
+        private void UpdateEngine(float speed01, float dt)
+        {
+            float targetRevs = kart.InputEnabled ? speed01 : 0f;
+            revs = EnginePitch.MoveLimited(revs, targetRevs, revRisePerSecond, revFallPerSecond, dt);
+
+            float bonus = (kart.IsBoosting || !kart.IsGrounded) ? revBonus : 0f;
+            float highMix = EnginePitch.HighLoopMix(revs);
+            float volume = Mathf.Lerp(engineIdleVolume, engineFullVolume, revs);
+
+            engineLowSource.pitch = EnginePitch.LowLoopPitch(revs) + bonus;
+            engineHighSource.pitch = EnginePitch.HighLoopPitch(revs) + bonus;
+            engineLowSource.volume = volume * (1f - highMix);
+            engineHighSource.volume = volume * highMix;
+        }
+
+        private void UpdateDrift(float dt)
+        {
+            bool drifting = kart.IsDrifting && kart.IsGrounded;
+            int stage = drifting ? kart.DriftStage : 0;
+
+            // Chirp when the drift starts.
+            if (drifting && !wasDrifting)
             {
-                targetPitch += revBonus;
+                PlayOneShot(effectSource, driftStartClip, 0.8f);
             }
-            engineSource.pitch = EnginePitch.Smooth(engineSource.pitch, targetPitch, pitchSharpness, dt);
-            engineSource.volume = Mathf.Lerp(idleVolume, fullVolume, speed01);
+            wasDrifting = drifting;
 
-            // Drift screech: quick fade in/out instead of a hard cut.
-            float driftTarget = kart.IsDrifting && kart.IsGrounded ? driftVolume : 0f;
-            driftSource.volume = Mathf.MoveTowards(driftSource.volume, driftTarget, dt * 4f);
+            // Squeal fades in and out over a few tenths of a second instead of a hard cut.
+            float squealTarget = drifting ? squealVolume : 0f;
+            squealSource.volume = Mathf.MoveTowards(squealSource.volume, squealTarget, dt * 3f);
 
-            // Stage pings: one sound each time the drift reaches a new stage (blue, then orange).
-            int stage = kart.DriftStage;
+            // Sparks: louder and a bit higher with every stage.
+            float sparksTarget = DriftSound.SparksVolume(stage);
+            sparksSource.volume = Mathf.MoveTowards(sparksSource.volume, sparksTarget, dt * 4f);
+            sparksSource.pitch = DriftSound.SparksPitch(stage);
+
+            // Chime each time the drift reaches a new stage, higher for every stage.
             if (stage > lastDriftStage)
             {
-                PlayOneShot(stage == 2 ? driftStage2Clip : driftStage1Clip, 0.7f);
+                stageSource.pitch = DriftSound.StageUpPitch(stage);
+                PlayOneShot(stageSource, stageUpClip, 0.8f);
             }
             lastDriftStage = stage;
+        }
 
+        // Wind: only really audible when fast (speed squared), so it makes speed feel fast.
+        private void UpdateWind(float speed01)
+        {
+            windSource.volume = windFullVolume * speed01 * speed01;
+            windSource.pitch = 0.8f + 0.4f * speed01;
+        }
+
+        private void UpdateBoostAndLanding(float dt)
+        {
             // Boost: whoosh on the frame the boost starts.
             if (kart.IsBoosting && !wasBoosting)
             {
-                PlayOneShot(boostClip, 0.9f);
+                PlayOneShot(effectSource, boostClip, 0.9f);
             }
             wasBoosting = kart.IsBoosting;
 
@@ -116,18 +176,25 @@ namespace CarcavelosCircuit.Audio
             {
                 if (!wasGrounded && airSeconds >= minAirSeconds)
                 {
-                    PlayOneShot(landClip, 0.8f);
+                    PlayOneShot(effectSource, landClip, 0.8f);
                 }
                 airSeconds = 0f;
             }
             wasGrounded = kart.IsGrounded;
         }
 
-        private void PlayOneShot(AudioClip clip, float volume)
+        private static void StartSilent(AudioSource source)
+        {
+            source.volume = 0f;
+            source.Play();
+        }
+
+        // PlayOneShot lets sounds overlap on one AudioSource. A missing clip is simply skipped.
+        private static void PlayOneShot(AudioSource source, AudioClip clip, float volume)
         {
             if (clip != null)
             {
-                effectSource.PlayOneShot(clip, volume);
+                source.PlayOneShot(clip, volume);
             }
         }
     }
