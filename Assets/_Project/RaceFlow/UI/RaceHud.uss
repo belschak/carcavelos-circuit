@@ -1371,3 +1371,631 @@
 .retry-button:hover:active {
     scale: 0.95 0.95;
 }
+
+/* =====================================================================================================
+   Task P7: menu buttons, settings, credits, pause, sound toast, reduced motion.
+   Same language as above: dark rounded tiles with a lip, true pills (radius = half the height), keycaps,
+   azulejo diamonds. C# (UI/HudMenus.cs, SettingsPanel.cs, CreditsPanel.cs) only switches classes.
+   ===================================================================================================== */
+
+/* ---------- Menu buttons: a dark pill with a keycap (start screen, results card, menu footers) ---------- */
+.menu-row {
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 22px;
+}
+
+.intro-in .intro--6 { transition-delay: 440ms, 440ms, 0ms; }
+
+.menu-pill {
+    flex-direction: row;
+    align-items: center;
+    height: 40px;
+    margin: 0 6px;
+    padding: 0 18px 0 8px;
+    border-radius: 20px; /* half the height = a true pill */
+    background-color: rgba(29, 29, 31, 0.78);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--cc-lip);
+    transition-property: background-color, scale;
+    transition-duration: 100ms, 140ms;
+    transition-timing-function: linear, ease-out-back;
+}
+
+.menu-pill:hover {
+    background-color: var(--cc-blue-deep);
+}
+
+.menu-pill:hover:active {
+    scale: 0.94 0.94;
+}
+
+.menu-pill-text {
+    margin-left: 8px;
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: var(--cc-white);
+}
+
+/* The sound pill while muted: the word turns orange, so "off" is seen at a glance. */
+.menu-pill--muted .menu-pill-text {
+    color: var(--cc-orange);
+}
+
+.menu-pill--results {
+    height: 44px;
+    border-radius: 22px;
+    margin: 0 0 0 16px;
+    padding-right: 14px;
+}
+
+.menu-pill--results .menu-pill-text {
+    letter-spacing: 2px; /* the results card is 480 px inside: Retry + Enter + this pill must fit in one row */
+}
+
+/* Close = the main action of a menu, so it is orange like the start pill and the Retry button. */
+.menu-pill--close {
+    margin-top: 14px;
+    background-color: var(--cc-orange);
+    border-bottom-color: #B35C0E;
+}
+
+.menu-pill--close:hover {
+    background-color: #FFA550;
+}
+
+.menu-pill--close .menu-pill-text {
+    color: var(--cc-black);
+}
+
+.keycap--small {
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    margin: 0;
+    border-radius: 5px;
+    border-bottom-width: 2px;
+}
+
+.keycap--small > Label {
+    font-size: 13px;
+}
+
+/* ---------- Menu overlay + card (settings and credits) ---------- */
+.menu-overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-timing-function: ease-out;
+}
+
+.menu-overlay.is-shown {
+    opacity: 1;
+}
+
+.menu-bg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(18, 59, 94, 0.62); /* blue-deep: the start or results screen stays visible behind */
+}
+
+.menu-card {
+    width: 640px;
+    align-items: center;
+    padding: 24px 34px 24px 34px;
+    border-radius: 22px;
+    background-color: rgba(29, 29, 31, 0.95);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--cc-blue);
+    translate: 0 30px;
+    scale: 0.96 0.96;
+    transition-property: translate, scale;
+    transition-duration: 280ms, 280ms;
+    transition-timing-function: ease-out-cubic, ease-out-back;
+}
+
+.menu-overlay.is-shown .menu-card {
+    translate: 0 0;
+    scale: 1 1;
+}
+
+#credits-card {
+    border-bottom-color: var(--cc-sand);
+}
+
+.menu-title {
+    font-size: 40px;
+    letter-spacing: 8px;
+    padding-left: 8px; /* letter-spacing adds space after the last letter too; this re-centres the word */
+    color: var(--cc-white);
+    text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+.menu-keys {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+/* ---------- Settings rows ---------- */
+.set-row {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+    margin-top: 4px;
+    padding: 0 14px 0 12px;
+    border-radius: 12px;
+    border-left-width: 4px;
+    border-left-color: rgba(0, 0, 0, 0);
+    background-color: rgba(234, 234, 236, 0.04);
+    transition-property: background-color, border-color;
+    transition-duration: 120ms;
+}
+
+.set-row:hover {
+    background-color: rgba(234, 234, 236, 0.09);
+}
+
+/* The row the keys change (W/S): blue accent bar like the time panel. */
+.set-row--selected,
+.set-row--selected:hover {
+    background-color: rgba(45, 140, 214, 0.22);
+    border-left-color: var(--cc-blue);
+}
+
+.set-name {
+    width: 170px;
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: rgba(234, 234, 236, 0.80);
+}
+
+.set-row--selected .set-name {
+    color: var(--cc-white);
+}
+
+.set-control {
+    flex-grow: 1;
+    flex-direction: row;
+    align-items: center;
+}
+
+.set-step {
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    background-color: rgba(234, 234, 236, 0.12);
+    align-items: center;
+    justify-content: center;
+    transition-property: background-color, scale;
+    transition-duration: 100ms, 140ms;
+    transition-timing-function: linear, ease-out-back;
+}
+
+/* Minus = one bar, plus = the same bar twice, the second turned 90 degrees (no font glyph needed). */
+.set-step-bar {
+    position: absolute;
+    width: 12px;
+    height: 3px;
+    border-radius: 1px;
+    background-color: var(--cc-white);
+}
+
+.set-step-bar--v {
+    rotate: 90deg;
+}
+
+.set-step:hover {
+    background-color: rgba(234, 234, 236, 0.26);
+}
+
+.set-step:hover:active {
+    scale: 0.88 0.88;
+}
+
+/* Volume bar: ten azulejo diamonds (cells made in SettingsPanel.cs), lit up to the volume. */
+.set-bar {
+    flex-direction: row;
+    margin: 0 8px;
+}
+
+.set-cell {
+    width: 22px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+}
+
+.set-cell-gem {
+    width: 13px;
+    height: 13px;
+    border-radius: 3px;
+    rotate: 45deg;
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(234, 234, 236, 0.16);
+    transition-property: background-color, scale;
+    transition-duration: 100ms, 140ms;
+    transition-timing-function: linear, ease-out-back;
+}
+
+.set-cell--on .set-cell-gem {
+    background-color: var(--cc-white);
+}
+
+.set-row--selected .set-cell--on .set-cell-gem {
+    background-color: var(--cc-orange);
+}
+
+.set-cell:hover .set-cell-gem {
+    scale: 1.3 1.3;
+}
+
+/* Muted: the master bar keeps its level (unmute brings it back) but shows hollow diamonds. */
+.set-row--muted .set-cell--on .set-cell-gem,
+.set-row--selected.set-row--muted .set-cell--on .set-cell-gem {
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgba(234, 234, 236, 0.55);
+}
+
+.set-value {
+    width: 76px;
+    font-size: 20px;
+    color: var(--cc-white);
+    -unity-text-align: middle-right;
+}
+
+.set-row--muted .set-value {
+    color: var(--cc-orange);
+}
+
+/* On/off switch: a pill track with a round knob that slides right when on. */
+.set-switch {
+    width: 54px;
+    height: 28px;
+    padding: 3px;
+    border-radius: 14px;
+    background-color: rgba(234, 234, 236, 0.16);
+    transition-property: background-color;
+    transition-duration: 120ms;
+}
+
+.set-knob {
+    width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    background-color: var(--cc-white);
+    transition-property: translate;
+    transition-duration: 160ms;
+    transition-timing-function: ease-out-back;
+}
+
+.set-row--on .set-switch {
+    background-color: var(--cc-blue);
+}
+
+.set-row--on .set-knob {
+    translate: 26px 0;
+}
+
+.set-row--toggle .set-value {
+    color: rgba(234, 234, 236, 0.55);
+}
+
+.set-row--toggle.set-row--on .set-value {
+    color: var(--cc-white);
+}
+
+.set-note {
+    margin-left: 14px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.50);
+}
+
+/* ---------- Credits: two pages in one fixed box, the shown one fades and slides in ---------- */
+.credits-pages {
+    width: 100%;
+    height: 300px;
+    margin-top: 2px;
+}
+
+.credits-page {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    align-items: center;
+    opacity: 0;
+    translate: 24px 0;
+    transition-property: opacity, translate;
+    transition-duration: 200ms, 260ms;
+    transition-timing-function: ease-out, ease-out-cubic;
+}
+
+.credits-page.is-shown {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.credits-head {
+    margin-top: 6px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    letter-spacing: 5px;
+    color: var(--cc-sand);
+}
+
+.credits-head--next {
+    margin-top: 16px;
+}
+
+.credits-team {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.credit-person {
+    width: 50%;
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 8px 12px 8px;
+}
+
+/* Role number on an azulejo diamond, like the countdown tile. */
+.credit-badge {
+    width: 40px;
+    height: 40px;
+    margin: 0 18px 0 10px;
+    border-radius: 8px;
+    rotate: 45deg;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--cc-blue);
+    border-width: 3px;
+    border-color: var(--cc-white);
+}
+
+.credit-badge-num {
+    rotate: -45deg;
+    font-size: 20px;
+    color: var(--cc-white);
+    -unity-text-align: middle-center;
+}
+
+.credit-words {
+    flex-shrink: 1;
+}
+
+.credit-name {
+    font-size: 19px;
+    letter-spacing: 2px;
+    color: var(--cc-white);
+}
+
+.credit-role {
+    margin-top: 3px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    white-space: normal;
+    color: rgba(234, 234, 236, 0.65);
+}
+
+.credit-text {
+    max-width: 100%;
+    font-size: 15px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    color: rgba(234, 234, 236, 0.90);
+}
+
+.credits-foot {
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+    font-size: 14px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    color: rgba(234, 234, 236, 0.60);
+}
+
+.credits-footer {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.credits-dot {
+    width: 12px;
+    height: 12px;
+    margin: 0 8px;
+    border-radius: 3px;
+    rotate: 45deg;
+    background-color: rgba(234, 234, 236, 0.25);
+    transition-property: background-color;
+    transition-duration: 120ms;
+}
+
+.credits-dot--on {
+    background-color: var(--cc-sand);
+}
+
+.credits-footer .menu-pill--next {
+    margin-left: 18px;
+}
+
+.credits-footer .menu-pill--close {
+    margin-top: 0;
+}
+
+/* ---------- Pause (focus lost during the countdown or the race) ---------- */
+.pause-screen.is-shown {
+    opacity: 1;
+}
+
+.pause-bg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(18, 59, 94, 0.80);
+}
+
+.pause-content {
+    align-items: center;
+}
+
+.pause-title {
+    font-size: 84px;
+    letter-spacing: 12px;
+    padding-left: 12px;
+    color: var(--cc-white);
+    text-shadow: 0 5px 0 rgba(0, 0, 0, 0.35);
+}
+
+.pause-pill {
+    margin-top: 22px;
+}
+
+.pause-note {
+    margin-top: 18px;
+    font-size: 16px;
+    letter-spacing: 5px;
+    color: var(--cc-sand);
+}
+
+/* ---------- Sound toast (key M) ---------- */
+.toast {
+    position: absolute;
+    bottom: 96px;
+    flex-direction: row;
+    align-items: center;
+    height: 44px;
+    padding: 0 20px 0 10px;
+    border-radius: 22px; /* half the height = a true pill */
+    background-color: rgba(29, 29, 31, 0.92);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--cc-lip);
+    opacity: 0;
+    translate: 0 14px;
+    transition-property: opacity, translate;
+    transition-duration: 160ms, 220ms;
+    transition-timing-function: ease-out, ease-out-back;
+}
+
+.toast.is-shown {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.toast-text {
+    margin-left: 10px;
+    font-size: 17px;
+    letter-spacing: 4px;
+    color: var(--cc-white);
+}
+
+.toast--off .toast-text {
+    color: var(--cc-orange);
+}
+
+/* On the start and results screens the middle is full (title, results card): the toast goes to the bottom-left corner. */
+.st-ready .toast,
+.st-results .toast {
+    left: 34px;
+    bottom: 26px;
+}
+
+/* ---------- Reduced motion (settings) ----------
+   RaceHud puts "reduce-motion" on .hud-root. Everything still fades (opacity), but nothing slides, shakes,
+   punches or spins. Each rule has one class more than the rule it beats; they are last in the file, so they
+   also win every tie. Not covered here (C# checks the setting): the breathing start pill (an inline style). */
+.reduce-motion .intro,
+.reduce-motion .callout-chip,
+.reduce-motion .split-chip,
+.reduce-motion .card,
+.reduce-motion .res-delta,
+.reduce-motion .res-stats,
+.reduce-motion .toast,
+.reduce-motion .menu-card,
+.reduce-motion .credits-page {
+    translate: 0 0;
+}
+
+.reduce-motion .panel--pop,
+.reduce-motion .medal-target--pop,
+.reduce-motion .cp-pip--pop,
+.reduce-motion .split-chip--pop,
+.reduce-motion .speed--pop,
+.reduce-motion .drift-label--pop,
+.reduce-motion .drift-pip--pop,
+.reduce-motion .drift-bar--pop,
+.reduce-motion .final-time--pop,
+.reduce-motion .pill--pop,
+.reduce-motion .wrong-way-chip--pulse,
+.reduce-motion .menu-card {
+    scale: 1 1;
+}
+
+.reduce-motion .callout.is-shown .callout-chip--shake-l,
+.reduce-motion .callout.is-shown .callout-chip--shake-r,
+.reduce-motion .results--in .card--shake-l,
+.reduce-motion .results--in .card--shake-r {
+    translate: 0 0;
+}
+
+.reduce-motion .callout.is-shown .callout-chip--pop {
+    scale: 1 1;
+}
+
+/* Countdown: the number fades in instead of punching, GO fades out instead of flying up, no white flash. */
+.reduce-motion .cd-tile--pop {
+    scale: 1 1;
+    rotate: 45deg;
+}
+
+.reduce-motion .cd--go .cd-tile--pop-go {
+    scale: 1 1;
+}
+
+.reduce-motion .cd--exit,
+.reduce-motion .cd.is-shown.cd--exit {
+    translate: 0 0;
+    scale: 1 1;
+}
+
+.reduce-motion .go-flash--pop {
+    opacity: 0;
+}
+
+/* Results stamps fade in at their final angle instead of slamming down. */
+.reduce-motion .record {
+    scale: 1 1;
+    rotate: -6deg;
+}
+
+.reduce-motion .medal-badge {
+    scale: 1 1;
+    rotate: -3deg;
+}
+
+/* No light streak running through the drift bar while boosting (the bar itself still turns orange). */
+.reduce-motion .drift-shine {
+    opacity: 0;
+}
