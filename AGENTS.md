@@ -6,13 +6,39 @@ Deadlines: every role's part merged **Fri 13 Nov 2026**, feature freeze 17 Nov, 
 
 **Official course rules we are graded against: `docs/course-requirements.md` (read it once).** The three that affect every session: the repo becomes **public** (never commit secrets or personal data), **every member must commit their own code from their own GitHub account**, and the deployed code must be on `main`.
 
-## Always pull first, always push after (non-negotiable)
-- **Start of every session, before reading or writing anything:** `git fetch --all`, `git switch main && git pull`, then switch to your branch and `git merge main`. Never work on a stale copy.
-- **After every finished step** (a script compiles, a test passes, a task row changes) and at the latest **before the session ends**: commit and `git push` to your branch, even if it is work in progress (`wip:` prefix). Unpushed work does not exist for the team.
+## Git workflow: every session, every AI, step by step (non-negotiable)
+Four people and their AIs push into one repo every day. These steps keep everyone building on the newest version instead of overwriting each other. If a step fails or something looks unexpected: stop and tell your human, do not improvise with Git.
+
+**A. Start of every session, before reading or writing any code**
+1. Close Unity (Unity open during a pull or merge can rewrite files).
+2. Check the safety hook: `git config core.hooksPath` must print `.githooks`. If not: `git config core.hooksPath .githooks`. It is the only thing that blocks pushes to `main` (GitHub cannot protect `main` on our plan).
+3. Check you commit as your human: `git config user.name` and `git config user.email` must be your human's own GitHub account (graded: every member commits their own code).
+4. Get the newest version: `git fetch --all --prune`, then `git switch main` and `git pull --ff-only`.
+5. **Look at what everyone else built since the last session**, then build on top of it, never re-implement or undo it:
+   - `git log --oneline -20 main` and `gh pr list --state all --limit 15` (merged and open PRs, including drafts = who works on what right now).
+   - For every merged PR that touches a file, scene or contract you use: read it (`gh pr view <n>` and `gh pr diff <n>`).
+   - New rows in `docs/decisions.md`, `docs/interfaces.md`, `TASKS.md` (also "Requests between roles", maybe one is for you).
+   - Tell your human in 2 or 3 lines what changed and how it affects the task.
+6. Bring your branch up to date: `git switch role<N>/<task-id>-<short-name>`, then `git merge main`. Conflict in your own files: resolve it. Conflict in a file someone else owns: stop and ask your human, never just keep "your" version of their file.
+7. Only now open Unity and start working.
+
+**B. While working**
+- One branch per task, always created from a freshly pulled `main` (steps 4 and 5 first). Never work on `main`, never commit to someone else's branch unless they asked (see "Helping another role").
+- Commit small and **push after every finished step** (a script compiles, a test passes, a task row changes) and at the latest before the session ends, even work in progress (`wip:` prefix). Unpushed work does not exist for the team.
+- Before every commit: `git status` must show only paths your role owns (table below). Add files by name (`git add <files>`), never a blind `git add -A` or `git add .`. Commit each script together with its `.meta`.
+- Others merge every day: run steps 4 and 6 again at least once a day while your branch is open.
 - Your draft PR is your live status: teammates see what you did without asking.
 
+**C. Finishing a task**
+1. Steps 4 and 6 again (newest `main` merged into your branch), open Unity, Console clean, play once, tests if you touched rules, push.
+2. Fill the PR template, mark the PR ready, ask a teammate to review. The owner of the paths (see `.github/CODEOWNERS`) merges with **Squash and merge**.
+3. After the merge: `git switch main`, `git pull --ff-only`, delete the old branch (`git branch -d <branch>`), and start the next task on a **new** branch. Never keep committing on a branch whose PR is already merged (squash merges make its old commits conflict with `main`).
+4. Tell the group chat: "merged <task>, please pull".
+
+**D. Git commands an AI must never run** (they destroy other people's work or hide it): `git push --force` / `-f`, `git reset --hard`, `git rebase` of a pushed branch, `git commit --amend` of a pushed commit, `git clean -fd`, `git checkout -- .` / `git restore .` on files you did not change, `git stash` without telling your human, pushing to `main`, `git add -f` on ignored files.
+
 ## Before you start a task
-1. Pull as above.
+1. Section A above (pull, read what the others built).
 2. Read `TASKS.md`, `docs/team.md` (who owns what), `docs/interfaces.md` (contracts), `docs/decisions.md`. For track work also `docs/route.md`.
 3. Find the task in `TASKS.md`. If it is not `todo`, or it belongs to another role: **stop and ask your human**.
 4. Claim it: create the branch `role<N>/<task-id>-<short-name>` (e.g. `role1/D3-drift-boost`), make the first commit only the `TASKS.md` status change to `claimed (<name>, <date>)`, push, and open a **draft PR** right away (`gh pr create --draft --fill`). Open draft PRs = who is working on what. Check them (`gh pr list`) before claiming.
