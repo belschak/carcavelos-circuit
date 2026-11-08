@@ -1,0 +1,1 @@
+Follow `AGENTS.md` in the repository root for everything in this repo: the Git workflow (always pull `main` first, read what the others merged, work on your own `role<N>/...` branch, push after every step, never push to `main`), ownership of folders, contracts and what never to touch.
