@@ -39,6 +39,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 ProjectSetup.EnsureFolder(Root + folder);
             }
 
+            SetUpAudioImport();
             RaceSettings settings = CreateSettings();
             PanelSettings panel = CreatePanelSettings();
             GameObject kartAudio = CreateKartAudioPrefab();
@@ -117,6 +118,28 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             AssetDatabase.AddObjectToAsset(bloom, profile); // the effect is stored inside the profile file
             AssetDatabase.SaveAssets();
             return profile;
+        }
+
+        // Web build rules (Unity manual "Audio in Web"): sound effects "Decompress On Load" for low latency,
+        // music "Compressed In Memory". "Preload Audio Data" loads every clip with the scene, so the first
+        // countdown beep is not late (without it the browser logs "Trying to get length of sound which is not loaded yet").
+        private static void SetUpAudioImport()
+        {
+            foreach (string guid in AssetDatabase.FindAssets("t:AudioClip", new[] { ClipsFolder.TrimEnd('/') }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                AudioImporter importer = (AudioImporter)AssetImporter.GetAtPath(path);
+                AudioImporterSampleSettings sample = importer.defaultSampleSettings;
+                bool isMusic = System.IO.Path.GetFileName(path).StartsWith("music_");
+                sample.loadType = isMusic ? AudioClipLoadType.CompressedInMemory : AudioClipLoadType.DecompressOnLoad;
+                sample.preloadAudioData = true;
+                if (sample.loadType == importer.defaultSampleSettings.loadType && importer.defaultSampleSettings.preloadAudioData)
+                {
+                    continue; // already right, no reimport needed
+                }
+                importer.defaultSampleSettings = sample;
+                importer.SaveAndReimport();
+            }
         }
 
         private static AudioClip Clip(string name)
