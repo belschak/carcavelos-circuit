@@ -32,6 +32,7 @@ namespace CarcavelosCircuit.RaceFlow
         public event Action<int> CheckpointPassed;       // index of the checkpoint that counted
         public event Action<float, bool> LapFinished;    // lap time, new record?
         public event Action Restarted;
+        public event Action Recovered;                   // kart put back after R or a fall (respawn sound)
 
         private readonly RaceTimer timer = new RaceTimer();
         private RaceStateMachine stateMachine;
@@ -145,6 +146,7 @@ namespace CarcavelosCircuit.RaceFlow
         {
             Transform respawn = track.GetRespawnPoint(rules.LastValidCheckpoint);
             kart.ResetTo(respawn.position, respawn.rotation);
+            if (Recovered != null) Recovered();
         }
 
         // Called by CheckpointRelay when the kart drives through a checkpoint trigger.

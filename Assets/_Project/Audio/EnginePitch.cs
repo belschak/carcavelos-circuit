@@ -1,7 +1,9 @@
 namespace CarcavelosCircuit.Audio
 {
     // The maths behind the engine sound, as plain C# so it can be unit tested.
-    // One looping engine recording sounds faster when it plays at a higher pitch (like a tape played faster).
+    // The engine is two looping recordings (Luc's kart_engine_low and kart_engine_high).
+    // A recording sounds faster when it plays at a higher pitch (like a tape played faster),
+    // and between low and high revs the low loop fades out while the high loop fades in.
     public static class EnginePitch
     {
         // Speed as a number from 0 (standing) to 1 (top speed). Reverse counts as positive, boosting caps at 1.
@@ -16,20 +18,38 @@ namespace CarcavelosCircuit.Audio
             return value;
         }
 
-        // 0 -> minPitch (idle), 1 -> maxPitch (top speed), straight line in between.
-        public static float FromSpeed01(float speed01, float minPitch, float maxPitch)
+        // Moves "current" towards "target", but never faster than the given rates (units per second).
+        // The engine revs up a bit slower (rise) than it drops (fall), so it never jumps.
+        public static float MoveLimited(float current, float target, float risePerSecond, float fallPerSecond, float deltaTime)
         {
-            if (speed01 < 0f) speed01 = 0f;
-            if (speed01 > 1f) speed01 = 1f;
-            return minPitch + (maxPitch - minPitch) * speed01;
+            if (target > current)
+            {
+                float up = current + risePerSecond * deltaTime;
+                return up > target ? target : up;
+            }
+            float down = current - fallPerSecond * deltaTime;
+            return down < target ? target : down;
         }
 
-        // Moves the current value towards the target by a share that does not depend on the frame rate.
-        // sharpness 6 = after 1/6 s about 63 % of the way there, at 30 or 144 FPS alike.
-        public static float Smooth(float current, float target, float sharpness, float deltaTime)
+        // How much of the HIGH loop we hear: 0 below r = 0.2, 1 above r = 0.7,
+        // and a smooth S-curve ("smoothstep") in between. The low loop gets the rest (1 - this).
+        public static float HighLoopMix(float r)
         {
-            float share = 1f - (float)System.Math.Exp(-sharpness * deltaTime);
-            return current + (target - current) * share;
+            float t = (r - 0.2f) / 0.5f;
+            if (t < 0f) t = 0f;
+            if (t > 1f) t = 1f;
+            return t * t * (3f - 2f * t);
+        }
+
+        // Pitch of each loop by revs r (0..1). Numbers from Luc's audio handoff (section 6).
+        public static float LowLoopPitch(float r)
+        {
+            return 0.75f + 0.85f * r;
+        }
+
+        public static float HighLoopPitch(float r)
+        {
+            return 0.8f + 0.55f * r;
         }
     }
 }

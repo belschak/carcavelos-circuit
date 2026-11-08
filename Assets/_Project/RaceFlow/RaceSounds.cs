@@ -2,7 +2,8 @@ using UnityEngine;
 
 namespace CarcavelosCircuit.RaceFlow
 {
-    // Task R5 (race part): countdown beeps, checkpoint chime, finish jingle, new-record sting.
+    // Task R5 (race part): countdown beeps, checkpoint chime, finish jingle, new-record sting,
+    // click on retry, whoosh on respawn.
     // It listens to the RaceManager's events. The sound files live in Audio/Clips.
     // Kart sounds (engine, drift, boost) are in the Audio module (KartAudio), because they only read IKartState.
     public class RaceSounds : MonoBehaviour
@@ -28,6 +29,12 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField]
         private AudioClip newRecordSting;
 
+        [SerializeField, Tooltip("Short click when the player restarts (Enter or the Retry button)")]
+        private AudioClip retryClick;
+
+        [SerializeField, Tooltip("Airy whoosh when the kart is put back on the track (R or a fall)")]
+        private AudioClip respawnWhoosh;
+
         [SerializeField, Range(0f, 1f)]
         private float volume = 0.8f;
 
@@ -36,6 +43,8 @@ namespace CarcavelosCircuit.RaceFlow
             raceManager.CountdownStep += OnCountdownStep;
             raceManager.CheckpointPassed += OnCheckpointPassed;
             raceManager.LapFinished += OnLapFinished;
+            raceManager.Restarted += OnRestarted;
+            raceManager.Recovered += OnRecovered;
         }
 
         private void OnDisable()
@@ -43,6 +52,8 @@ namespace CarcavelosCircuit.RaceFlow
             raceManager.CountdownStep -= OnCountdownStep;
             raceManager.CheckpointPassed -= OnCheckpointPassed;
             raceManager.LapFinished -= OnLapFinished;
+            raceManager.Restarted -= OnRestarted;
+            raceManager.Recovered -= OnRecovered;
         }
 
         private void OnCountdownStep(int number)
@@ -62,6 +73,16 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 Play(newRecordSting);
             }
+        }
+
+        private void OnRestarted()
+        {
+            Play(retryClick);
+        }
+
+        private void OnRecovered()
+        {
+            Play(respawnWhoosh);
         }
 
         // PlayOneShot lets several sounds overlap on one AudioSource. A missing clip is simply skipped.

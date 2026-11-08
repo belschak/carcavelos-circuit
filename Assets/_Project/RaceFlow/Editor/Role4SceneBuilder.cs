@@ -164,18 +164,27 @@ namespace CarcavelosCircuit.RaceFlow.Editor
 
         private static GameObject CreateKartAudioPrefab()
         {
+            // Engine and drift sounds are Luc's (Role 3) kart set, wind is our own synth.
             GameObject go = new GameObject("KartAudio");
-            AudioSource engine = AddAudioSource(go, Clip("el_engine_loop"), true);
-            AudioSource drift = AddAudioSource(go, Clip("el_drift_loop"), true);
+            AudioSource engineLow = AddAudioSource(go, Clip("kart_engine_low"), true);
+            AudioSource engineHigh = AddAudioSource(go, Clip("kart_engine_high"), true);
+            AudioSource squeal = AddAudioSource(go, Clip("kart_drift_squeal"), true);
+            AudioSource sparks = AddAudioSource(go, Clip("kart_drift_sparks"), true);
+            AudioSource wind = AddAudioSource(go, Clip("amb_wind_loop"), true);
+            AudioSource stage = AddAudioSource(go, null, false);
             AudioSource effects = AddAudioSource(go, null, false);
             KartAudio kartAudio = go.AddComponent<KartAudio>();
 
             SerializedObject so = new SerializedObject(kartAudio);
-            so.FindProperty("engineSource").objectReferenceValue = engine;
-            so.FindProperty("driftSource").objectReferenceValue = drift;
+            so.FindProperty("engineLowSource").objectReferenceValue = engineLow;
+            so.FindProperty("engineHighSource").objectReferenceValue = engineHigh;
+            so.FindProperty("squealSource").objectReferenceValue = squeal;
+            so.FindProperty("sparksSource").objectReferenceValue = sparks;
+            so.FindProperty("windSource").objectReferenceValue = wind;
+            so.FindProperty("stageSource").objectReferenceValue = stage;
             so.FindProperty("effectSource").objectReferenceValue = effects;
-            so.FindProperty("driftStage1Clip").objectReferenceValue = Clip("sfx_drift_stage1");
-            so.FindProperty("driftStage2Clip").objectReferenceValue = Clip("sfx_drift_stage2");
+            so.FindProperty("driftStartClip").objectReferenceValue = Clip("kart_drift_start");
+            so.FindProperty("stageUpClip").objectReferenceValue = Clip("kart_drift_stage_up");
             so.FindProperty("boostClip").objectReferenceValue = Clip("el_boost_whoosh");
             so.FindProperty("landClip").objectReferenceValue = Clip("sfx_landing_thud");
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -452,6 +461,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             sso.FindProperty("checkpointChime").objectReferenceValue = Clip("sfx_checkpoint_chime");
             sso.FindProperty("finishJingle").objectReferenceValue = Clip("sfx_finish_jingle");
             sso.FindProperty("newRecordSting").objectReferenceValue = Clip("sfx_new_record");
+            sso.FindProperty("retryClick").objectReferenceValue = Clip("ui_click");
+            sso.FindProperty("respawnWhoosh").objectReferenceValue = Clip("sfx_respawn");
             sso.ApplyModifiedPropertiesWithoutUndo();
 
             // HUD (UI Toolkit).
