@@ -122,6 +122,8 @@ namespace CarcavelosCircuit.RaceFlow
             if (number > 0)
             {
                 // Countdown (first start or retry): music out, kart a little quieter, results music off.
+                // A duck left over from the finish jingle is dropped, so GO starts the music cleanly.
+                duck.Clear();
                 raceLevel.FadeTo(Decibels.Silent, countdownFadeSeconds);
                 resultsLevel.FadeTo(Decibels.Silent, countdownFadeSeconds);
                 engineLevel.FadeTo(engineCountdownDb, countdownFadeSeconds);
@@ -143,7 +145,6 @@ namespace CarcavelosCircuit.RaceFlow
                 raceMusic.timeSamples = Mathf.Clamp(musicStartSample, 0, raceMusic.clip.samples - 1);
                 raceMusic.Play();
             }
-            duck.Clear();
             raceLevel.FadeTo(racingDb, goFadeSeconds);
             engineLevel.FadeTo(0f, goFadeSeconds);
             effectsLevel.FadeTo(0f, goFadeSeconds);
