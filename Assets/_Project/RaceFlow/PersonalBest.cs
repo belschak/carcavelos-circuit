@@ -4,6 +4,7 @@ namespace CarcavelosCircuit.RaceFlow
 {
     // Remembers the best lap time and the time at every checkpoint of that best lap,
     // so the HUD can show "-0.412" (ahead of your best) or "+1.030" (behind) at each checkpoint.
+    // Also keeps the best medal ever earned on this track (saved in the same text, see ToSaveString).
     public class PersonalBest
     {
         // Best lap time in seconds, or -1 when nobody has finished a lap yet.
@@ -13,6 +14,9 @@ namespace CarcavelosCircuit.RaceFlow
         {
             get { return BestSeconds > 0f; }
         }
+
+        // Best medal ever earned here. Kept even if the medal times are made harder later (re-tuning).
+        public Medal BestMedal { get; private set; } = Medal.None;
 
         private readonly float[] bestSplits;     // checkpoint times of the best lap (-1 = unknown)
         private readonly float[] currentSplits;  // checkpoint times of the lap we are driving now
@@ -68,7 +72,18 @@ namespace CarcavelosCircuit.RaceFlow
             return true;
         }
 
-        // Turns the record into text for PlayerPrefs, e.g. "41.250|10.5;22.25;-1".
+        // Remembers a medal if it is better than the best one so far. Returns true if it was better (then save).
+        public bool NoteMedal(Medal medal)
+        {
+            if (medal <= BestMedal)
+            {
+                return false;
+            }
+            BestMedal = medal;
+            return true;
+        }
+
+        // Turns the record into text for PlayerPrefs, e.g. "41.250|10.5;22.25;-1|2" (time | splits | medal number).
         // InvariantCulture = always a dot as decimal sign (a Portuguese laptop would write a comma).
         public string ToSaveString()
         {
@@ -81,10 +96,12 @@ namespace CarcavelosCircuit.RaceFlow
                 }
                 text += bestSplits[i].ToString(CultureInfo.InvariantCulture);
             }
+            text += "|" + ((int)BestMedal).ToString(CultureInfo.InvariantCulture);
             return text;
         }
 
-        // The opposite of ToSaveString. Broken or old text simply gives "no record yet".
+        // The opposite of ToSaveString. Broken text simply gives "no record yet".
+        // Saves from before medals existed ("41.25|10.5;22.25") load with BestMedal = None.
         public static PersonalBest FromSaveString(string text, int checkpointCount)
         {
             PersonalBest result = new PersonalBest(checkpointCount);
@@ -116,6 +133,13 @@ namespace CarcavelosCircuit.RaceFlow
                         }
                     }
                 }
+            }
+
+            int medal;
+            if (parts.Length > 2 && int.TryParse(parts[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out medal)
+                && medal >= (int)Medal.None && medal <= (int)Medal.DeansList)
+            {
+                result.BestMedal = (Medal)medal;
             }
             return result;
         }

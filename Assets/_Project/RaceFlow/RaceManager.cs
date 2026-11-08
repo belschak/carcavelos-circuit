@@ -24,6 +24,7 @@ namespace CarcavelosCircuit.RaceFlow
         public float SplitVisibleUntil { get; private set; }
         public string HintText { get; private set; } = "";
         public float HintVisibleUntil { get; private set; }
+        public HintKind CurrentHintKind { get; private set; } // warning, coach tip or praise (chip colour)
         public IKartState Kart { get { return kart; } }
         public bool IsSetUp { get { return kart != null; } }
         public int CountdownFrom { get { return settings.CountdownFrom; } }
@@ -31,6 +32,13 @@ namespace CarcavelosCircuit.RaceFlow
         public int CheckpointCount { get { return checkpointList == null ? 0 : checkpointList.Length; } } // incl. the start/finish line
         public int CheckpointsPassed { get { return rules == null ? 0 : rules.LastValidCheckpoint; } } // this lap, in order
         public int LapCount { get { return 1; } } // a time trial is one lap; the HUD shows a lap counter only if this is > 1
+
+        // ---- Medals and the lap report (task P5) ----
+        public Medal LastMedal { get; private set; }          // medal of the lap that just ended
+        public Medal PreviousBestMedal { get; private set; }  // best medal before that lap (to spot a new medal)
+        public Medal BestMedal { get { return personalBest == null ? Medal.None : personalBest.BestMedal; } }
+        public Medal NextMedalTarget { get { return MedalRules.NextTarget(BestMedal); } } // None = top tier reached
+        public RunStats Stats { get { return runStats; } }    // stats of the current (or just finished) lap, read only
 
         // ---- Events (sounds and effects listen, the HUD mostly reads the values above) ----
         public event Action<int> CountdownStep;          // 3, 2, 1, 0 = GO
@@ -40,6 +48,12 @@ namespace CarcavelosCircuit.RaceFlow
         public event Action Recovered;                   // kart put back after R or a fall (respawn sound)
 
         private readonly RaceTimer timer = new RaceTimer();
+        private readonly RunStats runStats = new RunStats();
+        private float[] medalThresholds;       // from RaceSettings: Bronze, Silver, Gold, Dean's List (seconds)
+        private OnboardingCoach coach;
+        private int savedCoachFlags;
+        private CoachHint waitingCoachHint;    // a tip that waits until the hint chip is free
+        private const string CoachSaveKey = "CarcavelosCircuit.CoachDone"; // one key for all tracks: it is about the player
         private RaceStateMachine stateMachine;
         private PlaceholderLapRules rules;   // swap to RaceRules (Role 2) once T5 is merged
         private PlaceholderTrack track;      // swap to TrackInfo (Role 2) once T4 is merged
@@ -83,6 +97,21 @@ namespace CarcavelosCircuit.RaceFlow
             // The best time is saved per track in PlayerPrefs (in the browser Unity keeps them in the site's IndexedDB storage).
             saveKey = "CarcavelosCircuit.Best." + trackName;
             personalBest = PersonalBest.FromSaveString(PlayerPrefs.GetString(saveKey, ""), checkpointCount);
+
+            // Medal times. A save from before medals existed gets the medal its best time is worth.
+            medalThresholds = settings.MedalThresholds();
+            if (!MedalRules.AreValid(medalThresholds))
+            {
+                Debug.LogError("RaceManager: the medal times in RaceSettings must be positive and each faster than the one before (Bronze > Silver > Gold > Dean's List). No medals this session.");
+            }
+            if (personalBest.HasRecord)
+            {
+                personalBest.NoteMedal(MedalRules.For(personalBest.BestSeconds, medalThresholds));
+            }
+
+            // Coach tips already shown in an earlier session are not shown again.
+            savedCoachFlags = PlayerPrefs.GetInt(CoachSaveKey, 0);
+            coach = new OnboardingCoach(savedCoachFlags, settings.CoachNoDriftSeconds);
 
             stateMachine = new RaceStateMachine(settings.CountdownFrom);
             stateMachine.StateChanged += OnStateChanged;
@@ -245,6 +274,12 @@ namespace CarcavelosCircuit.RaceFlow
             timer.Tick(Time.deltaTime);
             stateMachine.Tick(Time.deltaTime); // on the GO frame this switches the input on (OnStateChanged)
 
+            if (State == RaceState.Racing)
+            {
+                runStats.Tick(Time.deltaTime, kart.Speed, kart.IsDrifting, kart.IsBoosting, kart.IsGrounded);
+            }
+            UpdateCoach();
+
             if ((State == RaceState.Racing || State == RaceState.Results) && RaceKeys.RetryPressed())
             {
                 Retry();
@@ -275,6 +310,9 @@ namespace CarcavelosCircuit.RaceFlow
             LastLapWasRecord = false;
             HasSplitDelta = false;
             HintText = "";
+            HintVisibleUntil = 0f;
+            waitingCoachHint = CoachHint.None; // a tip for the old attempt
+            runStats.Reset();
             stateMachine.BeginCountdown(settings.RetryCountdownStepSeconds);
             if (Restarted != null) Restarted();
         }
@@ -290,6 +328,7 @@ namespace CarcavelosCircuit.RaceFlow
             Transform respawn = track.GetRespawnPoint(rules.LastValidCheckpoint);
             kart.ResetTo(respawn.position, respawn.rotation);
             fallCheck.NoteRecovered(Time.time); // pause the fall check, so one fall gives one recover
+            runStats.NoteRecovery();
             if (Recovered != null) Recovered();
         }
 
@@ -310,7 +349,7 @@ namespace CarcavelosCircuit.RaceFlow
                 }
                 else if (rules.LastValidCheckpoint > 0)
                 {
-                    ShowHint("Missed a checkpoint! Press R to go back");
+                    ShowHint("Missed a checkpoint! Press R to go back", HintKind.Warning, settings.HintSeconds);
                 }
                 return;
             }
@@ -337,7 +376,10 @@ namespace CarcavelosCircuit.RaceFlow
             float lapTime = timer.ElapsedSeconds;
             PreviousBestSeconds = personalBest.BestSeconds;
             LastLapWasRecord = personalBest.FinishRun(lapTime);
-            if (LastLapWasRecord)
+            PreviousBestMedal = personalBest.BestMedal;
+            LastMedal = MedalRules.For(lapTime, medalThresholds);
+            bool medalImproved = personalBest.NoteMedal(LastMedal); // can differ from a record only after a re-tune
+            if (LastLapWasRecord || medalImproved)
             {
                 PlayerPrefs.SetString(saveKey, personalBest.ToSaveString());
                 PlayerPrefs.Save(); // in a Web build this writes to the browser right away
@@ -353,6 +395,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 rules.StartLap();
                 personalBest.StartRun();
+                runStats.Reset();
                 timer.Start(Time.timeAsDouble); // timestamp of the GO frame
             }
         }
@@ -367,10 +410,40 @@ namespace CarcavelosCircuit.RaceFlow
             kart.ResetTo(track.SpawnPoint.position, track.SpawnPoint.rotation);
         }
 
-        private void ShowHint(string text)
+        private void ShowHint(string text, HintKind kind, float seconds)
         {
             HintText = text;
-            HintVisibleUntil = Time.time + settings.HintSeconds;
+            CurrentHintKind = kind;
+            HintVisibleUntil = Time.time + seconds;
+        }
+
+        // The medal time for one tier in seconds (for the HUD), -1 if there is none.
+        public float MedalSeconds(Medal medal)
+        {
+            return MedalRules.ThresholdFor(medal, medalThresholds);
+        }
+
+        // Feeds the coach every frame. A tip waits while another hint (e.g. "Missed a checkpoint!") is showing,
+        // and only appears while racing. New "already shown" flags are saved at once.
+        private void UpdateCoach()
+        {
+            bool racing = State == RaceState.Racing;
+            CoachHint hint = coach.Tick(Time.deltaTime, racing, kart.IsDrifting, kart.DriftStage, kart.IsBoosting);
+            if (hint != CoachHint.None)
+            {
+                waitingCoachHint = hint;
+            }
+            if (racing && waitingCoachHint != CoachHint.None && Time.time >= HintVisibleUntil)
+            {
+                ShowHint(OnboardingCoach.TextFor(waitingCoachHint), OnboardingCoach.KindFor(waitingCoachHint), settings.CoachHintSeconds);
+                waitingCoachHint = CoachHint.None;
+            }
+            if (coach.DoneFlags != savedCoachFlags)
+            {
+                savedCoachFlags = coach.DoneFlags;
+                PlayerPrefs.SetInt(CoachSaveKey, savedCoachFlags);
+                PlayerPrefs.Save();
+            }
         }
     }
 }
