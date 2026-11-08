@@ -29,6 +29,10 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("How long the R / Enter key hint stays after GO (it comes back for a moment after a recover)")]
         private float controlsHintSeconds = 8f;
 
+        // Below this panel width (reference pixels) the HUD uses the "hud--narrow" layout. The longest hint chip
+        // ("Missed a checkpoint! Press R to go back", about 600 px) needs 1230 px to stay clear of the lap time panel.
+        private const float NarrowHudWidth = 1230f;
+
         // ---- Elements (found by name in RaceHud.uxml) ----
         private VisualElement hudRoot;
         private VisualElement timePanel;
@@ -145,6 +149,10 @@ namespace CarcavelosCircuit.RaceFlow
             HudFx.IgnoreClicksDeep(root);
             retryButton.focusable = false; // after a mouse click it must not keep focus, or Space/Enter would press it again
 
+            // Narrow windows (4:3, 16:10): the HUD scales by height, so the panel gets less width than the 1280 reference.
+            // Then the centred hint chip would cover the lap time and the key bar the drift panel: "hud--narrow" moves them.
+            hudRoot.RegisterCallback<GeometryChangedEvent>(OnHudResized);
+
             // The labels are new objects after a re-enable, so every cached number must be written again.
             ForgetShownNumbers();
             pips = new VisualElement[0];
@@ -159,6 +167,7 @@ namespace CarcavelosCircuit.RaceFlow
 
         private void OnDisable()
         {
+            hudRoot.UnregisterCallback<GeometryChangedEvent>(OnHudResized);
             retryButton.clicked -= OnRetryClicked;
             raceManager.CountdownStep -= OnCountdownStep;
             raceManager.CheckpointPassed -= OnCheckpointPassed;
@@ -169,6 +178,11 @@ namespace CarcavelosCircuit.RaceFlow
             HudTextures.Destroy(resultsGradient);
             HudTextures.Destroy(glowLeftTexture);
             HudTextures.Destroy(glowRightTexture);
+        }
+
+        private void OnHudResized(GeometryChangedEvent evt)
+        {
+            hudRoot.EnableInClassList("hud--narrow", evt.newRect.width < NarrowHudWidth);
         }
 
         private void FindElements(VisualElement root)
