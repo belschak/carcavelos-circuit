@@ -26,6 +26,11 @@ namespace CarcavelosCircuit.RaceFlow
         public float HintVisibleUntil { get; private set; }
         public IKartState Kart { get { return kart; } }
         public bool IsSetUp { get { return kart != null; } }
+        public int CountdownFrom { get { return settings.CountdownFrom; } }
+        public Transform KartTransform { get { return kartTransform; } }
+        public int CheckpointCount { get { return checkpointList == null ? 0 : checkpointList.Length; } } // incl. the start/finish line
+        public int CheckpointsPassed { get { return rules == null ? 0 : rules.LastValidCheckpoint; } } // this lap, in order
+        public int LapCount { get { return 1; } } // a time trial is one lap; the HUD shows a lap counter only if this is > 1
 
         // ---- Events (sounds and effects listen, the HUD mostly reads the values above) ----
         public event Action<int> CountdownStep;          // 3, 2, 1, 0 = GO
@@ -39,6 +44,7 @@ namespace CarcavelosCircuit.RaceFlow
         private PlaceholderLapRules rules;   // swap to RaceRules (Role 2) once T5 is merged
         private PlaceholderTrack track;      // swap to TrackInfo (Role 2) once T4 is merged
         private PersonalBest personalBest;
+        private PlaceholderCheckpoint[] checkpointList; // the track's checkpoints (index 0 = start/finish), read by the HUD
         private FallCheck fallCheck;
         private IKartState kart;
         private Transform kartTransform;
@@ -68,6 +74,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 checkpoints = new PlaceholderCheckpoint[0];
             }
+            checkpointList = checkpoints;
             int checkpointCount = checkpoints.Length;
             CheckCheckpoints(checkpoints); // only logs errors, the race still starts so the kart can be tested
             rules = new PlaceholderLapRules(checkpointCount);
@@ -142,6 +149,31 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 if (colliders[i].isTrigger)
                 {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // For the HUD's wrong-way warning: where is the checkpoint the kart must drive through next?
+        // After the last checkpoint that is the start/finish line (index 0). False before set-up or if it is missing.
+        public bool TryGetNextCheckpointPosition(out Vector3 position)
+        {
+            position = Vector3.zero;
+            if (checkpointList == null || checkpointList.Length == 0)
+            {
+                return false;
+            }
+            int next = CheckpointsPassed + 1;
+            if (next >= checkpointList.Length)
+            {
+                next = 0;
+            }
+            for (int i = 0; i < checkpointList.Length; i++)
+            {
+                if (checkpointList[i] != null && checkpointList[i].Index == next)
+                {
+                    position = checkpointList[i].transform.position;
                     return true;
                 }
             }

@@ -63,6 +63,8 @@ Suggested order for the live walkthrough (about 5 minutes):
 | "Press any key to start" screen | Browsers block sound until the first click or key press; our start screen forces that press before the race. |
 | Enter = retry, not Escape | In a browser Escape leaves fullscreen. |
 | Own synthesised CC0 sounds + ElevenLabs kart sounds, WAV sources mastered by `process_wavs.py` | Licence is clean (`THIRD_PARTY.md`). Unity re-encodes every clip to AAC for the Web build anyway, and the Windows AAC encoder changes the first 1024 samples, so loops get 2048 samples of silence and WAV loop points (`smpl` chunk) that skip it. WAV is the only format that carries those loop points. |
+| Every Web build setting set by `Role4WebBuild` in code | Some settings (Code Optimization) are saved per laptop in `Library/`; in code the build is the same whoever runs it. Size before/after in section 3.18. |
+| Own Web template, canvas = whole window | Unity's default is a fixed 960x600 box that is cut off in small windows (playtest F1) and tiny on a big screen. |
 | One asmdef per module | Compiler enforces who may talk to whom (no hidden dependencies), and recompiles are faster. |
 
 ---
@@ -200,7 +202,7 @@ The music and the overall mix, following the race. Four `LevelFade`s (race music
 
 - Title screen: race music at -10 dB. Countdown (`CountdownStep` 3, 2, 1): music fades out in 0.3 s, engine -3 dB, effects -6 dB.
 - GO (`CountdownStep(0)`): race music restarts from bar 1 (`timeSamples = 2048`, right after the loop padding) at normal pitch and fades in over 0.12 s. The music is 120 BPM, so its beats line up with the 1 s and 0.5 s countdown steps.
-- Final stretch: when the last checkpoint before the finish is passed, the music glides up one semitone (pitch 1.0595 over 2 s, `Mathf.MoveTowards`) and gets 3 dB louder. `RaceManager` does not say how many checkpoints there are, so the last index is learned from the first finished lap (lap 1 has no lift).
+- Final stretch: when the last checkpoint before the finish is passed, the music glides up one semitone (pitch 1.0595 over 2 s, `Mathf.MoveTowards`) and gets 3 dB louder. The last checkpoint is `RaceManager.CheckpointCount - 1` (index 0 is the start/finish line), so the lift plays on every lap, the first one too.
 - Finish (`LapFinished`): race music fades out, engine and effects -14 dB (`KartAudio.SetMixLevels`), the results loop starts 1.8 s later (`PlayDelayed`), after the jingle.
 - `Duck(db, hold)`: called by `RaceSounds`. Down at 200 dB/s, hold, back at 15 dB/s: "the slow return is what makes it sound like a radio mix pumping, not a volume jump".
 - `OnApplicationFocus` / `OnApplicationPause` -> `AudioListener.pause`: in a hidden browser tab Unity stops updating, but the browser would keep playing the engine and music loops; this pauses every source.
@@ -294,9 +296,28 @@ The editor asmdef references `Shared`, `Shared.Editor`, `RaceFlow`, `Audio` and,
 - Concept: `SerializedObject` is how editor code sets `[SerializeField] private` fields, the same way the Inspector does.
 - Concept: post-processing in URP = the camera must allow it, and a `Volume` (global = everywhere) applies a `VolumeProfile` asset with effects such as Bloom.
 
-### 3.18 `RaceFlow/Editor/Role4WebBuild.cs`
+### 3.18 `RaceFlow/Editor/Role4WebBuild.cs` + `Role4WebQuality.cs` + the Web template
 
-Menu **Carcavelos Circuit > Web Smoke Build**: `BuildPipeline.BuildPlayer` for WebGL into `Build-Web/` (git-ignored), logs result, size and errors; exits with code 1 in batch mode if it failed. Only a smoke test, the release build is Role 3's job.
+Menu **Carcavelos Circuit > Web Build**, or from the command line (Unity closed):
+```
+"C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -buildTarget WebGL -executeMethod CarcavelosCircuit.RaceFlow.Editor.Role4WebBuild.Build -quit -logFile Logs/web-build.log
+```
+What `Build()` does, in order:
+1. `ApplyWebSettings()` sets every Web setting in code, one line each with the reason: small WebAssembly (`UserBuildSettings.codeOptimization = DiskSize`; the "with LTO" variant, link time optimisation, ran over an hour and failed on our laptop), IL2CPP Master, Managed Stripping High, Wasm 2023, exceptions "explicitly thrown only", compression Disabled + hashed file names, data caching, 256 MB starting memory, no Unity splash, static batching, our template. `-webHost=itch` switches compression to Gzip.
+2. `Role4WebQuality.SetUp()` makes sure `RaceFlow/Settings/Web_RPAsset.asset` (copy of the Mobile URP asset, render scale 1.0, MSAA 2x, created once, Luc tunes it) and the quality level "Web" exist, and that Web uses only that level. Quality levels have no "add" method, so it uses `SerializedObject`, like the Project Settings window does.
+3. During the build `GraphicsSettings.defaultRenderPipeline` is the Web asset (so the PC asset's shader variants stay out); `finally` puts the editor's asset back even if the build fails.
+4. Deletes the old `Build-Web/` (hashed names would pile up), builds, logs all effective settings and every file with its size and gzip size, exits with code 1 in batch mode if the build failed.
+
+SIZES_PLACEHOLDER
+
+The template `Assets/WebGLTemplates/CarcavelosCircuit/` (`index.html` + `TemplateData/style.css`) is plain HTML/CSS/JS. Unity fills in the `{{{ ... }}}` parts (file names, product name) when it builds.
+- The canvas is `position: fixed; inset: 0` = always the whole window, no scrollbars. Unity renders at that size times `devicePixelRatio`, which we cap at 1.5 (sharp on a laptop, but a 4K screen does not cost 4x the GPU).
+- Loading screen: `createUnityInstance(canvas, config, onProgress)` calls `onProgress` with 0..1; we move the road fill and the kart dot. 0 to 0.9 is the download, 0.9 to 1 is starting the engine.
+- There is no separate "Click to start" layer: the game's start screen already asks for any key, and a click on the canvas counts as a key and unlocks the sound (browsers only allow audio after a click or key).
+- Errors: no WebGL 2, a file that fails to download, or an error from Unity show a readable box instead of a blank page.
+
+- How I would explain it: "The build is code, like the scenes. Whoever builds gets the same small build, and the page is ours, not Unity's default box."
+- Concept: compression. GitHub Pages compresses files itself but cannot send the header that Unity's pre-compressed `.gz` files need, so we ship plain files and let the host compress them.
 
 ### 3.19 `tools/audio-synth/synth_sfx.py`
 
@@ -316,7 +337,7 @@ python -I tools/audio-synth/process_wavs.py Assets/_Project/Audio/Clips
 
 ### 3.20 `tools/serve_web_build.py`
 
-Tiny local web server for `Build-Web/` on `http://127.0.0.1:8000`. Our build is gzip without decompression fallback, so it adds `Content-Encoding: gzip` for `.gz` files and the right MIME type (`foo.wasm.gz` as `application/wasm`), plus `Cache-Control: no-store`. Plain `python -m http.server` would not start the game.
+Tiny local web server for `Build-Web/` on `http://127.0.0.1:8000`, standard library only. Our default build is uncompressed, so it gzips `.wasm`/`.data`/`.js` on the fly when the browser asks for gzip, like GitHub Pages does (each file is compressed once and kept in memory). For an itch.io build (`-webHost=itch`, pre-gzipped `.gz` files) it adds `Content-Encoding: gzip` and the right MIME type (`foo.wasm.gz` as `application/wasm`). Always `Cache-Control: no-store`, so a reload gets the newest build.
 
 ```
 python tools/serve_web_build.py
@@ -379,7 +400,7 @@ Do it on a branch `role4/<task-id>-swap-contract`, after `git pull` of `main` wi
 12. `Role4SceneBuilder.cs`: remove `CreatePlaceholderKartPrefab()` and the `if (kart == null)` fallback in `BuildAll()`, `BuildPlaceholderTrackScene()`, the `Block()` helper, and `TrackScenePath` from the build list (they reference deleted types). `ProjectSetup` needs no change: it adds the placeholder track only if the file exists.
 13. Wait for compile, Console 0 errors. Run **Carcavelos Circuit > Build Role 4 Scenes**.
 14. Run EditMode tests (command above). Play `Main.unity`: start, countdown, all checkpoints, finish, record saved, R, Enter, Retry button, falling off, drift glow (Bloom).
-15. Run **Carcavelos Circuit > Web Smoke Build**, then `python tools/serve_web_build.py`, test sound starts after the first key.
+15. Run **Carcavelos Circuit > Web Build**, then `python tools/serve_web_build.py`, test sound starts after the first key.
 16. Log the swap in `docs/decisions.md`, commit, push, PR.
 
 ---
@@ -401,8 +422,10 @@ Do it on a branch `role4/<task-id>-swap-contract`, after `git pull` of `main` wi
 13. **What is a ScriptableObject vs a MonoBehaviour?** ScriptableObject = data asset in the project (`RaceSettings`), not attached to a scene object. MonoBehaviour = component on a GameObject with a lifecycle.
 14. **Why `[SerializeField] private` instead of `public`?** Other scripts cannot change the value by accident, but Unity still saves it and shows it in the Inspector.
 15. **What happens if a track scene has its own camera?** `RaceBootstrap.TurnOffTestCameras` switches it and any AudioListener off after loading, so only Main's camera renders and only one AudioListener hears.
-16. **Why no limiter or AudioMixer effects?** Unity's Web build only supports volume changes. We gain-stage instead: every file has a loudness target, Normalize is off, peaks stay under -1 dBFS, and music ducks in script under the important sounds.
-17. **How can an engine without gears "shift"?** The sound pretends: the speed range is split into 4 gears; inside a gear the pitch climbs, at the top it drops back to 60 % and climbs again, with a 0.07 s volume cut and a pop. The kart itself has no gears.
+16. **Why is the Web build uncompressed?** Not on the wire: the host (GitHub Pages) gzips it. Unity's own `.gz` files need a header Pages cannot send, so they would not start there. Hashed file names make sure a browser never mixes an old and a new build.
+17. **Why is the canvas not just 1280x720?** Players have different window sizes. The canvas fills the window and the HUD scales from a 1280x720 reference (PanelSettings "scale with screen size").
+18. **Why no limiter or AudioMixer effects?** Unity's Web build only supports volume changes. We gain-stage instead: every file has a loudness target, Normalize is off, peaks stay under -1 dBFS, and music ducks in script under the important sounds.
+19. **How can an engine without gears "shift"?** The sound pretends: the speed range is split into 4 gears; inside a gear the pitch climbs, at the top it drops back to 60 % and climbs again, with a 0.07 s volume cut and a pop. The kart itself has no gears.
 
 ---
 
@@ -417,5 +440,5 @@ Fixed on 2026-11-08 and no longer weak spots: drift boost after the finish, drif
 - **Camera object is switched off as a whole** (`RaceBootstrap.cs:97`, `SetActive(false)`): anything else on that GameObject or its children goes off too. Fine as long as test cameras sit on their own object.
 - **Kart prefab name is strict** (`Role4SceneBuilder.FindRealKartPrefab`): exactly `Kart`, under `Driving/`, `IKartState` on the root. A prefab called "Kart Variant" or with the controller on a child is ignored and the placeholder stays, silently apart from the missing Console line.
 - **Bloom not yet checked in a Web build with real effects**: it depends on Role 3's sparks and flames being bright enough (above threshold 0.9). Check it looks right and the frame rate stays fine on a normal laptop.
-- **P4 audio not yet heard in a real build** (written without opening Unity): gear-change feel, ducking amounts, music start on GO and gapless loops (smpl + 2048 pad) must be checked in the Web build with headphones (`audio-polish-plan.md` section 7). The final-stretch lift only works from lap 2 until `RaceManager` exposes the checkpoint count.
+- **P4 audio not yet heard in a real build** (written without opening Unity): gear-change feel, ducking amounts, music start on GO and gapless loops (smpl + 2048 pad) must be checked in the Web build with headphones (`audio-polish-plan.md` section 7).
 - **By design, worth remembering**: the builder rewrites its own root objects in `Main.unity` on every run (values set by hand on them are lost; added components or children make it stop and ask); other root objects, the Volume profile and `RaceSettings` values are kept.

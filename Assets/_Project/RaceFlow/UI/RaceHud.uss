@@ -1,199 +1,1142 @@
-/* HUD styles. Like CSS, with "-unity-" names for Unity-only properties.
-   Colours from docs/art-style.md: Kart White #EAEAEC, Gloss Black #1D1D1F, Atlantic Blue #2D8CD6, Boost Orange #FF8A1F.
-   Sizes are for a 1280x720 reference screen (PanelSettings scales them). */
+/* HUD styles, design direction "Linha de Costa" (coastline): chunky rounded tiles with a darker "lip" at the bottom,
+   azulejo diamonds and calcada pavement waves, blue and orange kept for drift/boost signals (docs/art-style.md).
+   Like CSS, with "-unity-" names for Unity-only properties. Sizes are for a 1280x720 reference screen
+   (PanelSettings scales them, matching the screen HEIGHT, so the HUD is always the same share of the screen).
 
+   Animation pattern (read this first):
+   - Nothing that animates is ever display:none (UI Toolkit cannot animate from display:none). Hidden = opacity 0,
+     and RaceHud.cs switches clicks off on hidden parts.
+   - RaceHud.cs puts ONE state class on .hud-root: st-ready, st-countdown, st-racing or st-results.
+     Rules below like ".st-ready .race-layer" then fade whole layers.
+   - Parts that come and go get "is-shown". A "...--pop" class has transition-duration 0s: C# adds it, removes it
+     two frames later (HudFx.Punch), and the normal transition animates back = a punch. */
+
+/* ---------- Tokens (same values as UI/HudColors.cs) ---------- */
+.hud-root {
+    --cc-white: #EAEAEC;
+    --cc-black: #1D1D1F;
+    --cc-asphalt: #55585E;
+    --cc-sand: #E3C48D;
+    --cc-blue: #2D8CD6;
+    --cc-blue-deep: #123B5E;   /* UI only: darker step of Atlantic Blue */
+    --cc-orange: #FF8A1F;
+    --cc-coral: #E6463C;       /* UI only: split "behind" (waiting for Luc's OK in docs/art-style.md) */
+    --cc-panel: rgba(29, 29, 31, 0.82);
+    --cc-lip: rgba(0, 0, 0, 0.45);
+    --drift-s1: #2D8CD6;       /* swap these two if the drift colour mapping changes */
+    --drift-s2: #FF8A1F;
+}
+
+/* Reset Unity's default label spacing. One class = same weight as the theme's rule, and this sheet wins because it
+   sits deeper in the hierarchy. It is near the top so later rules in this file (same weight) can still set margins. */
+.unity-label {
+    margin: 0;
+    padding: 0;
+    color: var(--cc-white);
+}
+
+/* ---------- Fonts: the ONE place to change them ----------
+   Today: Unity's built-in default font; weight comes from bold.
+   When the OFL fonts are approved and imported (spec section 3), replace the three rules below with:
+     .f-display { -unity-font-definition: url("Fonts/Unbounded-Black SDF.asset"); -unity-font-style: normal; }
+     .f-num, .f-ui { -unity-font-definition: url("Fonts/BarlowCondensed-ExtraBold SDF.asset"); -unity-font-style: normal; }
+   and tune HudFormat.DigitWidth (0.55em for Barlow Condensed). No other rule sets a font. */
+.f-display { -unity-font-style: bold; }
+.f-num { -unity-font-style: bold; }
+.f-ui { -unity-font-style: bold; }
+
+/* ---------- Root, layers, state classes ---------- */
 .hud-root {
     flex-grow: 1;
-    padding: 24px;
-    justify-content: space-between;
+    align-items: center;
 }
 
-.top-bar, .bottom-bar {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-end;
-}
 
-.panel {
-    background-color: rgba(29, 29, 31, 0.65);
-    border-radius: 10px;
-    padding: 8px 18px;
-    min-width: 200px;
-}
-
-.panel-right {
-    align-items: flex-end;
-}
-
-.caption {
-    color: rgba(234, 234, 236, 0.75);
-    font-size: 18px;
-    -unity-font-style: bold;
-    letter-spacing: 2px;
-}
-
-.timer {
-    color: rgb(234, 234, 236);
-    font-size: 52px;
-    -unity-font-style: bold;
-    min-width: 230px;
-}
-
-.best {
-    color: rgb(234, 234, 236);
-    font-size: 30px;
-}
-
-.speed {
-    color: rgb(234, 234, 236);
-    font-size: 44px;
-    -unity-font-style: bold;
-}
-
-.split {
-    position: absolute;
-    top: 130px;
-    left: 0;
-    right: 0;
-    -unity-text-align: middle-center;
-    font-size: 40px;
-    -unity-font-style: bold;
-    color: rgb(234, 234, 236);
-    -unity-text-outline-width: 1px;
-    -unity-text-outline-color: rgb(29, 29, 31);
-}
-
-.split-ahead { color: rgb(45, 140, 214); }
-.split-behind { color: rgb(230, 70, 60); }
-
-.hint {
-    position: absolute;
-    top: 190px;
-    left: 0;
-    right: 0;
-    -unity-text-align: middle-center;
-    font-size: 28px;
-    color: rgb(255, 138, 31);
-    -unity-font-style: bold;
-}
-
-.countdown {
+.race-layer {
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
-    -unity-text-align: middle-center;
-    font-size: 200px;
-    -unity-font-style: bold;
-    color: rgb(234, 234, 236);
-    -unity-text-outline-width: 3px;
-    -unity-text-outline-color: rgb(29, 29, 31);
+    align-items: center;
+    opacity: 1;
+    transition-property: opacity;
+    transition-duration: 250ms;
+    transition-timing-function: ease-out;
 }
 
-.countdown-go { color: rgb(255, 138, 31); }
-
-.boost-panel {
-    min-width: 280px;
+.st-ready .race-layer,
+.st-results .race-layer {
+    opacity: 0;
 }
 
-.boost-bar {
-    height: 18px;
-    margin-top: 6px;
-    background-color: rgba(234, 234, 236, 0.2);
-    border-radius: 9px;
-    overflow: hidden;
+/* Safe frame: on very wide screens the corners stay inside the player's attention cone. */
+.hud-safe {
+    flex-grow: 1;
+    width: 100%;
+    max-width: 1600px;
+    padding: 26px 34px 24px 34px;
+    justify-content: space-between;
 }
 
-.boost-fill {
-    height: 100%;
-    width: 0%;
-    background-color: rgb(234, 234, 236);
-    border-radius: 9px;
+.hud-top, .hud-bottom {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
-.boost-stage-1 { background-color: rgb(45, 140, 214); }
-.boost-stage-2 { background-color: rgb(255, 138, 31); }
-.boost-active { color: rgb(255, 138, 31); }
+.hud-bottom {
+    align-items: flex-end;
+}
 
-.controls-hint {
+.row {
+    flex-direction: row;
+    align-items: center;
+}
+
+/* ---------- Panels ---------- */
+.panel {
+    background-color: var(--cc-panel);
+    border-radius: 14px;
+    border-bottom-width: 4px;
+    border-bottom-color: var(--cc-lip);
+    padding: 8px 18px 10px 16px;
+    transition-property: scale;
+    transition-duration: 160ms;
+    transition-timing-function: ease-out-back;
+}
+
+.panel--accent {
+    border-left-width: 6px;
+    border-left-color: var(--cc-blue);
+}
+
+.panel--pop {
+    scale: 1.06 1.06;
+    transition-duration: 0s;
+}
+
+.caption {
+    font-size: 15px;
+    letter-spacing: 4px;
+    color: rgba(234, 234, 236, 0.70);
+}
+
+.caption--small {
+    font-size: 13px;
+    letter-spacing: 3px;
+}
+
+/* ---------- A. Time panel ---------- */
+.time-panel {
+    min-width: 268px;
+    transform-origin: left top;
+}
+
+.lap-counter {
+    margin-left: 14px;
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: var(--cc-sand);
+}
+
+.timer-row {
+    flex-direction: row;
+    align-items: flex-end;
+    margin-top: 2px;
+    transition-property: opacity;
+    transition-duration: 200ms;
+}
+
+.st-countdown .timer-row {
+    opacity: 0.45; /* the time is not running yet */
+}
+
+.timer-main {
+    font-size: 60px;
+    color: var(--cc-white);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.30);
+    -unity-text-align: lower-left;
+}
+
+.timer-fraction {
+    font-size: 34px;
+    margin-bottom: 7px;
+    color: rgba(234, 234, 236, 0.70);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.30);
+    -unity-text-align: lower-left;
+}
+
+.best-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 2px;
+}
+
+.best {
+    margin-left: 10px;
+    font-size: 22px;
+    color: var(--cc-sand);
+}
+
+.best--none {
+    color: rgba(234, 234, 236, 0.45);
+}
+
+/* ---------- B. Checkpoint pips ---------- */
+.cp-panel {
+    align-items: flex-end;
+    padding: 8px 16px 12px 18px;
+}
+
+.cp-count {
+    margin-left: 10px;
+    font-size: 22px;
+    color: var(--cc-white);
+}
+
+.cp-pips {
+    flex-direction: row;
+    margin-top: 10px;
+    margin-right: 4px;
+}
+
+.cp-pip {
+    width: 16px;
+    height: 16px;
+    margin-left: 12px;
+    border-radius: 4px;
+    rotate: 45deg;
+    background-color: rgba(234, 234, 236, 0.22);
+    border-width: 2px;
+    border-color: rgba(234, 234, 236, 0);
+    transition-property: background-color, border-color, scale, opacity;
+    transition-duration: 120ms, 120ms, 180ms, 700ms;
+    transition-timing-function: linear, linear, ease-out-back, ease-in-out-sine;
+}
+
+.cp-pip--passed {
+    background-color: var(--cc-white);
+}
+
+.cp-pip--next {
+    background-color: rgba(234, 234, 236, 0.10);
+    border-color: var(--cc-white);
+}
+
+.cp-pip--dim {
+    opacity: 0.4; /* toggled every 0.7 s on the "next" pip = slow pulse */
+}
+
+.cp-pip--finish {
+    border-color: var(--cc-sand);
+}
+
+.cp-pip--finish.cp-pip--passed,
+.cp-pip--finish.cp-pip--next {
+    background-color: var(--cc-sand);
+}
+
+.cp-pip--pop {
+    scale: 1.7 1.7;
+    transition-duration: 0s;
+}
+
+/* ---------- C. Split chip ---------- */
+.split {
     position: absolute;
-    bottom: 8px;
+    top: 26px;
     left: 0;
     right: 0;
-    -unity-text-align: middle-center;
-    font-size: 16px;
-    color: rgba(234, 234, 236, 0.7);
+    align-items: center;
 }
 
+.split-chip {
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 18px 6px 14px;
+    border-radius: 12px;
+    border-bottom-width: 4px;
+    border-bottom-color: var(--cc-lip);
+    background-color: var(--cc-blue);
+    opacity: 0;
+    translate: 0 -24px;
+    transition-property: opacity, translate, scale, background-color;
+    transition-duration: 160ms, 220ms, 160ms, 80ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back, linear;
+}
+
+.split.is-shown .split-chip {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.split--behind .split-chip {
+    background-color: var(--cc-coral);
+}
+
+.split--big .split-chip {
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-left-color: var(--cc-sand);
+    border-right-color: var(--cc-sand);
+    border-top-color: var(--cc-sand);
+}
+
+.split--neutral .split-chip {
+    background-color: var(--cc-panel);
+    border-left-width: 6px;
+    border-left-color: var(--cc-white);
+}
+
+.split-chip--pop {
+    scale: 1.18 1.18;
+    transition-duration: 0s;
+}
+
+.split-words {
+    margin-right: 12px;
+    align-items: flex-start;
+}
+
+.split-cp {
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: rgba(234, 234, 236, 0.85);
+}
+
+.split-word {
+    font-size: 17px;
+    letter-spacing: 2px;
+    color: var(--cc-white);
+}
+
+.split-value {
+    font-size: 40px;
+    color: var(--cc-white);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- D. Callouts: hint, wrong way, stuck ---------- */
+.callout {
+    position: absolute;
+    top: 112px;
+    left: 0;
+    right: 0;
+    align-items: center;
+}
+
+.callout-chip {
+    flex-direction: row;
+    align-items: center;
+    border-radius: 12px;
+    border-bottom-width: 4px;
+    border-bottom-color: var(--cc-lip);
+    opacity: 0;
+    translate: 0 -20px;
+    transition-property: opacity, translate, scale;
+    transition-duration: 160ms, 220ms, 160ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back;
+}
+
+.callout.is-shown .callout-chip {
+    opacity: 1;
+    translate: 0 0;
+}
+
+/* Shake: 3 classes so it beats ".callout.is-shown .callout-chip" above. */
+.callout.is-shown .callout-chip--shake-l { translate: -7px 0; transition-duration: 0s; }
+.callout.is-shown .callout-chip--shake-r { translate: 7px 0; transition-duration: 0s; }
+
+.hint-chip {
+    background-color: var(--cc-orange);
+    padding: 8px 20px 10px 10px;
+}
+
+.hint-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 12px;
+    border-radius: 16px;
+    background-color: var(--cc-black);
+    color: var(--cc-orange);
+    font-size: 22px;
+    -unity-text-align: middle-center;
+}
+
+.hint-text {
+    font-size: 22px;
+    letter-spacing: 1px;
+    color: var(--cc-black);
+}
+
+.wrong-way-chip {
+    flex-direction: column;
+    background-color: rgba(29, 29, 31, 0.88);
+    border-width: 4px;
+    border-color: var(--cc-coral);
+    border-bottom-width: 6px;
+    padding: 10px 34px 12px 34px;
+}
+
+.wrong-way-title {
+    font-size: 46px;
+    letter-spacing: 4px;
+    color: var(--cc-white);
+    text-shadow: 0 3px 0 rgba(0, 0, 0, 0.4);
+}
+
+.wrong-way-sub {
+    margin-top: 2px;
+    font-size: 16px;
+    letter-spacing: 6px;
+    color: var(--cc-sand);
+}
+
+.wrong-way-chip--pulse {
+    scale: 1.06 1.06;
+}
+
+.stuck-chip {
+    background-color: var(--cc-panel);
+    border-left-width: 6px;
+    border-left-color: var(--cc-orange);
+    padding: 10px 22px 12px 18px;
+}
+
+.stuck-title {
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--cc-white);
+}
+
+/* ---------- E. Speed gauge ---------- */
+.speed-gauge {
+    width: 176px;
+    height: 176px;
+    border-radius: 88px;
+    background-color: rgba(29, 29, 31, 0.55);
+    align-items: center;
+    justify-content: center;
+}
+
+.speed-arc-host {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.speed-arc {
+    flex-grow: 1;
+}
+
+.speed-centre {
+    align-items: center;
+    margin-top: 6px;
+}
+
+.speed {
+    font-size: 60px;
+    color: var(--cc-white);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.30);
+    -unity-text-align: middle-center;
+    transition-property: scale, color;
+    transition-duration: 160ms, 120ms;
+    transition-timing-function: ease-out-back, linear;
+}
+
+.speed--boost {
+    color: var(--cc-orange);
+}
+
+.speed--pop {
+    scale: 1.18 1.18;
+    transition-duration: 0s;
+}
+
+/* ---------- F. Drift meter ---------- */
+.drift-panel {
+    min-width: 300px;
+    padding: 10px 16px 14px 16px;
+}
+
+.drift-head {
+    height: 30px;
+    margin-bottom: 6px;
+}
+
+.drift-label {
+    font-size: 15px;
+    letter-spacing: 4px;
+    color: rgba(234, 234, 236, 0.80);
+    margin-right: 10px;
+    transform-origin: left;
+    transition-property: scale, color;
+    transition-duration: 220ms, 100ms;
+    transition-timing-function: ease-out-back, linear;
+}
+
+.drift-label--boost {
+    color: var(--cc-orange);
+    font-size: 26px;
+    letter-spacing: 3px;
+}
+
+.drift-label--pop {
+    scale: 1.5 1.5;
+    transition-duration: 0s;
+}
+
+.drift-pip {
+    width: 12px;
+    height: 12px;
+    margin-left: 10px;
+    border-radius: 3px;
+    rotate: 45deg;
+    background-color: rgba(234, 234, 236, 0.22);
+    transition-property: background-color, scale;
+    transition-duration: 100ms, 180ms;
+    transition-timing-function: linear, ease-out-back;
+}
+
+.drift--s1 .drift-pip--1,
+.drift--s2 .drift-pip--1 { background-color: var(--drift-s1); }
+.drift--s2 .drift-pip--2 { background-color: var(--drift-s2); }
+.drift--boost .drift-pip { background-color: var(--cc-orange); }
+
+.drift-pip--pop {
+    scale: 1.8 1.8;
+    transition-duration: 0s;
+}
+
+.drift-bar {
+    width: 300px;
+    height: 22px;
+    border-radius: 8px;
+    background-color: rgba(234, 234, 236, 0.16);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--cc-lip);
+    overflow: hidden;
+    transform-origin: left;
+    transition-property: scale;
+    transition-duration: 160ms;
+    transition-timing-function: ease-out-back;
+}
+
+.drift-bar--pop {
+    scale: 1 1.35;
+    transition-duration: 0s;
+}
+
+/* The fill is scaled from the left (no width change = no layout pass every frame). */
+.drift-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    transform-origin: left;
+    scale: 0 1;
+    background-color: var(--cc-white);
+    transition-property: background-color;
+    transition-duration: 80ms;
+}
+
+.drift--s1 .drift-fill { background-color: var(--drift-s1); }
+.drift--s2 .drift-fill { background-color: var(--drift-s2); }
+.drift--boost .drift-fill { background-color: var(--cc-orange); }
+
+/* Marks where stage 1 starts (left is set from RaceHud.stage1At). */
+.drift-tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 3px;
+    background-color: rgba(234, 234, 236, 0.55);
+}
+
+/* A light streak running through the bar while boosting. */
+.drift-shine {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    background-color: rgba(255, 255, 255, 0.35);
+    translate: -60px 0;
+    opacity: 0;
+}
+
+.drift--boost .drift-shine {
+    opacity: 1;
+}
+
+.drift-shine--run {
+    translate: 340px 0;
+    transition-property: translate;
+    transition-duration: 500ms;
+    transition-timing-function: linear;
+}
+
+/* ---------- G. Boost edge glow (gradient texture set in RaceHud.cs) ---------- */
+.edge-glow {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 240px;
+    opacity: 0;
+    -unity-background-scale-mode: stretch-to-fill;
+    transition-property: opacity;
+    transition-duration: 400ms;
+    transition-timing-function: ease-out;
+}
+
+.edge-glow--left { left: 0; }
+.edge-glow--right { right: 0; }
+
+.edge-glow.is-shown {
+    opacity: 1;
+    transition-duration: 120ms;
+}
+
+/* ---------- H. Footer key hint ---------- */
+.controls-hint {
+    position: absolute;
+    bottom: 34px;
+    flex-direction: row;
+    align-items: center;
+    height: 44px;
+    padding: 0 16px 0 12px;
+    border-radius: 22px; /* half the height = a true pill (999px draws an ellipse in UI Toolkit) */
+    background-color: rgba(29, 29, 31, 0.70);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 400ms;
+}
+
+.controls-hint.is-shown {
+    opacity: 1;
+}
+
+/* Keycaps (also used on the start and results screens). */
+.keycap {
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    margin: 0 3px;
+    border-radius: 6px;
+    background-color: var(--cc-white);
+    border-bottom-width: 3px;
+    border-bottom-color: #9A9AA0;
+    align-items: center;
+    justify-content: center;
+}
+
+.keycap > Label {
+    font-size: 15px;
+    color: var(--cc-black);
+    letter-spacing: 1px;
+}
+
+.keycap--wide {
+    min-width: 70px;
+}
+
+.keycap--big {
+    min-width: 38px;
+    height: 38px;
+    margin: 0 12px;
+}
+
+.keycap--big > Label {
+    font-size: 20px;
+}
+
+.key-text {
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.88);
+    margin: 0 18px 0 7px;
+    -unity-text-align: middle-left;
+}
+
+.key-text--last {
+    margin-right: 0;
+}
+
+/* ---------- Countdown ---------- */
+.cd {
+    position: absolute;
+    top: 92px;
+    left: 0;
+    right: 0;
+    align-items: center;
+    opacity: 0;
+    transition-property: opacity, translate, scale;
+    transition-duration: 120ms;
+    transition-timing-function: ease-out;
+}
+
+.cd.is-shown {
+    opacity: 1;
+}
+
+.cd-tile {
+    width: 140px;
+    height: 140px;
+    border-radius: 24px;
+    rotate: 45deg;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--cc-white);
+    border-width: 8px;
+    border-color: var(--cc-blue);
+    border-bottom-color: #1F6AA6;
+    transition-property: scale, rotate, opacity, background-color, border-color;
+    transition-duration: 220ms, 220ms, 110ms, 100ms, 100ms;
+    transition-timing-function: ease-out-back, ease-out-back, ease-out, linear, linear;
+}
+
+.cd-tile--pop {
+    scale: 1.7 1.7;
+    rotate: 70deg;
+    opacity: 0;
+    transition-duration: 0s;
+}
+
+.cd-num {
+    rotate: -45deg;
+    font-size: 92px;
+    color: var(--cc-black);
+    -unity-text-align: middle-center;
+}
+
+.cd--go .cd-tile {
+    background-color: var(--cc-orange);
+    border-color: var(--cc-white);
+    transition-duration: 380ms, 380ms, 110ms, 100ms, 100ms;
+    transition-timing-function: ease-out-elastic, ease-out-elastic, ease-out, linear, linear;
+}
+
+.cd--go .cd-num {
+    font-size: 58px;
+}
+
+.cd--go .cd-tile--pop-go { /* 2 classes, so it beats ".cd--go .cd-tile" and really jumps (duration 0s) */
+    scale: 0.45 0.45;
+    opacity: 0;
+    transition-duration: 0s;
+}
+
+/* GO flies up and fades. "Two classes" version too, because ".cd.is-shown" (2 classes) would otherwise keep opacity 1. */
+.cd--exit,
+.cd.is-shown.cd--exit {
+    translate: 0 -48px;
+    scale: 1.25 1.25;
+    opacity: 0;
+    transition-duration: 260ms;
+    transition-timing-function: ease-in-cubic;
+}
+
+.cd-lamps {
+    flex-direction: row;
+    margin-top: 44px;
+}
+
+.cd-lamp {
+    width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    margin: 0 7px;
+    border-width: 3px;
+    border-color: var(--cc-black);
+    background-color: rgba(234, 234, 236, 0.25);
+    transition-property: background-color, scale;
+    transition-duration: 90ms, 160ms;
+    transition-timing-function: linear, ease-out-back;
+}
+
+.cd-lamp--lit {
+    background-color: var(--cc-blue);
+    scale: 1.2 1.2;
+}
+
+.cd--go .cd-lamp {
+    background-color: var(--cc-orange);
+    scale: 1.2 1.2;
+}
+
+.go-flash {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--cc-white);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 300ms;
+    transition-timing-function: ease-out;
+}
+
+.go-flash--pop {
+    opacity: 0.18;
+    transition-duration: 0s;
+}
+
+/* ---------- Full-screen overlays (start, results) ---------- */
 .overlay {
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: rgba(29, 29, 31, 0.72);
     align-items: center;
     justify-content: center;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 250ms;
+    transition-timing-function: ease-out;
+}
+
+.st-ready .start-screen,
+.st-results .results-screen {
+    opacity: 1;
+}
+
+.overlay-bg, .pattern-host {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.azulejo {
+    flex-grow: 1;
+    opacity: 0.07;
+}
+
+.results-screen .azulejo {
+    opacity: 0.08;
+}
+
+.calcada {
+    flex-grow: 1;
+}
+
+.wave-host {
+    width: 360px;
+    height: 16px;
+    margin: 8px 0 6px 0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.wave-host--small {
+    width: 300px;
+    height: 12px;
+    margin: 6px 0 14px 0;
+}
+
+/* ---------- Start screen ---------- */
+.start-content {
+    align-items: center;
+}
+
+.kicker {
+    font-size: 17px;
+    letter-spacing: 6px;
+    color: var(--cc-sand);
+    margin-bottom: 6px;
 }
 
 .title {
-    color: rgb(234, 234, 236);
-    font-size: 72px;
-    -unity-font-style: bold;
-    letter-spacing: 4px;
+    font-size: 88px;
+    letter-spacing: 2px;
+    color: var(--cc-white);
+    text-shadow: 0 5px 0 rgba(0, 0, 0, 0.35);
 }
 
-.subtitle {
-    color: rgb(227, 196, 141);
-    font-size: 28px;
-    margin-bottom: 10px;
+.title-2 {
+    font-size: 34px;
+    letter-spacing: 22px;
+    padding-left: 22px; /* letter-spacing adds space after the last letter too; this re-centres the word */
+    color: var(--cc-orange);
+    text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
 }
 
-.press-key {
-    color: rgb(255, 138, 31);
-    font-size: 36px;
-    -unity-font-style: bold;
-    margin-top: 40px;
-    margin-bottom: 24px;
+.pill {
+    margin-top: 44px;
+    height: 58px;
+    padding: 0 34px 0 34px;
+    border-radius: 29px; /* half the height = a true pill (999px draws an ellipse in UI Toolkit) */
+    background-color: var(--cc-orange);
+    border-bottom-width: 4px;
+    border-bottom-color: #B35C0E;
+    font-size: 26px;
+    letter-spacing: 5px;
+    color: var(--cc-black);
+    -unity-text-align: middle-center;
 }
 
-.controls {
-    color: rgba(234, 234, 236, 0.8);
-    font-size: 18px;
-    margin-bottom: 16px;
+.pill--loading {
+    background-color: var(--cc-asphalt);
+    border-bottom-color: #33353A;
+    color: var(--cc-white);
 }
 
-.record {
-    color: rgb(255, 138, 31);
-    font-size: 54px;
-    -unity-font-style: bold;
-    margin-bottom: 16px;
+.pill--pop {
+    scale: 0.92 0.92;
+    transition-duration: 0s;
+}
+
+.controls-row {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 30px;
+    padding: 10px 18px;
+    border-radius: 14px;
+    background-color: rgba(29, 29, 31, 0.55);
+    max-width: 1100px;
+}
+
+.start-best {
+    margin-top: 22px;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--cc-sand);
+}
+
+/* Intro: title rows slide down in one after another (".intro-in" is added one frame after the screen shows). */
+.intro {
+    opacity: 0;
+    translate: 0 -24px;
+    transition-property: opacity, translate, scale;
+    transition-duration: 450ms, 450ms, 140ms;
+    transition-timing-function: ease-out-cubic, ease-out-cubic, ease-out-back;
+}
+
+.intro-in .intro {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.intro-in .intro--2 { transition-delay: 80ms, 80ms, 0ms; }
+.intro-in .intro--3 { transition-delay: 160ms, 160ms, 0ms; }
+.intro-in .intro--4 { transition-delay: 260ms, 260ms, 0ms; }
+.intro-in .intro--5 { transition-delay: 360ms, 360ms, 0ms; }
+
+/* ---------- Results screen ---------- */
+.card {
+    width: 560px;
+    align-items: center;
+    padding: 30px 40px 30px 40px;
+    border-radius: 22px;
+    background-color: rgba(29, 29, 31, 0.92);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--cc-blue);
+    opacity: 0;
+    translate: 0 40px;
+    transition-property: opacity, translate;
+    transition-duration: 320ms;
+    transition-timing-function: ease-out-cubic;
+    transition-delay: 80ms;
+}
+
+.results--in .card {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.card--record {
+    border-bottom-color: var(--cc-sand);
+    /* Room for the NEW RECORD stamp, which hangs over the top edge: without it the stamp covers the kicker. */
+    padding-top: 58px;
+}
+
+/* Shake when the NEW RECORD stamp lands: 2 classes and after ".results--in .card", so these win.
+   card--shaking is on for the whole shake and makes the way back quick (40 ms, no delay) instead of the slow entry. */
+.results--in .card--shaking { transition-duration: 40ms; transition-delay: 0s; transition-timing-function: linear; }
+.results--in .card--shake-l { translate: -5px 0; transition-duration: 0s; transition-delay: 0s; }
+.results--in .card--shake-r { translate: 5px 0; transition-duration: 0s; transition-delay: 0s; }
+
+.res-kicker {
+    font-size: 15px;
+    letter-spacing: 6px;
+    color: var(--cc-sand);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-delay: 200ms;
+}
+
+.res-headline {
+    margin-top: 4px;
+    font-size: 30px;
+    letter-spacing: 10px;
+    padding-left: 10px;
+    color: var(--cc-white);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-delay: 220ms;
+}
+
+.results--in .res-kicker,
+.results--in .res-headline {
+    opacity: 1;
 }
 
 .final-time {
-    color: rgb(234, 234, 236);
-    font-size: 96px;
-    -unity-font-style: bold;
+    margin-top: 2px;
+    font-size: 104px;
+    color: var(--cc-white);
+    text-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+    transition-property: scale;
+    transition-duration: 140ms;
+    transition-timing-function: ease-out-back;
 }
 
-.final-delta {
-    color: rgba(234, 234, 236, 0.85);
-    font-size: 30px;
-    margin-bottom: 30px;
+.final-time--pop {
+    scale: 1.08 1.08;
+    transition-duration: 0s;
+}
+
+.res-delta {
+    flex-direction: row;
+    align-items: center;
+    max-width: 100%;
+    padding: 4px 16px 6px 16px;
+    border-radius: 10px;
+    border-bottom-width: 4px;
+    border-bottom-color: var(--cc-lip);
+    background-color: var(--cc-coral);
+    opacity: 0;
+    translate: -30px 0;
+    transition-property: opacity, translate;
+    transition-duration: 240ms;
+    transition-timing-function: ease-out-back;
+    transition-delay: 900ms;
+}
+
+.results--in .res-delta {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.res-delta--ahead {
+    background-color: var(--cc-blue);
+}
+
+.res-delta--first {
+    background-color: rgba(0, 0, 0, 0);
+    border-bottom-width: 0;
+}
+
+.res-delta-value {
+    font-size: 28px;
+    color: var(--cc-white);
+    margin-right: 10px;
+}
+
+.res-delta-text {
+    flex-shrink: 1;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    font-size: 17px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.92);
+}
+
+.res-delta--first .res-delta-text {
+    color: var(--cc-sand);
+    font-size: 19px;
+}
+
+.res-best {
+    margin-top: 12px;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.70);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-delay: 1000ms;
+}
+
+.results--in .res-best {
+    opacity: 1;
+}
+
+.record {
+    position: absolute;
+    top: -40px;
+    align-self: center;
+    padding: 6px 22px 6px 22px;
+    border-radius: 10px;
+    background-color: var(--cc-sand);
+    border-width: 4px;
+    border-color: var(--cc-white);
+    border-bottom-color: #B8975E;
+    color: var(--cc-black);
+    font-size: 36px;
+    letter-spacing: 3px;
+    opacity: 0;
+    scale: 2.4 2.4;
+    rotate: -16deg;
+    transition-property: opacity, scale, rotate;
+    transition-duration: 180ms, 280ms, 280ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back;
+    transition-delay: 1050ms;
+}
+
+.results--in .record--on {
+    opacity: 1;
+    scale: 1 1;
+    rotate: -6deg;
+}
+
+.res-actions {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 26px;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-delay: 1250ms;
+}
+
+.results--in .res-actions {
+    opacity: 1;
 }
 
 .retry-button {
-    font-size: 30px;
-    -unity-font-style: bold;
-    color: rgb(29, 29, 31);
-    background-color: rgb(255, 138, 31);
+    margin: 0 10px 0 0;
+    height: 54px;
+    padding: 0 40px 0 40px;
     border-width: 0;
-    border-radius: 12px;
-    padding: 12px 40px;
+    border-bottom-width: 4px;
+    border-bottom-color: #B35C0E;
+    border-radius: 27px; /* half the height = a true pill */
+    background-image: none;
+    background-color: var(--cc-orange);
+    font-size: 24px;
+    letter-spacing: 5px;
+    color: var(--cc-black);
 }
 
 .retry-button:hover {
-    background-color: rgb(255, 165, 80);
+    background-color: #FFA550;
 }
 
+.retry-button:hover:active {
+    scale: 0.95 0.95;
+}

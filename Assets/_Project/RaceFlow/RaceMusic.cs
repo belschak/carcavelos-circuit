@@ -67,8 +67,6 @@ namespace CarcavelosCircuit.RaceFlow
         private LevelFade effectsLevel;
         private DuckEnvelope duck;
         private KartAudio kartAudio;
-        private int lastCheckpointOfLap = -1; // learned from a finished lap (see OnCheckpointPassed)
-        private int highestCheckpointThisLap;
         private bool onFinalStretch; // true from the last checkpoint until the next GO
         private bool hasFocus = true;
         private bool isPaused;
@@ -132,7 +130,6 @@ namespace CarcavelosCircuit.RaceFlow
             }
 
             // GO: race music from bar 1, normal pitch, full race mix.
-            highestCheckpointThisLap = 0;
             onFinalStretch = false;
             if (resultsMusic != null)
             {
@@ -152,13 +149,9 @@ namespace CarcavelosCircuit.RaceFlow
 
         private void OnCheckpointPassed(int index)
         {
-            if (index > highestCheckpointThisLap)
-            {
-                highestCheckpointThisLap = index;
-            }
-            // Final stretch = the last checkpoint before the finish line. RaceManager does not tell us how many
-            // checkpoints there are (yet), so we learn the last index from the first finished lap.
-            if (lastCheckpointOfLap > 0 && index == lastCheckpointOfLap)
+            // Final stretch = the last checkpoint before the finish line. CheckpointCount includes the
+            // start/finish line (index 0), so the last real checkpoint has index CheckpointCount - 1.
+            if (raceManager.CheckpointCount > 1 && index == raceManager.CheckpointCount - 1)
             {
                 onFinalStretch = true;
                 raceLevel.FadeTo(finalStretchDb, 1.5f);
@@ -167,7 +160,6 @@ namespace CarcavelosCircuit.RaceFlow
 
         private void OnLapFinished(float lapSeconds, bool newRecord)
         {
-            lastCheckpointOfLap = highestCheckpointThisLap;
             raceLevel.FadeTo(Decibels.Silent, resultsFadeSeconds);
             engineLevel.FadeTo(engineResultsDb, resultsFadeSeconds);
             effectsLevel.FadeTo(effectsResultsDb, resultsFadeSeconds);

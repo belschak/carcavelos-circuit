@@ -48,8 +48,8 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Range(0f, 1f)]
         private float volume = 1f;
 
-        [SerializeField, Tooltip("The record sting starts this many seconds after the finish jingle, so they do not blur into one sound")]
-        private float recordStingDelay = 0.7f;
+        [SerializeField, Tooltip("The new-record sting waits this long after the finish jingle, so the two do not stack into one muddy sound and the sting lands with the NEW RECORD stamp on the results card")]
+        private float recordStingDelay = 1.25f;
 
         [SerializeField, Tooltip("On a retry the first beep waits this long, so the retry click is not hidden under it")]
         private float retryBeepDelay = 0.1f;
@@ -126,7 +126,7 @@ namespace CarcavelosCircuit.RaceFlow
             Duck(-12f, finishJingle);
             if (newRecord)
             {
-                // After the jingle's first notes, not on top of them.
+                // With the NEW RECORD stamp, not on top of the jingle's first notes.
                 PlayLater(newRecordSting, recordStingDelay);
                 if (music != null && newRecordSting != null)
                 {
@@ -137,6 +137,7 @@ namespace CarcavelosCircuit.RaceFlow
 
         private void OnRestarted()
         {
+            // A sting still waiting from the old lap is stopped by the delayed first beep (PlayLater replaces it).
             Play(retryClick);
         }
 

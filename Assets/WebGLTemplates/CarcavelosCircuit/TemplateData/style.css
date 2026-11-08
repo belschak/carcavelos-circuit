@@ -1,0 +1,263 @@
+/* Carcavelos Circuit Web template. Colours from docs/art-style.md (Role 3 palette). */
+:root {
+  --kart-white: #EAEAEC;
+  --gloss-black: #1D1D1F;
+  --asphalt: #55585E;
+  --sand: #E3C48D;
+  --atlantic-blue: #2D8CD6;
+  --boost-orange: #FF8A1F;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; } /* "hidden" must win over display: flex/grid below */
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;              /* never scrollbars, whatever the window size */
+  background: var(--gloss-black);
+  color: var(--kart-white);
+  font-family: var(--font);
+}
+
+/* The game: always the whole window. Unity matches its render size to this (times the capped pixel ratio). */
+#cc-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  outline: none;
+  background: var(--gloss-black);
+}
+
+/* ---------- Loading screen ---------- */
+#cc-loader {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background:
+    radial-gradient(120% 70% at 50% 115%, rgba(45, 140, 214, 0.28) 0%, rgba(45, 140, 214, 0) 60%),
+    radial-gradient(90% 60% at 50% 120%, var(--asphalt) 0%, var(--gloss-black) 70%);
+  transition: opacity 0.35s ease;
+  z-index: 2;
+}
+
+.cc-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(560px, 100%);
+}
+
+.cc-title {
+  margin: 0;
+  font-size: clamp(30px, 6.2vw, 64px);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-align: center;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+.cc-title-accent { color: var(--boost-orange); }
+
+.cc-subtitle {
+  margin: 10px 0 34px;
+  font-size: clamp(12px, 1.6vw, 15px);
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--sand);
+}
+
+/* The progress bar is a little road: asphalt, dashed centre line, kerbs, chequered finish, and the kart driving along. */
+.cc-road {
+  position: relative;
+  width: 100%;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--asphalt);
+  box-shadow:
+    0 0 0 3px var(--gloss-black),
+    0 0 0 6px var(--kart-white),
+    0 10px 24px rgba(0, 0, 0, 0.45);
+}
+
+.cc-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 11px;
+  background: linear-gradient(90deg, rgba(45, 140, 214, 0.85), rgba(255, 138, 31, 0.9));
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.25s ease-out;
+}
+
+.cc-lane {
+  position: absolute;
+  left: 14px;
+  right: 22px;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: repeating-linear-gradient(90deg, rgba(234, 234, 236, 0.85) 0 12px, transparent 12px 24px);
+}
+
+.cc-finish {
+  position: absolute;
+  top: 0;
+  right: 6px;
+  width: 12px;
+  height: 100%;
+  background: repeating-conic-gradient(var(--kart-white) 0 25%, var(--gloss-black) 0 50%) 0 0 / 6px 6px;
+}
+
+/* The kart: white body, black bumpers, an orange exhaust glow. Moves with the progress. */
+.cc-kart {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  width: 30px;
+  height: 18px;
+  margin-top: -9px;
+  transform: translateX(-50%);
+  border-radius: 5px 9px 9px 5px;
+  background: linear-gradient(180deg, var(--kart-white) 0 62%, #C9C9CD 62% 100%);
+  box-shadow:
+    inset 0 0 0 2px var(--gloss-black),
+    0 0 14px rgba(255, 138, 31, 0.75);
+  transition: left 0.25s ease-out;
+}
+
+.cc-kart::before {               /* driver's helmet */
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--atlantic-blue);
+  box-shadow: inset 0 0 0 2px var(--gloss-black);
+}
+
+.cc-kart::after {                /* exhaust flame */
+  content: "";
+  position: absolute;
+  right: 100%;
+  top: 5px;
+  width: 12px;
+  height: 8px;
+  border-radius: 8px 0 0 8px;
+  background: linear-gradient(90deg, rgba(255, 138, 31, 0), var(--boost-orange));
+  animation: cc-flame 0.18s ease-in-out infinite alternate;
+}
+
+.cc-status {
+  margin: 26px 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+
+.cc-tip {
+  margin: 0;
+  min-height: 2.6em;
+  max-width: 440px;
+  font-size: 14px;
+  line-height: 1.3;
+  text-align: center;
+  color: rgba(234, 234, 236, 0.72);
+}
+
+.cc-credits {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  color: rgba(234, 234, 236, 0.5);
+}
+
+/* ---------- Fullscreen button, error box, warning toast ---------- */
+#cc-fullscreen {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(29, 29, 31, 0.55);
+  color: var(--kart-white);
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  z-index: 1;
+}
+
+#cc-fullscreen:hover, #cc-fullscreen:focus-visible { opacity: 1; outline: 2px solid var(--boost-orange); }
+
+/* Hidden while you drive (it sits where the split chip and countdown appear): it comes back when the mouse moves. */
+#cc-fullscreen.cc-idle { opacity: 0; pointer-events: none; }
+
+#cc-error {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(460px, calc(100% - 32px));
+  padding: 22px 24px;
+  border-radius: 14px;
+  background: var(--gloss-black);
+  box-shadow: 0 0 0 3px var(--boost-orange), 0 18px 40px rgba(0, 0, 0, 0.5);
+  z-index: 3;
+}
+
+#cc-error h2 { margin: 0 0 10px; font-size: 20px; color: var(--boost-orange); }
+#cc-error p { margin: 0 0 8px; font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
+#cc-error .cc-error-hint { color: rgba(234, 234, 236, 0.7); margin: 0; }
+
+#cc-toast {
+  position: fixed;
+  left: 50%;
+  top: 56px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(29, 29, 31, 0.85);
+  box-shadow: 0 0 0 2px var(--sand);
+  font-size: 13px;
+  z-index: 3;
+}
+
+.cc-done { opacity: 0; pointer-events: none; }
+
+@keyframes cc-flame { from { width: 8px; opacity: 0.7; } to { width: 14px; opacity: 1; } }
+
+@media (max-height: 420px) {
+  .cc-subtitle { margin-bottom: 20px; }
+  .cc-status { margin-top: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
