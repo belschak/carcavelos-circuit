@@ -1,60 +1,175 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
-    <!-- The whole HUD. Works like HTML: elements with names (RaceHud.cs finds them by name) and classes (RaceHud.uss styles them). -->
+    <!-- The whole HUD. Works like HTML: elements with names (RaceHud.cs finds them by name) and classes (RaceHud.uss styles them).
+         Nothing here is hidden with display:none. RaceHud.cs puts a state class on hud-root (st-ready, st-countdown,
+         st-racing, st-results) and "is-shown" on parts, and the USS fades and slides them (see "Animation pattern" in RaceHud.uss).
+         Empty elements named "...-host" get a shape drawn in code (UI/HudShapes.cs). -->
     <Style src="RaceHud.uss" />
-    <ui:VisualElement name="hud-root" class="hud-root">
+    <ui:VisualElement name="hud-root" class="hud-root st-ready">
 
-        <!-- Top bar: lap time on the left, best time on the right -->
-        <ui:VisualElement class="top-bar">
-            <ui:VisualElement class="panel">
-                <ui:Label text="TIME" class="caption" />
-                <ui:Label name="timer" text="0:00.000" class="timer" />
-            </ui:VisualElement>
-            <ui:VisualElement class="panel panel-right">
-                <ui:Label text="BEST" class="caption" />
-                <ui:Label name="best" text="--:--.---" class="best" />
-            </ui:VisualElement>
-        </ui:VisualElement>
+        <!-- Boost edge glow: orange light on the left and right screen edge while boosting (peripheral vision cue) -->
+        <ui:VisualElement name="edge-glow-left" class="edge-glow edge-glow--left" />
+        <ui:VisualElement name="edge-glow-right" class="edge-glow edge-glow--right" />
 
-        <!-- Checkpoint split, e.g. "-0.412" in blue (ahead) or "+1.030" in red (behind) -->
-        <ui:Label name="split" text="+0.000" class="split" />
+        <!-- ===== Race layer: everything shown while driving (faded out on the start and results screens) ===== -->
+        <ui:VisualElement name="race-layer" class="race-layer">
+            <ui:VisualElement class="hud-safe">
 
-        <!-- Short hints like "Missed a checkpoint!" -->
-        <ui:Label name="hint" text="" class="hint" />
+                <ui:VisualElement class="hud-top">
+                    <!-- Lap time + best time in one panel -->
+                    <ui:VisualElement name="time-panel" class="panel panel--accent time-panel">
+                        <ui:VisualElement class="row">
+                            <ui:Label text="LAP TIME" class="caption f-ui" />
+                            <ui:Label name="lap-counter" text="LAP 1/1" class="lap-counter f-ui" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="timer-row" class="timer-row">
+                            <ui:Label name="timer-main" text="0:00" class="timer-main f-num" />
+                            <ui:Label name="timer-fraction" text=".000" class="timer-fraction f-num" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="best-row">
+                            <ui:Label text="BEST" class="caption caption--small f-ui" />
+                            <ui:Label name="best" text="--" class="best f-num" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
 
-        <!-- 3, 2, 1, GO! -->
-        <ui:Label name="countdown" text="3" class="countdown" />
+                    <!-- Checkpoint progress: "2/3" and one diamond per checkpoint plus the finish (pips made in RaceHud.cs) -->
+                    <ui:VisualElement name="cp-panel" class="panel cp-panel">
+                        <ui:VisualElement class="row cp-head">
+                            <ui:Label text="CHECKPOINT" class="caption f-ui" />
+                            <ui:Label name="cp-count" text="0/3" class="cp-count f-num" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="cp-pips" class="cp-pips" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
 
-        <!-- Bottom: drift boost cue on the left, speed on the right -->
-        <ui:VisualElement class="bottom-bar">
-            <ui:VisualElement class="panel boost-panel">
-                <ui:Label name="boost-label" text="DRIFT" class="caption" />
-                <ui:VisualElement name="boost-bar" class="boost-bar">
-                    <ui:VisualElement name="boost-fill" class="boost-fill" />
+                <ui:VisualElement class="hud-bottom">
+                    <!-- Drift meter: two stage diamonds, a bar that fills while drifting, BOOST on release -->
+                    <ui:VisualElement name="drift-panel" class="panel drift-panel">
+                        <ui:VisualElement class="row drift-head">
+                            <ui:Label name="drift-label" text="DRIFT" class="drift-label f-ui" />
+                            <ui:VisualElement name="drift-pip-1" class="drift-pip drift-pip--1" />
+                            <ui:VisualElement name="drift-pip-2" class="drift-pip drift-pip--2" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="drift-bar" class="drift-bar">
+                            <ui:VisualElement name="drift-fill" class="drift-fill" />
+                            <ui:VisualElement name="drift-tick" class="drift-tick" />
+                            <ui:VisualElement name="drift-shine" class="drift-shine" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Speed gauge: arc drawn in code (SpeedArc) with the number in the middle -->
+                    <ui:VisualElement name="speed-gauge" class="speed-gauge">
+                        <ui:VisualElement name="speed-arc-host" class="speed-arc-host" />
+                        <ui:VisualElement class="speed-centre">
+                            <ui:Label name="speed" text="0" class="speed f-num" />
+                            <ui:Label text="KM/H" class="caption caption--small f-ui" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
-            <ui:VisualElement class="panel panel-right">
-                <ui:Label name="speed" text="0" class="speed" />
-                <ui:Label text="KM/H" class="caption" />
+
+            <!-- Checkpoint split: a colour block that slides in, blue = ahead of your best, coral = behind -->
+            <ui:VisualElement name="split" class="split">
+                <ui:VisualElement name="split-chip" class="split-chip">
+                    <ui:VisualElement class="split-words">
+                        <ui:Label name="split-cp" text="CP 1" class="split-cp f-ui" />
+                        <ui:Label name="split-word" text="AHEAD" class="split-word f-ui" />
+                    </ui:VisualElement>
+                    <ui:Label name="split-value" text="-0.000" class="split-value f-num" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Callouts under the split. Only one shows at a time (RaceHud.cs picks): hint > wrong way > stuck -->
+            <ui:VisualElement name="hint" class="callout">
+                <ui:VisualElement class="callout-chip hint-chip">
+                    <ui:Label text="!" class="hint-icon f-display" />
+                    <ui:Label name="hint-text" text="" class="hint-text f-ui" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="wrong-way" class="callout">
+                <ui:VisualElement name="wrong-way-chip" class="callout-chip wrong-way-chip">
+                    <ui:Label text="WRONG WAY" class="wrong-way-title f-display" />
+                    <ui:Label text="TURN AROUND" class="wrong-way-sub f-ui" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="stuck" class="callout">
+                <ui:VisualElement class="callout-chip stuck-chip">
+                    <ui:Label text="STUCK?" class="stuck-title f-ui" />
+                    <ui:VisualElement class="keycap keycap--big"><ui:Label text="R" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="RECOVER" class="stuck-title f-ui" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Footer key hint: shown during the countdown and the first seconds of racing, then it fades out -->
+            <ui:VisualElement name="controls-hint" class="controls-hint">
+                <ui:VisualElement class="keycap"><ui:Label text="R" class="f-ui" /></ui:VisualElement>
+                <ui:Label text="RECOVER" class="key-text f-ui" />
+                <ui:VisualElement class="keycap keycap--wide"><ui:Label text="ENTER" class="f-ui" /></ui:VisualElement>
+                <ui:Label text="RETRY" class="key-text key-text--last f-ui" />
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:Label name="controls-hint" text="R = recover    Enter = retry" class="controls-hint" />
 
-        <!-- Start screen (state Ready) -->
-        <ui:VisualElement name="start-screen" class="overlay">
-            <ui:Label text="CARCAVELOS CIRCUIT" class="title" />
-            <ui:Label text="Time trial" class="subtitle" />
-            <ui:Label name="press-any-key" text="Press any key to start" class="press-key" />
-            <ui:Label text="W A S D / arrows = drive    Space = drift (let go for a boost)    R = recover    Enter = retry" class="controls" />
-            <ui:Label name="start-best" text="" class="subtitle" />
+        <!-- ===== Countdown: diamond tile with 3 / 2 / 1 / GO! and three lamps, in the upper third (above the kart) ===== -->
+        <ui:VisualElement name="countdown" class="cd">
+            <ui:VisualElement name="countdown-tile" class="cd-tile">
+                <ui:Label name="countdown-number" text="3" class="cd-num f-display" />
+            </ui:VisualElement>
+            <ui:VisualElement name="countdown-lamps" class="cd-lamps">
+                <ui:VisualElement class="cd-lamp" />
+                <ui:VisualElement class="cd-lamp" />
+                <ui:VisualElement class="cd-lamp" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="go-flash" class="go-flash" />
+
+        <!-- ===== Start screen (state Ready) ===== -->
+        <ui:VisualElement name="start-screen" class="overlay start-screen">
+            <ui:VisualElement name="start-bg" class="overlay-bg" />
+            <ui:VisualElement name="start-pattern-host" class="pattern-host" />
+            <ui:VisualElement name="start-content" class="start-content">
+                <ui:Label text="TIME TRIAL  ·  1 LAP  ·  PRAIA DE CARCAVELOS" class="kicker f-ui intro intro--1" />
+                <ui:Label text="CARCAVELOS" class="title f-display intro intro--2" />
+                <ui:VisualElement name="start-wave-host" class="wave-host intro intro--3" />
+                <ui:Label text="CIRCUIT" class="title-2 f-display intro intro--3" />
+                <ui:Label name="press-any-key" text="PRESS ANY KEY TO START" class="pill f-ui intro intro--4" />
+                <ui:VisualElement class="controls-row intro intro--5">
+                    <ui:VisualElement class="keycap"><ui:Label text="W" class="f-ui" /></ui:VisualElement>
+                    <ui:VisualElement class="keycap"><ui:Label text="A" class="f-ui" /></ui:VisualElement>
+                    <ui:VisualElement class="keycap"><ui:Label text="S" class="f-ui" /></ui:VisualElement>
+                    <ui:VisualElement class="keycap"><ui:Label text="D" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="DRIVE" class="key-text f-ui" />
+                    <ui:VisualElement class="keycap keycap--wide"><ui:Label text="SPACE" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="DRIFT, LET GO = BOOST" class="key-text f-ui" />
+                    <ui:VisualElement class="keycap"><ui:Label text="R" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="RECOVER" class="key-text f-ui" />
+                    <ui:VisualElement class="keycap keycap--wide"><ui:Label text="ENTER" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="RETRY" class="key-text key-text--last f-ui" />
+                </ui:VisualElement>
+                <ui:Label name="start-best" text="" class="start-best f-num intro intro--5" />
+            </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- Results screen (state Results) -->
-        <ui:VisualElement name="results-screen" class="overlay">
-            <ui:Label name="record" text="NEW RECORD!" class="record" />
-            <ui:Label text="LAP TIME" class="caption" />
-            <ui:Label name="final-time" text="0:00.000" class="final-time" />
-            <ui:Label name="final-delta" text="" class="final-delta" />
-            <ui:Button name="retry-button" text="Retry (Enter)" class="retry-button" />
+        <!-- ===== Results screen (state Results). Stagger timing lives in the USS (transition-delay) ===== -->
+        <ui:VisualElement name="results-screen" class="overlay results-screen">
+            <ui:VisualElement name="results-bg" class="overlay-bg" />
+            <ui:VisualElement name="results-pattern-host" class="pattern-host" />
+            <ui:VisualElement name="results-card" class="card">
+                <ui:Label name="record" text="NEW RECORD" class="record f-display" />
+                <ui:Label text="TIME TRIAL  ·  1 LAP" class="res-kicker f-ui" />
+                <ui:Label text="FINISH" class="res-headline f-display" />
+                <ui:Label name="final-time" text="0:00.000" class="final-time f-num" />
+                <ui:VisualElement name="results-wave-host" class="wave-host wave-host--small" />
+                <ui:VisualElement name="res-delta" class="res-delta">
+                    <ui:Label name="res-delta-value" text="+0.000 s" class="res-delta-value f-num" />
+                    <ui:Label name="res-delta-text" text="vs your best" class="res-delta-text f-ui" />
+                </ui:VisualElement>
+                <ui:Label name="res-best" text="" class="res-best f-num" />
+                <ui:VisualElement name="res-actions" class="res-actions">
+                    <ui:Button name="retry-button" text="RETRY" class="retry-button f-ui" />
+                    <ui:VisualElement class="keycap keycap--wide"><ui:Label text="ENTER" class="f-ui" /></ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
         </ui:VisualElement>
 
     </ui:VisualElement>
