@@ -51,5 +51,52 @@ namespace CarcavelosCircuit.Audio
         {
             return 0.8f + 0.55f * r;
         }
+
+        // Equal-power crossfade: the two recordings are different sounds, so a straight 50/50 split sounds
+        // about 3 dB quieter in the middle. Cosine and sine keep low^2 + high^2 = 1, so the loudness stays the same.
+        public static float EqualPowerLow(float highMix)
+        {
+            return (float)System.Math.Cos(Clamp01(highMix) * System.Math.PI * 0.5);
+        }
+
+        public static float EqualPowerHigh(float highMix)
+        {
+            return (float)System.Math.Sin(Clamp01(highMix) * System.Math.PI * 0.5);
+        }
+
+        // ---- Virtual gearbox (the kart has no real gears, the sound pretends it has) ----
+
+        // Speed share (0..1) at which gear "gear" (1-based) runs out of revs. Lower gears are shorter,
+        // like a real gearbox: with 4 gears the tops are about 0.31, 0.55, 0.78 and 1.
+        public static float GearTop(int gear, int gears)
+        {
+            if (gear <= 0 || gears <= 0)
+            {
+                return 0f;
+            }
+            if (gear >= gears)
+            {
+                return 1f;
+            }
+            return (float)System.Math.Pow(gear / (double)gears, 0.85);
+        }
+
+        // Revs (0..1) inside the current gear: gear 1 starts at 0, higher gears start at revsAfterShift
+        // (the revs drop after an upshift), and every gear reaches 0.97 at its top.
+        public static float GearRevs(float speed01, int gear, int gears, float revsAfterShift)
+        {
+            float low = GearTop(gear - 1, gears);
+            float high = GearTop(gear, gears);
+            float fraction = Clamp01((speed01 - low) / System.Math.Max(0.001f, high - low));
+            float start = gear <= 1 ? 0f : revsAfterShift;
+            return start + (0.97f - start) * fraction;
+        }
+
+        private static float Clamp01(float value)
+        {
+            if (value < 0f) return 0f;
+            if (value > 1f) return 1f;
+            return value;
+        }
     }
 }
