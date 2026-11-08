@@ -22,6 +22,13 @@ Unity **6000.3.28f1** (6.3 LTS) · C# · Blender (FBX) · Web build
   ```
   Unity Hub > Add project from disk > the cloned folder > open `Assets/_Project/RaceFlow/Scenes/Main.unity` > press Play.
 
+- **Web build locally** (Unity closed, Windows):
+  ```
+  "C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -buildTarget WebGL -executeMethod CarcavelosCircuit.RaceFlow.Editor.Role4WebBuild.Build -quit -logFile Logs/web-build.log
+  python tools/serve_web_build.py
+  ```
+  then open `http://localhost:8000`. All Web settings come from that build script ([docs/setup.md](docs/setup.md#web-build-role-3-or-the-build-backup)).
+
 ## Run the tests
 In the Unity Editor: Window > General > Test Runner > EditMode > Run All. Command line (Unity closed), Windows:
 ```

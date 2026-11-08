@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+    <title>{{{ PRODUCT_NAME }}}</title>
+    <meta name="description" content="Carcavelos Circuit: a kart time trial around a seaside campus. Student project, made with Unity.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231D1D1F'/%3E%3Cpath d='M6 21h20' stroke='%2355585E' stroke-width='6' stroke-linecap='round'/%3E%3Crect x='9' y='9' width='14' height='9' rx='3' fill='%23EAEAEC'/%3E%3Crect x='5' y='17' width='6' height='3' rx='1.5' fill='%23FF8A1F'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="TemplateData/style.css">
+  </head>
+  <body>
+    <!-- Carcavelos Circuit Web template (Role 4, task P2). Plain HTML/CSS/JS, no external fonts or scripts.
+         The canvas always fills the window; Unity renders at that size (capped device pixel ratio). -->
+    <canvas id="cc-canvas" tabindex="-1" aria-label="Carcavelos Circuit game"></canvas>
+
+    <div id="cc-loader">
+      <div class="cc-center">
+        <h1 class="cc-title"><span>Carcavelos</span> <span class="cc-title-accent">Circuit</span></h1>
+        <p class="cc-subtitle">Campus time trial</p>
+        <div class="cc-road" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="cc-fill"></div>
+          <div class="cc-lane"></div>
+          <div class="cc-finish"></div>
+          <div class="cc-kart"></div>
+        </div>
+        <p class="cc-status">Loading 0%</p>
+        <p class="cc-tip">Hold Space in a corner to drift, let go for a boost.</p>
+      </div>
+      <p class="cc-credits">Student project, Intro to Programming, Nova SBE 2026 &middot; Sounds: our own synth + elevenlabs.io &middot; Not affiliated with Nintendo or Nova SBE &middot; v{{{ PRODUCT_VERSION }}}</p>
+    </div>
+
+    <button id="cc-fullscreen" type="button" title="Fullscreen" aria-label="Fullscreen" hidden>
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+
+    <div id="cc-toast" hidden></div>
+
+    <div id="cc-error" role="alert" hidden>
+      <h2>The game could not start</h2>
+      <p class="cc-error-message"></p>
+      <p class="cc-error-hint">Try a current Chrome, Edge or Firefox on a laptop with hardware acceleration switched on, then reload the page.</p>
+    </div>
+
+    <script>
+      var canvas = document.getElementById("cc-canvas");
+      var loader = document.getElementById("cc-loader");
+      var road = loader.querySelector(".cc-road");
+      var fill = loader.querySelector(".cc-fill");
+      var kart = loader.querySelector(".cc-kart");
+      var statusLine = loader.querySelector(".cc-status");
+      var tipLine = loader.querySelector(".cc-tip");
+
+      var tips = [
+        "Hold Space in a corner to drift, let go for a boost.",
+        "Drift longer: blue sparks, then orange sparks, then a bigger boost.",
+        "Off the track? Press R to go back to the last checkpoint.",
+        "Press Enter after the finish to try again.",
+        "Your best lap is saved in this browser."
+      ];
+      var tipIndex = 0;
+      var tipTimer = setInterval(function () {
+        tipIndex = (tipIndex + 1) % tips.length;
+        tipLine.textContent = tips[tipIndex];
+      }, 3500);
+
+      function showError(message) {
+        var box = document.getElementById("cc-error");
+        box.querySelector(".cc-error-message").textContent = String(message);
+        box.hidden = false;
+        statusLine.textContent = "Stopped";
+        clearInterval(tipTimer);
+      }
+
+      // Unity calls this for warnings (short toast) and errors (error box).
+      function showBanner(message, type) {
+        if (type === "error") {
+          showError(message);
+          return;
+        }
+        var toast = document.getElementById("cc-toast");
+        toast.textContent = String(message);
+        toast.hidden = false;
+        setTimeout(function () { toast.hidden = true; }, 5000);
+      }
+
+      // Progress: 0 to 0.9 = downloading, 0.9 to 1 = starting the engine.
+      function onProgress(progress) {
+        var percent = Math.round(progress * 100);
+        fill.style.transform = "scaleX(" + progress + ")";
+        kart.style.left = percent + "%";
+        road.setAttribute("aria-valuenow", String(percent));
+        statusLine.textContent = progress < 0.9 ? "Loading " + percent + "%" : "Starting the engine...";
+      }
+
+      // After loading: the game's own start screen asks for any key; a click on the canvas counts too
+      // and also unlocks the sound (browsers only allow audio after a click or key).
+      function onReady(unityInstance) {
+        clearInterval(tipTimer);
+        loader.classList.add("cc-done");
+        setTimeout(function () { loader.hidden = true; }, 400);
+
+        canvas.focus();
+
+        var fullscreenButton = document.getElementById("cc-fullscreen");
+        fullscreenButton.hidden = false;
+        fullscreenButton.addEventListener("click", function () {
+          unityInstance.SetFullscreen(1);
+          canvas.focus(); // keys go to the game, not to the button
+        });
+      }
+
+      var gl = document.createElement("canvas").getContext("webgl2");
+      if (!gl) {
+        showError("This browser has no WebGL 2, which the game needs.");
+      } else {
+        var loseContext = gl.getExtension("WEBGL_lose_context");
+        if (loseContext) {
+          loseContext.loseContext(); // the test context is not needed any more
+        }
+        var config = {
+          arguments: [],
+          dataUrl: "Build/{{{ DATA_FILENAME }}}",
+          frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_WASM
+          codeUrl: "Build/{{{ CODE_FILENAME }}}",
+#endif
+          streamingAssetsUrl: "StreamingAssets",
+          companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+          productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+          productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+          // Sharp on high-DPI laptop screens, but at most 1.5x the window size so the GPU keeps up.
+          devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
+          showBanner: showBanner
+        };
+
+        var script = document.createElement("script");
+        script.src = "Build/{{{ LOADER_FILENAME }}}";
+        script.onload = function () {
+          createUnityInstance(canvas, config, onProgress).then(onReady).catch(showError);
+        };
+        script.onerror = function () {
+          showError("The game files could not be downloaded. Check the connection and reload the page.");
+        };
+        document.body.appendChild(script);
+      }
+    </script>
+  </body>
+</html>
