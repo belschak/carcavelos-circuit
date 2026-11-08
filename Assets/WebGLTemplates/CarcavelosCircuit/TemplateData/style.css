@@ -215,6 +215,9 @@ html, body {
 
 #cc-fullscreen:hover, #cc-fullscreen:focus-visible { opacity: 1; outline: 2px solid var(--boost-orange); }
 
+/* Hidden while you drive (it sits where the split chip and countdown appear): it comes back when the mouse moves. */
+#cc-fullscreen.cc-idle { opacity: 0; pointer-events: none; }
+
 #cc-error {
   position: fixed;
   left: 50%;

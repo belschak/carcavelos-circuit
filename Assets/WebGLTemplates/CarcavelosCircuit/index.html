@@ -107,6 +107,17 @@
           unityInstance.SetFullscreen(1);
           canvas.focus(); // keys go to the game, not to the button
         });
+
+        // Auto-hide: any key (driving) hides the button at once; moving the mouse shows it for 2.5 s.
+        var idleTimer = 0;
+        function hideButton() { fullscreenButton.classList.add("cc-idle"); }
+        document.addEventListener("keydown", hideButton);
+        document.addEventListener("mousemove", function () {
+          fullscreenButton.classList.remove("cc-idle");
+          clearTimeout(idleTimer);
+          idleTimer = setTimeout(hideButton, 2500);
+        });
+        idleTimer = setTimeout(hideButton, 2500);
       }
 
       var gl = document.createElement("canvas").getContext("webgl2");

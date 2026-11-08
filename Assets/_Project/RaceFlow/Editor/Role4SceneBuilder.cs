@@ -208,7 +208,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             panel.scaleMode = PanelScaleMode.ScaleWithScreenSize;
             panel.referenceResolution = new Vector2Int(1280, 720);
             panel.screenMatchMode = PanelScreenMatchMode.MatchWidthOrHeight;
-            panel.match = 0.5f;
+            panel.match = 1f; // match the screen height: the HUD is always the same share of the height, extra width goes to the sides
             EditorUtility.SetDirty(panel);
             return panel;
         }
