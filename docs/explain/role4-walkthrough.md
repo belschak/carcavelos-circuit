@@ -16,18 +16,18 @@ RaceBootstrap.Start()  (coroutine)
   |-- LoadSceneAsync("Track_Campus", Additive)   no track inside? -> load "RaceFlow_PlaceholderTrack"
   |-- FindTrackIn(scene) -> PlaceholderTrack     (later: TrackInfo)
   |-- Instantiate(kartPrefab) at SpawnPoint      + KartAudio prefab as a child
-  |-- chaseCamera.SetTarget(kart)
-  '-- raceManager.SetUp(kart, track, sceneName)
+  |-- raceManager.SetUp(kart, track, sceneName)  checks the checkpoints, remembers the kart's colliders
+  '-- chaseCamera.SetTarget(kart)                 only if a chase camera is set (it is removed once Role 1's camera exists)
           |
           v
 RaceManager.Update()  every frame
   Ready --any key/click--> Countdown --3,2,1,GO--> Racing --finish line, all checkpoints--> Results
                               ^                                                              |
                               '--------------------- Retry (Enter or button) ----------------'
-  |  reads/writes kart only via IKartState (InputEnabled, ResetTo, Speed ...)
-  |  checkpoint triggers -> CheckpointRelay -> OnCheckpointEntered -> lap rules
+  |  reads/writes kart only via IKartState (InputEnabled every frame, ResetTo, Speed ...)
+  |  checkpoint triggers -> CheckpointRelay -> IsKartCollider? -> OnCheckpointEntered -> lap rules
   |
-  +--> RaceHud (UI Toolkit)  polls State, LapSeconds, BestSeconds, Kart ... every frame
+  +--> RaceHud (UI Toolkit)  polls State, LapSeconds, BestSeconds, Kart ... every frame, new text only on change
   +--> RaceSounds            listens to events CountdownStep, CheckpointPassed, LapFinished, Restarted, Recovered
   '--> KartAudio (Audio)     reads IKartState of its parent kart every frame; MusicPlayer loops music
 ```
@@ -51,7 +51,9 @@ Suggested order for the live walkthrough (about 5 minutes):
 | Placeholders (`PlaceholderTrack`, `PlaceholderCheckpoint`, `PlaceholderLapRules`, `PlaceholderKart`, `PlaceholderChaseCamera`) with the same public API as Role 1 and 2's contract | I could build and test R1 to R5 now without waiting for, or writing, Noah's and Alessandro's graded code. Swap day = rename types, delete placeholders. |
 | Race sounds in `RaceFlow/RaceSounds`, kart sounds in `Audio/KartAudio` | The `Audio` assembly may only reference `Shared`, so it cannot see `RaceManager`. Kart sounds only need `IKartState`, race sounds need the `RaceManager` events. |
 | HUD = UI Toolkit (`.uxml` + `.uss`) | Text files that work like HTML and CSS, no TextMesh Pro import, easy to read in a PR. PanelSettings scale from a 1280x720 reference. |
-| Plain C# classes for logic (`RaceTimer`, `RaceStateMachine`, `PersonalBest`, `PlaceholderLapRules`, `EnginePitch`), MonoBehaviours only as thin glue | Plain classes can be unit tested in Edit Mode with fake frame times, no scene needed. |
+| Plain C# classes for logic (`RaceTimer`, `RaceStateMachine`, `PersonalBest`, `PlaceholderLapRules`, `CheckpointValidation`, `FallCheck`, `ShownNumber`, `EnginePitch`), MonoBehaviours only as thin glue | Plain classes can be unit tested in Edit Mode with fake frame times, no scene needed. |
+| Official lap time from two timestamps, added-up frame times only for the live timer | Adding thousands of float frame times drifts by milliseconds, and the finish happens inside a physics step between two frames. One subtraction of two `double` timestamps is exact. |
+| HUD builds a new string only when the shown number changes | Strings built every frame are garbage; on the Web the garbage collector cleans up all at once, which shows as a hitch mid-lap. |
 | Scenes and prefabs built by `Role4SceneBuilder` (editor script) | Nobody hand-edits scene YAML; same result on every laptop; re-runnable. The kart swap is automatic: it picks Role 1's `Kart` prefab as soon as it exists. |
 | Track scenes may keep their own test cameras; `RaceBootstrap` switches them off | Each owner can test their scene alone, and the race still has exactly one camera and one AudioListener (Main's). |
 | Bloom via one global Volume in Main | Luc's request: drift sparks and boost flames should glow. The profile asset is created once and then left alone, so Role 3 can tune it. |
@@ -96,22 +98,25 @@ Decides which phase we are in. No Unity types, only numbers and events, so fully
 
 ### 3.4 `RaceFlow/RaceTimer.cs` (plain C#)
 
-- `ElapsedSeconds`, `IsRunning`; `Start()` (from 0, running), `Stop()` (freeze), `Reset()` (0, stopped).
-- `Tick(deltaTime)`: adds time only while running and only if `deltaTime > 0`.
-- `static Format(seconds)` -> `"1:23.456"`: converts to whole milliseconds first with `Math.Round`, then splits into minutes, seconds, ms. "Rounding once at the start means 59.9996 s becomes 1:00.000, never 0:60.000."
-- `static FormatDelta(delta)` -> `"-1.204"` / `"+0.500"`: always with a sign.
-- How I would explain it: "The timer does not read the clock itself. The RaceManager feeds it `Time.deltaTime` every frame, so in tests I can feed fake frame times."
+- `ElapsedSeconds`, `IsRunning`; `Start(startTime)` (from 0, running, remembers the GO timestamp), `Stop(stopTime)` (freeze; `ElapsedSeconds` becomes `stopTime - startTime`, the official lap time; a second call does nothing), `Reset()` (0, stopped).
+- `Tick(deltaTime)`: adds time only while running and only if `deltaTime > 0`. Only for the live timer on the HUD.
+- `SecondsSinceStart(now)`: exact time since GO from the timestamps, never negative (used for checkpoint splits).
+- `static ToMilliseconds(seconds)`: rounds once with `Math.Round`. The HUD compares these ints to know when a text must change.
+- `static Format(seconds)` / `FormatMilliseconds(ms)` -> `"1:23.456"`: splits whole milliseconds into minutes, seconds, ms. "Rounding once at the start means 59.9996 s becomes 1:00.000, never 0:60.000." Built in one reused `char[]` buffer (`WriteNumber` fills digits from the right), so only the final string is created.
+- `static FormatDelta(delta)` / `FormatDeltaMilliseconds(ms)` -> `"-1.204"` / `"+0.500"`: always with a sign, and the sign comes from the rounded value, so -0.0004 s shows "+0.000", never "-0.000".
+- How I would explain it: "The timer does not read the clock itself. The RaceManager passes it `Time.timeAsDouble` at GO and at the finish line, and `Time.deltaTime` every frame for the live display, so in tests I can feed fake times. Inside `OnTriggerEnter` Unity returns the time of the physics step, so the finish is measured at the physics step where the kart crossed the line, not at the next drawn frame."
 
 ### 3.5 `RaceFlow/RaceSettings.cs` (ScriptableObject)
 
-`[CreateAssetMenu]` so it can be created from the Assets menu; the asset is `RaceFlow/Settings/RaceSettings.asset`. Fields: `trackSceneName = "Track_Campus"`, `fallbackTrackSceneName = "RaceFlow_PlaceholderTrack"`, `countdownFrom = 3`, `countdownStepSeconds = 1`, `retryCountdownStepSeconds = 0.5`, `splitPopupSeconds = 2`, `hintSeconds = 2.5` (how long "Missed a checkpoint!" stays), `fallRecoverHeight = -20`. Read-only properties expose them.
+`[CreateAssetMenu]` so it can be created from the Assets menu; the asset is `RaceFlow/Settings/RaceSettings.asset`. Fields: `trackSceneName = "Track_Campus"`, `fallbackTrackSceneName = "RaceFlow_PlaceholderTrack"`, `countdownFrom = 3`, `countdownStepSeconds = 1`, `retryCountdownStepSeconds = 0.5`, `splitPopupSeconds = 2`, `hintSeconds = 2.5` (how long "Missed a checkpoint!" stays), `fallRecoverHeight = -20`, `fallCheckCooldownSeconds = 0.5` (pause of the fall check after a recover). Read-only properties expose them.
 
 - How I would explain it: "A ScriptableObject is a data asset that lives in the project, not in a scene. Designers change numbers in the Inspector without touching code, and several scripts share the same asset."
 - Concept: `[SerializeField] private` = private in code (nobody else can change it), but Unity saves it and shows it in the Inspector. `[Tooltip]` = hover help.
 
 ### 3.6 `RaceFlow/RaceKeys.cs` (static helper, new Input System)
 
-- `AnyKeyOrClickPressed()`: `Keyboard.current.anyKey.wasPressedThisFrame` or left mouse button.
+- `AnyKeyOrClickPressed()`: left mouse button, or a key that `CountsAsStartKey`. First a quick `anyKey.wasPressedThisFrame` check, then a `for` loop over `keyboard.allKeys` (a `for`, not `foreach`, so no garbage).
+- `CountsAsStartKey(Key)`: false for modifiers (Shift, Ctrl, Alt, Windows/Cmd), F1 to F24 and system keys (Escape, Tab, Caps Lock, Print Screen ...). "Alt-Tab or F11 for fullscreen must not start the countdown by accident." Public so `RaceKeysTests` can check it.
 - `RetryPressed()`: Enter or numpad Enter.
 - `RecoverPressed()`: R.
 - Every method checks `Keyboard.current != null` (no keyboard = null).
@@ -120,10 +125,10 @@ Decides which phase we are in. No Unity types, only numbers and events, so fully
 
 ### 3.7 `RaceFlow/CheckpointRelay.cs` (MonoBehaviour)
 
-Added by `RaceManager.SetUp` at runtime to every checkpoint object. `SetUp(manager, index)` stores both. `OnTriggerEnter(Collider other)`: if the thing that entered has an `IKartState` on itself or a parent, call `raceManager.OnCheckpointEntered(index)`.
+Added by `RaceManager.SetUp` at runtime, not to the checkpoint object itself but to every object under it that owns a trigger collider (Unity sends `OnTriggerEnter` only to the object with the collider, and Noah may put it on a child). `SetUp(manager, index)` stores both. `OnTriggerEnter(Collider other)`: if `raceManager.IsKartCollider(other)`, call `raceManager.OnCheckpointEntered(index)`.
 
-- How I would explain it: "The track should not know about the race. So I glue a tiny messenger onto each checkpoint. It only says 'the kart touched checkpoint N'; the rules decide if that counts."
-- Concept: triggers. A collider with `isTrigger` does not block, it only reports. `OnTriggerEnter` needs a Rigidbody on at least one of the two objects (the kart has one). `GetComponentInParent` works with interfaces.
+- How I would explain it: "The track should not know about the race. So I glue a tiny messenger onto each checkpoint trigger. It only says 'the kart touched checkpoint N'; the rules decide if that counts."
+- Concept: triggers. A collider with `isTrigger` does not block, it only reports. `OnTriggerEnter` needs a Rigidbody on at least one of the two objects (the kart has one). `Collider.attachedRigidbody` = the Rigidbody that moves this collider.
 
 ### 3.8 `RaceFlow/PersonalBest.cs` (plain C#)
 
@@ -146,28 +151,31 @@ Public read-only values for the HUD: `State`, `CountdownNumber`, `LapSeconds`, `
 
 Events: `CountdownStep`, `CheckpointPassed`, `LapFinished(float time, bool record)`, `Restarted` (the camera snaps behind the kart, RaceSounds clicks), `Recovered` (RaceSounds plays the respawn whoosh).
 
-- `SetUp(kartObject, track, trackName)` (~line 47): gets `IKartState` from the kart (error if missing); creates the lap rules with the number of checkpoints; loads the best time from `PlayerPrefs` with key `"CarcavelosCircuit.Best." + trackName`; creates the state machine and subscribes `OnStateChanged` and `OnCountdownStep` with `+=`; adds a `CheckpointRelay` to every checkpoint; puts the kart on the grid; `InputEnabled = false`. "Called once by the bootstrap, not in Start, because the kart does not exist yet when the scene starts."
+- `SetUp(kartObject, track, trackName)` (~line 50): gets `IKartState` from the kart (error if missing); remembers all Rigidbodies and colliders of the kart (`GetComponentsInChildren`, right after spawning, before the kart's own `Start` could unparent a physics sphere); `CheckCheckpoints` (red errors for an empty entry, a checkpoint without a trigger collider, or indices that are not exactly 0..N-1 via `CheckpointValidation.FindProblem`); creates the lap rules and the `FallCheck`; loads the best time from `PlayerPrefs` with key `"CarcavelosCircuit.Best." + trackName`; creates the state machine and subscribes `OnStateChanged` and `OnCountdownStep` with `+=`; `AddRelays` for every checkpoint; puts the kart on the grid; `InputEnabled = false`. "Called once by the bootstrap, not in Start, because the kart does not exist yet when the scene starts."
+- `IsKartCollider(other)`: true if `other` is one of the remembered kart colliders, or its `attachedRigidbody` is one of the remembered kart Rigidbodies, or it has `IKartState` on itself or a parent. "Sphere controllers often unparent their physics sphere, then the parent check alone would never see the kart."
 - `OnDestroy()`: unsubscribes with `-=`. "Always remove listeners you added, otherwise a destroyed object can still be called."
 - `Update()` (~line 89), the heart:
   1. Not set up yet: do nothing.
-  2. Ready: wait for any key or click, then `BeginCountdown(CountdownStepSeconds)`.
-  3. `timer.Tick` then `stateMachine.Tick` with `Time.deltaTime`. "Timer first: on the GO frame the timer is not running yet, so the GO frame does not count as race time."
-  4. Racing or Results + Enter: `Retry()`.
-  5. Racing + R or kart below `FallRecoverHeight`: `Recover()`.
+  2. `kart.InputEnabled = stateMachine.InputAllowed`, every frame. "If the kart switched its own input on in its Start, this switches it off again, so it can never drive before GO."
+  3. Ready: wait for any start key or click, then `BeginCountdown(CountdownStepSeconds)`.
+  4. `timer.Tick` then `stateMachine.Tick` with `Time.deltaTime`. "Timer first: on the GO frame the timer is not running yet, so the GO frame does not count as race time."
+  5. Racing or Results + Enter: `Retry()`.
+  6. Racing + R or `fallCheck.HasFallen(height, Time.time)`: `Recover()`.
 - `Retry()` (public, also called by the HUD button): ignored in Ready; kart back to the grid (`ResetTo` also clears drift/boost), `rules.Reset()`, `timer.Reset()`, clears record/split/hint flags, quick countdown, fires `Restarted`.
-- `Recover()`: `track.GetRespawnPoint(rules.LastValidCheckpoint)` then `kart.ResetTo(...)`, fires `Recovered`. Timer keeps running, no checkpoint awarded. "Recovering costs you time, that is the penalty."
-- `OnCheckpointEntered(index)`: only while Racing. Index 0 = start/finish: `rules.TryFinish()` -> `FinishLap()`; if it fails after at least one checkpoint, hint "Missed a checkpoint! Press R to go back". Other index: `rules.PassCheckpoint(index)`; if valid, record the split, show it for `SplitPopupSeconds`, fire `CheckpointPassed`.
-- `FinishLap()` (private): `stateMachine.Finish()` (guards double finish), stop the timer, remember `PreviousBestSeconds`, `personalBest.FinishRun`; if record: `PlayerPrefs.SetString` + `PlayerPrefs.Save()`; fire `LapFinished`.
-- `OnStateChanged(newState)`: `kart.InputEnabled = stateMachine.InputAllowed`; when entering Racing: `rules.StartLap()`, `personalBest.StartRun()`, `timer.Start()`.
+- `Recover()` (public, guarded: only when set up and Racing): `track.GetRespawnPoint(rules.LastValidCheckpoint)` then `kart.ResetTo(...)`, `fallCheck.NoteRecovered(Time.time)`, fires `Recovered`. Timer keeps running, no checkpoint awarded. "Recovering costs you time, that is the penalty."
+- `OnCheckpointEntered(index)`: only while Racing. Index 0 = start/finish: `rules.TryFinish()` -> `FinishLap()`; if it fails after at least one checkpoint, hint "Missed a checkpoint! Press R to go back". Other index: `rules.PassCheckpoint(index)`; if valid, record the split with `timer.SecondsSinceStart(Time.timeAsDouble)`, show it for `SplitPopupSeconds`, fire `CheckpointPassed`.
+- `FinishLap()` (private): `stateMachine.Finish()` (guards double finish), `timer.Stop(Time.timeAsDouble)` (we are inside `OnTriggerEnter`, so this is the physics step's time), remember `PreviousBestSeconds`, `personalBest.FinishRun`; if record: `PlayerPrefs.SetString` + `PlayerPrefs.Save()`; fire `LapFinished`.
+- `OnStateChanged(newState)`: `kart.InputEnabled = stateMachine.InputAllowed`; when entering Racing: `rules.StartLap()`, `personalBest.StartRun()`, `timer.Start(Time.timeAsDouble)`.
 - `OnCountdownStep(number)`: forwards the state machine's event to RaceManager's own `CountdownStep` (so HUD and sounds only need to know the RaceManager).
 - `PutKartOnStartGrid()`, `ShowHint(text)` (visible for `settings.HintSeconds`).
+- Helpers in their own plain C# files: `CheckpointValidation.FindProblem(indices)` returns "" or a sentence ("checkpoint index 3 is outside 0..2", "used twice"); `FallCheck` (`HasFallen(height, now)` is false during `fallCheckCooldownSeconds` after `NoteRecovered`, so a physics kart that only reaches the respawn point in the next physics step is not recovered several times).
 - Concepts: MonoBehaviour lifecycle (`Update` every frame, `OnDestroy`), events/delegates (`Action<T>`, `+=`/`-=`, null check before invoking), PlayerPrefs (on Web stored in the browser, IndexedDB), `Time.time` for "visible until" timestamps.
 
 ### 3.10 `RaceFlow/RaceBootstrap.cs` (MonoBehaviour)
 
 Entry point of `Main.unity` (task R1). Serialized: `settings`, `kartPrefab`, `kartAttachments[]` (the KartAudio prefab), `raceManager`, `chaseCamera`.
 
-- `IEnumerator Start()` (~line 28): a coroutine. Loads the campus scene, looks for a track; if none, it first unloads the empty campus scene (`SceneManager.UnloadSceneAsync`, so its test camera or lights do not end up in the race) and loads the fallback placeholder scene; error if still none. Then `SetActiveScene(track scene)` (its lighting and sky are used), `TurnOffTestCameras(track scene)`, `Instantiate(kartPrefab, spawn.position, spawn.rotation)`, instantiates each attachment as a child of the kart, `chaseCamera.SetTarget`, `raceManager.SetUp`, and subscribes `chaseCamera.SnapBehindTarget` to `Restarted`.
+- `IEnumerator Start()` (~line 28): a coroutine. Loads the campus scene, looks for a track; if none, it logs a yellow warning (on swap day Noah's `TrackInfo` may already be there while this code still looks for `PlaceholderTrack`, so the warning says "do the swap"), unloads the campus scene (`SceneManager.UnloadSceneAsync`, so its test camera or lights do not end up in the race) and loads the fallback placeholder scene; error if still none. Then `SetActiveScene(track scene)` (its lighting and sky are used), `TurnOffTestCameras(track scene)`, `Instantiate(kartPrefab, spawn.position, spawn.rotation)`, instantiates each attachment as a child of the kart, `raceManager.SetUp` first, and only then, if a chase camera is set, `chaseCamera.SetTarget` and `Restarted += chaseCamera.SnapBehindTarget`. "The race comes first: once the placeholder camera is removed the field is empty, and that must never stop the race from being set up." `OnDestroy` removes the listener again.
 - `LoadSceneIfNeeded(name)`: skip if already loaded (both scenes open in the Editor); warn if not in the build list (`Application.CanStreamedLevelBeLoaded`); else `yield return SceneManager.LoadSceneAsync(name, LoadSceneMode.Additive)`.
 - `TurnOffTestCameras(name)` (~line 90): in the loaded track scene, every GameObject with a `Camera` is switched off (`SetActive(false)`) and every `AudioListener` disabled. "Owners may keep a test camera in their own scene. In the race only Main's camera may render and listen: two AudioListeners give a Unity warning, two cameras the wrong picture."
 - `FindTrackIn(name)`: loops over the scene's root objects with `GetComponentInChildren<PlaceholderTrack>()`. "No `GameObject.Find`, which is slow and breaks when someone renames an object."
@@ -191,18 +199,19 @@ Race interface sounds on one 2D `AudioSource`. `OnEnable` subscribes to `Countdo
 
 `RaceHud.cs`: `[RequireComponent(typeof(UIDocument))]` (Unity adds the UIDocument automatically and stops you removing it).
 
-- `OnEnable()`: `root.Q<Label>("timer")` etc. finds every element by name; sets `retryButton.focusable = false` and subscribes the button (`retryButton.clicked += OnRetryClicked`) and `CountdownStep`. `OnDisable()` unsubscribes. "Not focusable: otherwise, after a mouse click, the button keeps keyboard focus and Space (drift) or Enter in the next race would press it again."
+- One `ShownNumber` per label (`shownTimer`, `shownSpeed`, `shownCountdown` ...): `Changed(value)` is true only when the number on screen is different, then the HUD builds the new text. Timer and best are compared in whole milliseconds, speed in km/h, the boost bar in half-percent steps.
+- `OnEnable()`: `root.Q<Label>("timer")` etc. finds every element by name; `ForgetShownNumbers()` (new labels, so everything is written once); sets `retryButton.focusable = false` and subscribes the button (`retryButton.clicked += OnRetryClicked`), `CountdownStep` and `LapFinished`. `OnDisable()` unsubscribes. "Not focusable: otherwise, after a mouse click, the button keeps keyboard focus and Space (drift) or Enter in the next race would press it again."
 - `OnRetryClicked()`: `raceManager.Retry()`.
 - `OnCountdownStep(0)`: remembers `goVisibleUntil = Time.time + 0.8 s`.
-- `Update()`: shows the start screen only in Ready, results only in Results, then updates each part. "The HUD only reads the RaceManager, it never changes the race (except the Retry button, which calls the same public `Retry()` as the Enter key)."
+- `OnLapFinished(time, record)`: fills the results screen once per lap: final time, "NEW RECORD!", delta to the previous best or "First lap on this track".
+- `Update()`: shows the start screen only in Ready, results only in Results; updates the start screen only in Ready, then the other parts. "The HUD only reads the RaceManager, it never changes the race (except the Retry button, which calls the same public `Retry()` as the Enter key)."
 - `UpdateStartScreen()`: blinking "Press any key" with `Mathf.Sin(Time.time)`; "Loading track..." until `IsSetUp`; "Your best: ...".
 - `UpdateCountdown()`: number during Countdown, "GO!" for 0.8 s after.
-- `UpdateTimes()`: `RaceTimer.Format` for lap and best (`--:--.---` if none).
-- `UpdateSplitAndHint()`: split only if racing, there is a delta, and its time has not run out.
-- `UpdateKartInfo()`: km/h = `|Speed| * 3.6`; boost bar width = `Length.Percent(DriftCharge01 * 100)`; label "DRIFT", "DRIFT  1", "DRIFT  MAX", "BOOST!".
-- `UpdateResults()`: final time, "NEW RECORD!", delta to the previous best or "First lap on this track".
-- `SetVisible()`: `style.display = Flex / None`.
-- Concept: polling (HUD reads every frame) vs events (sounds react once). For labels that change every frame, polling is simpler.
+- `UpdateTimes()`: `RaceTimer.FormatMilliseconds` for lap and best (`--:--.---` if none), only when the millisecond value changed.
+- `UpdateSplitAndHint()`: split only if racing, there is a delta, and its time has not run out; colour from the rounded delta.
+- `UpdateKartInfo()`: km/h = `|Speed| * 3.6`; boost bar width = `Length.Percent(...)`; label "DRIFT", "DRIFT  1", "DRIFT  MAX", "BOOST!" and the stage classes only when stage or boost change.
+- `SetVisible()`: `style.display = Flex / None`, only written when it changes.
+- Concept: polling (HUD reads every frame) vs events (sounds and the results screen react once). Garbage: every new string is memory the garbage collector must clean; in a Web build it cleans all at once at the end of a frame, so building 20 strings per frame shows as small hitches.
 
 ### 3.13 `RaceFlow/Placeholders/` (stand-ins, deleted on swap day)
 
@@ -226,11 +235,12 @@ The sound maths, kept out of MonoBehaviours so it can be unit tested. All number
 
 ### 3.15 `Audio/KartAudio.cs` (MonoBehaviour, on the KartAudio prefab under the kart)
 
-Seven 2D AudioSources: five loops that always run (engine low, engine high, tyre squeal, sparks, wind; only their volume changes, because starting a loop late can click) and two one-shot sources (stage chime with its own pitch, and effects).
+Eight 2D AudioSources: five loops that always run (engine low, engine high, tyre squeal, sparks, wind; only their volume changes, because starting a loop late can click) and three one-shot sources (two stage-chime sources that take turns, and effects).
 
 - `Start()`: `GetComponentInParent<IKartState>()`; if none, warn and `enabled = false`. Starts every loop at volume 0.
 - `UpdateEngine`: target revs = `Speed01`, or 0 while `InputEnabled` is false (idle during countdown and results); `MoveLimited`; pitch of both loops from revs (+0.1 while boosting or airborne); volume 0.45 to 0.75 with revs, split by `HighLoopMix`.
-- `UpdateDrift`: chirp on the frame a drift starts; squeal fades in/out with `Mathf.MoveTowards`; sparks volume/pitch from `DriftSound` by stage; chime each time the stage goes up, pitched higher per stage.
+- Teleport check at the start of `Update`: if the kart moved more than `teleportDistance` (10 m) in one frame, it was put back (R, fall, retry), so `airSeconds = 0` and `wasGrounded = true`. "Audio may only read `IKartState`, it cannot hear the RaceManager's `Recovered` event. Without this, landing on the respawn point after a fall would play a thud on top of the whoosh."
+- `UpdateDrift`: chirp on the frame a drift starts; squeal fades in/out with `Mathf.MoveTowards`; sparks volume/pitch from `DriftSound` by stage; chime each time the stage goes up, pitched higher per stage, alternating between `stageSource` and `secondStageSource`. "The chime is 1.2 s long and stage 2 comes 0.8 s after stage 1. Changing the pitch of a source that still rings would bend the first chime."
 - `UpdateWind`: volume `0.35 * speed01^2` (only audible when fast), pitch 0.8 to 1.2. "The cheapest way to make speed feel fast."
 - `UpdateBoostAndLanding`: whoosh on the first frame of a boost (`IsBoosting && !wasBoosting`); landing thud after at least 0.3 s in the air.
 - How I would explain it: "Two engine recordings, low and high revs. Playing a recording faster raises its pitch like a tape, and between low and high revs one fades into the other. I remember last frame's values (`wasDrifting`, `wasBoosting`, `lastDriftStage`, `wasGrounded`) to detect the moment something starts."
@@ -245,16 +255,17 @@ Seven 2D AudioSources: five loops that always run (engine low, engine high, tyre
 Menu **Carcavelos Circuit > Build Role 4 Scenes** (`[MenuItem("Carcavelos Circuit/Build Role 4 Scenes")]`), or batch: `-executeMethod CarcavelosCircuit.RaceFlow.Editor.Role4SceneBuilder.BuildAll`.
 
 `BuildAll()` does, in order:
+0. Safety first: `EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()` (stops if you press Cancel), then `MayRebuildMain()`: `FindHandEditsInMain()` opens Main and checks that the builder's own root objects (`Main Camera`, `PostProcessing`, `RaceSystems`, `HUD`, `Music`, listed in `BuilderComponents`) have no children and no components the builder did not add. If they do, batch mode stops with an error and exit code 1, the menu asks "Rebuild anyway / Cancel".
 1. Ensures folders.
 2. `CreateSettings()`: loads or creates `RaceSettings.asset` (existing values kept) and calls `EditorUtility.SetDirty`, so fields added to `RaceSettings` later (like `hintSeconds`) are written into the file with their defaults.
 3. `CreatePanelSettings()`: theme file + PanelSettings (scale with screen size, 1280x720, match 0.5).
-4. `CreateKartAudioPrefab()`: 7 AudioSources + `KartAudio`, clips `kart_engine_low/high`, `kart_drift_squeal/sparks/start/stage_up` (Luc's), `amb_wind_loop`, `el_boost_whoosh`, `sfx_landing_thud`. Private fields are filled with `SerializedObject.FindProperty(...)`.
+4. `CreateKartAudioPrefab()`: 8 AudioSources + `KartAudio`, clips `kart_engine_low/high`, `kart_drift_squeal/sparks/start/stage_up` (Luc's), `amb_wind_loop`, `el_boost_whoosh`, `sfx_landing_thud`. Private fields are filled with `SerializedObject.FindProperty(...)`.
 5. `FindRealKartPrefab()` (~line 199): `AssetDatabase.FindAssets("Kart t:Prefab")` under `Assets/_Project/Driving`; uses a prefab only if it is named exactly `Kart` and its root has a component implementing `IKartState`. "The kart swap is automatic: once Alessandro's prefab exists, re-running the builder puts it into Main."
 6. Only if no real kart was found: `CreatePlaceholderKartPrefab()`: Rigidbody (150 kg, interpolate, continuous collision, X/Z rotation frozen), frictionless box collider, `PlaceholderKart`, a `Visual` child made of primitives.
 7. `BuildPlaceholderTrackScene()`: a ~230 m rectangular loop around a sand "building", walls, cones, a kicker ramp, 4 checkpoint triggers (15 m wide) each with a `RespawnPoint` child 4 m after it, and a `SpawnPoint` just after the start line.
-8. `BuildMainScene()`: camera + AudioListener + chase camera, with `GetUniversalAdditionalCameraData().renderPostProcessing = true`; a global `Volume` object "PostProcessing" using `CreateVolumeProfile()`; `RaceSystems` (RaceManager, RaceBootstrap, UI AudioSource, RaceSounds), `HUD` (UIDocument + RaceHud), `Music`. All references wired.
+8. `BuildMainScene()`: rebuilds Main in place: opens the existing `Main.unity`, deletes only the builder's own root objects and keeps every other root object (logged as "kept ..."), so Role 1 can add a camera rig as its own root object. Then camera + AudioListener + chase camera, with `GetUniversalAdditionalCameraData().renderPostProcessing = true`; a global `Volume` object "PostProcessing" using `CreateVolumeProfile()`; `RaceSystems` (RaceManager, RaceBootstrap, UI AudioSource, RaceSounds), `HUD` (UIDocument + RaceHud), `Music`. All references wired.
 9. `CreateVolumeProfile()` (called from step 8): `RaceFlow/Settings/RaceCameraVolume.asset` with Bloom (threshold 0.9 = only very bright pixels glow, intensity 0.6, scatter 0.6). If the asset already exists it is returned unchanged, so Role 3's tuning survives a rebuild.
-10. Build list: Main, Track_Campus, RaceFlow_PlaceholderTrack. `ProjectSetup.SetBuildScenes` (Shared/Editor) now writes the same three, the placeholder track only if its file exists, so both menus agree.
+10. `MergeBuildScenes()`: Main, Track_Campus, RaceFlow_PlaceholderTrack first (ticked), then every other scene that was already in the build list, with its tick box. Merged, never replaced. (`ProjectSetup.SetBuildScenes` in Shared/Editor still writes only the three; run the builder after it if someone added scenes.)
 
 The editor asmdef references `Shared`, `Shared.Editor`, `RaceFlow`, `Audio` and, for the Volume and Bloom types, `Unity.RenderPipelines.Core.Runtime` and `Unity.RenderPipelines.Universal.Runtime`. All six are recorded in `docs/decisions.md`.
 
@@ -286,11 +297,15 @@ python tools/serve_web_build.py
 
 ## 4. Tests
 
-All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceFlow, Audio; editor only).
+All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceFlow, Audio, Unity.InputSystem; editor only).
 
 | File | What it proves |
 |---|---|
-| `RaceTimerTests` | No counting before Start; frame times add up; Stop freezes; Reset goes to 0; negative frame time ignored; `Format` (0:00.000, 1:23.456, 59.9996 -> 1:00.000, negative -> 0); `FormatDelta` always signed. |
+| `RaceTimerTests` | No counting before Start; frame times add up; Stop freezes; Reset goes to 0; negative frame time ignored; official lap time comes from the timestamps (a minute of 60 fps frames, a long frame), a second Stop changes nothing, `SecondsSinceStart` never negative; `Format`/`FormatMilliseconds` (0:00.000, 1:23.456, 59.9996 -> 1:00.000, 100:00.000, negative -> 0); `FormatDelta` always signed, -0.0004 -> "+0.000". |
+| `CheckpointValidationTests` | 0..N-1 in any order is fine; no checkpoints, numbering from 1, a duplicate or a negative index is reported. |
+| `FallCheckTests` | Below the fall height = fallen; no second recover during the 0.5 s pause; a real fall after the pause counts. |
+| `ShownNumberTests` | First value and new values count as changed, the same value does not; `Forget` makes the next one a change. |
+| `RaceKeysTests` | Letters, Space, Enter, arrows start the race; Alt, Ctrl, Shift, Windows/Cmd, Tab, Escape, F1/F11/F12/F24, Print Screen do not. |
 | `RaceStateMachineTests` | Starts in Ready with input off; countdown fires 3, 2, 1, 0 then Racing with input on; not over at 2.9 s; one 10 s frame still fires every step; Finish only while racing, no double finish, input off in Results; retry countdown at 0.5 s per step; StateChanged reports Countdown, Racing, Results; bad settings (0 steps, 0 s) cannot freeze the race. |
 | `PersonalBestTests` | First lap is a record; slower or equal is not, faster is; no split delta without a best lap; deltas ahead (-0.5) and behind (+1); out-of-range index ignored; save string round trip; dot not comma; broken saves = no record; other checkpoint count keeps time, drops splits. |
 | `PlaceholderLapRulesTests` | In order then finish works; skipped checkpoint cannot finish; same checkpoint twice counts once; no double finish; `LastValidCheckpoint` for recovery; Reset starts over. |
@@ -313,17 +328,17 @@ Do it on a branch `role4/<task-id>-swap-contract`, after `git pull` of `main` wi
 
 **A. Track (Noah: `TrackInfo`, `Checkpoint`, `RaceRules` in `CarcavelosCircuit.Track`)**
 1. Read their code first and confirm the members match `docs/interfaces.md`: `TrackInfo.Checkpoints` (`Checkpoint[]`), `SpawnPoint`, `GetRespawnPoint(int)`; `Checkpoint.Index`; `RaceRules(int)`, `StartLap()`, `PassCheckpoint(int)`, `TryFinish()`, `LastValidCheckpoint`, `Reset()`.
-2. Confirm the checkpoint 0 meaning is the same as in `PlaceholderLapRules`: index 0 = start/finish line, it is never passed with `PassCheckpoint`; `PassCheckpoint` accepts only 1, 2, 3 ... in order; `TryFinish` is true once all of them were passed, and only once; `LastValidCheckpoint` is 0 before the first checkpoint. `RaceManager.OnCheckpointEntered` relies on exactly this (index 0 -> `TryFinish`, others -> `PassCheckpoint`). If Noah's rules differ, adapt `OnCheckpointEntered`, not his class.
+2. Confirm the checkpoint 0 meaning is the same as in `PlaceholderLapRules` (now written into `docs/interfaces.md`; a wrong numbering shows a red `RaceManager` error at start): index 0 = start/finish line, it is never passed with `PassCheckpoint`; `PassCheckpoint` accepts only 1, 2, 3 ... in order; `TryFinish` is true once all of them were passed, and only once; `LastValidCheckpoint` is 0 before the first checkpoint. `RaceManager.OnCheckpointEntered` relies on exactly this (index 0 -> `TryFinish`, others -> `PassCheckpoint`). If Noah's rules differ, adapt `OnCheckpointEntered`, not his class.
 3. `RaceManager.cs`: add `using CarcavelosCircuit.Track;`; field `private PlaceholderLapRules rules;` -> `private RaceRules rules;`; `private PlaceholderTrack track;` -> `private TrackInfo track;`; `new PlaceholderLapRules(checkpointCount)` -> `new RaceRules(checkpointCount)`; `SetUp(GameObject kartObject, PlaceholderTrack loadedTrack, ...)` -> `TrackInfo loadedTrack`. Delete the two "swap to ..." comments.
 4. `RaceBootstrap.cs`: add `using CarcavelosCircuit.Track;`; `PlaceholderTrack track` (Start) -> `TrackInfo track`; `FindTrackIn` return type and `GetComponentInChildren<PlaceholderTrack>()` -> `TrackInfo`.
 5. Fallback: once `Track_Campus` has a `TrackInfo`, set `fallbackTrackSceneName` to empty in `RaceSettings.asset` (Inspector), so the placeholder scene is no longer needed.
 6. Test cameras in `Track_Campus` are fine: `TurnOffTestCameras` switches off every Camera GameObject and AudioListener in the track scene. Only ask Noah to keep the test camera on its own GameObject (that whole object is switched off) and to make checkpoint colliders `isTrigger`.
 
 **B. Kart (Alessandro: `Kart` prefab, root has `KartController : IKartState`)**
-7. Check the collider that touches the checkpoint triggers sits on the `KartController` object or a child of it (`CheckpointRelay` uses `GetComponentInParent<IKartState>()`). A sphere controller whose sphere is a separate, unparented object would never trigger checkpoints.
+7. Check the kart's Rigidbody and colliders are on the `Kart` prefab root or its children when it is spawned (`RaceManager.IsKartCollider` remembers them at spawn, so the sphere may be unparented later in `Start`). A sphere that is a separate object never under the prefab would not count.
 8. Check `InputEnabled = false` stops all input (and does not release a drift into a boost) and `ResetTo` zeroes velocity and clears drift/boost (request Q6 in `TASKS.md`).
-9. No code change for the kart: the prefab must be named exactly `Kart` and live under `Assets/_Project/Driving/`, with `KartController` on the root. Then run **Carcavelos Circuit > Build Role 4 Scenes**; `FindRealKartPrefab()` picks it up and the Console says "Role4SceneBuilder: using Role 1's kart ...". Never set the prefab by hand in Main's Inspector: the builder rewrites `Main.unity` on every run.
-10. Camera: keep `PlaceholderChaseCamera` until Role 1's Cinemachine camera (D2) exists; then remove it from `BuildMainScene` and from `RaceBootstrap` (`chaseCamera` field, `SetTarget`, the `Restarted += SnapBehindTarget` line).
+9. No code change for the kart: the prefab must be named exactly `Kart` and live under `Assets/_Project/Driving/`, with `KartController` on the root. Then run **Carcavelos Circuit > Build Role 4 Scenes**; `FindRealKartPrefab()` picks it up and the Console says "Role4SceneBuilder: using Role 1's kart ...". Never set the prefab by hand in Main's Inspector: the builder rewrites its own objects in `Main.unity` on every run.
+10. Camera: keep `PlaceholderChaseCamera` until Role 1's Cinemachine camera (D2) exists. Role 1's camera rig goes into Main as its own root object (the builder keeps it). Then remove the placeholder camera from `BuildMainScene` and from `BuilderComponents` ("Main Camera" entry), and in `RaceBootstrap` the `chaseCamera` field and its `if` block; the race already works with the field empty.
 
 **C. Delete and rebuild**
 11. In the Unity Editor (never in Explorer, keeps `.meta` files right): delete `PlaceholderTrack`, `PlaceholderCheckpoint`, `PlaceholderLapRules`, `PlaceholderKart` (and `PlaceholderChaseCamera` once D2 is in), `Tests/EditMode/PlaceholderLapRulesTests.cs`, `RaceFlow/Prefabs/PlaceholderKart.prefab`, `RaceFlow/Scenes/RaceFlow_PlaceholderTrack.unity`.
@@ -357,12 +372,13 @@ Do it on a branch `role4/<task-id>-swap-contract`, after `git pull` of `main` wi
 
 ## 7. Still open (be honest if asked)
 
-Fixed on 2026-11-08 and no longer weak spots: drift boost after the finish, drift cancelling itself on the placeholder kart, hard-coded hint time, campus scene staying loaded on fallback, the two build lists disagreeing, Retry button focus, manual kart swap.
+Fixed on 2026-11-08 and no longer weak spots: drift boost after the finish, drift cancelling itself on the placeholder kart, hard-coded hint time, campus scene staying loaded on fallback, the two build lists disagreeing, Retry button focus, manual kart swap. Robustness pass (audit, same day): race no longer depends on the placeholder camera, kart found by its Rigidbody/colliders, checkpoint check with red errors, builder keeps other people's work, input forced off outside Racing every frame, lap time from timestamps, HUD without per-frame strings, one recover per fall, no landing thud after a teleport, stage chimes no longer bend each other, Alt/F11 no longer start the race.
 
-- **Sphere kart and checkpoints** (`CheckpointRelay.cs:23`): checkpoints only count if the collider that enters the trigger has the `IKartState` component on itself or a parent. If Alessandro's physics sphere is a separate object that is not a child of `KartController`, no checkpoint ever counts. Check this the day D1 lands (checklist step 7).
-- **Checkpoint 0 meaning not yet confirmed with Noah**: `docs/interfaces.md` only says "the finish line is checkpoint 0 / the last crossing". My code assumes the `PlaceholderLapRules` meaning (checklist step 2). Confirm before T5 is merged.
+- **Sphere kart and checkpoints**: handled for a sphere that is under the prefab at spawn (`IsKartCollider`), but not yet tested with Alessandro's real kart. Check the day D1 lands (checklist step 7).
+- **Checkpoint 0 meaning written down, not yet confirmed by Noah**: `docs/interfaces.md` now says index 0 = start/finish, indices exactly 0..N-1. A wrong numbering gives a red error at start instead of a silent unfinishable lap. Confirm before T5 is merged.
+- **Personal bests reset on every itch.io re-upload** (decided and accepted in `docs/decisions.md`): Web PlayerPrefs live under a folder named after the page URL, and itch.io changes it per upload.
 - **Cinemachine cameras in track scenes**: `TurnOffTestCameras` only finds `Camera` components and `AudioListener`s. A `CinemachineCamera` has neither, so once Role 1's camera with a `CinemachineBrain` is in Main, a Cinemachine test camera left in a track scene could take over the view. Ask owners not to leave Cinemachine cameras in their scenes, or extend the method then.
 - **Camera object is switched off as a whole** (`RaceBootstrap.cs:97`, `SetActive(false)`): anything else on that GameObject or its children goes off too. Fine as long as test cameras sit on their own object.
 - **Kart prefab name is strict** (`Role4SceneBuilder.FindRealKartPrefab`): exactly `Kart`, under `Driving/`, `IKartState` on the root. A prefab called "Kart Variant" or with the controller on a child is ignored and the placeholder stays, silently apart from the missing Console line.
 - **Bloom not yet checked in a Web build with real effects**: it depends on Role 3's sparks and flames being bright enough (above threshold 0.9). Check it looks right and the frame rate stays fine on a normal laptop.
-- **By design, worth remembering**: the builder rewrites `Main.unity` on every run, so any hand edit in Main is lost; the Volume profile and `RaceSettings` values are kept.
+- **By design, worth remembering**: the builder rewrites its own root objects in `Main.unity` on every run (values set by hand on them are lost; added components or children make it stop and ask); other root objects, the Volume profile and `RaceSettings` values are kept.

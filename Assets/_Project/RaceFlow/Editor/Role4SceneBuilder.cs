@@ -6,6 +6,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 namespace CarcavelosCircuit.RaceFlow.Editor
@@ -14,7 +15,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
     // on every laptop: settings, HUD panel, kart + kart-audio prefabs, the placeholder test track and Main.unity.
     // Menu: Carcavelos Circuit > Build Role 4 Scenes. Command line (Unity closed):
     //   Unity.exe -batchmode -projectPath . -executeMethod CarcavelosCircuit.RaceFlow.Editor.Role4SceneBuilder.BuildAll -quit
-    // Safe to run again: Main and the placeholder track are rebuilt (Role 4 owns them), RaceSettings keeps its values.
+    // Safe to run again: the placeholder track is rebuilt, RaceSettings keeps its values. In Main.unity only the
+    // builder's own root objects are rebuilt; root objects someone else added are kept. If someone added components
+    // or children to the builder's own objects, the builder stops (batch mode: error, exit code 1; menu: asks first).
     public static class Role4SceneBuilder
     {
         private const string Root = "Assets/_Project/";
@@ -34,6 +37,18 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         [MenuItem("Carcavelos Circuit/Build Role 4 Scenes")]
         public static void BuildAll()
         {
+            // The builder opens other scenes, so unsaved edits in the open scene would be lost without asking.
+            // (In batch mode nothing is open and this simply returns true.)
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            {
+                Debug.LogWarning("Role4SceneBuilder: cancelled, nothing was changed.");
+                return;
+            }
+            if (!MayRebuildMain())
+            {
+                return;
+            }
+
             foreach (string folder in new[] { "RaceFlow/Settings", "RaceFlow/UI", "RaceFlow/Prefabs", "RaceFlow/Materials", "RaceFlow/Scenes", "Audio/Prefabs", "Audio/Clips" })
             {
                 ProjectSetup.EnsureFolder(Root + folder);
@@ -51,15 +66,112 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             BuildPlaceholderTrackScene();
             BuildMainScene(settings, panel, kart, kartAudio);
 
-            // Build order: Main first (the game starts there), then the tracks it can load.
-            EditorBuildSettings.scenes = new[]
-            {
-                new EditorBuildSettingsScene(MainScenePath, true),
-                new EditorBuildSettingsScene(CampusScenePath, true),
-                new EditorBuildSettingsScene(TrackScenePath, true),
-            };
+            MergeBuildScenes();
             AssetDatabase.SaveAssets();
             Debug.Log("Role4SceneBuilder: done.");
+        }
+
+        // Build order: Main first (the game starts there), then the tracks it can load, then every other scene that
+        // someone added to File > Build Profiles (kept with its tick box). Merged, never replaced.
+        private static void MergeBuildScenes()
+        {
+            string[] ours = { MainScenePath, CampusScenePath, TrackScenePath };
+            var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
+            foreach (string path in ours)
+            {
+                scenes.Add(new EditorBuildSettingsScene(path, true));
+            }
+            foreach (EditorBuildSettingsScene existing in EditorBuildSettings.scenes)
+            {
+                if (System.Array.IndexOf(ours, existing.path) < 0)
+                {
+                    scenes.Add(existing);
+                }
+            }
+            EditorBuildSettings.scenes = scenes.ToArray();
+        }
+
+        // ---------- guard for Main.unity ----------
+
+        // The builder's own root objects in Main.unity and the only components it puts on each of them.
+        // null = not a builder object: someone else's, kept on every rebuild.
+        private static System.Type[] BuilderComponents(string rootName)
+        {
+            switch (rootName)
+            {
+                case "Main Camera":
+                    return new[] { typeof(Transform), typeof(Camera), typeof(AudioListener), typeof(PlaceholderChaseCamera), typeof(UniversalAdditionalCameraData) };
+                case "PostProcessing":
+                    return new[] { typeof(Transform), typeof(Volume) };
+                case "RaceSystems":
+                    return new[] { typeof(Transform), typeof(RaceManager), typeof(RaceBootstrap), typeof(AudioSource), typeof(RaceSounds) };
+                case "HUD":
+                    return new[] { typeof(Transform), typeof(UIDocument), typeof(RaceHud) };
+                case "Music":
+                    return new[] { typeof(Transform), typeof(AudioSource), typeof(MusicPlayer) };
+                default:
+                    return null;
+            }
+        }
+
+        // Rebuilding Main recreates the builder's own root objects. Hand-added children or components on them would
+        // be lost, so we look first. Returns "" if there are none, otherwise one line per problem.
+        private static string FindHandEditsInMain()
+        {
+            if (!System.IO.File.Exists(MainScenePath))
+            {
+                return "";
+            }
+            Scene scene = EditorSceneManager.OpenScene(MainScenePath, OpenSceneMode.Single);
+            string report = "";
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                System.Type[] allowed = BuilderComponents(root.name);
+                if (allowed == null)
+                {
+                    continue; // someone else's object, it is kept anyway
+                }
+                if (root.transform.childCount > 0)
+                {
+                    report += "\n- " + root.name + " has child objects";
+                }
+                foreach (Component component in root.GetComponents<Component>())
+                {
+                    if (component == null)
+                    {
+                        report += "\n- " + root.name + " has a missing script";
+                    }
+                    else if (System.Array.IndexOf(allowed, component.GetType()) < 0)
+                    {
+                        report += "\n- " + root.name + " has an extra " + component.GetType().Name;
+                    }
+                }
+            }
+            return report;
+        }
+
+        // False = stop the whole build. Batch mode never overwrites hand edits (error + exception = exit code 1),
+        // the menu asks first.
+        private static bool MayRebuildMain()
+        {
+            string handEdits = FindHandEditsInMain();
+            if (handEdits == "")
+            {
+                return true;
+            }
+            string message = "Main.unity has hand edits on objects the builder recreates, a rebuild would lose them:" + handEdits
+                + "\nMove them to a root object of your own (those are kept) or add them to Role4SceneBuilder.";
+            if (Application.isBatchMode)
+            {
+                Debug.LogError("Role4SceneBuilder: refused, nothing was changed. " + message);
+                throw new System.Exception("Role4SceneBuilder: refused to overwrite hand edits in Main.unity.");
+            }
+            if (EditorUtility.DisplayDialog("Build Role 4 Scenes", message, "Rebuild anyway", "Cancel"))
+            {
+                return true;
+            }
+            Debug.LogWarning("Role4SceneBuilder: cancelled, nothing was changed.");
+            return false;
         }
 
         // ---------- assets ----------
@@ -172,6 +284,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             AudioSource sparks = AddAudioSource(go, Clip("kart_drift_sparks"), true);
             AudioSource wind = AddAudioSource(go, Clip("amb_wind_loop"), true);
             AudioSource stage = AddAudioSource(go, null, false);
+            AudioSource secondStage = AddAudioSource(go, null, false); // the two chime sources take turns
             AudioSource effects = AddAudioSource(go, null, false);
             KartAudio kartAudio = go.AddComponent<KartAudio>();
 
@@ -182,6 +295,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             so.FindProperty("sparksSource").objectReferenceValue = sparks;
             so.FindProperty("windSource").objectReferenceValue = wind;
             so.FindProperty("stageSource").objectReferenceValue = stage;
+            so.FindProperty("secondStageSource").objectReferenceValue = secondStage;
             so.FindProperty("effectSource").objectReferenceValue = effects;
             so.FindProperty("driftStartClip").objectReferenceValue = Clip("kart_drift_start");
             so.FindProperty("stageUpClip").objectReferenceValue = Clip("kart_drift_stage_up");
@@ -405,9 +519,30 @@ namespace CarcavelosCircuit.RaceFlow.Editor
 
         private static void BuildMainScene(RaceSettings settings, PanelSettings panel, GameObject kartPrefab, GameObject kartAudioPrefab)
         {
-            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            // Rebuild in place: open the existing Main, remove only the builder's own root objects and keep every
+            // other root object (for example Role 1's camera rig). MayRebuildMain checked them before.
+            Scene scene;
+            if (System.IO.File.Exists(MainScenePath))
+            {
+                scene = EditorSceneManager.OpenScene(MainScenePath, OpenSceneMode.Single);
+                foreach (GameObject root in scene.GetRootGameObjects())
+                {
+                    if (BuilderComponents(root.name) != null)
+                    {
+                        Object.DestroyImmediate(root);
+                    }
+                    else
+                    {
+                        Debug.Log("Role4SceneBuilder: kept " + root.name + " in Main.unity (not created by the builder).");
+                    }
+                }
+            }
+            else
+            {
+                scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            }
 
-            // Opening a new scene unloads assets nothing points to yet (our settings and panel), which would leave
+            // Opening a scene unloads assets nothing points to yet (our settings and panel), which would leave
             // empty references in Main. Loading them again from disk gives live objects.
             settings = AssetDatabase.LoadAssetAtPath<RaceSettings>(SettingsPath);
             panel = AssetDatabase.LoadAssetAtPath<PanelSettings>(PanelPath);

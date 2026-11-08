@@ -1,9 +1,9 @@
-using CarcavelosCircuit.Shared;
 using UnityEngine;
 
 namespace CarcavelosCircuit.RaceFlow
 {
-    // RaceManager adds one of these to every checkpoint trigger when the race is set up.
+    // RaceManager adds one of these to every checkpoint trigger collider when the race is set up
+    // (on the object that owns the collider, because only that object gets OnTriggerEnter).
     // It only tells the RaceManager "the kart touched checkpoint N". The rules decide if that counts.
     // This way the Track module does not need to know anything about RaceFlow.
     public class CheckpointRelay : MonoBehaviour
@@ -19,8 +19,8 @@ namespace CarcavelosCircuit.RaceFlow
 
         private void OnTriggerEnter(Collider other)
         {
-            // Only the kart counts (it carries IKartState somewhere on its root), not a ball or a prop.
-            if (raceManager != null && other.GetComponentInParent<IKartState>() != null)
+            // Only the kart counts, not a ball or a prop. The RaceManager knows the kart's colliders and Rigidbodies.
+            if (raceManager != null && raceManager.IsKartCollider(other))
             {
                 raceManager.OnCheckpointEntered(checkpointIndex);
             }

@@ -29,6 +29,9 @@ namespace CarcavelosCircuit.Audio
         [SerializeField, Tooltip("Own source for the stage-up chime, because its pitch changes per stage")]
         private AudioSource stageSource;
 
+        [SerializeField, Tooltip("Second chime source. Stage 2 comes while the stage-1 chime still rings, so the two take turns")]
+        private AudioSource secondStageSource;
+
         [SerializeField, Tooltip("Drift start chirp, boost, landing")]
         private AudioSource effectSource;
 
@@ -69,6 +72,9 @@ namespace CarcavelosCircuit.Audio
         [SerializeField, Tooltip("Air time needed before landing makes a thud")]
         private float minAirSeconds = 0.3f;
 
+        [SerializeField, Tooltip("A jump further than this in one frame is a teleport (R, fall recover, retry), not driving")]
+        private float teleportDistance = 10f;
+
         private IKartState kart;
         private float revs; // smoothed 0..1, drives the engine
         private bool wasDrifting;
@@ -76,6 +82,8 @@ namespace CarcavelosCircuit.Audio
         private bool wasGrounded = true;
         private int lastDriftStage;
         private float airSeconds;
+        private Vector3 lastPosition;
+        private bool useSecondStageSource; // which chime source plays next
 
         private void Start()
         {
@@ -92,12 +100,24 @@ namespace CarcavelosCircuit.Audio
             StartSilent(squealSource);
             StartSilent(sparksSource);
             StartSilent(windSource);
+            lastPosition = transform.position;
         }
 
         private void Update()
         {
             float dt = Time.deltaTime;
             float speed01 = EnginePitch.Speed01(kart.Speed, kart.MaxSpeed);
+
+            // Audio may only read IKartState, so it cannot listen to the RaceManager's Recovered event.
+            // Instead: a big jump in one frame means the kart was teleported. Then the fall before it was not a
+            // jump, and landing on the respawn point must not play a thud on top of the respawn whoosh.
+            Vector3 position = transform.position;
+            if ((position - lastPosition).sqrMagnitude > teleportDistance * teleportDistance)
+            {
+                airSeconds = 0f;
+                wasGrounded = true;
+            }
+            lastPosition = position;
 
             UpdateEngine(speed01, dt);
             UpdateDrift(dt);
@@ -142,11 +162,15 @@ namespace CarcavelosCircuit.Audio
             sparksSource.volume = Mathf.MoveTowards(sparksSource.volume, sparksTarget, dt * 4f);
             sparksSource.pitch = DriftSound.SparksPitch(stage);
 
-            // Chime each time the drift reaches a new stage, higher for every stage.
+            // Chime each time the drift reaches a new stage, higher for every stage. The chime is 1.2 s long and
+            // stage 2 comes 0.8 s after stage 1, so two sources take turns: changing the pitch of a source that is
+            // still ringing would bend the first chime too.
             if (stage > lastDriftStage)
             {
-                stageSource.pitch = DriftSound.StageUpPitch(stage);
-                PlayOneShot(stageSource, stageUpClip, 0.8f);
+                AudioSource chimeSource = useSecondStageSource && secondStageSource != null ? secondStageSource : stageSource;
+                useSecondStageSource = !useSecondStageSource;
+                chimeSource.pitch = DriftSound.StageUpPitch(stage);
+                PlayOneShot(chimeSource, stageUpClip, 0.8f);
             }
             lastDriftStage = stage;
         }

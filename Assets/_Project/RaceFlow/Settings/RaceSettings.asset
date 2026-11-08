@@ -20,3 +20,4 @@ MonoBehaviour:
   splitPopupSeconds: 2
   hintSeconds: 2.5
   fallRecoverHeight: -20
+  fallCheckCooldownSeconds: 0.5

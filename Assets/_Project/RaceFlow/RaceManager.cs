@@ -39,8 +39,11 @@ namespace CarcavelosCircuit.RaceFlow
         private PlaceholderLapRules rules;   // swap to RaceRules (Role 2) once T5 is merged
         private PlaceholderTrack track;      // swap to TrackInfo (Role 2) once T4 is merged
         private PersonalBest personalBest;
+        private FallCheck fallCheck;
         private IKartState kart;
         private Transform kartTransform;
+        private Rigidbody[] kartBodies;    // the kart's Rigidbodies at spawn time (see IsKartCollider)
+        private Collider[] kartColliders;  // the kart's colliders at spawn time
         private string saveKey;
 
         // Called once by RaceBootstrap after the track is loaded and the kart is spawned.
@@ -55,8 +58,20 @@ namespace CarcavelosCircuit.RaceFlow
             kartTransform = kartObject.transform;
             track = loadedTrack;
 
-            int checkpointCount = track.Checkpoints.Length;
+            // Remember the kart's physics parts now, while they are all still under the kart. A sphere controller
+            // may unparent its physics sphere in its own Start, which runs after this.
+            kartBodies = kartObject.GetComponentsInChildren<Rigidbody>(true);
+            kartColliders = kartObject.GetComponentsInChildren<Collider>(true);
+
+            PlaceholderCheckpoint[] checkpoints = track.Checkpoints;
+            if (checkpoints == null)
+            {
+                checkpoints = new PlaceholderCheckpoint[0];
+            }
+            int checkpointCount = checkpoints.Length;
+            CheckCheckpoints(checkpoints); // only logs errors, the race still starts so the kart can be tested
             rules = new PlaceholderLapRules(checkpointCount);
+            fallCheck = new FallCheck(settings.FallRecoverHeight, settings.FallCheckCooldownSeconds);
 
             // The best time is saved per track in PlayerPrefs (in the browser Unity keeps them in the site's IndexedDB storage).
             saveKey = "CarcavelosCircuit.Best." + trackName;
@@ -69,12 +84,99 @@ namespace CarcavelosCircuit.RaceFlow
             // Every checkpoint trigger reports to us (see CheckpointRelay).
             for (int i = 0; i < checkpointCount; i++)
             {
-                CheckpointRelay relay = track.Checkpoints[i].gameObject.AddComponent<CheckpointRelay>();
-                relay.SetUp(this, track.Checkpoints[i].Index);
+                if (checkpoints[i] != null)
+                {
+                    AddRelays(checkpoints[i]);
+                }
             }
 
             PutKartOnStartGrid();
             kart.InputEnabled = false;
+        }
+
+        // Unity sends OnTriggerEnter to the GameObject that owns the trigger collider. Role 2 may put the collider
+        // on the checkpoint object itself or on a child, so a relay goes onto every object with a trigger collider.
+        private void AddRelays(PlaceholderCheckpoint checkpoint)
+        {
+            Collider[] colliders = checkpoint.GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                GameObject owner = colliders[i].gameObject;
+                if (colliders[i].isTrigger && owner.GetComponent<CheckpointRelay>() == null)
+                {
+                    CheckpointRelay relay = owner.AddComponent<CheckpointRelay>();
+                    relay.SetUp(this, checkpoint.Index);
+                }
+            }
+        }
+
+        // Swap-day safety net: a wrong track setup gives a clear red error instead of a lap that never finishes.
+        // Rules (docs/interfaces.md): no empty entries, a trigger collider on every checkpoint, indices exactly 0..N-1.
+        private void CheckCheckpoints(PlaceholderCheckpoint[] checkpoints)
+        {
+            int[] indices = new int[checkpoints.Length];
+            for (int i = 0; i < checkpoints.Length; i++)
+            {
+                if (checkpoints[i] == null)
+                {
+                    Debug.LogError("RaceManager: entry " + i + " in the track's checkpoint list is empty. The lap can never finish.");
+                    return;
+                }
+                if (!HasTriggerCollider(checkpoints[i]))
+                {
+                    Debug.LogError("RaceManager: checkpoint " + checkpoints[i].name + " has no collider with Is Trigger on itself or a child, so it can never count.");
+                }
+                indices[i] = checkpoints[i].Index;
+            }
+            string problem = CheckpointValidation.FindProblem(indices);
+            if (problem != "")
+            {
+                Debug.LogError("RaceManager: " + problem + ". The lap can never finish.");
+            }
+        }
+
+        private static bool HasTriggerCollider(PlaceholderCheckpoint checkpoint)
+        {
+            Collider[] colliders = checkpoint.GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                if (colliders[i].isTrigger)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Called by CheckpointRelay: is this collider part of our kart? Two accepted ways (docs/interfaces.md):
+        // 1. it is one of the kart's colliders, or it moves with one of the kart's Rigidbodies, as remembered at
+        //    spawn (this also works for a physics sphere that is no longer a child of the kart), or
+        // 2. it has the IKartState component on itself or on a parent.
+        public bool IsKartCollider(Collider other)
+        {
+            if (!IsSetUp)
+            {
+                return false;
+            }
+            for (int i = 0; i < kartColliders.Length; i++)
+            {
+                if (kartColliders[i] == other)
+                {
+                    return true;
+                }
+            }
+            Rigidbody body = other.attachedRigidbody;
+            if (body != null)
+            {
+                for (int i = 0; i < kartBodies.Length; i++)
+                {
+                    if (kartBodies[i] == body)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return other.GetComponentInParent<IKartState>() != null;
         }
 
         private void OnDestroy()
@@ -93,6 +195,10 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
 
+            // Every frame, not only when the state changes: if the kart switched its own input on (for example in
+            // its Start), this switches it off again before it can drive in Ready, Countdown or Results.
+            kart.InputEnabled = stateMachine.InputAllowed;
+
             // Ready screen: wait for the first key or click (browsers only allow sound after that).
             if (State == RaceState.Ready)
             {
@@ -105,7 +211,7 @@ namespace CarcavelosCircuit.RaceFlow
 
             // Timer first, then the state machine, so the GO frame does not already count as race time.
             timer.Tick(Time.deltaTime);
-            stateMachine.Tick(Time.deltaTime);
+            stateMachine.Tick(Time.deltaTime); // on the GO frame this switches the input on (OnStateChanged)
 
             if ((State == RaceState.Racing || State == RaceState.Results) && RaceKeys.RetryPressed())
             {
@@ -115,7 +221,7 @@ namespace CarcavelosCircuit.RaceFlow
 
             if (State == RaceState.Racing)
             {
-                bool fellOff = kartTransform.position.y < settings.FallRecoverHeight;
+                bool fellOff = fallCheck.HasFallen(kartTransform.position.y, Time.time);
                 if (RaceKeys.RecoverPressed() || fellOff)
                 {
                     Recover();
@@ -142,10 +248,16 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // Back to the last checkpoint that counted. The timer keeps running and no checkpoint is awarded.
+        // Public for a possible HUD button, so it guards itself: only while racing (before set-up there is no track).
         public void Recover()
         {
+            if (!IsSetUp || State != RaceState.Racing)
+            {
+                return;
+            }
             Transform respawn = track.GetRespawnPoint(rules.LastValidCheckpoint);
             kart.ResetTo(respawn.position, respawn.rotation);
+            fallCheck.NoteRecovered(Time.time); // pause the fall check, so one fall gives one recover
             if (Recovered != null) Recovered();
         }
 
@@ -174,7 +286,7 @@ namespace CarcavelosCircuit.RaceFlow
             if (rules.PassCheckpoint(index))
             {
                 float delta;
-                HasSplitDelta = personalBest.RecordSplit(index, timer.ElapsedSeconds, out delta);
+                HasSplitDelta = personalBest.RecordSplit(index, timer.SecondsSinceStart(Time.timeAsDouble), out delta);
                 LastSplitDelta = delta;
                 SplitVisibleUntil = Time.time + settings.SplitPopupSeconds;
                 if (CheckpointPassed != null) CheckpointPassed(index);
@@ -187,7 +299,9 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 return;
             }
-            timer.Stop();
+            // Official time = finish timestamp - start timestamp. We are inside OnTriggerEnter here,
+            // so Time.timeAsDouble is the time of the physics step in which the kart crossed the line.
+            timer.Stop(Time.timeAsDouble);
             float lapTime = timer.ElapsedSeconds;
             PreviousBestSeconds = personalBest.BestSeconds;
             LastLapWasRecord = personalBest.FinishRun(lapTime);
@@ -207,7 +321,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 rules.StartLap();
                 personalBest.StartRun();
-                timer.Start();
+                timer.Start(Time.timeAsDouble); // timestamp of the GO frame
             }
         }
 

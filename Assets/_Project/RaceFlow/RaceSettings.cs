@@ -30,6 +30,9 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("If the kart falls below this height it is recovered automatically")]
         private float fallRecoverHeight = -20f;
 
+        [SerializeField, Tooltip("After a recover the fall check waits this long, so one fall gives one recover")]
+        private float fallCheckCooldownSeconds = 0.5f;
+
         public string TrackSceneName { get { return trackSceneName; } }
         public string FallbackTrackSceneName { get { return fallbackTrackSceneName; } }
         public int CountdownFrom { get { return countdownFrom; } }
@@ -38,5 +41,6 @@ namespace CarcavelosCircuit.RaceFlow
         public float SplitPopupSeconds { get { return splitPopupSeconds; } }
         public float HintSeconds { get { return hintSeconds; } }
         public float FallRecoverHeight { get { return fallRecoverHeight; } }
+        public float FallCheckCooldownSeconds { get { return fallCheckCooldownSeconds; } }
     }
 }

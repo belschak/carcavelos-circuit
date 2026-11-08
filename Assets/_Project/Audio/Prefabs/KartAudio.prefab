@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 7925332564394132702}
   - component: {fileID: 7375438155334411512}
   - component: {fileID: 7033713661683685142}
+  - component: {fileID: 5317819008466842584}
   - component: {fileID: 8634488276450921279}
   m_Layer: 0
   m_Name: KartAudio
@@ -718,6 +719,103 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!82 &5317819008466842584
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4447663131456866007}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!114 &8634488276450921279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -736,7 +834,8 @@ MonoBehaviour:
   sparksSource: {fileID: 7585621712458959668}
   windSource: {fileID: 7925332564394132702}
   stageSource: {fileID: 7375438155334411512}
-  effectSource: {fileID: 7033713661683685142}
+  secondStageSource: {fileID: 7033713661683685142}
+  effectSource: {fileID: 5317819008466842584}
   driftStartClip: {fileID: 8300000, guid: e5eb353b89f94374c9bb81f344981ebb, type: 3}
   stageUpClip: {fileID: 8300000, guid: 04573b193c6394a4cb6bbb55d404b4cf, type: 3}
   boostClip: {fileID: 8300000, guid: b4244317d61e3304aae720cc80fba033, type: 3}
@@ -749,3 +848,4 @@ MonoBehaviour:
   squealVolume: 0.6
   windFullVolume: 0.35
   minAirSeconds: 0.3
+  teleportDistance: 10
