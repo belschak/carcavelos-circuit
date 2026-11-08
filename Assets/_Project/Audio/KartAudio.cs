@@ -7,6 +7,8 @@ namespace CarcavelosCircuit.Audio
     // Lives on the KartAudio prefab, which RaceBootstrap spawns as a child of the kart.
     // It only READS IKartState from its parent, so it works with any kart that follows the contract.
     // Engine and drift recordings are Luc's (Role 3), the rules for pitch and volume follow his handoff.
+    // P4 polish: equal-power crossfade, a pretend 4-gear gearbox (revs climb and drop, short cut + pop on every
+    // upshift), a throttle guess (lower and quieter when slowing down) and a tiny random pitch wobble.
     public class KartAudio : MonoBehaviour
     {
         [Header("Looping sounds (one AudioSource each)")]
@@ -35,6 +37,9 @@ namespace CarcavelosCircuit.Audio
         [SerializeField, Tooltip("Drift start chirp, boost, landing")]
         private AudioSource effectSource;
 
+        [SerializeField, Tooltip("Own source for the gear-change pop, because its pitch is a bit random every time")]
+        private AudioSource shiftSource;
+
         [SerializeField]
         private AudioClip driftStartClip;
 
@@ -47,15 +52,31 @@ namespace CarcavelosCircuit.Audio
         [SerializeField]
         private AudioClip landClip;
 
+        [SerializeField, Tooltip("Short exhaust pop on every pretend upshift (sfx_shift_pop)")]
+        private AudioClip shiftClip;
+
         [Header("Mix")]
         [SerializeField, Tooltip("How fast the revs may rise and fall, in 'full range' per second")]
-        private float revRisePerSecond = 1.4f;
+        private float revRisePerSecond = 2.5f;
 
         [SerializeField]
         private float revFallPerSecond = 2.2f;
 
-        [SerializeField, Tooltip("Extra pitch while boosting or in the air (engine revs freely)")]
+        [SerializeField, Tooltip("Extra revs while boosting or in the air (engine revs freely)")]
         private float revBonus = 0.1f;
+
+        [Header("Pretend gearbox (the kart has no gears, the sound does)")]
+        [SerializeField, Tooltip("Number of pretend gears. 4 suits a 35-60 s lap; more sounds busy")]
+        private int gears = 4;
+
+        [SerializeField, Range(0f, 0.95f), Tooltip("Revs right after an upshift (0..1). Lower = bigger drop")]
+        private float revsAfterShift = 0.6f;
+
+        [SerializeField, Tooltip("How long the engine goes quiet on an upshift (ignition cut), in seconds")]
+        private float shiftCutSeconds = 0.07f;
+
+        [SerializeField, Range(0f, 1f)]
+        private float shiftVolume = 0.45f;
 
         [SerializeField, Range(0f, 1f)]
         private float engineIdleVolume = 0.45f;
@@ -76,7 +97,13 @@ namespace CarcavelosCircuit.Audio
         private float teleportDistance = 10f;
 
         private IKartState kart;
-        private float revs; // smoothed 0..1, drives the engine
+        private float revs;       // smoothed 0..1 revs inside the current gear: drives the PITCH
+        private float speedRevs;  // smoothed 0..1 speed: drives the MIX of the two loops and the volume
+        private VirtualGearbox gearbox;
+        private readonly ThrottleGuess throttle = new ThrottleGuess();
+        private float shiftCutLeft;      // seconds left of the ignition cut after an upshift
+        private float engineLevel = 1f;  // set by RaceMusic: quieter engine on the results screen
+        private float effectsLevel = 1f; // same for drift, wind, boost, landing
         private bool wasDrifting;
         private bool wasBoosting;
         private bool wasGrounded = true;
@@ -101,6 +128,15 @@ namespace CarcavelosCircuit.Audio
             StartSilent(sparksSource);
             StartSilent(windSource);
             lastPosition = transform.position;
+            gearbox = new VirtualGearbox(gears);
+        }
+
+        // Called by RaceMusic (RaceFlow) when the race phase changes, e.g. quieter engine on the results screen.
+        // Plain volume factors 0..1; 1 = normal.
+        public void SetMixLevels(float engine, float effects)
+        {
+            engineLevel = engine;
+            effectsLevel = effects;
         }
 
         private void Update()
@@ -116,6 +152,7 @@ namespace CarcavelosCircuit.Audio
             {
                 airSeconds = 0f;
                 wasGrounded = true;
+                throttle.Reset(); // the speed jump of a teleport is not the driver accelerating
             }
             lastPosition = position;
 
@@ -125,20 +162,66 @@ namespace CarcavelosCircuit.Audio
             UpdateBoostAndLanding(dt);
         }
 
-        // Two loops crossfaded by revs. Idle while the player cannot drive (countdown, results).
+        // Two loops crossfaded by speed, pitched by pretend gear revs. Idle while the player cannot drive.
+        // Pitch follows the revs (they climb and drop with every gear), the mix of the two loops follows the
+        // speed, so the high loop does not fade out on every gear change.
         private void UpdateEngine(float speed01, float dt)
         {
-            float targetRevs = kart.InputEnabled ? speed01 : 0f;
+            float targetRevs = 0f;
+            float targetSpeed = 0f;
+            if (kart.InputEnabled)
+            {
+                if (gearbox.Update(speed01))
+                {
+                    shiftCutLeft = shiftCutSeconds;
+                    PlayShiftPop();
+                }
+                targetRevs = EnginePitch.GearRevs(speed01, gearbox.Gear, gears, revsAfterShift);
+                targetSpeed = speed01;
+                // Boost or air time: the engine revs a bit higher (smoothed below, so no pitch jump).
+                if (kart.IsBoosting || !kart.IsGrounded)
+                {
+                    targetRevs += revBonus;
+                }
+            }
+            else
+            {
+                gearbox.Reset(); // countdown, results: back in first gear
+            }
             revs = EnginePitch.MoveLimited(revs, targetRevs, revRisePerSecond, revFallPerSecond, dt);
+            speedRevs = EnginePitch.MoveLimited(speedRevs, targetSpeed, revRisePerSecond, revFallPerSecond, dt);
 
-            float bonus = (kart.IsBoosting || !kart.IsGrounded) ? revBonus : 0f;
-            float highMix = EnginePitch.HighLoopMix(revs);
-            float volume = Mathf.Lerp(engineIdleVolume, engineFullVolume, revs);
+            // Lifting off the throttle: a little lower and quieter (guessed from the change in speed).
+            float load = throttle.Tick(Mathf.Abs(kart.Speed), dt);
+            // A tiny random wobble (Perlin noise) so the loop never sounds like a perfect machine.
+            float wobble = 1f + 0.004f * (Mathf.PerlinNoise(Time.time * 6f, 0.1f) - 0.5f);
+            float pitchFactor = Mathf.Lerp(0.94f, 1f, load) * wobble;
 
-            engineLowSource.pitch = EnginePitch.LowLoopPitch(revs) + bonus;
-            engineHighSource.pitch = EnginePitch.HighLoopPitch(revs) + bonus;
-            engineLowSource.volume = volume * (1f - highMix);
-            engineHighSource.volume = volume * highMix;
+            float volume = Mathf.Lerp(engineIdleVolume, engineFullVolume, speedRevs);
+            volume *= Mathf.Lerp(0.6f, 1f, load);
+            if (shiftCutLeft > 0f)
+            {
+                shiftCutLeft -= dt;
+                volume *= 0.4f; // ignition cut: the short gap you hear when a real engine shifts up
+            }
+            volume *= engineLevel;
+
+            float highMix = EnginePitch.HighLoopMix(speedRevs);
+            engineLowSource.pitch = EnginePitch.LowLoopPitch(revs) * pitchFactor;
+            engineHighSource.pitch = EnginePitch.HighLoopPitch(revs) * pitchFactor;
+            engineLowSource.volume = volume * EnginePitch.EqualPowerLow(highMix);
+            engineHighSource.volume = volume * EnginePitch.EqualPowerHigh(highMix);
+        }
+
+        // The pop varies a little in pitch every time, so ten shifts per lap never sound copy-pasted.
+        private void PlayShiftPop()
+        {
+            if (shiftSource == null || shiftClip == null)
+            {
+                return;
+            }
+            shiftSource.pitch = Random.Range(0.92f, 1.08f);
+            shiftSource.PlayOneShot(shiftClip, shiftVolume * effectsLevel);
         }
 
         private void UpdateDrift(float dt)
@@ -154,11 +237,11 @@ namespace CarcavelosCircuit.Audio
             wasDrifting = drifting;
 
             // Squeal fades in and out over a few tenths of a second instead of a hard cut.
-            float squealTarget = drifting ? squealVolume : 0f;
+            float squealTarget = drifting ? squealVolume * effectsLevel : 0f;
             squealSource.volume = Mathf.MoveTowards(squealSource.volume, squealTarget, dt * 3f);
 
             // Sparks: louder and a bit higher with every stage.
-            float sparksTarget = DriftSound.SparksVolume(stage);
+            float sparksTarget = DriftSound.SparksVolume(stage) * effectsLevel;
             sparksSource.volume = Mathf.MoveTowards(sparksSource.volume, sparksTarget, dt * 4f);
             sparksSource.pitch = DriftSound.SparksPitch(stage);
 
@@ -178,7 +261,7 @@ namespace CarcavelosCircuit.Audio
         // Wind: only really audible when fast (speed squared), so it makes speed feel fast.
         private void UpdateWind(float speed01)
         {
-            windSource.volume = windFullVolume * speed01 * speed01;
+            windSource.volume = windFullVolume * speed01 * speed01 * effectsLevel;
             windSource.pitch = 0.8f + 0.4f * speed01;
         }
 
@@ -214,11 +297,12 @@ namespace CarcavelosCircuit.Audio
         }
 
         // PlayOneShot lets sounds overlap on one AudioSource. A missing clip is simply skipped.
-        private static void PlayOneShot(AudioSource source, AudioClip clip, float volume)
+        // effectsLevel makes the kart effects quieter on the results screen (set by RaceMusic).
+        private void PlayOneShot(AudioSource source, AudioClip clip, float volume)
         {
             if (clip != null)
             {
-                source.PlayOneShot(clip, volume);
+                source.PlayOneShot(clip, volume * effectsLevel);
             }
         }
     }

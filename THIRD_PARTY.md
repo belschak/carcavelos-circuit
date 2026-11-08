@@ -12,4 +12,6 @@ Allowed without asking: Kenney assets (CC0, https://kenney.nl). Everything else:
 
 Audio from ElevenLabs: note the plan used per file. Free plan = non-commercial only, credit "Sound effects: elevenlabs.io" (music: "Eleven Music") in the game credits and on the itch.io page. No donations or "pay what you want" on itch with free-plan audio.
 
-Own work (not third party, listed so nobody wonders): the other 15 files in `Assets/_Project/Audio/Clips/` (`sfx_*`, `ui_click`, `amb_wind_loop`, `loop_engine`, `loop_drift`, `music_campus_loop`) are synthesised by our own script `tools/audio-synth/synth_sfx.py` (pure Python, no samples). Released as CC0 by the team.
+Own work (not third party, listed so nobody wonders): the other 18 files in `Assets/_Project/Audio/Clips/` (`sfx_*` incl. `sfx_hint_warning` and `sfx_shift_pop`, `ui_click`, `amb_wind_loop`, `loop_engine`, `loop_drift`, `music_campus_loop`, `music_results_loop`) are synthesised by our own script `tools/audio-synth/synth_sfx.py` (pure Python, no samples). Released as CC0 by the team.
+
+All WAVs in the table above and the own files are mastered by our own `tools/audio-synth/process_wavs.py` (loudness level, loop padding, loop points; 2026-11-08, P4). That changes only level and adds silence, not the content, so the licences above are unchanged.

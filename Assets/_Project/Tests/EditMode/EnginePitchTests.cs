@@ -61,5 +61,65 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(expectedLow, EnginePitch.LowLoopPitch(revs), 0.0001f);
             Assert.AreEqual(expectedHigh, EnginePitch.HighLoopPitch(revs), 0.0001f);
         }
+
+        // ---- P4: equal-power crossfade ----
+
+        [TestCase(0f)]
+        [TestCase(0.25f)]
+        [TestCase(0.5f)]
+        [TestCase(0.8f)]
+        [TestCase(1f)]
+        public void EqualPower_KeepsTheLoudnessTheSame(float highMix)
+        {
+            // low^2 + high^2 = 1 everywhere: no dip in the middle of the crossfade.
+            float low = EnginePitch.EqualPowerLow(highMix);
+            float high = EnginePitch.EqualPowerHigh(highMix);
+            Assert.AreEqual(1f, low * low + high * high, 0.0001f);
+        }
+
+        [Test]
+        public void EqualPower_StartsWithOnlyTheLowLoopAndEndsWithOnlyTheHighLoop()
+        {
+            Assert.AreEqual(1f, EnginePitch.EqualPowerLow(0f), 0.0001f);
+            Assert.AreEqual(0f, EnginePitch.EqualPowerHigh(0f), 0.0001f);
+            Assert.AreEqual(0f, EnginePitch.EqualPowerLow(1f), 0.0001f);
+            Assert.AreEqual(1f, EnginePitch.EqualPowerHigh(1f), 0.0001f);
+        }
+
+        // ---- P4: pretend gearbox maths ----
+
+        [Test]
+        public void GearTop_LastGearEndsAtTopSpeedAndGearsGetLonger()
+        {
+            Assert.AreEqual(0f, EnginePitch.GearTop(0, 4), 0.0001f);
+            Assert.AreEqual(1f, EnginePitch.GearTop(4, 4), 0.0001f);
+            float first = EnginePitch.GearTop(1, 4);
+            float second = EnginePitch.GearTop(2, 4) - first;
+            Assert.Greater(first, 0.25f);   // first gear is longer than a quarter (0.85 power)
+            Assert.Less(second, first);     // ...and every later gear covers a bit less speed
+        }
+
+        [Test]
+        public void GearRevs_FirstGearStartsAtZero()
+        {
+            Assert.AreEqual(0f, EnginePitch.GearRevs(0f, 1, 4, 0.6f), 0.0001f);
+        }
+
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        [TestCase(4)]
+        public void GearRevs_EveryGearTopsOutAt097(int gear)
+        {
+            float top = EnginePitch.GearTop(gear, 4);
+            Assert.AreEqual(0.97f, EnginePitch.GearRevs(top, gear, 4, 0.6f), 0.0001f);
+        }
+
+        [Test]
+        public void GearRevs_DropToRevsAfterShiftWhenTheNextGearStarts()
+        {
+            float changePoint = EnginePitch.GearTop(1, 4);
+            Assert.AreEqual(0.6f, EnginePitch.GearRevs(changePoint, 2, 4, 0.6f), 0.0001f);
+        }
     }
 }

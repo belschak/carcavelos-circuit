@@ -49,7 +49,8 @@ Suggested order for the live walkthrough (about 5 minutes):
 | Decision | Why |
 |---|---|
 | Placeholders (`PlaceholderTrack`, `PlaceholderCheckpoint`, `PlaceholderLapRules`, `PlaceholderKart`, `PlaceholderChaseCamera`) with the same public API as Role 1 and 2's contract | I could build and test R1 to R5 now without waiting for, or writing, Noah's and Alessandro's graded code. Swap day = rename types, delete placeholders. |
-| Race sounds in `RaceFlow/RaceSounds`, kart sounds in `Audio/KartAudio` | The `Audio` assembly may only reference `Shared`, so it cannot see `RaceManager`. Kart sounds only need `IKartState`, race sounds need the `RaceManager` events. |
+| Race sounds in `RaceFlow/RaceSounds` and `RaceFlow/RaceMusic`, kart sounds in `Audio/KartAudio` | The `Audio` assembly may only reference `Shared`, so it cannot see `RaceManager`. Kart sounds only need `IKartState`, race sounds and music need the `RaceManager` events. `RaceFlow` references `Audio` (one direction only) for the mix maths and `KartAudio.SetMixLevels`. |
+| No AudioMixer: every mix level is a script fade in dB (`LevelFade`, `DuckEnvelope`) | Unity's Web build only supports mixer group volume (no Duck Volume, compressor, limiter), and there is no public API to create a mixer from code. Script fades do the same and behave identically in the Editor and the browser. |
 | HUD = UI Toolkit (`.uxml` + `.uss`) | Text files that work like HTML and CSS, no TextMesh Pro import, easy to read in a PR. PanelSettings scale from a 1280x720 reference. |
 | Plain C# classes for logic (`RaceTimer`, `RaceStateMachine`, `PersonalBest`, `PlaceholderLapRules`, `CheckpointValidation`, `FallCheck`, `ShownNumber`, `EnginePitch`), MonoBehaviours only as thin glue | Plain classes can be unit tested in Edit Mode with fake frame times, no scene needed. |
 | Official lap time from two timestamps, added-up frame times only for the live timer | Adding thousands of float frame times drifts by milliseconds, and the finish happens inside a physics step between two frames. One subtraction of two `double` timestamps is exact. |
@@ -61,7 +62,7 @@ Suggested order for the live walkthrough (about 5 minutes):
 | Countdown 1 s per step on the first start, 0.5 s on retry | Time-trial players retry a lot, a quick restart feels better. |
 | "Press any key to start" screen | Browsers block sound until the first click or key press; our start screen forces that press before the race. |
 | Enter = retry, not Escape | In a browser Escape leaves fullscreen. |
-| Own synthesised CC0 sounds + 3 ElevenLabs loops, WAV sources | Licence is clean (`THIRD_PARTY.md`); WAV is the lossless master. Honest note: the Web build re-encodes every clip to AAC anyway, which can add a tiny gap at a loop point (separate audio task). |
+| Own synthesised CC0 sounds + ElevenLabs kart sounds, WAV sources mastered by `process_wavs.py` | Licence is clean (`THIRD_PARTY.md`). Unity re-encodes every clip to AAC for the Web build anyway, and the Windows AAC encoder changes the first 1024 samples, so loops get 2048 samples of silence and WAV loop points (`smpl` chunk) that skip it. WAV is the only format that carries those loop points. |
 | Every Web build setting set by `Role4WebBuild` in code | Some settings (Code Optimization) are saved per laptop in `Library/`; in code the build is the same whoever runs it. Size before/after in section 3.18. |
 | Own Web template, canvas = whole window | Unity's default is a fixed 960x600 box that is cut off in small windows (playtest F1) and tiny on a big screen. |
 | One asmdef per module | Compiler enforces who may talk to whom (no hidden dependencies), and recompiles are faster. |
@@ -186,12 +187,27 @@ Entry point of `Main.unity` (task R1). Serialized: `settings`, `kartPrefab`, `ka
 
 ### 3.11 `RaceFlow/RaceSounds.cs` (MonoBehaviour)
 
-Race interface sounds on one 2D `AudioSource`. `OnEnable` subscribes to `CountdownStep`, `CheckpointPassed`, `LapFinished`, `Restarted`, `Recovered`; `OnDisable` unsubscribes.
+Race interface sounds on two 2D `AudioSource`s (one for sounds that play now, one for sounds that start a moment later). `OnEnable` subscribes to `CountdownStep`, `CheckpointPassed`, `LapFinished`, `Restarted`, `Recovered`; `OnDisable` unsubscribes. Volume is 1.0 for everything: the loudness of each sound lives in the file (`process_wavs.py`).
 
-- `OnCountdownStep(n)`: low beep for 3, 2, 1, high GO beep for 0.
-- `OnCheckpointPassed`: chime. `OnLapFinished`: jingle, plus a sting if new record. `OnRestarted`: click (`ui_click`). `OnRecovered`: whoosh (`sfx_respawn`).
-- `Play(clip)`: `source.PlayOneShot(clip, volume)`, skips missing clips. "PlayOneShot lets sounds overlap on the same source."
+- `OnCountdownStep(n)`: low beep for 3, 2, 1, high GO beep for 0. On a retry the first beep waits 0.1 s (`PlayLater`), because `RaceManager.Retry()` fires beep "3" and the `Restarted` click in the same frame and the beep would hide the click. A retry is recognised by the state of the last frame (`stateLastFrame` was Racing or Results).
+- `OnCheckpointPassed`: chime. `OnLapFinished`: jingle; on a new record the sting starts 0.7 s later (`recordStingDelay`), so the two do not blur into one sound. `OnRestarted`: click (`ui_click`). `OnRecovered`: whoosh (`sfx_respawn`).
+- `Update()`: plays `sfx_hint_warning` once when a new "Missed a checkpoint" hint appears. There is no hint event, but `HintVisibleUntil` moves forward every time a hint is shown, so "later than last frame" = new hint.
+- Every stinger calls `music.Duck(dB, 0.6 x clip length)`: the music dips under it and comes back.
+- `Play(clip)`: `source.PlayOneShot(clip, volume)`, skips missing clips. `PlayLater(clip, delay)`: `delayedSource.PlayDelayed(delay)`; a new one replaces a waiting one (a retry stops a record sting).
 - Concept: `OnEnable`/`OnDisable` are the right pair for subscribing, they also run when the component is switched on and off.
+
+### 3.11b `RaceFlow/RaceMusic.cs` (MonoBehaviour, on the Music object)
+
+The music and the overall mix, following the race. Four `LevelFade`s (race music, results music, engine, kart effects) and one `DuckEnvelope`, all in dB, turned into `AudioSource.volume` with `Decibels.ToVolume` every frame.
+
+- Title screen: race music at -10 dB. Countdown (`CountdownStep` 3, 2, 1): music fades out in 0.3 s, engine -3 dB, effects -6 dB.
+- GO (`CountdownStep(0)`): race music restarts from bar 1 (`timeSamples = 2048`, right after the loop padding) at normal pitch and fades in over 0.12 s. The music is 120 BPM, so its beats line up with the 1 s and 0.5 s countdown steps.
+- Final stretch: when the last checkpoint before the finish is passed, the music glides up one semitone (pitch 1.0595 over 2 s, `Mathf.MoveTowards`) and gets 3 dB louder. The last checkpoint is `RaceManager.CheckpointCount - 1` (index 0 is the start/finish line), so the lift plays on every lap, the first one too.
+- Finish (`LapFinished`): race music fades out, engine and effects -14 dB (`KartAudio.SetMixLevels`), the results loop starts 1.8 s later (`PlayDelayed`), after the jingle.
+- `Duck(db, hold)`: called by `RaceSounds`. Down at 200 dB/s, hold, back at 15 dB/s: "the slow return is what makes it sound like a radio mix pumping, not a volume jump".
+- `OnApplicationFocus` / `OnApplicationPause` -> `AudioListener.pause`: in a hidden browser tab Unity stops updating, but the browser would keep playing the engine and music loops; this pauses every source.
+- The kart is spawned at runtime, so the `KartAudio` is looked up once it exists: `(raceManager.Kart as Component).GetComponentInChildren<KartAudio>()`.
+- How I would explain it: "A mixer snapshot is just a set of volumes plus a fade time. The Web build cannot do more than volumes, so I wrote those fades myself in four lines of plain C#, which I can also unit test."
 
 ### 3.12 `RaceFlow/RaceHud.cs` + `UI/RaceHud.uxml` + `UI/RaceHud.uss`
 
@@ -233,14 +249,18 @@ The sound maths, kept out of MonoBehaviours so it can be unit tested. All number
 - `EnginePitch.MoveLimited(current, target, rise, fall, dt)`: moves towards the target but at most `rise` (1.4) per second up and `fall` (2.2) per second down. "The revs never jump, and they drop a bit faster than they rise, like a real engine."
 - `EnginePitch.HighLoopMix(r)`: share of the high engine loop. 0 below r = 0.2, 1 above 0.7, smoothstep `t * t * (3 - 2t)` in between. "Smoothstep starts and ends flat, so you never hear where the fade begins."
 - `EnginePitch.LowLoopPitch(r) = 0.75 + 0.85r`, `HighLoopPitch(r) = 0.8 + 0.55r`.
+- P4: `EqualPowerLow(mix) = cos(mix * pi/2)`, `EqualPowerHigh(mix) = sin(mix * pi/2)`. "The two recordings are different sounds, so a straight 50/50 split is about 3 dB quieter in the middle. With cos and sin, low^2 + high^2 is always 1: same loudness."
+- P4: `GearTop(gear, gears) = (gear / gears)^0.85`: where a pretend gear runs out of revs (4 gears: 0.31, 0.55, 0.78, 1; lower gears are shorter). `GearRevs(speed01, gear, gears, 0.6)`: revs inside the gear, from 0 (gear 1) or 0.6 (after an upshift) to 0.97 at the top of the gear.
+- P4 plain classes: `VirtualGearbox` (`Update(speed01)` shifts up at 98.5 % of the gear top and returns true for the pop, shifts down only below 90 % of the change point, so it never flutters), `ThrottleGuess` (`IKartState` has no throttle: smoothed change in speed > 0.4 m/s^2 = full load, < -0.8 = no load, else 0.55), `Decibels.ToVolume(db) = 10^(db/20)` (-80 dB = exactly 0), `LevelFade` (glide to a dB target in a given time), `DuckEnvelope` (duck with hold; the deeper duck wins).
 - `DriftSound.StageUpPitch(stage) = 1 + 0.12 (stage - 1)`, `SparksVolume(stage) = 0.55 + 0.15 stage` (0 without sparks, capped at 1), `SparksPitch(stage) = 0.95 + 0.07 stage`. "Written for any number of stages, so it still works if Role 1 changes the drift to three stages (Luc's request Q1)."
 
 ### 3.15 `Audio/KartAudio.cs` (MonoBehaviour, on the KartAudio prefab under the kart)
 
-Eight 2D AudioSources: five loops that always run (engine low, engine high, tyre squeal, sparks, wind; only their volume changes, because starting a loop late can click) and three one-shot sources (two stage-chime sources that take turns, and effects).
+Nine 2D AudioSources: five loops that always run (engine low, engine high, tyre squeal, sparks, wind; only their volume changes, because starting a loop late can click) and four one-shot sources (two stage-chime sources that take turns, effects, and the gear-change pop).
 
 - `Start()`: `GetComponentInParent<IKartState>()`; if none, warn and `enabled = false`. Starts every loop at volume 0.
-- `UpdateEngine`: target revs = `Speed01`, or 0 while `InputEnabled` is false (idle during countdown and results); `MoveLimited`; pitch of both loops from revs (+0.1 while boosting or airborne); volume 0.45 to 0.75 with revs, split by `HighLoopMix`.
+- `UpdateEngine` (P4): two smoothed values. `revs` = revs inside the pretend gear (`VirtualGearbox` + `GearRevs`, +0.1 while boosting or airborne, rise 2.5/s, fall 2.2/s) drives the **pitch**, so you hear the engine climb, drop on the upshift and climb again. `speedRevs` = smoothed speed drives the **mix** of the two loops (`HighLoopMix` + equal power) and the volume (0.45 to 0.75), so the high loop does not fade out on every shift. On an upshift: 0.07 s at 40 % volume (ignition cut) plus `sfx_shift_pop` at a random pitch 0.92-1.08. `ThrottleGuess`: off the throttle the pitch sags up to 6 % and the volume drops to 60 %. A Perlin-noise wobble of +-0.2 % keeps it from sounding like a machine. While `InputEnabled` is false: target 0, back to first gear.
+- `SetMixLevels(engine, effects)`: volume factors from `RaceMusic` (quieter on the results screen).
 - Teleport check at the start of `Update`: if the kart moved more than `teleportDistance` (10 m) in one frame, it was put back (R, fall, retry), so `airSeconds = 0` and `wasGrounded = true`. "Audio may only read `IKartState`, it cannot hear the RaceManager's `Recovered` event. Without this, landing on the respawn point after a fall would play a thud on top of the whoosh."
 - `UpdateDrift`: chirp on the frame a drift starts; squeal fades in/out with `Mathf.MoveTowards`; sparks volume/pitch from `DriftSound` by stage; chime each time the stage goes up, pitched higher per stage, alternating between `stageSource` and `secondStageSource`. "The chime is 1.2 s long and stage 2 comes 0.8 s after stage 1. Changing the pitch of a source that still rings would bend the first chime."
 - `UpdateWind`: volume `0.35 * speed01^2` (only audible when fast), pitch 0.8 to 1.2. "The cheapest way to make speed feel fast."
@@ -248,9 +268,9 @@ Eight 2D AudioSources: five loops that always run (engine low, engine high, tyre
 - How I would explain it: "Two engine recordings, low and high revs. Playing a recording faster raises its pitch like a tape, and between low and high revs one fades into the other. I remember last frame's values (`wasDrifting`, `wasBoosting`, `lastDriftStage`, `wasGrounded`) to detect the moment something starts."
 - Concept: edge detection with a 'was' flag; `Audio` asmdef only references `Shared`.
 
-### 3.16 `Audio/MusicPlayer.cs`
+### 3.16 `Audio/MusicPlayer.cs` (no longer used in Main since P4)
 
-`[RequireComponent(typeof(AudioSource))]`; `Start()` sets loop, volume 0.3, 2D, plays the clip if set. "Browsers mute audio until the first input; Unity resumes it then, and the start screen guarantees that input."
+`[RequireComponent(typeof(AudioSource))]`; `Start()` sets loop, volume 0.3, 2D, plays the clip if set. Replaced in `Main.unity` by `RaceFlow/RaceMusic` (3.11b); the file stays until it is deleted in the Unity Editor. "Browsers mute audio until the first input; Unity resumes it then, and the start screen guarantees that input."
 
 ### 3.17 `RaceFlow/Editor/Role4SceneBuilder.cs` (editor only)
 
@@ -261,11 +281,12 @@ Menu **Carcavelos Circuit > Build Role 4 Scenes** (`[MenuItem("Carcavelos Circui
 1. Ensures folders.
 2. `CreateSettings()`: loads or creates `RaceSettings.asset` (existing values kept) and calls `EditorUtility.SetDirty`, so fields added to `RaceSettings` later (like `hintSeconds`) are written into the file with their defaults.
 3. `CreatePanelSettings()`: theme file + PanelSettings (scale with screen size, 1280x720, match 0.5).
-4. `CreateKartAudioPrefab()`: 8 AudioSources + `KartAudio`, clips `kart_engine_low/high`, `kart_drift_squeal/sparks/start/stage_up` (Luc's), `amb_wind_loop`, `el_boost_whoosh`, `sfx_landing_thud`. Private fields are filled with `SerializedObject.FindProperty(...)`.
+0b. `SetUpAudioImport()` -> `AudioImportSetup.ApplyAll()` (own file, also menu **Carcavelos Circuit > Apply Audio Import Settings** or batch `-executeMethod CarcavelosCircuit.RaceFlow.Editor.AudioImportSetup.ApplyAll`): every clip in `Audio/Clips` gets Normalize off (Unity would push each clip to full peak and undo our loudness levels; no public property, so via `SerializedObject` field `m_Normalize`), Decompress On Load + Preload (also the music: only then does the Web build use the WAV loop points), Web override AAC with quality 1.0 (effects) or 0.7 (music). Only clips whose settings differ are re-imported.
+4. `CreateKartAudioPrefab()`: 9 AudioSources + `KartAudio`, clips `kart_engine_low/high`, `kart_drift_squeal/sparks/start/stage_up` (Luc's), `amb_wind_loop`, `el_boost_whoosh`, `sfx_landing_thud`, `sfx_shift_pop`. Every source gets `dopplerLevel = 0`. Private fields are filled with `SerializedObject.FindProperty(...)`.
 5. `FindRealKartPrefab()` (~line 199): `AssetDatabase.FindAssets("Kart t:Prefab")` under `Assets/_Project/Driving`; uses a prefab only if it is named exactly `Kart` and its root has a component implementing `IKartState`. "The kart swap is automatic: once Alessandro's prefab exists, re-running the builder puts it into Main."
 6. Only if no real kart was found: `CreatePlaceholderKartPrefab()`: Rigidbody (150 kg, interpolate, continuous collision, X/Z rotation frozen), frictionless box collider, `PlaceholderKart`, a `Visual` child made of primitives.
 7. `BuildPlaceholderTrackScene()`: a ~230 m rectangular loop around a sand "building", walls, cones, a kicker ramp, 4 checkpoint triggers (15 m wide) each with a `RespawnPoint` child 4 m after it, and a `SpawnPoint` just after the start line.
-8. `BuildMainScene()`: rebuilds Main in place: opens the existing `Main.unity`, deletes only the builder's own root objects and keeps every other root object (logged as "kept ..."), so Role 1 can add a camera rig as its own root object. Then camera + AudioListener + chase camera, with `GetUniversalAdditionalCameraData().renderPostProcessing = true`; a global `Volume` object "PostProcessing" using `CreateVolumeProfile()`; `RaceSystems` (RaceManager, RaceBootstrap, UI AudioSource, RaceSounds), `HUD` (UIDocument + RaceHud), `Music`. All references wired.
+8. `BuildMainScene()`: rebuilds Main in place: opens the existing `Main.unity`, deletes only the builder's own root objects and keeps every other root object (logged as "kept ..."), so Role 1 can add a camera rig as its own root object. Then camera + AudioListener + chase camera, with `GetUniversalAdditionalCameraData().renderPostProcessing = true`; a global `Volume` object "PostProcessing" using `CreateVolumeProfile()`; `RaceSystems` (RaceManager, RaceBootstrap, two AudioSources, RaceSounds), `HUD` (UIDocument + RaceHud), `Music` (race music + results music AudioSources, RaceMusic). All references wired.
 9. `CreateVolumeProfile()` (called from step 8): `RaceFlow/Settings/RaceCameraVolume.asset` with Bloom (threshold 0.9 = only very bright pixels glow, intensity 0.6, scatter 0.6). If the asset already exists it is returned unchanged, so Role 3's tuning survives a rebuild.
 10. `MergeBuildScenes()`: Main, Track_Campus, RaceFlow_PlaceholderTrack first (ticked), then every other scene that was already in the build list, with its tick box. Merged, never replaced. (`ProjectSetup.SetBuildScenes` in Shared/Editor still writes only the three; run the builder after it if someone added scenes.)
 
@@ -302,8 +323,16 @@ The template `Assets/WebGLTemplates/CarcavelosCircuit/` (`index.html` + `Templat
 
 Pure Python (only standard library: `math`, `random`, `wave`, `array`). Builds sounds from sine partials, filtered noise and envelopes and writes 16-bit mono 44.1 kHz WAV. `SOUNDS` maps file names to functions: countdown beep (440 Hz), GO beep (880 Hz), checkpoint chime, finish jingle, new-record sting, drift pings, `ui_click`, `sfx_respawn`, the `amb_wind_loop`, plus synth versions of boost/engine/drift sounds (`sfx_boost_whoosh`, `loop_engine`, `loop_drift`, `sfx_drift_stage1/2`, kept as CC0 backups; the prefab uses Luc's `kart_*` files and the ElevenLabs boost) and a 32 s music loop (120 BPM, A minor). `loop_crossfade()` fades the extra tail over the start, so loops have no click. Seeded `random.Random(seed)` = the same output every run.
 
+Since P4 it also makes `sfx_hint_warning` (missed checkpoint), `sfx_shift_pop` (gear change) and `music_results_loop` (16 s, 120 BPM, C major).
+
+`tools/audio-synth/process_wavs.py` is the mastering step, run after the synth script (standard library only):
+1. Re-level by loudness (RMS) to a target per sound (for example countdown beep -15 dBFS, engine loops unchanged at about -16.5), never a peak above -1 dBFS. "Peak normalising makes a short beep and a long engine loop look equally loud but sound very different; RMS is closer to what we hear."
+2. Loops: 2048 samples of silence at the start plus a `smpl` chunk (loop start 2048, loop end = last sample).
+3. Safe to run twice (a padded file is un-padded first; a second run gives the same bytes). Only touches the files in its table; `.meta` files are never touched, so the GUIDs and references stay.
+
 ```
 python tools/audio-synth/synth_sfx.py Assets/_Project/Audio/Clips
+python -I tools/audio-synth/process_wavs.py Assets/_Project/Audio/Clips
 ```
 
 ### 3.20 `tools/serve_web_build.py`
@@ -332,6 +361,11 @@ All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceF
 | `PlaceholderLapRulesTests` | In order then finish works; skipped checkpoint cannot finish; same checkpoint twice counts once; no double finish; `LastValidCheckpoint` for recovery; Reset starts over. |
 | `EnginePitchTests` | `Speed01` in 0..1 (capped while boosting, reverse counts, `MaxSpeed` 0 safe); `MoveLimited` respects rise/fall rates and stops at the target; `HighLoopMix` 0 / 0.5 / 1 at r 0.2 / 0.45 / 0.7 and flat near the edges; loop pitches match Luc's numbers. |
 | `DriftSoundTests` | Stage-up chime 12 % higher per stage; sparks silent at stage 0, louder per stage, capped at 1; sparks pitch rises per stage. |
+| `EnginePitchTests` (P4 part) | Equal-power crossfade keeps low^2 + high^2 = 1 and starts/ends with one loop; last gear ends at top speed and lower gears are longer; gear 1 starts at 0 revs, every gear tops out at 0.97, revs drop to 0.6 when the next gear starts. |
+| `VirtualGearboxTests` | Starts in gear 1; upshift just before the gear top, true only on that frame; never past the last gear; no flutter around a change point; downshift when clearly slower (no pop); Reset to gear 1. |
+| `ThrottleGuessTests` | Speeding up = load 1, braking = 0, cruising = 0.55; one hard frame does not jump; zero frame time changes nothing; Reset forgets a teleport. |
+| `MixLevelTests` | dB to volume (0 dB = 1, -6 = 0.5, -80 = exactly 0); a fade takes the given time and stays; 0 s jumps; a new target starts from where it is. |
+| `DuckEnvelopeTests` | No duck at the start; down at the attack rate and stops at the depth; held, then back at the release rate; the deeper duck wins; Clear is immediate. |
 
 Run: Unity Editor, Window > General > Test Runner > EditMode > Run All. Command line (Unity closed), Windows:
 
@@ -384,12 +418,14 @@ Do it on a branch `role4/<task-id>-swap-contract`, after `git pull` of `main` wi
 9. **Why InvariantCulture in the save string?** So 41.25 is always written with a dot. On a Portuguese system it would be "41,25" and loading could fail.
 10. **Why no sound before the first key press?** Browsers block audio until the user interacts with the page. The start screen makes that interaction happen before the countdown.
 11. **What happens on Retry vs Recover?** Retry: full reset (kart to grid, rules, timer, quick countdown). Recover: kart to the last valid checkpoint's respawn point, timer keeps running, no checkpoint awarded.
-12. **What are asmdefs?** Assembly definition files split the code into separate assemblies with allowed references (`Audio -> Shared` only, `RaceFlow -> Shared, Track`). The compiler stops forbidden dependencies and cycles.
+12. **What are asmdefs?** Assembly definition files split the code into separate assemblies with allowed references (`Audio -> Shared` only, `RaceFlow -> Shared, Track, Audio`). The compiler stops forbidden dependencies and cycles.
 13. **What is a ScriptableObject vs a MonoBehaviour?** ScriptableObject = data asset in the project (`RaceSettings`), not attached to a scene object. MonoBehaviour = component on a GameObject with a lifecycle.
 14. **Why `[SerializeField] private` instead of `public`?** Other scripts cannot change the value by accident, but Unity still saves it and shows it in the Inspector.
 15. **What happens if a track scene has its own camera?** `RaceBootstrap.TurnOffTestCameras` switches it and any AudioListener off after loading, so only Main's camera renders and only one AudioListener hears.
 16. **Why is the Web build uncompressed?** Not on the wire: the host (GitHub Pages) gzips it. Unity's own `.gz` files need a header Pages cannot send, so they would not start there. Hashed file names make sure a browser never mixes an old and a new build.
 17. **Why is the canvas not just 1280x720?** Players have different window sizes. The canvas fills the window and the HUD scales from a 1280x720 reference (PanelSettings "scale with screen size").
+18. **Why no limiter or AudioMixer effects?** Unity's Web build only supports volume changes. We gain-stage instead: every file has a loudness target, Normalize is off, peaks stay under -1 dBFS, and music ducks in script under the important sounds.
+19. **How can an engine without gears "shift"?** The sound pretends: the speed range is split into 4 gears; inside a gear the pitch climbs, at the top it drops back to 60 % and climbs again, with a 0.07 s volume cut and a pop. The kart itself has no gears.
 
 ---
 
@@ -404,4 +440,5 @@ Fixed on 2026-11-08 and no longer weak spots: drift boost after the finish, drif
 - **Camera object is switched off as a whole** (`RaceBootstrap.cs:97`, `SetActive(false)`): anything else on that GameObject or its children goes off too. Fine as long as test cameras sit on their own object.
 - **Kart prefab name is strict** (`Role4SceneBuilder.FindRealKartPrefab`): exactly `Kart`, under `Driving/`, `IKartState` on the root. A prefab called "Kart Variant" or with the controller on a child is ignored and the placeholder stays, silently apart from the missing Console line.
 - **Bloom not yet checked in a Web build with real effects**: it depends on Role 3's sparks and flames being bright enough (above threshold 0.9). Check it looks right and the frame rate stays fine on a normal laptop.
+- **P4 audio not yet heard in a real build** (written without opening Unity): gear-change feel, ducking amounts, music start on GO and gapless loops (smpl + 2048 pad) must be checked in the Web build with headphones (`audio-polish-plan.md` section 7).
 - **By design, worth remembering**: the builder rewrites its own root objects in `Main.unity` on every run (values set by hand on them are lost; added components or children make it stop and ask); other root objects, the Volume profile and `RaceSettings` values are kept.

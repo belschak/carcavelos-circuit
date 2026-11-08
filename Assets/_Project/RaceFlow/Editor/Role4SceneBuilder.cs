@@ -108,7 +108,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 case "HUD":
                     return new[] { typeof(Transform), typeof(UIDocument), typeof(RaceHud) };
                 case "Music":
-                    return new[] { typeof(Transform), typeof(AudioSource), typeof(MusicPlayer) };
+                    // MusicPlayer = the old music script (before P4), still allowed so an old Main.unity can be rebuilt.
+                    return new[] { typeof(Transform), typeof(AudioSource), typeof(RaceMusic), typeof(MusicPlayer) };
                 default:
                     return null;
             }
@@ -232,26 +233,10 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             return profile;
         }
 
-        // Web build rules (Unity manual "Audio in Web"): sound effects "Decompress On Load" for low latency,
-        // music "Compressed In Memory". "Preload Audio Data" loads every clip with the scene, so the first
-        // countdown beep is not late (without it the browser logs "Trying to get length of sound which is not loaded yet").
+        // Web build rules for all clips (Decompress On Load, Preload, Normalize off, AAC on Web): see AudioImportSetup.
         private static void SetUpAudioImport()
         {
-            foreach (string guid in AssetDatabase.FindAssets("t:AudioClip", new[] { ClipsFolder.TrimEnd('/') }))
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                AudioImporter importer = (AudioImporter)AssetImporter.GetAtPath(path);
-                AudioImporterSampleSettings sample = importer.defaultSampleSettings;
-                bool isMusic = System.IO.Path.GetFileName(path).StartsWith("music_");
-                sample.loadType = isMusic ? AudioClipLoadType.CompressedInMemory : AudioClipLoadType.DecompressOnLoad;
-                sample.preloadAudioData = true;
-                if (sample.loadType == importer.defaultSampleSettings.loadType && importer.defaultSampleSettings.preloadAudioData)
-                {
-                    continue; // already right, no reimport needed
-                }
-                importer.defaultSampleSettings = sample;
-                importer.SaveAndReimport();
-            }
+            AudioImportSetup.ApplyAll();
         }
 
         private static AudioClip Clip(string name)
@@ -271,6 +256,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             source.loop = loop;
             source.playOnAwake = false;
             source.spatialBlend = 0f; // 2D: the camera always follows our own kart
+            source.dopplerLevel = 0f; // no pitch wobble, even if someone switches a source to 3D later
             return source;
         }
 
@@ -286,6 +272,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             AudioSource stage = AddAudioSource(go, null, false);
             AudioSource secondStage = AddAudioSource(go, null, false); // the two chime sources take turns
             AudioSource effects = AddAudioSource(go, null, false);
+            AudioSource shift = AddAudioSource(go, null, false); // gear-change pop, own source for its random pitch
             KartAudio kartAudio = go.AddComponent<KartAudio>();
 
             SerializedObject so = new SerializedObject(kartAudio);
@@ -297,10 +284,12 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             so.FindProperty("stageSource").objectReferenceValue = stage;
             so.FindProperty("secondStageSource").objectReferenceValue = secondStage;
             so.FindProperty("effectSource").objectReferenceValue = effects;
+            so.FindProperty("shiftSource").objectReferenceValue = shift;
             so.FindProperty("driftStartClip").objectReferenceValue = Clip("kart_drift_start");
             so.FindProperty("stageUpClip").objectReferenceValue = Clip("kart_drift_stage_up");
             so.FindProperty("boostClip").objectReferenceValue = Clip("el_boost_whoosh");
             so.FindProperty("landClip").objectReferenceValue = Clip("sfx_landing_thud");
+            so.FindProperty("shiftClip").objectReferenceValue = Clip("sfx_shift_pop");
             so.ApplyModifiedPropertiesWithoutUndo();
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(go, KartAudioPrefabPath);
@@ -572,7 +561,19 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             RaceManager manager = systems.AddComponent<RaceManager>();
             RaceBootstrap bootstrap = systems.AddComponent<RaceBootstrap>();
             AudioSource uiSource = AddAudioSource(systems, null, false);
+            AudioSource delayedSource = AddAudioSource(systems, null, false); // record sting, retry beep
             RaceSounds sounds = systems.AddComponent<RaceSounds>();
+
+            // Music: race loop + results loop, and RaceMusic, which follows the race and ducks under the beeps.
+            GameObject music = new GameObject("Music");
+            AudioSource raceMusicSource = AddAudioSource(music, Clip("music_campus_loop"), true);
+            AudioSource resultsMusicSource = AddAudioSource(music, Clip("music_results_loop"), true);
+            RaceMusic raceMusic = music.AddComponent<RaceMusic>();
+            SerializedObject muso = new SerializedObject(raceMusic);
+            muso.FindProperty("raceManager").objectReferenceValue = manager;
+            muso.FindProperty("raceMusic").objectReferenceValue = raceMusicSource;
+            muso.FindProperty("resultsMusic").objectReferenceValue = resultsMusicSource;
+            muso.ApplyModifiedPropertiesWithoutUndo();
 
             SerializedObject mso = new SerializedObject(manager);
             mso.FindProperty("settings").objectReferenceValue = settings;
@@ -591,6 +592,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             SerializedObject sso = new SerializedObject(sounds);
             sso.FindProperty("raceManager").objectReferenceValue = manager;
             sso.FindProperty("source").objectReferenceValue = uiSource;
+            sso.FindProperty("delayedSource").objectReferenceValue = delayedSource;
+            sso.FindProperty("music").objectReferenceValue = raceMusic;
+            sso.FindProperty("hintWarning").objectReferenceValue = Clip("sfx_hint_warning");
             sso.FindProperty("countdownBeep").objectReferenceValue = Clip("sfx_countdown_beep");
             sso.FindProperty("goBeep").objectReferenceValue = Clip("sfx_go_beep");
             sso.FindProperty("checkpointChime").objectReferenceValue = Clip("sfx_checkpoint_chime");
@@ -609,11 +613,6 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             SerializedObject hso = new SerializedObject(raceHud);
             hso.FindProperty("raceManager").objectReferenceValue = manager;
             hso.ApplyModifiedPropertiesWithoutUndo();
-
-            // Music.
-            GameObject music = new GameObject("Music");
-            AddAudioSource(music, Clip("music_campus_loop"), true);
-            music.AddComponent<MusicPlayer>();
 
             EditorSceneManager.SaveScene(scene, MainScenePath);
 
