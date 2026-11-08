@@ -731,7 +731,9 @@
     transition-duration: 0s;
 }
 
-.cd--exit {
+/* GO flies up and fades. "Two classes" version too, because ".cd.is-shown" (2 classes) would otherwise keep opacity 1. */
+.cd--exit,
+.cd.is-shown.cd--exit {
     translate: 0 -48px;
     scale: 1.25 1.25;
     opacity: 0;
@@ -956,7 +958,9 @@
     border-bottom-color: var(--cc-sand);
 }
 
-/* Shake when the NEW RECORD stamp lands: 2 classes and after ".results--in .card", so these win. */
+/* Shake when the NEW RECORD stamp lands: 2 classes and after ".results--in .card", so these win.
+   card--shaking is on for the whole shake and makes the way back quick (40 ms, no delay) instead of the slow entry. */
+.results--in .card--shaking { transition-duration: 40ms; transition-delay: 0s; transition-timing-function: linear; }
 .results--in .card--shake-l { translate: -5px 0; transition-duration: 0s; transition-delay: 0s; }
 .results--in .card--shake-r { translate: 5px 0; transition-duration: 0s; transition-delay: 0s; }
 

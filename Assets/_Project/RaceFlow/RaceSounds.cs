@@ -38,6 +38,11 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Range(0f, 1f)]
         private float volume = 0.8f;
 
+        [SerializeField, Tooltip("The new-record sting waits this long after the finish jingle, so the two do not stack into one muddy sound and the sting lands with the NEW RECORD stamp on the results card")]
+        private float recordStingDelaySeconds = 1.25f;
+
+        private float stingPlayTime = -1f; // when the waiting sting should play, -1 = none waiting
+
         private void OnEnable()
         {
             raceManager.CountdownStep += OnCountdownStep;
@@ -71,13 +76,24 @@ namespace CarcavelosCircuit.RaceFlow
             Play(finishJingle);
             if (newRecord)
             {
-                Play(newRecordSting);
+                stingPlayTime = Time.time + recordStingDelaySeconds;
             }
         }
 
         private void OnRestarted()
         {
+            stingPlayTime = -1f; // retry before the sting played: it would belong to the old lap
             Play(retryClick);
+        }
+
+        // Plays the waiting new-record sting once its time has come.
+        private void Update()
+        {
+            if (stingPlayTime >= 0f && Time.time >= stingPlayTime)
+            {
+                stingPlayTime = -1f;
+                Play(newRecordSting);
+            }
         }
 
         private void OnRecovered()

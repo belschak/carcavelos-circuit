@@ -2,7 +2,7 @@
     <!-- The whole HUD. Works like HTML: elements with names (RaceHud.cs finds them by name) and classes (RaceHud.uss styles them).
          Nothing here is hidden with display:none. RaceHud.cs puts a state class on hud-root (st-ready, st-countdown,
          st-racing, st-results) and "is-shown" on parts, and the USS fades and slides them (see "Animation pattern" in RaceHud.uss).
-         Empty elements named "...-host" get a shape drawn in code (UI/HudShapes.cs). -->
+         Empty elements named "...-host" get a shape drawn in code (UI/SpeedArc.cs, UI/CalcadaWave.cs, UI/AzulejoPattern.cs). -->
     <Style src="RaceHud.uss" />
     <ui:VisualElement name="hud-root" class="hud-root st-ready">
 
@@ -132,7 +132,7 @@
                 <ui:Label text="CARCAVELOS" class="title f-display intro intro--2" />
                 <ui:VisualElement name="start-wave-host" class="wave-host intro intro--3" />
                 <ui:Label text="CIRCUIT" class="title-2 f-display intro intro--3" />
-                <ui:Label name="press-any-key" text="PRESS ANY KEY TO START" class="pill f-ui intro intro--4" />
+                <ui:Label name="press-any-key" text="CLICK OR PRESS ANY KEY" class="pill f-ui intro intro--4" />
                 <ui:VisualElement class="controls-row intro intro--5">
                     <ui:VisualElement class="keycap"><ui:Label text="W" class="f-ui" /></ui:VisualElement>
                     <ui:VisualElement class="keycap"><ui:Label text="A" class="f-ui" /></ui:VisualElement>

@@ -209,7 +209,7 @@ namespace CarcavelosCircuit.RaceFlow
             root.Q<VisualElement>("drift-tick").style.left = Length.Percent(stage1At * 100f);
         }
 
-        // Shapes drawn in code (UI/HudShapes.cs) go into the empty "...-host" elements.
+        // Shapes drawn in code (UI/SpeedArc.cs, CalcadaWave.cs, AzulejoPattern.cs) go into the empty "...-host" elements.
         private void AddDrawnShapes(VisualElement root)
         {
             speedArc = new SpeedArc();
@@ -371,7 +371,19 @@ namespace CarcavelosCircuit.RaceFlow
                 int deltaMilliseconds = RaceTimer.ToMilliseconds(lapSeconds) - RaceTimer.ToMilliseconds(previousBest);
                 resultsDeltaValue.style.display = DisplayStyle.Flex;
                 resultsDeltaValue.text = HudFormat.Delta(deltaMilliseconds, true);
-                resultsDeltaText.text = isRecord ? "FASTER THAN YOUR BEST" : "SLOWER THAN YOUR BEST";
+                // The words follow the rounded number on screen, so "+0.000 s" never says "faster".
+                if (deltaMilliseconds < 0)
+                {
+                    resultsDeltaText.text = "FASTER THAN YOUR BEST";
+                }
+                else if (deltaMilliseconds == 0)
+                {
+                    resultsDeltaText.text = "SAME AS YOUR BEST";
+                }
+                else
+                {
+                    resultsDeltaText.text = "SLOWER THAN YOUR BEST";
+                }
                 resultsDelta.EnableInClassList("res-delta--ahead", deltaMilliseconds < 0);
                 resultsBest.text = (isRecord ? "PREVIOUS BEST  " : "YOUR BEST  ") + HudFormat.Time(RaceTimer.ToMilliseconds(previousBest));
             }
@@ -459,6 +471,9 @@ namespace CarcavelosCircuit.RaceFlow
             else
             {
                 resultsScreen.RemoveFromClassList("results--in");
+                resultsCard.RemoveFromClassList("card--shaking"); // a retry in the middle of the record shake
+                resultsCard.RemoveFromClassList("card--shake-l");
+                resultsCard.RemoveFromClassList("card--shake-r");
             }
 
             if (state == RaceState.Ready || state == RaceState.Results)
@@ -482,7 +497,7 @@ namespace CarcavelosCircuit.RaceFlow
 
             if (shownLoading.Changed(raceManager.IsSetUp ? 0 : 1))
             {
-                pressAnyKey.text = raceManager.IsSetUp ? "PRESS ANY KEY TO START" : "LOADING TRACK...";
+                pressAnyKey.text = raceManager.IsSetUp ? "CLICK OR PRESS ANY KEY" : "LOADING TRACK...";
                 pressAnyKey.EnableInClassList("pill--loading", !raceManager.IsSetUp);
             }
         }
@@ -735,10 +750,12 @@ namespace CarcavelosCircuit.RaceFlow
                     // The NEW RECORD stamp lands at about 1.25 s: give the card a short shake then.
                     float wait = Mathf.Max(0f, 1.25f - (Time.time - resultsStartTime));
                     long ms = (long)(wait * 1000f);
+                    resultsCard.schedule.Execute(() => resultsCard.AddToClassList("card--shaking")).ExecuteLater(ms);
                     resultsCard.schedule.Execute(() => resultsCard.AddToClassList("card--shake-l")).ExecuteLater(ms);
                     resultsCard.schedule.Execute(() => { resultsCard.RemoveFromClassList("card--shake-l"); resultsCard.AddToClassList("card--shake-r"); }).ExecuteLater(ms + 40);
                     resultsCard.schedule.Execute(() => { resultsCard.RemoveFromClassList("card--shake-r"); resultsCard.AddToClassList("card--shake-l"); }).ExecuteLater(ms + 80);
                     resultsCard.schedule.Execute(() => resultsCard.RemoveFromClassList("card--shake-l")).ExecuteLater(ms + 120);
+                    resultsCard.schedule.Execute(() => resultsCard.RemoveFromClassList("card--shaking")).ExecuteLater(ms + 200);
                 }
             }
         }
