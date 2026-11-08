@@ -4,6 +4,10 @@ Pure Python (no extra packages): sine/saw waves, filtered noise and envelopes,
 written as 16-bit mono WAV files. Run it again to rebuild the sounds exactly:
 
     python tools/audio-synth/synth_sfx.py Assets/_Project/Audio/Clips
+    python -I tools/audio-synth/process_wavs.py Assets/_Project/Audio/Clips
+
+The second script is the mastering step (loudness targets, loop padding + loop points), so always run it
+after this one. To rebuild only some sounds, add their names: synth_sfx.py <folder> sfx_hint_warning
 
 All sounds are our own work (no samples), so they are free to use (CC0).
 """
@@ -213,6 +217,32 @@ def new_record_sting():
     for i, name in enumerate(["C6", "E6", "G6", "C7", "E7"]):
         mix_into(out, bell(note_freq(name), 0.7, bright=1.2), 0.5 + i * 0.07, 0.5)
     return normalise(out, -4.0)
+
+
+def hint_warning():
+    # "Missed a checkpoint": two falling square-ish notes (A5 then E5), clearly a warning but not harsh.
+    out = []
+    partials = ((1, 1.0), (3, 0.3), (5, 0.12))
+    for i, (name, length) in enumerate((("A5", 0.12), ("E5", 0.22))):
+        x = tone(note_freq(name), length, partials=partials)
+        x = mul(x, envelope(len(x), 0.004, length * 0.6))
+        mix_into(out, x, i * 0.13, 0.7)
+    return normalise(lowpass(out, 4000.0), -3.0)
+
+
+def shift_pop():
+    # Gear change: three quick exhaust pops (band-passed noise) and a low thump under them.
+    seconds = 0.14
+    n = int(seconds * SR)
+    out = [0.0] * n
+    for k in range(3):
+        m = int(0.03 * SR)
+        pop = mul(bandpass(noise(m, 61 + k), 900.0, q=1.2), exp_decay(m, 0.02))
+        mix_into(out, pop, k * 0.015, 1.0 - 0.25 * k)
+    thump = mul(tone(70.0, seconds), exp_decay(n, 0.08))
+    out = [o * 3.0 + t * 0.6 for o, t in zip(out[:n], thump)]
+    out = mul(out, envelope(n, 0.001, 0.04))
+    return normalise(soft_clip(out, 1.5), -3.0)
 
 
 # ---------- kart sounds ----------
@@ -426,6 +456,56 @@ def music_loop():
     return normalise(soft_clip(out, 1.1), -3.0)
 
 
+def results_loop():
+    """Original 16-second "you made it" loop for the results screen (120 BPM like the race music,
+    C major: C - G - Am - F). Calm: kick only on beat 1, rim clicks on 2 and 4, louder pads and a bell arpeggio.
+    Exactly 8 bars, so it loops on the beat."""
+    bpm = 120.0
+    beat = 60.0 / bpm
+    bar = 4 * beat
+    bars = 8
+    total = bars * bar
+    out = [0.0] * int(total * SR)
+
+    chords = [["C4", "E4", "G4"], ["G3", "B3", "D4"], ["A3", "C4", "E4"], ["F3", "A3", "C4"]]
+    roots = ["C3", "G2", "A2", "F2"]
+    arpeggio = ["C6", "E6", "G6", "B5"]
+
+    kick_n = int(0.3 * SR)
+    kick = mul(tone(140.0, 0.3, glide_to=45.0), exp_decay(kick_n, 0.28))
+    rim_n = int(0.04 * SR)
+    rim = mul(highpass(noise(rim_n, 71), 3000.0), exp_decay(rim_n, 0.02))
+
+    for b in range(bars):
+        t0 = b * bar
+        mix_into(out, kick, t0, 0.7)
+        mix_into(out, rim, t0 + beat, 0.3)
+        mix_into(out, rim, t0 + 3 * beat, 0.3)
+        chord = chords[b % 4]
+        root = roots[b % 4]
+        # Bass: quarter notes, round and soft.
+        for q in range(4):
+            n = int(beat * SR)
+            x = tone(note_freq(root), beat, partials=((1, 1.0), (2, 0.3), (3, 0.1)))
+            x = lowpass(mul(x, envelope(n, 0.01, 0.2)), 500.0)
+            mix_into(out, x, t0 + q * beat, 0.28)
+        # Pads, louder than in the race music.
+        for name in chord:
+            x = tone(note_freq(name), bar, partials=((1, 1.0), (2, 0.2), (3, 0.08)), vibrato=0.05, vib_rate=4.0)
+            x = mul(x, envelope(len(x), 0.3, 0.5))
+            mix_into(out, x, t0, 0.11)
+        # Sparse bell arpeggio, one note per beat, on every bar.
+        for k, name in enumerate(arpeggio):
+            mix_into(out, bell(note_freq(name), 0.9, bright=0.7), t0 + k * beat, 0.12)
+
+    # Fold the ringing tail back to the start, like music_loop.
+    n_loop = int(total * SR)
+    for i in range(n_loop, len(out)):
+        out[i - n_loop] += out[i]
+    out = out[:n_loop]
+    return normalise(soft_clip(out, 1.1), -3.0)
+
+
 SOUNDS = {
     "sfx_countdown_beep": countdown_beep,
     "sfx_go_beep": go_beep,
@@ -442,6 +522,9 @@ SOUNDS = {
     "ui_click": ui_click,
     "sfx_respawn": respawn_whoosh,
     "amb_wind_loop": wind_loop,
+    "sfx_hint_warning": hint_warning,
+    "sfx_shift_pop": shift_pop,
+    "music_results_loop": results_loop,
 }
 
 
