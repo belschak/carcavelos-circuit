@@ -12,6 +12,11 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("Used only while the campus scene has no track in it yet")]
         private string fallbackTrackSceneName = "RaceFlow_PlaceholderTrack";
 
+        // Set by Role4SceneBuilder: 1 = it already switched the race to the Nova campus scene once, so a later
+        // manual choice of track in the field above is never overwritten again.
+        [SerializeField, HideInInspector]
+        private int trackDefaultVersion = 0;
+
         [SerializeField, Tooltip("The countdown starts at this number: 3, 2, 1, GO")]
         private int countdownFrom = 3;
 

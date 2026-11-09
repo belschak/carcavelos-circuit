@@ -4,7 +4,7 @@ Every file not made by us goes here in the same PR that adds it. No licence = no
 
 | Asset / code | Source (URL) | Licence | Used where | Added by | Date |
 |---|---|---|---|---|---|
-| Map data (route tracing only) | https://www.openstreetmap.org/copyright | ODbL, credit "© OpenStreetMap contributors" | `docs/route.md`, game credits | | 2026-11-07 |
+| Map data (route tracing; building footprints and paths of the Nova campus in `tools/nova_track/layout.json` and `Track_NovaCampus`) | https://www.openstreetmap.org/copyright | ODbL, credit "© OpenStreetMap contributors" | `docs/route.md`, game credits | | 2026-11-07 |
 | Sound effect `el_boost_whoosh.wav` (generated with ElevenLabs Sound Effects v3) | https://elevenlabs.io/docs/help-center/legal/can-i-publish-the-content-i-generate-on-the-platform | ElevenLabs **Creator plan (paid)**: commercial licence included, no attribution required; credit "Sound effects: elevenlabs.io" given anyway | `Assets/_Project/Audio/Clips/`, wired in `KartAudio` prefab | David (Role 4) | 2026-11-08 |
 | Kart sounds `kart_engine_low.wav`, `kart_engine_high.wav`, `kart_drift_squeal.wav`, `kart_drift_sparks.wav`, `kart_drift_start.wav`, `kart_drift_stage_up.wav` (made by Luc Tippmann, Role 3, with ElevenLabs Sound Effects v2, loops cut with his own script) | https://elevenlabs.io/docs/help-center/legal/can-i-publish-the-content-i-generate-on-the-platform | ElevenLabs, **plan: pending Luc's confirmation**. If free plan: non-commercial only, credit "Sound effects: elevenlabs.io" (already in the README credits) | `Assets/_Project/Audio/Clips/`, wired in `KartAudio` prefab | David (Role 4), files from Luc (Role 3) | 2026-11-08 |
 

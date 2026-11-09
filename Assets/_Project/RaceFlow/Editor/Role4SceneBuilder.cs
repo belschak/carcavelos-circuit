@@ -33,6 +33,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         private const string TrackScenePath = Root + "RaceFlow/Scenes/RaceFlow_PlaceholderTrack.unity";
         private const string VolumeProfilePath = Root + "RaceFlow/Settings/RaceCameraVolume.asset";
         private const string CampusScenePath = Root + "Track/Scenes/Track_Campus.unity";
+        private const string NovaScenePath = Root + "Track/Scenes/Track_NovaCampus.unity"; // help PR for Role 2 (#31)
+        private const string NovaSceneName = "Track_NovaCampus";
         private const string DeansGhostPath = Root + "RaceFlow/Settings/DeansGhost.txt"; // shipped team ghost (DeansGhostExporter)
 
         [MenuItem("Carcavelos Circuit/Build Role 4 Scenes")]
@@ -76,7 +78,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         // someone added to File > Build Profiles (kept with its tick box). Merged, never replaced.
         private static void MergeBuildScenes()
         {
-            string[] ours = { MainScenePath, CampusScenePath, TrackScenePath };
+            string[] ours = NovaSceneExists()
+                ? new[] { MainScenePath, NovaScenePath, CampusScenePath, TrackScenePath }
+                : new[] { MainScenePath, CampusScenePath, TrackScenePath };
             var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
             foreach (string path in ours)
             {
@@ -188,8 +192,30 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 settings = ScriptableObject.CreateInstance<RaceSettings>();
                 AssetDatabase.CreateAsset(settings, SettingsPath);
             }
+            SwitchToNovaTrackOnce(settings);
             EditorUtility.SetDirty(settings); // writes settings added later to the file, with their default values
             return settings;
+        }
+
+        // Once the Nova campus scene is on main, the race uses it (one time only: if someone later picks another
+        // track in RaceSettings, that choice stays).
+        private static void SwitchToNovaTrackOnce(RaceSettings settings)
+        {
+            SerializedObject so = new SerializedObject(settings);
+            SerializedProperty done = so.FindProperty("trackDefaultVersion");
+            if (done.intValue >= 1 || !NovaSceneExists())
+            {
+                return;
+            }
+            so.FindProperty("trackSceneName").stringValue = NovaSceneName;
+            done.intValue = 1;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("Role4SceneBuilder: the race now uses " + NovaSceneName + " (set once; change RaceSettings > Track Scene Name to pick another).");
+        }
+
+        private static bool NovaSceneExists()
+        {
+            return AssetDatabase.LoadAssetAtPath<SceneAsset>(NovaScenePath) != null;
         }
 
         // UI Toolkit needs a PanelSettings asset (screen scaling) and a theme (default fonts and controls).
