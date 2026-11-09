@@ -37,7 +37,7 @@ NW_CORNER, NE_CORNER = (3.0, 160.0), (67.0, 184.0)
 
 # ---------- sizes (m) ----------
 SPLIT_U = 68.0               # line between the atrium block and the long room (through (28, 97) and (55, 107))
-LONG_END_U = 132.0           # the long room ends here, ~64 m after the artwork wall (IMG_7722 walk); the wing goes on
+LONG_END_U = 209.8           # the long room runs through the whole wing to its south facade (map: wing ends at u 210)
 ATRIUM_H = 12.5              # clear height under the atrium roof
 LONG_H = 11.0                # clear height of the long room
 LOW_CEILING_END = 80.0       # first part of the long room has a flat ceiling at LOW_Z
@@ -175,6 +175,8 @@ def door(m, c, t, n, width):
 def rest_of_wing(m, f, poly):
     """The rest of the wing south of the long room (no interior yet): closed block with the same facade and roof, so the
     building on the map stays complete when Luc's Edificio Principal block is switched off."""
+    if len(poly) < 3 or abs(K.signed_area(poly)) < 1.0:
+        return                                                           # nothing left south of the long room
     ccw = K.signed_area(poly) > 0
     for a, b in zip(poly, poly[1:] + poly[:1]):
         L = math.hypot(b[0] - a[0], b[1] - a[1])
@@ -490,27 +492,28 @@ def long_room_structure(m, f):
     glass_vestibule(m, f, 71.0, 77.5, 3.2)
     for du in (-3.0, 3.0):                                               # tall planters both sides of the terrace door
         tall_pot(m, f, TERRACE_DOOR_U + du, 2.2, 20 + int(du))
-    for u0 in (84.0, 106.0):                                             # white boxes with dark brown recesses (east side)
+    for u0 in K.Frame().samples(84.0, LONG_END_U - 26.0, 22.0):         # white boxes with dark brown recesses (east side)
         K.block(m, f, u0, u0 + 11.0, 26.5, 29.7, 0.0, 3.8, "brown")
         K.block(m, f, u0 - 1.0, u0 + 12.0, 25.2, 29.7, 3.8, 6.4, "wall")
         for u in (u0 + 1.0, u0 + 10.0):
             K.round_column(m, f, u, 25.6, 0, 3.8, 0.28)
-    K.block(m, f, 120.0, LONG_END_U - 0.3, 22.0, 29.7, 6.4, 9.6, "wall")                         # mezzanine box
-    K.wall_o(m, f, 21.95, 120.0, LONG_END_U - 0.3, 6.6, 7.8, "glass", facing=-1)
+    K.block(m, f, LONG_END_U - 12.0, LONG_END_U - 0.3, 22.0, 29.7, 6.4, 9.6, "wall")             # mezzanine box at the end
+    K.wall_o(m, f, 21.95, LONG_END_U - 12.0, LONG_END_U - 0.3, 6.6, 7.8, "glass", facing=-1)
 
 
 def long_room_furniture(m, f):
     for u in K.Frame().samples(84.0, LONG_END_U - 4.0, 4.6):
-        if abs(u - TERRACE_DOOR_U) > 3.5:                                # keep the terrace door free                                         # keep the terrace door free
+        if abs(u - TERRACE_DOOR_U) > 3.5:                                # keep the terrace door free
             K.long_table(m, f, u, 5.4, seats=3)
-    for k, (u, o) in enumerate(((84, 12), (88, 17), (92, 11), (98, 16), (102, 11), (106, 17), (110, 12), (114, 18),
-                                (118, 12), (122, 17), (126, 12), (90, 22), (100, 21), (112, 22))):
-        K.round_table(m, f, float(u), float(o), 4 if k % 2 == 0 else 3)
-    K.grand_piano(m, f, 92.0, 9.4, 90)
-    K.grand_piano(m, f, 113.0, 9.0, 90)
-    for k, (u, o) in enumerate(((82.0, 2.4), (99.0, 2.4), (108.5, 2.4), (124.0, 2.4), (95.0, 23.0))):
-        K.big_plant(m, f, u, o, 9 + k)
-    for k, (u, o) in enumerate(((71.0, 14.0), (86.0, 24.0), (120.0, 22.0))):
+    for k, u in enumerate(K.Frame().samples(84.0, LONG_END_U - 4.0, 4.0)):   # round tables in two staggered rows
+        K.round_table(m, f, u, 12.5 if k % 2 == 0 else 14.0, 4)
+        K.round_table(m, f, u + 2.0, 19.5 if k % 2 == 0 else 21.0, 4 if k % 3 else 3)
+    K.grand_piano(m, f, 92.0, 8.6, 90)
+    K.grand_piano(m, f, 113.0, 8.6, 90)
+    for k, u in enumerate(K.Frame().samples(82.0, LONG_END_U - 3.0, 16.0)):  # fig trees in pots along the glass
+        if abs(u - TERRACE_DOOR_U) > 4.5:
+            K.big_plant(m, f, u, 2.4, 9 + k)
+    for k, (u, o) in enumerate(((71.0, 14.0), (86.0, 24.0), (150.0, 23.5), (180.0, 23.5))):
         K.info_stand(m, f, u, o, k)
 
 
