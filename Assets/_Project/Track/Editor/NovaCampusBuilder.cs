@@ -28,6 +28,7 @@ namespace CarcavelosCircuit.Track.Editor
         private const float MarginalEmbankment = 12f;
         private const float RampPlazaWidth = 8f;
         private const float TrenchDip = 0.3f;     // the road counts as "in the trench" once it is this far below the ground
+        private const float Batter = 0.6f;        // ramp walls lean back 0.6 m per metre of height (about 31 degrees), like the real ones
         private static Bounds groundArea;
 
         private static NovaTrackData data;
@@ -219,14 +220,18 @@ namespace CarcavelosCircuit.Track.Editor
                     }
                     Material m = IsTunnel(i) ? look.Mural : (trenchA || trenchB ? look.BeigeWall : look.Kerb);
                     float length = Vector3.Distance(a, b);
+                    // Open ramp walls are battered: the top sits further out than the foot.
+                    bool ramp = (trenchA || trenchB) && !IsTunnel(i);
+                    Vector3 shiftA = ramp ? NovaRouteMath.Right(centre, i) * (side * Mathf.Max(0f, topA - a.y) * Batter) : Vector3.zero;
+                    Vector3 shiftB = ramp ? NovaRouteMath.Right(centre, j) * (side * Mathf.Max(0f, topB - b.y) * Batter) : Vector3.zero;
                     // Right wall is seen from the road with "a" on the left; the left wall the other way round.
                     // Both faces: the road side, and the outside that players see from the plaza above the ramp.
-                    batch.For(m).Wall(a, b, a.y - 0.5f, b.y - 0.5f, topA, topB, u[k], 4f);
-                    batch.For(m).Wall(b, a, b.y - 0.5f, a.y - 0.5f, topB, topA, u[k], 4f);
-                    if ((trenchA || trenchB) && !IsTunnel(i))
+                    batch.For(m).SlopedWall(a, b, a.y - 0.5f, b.y - 0.5f, topA, topB, shiftA, shiftB, u[k], 4f);
+                    batch.For(m).SlopedWall(b, a, b.y - 0.5f, a.y - 0.5f, topB, topA, shiftB, shiftA, u[k], 4f);
+                    if (ramp)
                     {
-                        AddRampPlaza(batch, look, i, j, side, groundA, groundB);
-                        AddCapAndRailing(batch, look, a, b, topA, topB);
+                        AddRampPlaza(batch, look, i, j, side, groundA, groundB, shiftA, shiftB);
+                        AddCapAndRailing(batch, look, a + shiftA, b + shiftB, topA, topB);
                     }
                     u[k] += length;
 
@@ -250,10 +255,10 @@ namespace CarcavelosCircuit.Track.Editor
         }
 
         // Pale beige paving along the top of the ramp walls (as in the photos); it also hides the grass holes cut for the trench.
-        private static void AddRampPlaza(NovaBatch batch, NovaLook look, int i, int j, float side, float groundA, float groundB)
+        private static void AddRampPlaza(NovaBatch batch, NovaLook look, int i, int j, float side, float groundA, float groundB, Vector3 shiftA, Vector3 shiftB)
         {
-            Vector3 innerA = Edge(i, side);
-            Vector3 innerB = Edge(j, side);
+            Vector3 innerA = Edge(i, side) + shiftA;
+            Vector3 innerB = Edge(j, side) + shiftB;
             Vector3 outA = NovaRouteMath.Right(centre, i) * (side * RampPlazaWidth);
             Vector3 outB = NovaRouteMath.Right(centre, j) * (side * RampPlazaWidth);
             Vector3 ia = new Vector3(innerA.x, groundA + 0.03f, innerA.z);
@@ -317,10 +322,37 @@ namespace CarcavelosCircuit.Track.Editor
                 Vector3 tlj = new Vector3(lj.x, topJ, lj.z) - o;
                 Vector3 trj = new Vector3(rj.x, topJ, rj.z) + o;
                 batch.For(look.AsphaltMat).Quad(tli, tlj, trj, tri, Vector2.zero, Vector2.up, Vector2.one, Vector2.right); // faces up
+                int prev = (i - 1 + centre.Length) % centre.Length;
+                if (!IsTunnel(prev) || !IsTunnel(j))
+                {
+                    AddPortal(batch, look, !IsTunnel(prev) ? i : j, topI);
+                }
                 if (i % 4 == 0)
                 {
                     batch.For(look.Light).Box(centre[i] + Vector3.up * (TunnelHeight - 0.06f), new Vector3(width[i] * 0.5f, 0.08f, 0.5f), Quaternion.LookRotation(NovaRouteMath.Forward(centre, i)), 1f);
                 }
+            }
+        }
+
+        // Tunnel mouth: a thick grey concrete deck edge over the opening, a white cap and a steel railing on top (as in the photos).
+        private static void AddPortal(NovaBatch batch, NovaLook look, int i, float deckY)
+        {
+            Vector3 forward = NovaRouteMath.Forward(centre, i);
+            forward.y = 0f;
+            Quaternion across = Quaternion.LookRotation(forward); // box x = across the road
+            float span = width[i] + 6f;
+            float bottom = centre[i].y + TunnelHeight - 0.2f;
+            float height = Mathf.Max(1.2f, deckY - bottom + 0.1f);
+            Vector3 c = new Vector3(centre[i].x, bottom + height * 0.5f, centre[i].z);
+            batch.For(look.Deck).Box(c, new Vector3(span, height, 0.8f), across, 2f);
+            Vector3 top = new Vector3(centre[i].x, bottom + height, centre[i].z);
+            batch.For(look.Kerb).Box(top + Vector3.up * 0.1f, new Vector3(span, 0.2f, 0.9f), across, 1f);
+            batch.For(look.Metal).Box(top + Vector3.up * 1.2f, new Vector3(span, 0.06f, 0.06f), across, 1f);
+            batch.For(look.Metal).Box(top + Vector3.up * 0.7f, new Vector3(span, 0.04f, 0.04f), across, 1f);
+            Vector3 r = NovaRouteMath.Right(centre, i);
+            for (float x = -span * 0.5f; x <= span * 0.5f + 0.01f; x += 1.5f)
+            {
+                batch.For(look.Metal).Box(top + r * x + Vector3.up * 0.7f, new Vector3(0.06f, 1.0f, 0.06f), across, 1f);
             }
         }
 
@@ -381,7 +413,7 @@ namespace CarcavelosCircuit.Track.Editor
                     float roadY = centre[near].y - 0.05f;
                     if (roadY < g - TrenchDip)
                     {
-                        trench[ix, iz] = d < 0.5f; // small hole only: the ramp plaza strips cover the rest
+                        trench[ix, iz] = d < Mathf.Max(0.5f, (g - roadY) * Batter - 0.3f); // room for the battered wall; the ramp plaza strips cover the rest
                         h[ix, iz] = g;
                     }
                     else if (d < 1.5f)

@@ -96,6 +96,24 @@ namespace CarcavelosCircuit.Track.Editor
                     float rise = (steps - step) * 0.25f;
                     batch.For(look.Terracotta).Box(new Vector3(m.x, b.baseY + rise * 0.5f - 0.1f, m.y), new Vector3(0.4f, rise, step >= steps - 3 ? 14f : 10f), along, 1f);
                 }
+
+                // Deep white slab on slender round white columns along the entrance side (the campus colonnade).
+                float edgeLength = Vector2.Distance(a, c);
+                Vector2 dir = (c - a).normalized;
+                Quaternion edgeRot = Quaternion.LookRotation(new Vector3(dir.x, 0f, dir.y));
+                float slabY = b.baseY + Mathf.Min(b.height, 8f) * 0.5f;
+                for (float s = 3f; s < edgeLength - 2f; s += 6f)
+                {
+                    float fromMiddle = Mathf.Abs(s - edgeLength * 0.5f);
+                    if (fromMiddle < 6f)
+                    {
+                        continue; // keep the stair opening free
+                    }
+                    Vector2 p = a + dir * s + outward * 3f;
+                    batch.For(look.PlainWhite).Prism(new Vector3(p.x, b.baseY - 0.5f, p.y), 0.2f, slabY - b.baseY + 0.5f, 10);
+                }
+                Vector2 slabMid = (a + c) * 0.5f + outward * 1.75f;
+                batch.For(look.PlainWhite).Box(new Vector3(slabMid.x, slabY + 0.2f, slabMid.y), new Vector3(3.5f, 0.4f, edgeLength), edgeRot, 4f);
             }
         }
 

@@ -82,6 +82,53 @@ namespace CarcavelosCircuit.Track.Editor
         }
 
         // A flat polygon (seen from above) at height y, filled with ear clipping. UVs = world x/z divided by tile.
+        // Same as Wall, but the top edge is pushed sideways (a battered, sloping wall like the beach ramp's).
+        public void SlopedWall(Vector3 a, Vector3 b, float bottomA, float bottomB, float topA, float topB, Vector3 shiftA, Vector3 shiftB, float uStart, float tile)
+        {
+            float length = Vector3.Distance(new Vector3(a.x, 0f, a.z), new Vector3(b.x, 0f, b.z));
+            Vector3 a0 = new Vector3(a.x, bottomA, a.z);
+            Vector3 b0 = new Vector3(b.x, bottomB, b.z);
+            Vector3 a1 = new Vector3(a.x, topA, a.z) + shiftA;
+            Vector3 b1 = new Vector3(b.x, topB, b.z) + shiftB;
+            float u0 = uStart / tile;
+            float u1 = (uStart + length) / tile;
+            Quad(a0, a1, b1, b0, new Vector2(u0, bottomA / tile), new Vector2(u0, (bottomA + Vector3.Distance(a0, a1)) / tile), new Vector2(u1, (bottomB + Vector3.Distance(b0, b1)) / tile), new Vector2(u1, bottomB / tile));
+        }
+
+        // A polygon whose corners have their own heights (sloped roofs).
+        public void SlopedPolygon(Vector2[] outline, float[] y, float tile)
+        {
+            List<int> ears = NovaTriangulator.Triangulate(outline);
+            int start = vertices.Count;
+            for (int i = 0; i < outline.Length; i++)
+            {
+                vertices.Add(new Vector3(outline[i].x, y[i], outline[i].y));
+                uvs.Add(outline[i] / tile);
+            }
+            for (int i = 0; i < ears.Count; i++)
+            {
+                triangles.Add(start + ears[i]);
+            }
+        }
+
+        // A flat polygon seen from below (soffits under cantilevers).
+        public void FlatPolygonDown(Vector2[] outline, float y, float tile)
+        {
+            List<int> ears = NovaTriangulator.Triangulate(outline);
+            int start = vertices.Count;
+            for (int i = 0; i < outline.Length; i++)
+            {
+                vertices.Add(new Vector3(outline[i].x, y, outline[i].y));
+                uvs.Add(outline[i] / tile);
+            }
+            for (int i = 0; i + 2 < ears.Count; i += 3)
+            {
+                triangles.Add(start + ears[i]);
+                triangles.Add(start + ears[i + 2]);
+                triangles.Add(start + ears[i + 1]);
+            }
+        }
+
         public void FlatPolygon(Vector2[] outline, float y, float tile)
         {
             List<int> ears = NovaTriangulator.Triangulate(outline);

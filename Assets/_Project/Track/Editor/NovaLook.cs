@@ -43,6 +43,7 @@ namespace CarcavelosCircuit.Track.Editor
         public const string BollardWood = "#857A68";
         public const string FortOchre = "#C9AE86";
         public const string Headland = "#9C9078";
+        public const string DeckGrey = "#8F8E8A";        // tunnel portal deck edge
         public static readonly string[] MuralColours = { "#E63A2E", "#1E6FD0", "#F4C21B", "#2BA35A", "#F08BB0", "#1C2340", "#FFFFFF" };
 
         public Material Road;        // campus concrete paths
@@ -80,6 +81,7 @@ namespace CarcavelosCircuit.Track.Editor
         public Material Fort;
         public Material HeadlandMat;
         public Material Foam;
+        public Material Deck;        // grey concrete deck edge over the tunnel mouths
 
         public static NovaLook Create()
         {
@@ -132,6 +134,7 @@ namespace CarcavelosCircuit.Track.Editor
             look.Fort = Lit("NovaFort", FortOchre, 0.05f, null);
             look.HeadlandMat = Lit("NovaHeadland", Headland, 0f, null);
             look.Foam = Lit("NovaFoam", "#E8ECEC", 0.3f, null);
+            look.Deck = Lit("NovaDeck", DeckGrey, 0.1f, null);
             return look;
         }
 
