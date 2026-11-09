@@ -467,7 +467,6 @@ def long_room_end(m, f):
 
 
 def long_room_structure(m, f):
-    twisted_sculpture(m, f, 96.8, 7.8, LONG_H - 1.2)                     # black twisted column (IMG_7722 1:20)
     glass_vestibule(m, f, 71.0, 77.5, 3.2)
     for du in (-3.0, 3.0):                                               # tall planters both sides of the terrace door
         tall_pot(m, f, TERRACE_DOOR_U + du, 2.2, 20 + int(du))
