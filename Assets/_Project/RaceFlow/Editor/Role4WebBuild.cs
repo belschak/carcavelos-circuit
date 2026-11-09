@@ -30,7 +30,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             bool gzipForItch = HasArgument("-webHost=itch");
             ApplyWebSettings(gzipForItch);
 
-            // Every track scene that is merged into main goes into the build (CI runs only this method).
+            // CI runs only this method, so first rebuild Main.unity and the placeholder kart from what is on main now
+            // (Role 1's kart, Role 3's kart model, every merged track scene). Then the build is always the integrated game.
+            Role4SceneBuilder.BuildAll();
             Role4SceneBuilder.MergeBuildScenes(AssetDatabase.LoadAssetAtPath<RaceSettings>(Role4SceneBuilder.SettingsPath));
 
             // Build with the Web URP asset as the project default, so the build does not also carry the shader variants

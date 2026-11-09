@@ -361,6 +361,28 @@ namespace CarcavelosCircuit.RaceFlow.Editor
 
         // Swap day for the kart is automatic: as soon as Role 1's prefab "Kart" exists in Driving/ and its root has
         // a component implementing IKartState, the builder puts it into Main instead of the placeholder.
+        // Role 3's kart model (Visuals/Kart/Prefabs/KartVisual_*.prefab), the first one by name. null until it is merged.
+        private static GameObject FindKartVisualPrefab()
+        {
+            string[] guids = AssetDatabase.FindAssets("KartVisual t:Prefab", new[] { Root + "Visuals" });
+            string best = "";
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                string name = System.IO.Path.GetFileNameWithoutExtension(path);
+                if (name.StartsWith("KartVisual") && (best == "" || string.CompareOrdinal(path, best) < 0))
+                {
+                    best = path;
+                }
+            }
+            if (best == "")
+            {
+                return null;
+            }
+            Debug.Log("Role4SceneBuilder: placeholder kart shows Role 3's model " + best);
+            return AssetDatabase.LoadAssetAtPath<GameObject>(best);
+        }
+
         private static GameObject FindRealKartPrefab()
         {
             string[] guids = AssetDatabase.FindAssets("Kart t:Prefab", new[] { Root + "Driving" });
@@ -405,9 +427,18 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             box.sharedMaterial = slippery;
             kart.AddComponent<PlaceholderKart>();
 
-            // "Visual" child = the part Role 3 swaps for the real model (docs/interfaces.md).
+            // "Visual" child = the part Role 3 swaps for the real model (docs/interfaces.md). Once Luc's KartVisual prefab
+            // is on main it sits here, so the race shows the real kart even before Role 1's Kart prefab exists.
             GameObject visual = new GameObject("Visual");
             visual.transform.SetParent(kart.transform, false);
+            GameObject kartVisual = FindKartVisualPrefab();
+            if (kartVisual != null)
+            {
+                PrefabUtility.InstantiatePrefab(kartVisual, visual.transform);
+                GameObject withModel = PrefabUtility.SaveAsPrefabAsset(kart, KartPrefabPath);
+                Object.DestroyImmediate(kart);
+                return withModel;
+            }
             VisualPart(PrimitiveType.Cube, "Body", visual.transform, new Vector3(0f, 0.35f, 0f), Vector3.zero, new Vector3(1.1f, 0.3f, 1.7f), white);
             VisualPart(PrimitiveType.Cube, "Seat", visual.transform, new Vector3(0f, 0.6f, -0.3f), Vector3.zero, new Vector3(0.6f, 0.3f, 0.5f), black);
             VisualPart(PrimitiveType.Cube, "Nose", visual.transform, new Vector3(0f, 0.4f, 0.85f), Vector3.zero, new Vector3(0.9f, 0.18f, 0.2f), orange);
