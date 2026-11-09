@@ -36,14 +36,15 @@ NW_CORNER, NE_CORNER = (3.0, 160.0), (67.0, 184.0)
 
 # ---------- sizes (m) ----------
 SPLIT_U = 68.0               # line between the atrium block and the long room (through (28, 97) and (55, 107))
-LONG_END_U = 118.0           # the long room ends here (the wing goes on with other rooms)
+LONG_END_U = 132.0           # the long room ends here, ~64 m after the artwork wall (IMG_7722 walk); the wing goes on
 ATRIUM_H = 12.5              # clear height under the atrium roof
 LONG_H = 11.0                # clear height of the long room
 LOW_CEILING_END = 80.0       # first part of the long room has a flat ceiling at LOW_Z
 LOW_Z = 4.6
 GALLERY_Z = 5.2              # first floor
 GALLERY_DEPTH = 7.0          # depth of the galleries along the walls
-BRIDGE_U = (22.0, 27.0)      # gallery bridge across the east half of the atrium (the staircase arrives here)
+BRIDGE_U = (7.0, 27.0)       # north-south gallery in the middle of the atrium (seen from the main entrance), u from .. to
+BRIDGE_O = (30.0, 40.5)      # .. and o from .. to; the wide staircase arrives at its south end
 WALL = 0.35                  # wall thickness (outer face offset)
 SOLID_NORTH_U = 3.0          # facade pieces of the atrium closer than this to the north side are closed white walls
 DOOR_H = 3.2
@@ -51,7 +52,7 @@ DOOR_H = 3.2
 # doors: world position read from Noah's map (snapped to the nearest facade), width
 DOORS = {
     "D1_main_entrance": ((8.3, 141.0), 4.2),
-    "D3_terrace": ((35.9, 67.5), 3.6),
+    "D3_terrace": ((39.6, 63.3), 3.6),          # where the route leaves the building onto the CTT terrace (u 103.5)
     "D4_entrance_room": ((62.5, 107.0), 3.4),
     "D5_out_north_east": ((71.4, 169.9), 3.4),
 }
@@ -233,14 +234,23 @@ def atrium_structure(m, f):
     # north gallery (timber joists underneath, IMG_7722), east gallery, bridge across the east half, west balcony
     gallery_slab(m, f, 0.3, G, 0.6, 67.8, ("u1",), timber=True)
     gallery_slab(m, f, G, SPLIT_U - 0.4, 67.8 - G, 67.8, ("o0",))
-    gallery_slab(m, f, BRIDGE_U[0], BRIDGE_U[1], 32.0, 67.8 - G, ("u0", "u1"), timber=True)
+    gallery_slab(m, f, BRIDGE_U[0], BRIDGE_U[1], BRIDGE_O[0], BRIDGE_O[1], ("o0", "u1"), timber=True)
     gallery_slab(m, f, 44.0, SPLIT_U - 0.4, 0.6, 5.0, ("o1",), timber=True)
     for u in K.Frame().samples(G + 1.0, SPLIT_U - 2.0, 8.0):                                   # slim round columns
         K.round_column(m, f, u, 67.8 - G - 0.3, 0, GALLERY_Z - 0.45, 0.22)
     for o in K.Frame().samples(6.0, 60.0, 8.0):
         K.round_column(m, f, G + 0.3, o, 0, GALLERY_Z - 0.45, 0.22)
-    for o in (32.0, 44.0):
+    for u in (12.0, 19.5):
+        K.round_column(m, f, u, BRIDGE_O[0] + 0.3, 0, GALLERY_Z - 0.45, 0.22)
+    for o in (BRIDGE_O[0] + 0.3, BRIDGE_O[1] - 0.3):
         K.round_column(m, f, BRIDGE_U[1] + 0.3, o, 0, GALLERY_Z - 0.45, 0.22)
+    K.block(m, f, 14.0, 18.5, BRIDGE_O[0] - 0.12, BRIDGE_O[0] - 0.05, GALLERY_Z + 0.3, GALLERY_Z + 2.8, "piano")   # big screen
+    # north wall, ground floor (seen left of the main entrance): white square pillars, doors, red exit signs
+    for o in (4.0, 10.0, 16.0, 22.0):
+        K.square_column(m, f, 1.2, o, 0, GALLERY_Z - 0.45, 0.7)
+    for o0 in (6.0, 18.0):
+        K.block(m, f, 0.2, 0.3, o0, o0 + 2.0, 0.0, 2.4, "table")
+        K.block(m, f, 0.3, 0.42, o0 + 0.6, o0 + 1.4, 2.6, 2.85, "red")
     for u, o in ((36.0, 46.0), (36.0, 54.0), (46.0, 54.0), (56.0, 54.0), (46.0, 26.0), (56.0, 26.0), (30.0, 14.0)):
         K.round_column(m, f, u, o, 0, ATRIUM_H - 1.6, 0.24)                                    # free columns up to the roof
         m.cylinder(f.at(u, o, 0), 0.44, 0.5, "wall", 14, top_radius=0.25)                      # flared foot (IMG_7725)
@@ -292,21 +302,25 @@ def artwork_wall(m, f):
 
 def atrium_furniture(m, f):
     # entrance zone (west, IMG_7722): reception desk left of the door, sculpture ahead, boards with planter troughs
-    K.desk(m, f, 12.0, 6.0, 6.0)
-    K.block(m, f, 18.0, 20.5, 14.0, 15.0, 0.0, 2.4, "wall")
+    K.desk(m, f, 16.5, 3.4, 1.2, 5.0)                                     # welcome desk, left of the doors
+    # abstract sculpture straight ahead of the main entrance (the real hall has the logo letters here):
+    # a slab, an upright ring on a low plinth, two chevrons, in a row across the view
+    K.block(m, f, 17.0, 18.2, 15.6, 16.4, 0.0, 2.6, "wall")
+    K.block(m, f, 19.4, 25.6, 15.5, 16.5, 0.0, 0.45, "wall")
     t, nrm = f.tangent(), f.left()
-    m.ring(f.at(19.3, 18.0, 1.25), 1.2, 0.7, 0.7, "wall", basis=((0, 0, 1), (t[0], t[1], 0), (nrm[0], nrm[1], 0)))
-    K.rod(m, f, (18.5, 21.0, 0.0), (19.3, 22.0, 2.4), 0.6, "wall")
-    K.rod(m, f, (20.1, 23.0, 0.0), (19.3, 22.0, 2.4), 0.6, "wall")
-    for k in range(8):                                                   # boards and planter troughs in a row
-        u = 12.0 + k * 3.2
+    m.ring(f.at(21.4, 15.7, 1.75), 1.3, 0.75, 0.6, "wall", basis=((0, 0, 1), (t[0], t[1], 0), (nrm[0], nrm[1], 0)))
+    for u0 in (24.6, 27.6):
+        K.rod(m, f, (u0, 16.0, 0.0), (u0 + 1.0, 16.0, 2.6), 0.6, "wall")
+        K.rod(m, f, (u0 + 2.0, 16.0, 0.0), (u0 + 1.0, 16.0, 2.6), 0.6, "wall")
+    for k in range(8):                                                   # dark blue boards and planter troughs behind it
+        u = 14.0 + k * 2.6
         if k % 2 == 0:
-            K.board(m, f, u, 26.4, 1.8, 2.2)
+            K.board(m, f, u, 21.0, 1.8, 2.2)
         else:
-            K.planter(m, f, u, 26.0, 40 + k, palm=k % 4 == 1)
+            K.planter(m, f, u, 20.6, 40 + k, palm=k % 4 == 1)
     for k in range(9):                                                   # planters along the way to the artwork wall
         K.planter(m, f, 44.0 + k * 2.6, 19.0, 60 + k, palm=k % 2 == 0)
-    for u, o in ((14.0, 32.0), (17.0, 35.5), (24.0, 30.0), (33.0, 22.0)):
+    for u, o in ((14.5, 25.5), (19.5, 26.5), (25.0, 25.5), (31.0, 24.0), (36.0, 22.0)):
         K.round_table(m, f, u, o, 4)
     K.block(m, f, 50.0, 50.6, 0.6, 0.9, 1.0, 1.8, "red")                 # fire hose cabinet
 
@@ -367,27 +381,27 @@ def long_room_end(m, f):
 
 
 def long_room_structure(m, f):
-    for u0 in (84.0, 102.0):                                             # white boxes with dark brown recesses (east side)
+    for u0 in (84.0, 106.0):                                             # white boxes with dark brown recesses (east side)
         K.block(m, f, u0, u0 + 11.0, 26.5, 29.7, 0.0, 3.8, "brown")
         K.block(m, f, u0 - 1.0, u0 + 12.0, 25.2, 29.7, 3.8, 6.4, "wall")
         for u in (u0 + 1.0, u0 + 10.0):
             K.round_column(m, f, u, 25.6, 0, 3.8, 0.28)
-    K.block(m, f, 106.0, LONG_END_U - 0.3, 22.0, 29.7, 6.4, 9.6, "wall")                         # mezzanine box
-    K.wall_o(m, f, 21.95, 106.0, LONG_END_U - 0.3, 6.6, 7.8, "glass", facing=-1)
+    K.block(m, f, 120.0, LONG_END_U - 0.3, 22.0, 29.7, 6.4, 9.6, "wall")                         # mezzanine box
+    K.wall_o(m, f, 21.95, 120.0, LONG_END_U - 0.3, 6.6, 7.8, "glass", facing=-1)
 
 
 def long_room_furniture(m, f):
-    for u in K.Frame().samples(84.0, 114.0, 4.6):
-        if abs(u - 96.0) > 3.5:                                         # keep the terrace door free
+    for u in K.Frame().samples(84.0, LONG_END_U - 4.0, 4.6):
+        if abs(u - 103.5) > 3.5:                                         # keep the terrace door free
             K.long_table(m, f, u, 5.4, seats=3)
     for k, (u, o) in enumerate(((84, 12), (88, 17), (92, 11), (98, 16), (102, 11), (106, 17), (110, 12), (114, 18),
-                                (90, 22), (100, 21))):
+                                (118, 12), (122, 17), (126, 12), (90, 22), (100, 21), (112, 22))):
         K.round_table(m, f, float(u), float(o), 4 if k % 2 == 0 else 3)
-    K.grand_piano(m, f, 91.0, 9.0, 90)
-    K.grand_piano(m, f, 100.5, 9.0, 90)
-    for k, (u, o) in enumerate(((82.0, 2.4), (93.5, 2.4), (108.0, 2.4), (95.0, 23.0))):
+    K.grand_piano(m, f, 93.0, 9.0, 90)
+    K.grand_piano(m, f, 113.0, 9.0, 90)
+    for k, (u, o) in enumerate(((82.0, 2.4), (99.0, 2.4), (108.5, 2.4), (124.0, 2.4), (95.0, 23.0))):
         K.big_plant(m, f, u, o, 9 + k)
-    for k, (u, o) in enumerate(((71.0, 14.0), (86.0, 24.0), (112.0, 22.0))):
+    for k, (u, o) in enumerate(((71.0, 14.0), (86.0, 24.0), (120.0, 22.0))):
         K.info_stand(m, f, u, o, k)
 
 
