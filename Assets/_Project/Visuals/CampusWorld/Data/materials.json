@@ -527,6 +527,54 @@
    "smoothness": 0.5
   },
   {
+   "name": "W_cafe_wood",
+   "colour": [
+    0.7198,
+    0.5365,
+    0.3584
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.25
+  },
+  {
+   "name": "W_cafe_metal",
+   "colour": [
+    0.2519,
+    0.2411,
+    0.2375
+   ],
+   "metallic": 0.5,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.5
+  },
+  {
+   "name": "W_cafe_table_top",
+   "colour": [
+    0.9111,
+    0.871,
+    0.7911
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.3
+  },
+  {
    "name": "W_bollard_cap",
    "colour": [
     0.1947,
@@ -541,6 +589,38 @@
    "alpha": 1.0,
    "metallic_smoothness": null,
    "smoothness": 0.6
+  },
+  {
+   "name": "W_piano_gloss",
+   "colour": [
+    0.1354,
+    0.1354,
+    0.1423
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.8
+  },
+  {
+   "name": "W_piano_keys",
+   "colour": [
+    0.9071,
+    0.883,
+    0.819
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.5
   },
   {
    "name": "W_lamp_metal",
@@ -649,8 +729,8 @@
    "name": "W_parasol_canvas",
    "colour": [
     0.9474,
-    0.9313,
-    0.8991
+    0.887,
+    0.7792
    ],
    "metallic": 0.0,
    "albedo": null,
@@ -676,6 +756,150 @@
    "alpha": 1.0,
    "metallic_smoothness": null,
    "smoothness": 0.05
+  },
+  {
+   "name": "W_planter_cream",
+   "colour": [
+    0.8469,
+    0.807,
+    0.7277
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
+   "name": "W_soil",
+   "colour": [
+    0.3696,
+    0.2956,
+    0.2375
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.0
+  },
+  {
+   "name": "W_olive_crown_b",
+   "colour": [
+    0.3733,
+    0.4943,
+    0.314
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_olive_crown_top_b",
+   "colour": [
+    0.6101,
+    0.6844,
+    0.4297
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_study_wood",
+   "colour": [
+    0.6883,
+    0.5442,
+    0.4033
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.3
+  },
+  {
+   "name": "W_event_violet",
+   "colour": [
+    0.3621,
+    0.2267,
+    0.4867
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
+   "name": "W_bloom_leaf",
+   "colour": [
+    0.3287,
+    0.4297,
+    0.2919
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_bloom",
+   "colour": [
+    0.4981,
+    0.4033,
+    0.6023
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
+   "name": "W_bloom_light",
+   "colour": [
+    0.7317,
+    0.6218,
+    0.8429
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
   },
   {
    "name": "W_route",
@@ -802,8 +1026,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
-   "metallic_smoothness": "concrete_polished_metallic_smoothness.png",
-   "smoothness": 0.1
+   "metallic_smoothness": null,
+   "smoothness": 0.2
   },
   {
    "name": "W_T_kerb",
@@ -1069,11 +1293,11 @@
    "smoothness": 0.05
   },
   {
-   "name": "W_olive_leaf",
+   "name": "W_olive_crown",
    "colour": [
-    0.5365,
-    0.5984,
-    0.4184
+    0.392,
+    0.4867,
+    0.3435
    ],
    "metallic": 0.0,
    "albedo": null,
@@ -1085,11 +1309,11 @@
    "smoothness": 0.1
   },
   {
-   "name": "W_olive_leaf_light",
+   "name": "W_olive_crown_top",
    "colour": [
-    0.6101,
-    0.6608,
-    0.4981
+    0.6218,
+    0.6648,
+    0.4638
    ],
    "metallic": 0.0,
    "albedo": null,
@@ -1115,38 +1339,6 @@
    "alpha": 1.0,
    "metallic_smoothness": null,
    "smoothness": 0.05
-  },
-  {
-   "name": "W_olive_leaf_b",
-   "colour": [
-    0.4905,
-    0.5674,
-    0.3958
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_olive_leaf_light_b",
-   "colour": [
-    0.5713,
-    0.6413,
-    0.4714
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
   },
   {
    "name": "W_palm_trunk",
@@ -1242,7 +1434,7 @@
    "emission": null,
    "alpha": 1.0,
    "metallic_smoothness": null,
-   "smoothness": 0.1
+   "smoothness": 0.15
   },
   {
    "name": "W_leaf_dark",
@@ -1309,6 +1501,38 @@
    "smoothness": 0.05
   },
   {
+   "name": "W_pine_crown",
+   "colour": [
+    0.2846,
+    0.4524,
+    0.2956
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_pine_crown_top",
+   "colour": [
+    0.4981,
+    0.6335,
+    0.3808
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
    "name": "W_bark",
    "colour": [
     0.4184,
@@ -1325,11 +1549,11 @@
    "smoothness": 0.05
   },
   {
-   "name": "W_pine_needles_b",
+   "name": "W_pine_crown_b",
    "colour": [
-    0.281,
-    0.4335,
-    0.2519
+    0.2555,
+    0.4146,
+    0.2737
    ],
    "metallic": 0.0,
    "albedo": null,
@@ -1341,11 +1565,11 @@
    "smoothness": 0.1
   },
   {
-   "name": "W_pine_top_b",
+   "name": "W_pine_crown_top_b",
    "colour": [
-    0.4221,
-    0.5868,
-    0.325
+    0.4486,
+    0.5984,
+    0.3472
    ],
    "metallic": 0.0,
    "albedo": null,

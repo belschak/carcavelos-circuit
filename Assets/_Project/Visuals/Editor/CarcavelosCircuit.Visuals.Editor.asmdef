@@ -3,7 +3,9 @@
     "rootNamespace": "CarcavelosCircuit.Visuals.Editor",
     "references": [
         "CarcavelosCircuit.RaceFlow",
-        "CarcavelosCircuit.Visuals"
+        "CarcavelosCircuit.Visuals",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [
         "Editor"
