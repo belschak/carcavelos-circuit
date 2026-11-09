@@ -1,0 +1,21 @@
+{
+    "name": "CarcavelosCircuit.Track.Editor",
+    "rootNamespace": "CarcavelosCircuit.Track.Editor",
+    "references": [
+        "CarcavelosCircuit.Track",
+        "CarcavelosCircuit.RaceFlow",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
