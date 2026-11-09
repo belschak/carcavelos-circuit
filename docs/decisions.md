@@ -1,3 +1,4 @@
+- 2026-11-09: **Web build on GitHub Actions (Role 4).** `.github/workflows/web-build.yml` builds every merge into `main` with GameCI (`game-ci/unity-builder`, MIT, pinned to a commit) and our own `Role4WebBuild.Build`, and keeps the zip 14 days as a run artifact. Why: the whole team gets the same build from `main` (course rule C6), and Windows Smart App Control blocks Unity's player build step on some laptops. Needs the repo owner's Unity secrets once; without them the run skips with a warning.
 # Decision log
 
 Newest on top. One line per decision: date, decision, why. Agents: never contradict a decision here without asking the team.
