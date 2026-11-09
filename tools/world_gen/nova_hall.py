@@ -18,6 +18,7 @@ Everything is a number in the constants below. No Nova logo (docs/decisions.md):
 an abstract white sculpture. hall_kit.py has the parts.
 
 Run:  /Applications/Blender.app/Contents/MacOS/Blender -b -P nova_hall.py   ->  out/NovaHall.blend, out/NovaHall.fbx
+      ... -b -P nova_hall.py -- world   ->  out/NovaHallWorld.fbx (at its place in Luc's campus world, for Unity)
 """
 import math
 import os
@@ -46,6 +47,7 @@ GALLERY_DEPTH = 7.0          # depth of the galleries along the walls
 BRIDGE_U = (7.0, 27.0)       # north-south gallery in the middle of the atrium (seen from the main entrance), u from .. to
 BRIDGE_O = (30.0, 40.5)      # .. and o from .. to; the wide staircase arrives at its south end
 WALL = 0.35                  # wall thickness (outer face offset)
+PLINTH = 5.0                 # outer walls go this far below the hall floor (the ground falls away to the south)
 SOLID_NORTH_U = 3.0          # facade pieces of the atrium closer than this to the north side are closed white walls
 DOOR_H = 3.2
 
@@ -77,8 +79,9 @@ def regions(f):
     fp = footprint()
     atrium = K.clip_polygon(fp, lambda p: SPLIT_U - f.uo(*p)[0])
     long_room = K.clip_polygon(fp, lambda p: f.uo(*p)[0] - SPLIT_U)
+    rest = K.clip_polygon(long_room, lambda p: f.uo(*p)[0] - LONG_END_U)
     long_room = K.clip_polygon(long_room, lambda p: LONG_END_U - f.uo(*p)[0])
-    return atrium, long_room
+    return atrium, long_room, rest
 
 
 # ---------- outer walls with doors ----------
@@ -151,6 +154,7 @@ def facade(m, a, b, inside, H, openings, style):
     else:
         band(0, L, top, H + 0.8, "wall")
     m.face([P(0, H + 0.8), P(L, H + 0.8), P(L, H + 0.8, True), P(0, H + 0.8, True)], "wall", (0, 0, 1))  # wall top
+    m.face([P(0, -PLINTH, True), P(L, -PLINTH, True), P(L, 0.0, True), P(0, 0.0, True)], "wall", (-nx, -ny, 0))   # plinth
 
 
 def door(m, c, t, n, width):
@@ -168,9 +172,25 @@ def door(m, c, t, n, width):
     m.box((mat[0], mat[1], 0.012), width / 2 - 0.2, 1.4, 0.012, "mat", h)
 
 
+def rest_of_wing(m, f, poly):
+    """The rest of the wing south of the long room (no interior yet): closed block with the same facade and roof, so the
+    building on the map stays complete when Luc's Edificio Principal block is switched off."""
+    ccw = K.signed_area(poly) > 0
+    for a, b in zip(poly, poly[1:] + poly[:1]):
+        L = math.hypot(b[0] - a[0], b[1] - a[1])
+        if L < 0.05:
+            continue
+        if abs(f.uo(*a)[0] - LONG_END_U) < 0.05 and abs(f.uo(*b)[0] - LONG_END_U) < 0.05:
+            continue                                                     # shared with the long room end wall
+        tx, ty = (b[0] - a[0]) / L, (b[1] - a[1]) / L
+        facade(m, a, b, (-ty, tx) if ccw else (ty, -tx), ATRIUM_H, [], "glass")
+    K.polygon_face(m, poly, ATRIUM_H + 0.8, "concrete", up=True)
+    K.polygon_face(m, poly, 0.0, "floor", up=True)
+
+
 def shell(m, f, polys, door_map):
     """Floors and outer walls. The wall between atrium and long room and the end wall are built separately."""
-    atrium, long_room = polys
+    atrium, long_room = polys[0], polys[1]
     K.polygon_face(m, atrium, 0.0, "floor", up=True)
     K.polygon_face(m, long_room, 0.0, "floor", up=True)
     for poly, H in ((atrium, ATRIUM_H), (long_room, LONG_H)):
@@ -499,9 +519,9 @@ def make_hall(col):
     """Builds the interior in world coordinates (floor at z 0) and returns the objects."""
     f = building_frame()
     polys = regions(f)
-    door_map = snapped_doors(polys)
+    door_map = snapped_doors(polys[:2])
     objects = []
-    for name, parts in (("Hall_Shell", (lambda m: shell(m, f, polys, door_map),)),
+    for name, parts in (("Hall_Shell", (lambda m: shell(m, f, polys, door_map), lambda m: rest_of_wing(m, f, polys[2]))),
                         ("Hall_Roof", (lambda m: atrium_roof(m, f, polys[0]), lambda m: long_room_shell(m, f))),
                         ("Hall_Structure", (lambda m: atrium_structure(m, f), lambda m: artwork_wall(m, f),
                                             lambda m: long_room_end(m, f), lambda m: long_room_structure(m, f))),
@@ -522,6 +542,30 @@ def export_fbx(path):
                              axis_forward="-Z", axis_up="Y", use_selection=True, use_triangles=True, mesh_smooth_type="FACE")
 
 
+FLOOR_Z = 14.47              # hall floor in the campus world (route_profile.json: atrium level 14.5 m, road 3 cm above)
+
+
+def build_world_fbx():
+    """out/NovaHallWorld.fbx: the hall at its real place and height, in the same axes as Luc's CampusWorld.fbx
+    (build_world.export_for_unity turns the geometry 180 degrees so that Unity x = east, z = north). In Unity it goes
+    at position 0 / rotation 0 next to the CampusWorld model and replaces the Edificio Principal block."""
+    from mathutils import Matrix
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    objects = make_hall(E.collection("Nova_Hall"))
+    turn = Matrix.Rotation(math.pi, 4, "Z")
+    for obj in objects:
+        obj.location.z = FLOOR_Z
+        obj.data.transform(turn)
+        obj.location = turn @ obj.location
+    for o in bpy.data.objects:
+        o.select_set(o.type == "MESH")
+    os.makedirs(OUT, exist_ok=True)
+    bpy.ops.export_scene.fbx(filepath=os.path.join(OUT, "NovaHallWorld.fbx"), object_types={"MESH"},
+                             apply_scale_options="FBX_SCALE_ALL", axis_forward="-Z", axis_up="Y", bake_space_transform=True,
+                             mesh_smooth_type="FACE", use_selection=True, use_triangles=True)
+    print("done (world)")
+
+
 def build():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     make_hall(E.collection("Nova_Hall"))
@@ -532,4 +576,7 @@ def build():
 
 
 if __name__ == "__main__":
-    build()
+    if "world" in sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else False:
+        build_world_fbx()                  # blender -b -P nova_hall.py -- world
+    else:
+        build()
