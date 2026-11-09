@@ -38,7 +38,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | V2 | Scale test: 1 m cube from Blender as FBX imports at 1 m, forward = +Z; record export settings in `docs/art-style.md` | Sun 8 | todo |
 | V3 | Kart + simple seated driver FBX, fits `Kart/Visual` (agree pivot/size with Role 1) | Wed 11 | todo |
 | V4 | 2-3 low-poly campus landmarks from the photos (e.g. library facade, EDP Plaza, D/B ramp) | Fri 13 | done (#33): whole campus world `Track_CampusWorld` on Noah's route, built by `CampusWorldBuilder` |
-| V5 | `KartEffects`: drift sparks + boost flame, reads `IKartState` only | Thu 12 | todo |
+| V5 | `KartEffects`: drift sparks + boost flame, reads `IKartState` only | Thu 12 | claimed (Luc, 2026-11-09) |
 | V6 | Complete race at the itch.io URL, logged in `docs/builds.md` | Thu 12 | todo |
 | V7 | README "How to build" reproducible by a second person | Fri 13 | todo |
 
