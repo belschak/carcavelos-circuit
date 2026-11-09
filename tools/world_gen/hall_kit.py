@@ -52,6 +52,8 @@ MATERIALS = {
     "concrete": _mat("N_terrace", "#C9C6BE", 0.85),
     "skylight": _mat("N_skylight", "#DDE9F2", 0.3, emission="#C9DBEA"),     # glass roof bands, lit by the sky
     "stair": _mat("N_stair", "#F2F1EC", 0.55),                               # white stairs and gallery floors
+    "azulejo": _mat("N_azulejo_pot", "#EEF1F6", 0.4),                        # white tall planters (blue pattern = "blue")
+    "pit": _mat("N_pit", "#3A3530", 0.9),                                    # walls and floor of the stair void
 }
 
 
@@ -98,6 +100,24 @@ class Mesh:
             self.face([ra[i], ra[j], rb[j], rb[i]], material, mid)
         self.face(ra[::-1], material, -t)
         self.face(rb, material, t)
+
+    def tube(self, a, b, r, material, sides=10):
+        """Round tube from a to b (columns, steel pipes)."""
+        a, b = Vector(a), Vector(b)
+        axis = b - a
+        if axis.length < 1e-6:
+            return
+        t = axis.normalized()
+        side = t.cross(Vector((0, 0, 1)))
+        if side.length < 1e-3:
+            side = Vector((1, 0, 0))
+        side.normalize()
+        up = side.cross(t).normalized()
+        ra = [a + (side * math.cos(2 * math.pi * i / sides) + up * math.sin(2 * math.pi * i / sides)) * r for i in range(sides)]
+        rb = [p + axis for p in ra]
+        for i in range(sides):
+            j = (i + 1) % sides
+            self.face([ra[i], ra[j], rb[j], rb[i]], material, (ra[i] + ra[j]) / 2 - a)
 
     def box(self, c, hx, hy, hz, material, rot=0.0):
         cs, sn = math.cos(rot), math.sin(rot)
