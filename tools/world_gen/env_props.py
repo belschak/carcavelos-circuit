@@ -292,7 +292,7 @@ def build_prototypes():
     m = E.material
     metal = m("lamp_metal", "#4A4E55", roughness=0.45, metallic=0.6)
     light = m("lamp_light", "#FFF3D6", roughness=0.5, emission="#FFE9B8")
-    steel = m("steel", roughness=0.3, metallic=0.85)
+    steel = m("steel", "#7A6C52", roughness=0.55, metallic=0.5)   # campus railings are bronze (walk video)
     protos = {
         "Prop_LampCampus": lamp_campus("Prop_LampCampus", metal, m("concrete_light", roughness=0.9), light, col),
         "Prop_LampRoad": lamp_road("Prop_LampRoad", metal, m("lamp_foot", "#3A3D42", roughness=0.6, metallic=0.4),

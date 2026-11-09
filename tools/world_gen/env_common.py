@@ -37,11 +37,12 @@ PALETTE = {
     # art-style.md
     "kart_white": "#EAEAEC", "gloss_black": "#1D1D1F", "asphalt": "#55585E", "sand": "#E3C48D",
     "atlantic_blue": "#2D8CD6", "boost_orange": "#FF8A1F",
-    # environment additions
-    "lawn": "#8FB37A", "leaf": "#5E8F4E", "leaf_dark": "#3F6B3A", "olive_leaf": "#8A9A6B", "palm_leaf": "#5F8A3E",
-    "bark": "#6B4F3A", "bark_light": "#9C8468", "terracotta": "#C8664A", "concrete_sand": "#D9C9A8",
-    "concrete_light": "#C9C5BC", "calcada": "#E6E1D6", "steel": "#A7ABB2", "glass": "#2E3A46",
-    "sea": "#2D8CD6", "sea_deep": "#1D5F96", "wet_sand": "#C9A877", "building_other": "#C9C5BC",
+    # environment additions (lawn, concrete_sand, glass, sea: realism pass 2026-11-09, colours measured
+    # in the walk video IMG_7723 and scaled so the white facade matches kart_white)
+    "lawn": "#7E9658", "leaf": "#5E8F4E", "leaf_dark": "#3F6B3A", "olive_leaf": "#8A9A6B", "palm_leaf": "#5F8A3E",
+    "bark": "#6B4F3A", "bark_light": "#9C8468", "terracotta": "#C8664A", "concrete_sand": "#C6BB98",
+    "concrete_light": "#C9C5BC", "calcada": "#E6E1D6", "steel": "#A7ABB2", "glass": "#353B3F",
+    "sea": "#34779A", "sea_deep": "#1F5577", "wet_sand": "#C9A877", "building_other": "#C9C5BC",
 }
 
 

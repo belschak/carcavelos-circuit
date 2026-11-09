@@ -37,7 +37,7 @@ def build_sea(col):
     verts = [(-s, -s, SEA_LEVEL), (s, -s, SEA_LEVEL), (s, COAST_Y, SEA_LEVEL), (-s, COAST_Y, SEA_LEVEL),
              (xa, COAST_Y, SEA_LEVEL), (xb, COAST_Y, SEA_LEVEL), (xb, 150.0, SEA_LEVEL), (xa, 150.0, SEA_LEVEL)]
     mesh.from_pydata(verts, [], [(0, 1, 2, 3), (4, 5, 6, 7)])
-    mesh.materials.append(E.material("sea_water", "#2D8CD6", roughness=0.12, metallic=0.0))
+    mesh.materials.append(E.material("sea_water", E.PALETTE["sea"], roughness=0.12, metallic=0.0))
     E.new_object("Backdrop_Sea", mesh, col)
 
 

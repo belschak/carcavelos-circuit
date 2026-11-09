@@ -36,9 +36,9 @@ TAU = 2.0 * np.pi
 HEX = {
     "kart_white": "#EAEAEC", "gloss_black": "#1D1D1F", "asphalt": "#55585E", "sand": "#E3C48D",
     "atlantic_blue": "#2D8CD6", "boost_orange": "#FF8A1F",
-    "calcada": "#E6E1D6", "concrete_sand": "#D9C9A8", "concrete_light": "#C9C5BC",
-    "terracotta": "#C8664A", "lawn": "#8FB37A", "glass": "#2E3A46", "wet_sand": "#C9A877",
-    "sea_deep": "#1D5F96", "leaf_dark": "#3F6B3A",
+    "calcada": "#E6E1D6", "concrete_sand": "#C6BB98", "concrete_light": "#C9C5BC",
+    "terracotta": "#C8664A", "lawn": "#7E9658", "glass": "#353B3F", "wet_sand": "#C9A877",
+    "sea_deep": "#1F5577", "leaf_dark": "#3F6B3A",
     "yellow": "#F4C430", "red": "#E2483D", "green": "#3FA34D", "pink": "#F28AB2", "purple": "#7A4FB0",
     # mural stand-ins for the two signal colours (art-style.md: keep Atlantic Blue and Boost Orange rare in the scenery)
     "sea_glass": "#4FA3A5", "teal_deep": "#2F7F86",
@@ -505,12 +505,12 @@ def make_window_band(W=1024, H=256, seed=99):
     pane_w, frame = W / 4, 6.0                                  # 1.5 m panes, 3.5 cm frame
     pane = np.floor(X / pane_w).astype(int) % 4
     v = (Y - frame) / (H - 2 * frame)                           # 0 = top of the glass, 1 = sill
-    # sky reflection: light at the top, fading into the dark blue-grey glass below mid height
+    # sky reflection: light at the top, fading into the dark neutral grey glass below mid height
     refl = 0.50 * (1.0 - smoothstep(0.0, 0.66, v)) ** 1.25
     wisps = np.clip(noise((H, W), 34, rng, 6), 0, None) * (1.0 - smoothstep(0.05, 0.5, v))
     refl = refl + 0.07 * wisps
     refl = refl * np.array([1.0, 0.92, 1.06, 0.97])[pane]       # every pane reflects a bit differently
-    alb = lerp(rgb("glass"), rgb("#86A8C6"), refl[..., None])
+    alb = lerp(rgb("glass"), rgb("#A4AFB4"), refl[..., None])        # neutral silver sky, as in the video
     alb = alb * (1.0 - 0.08 * smoothstep(0.6, 1.0, v))[..., None]
     # crisp diagonal glints, two per pane at different offsets (classic stylised glass)
     lx = X - pane * pane_w
@@ -521,7 +521,7 @@ def make_window_band(W=1024, H=256, seed=99):
                             (rng.uniform(150, 215), rng.uniform(6, 9), 0.09)):
             s = (lx - off) * sa + (Y - H / 2) * ca
             glint = np.where(pane == p, np.maximum(glint, a * np.clip(wid / 2 - np.abs(s) + 0.5, 0, 1)), glint)
-    alb = lerp(alb, rgb("#C4D6E6"), glint[..., None] * (1.0 - 0.5 * smoothstep(0.3, 1.0, v))[..., None])
+    alb = lerp(alb, rgb("#D2D9DC"), glint[..., None] * (1.0 - 0.5 * smoothstep(0.3, 1.0, v))[..., None])
     # mullions every 1.5 m (the one at x = 0 is split over both edges) and the top/bottom frame
     dm = np.abs((X + pane_w / 2) % pane_w - pane_w / 2)
     mull = smoothstep(4.6, 3.6, dm)

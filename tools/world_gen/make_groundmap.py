@@ -20,8 +20,8 @@ H = int(round(W * (Y1 - Y0) / (X1 - X0)))
 SS = 3                                          # supersampling for smooth edges
 
 COLOURS = {
-    "ground": (166, 170, 130), "grass": (143, 179, 122), "wood": (104, 140, 90), "paved": (201, 197, 188),
-    "pitch": (122, 170, 104), "sand": (227, 196, 141), "water": (64, 140, 200), "seabed": (58, 118, 150),
+    "ground": (166, 170, 130), "grass": (126, 150, 88), "wood": (94, 118, 72), "paved": (201, 197, 188),
+    "pitch": (122, 170, 104), "sand": (227, 196, 141), "water": (60, 118, 150), "seabed": (50, 98, 122),
     "wet_sand": (201, 168, 119), "road": (85, 88, 94), "footway": (218, 213, 200), "steps": (200, 192, 178),
 }
 ROADS = {"primary", "primary_link", "secondary", "tertiary", "residential", "unclassified", "service", "living_street"}

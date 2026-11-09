@@ -71,7 +71,7 @@ def build_shell(pts, col):
     bm.to_mesh(mesh)
     bm.free()
     mesh.materials.append(E.material("tunnel_mural", "#F2C14E", roughness=0.8))
-    mesh.materials.append(E.material("tunnel_concrete", "#C9C3B6", roughness=0.9))
+    mesh.materials.append(E.material("tunnel_concrete", "#E2DDD3", roughness=0.9, emission="#2E2C29")   # pale ceiling as in the video; the glow stands in for bounce light)
     return E.new_object("Tunnel_Shell", mesh, col)
 
 
