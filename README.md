@@ -15,12 +15,19 @@ Unity **6000.3.28f1** (6.3 LTS) · C# · Blender (FBX) · Web build
 | Noah _TBD_ | _TBD_ | 2 Campus track + race rules |
 
 ## Run the app
-- **Deployed:** open the URL above in Chrome, Edge or Firefox on a laptop and click to start. Keys: W/S or arrows to drive, Space to drift, R to recover.
+- **Deployed:** open the URL above in Chrome, Edge or Firefox on a laptop and click to start. Keys: W/S or arrows to drive, Space to drift, R to recover, Enter to retry after the finish.
 - **Locally:** install Unity Hub + Editor `6000.3.28f1` ([docs/setup.md](docs/setup.md)), then
   ```
   git clone https://github.com/belschak/carcavelos-circuit.git
   ```
   Unity Hub > Add project from disk > the cloned folder > open `Assets/_Project/RaceFlow/Scenes/Main.unity` > press Play.
+
+- **Web build locally** (Unity closed, Windows):
+  ```
+  "C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -buildTarget WebGL -executeMethod CarcavelosCircuit.RaceFlow.Editor.Role4WebBuild.Build -quit -logFile Logs/web-build.log
+  python tools/serve_web_build.py
+  ```
+  then open `http://localhost:8000`. All Web settings come from that build script ([docs/setup.md](docs/setup.md#web-build-role-3-or-the-build-backup)).
 
 ## Run the tests
 In the Unity Editor: Window > General > Test Runner > EditMode > Run All. Command line (Unity closed), Windows:
@@ -34,10 +41,15 @@ macOS: `/Applications/Unity/Hub/Editor/6000.3.28f1/Unity.app/Contents/MacOS/Unit
 2. `gh repo clone belschak/carcavelos-circuit`, then once per clone: `git config core.hooksPath .githooks`.
 3. Open [TASKS.md](TASKS.md), pick a `todo` task of your role, follow the claim steps in [AGENTS.md](AGENTS.md).
 
-**Do not open the project in Unity before task S1 is merged** (otherwise everyone creates different `.meta` files).
+S1 (the Unity project) is merged: pull `main`, then open the folder in Unity `6000.3.28f1` (no other version, otherwise `.meta` and settings files change).
 
 ## Working with an AI assistant
-Point Claude Code, Codex, Cursor or Copilot at this folder. They read [AGENTS.md](AGENTS.md) (Claude via `CLAUDE.md`): ownership, contracts, what never to touch, definition of done.
+Point Claude Code, Codex, Cursor, Copilot or Gemini CLI at this folder. They read [AGENTS.md](AGENTS.md) (Claude via `CLAUDE.md`, Gemini via `GEMINI.md`, Copilot via `.github/copilot-instructions.md`): the Git workflow, ownership, contracts, what never to touch, definition of done. A chat AI that cannot see the folder (ChatGPT or Claude in the browser) does not know these rules: paste `AGENTS.md` into the chat first.
+
+Start every AI session with this message (copy it as it is):
+```
+Read AGENTS.md and follow its Git workflow section A before anything else: check the hook and my Git identity, pull main, show me in 2-3 lines what the others merged since my last session and how it affects my task, then merge main into my branch. Only work on files my role owns, push after every finished step, never push to main or force-push.
+```
 
 ## Where things are
 | File | What |
@@ -66,4 +78,4 @@ Point Claude Code, Codex, Cursor or Copilot at this folder. They read [AGENTS.md
 Web build steps: [docs/setup.md#web-build-role-3-or-the-build-backup](docs/setup.md#web-build-role-3-or-the-build-backup). Role 3 makes this reproducible by a second person (task V7).
 
 ## Credits
-Map data © OpenStreetMap contributors (ODbL). Third-party assets: [THIRD_PARTY.md](THIRD_PARTY.md). Original game, not affiliated with Nintendo or Nova SBE.
+Map data © OpenStreetMap contributors (ODbL). Sound effects: elevenlabs.io (kart engine and drift sounds made by Luc Tippmann, boost by David Belschak), all other sounds and the music are our own synthesised work. Third-party assets: [THIRD_PARTY.md](THIRD_PARTY.md). Original game, not affiliated with Nintendo or Nova SBE.

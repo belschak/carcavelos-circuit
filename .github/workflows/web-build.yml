@@ -1,0 +1,82 @@
+# Web build on GitHub's servers (Role 4).
+# Every merge into main builds the game for the browser, so the whole team gets the same build
+# and nobody's laptop matters (Windows Smart App Control blocks Unity's build step on some laptops).
+# Result: Actions tab > this run > Artifacts > "carcavelos-web-<commit>" (zip of Build-Web/).
+# Play it: unzip, then `python tools/serve_web_build.py <folder> 8000` and open http://localhost:8000.
+#
+# Needs three repository secrets (Settings > Secrets and variables > Actions), set once by the repo owner:
+#   UNITY_LICENSE  = contents of C:\ProgramData\Unity\Unity_lic.ulf (Unity Hub > Manage licenses > Add >
+#                    Get a free personal license creates it, even if a licence is already listed)
+#   UNITY_EMAIL    = the Unity account's email
+#   UNITY_PASSWORD = the Unity account's password
+# Without them the run stops at the first step with a clear message (no failed build).
+
+name: Web build
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "**/*.md"]
+  workflow_dispatch: # "Run workflow" button in the Actions tab
+
+concurrency:
+  group: web-build
+  cancel-in-progress: true # a newer merge replaces a build that is still running
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      HAS_LICENSE: ${{ secrets.UNITY_LICENSE != '' && secrets.UNITY_EMAIL != '' && secrets.UNITY_PASSWORD != '' }}
+    steps:
+      - name: Check the Unity secrets
+        run: |
+          if [ "$HAS_LICENSE" != "true" ]; then
+            echo "::warning::Unity secrets missing (UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD). See the comment at the top of .github/workflows/web-build.yml. Skipping the build."
+          fi
+
+      # The Unity build image is about 7.5 GB; the runner needs room for it and the build.
+      - name: Free disk space
+        if: env.HAS_LICENSE == 'true'
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Check out
+        if: env.HAS_LICENSE == 'true'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      # Unity's Library folder (imported assets) makes the next build much faster.
+      - name: Cache Library
+        if: env.HAS_LICENSE == 'true'
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        with:
+          path: Library
+          key: Library-WebGL-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: Library-WebGL-
+
+      # Same build code as on a laptop (Carcavelos Circuit > Web Build): every Web setting lives in Role4WebBuild.
+      - name: Build
+        if: env.HAS_LICENSE == 'true'
+        uses: game-ci/unity-builder@4423ee75828dff56037d1d1cfdac6b68e3a6ba00 # v4.8.2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: auto
+          targetPlatform: WebGL
+          buildMethod: CarcavelosCircuit.RaceFlow.Editor.Role4WebBuild.Build
+
+      - name: Upload the build
+        if: env.HAS_LICENSE == 'true'
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: carcavelos-web-${{ github.sha }}
+          path: Build-Web
+          if-no-files-found: error
+          retention-days: 14

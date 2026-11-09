@@ -1,6 +1,7 @@
 # Setup (each teammate, once, ~30 min)
 
 1. **Unity Hub**, only from the official site: https://unity.com/download . Sign in with a free Unity account (Personal licence). Never install Unity or add-ons from other sites.
+   Command-line runs (tests, builds) say "No valid Unity Editor license found" although Hub is signed in? Then Hub is the Microsoft Store/winget version, which keeps its licence in a sandbox. Copy `%LOCALAPPDATA%\Packages\UnityTechnologies.UnityHub_2vrhnee42bhxm\LocalCache\Local\Unity\licenses\UnityEntitlementLicense.xml` to `%LOCALAPPDATA%\Unity\licenses\`.
 2. In Hub > Installs > Install Editor > Archive / "Install other versions": **exactly `6000.3.28f1` (Unity 6.3 LTS)**. Tick **Web Build Support** in the modules list. Already installed? Installs > Manage > Add modules > Web Build Support.
 3. **Git** (Windows: git-scm.com, Mac: `xcode-select --install`) and **GitHub Desktop** or the `gh` CLI. Accept the repo invite in your email.
    Set your commit email to one that is on your GitHub account (`git config --global user.email <that email>`), otherwise your commits are not counted as yours. Every member must contribute code (graded).
@@ -37,4 +38,8 @@ Windows:
 Mac: `/Applications/Unity/Hub/Editor/6000.3.28f1/Unity.app/Contents/MacOS/Unity` with the same arguments. Or in the Editor: Window > General > Test Runner > EditMode > Run All.
 
 ## Web build (Role 3, or the build backup)
-File > Build Profiles > Web > Switch Platform. Player Settings > Web > Publishing Settings: Compression **Gzip**, Decompression Fallback **off** (turn on only if itch shows a decompression error). Build into `Build-Web/` (ignored by Git). Zip the folder contents so `index.html` is at the zip root, upload to itch.io as HTML, "This file will be played in the browser", viewport 1280x720, click-to-play on, SharedArrayBuffer off. Log it in `docs/builds.md`.
+All Web settings are set in code by `Assets/_Project/RaceFlow/Editor/Role4WebBuild.cs`, so do not change them by hand in Player Settings (the script overwrites them on every build). Menu **Carcavelos Circuit > Web Build**, or with Unity closed:
+```
+"C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -buildTarget WebGL -executeMethod CarcavelosCircuit.RaceFlow.Editor.Role4WebBuild.Build -quit -logFile Logs/web-build.log
+```
+It builds into `Build-Web/` (ignored by Git) with compression Disabled and hashed file names, which works on GitHub Pages (Pages gzips on the fly) and on itch.io. Add `-webHost=itch` for a pre-gzipped itch.io build. The build takes several minutes (link time optimisation). The log lists every file with its size. Test it with `python tools/serve_web_build.py`. For itch.io: zip the folder contents so `index.html` is at the zip root, upload as HTML, "This file will be played in the browser", viewport 1280x720, click-to-play on, SharedArrayBuffer off. Log it in `docs/builds.md`.

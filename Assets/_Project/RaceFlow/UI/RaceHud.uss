@@ -1,0 +1,2038 @@
+/* HUD styles, design direction "Linha de Costa" (coastline): chunky rounded tiles with a darker "lip" at the bottom,
+   azulejo diamonds and calcada pavement waves, blue and orange kept for drift/boost signals (docs/art-style.md).
+   Like CSS, with "-unity-" names for Unity-only properties. Sizes are for a 1280x720 reference screen
+   (PanelSettings scales them, matching the screen HEIGHT, so the HUD is always the same share of the screen).
+
+   Animation pattern (read this first):
+   - Nothing that animates is ever display:none (UI Toolkit cannot animate from display:none). Hidden = opacity 0,
+     and RaceHud.cs switches clicks off on hidden parts.
+   - RaceHud.cs puts ONE state class on .hud-root: st-ready, st-countdown, st-racing or st-results.
+     Rules below like ".st-ready .race-layer" then fade whole layers. In Results it also adds st-finish
+     (finish moment, task P6b, at the end of this file): the short beat before the results card comes in.
+   - Parts that come and go get "is-shown". A "...--pop" class has transition-duration 0s: C# adds it, removes it
+     two frames later (HudFx.Punch), and the normal transition animates back = a punch. */
+
+/* ---------- Tokens (same values as UI/HudColors.cs) ---------- */
+.hud-root {
+    --cc-white: #EAEAEC;
+    --cc-black: #1D1D1F;
+    --cc-asphalt: #55585E;
+    --cc-sand: #E3C48D;
+    --cc-blue: #2D8CD6;
+    --cc-blue-deep: #123B5E;   /* UI only: darker step of Atlantic Blue */
+    --cc-orange: #FF8A1F;
+    --cc-coral: #E6463C;       /* UI only: split "behind" (waiting for Luc's OK in docs/art-style.md) */
+    --cc-panel: rgba(29, 29, 31, 0.82);
+    --cc-lip: rgba(0, 0, 0, 0.45);
+    --drift-s1: #2D8CD6;       /* swap these two if the drift colour mapping changes */
+    --drift-s2: #FF8A1F;
+    /* Medal tiers (UI only, task P5). Like coral, they need a row in docs/art-style.md (Luc's OK).
+       Gold is warmer than sand on purpose, so a GOLD medal never looks like the sand NEW RECORD stamp.
+       Dean's List = azulejo blue and white (same hex as --cc-blue, written out: one token per tier). */
+    --medal-bronze: #C98A55;
+    --medal-silver: #C5CCD6;
+    --medal-gold: #F2B33D;
+    --medal-deans: #2D8CD6;
+}
+
+/* Reset Unity's default label spacing. One class = same weight as the theme's rule, and this sheet wins because it
+   sits deeper in the hierarchy. It is near the top so later rules in this file (same weight) can still set margins. */
+.unity-label {
+    margin: 0;
+    padding: 0;
+    color: var(--cc-white);
+}
+
+/* ---------- Fonts: the ONE place to change them ----------
+   Today: Unity's built-in default font; weight comes from bold.
+   When the OFL fonts are approved and imported (spec section 3), replace the three rules below with:
+     .f-display { -unity-font-definition: url("Fonts/Unbounded-Black SDF.asset"); -unity-font-style: normal; }
+     .f-num, .f-ui { -unity-font-definition: url("Fonts/BarlowCondensed-ExtraBold SDF.asset"); -unity-font-style: normal; }
+   and tune HudFormat.DigitWidth (0.55em for Barlow Condensed). No other rule sets a font. */
+.f-display { -unity-font-style: bold; }
+.f-num { -unity-font-style: bold; }
+.f-ui { -unity-font-style: bold; }
+
+/* ---------- Root, layers, state classes ---------- */
+.hud-root {
+    flex-grow: 1;
+    align-items: center;
+}
+
+
+.race-layer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    align-items: center;
+    opacity: 1;
+    transition-property: opacity;
+    transition-duration: 250ms;
+    transition-timing-function: ease-out;
+}
+
+.st-ready .race-layer,
+.st-results .race-layer {
+    opacity: 0;
+}
+
+/* Safe frame: on very wide screens the corners stay inside the player's attention cone. */
+.hud-safe {
+    flex-grow: 1;
+    width: 100%;
+    max-width: 1600px;
+    padding: 26px 34px 24px 34px;
+    justify-content: space-between;
+}
+
+.hud-top, .hud-bottom {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.hud-bottom {
+    align-items: flex-end;
+}
+
+.row {
+    flex-direction: row;
+    align-items: center;
+}
+
+/* ---------- Panels ---------- */
+.panel {
+    background-color: var(--cc-panel);
+    border-radius: 14px;
+    border-bottom-width: 4px;
+    border-bottom-color: var(--cc-lip);
+    padding: 8px 18px 10px 16px;
+    transition-property: scale;
+    transition-duration: 160ms;
+    transition-timing-function: ease-out-back;
+}
+
+.panel--accent {
+    border-left-width: 6px;
+    border-left-color: var(--cc-blue);
+}
+
+.panel--pop {
+    scale: 1.06 1.06;
+    transition-duration: 0s;
+}
+
+.caption {
+    font-size: 15px;
+    letter-spacing: 4px;
+    color: rgba(234, 234, 236, 0.70);
+}
+
+.caption--small {
+    font-size: 13px;
+    letter-spacing: 3px;
+}
+
+/* ---------- A. Time panel ---------- */
+.time-panel {
+    min-width: 268px;
+    transform-origin: left top;
+}
+
+.lap-counter {
+    margin-left: 14px;
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: var(--cc-sand);
+}
+
+.timer-row {
+    flex-direction: row;
+    align-items: flex-end;
+    margin-top: 2px;
+    transition-property: opacity;
+    transition-duration: 200ms;
+}
+
+.st-countdown .timer-row {
+    opacity: 0.45; /* the time is not running yet */
+}
+
+.timer-main {
+    font-size: 60px;
+    color: var(--cc-white);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.30);
+    -unity-text-align: lower-left;
+}
+
+.timer-fraction {
+    font-size: 34px;
+    margin-bottom: 7px;
+    color: rgba(234, 234, 236, 0.70);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.30);
+    -unity-text-align: lower-left;
+}
+
+.best-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 2px;
+}
+
+.best {
+    margin-left: 10px;
+    font-size: 22px;
+    color: var(--cc-sand);
+}
+
+.best--none {
+    color: rgba(234, 234, 236, 0.45);
+}
+
+/* ---------- A2. Medal target chip (under the time panel) ---------- */
+.top-left {
+    align-items: flex-start;
+}
+
+.medal-target {
+    flex-direction: row;
+    align-items: center;
+    height: 32px;
+    margin-top: 8px;
+    padding: 0 14px 0 12px;
+    border-radius: 16px; /* half the height = a true pill */
+    background-color: var(--cc-panel);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--cc-lip);
+    opacity: 0;
+    transform-origin: left;
+    transition-property: opacity, scale;
+    transition-duration: 300ms, 160ms;
+    transition-timing-function: ease-out, ease-out-back;
+}
+
+.medal-target.is-shown {
+    opacity: 1;
+}
+
+/* The lap is already slower than the target: the chip stays (you still see what you missed) but steps back. */
+.medal-target.is-shown.medal-target--missed {
+    opacity: 0.45;
+}
+
+.medal-target--pop {
+    scale: 1.12 1.12;
+    transition-duration: 0s;
+}
+
+.medal-target-name {
+    margin-left: 10px;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: rgba(234, 234, 236, 0.85);
+}
+
+.medal-target-time {
+    margin-left: 10px;
+    font-size: 18px;
+    color: var(--cc-white);
+}
+
+/* Medal gem: a small diamond tile (same shape as the checkpoint pips), coloured by the medal class on a parent. */
+.medal-gem {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    rotate: 45deg;
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(234, 234, 236, 0.22);
+}
+
+.medal--bronze .medal-gem { background-color: var(--medal-bronze); }
+.medal--silver .medal-gem { background-color: var(--medal-silver); }
+.medal--gold .medal-gem { background-color: var(--medal-gold); }
+.medal--deans .medal-gem { background-color: var(--medal-deans); border-color: var(--cc-white); }
+
+.medal-target--missed .medal-gem {
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgba(234, 234, 236, 0.55); /* hollow gem = not reachable this lap */
+}
+
+/* ---------- B. Checkpoint pips ---------- */
+.cp-panel {
+    align-items: flex-end;
+    padding: 8px 16px 12px 18px;
+}
+
+.cp-count {
+    margin-left: 10px;
+    font-size: 22px;
+    color: var(--cc-white);
+}
+
+.cp-pips {
+    flex-direction: row;
+    margin-top: 10px;
+    margin-right: 4px;
+}
+
+.cp-pip {
+    width: 16px;
+    height: 16px;
+    margin-left: 12px;
+    border-radius: 4px;
+    rotate: 45deg;
+    background-color: rgba(234, 234, 236, 0.22);
+    border-width: 2px;
+    border-color: rgba(234, 234, 236, 0);
+    transition-property: background-color, border-color, scale, opacity;
+    transition-duration: 120ms, 120ms, 180ms, 700ms;
+    transition-timing-function: linear, linear, ease-out-back, ease-in-out-sine;
+}
+
+.cp-pip--passed {
+    background-color: var(--cc-white);
+}
+
+.cp-pip--next {
+    background-color: rgba(234, 234, 236, 0.10);
+    border-color: var(--cc-white);
+}
+
+.cp-pip--dim {
+    opacity: 0.4; /* toggled every 0.7 s on the "next" pip = slow pulse */
+}
+
+.cp-pip--finish {
+    border-color: var(--cc-sand);
+}
+
+.cp-pip--finish.cp-pip--passed,
+.cp-pip--finish.cp-pip--next {
+    background-color: var(--cc-sand);
+}
+
+.cp-pip--pop {
+    scale: 1.7 1.7;
+    transition-duration: 0s;
+}
+
+/* ---------- C. Split chip ---------- */
+.split {
+    position: absolute;
+    top: 26px;
+    left: 0;
+    right: 0;
+    align-items: center;
+}
+
+.split-chip {
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 18px 6px 14px;
+    border-radius: 12px;
+    border-bottom-width: 4px;
+    border-bottom-color: var(--cc-lip);
+    background-color: var(--cc-blue);
+    opacity: 0;
+    translate: 0 -24px;
+    transition-property: opacity, translate, scale, background-color;
+    transition-duration: 160ms, 220ms, 160ms, 80ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back, linear;
+}
+
+.split.is-shown .split-chip {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.split--behind .split-chip {
+    background-color: var(--cc-coral);
+}
+
+.split--big .split-chip {
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-left-color: var(--cc-sand);
+    border-right-color: var(--cc-sand);
+    border-top-color: var(--cc-sand);
+}
+
+.split--neutral .split-chip {
+    background-color: var(--cc-panel);
+    border-left-width: 6px;
+    border-left-color: var(--cc-white);
+}
+
+.split-chip--pop {
+    scale: 1.18 1.18;
+    transition-duration: 0s;
+}
+
+.split-words {
+    margin-right: 12px;
+    align-items: flex-start;
+}
+
+.split-cp {
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: rgba(234, 234, 236, 0.85);
+}
+
+.split-word {
+    font-size: 17px;
+    letter-spacing: 2px;
+    color: var(--cc-white);
+}
+
+.split-value {
+    font-size: 40px;
+    color: var(--cc-white);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- D. Callouts: hint, wrong way, stuck ---------- */
+.callout {
+    position: absolute;
+    top: 112px;
+    left: 0;
+    right: 0;
+    align-items: center;
+}
+
+.callout-chip {
+    flex-direction: row;
+    align-items: center;
+    border-radius: 12px;
+    border-bottom-width: 4px;
+    border-bottom-color: var(--cc-lip);
+    opacity: 0;
+    translate: 0 -20px;
+    transition-property: opacity, translate, scale;
+    transition-duration: 160ms, 220ms, 160ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back;
+}
+
+.callout.is-shown .callout-chip {
+    opacity: 1;
+    translate: 0 0;
+}
+
+/* Shake: 3 classes so it beats ".callout.is-shown .callout-chip" above. */
+.callout.is-shown .callout-chip--shake-l { translate: -7px 0; transition-duration: 0s; }
+.callout.is-shown .callout-chip--shake-r { translate: 7px 0; transition-duration: 0s; }
+
+.hint-chip {
+    background-color: var(--cc-orange);
+    padding: 8px 20px 10px 10px;
+}
+
+.hint-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 12px;
+    border-radius: 16px;
+    background-color: var(--cc-black);
+    color: var(--cc-orange);
+    font-size: 22px;
+    -unity-text-align: middle-center;
+}
+
+.hint-text {
+    font-size: 22px;
+    letter-spacing: 1px;
+    color: var(--cc-black);
+}
+
+/* Coach tip: Atlantic blue chip, white text. Coach praise: sand chip. Only warnings shake; tips and praise bounce. */
+.hint--tip .hint-chip { background-color: var(--cc-blue); }
+.hint--tip .hint-text { color: var(--cc-white); }
+.hint--tip .hint-icon { color: var(--cc-blue); background-color: var(--cc-white); }
+.hint--praise .hint-chip { background-color: var(--cc-sand); }
+.hint--praise .hint-icon { color: var(--cc-sand); }
+
+.callout.is-shown .callout-chip--pop { scale: 1.1 1.1; transition-duration: 0s; }
+
+.wrong-way-chip {
+    flex-direction: column;
+    background-color: rgba(29, 29, 31, 0.88);
+    border-width: 4px;
+    border-color: var(--cc-coral);
+    border-bottom-width: 6px;
+    padding: 10px 34px 12px 34px;
+}
+
+.wrong-way-title {
+    font-size: 46px;
+    letter-spacing: 4px;
+    color: var(--cc-white);
+    text-shadow: 0 3px 0 rgba(0, 0, 0, 0.4);
+}
+
+.wrong-way-sub {
+    margin-top: 2px;
+    font-size: 16px;
+    letter-spacing: 6px;
+    color: var(--cc-sand);
+}
+
+.wrong-way-chip--pulse {
+    scale: 1.06 1.06;
+}
+
+.stuck-chip {
+    background-color: var(--cc-panel);
+    border-left-width: 6px;
+    border-left-color: var(--cc-orange);
+    padding: 10px 22px 12px 18px;
+}
+
+.stuck-title {
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--cc-white);
+}
+
+/* ---------- E. Speed gauge ---------- */
+.speed-gauge {
+    width: 176px;
+    height: 176px;
+    border-radius: 88px;
+    background-color: rgba(29, 29, 31, 0.55);
+    align-items: center;
+    justify-content: center;
+}
+
+.speed-arc-host {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.speed-arc {
+    flex-grow: 1;
+}
+
+.speed-centre {
+    align-items: center;
+    margin-top: 6px;
+}
+
+.speed {
+    font-size: 60px;
+    color: var(--cc-white);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.30);
+    -unity-text-align: middle-center;
+    transition-property: scale, color;
+    transition-duration: 160ms, 120ms;
+    transition-timing-function: ease-out-back, linear;
+}
+
+.speed--boost {
+    color: var(--cc-orange);
+}
+
+.speed--pop {
+    scale: 1.18 1.18;
+    transition-duration: 0s;
+}
+
+/* ---------- F. Drift meter ---------- */
+.drift-panel {
+    min-width: 300px;
+    padding: 10px 16px 14px 16px;
+}
+
+.drift-head {
+    height: 30px;
+    margin-bottom: 6px;
+}
+
+.drift-label {
+    font-size: 15px;
+    letter-spacing: 4px;
+    color: rgba(234, 234, 236, 0.80);
+    margin-right: 10px;
+    transform-origin: left;
+    transition-property: scale, color;
+    transition-duration: 220ms, 100ms;
+    transition-timing-function: ease-out-back, linear;
+}
+
+.drift-label--boost {
+    color: var(--cc-orange);
+    font-size: 26px;
+    letter-spacing: 3px;
+}
+
+.drift-label--pop {
+    scale: 1.5 1.5;
+    transition-duration: 0s;
+}
+
+.drift-pip {
+    width: 12px;
+    height: 12px;
+    margin-left: 10px;
+    border-radius: 3px;
+    rotate: 45deg;
+    background-color: rgba(234, 234, 236, 0.22);
+    transition-property: background-color, scale;
+    transition-duration: 100ms, 180ms;
+    transition-timing-function: linear, ease-out-back;
+}
+
+.drift--s1 .drift-pip--1,
+.drift--s2 .drift-pip--1 { background-color: var(--drift-s1); }
+.drift--s2 .drift-pip--2 { background-color: var(--drift-s2); }
+.drift--boost .drift-pip { background-color: var(--cc-orange); }
+
+.drift-pip--pop {
+    scale: 1.8 1.8;
+    transition-duration: 0s;
+}
+
+.drift-bar {
+    width: 300px;
+    height: 22px;
+    border-radius: 8px;
+    background-color: rgba(234, 234, 236, 0.16);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--cc-lip);
+    overflow: hidden;
+    transform-origin: left;
+    transition-property: scale;
+    transition-duration: 160ms;
+    transition-timing-function: ease-out-back;
+}
+
+.drift-bar--pop {
+    scale: 1 1.35;
+    transition-duration: 0s;
+}
+
+/* The fill is scaled from the left (no width change = no layout pass every frame). */
+.drift-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    transform-origin: left;
+    scale: 0 1;
+    background-color: var(--cc-white);
+    transition-property: background-color;
+    transition-duration: 80ms;
+}
+
+.drift--s1 .drift-fill { background-color: var(--drift-s1); }
+.drift--s2 .drift-fill { background-color: var(--drift-s2); }
+.drift--boost .drift-fill { background-color: var(--cc-orange); }
+
+/* Marks where stage 1 starts (left is set from RaceHud.stage1At). */
+.drift-tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 3px;
+    background-color: rgba(234, 234, 236, 0.55);
+}
+
+/* A light streak running through the bar while boosting. */
+.drift-shine {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    background-color: rgba(255, 255, 255, 0.35);
+    translate: -60px 0;
+    opacity: 0;
+}
+
+.drift--boost .drift-shine {
+    opacity: 1;
+}
+
+.drift-shine--run {
+    translate: 340px 0;
+    transition-property: translate;
+    transition-duration: 500ms;
+    transition-timing-function: linear;
+}
+
+/* ---------- G. Boost edge glow (gradient texture set in RaceHud.cs) ---------- */
+.edge-glow {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 240px;
+    opacity: 0;
+    -unity-background-scale-mode: stretch-to-fill;
+    transition-property: opacity;
+    transition-duration: 400ms;
+    transition-timing-function: ease-out;
+}
+
+.edge-glow--left { left: 0; }
+.edge-glow--right { right: 0; }
+
+.edge-glow.is-shown {
+    opacity: 1;
+    transition-duration: 120ms;
+}
+
+/* ---------- H. Footer key hint ---------- */
+.controls-hint {
+    position: absolute;
+    bottom: 34px;
+    flex-direction: row;
+    align-items: center;
+    height: 44px;
+    padding: 0 16px 0 12px;
+    border-radius: 22px; /* half the height = a true pill (999px draws an ellipse in UI Toolkit) */
+    background-color: rgba(29, 29, 31, 0.70);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 400ms;
+}
+
+.controls-hint.is-shown {
+    opacity: 1;
+}
+
+/* Narrow windows (RaceHud sets hud--narrow below 1230 reference px, e.g. 4:3 and 16:10). The hint chip drops
+   below the medal pill so it never covers the lap time, and the key bar moves right, into the gap between the
+   drift panel (ends at 366 px) and the speed gauge (starts 210 px from the right). */
+.hud--narrow .callout {
+    top: 228px;
+}
+
+.hud--narrow .controls-hint {
+    translate: 78px 0;
+}
+
+/* Keycaps (also used on the start and results screens). */
+.keycap {
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    margin: 0 3px;
+    border-radius: 6px;
+    background-color: var(--cc-white);
+    border-bottom-width: 3px;
+    border-bottom-color: #9A9AA0;
+    align-items: center;
+    justify-content: center;
+}
+
+.keycap > Label {
+    font-size: 15px;
+    color: var(--cc-black);
+    letter-spacing: 1px;
+}
+
+.keycap--wide {
+    min-width: 70px;
+}
+
+.keycap--big {
+    min-width: 38px;
+    height: 38px;
+    margin: 0 12px;
+}
+
+.keycap--big > Label {
+    font-size: 20px;
+}
+
+.key-text {
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.88);
+    margin: 0 18px 0 7px;
+    -unity-text-align: middle-left;
+}
+
+.key-text--last {
+    margin-right: 0;
+}
+
+/* ---------- Countdown ---------- */
+.cd {
+    position: absolute;
+    top: 92px;
+    left: 0;
+    right: 0;
+    align-items: center;
+    opacity: 0;
+    transition-property: opacity, translate, scale;
+    transition-duration: 120ms;
+    transition-timing-function: ease-out;
+}
+
+.cd.is-shown {
+    opacity: 1;
+}
+
+.cd-tile {
+    width: 140px;
+    height: 140px;
+    border-radius: 24px;
+    rotate: 45deg;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--cc-white);
+    border-width: 8px;
+    border-color: var(--cc-blue);
+    border-bottom-color: #1F6AA6;
+    transition-property: scale, rotate, opacity, background-color, border-color;
+    transition-duration: 220ms, 220ms, 110ms, 100ms, 100ms;
+    transition-timing-function: ease-out-back, ease-out-back, ease-out, linear, linear;
+}
+
+.cd-tile--pop {
+    scale: 1.7 1.7;
+    rotate: 70deg;
+    opacity: 0;
+    transition-duration: 0s;
+}
+
+.cd-num {
+    rotate: -45deg;
+    font-size: 92px;
+    color: var(--cc-black);
+    -unity-text-align: middle-center;
+}
+
+.cd--go .cd-tile {
+    background-color: var(--cc-orange);
+    border-color: var(--cc-white);
+    transition-duration: 380ms, 380ms, 110ms, 100ms, 100ms;
+    transition-timing-function: ease-out-elastic, ease-out-elastic, ease-out, linear, linear;
+}
+
+.cd--go .cd-num {
+    font-size: 58px;
+}
+
+.cd--go .cd-tile--pop-go { /* 2 classes, so it beats ".cd--go .cd-tile" and really jumps (duration 0s) */
+    scale: 0.45 0.45;
+    opacity: 0;
+    transition-duration: 0s;
+}
+
+/* GO flies up and fades. "Two classes" version too, because ".cd.is-shown" (2 classes) would otherwise keep opacity 1. */
+.cd--exit,
+.cd.is-shown.cd--exit {
+    translate: 0 -48px;
+    scale: 1.25 1.25;
+    opacity: 0;
+    transition-duration: 260ms;
+    transition-timing-function: ease-in-cubic;
+}
+
+.cd-lamps {
+    flex-direction: row;
+    margin-top: 44px;
+}
+
+.cd-lamp {
+    width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    margin: 0 7px;
+    border-width: 3px;
+    border-color: var(--cc-black);
+    background-color: rgba(234, 234, 236, 0.25);
+    transition-property: background-color, scale;
+    transition-duration: 90ms, 160ms;
+    transition-timing-function: linear, ease-out-back;
+}
+
+.cd-lamp--lit {
+    background-color: var(--cc-blue);
+    scale: 1.2 1.2;
+}
+
+.cd--go .cd-lamp {
+    background-color: var(--cc-orange);
+    scale: 1.2 1.2;
+}
+
+.go-flash {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--cc-white);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 300ms;
+    transition-timing-function: ease-out;
+}
+
+.go-flash--pop {
+    opacity: 0.18;
+    transition-duration: 0s;
+}
+
+/* ---------- Full-screen overlays (start, results) ---------- */
+.overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 250ms;
+    transition-timing-function: ease-out;
+}
+
+.st-ready .start-screen,
+.st-results .results-screen {
+    opacity: 1;
+}
+
+.overlay-bg, .pattern-host {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.azulejo {
+    flex-grow: 1;
+    opacity: 0.07;
+}
+
+.results-screen .azulejo {
+    opacity: 0.08;
+}
+
+.calcada {
+    flex-grow: 1;
+}
+
+.wave-host {
+    width: 360px;
+    height: 16px;
+    margin: 8px 0 6px 0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.wave-host--small {
+    width: 300px;
+    height: 12px;
+    margin: 6px 0 14px 0;
+}
+
+/* ---------- Start screen ---------- */
+.start-content {
+    align-items: center;
+}
+
+.kicker {
+    font-size: 17px;
+    letter-spacing: 6px;
+    color: var(--cc-sand);
+    margin-bottom: 6px;
+}
+
+.title {
+    font-size: 88px;
+    letter-spacing: 2px;
+    color: var(--cc-white);
+    text-shadow: 0 5px 0 rgba(0, 0, 0, 0.35);
+}
+
+.title-2 {
+    font-size: 34px;
+    letter-spacing: 22px;
+    padding-left: 22px; /* letter-spacing adds space after the last letter too; this re-centres the word */
+    color: var(--cc-orange);
+    text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+.pill {
+    margin-top: 44px;
+    height: 58px;
+    padding: 0 34px 0 34px;
+    border-radius: 29px; /* half the height = a true pill (999px draws an ellipse in UI Toolkit) */
+    background-color: var(--cc-orange);
+    border-bottom-width: 4px;
+    border-bottom-color: #B35C0E;
+    font-size: 26px;
+    letter-spacing: 5px;
+    color: var(--cc-black);
+    -unity-text-align: middle-center;
+}
+
+.pill--loading {
+    background-color: var(--cc-asphalt);
+    border-bottom-color: #33353A;
+    color: var(--cc-white);
+}
+
+.pill--pop {
+    scale: 0.92 0.92;
+    transition-duration: 0s;
+}
+
+.controls-row {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 30px;
+    padding: 10px 18px;
+    border-radius: 14px;
+    background-color: rgba(29, 29, 31, 0.55);
+    max-width: 1100px;
+}
+
+.start-best {
+    margin-top: 22px;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--cc-sand);
+}
+
+/* Intro: title rows slide down in one after another (".intro-in" is added one frame after the screen shows). */
+.intro {
+    opacity: 0;
+    translate: 0 -24px;
+    transition-property: opacity, translate, scale;
+    transition-duration: 450ms, 450ms, 140ms;
+    transition-timing-function: ease-out-cubic, ease-out-cubic, ease-out-back;
+}
+
+.intro-in .intro {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.intro-in .intro--2 { transition-delay: 80ms, 80ms, 0ms; }
+.intro-in .intro--3 { transition-delay: 160ms, 160ms, 0ms; }
+.intro-in .intro--4 { transition-delay: 260ms, 260ms, 0ms; }
+.intro-in .intro--5 { transition-delay: 360ms, 360ms, 0ms; }
+
+/* ---------- Results screen ---------- */
+.card {
+    width: 560px;
+    align-items: center;
+    padding: 30px 40px 30px 40px;
+    border-radius: 22px;
+    background-color: rgba(29, 29, 31, 0.92);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--cc-blue);
+    opacity: 0;
+    translate: 0 40px;
+    transition-property: opacity, translate;
+    transition-duration: 320ms;
+    transition-timing-function: ease-out-cubic;
+    transition-delay: 80ms;
+}
+
+.results--in .card {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.card--record {
+    border-bottom-color: var(--cc-sand);
+    /* Room for the NEW RECORD stamp, which hangs over the top edge: without it the stamp covers the kicker. */
+    padding-top: 58px;
+}
+
+/* Shake when the NEW RECORD stamp lands: 2 classes and after ".results--in .card", so these win.
+   card--shaking is on for the whole shake and makes the way back quick (40 ms, no delay) instead of the slow entry. */
+.results--in .card--shaking { transition-duration: 40ms; transition-delay: 0s; transition-timing-function: linear; }
+.results--in .card--shake-l { translate: -5px 0; transition-duration: 0s; transition-delay: 0s; }
+.results--in .card--shake-r { translate: 5px 0; transition-duration: 0s; transition-delay: 0s; }
+
+.res-kicker {
+    font-size: 15px;
+    letter-spacing: 6px;
+    color: var(--cc-sand);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-delay: 200ms;
+}
+
+.res-headline {
+    margin-top: 4px;
+    font-size: 30px;
+    letter-spacing: 10px;
+    padding-left: 10px;
+    color: var(--cc-white);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-delay: 220ms;
+}
+
+.results--in .res-kicker,
+.results--in .res-headline {
+    opacity: 1;
+}
+
+.final-time {
+    margin-top: 2px;
+    font-size: 96px; /* was 104px: room for the medal stamp and the lap report at 720 px height */
+    color: var(--cc-white);
+    text-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+    transition-property: scale;
+    transition-duration: 140ms;
+    transition-timing-function: ease-out-back;
+}
+
+.final-time--pop {
+    scale: 1.08 1.08;
+    transition-duration: 0s;
+}
+
+.res-delta {
+    flex-direction: row;
+    align-items: center;
+    max-width: 100%;
+    padding: 4px 16px 6px 16px;
+    border-radius: 10px;
+    border-bottom-width: 4px;
+    border-bottom-color: var(--cc-lip);
+    background-color: var(--cc-coral);
+    opacity: 0;
+    translate: -30px 0;
+    transition-property: opacity, translate;
+    transition-duration: 240ms;
+    transition-timing-function: ease-out-back;
+    transition-delay: 1000ms; /* after the medal stamp (900 ms) */
+}
+
+.results--in .res-delta {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.res-delta--ahead {
+    background-color: var(--cc-blue);
+}
+
+.res-delta--first {
+    background-color: rgba(0, 0, 0, 0);
+    border-bottom-width: 0;
+}
+
+.res-delta-value {
+    font-size: 28px;
+    color: var(--cc-white);
+    margin-right: 10px;
+}
+
+.res-delta-text {
+    flex-shrink: 1;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    font-size: 17px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.92);
+}
+
+.res-delta--first .res-delta-text {
+    color: var(--cc-sand);
+    font-size: 19px;
+}
+
+.res-best {
+    margin-top: 12px;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.70);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-delay: 1100ms;
+}
+
+.results--in .res-best {
+    opacity: 1;
+}
+
+/* Medal stamp: a pill badge in its own row (never over other text). It slams in like the NEW RECORD stamp,
+   just before it: medal at 900 ms, delta 1000 ms, record 1050 ms, best 1100 ms, lap report 1150 ms. */
+.res-medal {
+    align-items: center;
+    margin: 0 0 12px 0; /* sits under the wave that underlines the final time */
+}
+
+.medal-badge {
+    flex-direction: row;
+    align-items: center;
+    height: 46px;
+    padding: 0 24px 0 20px;
+    border-radius: 23px; /* half the height = a true pill */
+    background-color: var(--cc-black);
+    border-width: 3px;
+    border-bottom-width: 5px;
+    border-color: rgba(234, 234, 236, 0.25);
+    opacity: 0;
+    scale: 2.2 2.2;
+    rotate: -14deg;
+    transition-property: opacity, scale, rotate;
+    transition-duration: 160ms, 260ms, 260ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back;
+    transition-delay: 900ms;
+}
+
+.results--in .medal-badge {
+    opacity: 1;
+    scale: 1 1;
+    rotate: -3deg;
+}
+
+/* No medal: no stamp, just a quiet fade (3 classes, so it beats the two rules above in both states). */
+.res-medal .medal-badge.medal--none,
+.results--in .medal-badge.medal--none {
+    scale: 1 1;
+    rotate: 0deg;
+}
+
+.medal-badge.medal--bronze { border-color: var(--medal-bronze); }
+.medal-badge.medal--silver { border-color: var(--medal-silver); }
+.medal-badge.medal--gold { border-color: var(--medal-gold); }
+.medal-badge.medal--deans { border-color: var(--cc-white); background-color: var(--cc-blue-deep); }
+
+.medal-gem--big {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border-width: 3px;
+}
+
+.medal-badge-name {
+    margin-left: 14px;
+    font-size: 26px;
+    letter-spacing: 3px;
+    color: rgba(234, 234, 236, 0.55);
+}
+
+.medal--bronze .medal-badge-name { color: var(--medal-bronze); }
+.medal--silver .medal-badge-name { color: var(--medal-silver); }
+.medal--gold .medal-badge-name { color: var(--medal-gold); }
+.medal--deans .medal-badge-name { color: var(--cc-white); }
+
+.res-medal-next {
+    margin-top: 6px;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.70);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-delay: 1150ms;
+}
+
+.results--in .res-medal-next {
+    opacity: 1;
+}
+
+.res-medal-next--new {
+    color: var(--cc-sand);
+}
+
+/* Lap report: one tile strip, four equal cells. 480 px inside the card = 120 px per cell. */
+.res-stats {
+    flex-direction: row;
+    width: 100%;
+    margin-top: 14px;
+    padding: 8px 0 9px 0;
+    border-radius: 14px;
+    background-color: rgba(234, 234, 236, 0.07);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--cc-lip);
+    opacity: 0;
+    translate: 0 12px;
+    transition-property: opacity, translate;
+    transition-duration: 240ms;
+    transition-timing-function: ease-out-cubic;
+    transition-delay: 1150ms;
+}
+
+.results--in .res-stats {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.stat {
+    flex-grow: 1;
+    flex-basis: 0;
+    align-items: center;
+    border-right-width: 1px;
+    border-right-color: rgba(234, 234, 236, 0.14);
+}
+
+.stat--last {
+    border-right-width: 0;
+}
+
+.stat-value {
+    font-size: 26px;
+    color: var(--cc-white);
+}
+
+.stat-caption {
+    margin-top: 1px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.60);
+}
+
+/* 0 drifts or 0 boosts: dimmed, a quiet "try this next time" (the coach explains how). */
+.stat--zero .stat-value {
+    color: rgba(234, 234, 236, 0.35);
+}
+
+.record {
+    position: absolute;
+    top: -40px;
+    align-self: center;
+    padding: 6px 22px 6px 22px;
+    border-radius: 10px;
+    background-color: var(--cc-sand);
+    border-width: 4px;
+    border-color: var(--cc-white);
+    border-bottom-color: #B8975E;
+    color: var(--cc-black);
+    font-size: 36px;
+    letter-spacing: 3px;
+    opacity: 0;
+    scale: 2.4 2.4;
+    rotate: -16deg;
+    transition-property: opacity, scale, rotate;
+    transition-duration: 180ms, 280ms, 280ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back;
+    transition-delay: 1050ms;
+}
+
+.results--in .record--on {
+    opacity: 1;
+    scale: 1 1;
+    rotate: -6deg;
+}
+
+.res-actions {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 20px;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-delay: 1300ms;
+}
+
+.results--in .res-actions {
+    opacity: 1;
+}
+
+.retry-button {
+    margin: 0 10px 0 0;
+    height: 54px;
+    padding: 0 40px 0 40px;
+    border-width: 0;
+    border-bottom-width: 4px;
+    border-bottom-color: #B35C0E;
+    border-radius: 27px; /* half the height = a true pill */
+    background-image: none;
+    background-color: var(--cc-orange);
+    font-size: 24px;
+    letter-spacing: 5px;
+    color: var(--cc-black);
+}
+
+.retry-button:hover {
+    background-color: #FFA550;
+}
+
+.retry-button:hover:active {
+    scale: 0.95 0.95;
+}
+
+/* =====================================================================================================
+   Task P7: menu buttons, settings, credits, pause, sound toast, reduced motion.
+   Same language as above: dark rounded tiles with a lip, true pills (radius = half the height), keycaps,
+   azulejo diamonds. C# (UI/HudMenus.cs, SettingsPanel.cs, CreditsPanel.cs) only switches classes.
+   ===================================================================================================== */
+
+/* ---------- Menu buttons: a dark pill with a keycap (start screen, results card, menu footers) ---------- */
+.menu-row {
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 22px;
+}
+
+.intro-in .intro--6 { transition-delay: 440ms, 440ms, 0ms; }
+
+.menu-pill {
+    flex-direction: row;
+    align-items: center;
+    height: 40px;
+    margin: 0 6px;
+    padding: 0 18px 0 8px;
+    border-radius: 20px; /* half the height = a true pill */
+    background-color: rgba(29, 29, 31, 0.78);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--cc-lip);
+    transition-property: background-color, scale;
+    transition-duration: 100ms, 140ms;
+    transition-timing-function: linear, ease-out-back;
+}
+
+.menu-pill:hover {
+    background-color: var(--cc-blue-deep);
+}
+
+.menu-pill:hover:active {
+    scale: 0.94 0.94;
+}
+
+.menu-pill-text {
+    margin-left: 8px;
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: var(--cc-white);
+}
+
+/* The sound pill while muted: the word turns orange, so "off" is seen at a glance. */
+.menu-pill--muted .menu-pill-text {
+    color: var(--cc-orange);
+}
+
+.menu-pill--results {
+    height: 44px;
+    border-radius: 22px;
+    margin: 0 0 0 16px;
+    padding-right: 14px;
+}
+
+.menu-pill--results .menu-pill-text {
+    letter-spacing: 2px; /* the results card is 480 px inside: Retry + Enter + this pill must fit in one row */
+}
+
+/* Close = the main action of a menu, so it is orange like the start pill and the Retry button. */
+.menu-pill--close {
+    margin-top: 14px;
+    background-color: var(--cc-orange);
+    border-bottom-color: #B35C0E;
+}
+
+.menu-pill--close:hover {
+    background-color: #FFA550;
+}
+
+.menu-pill--close .menu-pill-text {
+    color: var(--cc-black);
+}
+
+.keycap--small {
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    margin: 0;
+    border-radius: 5px;
+    border-bottom-width: 2px;
+}
+
+.keycap--small > Label {
+    font-size: 13px;
+}
+
+/* ---------- Menu overlay + card (settings and credits) ---------- */
+.menu-overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-timing-function: ease-out;
+}
+
+.menu-overlay.is-shown {
+    opacity: 1;
+}
+
+.menu-bg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(18, 59, 94, 0.62); /* blue-deep: the start or results screen stays visible behind */
+}
+
+.menu-card {
+    width: 640px;
+    align-items: center;
+    padding: 24px 34px 24px 34px;
+    border-radius: 22px;
+    background-color: rgba(29, 29, 31, 0.95);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--cc-blue);
+    translate: 0 30px;
+    scale: 0.96 0.96;
+    transition-property: translate, scale;
+    transition-duration: 280ms, 280ms;
+    transition-timing-function: ease-out-cubic, ease-out-back;
+}
+
+.menu-overlay.is-shown .menu-card {
+    translate: 0 0;
+    scale: 1 1;
+}
+
+#credits-card {
+    border-bottom-color: var(--cc-sand);
+}
+
+.menu-title {
+    font-size: 40px;
+    letter-spacing: 8px;
+    padding-left: 8px; /* letter-spacing adds space after the last letter too; this re-centres the word */
+    color: var(--cc-white);
+    text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+.menu-keys {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+/* ---------- Settings rows ---------- */
+.set-row {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+    margin-top: 4px;
+    padding: 0 14px 0 12px;
+    border-radius: 12px;
+    border-left-width: 4px;
+    border-left-color: rgba(0, 0, 0, 0);
+    background-color: rgba(234, 234, 236, 0.04);
+    transition-property: background-color, border-color;
+    transition-duration: 120ms;
+}
+
+.set-row:hover {
+    background-color: rgba(234, 234, 236, 0.09);
+}
+
+/* The row the keys change (W/S): blue accent bar like the time panel. */
+.set-row--selected,
+.set-row--selected:hover {
+    background-color: rgba(45, 140, 214, 0.22);
+    border-left-color: var(--cc-blue);
+}
+
+.set-name {
+    width: 170px;
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: rgba(234, 234, 236, 0.80);
+}
+
+.set-row--selected .set-name {
+    color: var(--cc-white);
+}
+
+.set-control {
+    flex-grow: 1;
+    flex-direction: row;
+    align-items: center;
+}
+
+.set-step {
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    background-color: rgba(234, 234, 236, 0.12);
+    align-items: center;
+    justify-content: center;
+    transition-property: background-color, scale;
+    transition-duration: 100ms, 140ms;
+    transition-timing-function: linear, ease-out-back;
+}
+
+/* Minus = one bar, plus = the same bar twice, the second turned 90 degrees (no font glyph needed). */
+.set-step-bar {
+    position: absolute;
+    width: 12px;
+    height: 3px;
+    border-radius: 1px;
+    background-color: var(--cc-white);
+}
+
+.set-step-bar--v {
+    rotate: 90deg;
+}
+
+.set-step:hover {
+    background-color: rgba(234, 234, 236, 0.26);
+}
+
+.set-step:hover:active {
+    scale: 0.88 0.88;
+}
+
+/* Volume bar: ten azulejo diamonds (cells made in SettingsPanel.cs), lit up to the volume. */
+.set-bar {
+    flex-direction: row;
+    margin: 0 8px;
+}
+
+.set-cell {
+    width: 22px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+}
+
+.set-cell-gem {
+    width: 13px;
+    height: 13px;
+    border-radius: 3px;
+    rotate: 45deg;
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(234, 234, 236, 0.16);
+    transition-property: background-color, scale;
+    transition-duration: 100ms, 140ms;
+    transition-timing-function: linear, ease-out-back;
+}
+
+.set-cell--on .set-cell-gem {
+    background-color: var(--cc-white);
+}
+
+.set-row--selected .set-cell--on .set-cell-gem {
+    background-color: var(--cc-orange);
+}
+
+.set-cell:hover .set-cell-gem {
+    scale: 1.3 1.3;
+}
+
+/* Muted: the master bar keeps its level (unmute brings it back) but shows hollow diamonds. */
+.set-row--muted .set-cell--on .set-cell-gem,
+.set-row--selected.set-row--muted .set-cell--on .set-cell-gem {
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgba(234, 234, 236, 0.55);
+}
+
+.set-value {
+    width: 76px;
+    font-size: 20px;
+    color: var(--cc-white);
+    -unity-text-align: middle-right;
+}
+
+.set-row--muted .set-value {
+    color: var(--cc-orange);
+}
+
+/* On/off switch: a pill track with a round knob that slides right when on. */
+.set-switch {
+    width: 54px;
+    height: 28px;
+    padding: 3px;
+    border-radius: 14px;
+    background-color: rgba(234, 234, 236, 0.16);
+    transition-property: background-color;
+    transition-duration: 120ms;
+}
+
+.set-knob {
+    width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    background-color: var(--cc-white);
+    transition-property: translate;
+    transition-duration: 160ms;
+    transition-timing-function: ease-out-back;
+}
+
+.set-row--on .set-switch {
+    background-color: var(--cc-blue);
+}
+
+.set-row--on .set-knob {
+    translate: 26px 0;
+}
+
+.set-row--toggle .set-value {
+    color: rgba(234, 234, 236, 0.55);
+}
+
+.set-row--toggle.set-row--on .set-value {
+    color: var(--cc-white);
+}
+
+.set-note {
+    margin-left: 14px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.50);
+}
+
+/* ---------- Credits: two pages in one fixed box, the shown one fades and slides in ---------- */
+.credits-pages {
+    width: 100%;
+    height: 300px;
+    margin-top: 2px;
+}
+
+.credits-page {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    align-items: center;
+    opacity: 0;
+    translate: 24px 0;
+    transition-property: opacity, translate;
+    transition-duration: 200ms, 260ms;
+    transition-timing-function: ease-out, ease-out-cubic;
+}
+
+.credits-page.is-shown {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.credits-head {
+    margin-top: 6px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    letter-spacing: 5px;
+    color: var(--cc-sand);
+}
+
+.credits-head--next {
+    margin-top: 16px;
+}
+
+.credits-team {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.credit-person {
+    width: 50%;
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 8px 12px 8px;
+}
+
+/* Role number on an azulejo diamond, like the countdown tile. */
+.credit-badge {
+    width: 40px;
+    height: 40px;
+    margin: 0 18px 0 10px;
+    border-radius: 8px;
+    rotate: 45deg;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--cc-blue);
+    border-width: 3px;
+    border-color: var(--cc-white);
+}
+
+.credit-badge-num {
+    rotate: -45deg;
+    font-size: 20px;
+    color: var(--cc-white);
+    -unity-text-align: middle-center;
+}
+
+.credit-words {
+    flex-shrink: 1;
+}
+
+.credit-name {
+    font-size: 19px;
+    letter-spacing: 2px;
+    color: var(--cc-white);
+}
+
+.credit-role {
+    margin-top: 3px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    white-space: normal;
+    color: rgba(234, 234, 236, 0.65);
+}
+
+.credit-text {
+    max-width: 100%;
+    font-size: 15px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    color: rgba(234, 234, 236, 0.90);
+}
+
+.credits-foot {
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+    font-size: 14px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    color: rgba(234, 234, 236, 0.60);
+}
+
+.credits-footer {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.credits-dot {
+    width: 12px;
+    height: 12px;
+    margin: 0 8px;
+    border-radius: 3px;
+    rotate: 45deg;
+    background-color: rgba(234, 234, 236, 0.25);
+    transition-property: background-color;
+    transition-duration: 120ms;
+}
+
+.credits-dot--on {
+    background-color: var(--cc-sand);
+}
+
+.credits-footer .menu-pill--next {
+    margin-left: 18px;
+}
+
+.credits-footer .menu-pill--close {
+    margin-top: 0;
+}
+
+/* ---------- Pause (focus lost during the countdown or the race) ---------- */
+.pause-screen.is-shown {
+    opacity: 1;
+}
+
+.pause-bg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(18, 59, 94, 0.80);
+}
+
+.pause-content {
+    align-items: center;
+}
+
+.pause-title {
+    font-size: 84px;
+    letter-spacing: 12px;
+    padding-left: 12px;
+    color: var(--cc-white);
+    text-shadow: 0 5px 0 rgba(0, 0, 0, 0.35);
+}
+
+.pause-pill {
+    margin-top: 22px;
+}
+
+.pause-note {
+    margin-top: 18px;
+    font-size: 16px;
+    letter-spacing: 5px;
+    color: var(--cc-sand);
+}
+
+/* ---------- Sound toast (key M) ---------- */
+.toast {
+    position: absolute;
+    bottom: 96px;
+    flex-direction: row;
+    align-items: center;
+    height: 44px;
+    padding: 0 20px 0 10px;
+    border-radius: 22px; /* half the height = a true pill */
+    background-color: rgba(29, 29, 31, 0.92);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--cc-lip);
+    opacity: 0;
+    translate: 0 14px;
+    transition-property: opacity, translate;
+    transition-duration: 160ms, 220ms;
+    transition-timing-function: ease-out, ease-out-back;
+}
+
+.toast.is-shown {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.toast-text {
+    margin-left: 10px;
+    font-size: 17px;
+    letter-spacing: 4px;
+    color: var(--cc-white);
+}
+
+.toast--off .toast-text {
+    color: var(--cc-orange);
+}
+
+/* On the start and results screens the middle is full (title, results card): the toast goes to the bottom-left corner. */
+.st-ready .toast,
+.st-results .toast {
+    left: 34px;
+    bottom: 26px;
+}
+
+/* ---------- Reduced motion (settings) ----------
+   RaceHud puts "reduce-motion" on .hud-root. Everything still fades (opacity), but nothing slides, shakes,
+   punches or spins. Each rule has one class more than the rule it beats; they are last in the file, so they
+   also win every tie. Not covered here (C# checks the setting): the breathing start pill (an inline style). */
+.reduce-motion .intro,
+.reduce-motion .callout-chip,
+.reduce-motion .split-chip,
+.reduce-motion .card,
+.reduce-motion .res-delta,
+.reduce-motion .res-stats,
+.reduce-motion .toast,
+.reduce-motion .menu-card,
+.reduce-motion .credits-page {
+    translate: 0 0;
+}
+
+.reduce-motion .panel--pop,
+.reduce-motion .medal-target--pop,
+.reduce-motion .cp-pip--pop,
+.reduce-motion .split-chip--pop,
+.reduce-motion .speed--pop,
+.reduce-motion .drift-label--pop,
+.reduce-motion .drift-pip--pop,
+.reduce-motion .drift-bar--pop,
+.reduce-motion .final-time--pop,
+.reduce-motion .pill--pop,
+.reduce-motion .wrong-way-chip--pulse,
+.reduce-motion .menu-card {
+    scale: 1 1;
+}
+
+.reduce-motion .callout.is-shown .callout-chip--shake-l,
+.reduce-motion .callout.is-shown .callout-chip--shake-r,
+.reduce-motion .results--in .card--shake-l,
+.reduce-motion .results--in .card--shake-r {
+    translate: 0 0;
+}
+
+.reduce-motion .callout.is-shown .callout-chip--pop {
+    scale: 1 1;
+}
+
+/* Countdown: the number fades in instead of punching, GO fades out instead of flying up, no white flash. */
+.reduce-motion .cd-tile--pop {
+    scale: 1 1;
+    rotate: 45deg;
+}
+
+.reduce-motion .cd--go .cd-tile--pop-go {
+    scale: 1 1;
+}
+
+.reduce-motion .cd--exit,
+.reduce-motion .cd.is-shown.cd--exit {
+    translate: 0 0;
+    scale: 1 1;
+}
+
+.reduce-motion .go-flash--pop {
+    opacity: 0;
+}
+
+/* Results stamps fade in at their final angle instead of slamming down. */
+.reduce-motion .record {
+    scale: 1 1;
+    rotate: -6deg;
+}
+
+.reduce-motion .medal-badge {
+    scale: 1 1;
+    rotate: -3deg;
+}
+
+/* No light streak running through the drift bar while boosting (the bar itself still turns orange). */
+.reduce-motion .drift-shine {
+    opacity: 0;
+}
+
+/* ---------- Finish moment (task P6b) ----------
+   RaceHud puts "st-finish" on .hud-root for the whole Results state. For the first 0.6 s (the "finish beat", the
+   game is in slow motion) the results card is not there yet: the lap time panel grows a little and turns sand,
+   the exact time in full white, while the parts that no longer matter step back. Then st-results fades the card in
+   over all of it. These rules are last in the file and have one class more than the rules they beat. */
+.st-finish .time-panel {
+    scale: 1.12 1.12;
+    border-left-color: var(--cc-sand);
+    transition-property: scale, border-left-color;
+    transition-duration: 320ms, 160ms;
+    transition-timing-function: ease-out-back, ease-out;
+}
+
+.st-finish .timer-fraction {
+    color: var(--cc-white);
+}
+
+/* The drift meter and the speed gauge stay in place (no layout jump) and only fade. */
+.st-finish .drift-panel,
+.st-finish .speed-gauge {
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-timing-function: ease-out;
+}
+
+/* The next-medal chip can already show the next target after a new medal: hide it, the card tells the story. */
+.st-finish .medal-target.is-shown {
+    opacity: 0;
+}
+
+/* Reduced motion: no beat (the card comes at once) and no growing panel. */
+.reduce-motion.st-finish .time-panel {
+    scale: 1 1;
+}

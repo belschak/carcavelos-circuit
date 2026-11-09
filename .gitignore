@@ -156,3 +156,6 @@ Thumbs.db
 .vscode/
 # local AI tool state
 .claude/settings.local.json
+
+# Local Web builds (Role 3 uploads them to itch.io)
+/Build-Web/
