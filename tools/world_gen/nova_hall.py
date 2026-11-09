@@ -326,15 +326,17 @@ def artwork_wall(m, f):
 def atrium_furniture(m, f):
     # entrance zone (west, IMG_7722): reception desk left of the door, sculpture ahead, boards with planter troughs
     K.desk(m, f, 16.5, 3.4, 1.2, 5.0)                                     # welcome desk, left of the doors
-    # abstract sculpture straight ahead of the main entrance (the real hall has the logo letters here):
-    # a slab, an upright ring on a low plinth, two chevrons, in a row across the view
-    K.block(m, f, 17.0, 18.2, 15.6, 16.4, 0.0, 2.6, "wall")
-    K.block(m, f, 19.4, 25.6, 15.5, 16.5, 0.0, 0.45, "wall")
+    # abstract sculpture straight ahead of the main entrance, arranged and sized like the real logo letters
+    # (no readable logo, docs/decisions.md): tall block, ring standing on a long low plinth, a V, a chevron
+    SO = 16.0                                                            # o of the row (across the view from the door)
+    K.block(m, f, 16.4, 18.0, SO - 0.3, SO + 0.3, 0.0, 2.6, "wall")
+    K.block(m, f, 18.4, 24.8, SO - 0.45, SO + 0.45, 0.0, 0.5, "wall")
     t, nrm = f.tangent(), f.left()
-    m.ring(f.at(21.4, 15.7, 1.75), 1.3, 0.75, 0.6, "wall", basis=((0, 0, 1), (t[0], t[1], 0), (nrm[0], nrm[1], 0)))
-    for u0 in (24.6, 27.6):
-        K.rod(m, f, (u0, 16.0, 0.0), (u0 + 1.0, 16.0, 2.6), 0.6, "wall")
-        K.rod(m, f, (u0 + 2.0, 16.0, 0.0), (u0 + 1.0, 16.0, 2.6), 0.6, "wall")
+    m.ring(f.at(20.4, SO - 0.3, 1.78), 1.28, 0.72, 0.6, "wall", basis=((0, 0, 1), (t[0], t[1], 0), (nrm[0], nrm[1], 0)))
+    K.rod(m, f, (25.2, SO, 2.6), (26.4, SO, 0.0), 0.6, "wall")          # V: point at the bottom
+    K.rod(m, f, (27.6, SO, 2.6), (26.4, SO, 0.0), 0.6, "wall")
+    K.rod(m, f, (28.0, SO, 0.0), (29.2, SO, 2.6), 0.6, "wall")          # chevron: point at the top
+    K.rod(m, f, (30.4, SO, 0.0), (29.2, SO, 2.6), 0.6, "wall")
     for k in range(8):                                                   # dark blue boards and planter troughs behind it
         u = 14.0 + k * 2.6
         if k % 2 == 0:
