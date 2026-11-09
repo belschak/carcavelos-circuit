@@ -244,10 +244,9 @@ def exit_c(m, f):
     K.block(m, f, u + TERRACE_LEN - 0.05, u + TERRACE_LEN + 0.05, -B_RIGHT, B_LEFT, 0, 1.1, "rail")
 
 
-def build():
-    bpy.ops.wm.read_factory_settings(use_empty=True)
-    f = K.Frame()
-    col = E.collection("Nova_Hall")
+def make_hall(f, col):
+    """Builds the three hall meshes in the frame f (position and heading in the world) and returns the objects."""
+    objects = []
     for name, parts in (("Hall_Shell", (sealed_shell, north_entrance, roof_a, low_ceiling_b, steel_hall_b, exit_c)),
                         ("Hall_Structure", (gallery, hovione_wall, left_side_b)),
                         ("Hall_Furniture", (entrance_furniture, furniture_b))):
@@ -256,12 +255,23 @@ def build():
             part(m, f)
         obj = m.to_object(name, col)
         print(f"  {name}: {obj['triangles']} faces")
+        objects.append(obj)
+    return objects
+
+
+def export_fbx(path):
+    for o in bpy.data.objects:
+        o.select_set(o.type == "MESH")
+    bpy.ops.export_scene.fbx(filepath=path, object_types={"MESH"}, apply_scale_options="FBX_SCALE_ALL",
+                             axis_forward="-Z", axis_up="Y", use_selection=True, use_triangles=True, mesh_smooth_type="FACE")
+
+
+def build():
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    make_hall(K.Frame(), E.collection("Nova_Hall"))
     os.makedirs(OUT, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, "NovaHall.blend"))
-    for o in bpy.data.objects:
-        o.select_set(True)
-    bpy.ops.export_scene.fbx(filepath=os.path.join(OUT, "NovaHall.fbx"), object_types={"MESH"}, apply_scale_options="FBX_SCALE_ALL",
-                             axis_forward="-Z", axis_up="Y", use_selection=True, use_triangles=True, mesh_smooth_type="FACE")
+    export_fbx(os.path.join(OUT, "NovaHall.fbx"))
     print("done")
 
 
