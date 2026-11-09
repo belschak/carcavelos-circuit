@@ -25,7 +25,7 @@ def _mat(name, colour, rough=0.6, metal=0.0, emission=None, alpha=1.0):
 
 
 MATERIALS = {
-    "floor": _mat("N_floor", "#6A5B43", 0.28),                 # polished concrete, warm brown-grey (the videos)
+    "floor": _mat("N_floor", "#8E9093", 0.3),                  # one even grey for the whole floor (Noah)                 # polished concrete, warm brown-grey (the videos)
     "wall": _mat("N_wall", "#E9E7E1", 0.85),
     "soffit": _mat("N_soffit", "#F4F3EF", 0.9),
     "steel_white": _mat("N_steel_white", "#ECECE8", 0.5, 0.3),
@@ -50,6 +50,8 @@ MATERIALS = {
     "blue": _mat("N_art_blue", "#2F5FA8", 0.8),
     "yellow": _mat("N_art_yellow", "#E9B93A", 0.8),
     "concrete": _mat("N_terrace", "#C9C6BE", 0.85),
+    "rail_orange": _mat("N_rail_orange", "#FF8A1F", 0.4),                    # guard rail top tube (boost orange)
+    "rail_lilac": _mat("N_rail_lilac", "#D9CBEF", 0.5),                      # guard rail lower board
     "skylight": _mat("N_skylight", "#DDE9F2", 0.3, emission="#C9DBEA"),     # glass roof bands, lit by the sky
     "stair": _mat("N_stair", "#F2F1EC", 0.55),                               # white stairs and gallery floors
     "azulejo": _mat("N_azulejo_pot", "#EEF1F6", 0.4),                        # white tall planters (blue pattern = "blue")
