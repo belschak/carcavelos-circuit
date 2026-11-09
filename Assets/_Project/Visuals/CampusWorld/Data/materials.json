@@ -999,14 +999,7 @@
    "albedo": null,
    "normal": null,
    "normal_strength": 1.0,
-   "emission": {
-    "colour": [
-     0.1804,
-     0.1725,
-     0.1608
-    ],
-    "strength": 2.0
-   },
+   "emission": null,
    "alpha": 1.0,
    "metallic_smoothness": null,
    "smoothness": 0.1
