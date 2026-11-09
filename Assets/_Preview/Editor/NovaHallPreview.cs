@@ -1,4 +1,4 @@
-// TEST ONLY, never merge into main: opens a new empty scene with the Nova hall (Menu: Carcavelos Circuit > Preview Nova Hall).
+// TEST ONLY, never merge into main: opens a new empty scene with the Nova hall (Menu: Carcavelos Circuit > Preview Nova Hall ...).
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -6,14 +6,19 @@ using UnityEngine;
 public static class NovaHallPreview
 {
     [MenuItem("Carcavelos Circuit/Preview Nova Hall (temporary)")]
-    public static void Open()
+    public static void Open() { OpenFbx("Assets/_Preview/NovaHall.fbx"); }
+
+    [MenuItem("Carcavelos Circuit/Preview Nova Hall in context (temporary)")]
+    public static void OpenInContext() { OpenFbx("Assets/_Preview/NovaHallContext.fbx"); }
+
+    private static void OpenFbx(string path)
     {
         // Ask to save the current scene (choose Don't Save), then start a fresh scene with a light and a camera.
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
 
-        GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Preview/NovaHall.fbx");
-        if (asset == null) { Debug.LogError("Assets/_Preview/NovaHall.fbx not found (wait for the import to finish)."); return; }
+        GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        if (asset == null) { Debug.LogError(path + " not found (wait for the import to finish)."); return; }
         GameObject hall = (GameObject)PrefabUtility.InstantiatePrefab(asset);
 
         // Measure the hall, then look at it from inside the entrance hall.
