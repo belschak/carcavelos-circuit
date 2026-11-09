@@ -40,7 +40,7 @@ PALETTE = {
     # environment additions
     "lawn": "#8FB37A", "leaf": "#5E8F4E", "leaf_dark": "#3F6B3A", "olive_leaf": "#8A9A6B", "palm_leaf": "#5F8A3E",
     "bark": "#6B4F3A", "bark_light": "#9C8468", "terracotta": "#C8664A", "concrete_sand": "#D9C9A8",
-    "concrete_light": "#C9C5BC", "calcada": "#E6E1D6", "steel": "#A7ABB2", "glass": "#2E3A46",
+    "concrete_light": "#C9C5BC", "calcada": "#E6E1D6", "steel": "#A7ABB2", "glass": "#353B3F",
     "sea": "#2D8CD6", "sea_deep": "#1D5F96", "wet_sand": "#C9A877", "building_other": "#C9C5BC",
 }
 

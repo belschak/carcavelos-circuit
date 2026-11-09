@@ -387,7 +387,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             RenderSettings.ambientMode = AmbientMode.Trilight;                         // no baking needed
             RenderSettings.ambientSkyColor = new Color(0.62f, 0.72f, 0.86f);
             RenderSettings.ambientEquatorColor = new Color(0.62f, 0.62f, 0.6f);
-            RenderSettings.ambientGroundColor = new Color(0.38f, 0.36f, 0.32f);
+            RenderSettings.ambientGroundColor = new Color(0.52f, 0.49f, 0.43f);                // light bounced off the pale paving: ceilings and overhangs stay light, as on campus
             RenderSettings.skybox = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Skybox.mat");
             RenderSettings.fog = false;
         }

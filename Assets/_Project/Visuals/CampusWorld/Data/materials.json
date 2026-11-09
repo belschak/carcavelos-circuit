@@ -19,9 +19,9 @@
   {
    "name": "W_B_glass",
    "colour": [
-    0.1947,
-    0.2375,
-    0.281
+    0.2078,
+    0.2314,
+    0.2471
    ],
    "metallic": 0.5,
    "albedo": "window_band_albedo.png",
@@ -497,18 +497,18 @@
   {
    "name": "W_steel",
    "colour": [
-    0.6491,
-    0.6648,
-    0.6922
+    0.5216,
+    0.4627,
+    0.3529
    ],
-   "metallic": 0.85,
+   "metallic": 0.5,
    "albedo": null,
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
    "metallic_smoothness": null,
-   "smoothness": 0.7
+   "smoothness": 0.45
   },
   {
    "name": "W_gloss_black",
