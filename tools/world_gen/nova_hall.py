@@ -345,6 +345,82 @@ def atrium_furniture(m, f):
 
 
 # ---------- long room ----------
+FACADE_FRAME_STEP = 3.0                     # grid of the steel space frame in front of the west glass
+
+
+def twisted_sculpture(m, f, u, o, height, size=0.9, step=0.12, material="black"):
+    """Tall stack of thin slabs, each one turned a bit more: the black twisted column in the long room, and the
+    spiral topiaries by the terrace door (material 'leaf')."""
+    n = int(height / step)
+    for i in range(n):
+        p = f.at(u, o, i * step)
+        m.box((p[0], p[1], i * step + step * 0.3), size / 2 * (1 - 0.35 * abs(math.sin(i * 0.15))), 0.05, step * 0.3,
+              material, f.h + i * 0.22)
+
+
+TERRACE_DOOR_U = 103.5                      # u of the terrace door (keeps the space frame out of the doorway)
+
+
+def space_frame(m, f, u0, u1):
+    """White steel space frame in front of the west glass (IMG_7722): two layers of tubes, a square grid with crossed
+    diagonals, the layers tied together. Nothing below 4.6 m in front of the terrace door."""
+    H = LONG_H
+    step = FACADE_FRAME_STEP
+    us = K.Frame().samples(u0, u1, step)
+    zs = [0.6 + k * (H - 1.0) / 4 for k in range(5)]
+    door0, door1 = TERRACE_DOOR_U - 2.4, TERRACE_DOOR_U + 2.4
+
+    def in_door(a, b, z):
+        return z < DOOR_H + 1.4 and b > door0 and a < door1
+
+    for layer_o in (0.45, 1.5):
+        for u in us:
+            if door0 < u < door1:
+                K.rod(m, f, (u, layer_o, DOOR_H + 1.4), (u, layer_o, H - 0.3), 0.09, "steel_white")
+            else:
+                K.rod(m, f, (u, layer_o, 0.2), (u, layer_o, H - 0.3), 0.09, "steel_white")
+        for z in zs:
+            if z < DOOR_H + 1.4:
+                K.rod(m, f, (u0, layer_o, z), (door0, layer_o, z), 0.09, "steel_white")
+                K.rod(m, f, (door1, layer_o, z), (u1, layer_o, z), 0.09, "steel_white")
+            else:
+                K.rod(m, f, (u0, layer_o, z), (u1, layer_o, z), 0.09, "steel_white")
+        for a, b in zip(us, us[1:]):
+            for z0, z1 in zip(zs, zs[1:]):
+                if in_door(a, b, z0):
+                    continue
+                K.rod(m, f, (a, layer_o, z0), (b, layer_o, z1), 0.05, "steel_white")
+                K.rod(m, f, (a, layer_o, z1), (b, layer_o, z0), 0.05, "steel_white")
+    for u in us[::2]:
+        for z in zs:
+            if not in_door(u - 0.1, u + 0.1, z):
+                K.rod(m, f, (u, 0.45, z), (u, 1.5, z), 0.06, "steel_white")
+
+
+def tall_pot(m, f, u, o, seed):
+    """Tall white tile-pattern planter with a spiral topiary (by the terrace door)."""
+    K.block(m, f, u - 0.35, u + 0.35, o - 0.35, o + 0.35, 0.0, 1.1, "azulejo")
+    for k in range(4):
+        K.block(m, f, u - 0.36, u + 0.36, o - 0.36, o + 0.36, 0.2 + k * 0.25, 0.28 + k * 0.25, "blue")
+    twisted_sculpture(m, f, u, o, 1.6, size=0.7, step=0.1, material="leaf")
+    p = f.at(u, o, 0)
+    m.blob((p[0], p[1], 1.5), 0.35, "leaf", seed, 0.9)
+
+
+def glass_vestibule(m, f, u0, u1, depth):
+    """Glass box with a sliding door inside the secondary entrance on the west facade (low ceiling part)."""
+    o1 = depth
+    K.wall_o(m, f, o1, u0, u1, 0.0, 3.3, "glass", facing=1)
+    K.wall_o(m, f, o1, u0, u1, 0.0, 3.3, "glass", facing=-1)
+    for u in (u0, u1):
+        K.wall_u(m, f, u, 0.3, o1, 0.0, 3.3, "glass", facing=1)
+        K.wall_u(m, f, u, 0.3, o1, 0.0, 3.3, "glass", facing=-1)
+        K.block(m, f, u - 0.05, u + 0.05, o1 - 0.05, o1 + 0.05, 0.0, 3.3, "rail")
+    K.block(m, f, u0, u1, 0.3, o1 + 0.05, 3.3, 3.4, "rail")
+    mid = (u0 + u1) / 2
+    K.block(m, f, mid - 1.2, mid + 1.2, o1 - 0.02, o1 + 0.02, 0.0, 3.0, "rail")       # door frame (leaves open)
+    K.floor_rect(m, f, u0 + 0.2, u1 - 0.2, 0.4, o1 - 0.1, 0.012, "mat")
+
 def long_room_shell(m, f):
     u0, u1 = SPLIT_U, LONG_END_U
     K.floor_rect(m, f, u0, LOW_CEILING_END, 0.3, 29.7, LOW_Z, "soffit", up=False)
@@ -363,13 +439,23 @@ def long_room_shell(m, f):
         K.rod(m, f, (LOW_CEILING_END, o, LONG_H - 0.45), (u1, o, LONG_H - 0.45), 0.2, "steel_white", 0.38)
     K.floor_rect(m, f, LOW_CEILING_END + 3.0, u1 - 3.0, 4.0, 7.0, LONG_H - 0.05, "skylight", up=False)
     K.floor_rect(m, f, LOW_CEILING_END + 3.0, u1 - 3.0, 18.0, 21.0, LONG_H - 0.05, "skylight", up=False)
-    # leaning white columns and diagonal rods in front of the west glass facade (IMG_7722)
+    # longitudinal trusses under the roof with light strips, as in the video
+    for o in (7.5, 15.0, 22.5):
+        for u_a, u_b in zip(K.Frame().samples(LOW_CEILING_END, u1, 3.0), K.Frame().samples(LOW_CEILING_END, u1, 3.0)[1:]):
+            K.rod(m, f, (u_a, o, LONG_H - 1.8), (u_b, o, LONG_H - 0.25), 0.07, "steel_white")
+        K.rod(m, f, (LOW_CEILING_END, o, LONG_H - 1.8), (u1, o, LONG_H - 1.8), 0.14, "steel_white", 0.2)
+        K.floor_rect(m, f, LOW_CEILING_END + 2.0, u1 - 2.0, o - 0.1, o + 0.1, LONG_H - 1.92, "light", up=False)
+    for o in K.Frame().samples(0.5, 29.5, 1.0):                         # ribs of the grey roof deck
+        K.block(m, f, LOW_CEILING_END, u1, o - 0.04, o + 0.04, LONG_H - 0.12, LONG_H, "deck")
+    # the white space frame in front of the west glass, and big leaning round columns
+    space_frame(m, f, LOW_CEILING_END, u1)
     for k in range(int((u1 - LOW_CEILING_END) // 12) + 1):
-        ua = LOW_CEILING_END + k * 12.0
-        K.rod(m, f, (ua, 0.8, 0.0), (ua, 3.0, LONG_H - 0.3), 0.5, "wall")
-        if ua + 12.0 <= u1:
-            K.rod(m, f, (ua, 0.5, 0.3), (ua + 12.0, 0.5, LONG_H - 0.6), 0.07, "steel_white")
-            K.rod(m, f, (ua, 0.5, LONG_H - 0.6), (ua + 12.0, 0.5, 0.3), 0.07, "steel_white")
+        ua = LOW_CEILING_END + 6.0 + k * 12.0                            # 86, 98, 110, 122: clear of the terrace door
+        if ua > u1 - 2.0:
+            continue
+        a, b = f.at(ua, 2.4, 0.0), f.at(ua, 4.6, LONG_H - 0.2)
+        m.tube(a, b, 0.32, "wall", 14)
+        m.cylinder(a, 0.6, 0.35, "wall", 14, top_radius=0.34)
 
 
 def long_room_end(m, f):
@@ -381,6 +467,10 @@ def long_room_end(m, f):
 
 
 def long_room_structure(m, f):
+    twisted_sculpture(m, f, 96.8, 7.8, LONG_H - 1.2)                     # black twisted column (IMG_7722 1:20)
+    glass_vestibule(m, f, 71.0, 77.5, 3.2)
+    for du in (-3.0, 3.0):                                               # tall planters both sides of the terrace door
+        tall_pot(m, f, TERRACE_DOOR_U + du, 2.2, 20 + int(du))
     for u0 in (84.0, 106.0):                                             # white boxes with dark brown recesses (east side)
         K.block(m, f, u0, u0 + 11.0, 26.5, 29.7, 0.0, 3.8, "brown")
         K.block(m, f, u0 - 1.0, u0 + 12.0, 25.2, 29.7, 3.8, 6.4, "wall")
@@ -392,12 +482,12 @@ def long_room_structure(m, f):
 
 def long_room_furniture(m, f):
     for u in K.Frame().samples(84.0, LONG_END_U - 4.0, 4.6):
-        if abs(u - 103.5) > 3.5:                                         # keep the terrace door free
+        if abs(u - TERRACE_DOOR_U) > 3.5:                                # keep the terrace door free                                         # keep the terrace door free
             K.long_table(m, f, u, 5.4, seats=3)
     for k, (u, o) in enumerate(((84, 12), (88, 17), (92, 11), (98, 16), (102, 11), (106, 17), (110, 12), (114, 18),
                                 (118, 12), (122, 17), (126, 12), (90, 22), (100, 21), (112, 22))):
         K.round_table(m, f, float(u), float(o), 4 if k % 2 == 0 else 3)
-    K.grand_piano(m, f, 93.0, 9.0, 90)
+    K.grand_piano(m, f, 92.0, 9.4, 90)
     K.grand_piano(m, f, 113.0, 9.0, 90)
     for k, (u, o) in enumerate(((82.0, 2.4), (99.0, 2.4), (108.5, 2.4), (124.0, 2.4), (95.0, 23.0))):
         K.big_plant(m, f, u, o, 9 + k)
