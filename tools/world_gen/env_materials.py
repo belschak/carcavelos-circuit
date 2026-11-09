@@ -26,6 +26,7 @@ TEXTURED = {
     "W_B_wall_white": ("facade_white", 0.85),
     "W_B_glass": ("window_band", 0.08),
     "W_ground_map": ("ground_colour", 0.95),
+    "W_T_sand": ("sand", 0.95),
 }
 
 
