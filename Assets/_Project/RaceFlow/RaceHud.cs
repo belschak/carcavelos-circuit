@@ -11,6 +11,9 @@ namespace CarcavelosCircuit.RaceFlow
     //
     // How the HUD animates (details at the top of RaceHud.uss):
     // - One state class on the root (st-ready, st-countdown, st-racing, st-results) fades whole screens in and out.
+    //   The finish moment (task P6b) adds st-finish for the whole Results state: first a short beat in which the
+    //   race HUD stays and the lap time panel grows (the game is in slow motion), then st-results brings the card.
+    //   Everything here runs on real time (Time.unscaledTime), so the slow motion never slows the HUD.
     // - Parts that come and go get the class "is-shown" (HudFx.SetShown). Nothing uses display:none, because
     //   UI Toolkit cannot animate from display:none.
     // - A "punch" (HudFx.Punch) jumps into a pop class for two frames, then the USS transition animates back.
@@ -99,6 +102,7 @@ namespace CarcavelosCircuit.RaceFlow
         private Label statBoostsValue;
         private Label statAirValue;
         private VisualElement[] pips = new VisualElement[0];
+        private ConfettiBurst confetti;        // drawn on top of the results card (task P6b)
 
         // Gradient textures made at runtime (USS has no gradients). Destroyed in OnDisable.
         private Texture2D startGradient;
@@ -140,6 +144,12 @@ namespace CarcavelosCircuit.RaceFlow
         private bool lastBoosting;  // boost last frame, to spot the boost start
         private int targetMilliseconds = -1; // lap time the next medal needs, -1 = none
         private bool targetMissed;  // the lap is already slower than the target medal
+
+        // ---- Finish moment (task P6b), all in real time ----
+        private float resultsShowTime = -1f; // when the results card comes in (after the finish beat)
+        private bool resultsShown;           // the card is in (st-results is on)
+        private bool celebrateLap;           // a record or a new medal: confetti
+        private float confettiTime = -1f;    // when the confetti bursts, -1 = no confetti this lap
 
         private void OnEnable()
         {
@@ -267,6 +277,8 @@ namespace CarcavelosCircuit.RaceFlow
             root.Q<VisualElement>("results-wave-host").Add(new CalcadaWave());
             root.Q<VisualElement>("start-pattern-host").Add(new AzulejoPattern());
             root.Q<VisualElement>("results-pattern-host").Add(new AzulejoPattern());
+            confetti = new ConfettiBurst();
+            resultsScreen.Add(confetti); // last child = drawn above the card, and it fades with the results screen
         }
 
         private void MakeTextures()
@@ -449,6 +461,7 @@ namespace CarcavelosCircuit.RaceFlow
             shownFinal.Forget();
             ShowMedal(raceManager.LastMedal, raceManager.PreviousBestMedal);
             ShowLapReport(raceManager.Stats);
+            celebrateLap = FinishMoment.Celebrates(isRecord, raceManager.LastMedal, raceManager.PreviousBestMedal, menus.ReducedMotion);
         }
 
         // The medal stamp (USS animates it in) and the line under it: what to aim for next.
@@ -524,7 +537,13 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 EnterState(state);
             }
-            menus.Update(state);
+            if (state == RaceState.Results && !resultsShown && Time.unscaledTime >= resultsShowTime)
+            {
+                ShowResultsCard(); // the finish beat is over (with reduced motion: at once, in this frame)
+            }
+            // During the finish beat the card is not there yet, so the menus behave as in the race
+            // (no results Settings button to click, the S key does nothing yet).
+            menus.Update(state == RaceState.Results && !resultsShown ? RaceState.Racing : state);
 
             if (state == RaceState.Ready)
             {
@@ -537,10 +556,11 @@ namespace CarcavelosCircuit.RaceFlow
             UpdateCallouts(state);
             UpdateKartInfo(state);
             HudFx.SetShown(controlsHint, state == RaceState.Countdown || (state == RaceState.Racing && Time.time < controlsVisibleUntil));
-            if (state == RaceState.Results)
+            if (resultsShown)
             {
                 UpdateResults();
             }
+            UpdateConfetti();
         }
 
         // Runs once when the race state changes: swaps the root state class and starts screen animations.
@@ -549,10 +569,11 @@ namespace CarcavelosCircuit.RaceFlow
             hudRoot.EnableInClassList("st-ready", state == RaceState.Ready);
             hudRoot.EnableInClassList("st-countdown", state == RaceState.Countdown);
             hudRoot.EnableInClassList("st-racing", state == RaceState.Racing);
-            hudRoot.EnableInClassList("st-results", state == RaceState.Results);
-
-            // Only the visible Retry button may be clicked.
-            HudFx.SetClickable(retryButton, state == RaceState.Results);
+            // Results start with the finish beat (st-finish, the race HUD stays on screen). st-results and the
+            // clickable Retry button come with the card, in ShowResultsCard.
+            hudRoot.EnableInClassList("st-finish", state == RaceState.Results);
+            hudRoot.RemoveFromClassList("st-results");
+            HudFx.SetClickable(retryButton, false); // only the visible Retry button may be clicked
 
             if (state == RaceState.Ready)
             {
@@ -566,15 +587,17 @@ namespace CarcavelosCircuit.RaceFlow
                 HudFx.Punch(pressAnyKey, "pill--pop");
             }
 
+            resultsShown = false;
+            confettiTime = -1f;
             if (state == RaceState.Results)
             {
-                resultsStartTime = Time.time;
-                tickerDone = false;
+                resultsShowTime = Time.unscaledTime + FinishMoment.BeatFor(menus.ReducedMotion);
                 resultsScreen.RemoveFromClassList("results--in");
-                resultsScreen.schedule.Execute(() => resultsScreen.AddToClassList("results--in")).ExecuteLater(33);
             }
             else
             {
+                resultsShowTime = -1f;
+                confetti.Stop(); // a retry while the confetti still flies
                 resultsScreen.RemoveFromClassList("results--in");
                 resultsCard.RemoveFromClassList("card--shaking"); // a retry in the middle of the record shake
                 resultsCard.RemoveFromClassList("card--shake-l");
@@ -586,6 +609,40 @@ namespace CarcavelosCircuit.RaceFlow
                 countdownGeneration++;
                 HudFx.SetShown(countdown, false);
             }
+        }
+
+        // The finish beat is over: the results card comes in. Its stamps land at fixed times after this moment
+        // (FinishMoment.MedalStampLandsSeconds / RecordStampLandsSeconds), and the confetti bursts with the last one.
+        private void ShowResultsCard()
+        {
+            resultsShown = true;
+            hudRoot.AddToClassList("st-results");
+            HudFx.SetClickable(retryButton, true);
+            resultsStartTime = Time.unscaledTime;
+            tickerDone = false;
+            resultsScreen.RemoveFromClassList("results--in");
+            // A retry within these 33 ms must not bring the card back, so the call checks resultsShown.
+            resultsScreen.schedule.Execute(() =>
+            {
+                if (resultsShown) resultsScreen.AddToClassList("results--in");
+            }).ExecuteLater(33);
+            confettiTime = celebrateLap ? resultsStartTime + FinishMoment.ConfettiDelay(raceManager.LastLapWasRecord) : -1f;
+        }
+
+        // Starts the confetti when its stamp lands and moves it every frame (real time).
+        private void UpdateConfetti()
+        {
+            if (confettiTime >= 0f && Time.unscaledTime >= confettiTime)
+            {
+                confettiTime = -1f;
+                if (!menus.ReducedMotion) // the setting may have changed while the card came in
+                {
+                    VisualElement stamp = raceManager.LastLapWasRecord ? recordStamp : resultsMedalBadge;
+                    Vector2 origin = confetti.WorldToLocal(stamp.worldBound.center);
+                    confetti.Burst(origin, RaceTimer.ToMilliseconds(raceManager.LapSeconds)); // same lap = same burst
+                }
+            }
+            confetti.Step(Time.unscaledDeltaTime);
         }
 
         private void UpdateStartScreen()
@@ -690,10 +747,19 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
 
-            int passed = state == RaceState.Racing ? raceManager.CheckpointsPassed : 0;
+            // In Results every pip is lit, the finish pip too: it punches during the finish beat (task P6b).
+            int passed = 0;
+            if (state == RaceState.Racing)
+            {
+                passed = raceManager.CheckpointsPassed;
+            }
+            else if (state == RaceState.Results)
+            {
+                passed = pips.Length;
+            }
             if (shownCpPassed.Changed(passed))
             {
-                cpCount.text = passed + "/" + toPass; // a new string only when a checkpoint counts
+                cpCount.text = Mathf.Min(passed, toPass) + "/" + toPass; // a new string only when a checkpoint counts
                 for (int i = 0; i < pips.Length; i++)
                 {
                     CheckpointProgress.PipState pipState = CheckpointProgress.StateOf(i, passed);
@@ -905,7 +971,8 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 return; // nothing changes any more, so nothing is written
             }
-            float progress = HudEasing.CountUp(Time.time - resultsStartTime, 0.25f, 0.6f);
+            // Real time: the count-up must not slow down while the finish slow motion fades out.
+            float progress = HudEasing.CountUp(Time.unscaledTime - resultsStartTime, 0.25f, 0.6f);
             int milliseconds = Mathf.RoundToInt(raceManager.LapSeconds * progress * 1000f);
             if (progress >= 1f)
             {
@@ -922,7 +989,7 @@ namespace CarcavelosCircuit.RaceFlow
                 if (raceManager.LastLapWasRecord)
                 {
                     // The NEW RECORD stamp lands at about 1.25 s: give the card a short shake then.
-                    float wait = Mathf.Max(0f, 1.25f - (Time.time - resultsStartTime));
+                    float wait = Mathf.Max(0f, FinishMoment.RecordStampLandsSeconds - (Time.unscaledTime - resultsStartTime));
                     long ms = (long)(wait * 1000f);
                     resultsCard.schedule.Execute(() => resultsCard.AddToClassList("card--shaking")).ExecuteLater(ms);
                     resultsCard.schedule.Execute(() => resultsCard.AddToClassList("card--shake-l")).ExecuteLater(ms);

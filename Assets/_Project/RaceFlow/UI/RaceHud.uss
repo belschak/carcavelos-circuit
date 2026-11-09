@@ -7,7 +7,8 @@
    - Nothing that animates is ever display:none (UI Toolkit cannot animate from display:none). Hidden = opacity 0,
      and RaceHud.cs switches clicks off on hidden parts.
    - RaceHud.cs puts ONE state class on .hud-root: st-ready, st-countdown, st-racing or st-results.
-     Rules below like ".st-ready .race-layer" then fade whole layers.
+     Rules below like ".st-ready .race-layer" then fade whole layers. In Results it also adds st-finish
+     (finish moment, task P6b, at the end of this file): the short beat before the results card comes in.
    - Parts that come and go get "is-shown". A "...--pop" class has transition-duration 0s: C# adds it, removes it
      two frames later (HudFx.Punch), and the normal transition animates back = a punch. */
 
@@ -1998,4 +1999,40 @@
 /* No light streak running through the drift bar while boosting (the bar itself still turns orange). */
 .reduce-motion .drift-shine {
     opacity: 0;
+}
+
+/* ---------- Finish moment (task P6b) ----------
+   RaceHud puts "st-finish" on .hud-root for the whole Results state. For the first 0.6 s (the "finish beat", the
+   game is in slow motion) the results card is not there yet: the lap time panel grows a little and turns sand,
+   the exact time in full white, while the parts that no longer matter step back. Then st-results fades the card in
+   over all of it. These rules are last in the file and have one class more than the rules they beat. */
+.st-finish .time-panel {
+    scale: 1.12 1.12;
+    border-left-color: var(--cc-sand);
+    transition-property: scale, border-left-color;
+    transition-duration: 320ms, 160ms;
+    transition-timing-function: ease-out-back, ease-out;
+}
+
+.st-finish .timer-fraction {
+    color: var(--cc-white);
+}
+
+/* The drift meter and the speed gauge stay in place (no layout jump) and only fade. */
+.st-finish .drift-panel,
+.st-finish .speed-gauge {
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 200ms;
+    transition-timing-function: ease-out;
+}
+
+/* The next-medal chip can already show the next target after a new medal: hide it, the card tells the story. */
+.st-finish .medal-target.is-shown {
+    opacity: 0;
+}
+
+/* Reduced motion: no beat (the card comes at once) and no growing panel. */
+.reduce-motion.st-finish .time-panel {
+    scale: 1 1;
 }
