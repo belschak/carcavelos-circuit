@@ -1,0 +1,314 @@
+{
+ "source": "Noah, docs/route-waypoints.md on branch role2/T2-campus-route (PR #35), 2026-11-09; read off his sketch, +/- 5 m",
+ "axes": "x east, y north (Noah writes z for north), metres, same origin as world_data",
+ "closed_loop": true,
+ "start_waypoint": 0,
+ "jump_waypoint": 7,
+ "points": [
+  {
+   "n": 0,
+   "x": -17.0,
+   "y": 132.0,
+   "section": "start / finish",
+   "note": "north of the Student Center, black bar on the sketch"
+  },
+  {
+   "n": 1,
+   "x": 18.0,
+   "y": 135.0,
+   "section": "atrium",
+   "note": "small loop, then into the building, covered"
+  },
+  {
+   "n": 2,
+   "x": 32.0,
+   "y": 122.0,
+   "section": "atrium",
+   "note": "covered"
+  },
+  {
+   "n": 3,
+   "x": 49.0,
+   "y": 90.0,
+   "section": "atrium",
+   "note": "covered"
+  },
+  {
+   "n": 4,
+   "x": 49.0,
+   "y": 67.0,
+   "section": "atrium",
+   "note": "covered"
+  },
+  {
+   "n": 5,
+   "x": 32.0,
+   "y": 61.0,
+   "section": "atrium exit",
+   "note": "covered, then out onto the roof terrace"
+  },
+  {
+   "n": 6,
+   "x": 5.0,
+   "y": 58.0,
+   "section": "terrace",
+   "note": "drive west over the terrace deck (level 14.5 m)"
+  },
+  {
+   "n": 7,
+   "x": -1.0,
+   "y": 56.0,
+   "section": "take-off",
+   "note": "terrace edge = jump kicker (same spot as Luc's jump, s 506)"
+  },
+  {
+   "n": 8,
+   "x": -94.0,
+   "y": 38.0,
+   "section": "landing",
+   "note": "flight arrow points west, lawn about 3.8 m below the deck"
+  },
+  {
+   "n": 9,
+   "x": -96.0,
+   "y": 23.0,
+   "section": "landing",
+   "note": ""
+  },
+  {
+   "n": 10,
+   "x": -96.0,
+   "y": -18.0,
+   "section": "road west side",
+   "note": "south along the Marginal side"
+  },
+  {
+   "n": 11,
+   "x": -101.0,
+   "y": -41.0,
+   "section": "roundabout",
+   "note": ""
+  },
+  {
+   "n": 12,
+   "x": -132.0,
+   "y": -50.0,
+   "section": "west loop",
+   "note": ""
+  },
+  {
+   "n": 13,
+   "x": -187.0,
+   "y": -38.0,
+   "section": "west loop",
+   "note": ""
+  },
+  {
+   "n": 14,
+   "x": -241.0,
+   "y": -18.0,
+   "section": "west loop",
+   "note": "turning point"
+  },
+  {
+   "n": 15,
+   "x": -252.0,
+   "y": -28.0,
+   "section": "west loop",
+   "note": ""
+  },
+  {
+   "n": 16,
+   "x": -241.0,
+   "y": -38.0,
+   "section": "beach side",
+   "note": ""
+  },
+  {
+   "n": 17,
+   "x": -200.0,
+   "y": -76.0,
+   "section": "beach side",
+   "note": ""
+  },
+  {
+   "n": 18,
+   "x": -173.0,
+   "y": -103.0,
+   "section": "beach side",
+   "note": ""
+  },
+  {
+   "n": 19,
+   "x": -132.0,
+   "y": -137.0,
+   "section": "beach side",
+   "note": ""
+  },
+  {
+   "n": 20,
+   "x": -118.0,
+   "y": -157.0,
+   "section": "sand",
+   "note": "sand patch, beach stays as Luc built it"
+  },
+  {
+   "n": 21,
+   "x": -91.0,
+   "y": -154.0,
+   "section": "promenade",
+   "note": ""
+  },
+  {
+   "n": 22,
+   "x": -60.0,
+   "y": -140.0,
+   "section": "promenade",
+   "note": ""
+  },
+  {
+   "n": 23,
+   "x": -57.0,
+   "y": -124.0,
+   "section": "tunnel plaza",
+   "note": ""
+  },
+  {
+   "n": 24,
+   "x": -29.0,
+   "y": -123.0,
+   "section": "tunnel plaza",
+   "note": ""
+  },
+  {
+   "n": 25,
+   "x": 18.0,
+   "y": -106.0,
+   "section": "tunnel",
+   "note": "under the Avenida Marginal"
+  },
+  {
+   "n": 26,
+   "x": 53.0,
+   "y": -93.0,
+   "section": "tunnel exit",
+   "note": ""
+  },
+  {
+   "n": 27,
+   "x": 94.0,
+   "y": -72.0,
+   "section": "ramp up",
+   "note": ""
+  },
+  {
+   "n": 28,
+   "x": 114.0,
+   "y": -41.0,
+   "section": "ramp up",
+   "note": ""
+  },
+  {
+   "n": 29,
+   "x": 118.0,
+   "y": -24.0,
+   "section": "stairs",
+   "note": "drivable, narrow steps with light rumble"
+  },
+  {
+   "n": 30,
+   "x": 107.0,
+   "y": -4.0,
+   "section": "stairs",
+   "note": ""
+  },
+  {
+   "n": 31,
+   "x": 97.0,
+   "y": 16.0,
+   "section": "stairs",
+   "note": ""
+  },
+  {
+   "n": 32,
+   "x": 94.0,
+   "y": 44.0,
+   "section": "east side",
+   "note": "north along the east side"
+  },
+  {
+   "n": 33,
+   "x": 73.0,
+   "y": 64.0,
+   "section": "east side",
+   "note": ""
+  },
+  {
+   "n": 34,
+   "x": 66.0,
+   "y": 108.0,
+   "section": "east side",
+   "note": "short canopy (covered) around z 98-150"
+  },
+  {
+   "n": 35,
+   "x": 73.0,
+   "y": 149.0,
+   "section": "east side",
+   "note": ""
+  },
+  {
+   "n": 36,
+   "x": 80.0,
+   "y": 180.0,
+   "section": "north",
+   "note": ""
+  },
+  {
+   "n": 37,
+   "x": 46.0,
+   "y": 188.0,
+   "section": "north",
+   "note": ""
+  },
+  {
+   "n": 38,
+   "x": 12.0,
+   "y": 168.0,
+   "section": "north",
+   "note": "",
+   "noah": [
+    5.0,
+    183.0
+   ],
+   "fix": "Noah's point lies inside Milestone Carcavelos Nova: moved into the 10 m gap between Milestone and Edificio Principal"
+  },
+  {
+   "n": 39,
+   "x": -15.0,
+   "y": 157.0,
+   "section": "north",
+   "note": "",
+   "noah": [
+    -23.0,
+    176.0
+   ],
+   "fix": "inside Milestone Carcavelos Nova: moved just south of it, towards #40"
+  },
+  {
+   "n": 40,
+   "x": -33.0,
+   "y": 152.0,
+   "section": "north",
+   "note": ""
+  },
+  {
+   "n": 41,
+   "x": -16.0,
+   "y": 135.0,
+   "section": "back to start",
+   "note": "closes the loop at #0"
+  }
+ ],
+ "note": "x, y = used by the generator; 'noah' = Noah's original value where Luc's generator moved a point ('fix' says why)"
+}

@@ -37,7 +37,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | V1 | `docs/art-style.md`: palette (5-6 colours), shape language, 1 reference image | Sun 8 | todo |
 | V2 | Scale test: 1 m cube from Blender as FBX imports at 1 m, forward = +Z; record export settings in `docs/art-style.md` | Sun 8 | todo |
 | V3 | Kart + simple seated driver FBX, fits `Kart/Visual` (agree pivot/size with Role 1) | Wed 11 | todo |
-| V4 | 2-3 low-poly campus landmarks from the photos (e.g. library facade, EDP Plaza, D/B ramp) | Fri 13 | todo |
+| V4 | 2-3 low-poly campus landmarks from the photos (e.g. library facade, EDP Plaza, D/B ramp) | Fri 13 | done (#33): whole campus world `Track_CampusWorld` on Noah's route, built by `CampusWorldBuilder` |
 | V5 | `KartEffects`: drift sparks + boost flame, reads `IKartState` only | Thu 12 | todo |
 | V6 | Complete race at the itch.io URL, logged in `docs/builds.md` | Thu 12 | todo |
 | V7 | README "How to build" reproducible by a second person | Fri 13 | todo |
@@ -65,3 +65,5 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 |---|---|---|---|
 | Q5 | 4 -> 2 | `TrackInfo`, `Checkpoint`, `RaceRules` exactly as in `docs/interfaces.md` (T4/T5). RaceFlow already runs against look-alike placeholders in `RaceFlow/Placeholders/`; when yours are on `main`, Role 4 swaps them in (steps: `docs/explain/role4-walkthrough.md`). Put `TrackInfo` on the root of `Track_Campus`, `SpawnPoint` + one `RespawnPoint` per checkpoint. Meaning used by RaceFlow: checkpoint 0 = start/finish line, `PassCheckpoint(i)` for 1..N-1 in order, `TryFinish()` when crossing 0 again (same as `PlaceholderLapRules`). Your own test camera in `Track_Campus` is fine, RaceFlow switches it off in the race | open |
 | Q6 | 4 -> 1 | `Kart` prefab whose root has `KartController : IKartState` (D1). Name the prefab `Kart` and keep it under `Assets/_Project/Driving/`: the Role 4 scene builder then picks it up automatically for Main.unity (no Inspector change needed). Until then `PlaceholderKart` drives. `InputEnabled = false` must stop all driving input, `ResetTo` must zero velocity and clear drift/boost | open |
+| Q7 | 3 -> 2 | Route decision: Luc's sketch route in `Visuals/Scenes/Track_CampusWorld.unity` (1,184 m, atrium drive-through, terrace jump) vs. help PR #31 (968 m), or a mix. When T4 is on `main`, swap the race placeholders in `CampusWorldBuilder.AddRaceParts` to `TrackInfo`/`Checkpoint` (two lines, marked) | done 2026-11-09: the team takes the campus world with Noah's route (Q9, PR #35); built into `Track_CampusWorld` |
+| Q8 | 3 -> 4 | If the team picks the campus world: add `Track_CampusWorld` to the build list and `RaceSettings` (checkpoints and spawn are already there for RaceFlow's placeholders) | open |

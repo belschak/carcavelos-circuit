@@ -1,0 +1,145 @@
+{
+  "note": "Driving heights (m) along the route where the elevation data (about 30 m resolution) is too coarse. Anchors come from the walk videos (route_notes.md). Positions ('at', 'from_at': x east, y north in metres) win over s (metres along the lap), so moving the line doesn't shift them. Edit here and run route_from_sketch.py again.",
+  "tunnel_floor": {
+    "s_from": 2,
+    "s_to": 84,
+    "z_from": 3.8,
+    "z_to": 5.0,
+    "why": "beach tunnel under the Avenida Marginal, rises gently towards campus"
+  },
+  "tunnel_cover_m": 4.8,
+  "upper_level": {
+    "z": 14.5,
+    "from_s": 160,
+    "why": "upper campus level: plaza, atrium floor and terrace deck are one level (videos IMG_7722, IMG_7725)",
+    "from_at": [
+      106.51,
+      -1.36
+    ]
+  },
+  "anchors": [
+    {
+      "s": 128,
+      "z": 11.2,
+      "why": "top of the ramp from the tunnel = lower plaza at Horizon Hall / Grand Auditorium",
+      "zone": "lower plaza",
+      "at": [
+        100.58,
+        -31.67
+      ]
+    },
+    {
+      "s": 134,
+      "z": 11.2,
+      "why": "foot of the terracotta steps",
+      "zone": "lower plaza",
+      "at": [
+        103.86,
+        -26.65
+      ]
+    },
+    {
+      "s": 1120,
+      "z": 4.0,
+      "why": "end of the promenade before the tunnel plaza",
+      "zone": "promenade",
+      "at": [
+        -32.45,
+        -143.59
+      ]
+    },
+    {
+      "s": 1158,
+      "z": 3.8,
+      "why": "plaza in front of the south portal (tyre circles)",
+      "zone": "tunnel plaza",
+      "at": [
+        -5.38,
+        -117.54
+      ]
+    }
+  ],
+  "link_gap_m": 60,
+  "smooth_m": 20,
+  "blend_m": 20,
+  "max_grade_warn": 0.15,
+  "surfaces": [
+    {
+      "from_s": 0,
+      "to_s": 84,
+      "surface": "tunnel_floor"
+    },
+    {
+      "from_s": 84,
+      "to_s": 134,
+      "surface": "concrete_sand",
+      "from_at": [
+        70.99,
+        -63.76
+      ]
+    },
+    {
+      "from_s": 134,
+      "to_s": 160,
+      "surface": "terracotta",
+      "from_at": [
+        103.86,
+        -26.65
+      ]
+    },
+    {
+      "from_s": 160,
+      "to_s": 332,
+      "surface": "concrete_sand",
+      "from_at": [
+        106.51,
+        -1.36
+      ]
+    },
+    {
+      "from_s": 332,
+      "to_s": 456,
+      "surface": "concrete_polished",
+      "from_at": [
+        87.28,
+        152.21
+      ]
+    },
+    {
+      "from_s": 456,
+      "to_s": 497,
+      "surface": "concrete_light",
+      "from_at": [
+        37.84,
+        65.63
+      ]
+    },
+    {
+      "from_s": 497,
+      "to_s": 584,
+      "surface": "calcada",
+      "from_at": [
+        -2.58,
+        55.69
+      ]
+    },
+    {
+      "from_s": 584,
+      "to_s": 900,
+      "surface": "asphalt",
+      "from_at": [
+        -84.73,
+        35.09
+      ]
+    },
+    {
+      "from_s": 900,
+      "to_s": 1168,
+      "surface": "concrete_sand",
+      "from_at": [
+        -233.64,
+        -104.05
+      ]
+    }
+  ]
+}

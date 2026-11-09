@@ -1,0 +1,8 @@
+{
+  "note": "Hand corrections of OpenStreetMap building footprints, applied by world_data.py. 'polygon' replaces the footprint (world metres: x east, y north, counter-clockwise). Always say why.",
+  "w496301638": {
+    "name": "CTT Student Hall",
+    "polygon": [[-0.1, 47.7], [43.2, 54.4], [37.3, 69.7], [-1.3, 63.55], [-1.3, 58.5], [-0.8, 55.1]],
+    "why": "OSM draws two thin arms west of the roof terrace. The walk video (IMG_7723, 0-25 s) shows they are the ramps down to the lawn, not storeys. Trimmed so the jump off the terrace edge lands on open ground instead of a 3.4 m slot between two walls (decided 2026-11-08). The ramps can come back as low props outside the landing zone."
+  }
+}

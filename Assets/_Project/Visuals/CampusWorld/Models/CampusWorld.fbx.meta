@@ -1,0 +1,276 @@
+fileFormatVersion: 2
+guid: 09dccc03345904799800d93a4e2a3c2d
+ModelImporter:
+  serializedVersion: 24300
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_glass
+    second: {fileID: 2100000, guid: dbbd641c670774d78b64ab85ecdf1551, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_glass_roof
+    second: {fileID: 2100000, guid: 49bb128dd54214c18b4a110ff5016371, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_interior_column
+    second: {fileID: 2100000, guid: 57d187407b8cb4de48d2f02e56c933e6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_interior_wall
+    second: {fileID: 2100000, guid: 6afe9b7545d8745aeb98254ec38de530, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_roof
+    second: {fileID: 2100000, guid: a8af00661af5245cb8f4e6e83b71570c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_roof_other
+    second: {fileID: 2100000, guid: fd7ae4c6075334500bbcf1dee86bd417, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_steel
+    second: {fileID: 2100000, guid: 58b47cd51ffc5445588795738d127b18, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_wall_0
+    second: {fileID: 2100000, guid: ab4636ed1a64f45d9a3b8f76bab1ceb2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_wall_1
+    second: {fileID: 2100000, guid: 91c428c655b544dcbb5af6eabecb8d93, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_wall_2
+    second: {fileID: 2100000, guid: d8c01907047724da889261c006a5bf90, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_wall_3
+    second: {fileID: 2100000, guid: b5aa0879a447c4becb3618689b01e081, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_wall_4
+    second: {fileID: 2100000, guid: 41b1efcc88c484f528fa0939cab89032, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_wall_white
+    second: {fileID: 2100000, guid: 0f98f0322b63a478ba906fac831c1f23, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_cut_wall
+    second: {fileID: 2100000, guid: a5bde0704442148c2ab45e28780bba27, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_backdrop_building
+    second: {fileID: 2100000, guid: 6d361a4b7b6224ec1b1dc31b130a7907, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_backdrop_land
+    second: {fileID: 2100000, guid: eedadfc830f0546faa545744dd802c3f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_far_cream
+    second: {fileID: 2100000, guid: 1718ae3fe27af4729bedfb356ed23857, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_far_ochre
+    second: {fileID: 2100000, guid: ce279a3f75ab347d3959b985a05647ee, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_far_roof
+    second: {fileID: 2100000, guid: dde009d0aecfc48d5abbc4d69fc9d6cb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_far_white
+    second: {fileID: 2100000, guid: 23b0a241df79d490ea586ae8fa52c4fa, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_fort_stone
+    second: {fileID: 2100000, guid: 631cb4a53982345c18181af4fdd4680c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_fort_top
+    second: {fileID: 2100000, guid: a836d9b1998854897a87021217493311, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ground_map
+    second: {fileID: 2100000, guid: ae4fb58be0c3e4049a95152f455dec8a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_interior_light
+    second: {fileID: 2100000, guid: 0fc098f5d0a6b49b5afed89454f359fe, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_lawn
+    second: {fileID: 2100000, guid: 26d2bd744626a4b63bd135371ed2978a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_lighthouse_red
+    second: {fileID: 2100000, guid: b0f9239f8ff334386a1f2f27911b948e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_lighthouse_white
+    second: {fileID: 2100000, guid: b44dd5ee5fda5472180efbbca0950b85, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_portal_concrete
+    second: {fileID: 2100000, guid: 6cced73bea2ff4a5eb7825c247dfc8d1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_sea_water
+    second: {fileID: 2100000, guid: f7ca4a071b3d14397a52632fa9ce310e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_tunnel
+    second: {fileID: 2100000, guid: 55939766a7b0041de87f81880dd78121, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_tunnel_concrete
+    second: {fileID: 2100000, guid: 320ec29439ca14d7e8324188dc52fc00, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_tunnel_light
+    second: {fileID: 2100000, guid: 0a9cc9b3a289342429d18067967855b6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_tunnel_mural
+    second: {fileID: 2100000, guid: c232f7e5da4cf49968f1d8859228bfd5, type: 2}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+    searchTexturesGlobally: 0
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 0
+    importCameras: 0
+    importLights: 0
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 0
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,0 +1,135 @@
+{
+  "note": "Driving heights, zones and surfaces for Noah's route (route_waypoints.json, PR #35, adopted 2026-11-09). Luc's sketch route: route_profile_luc_sketch.json. Positions ('at', 'from_at': x east, y north, metres) pick the nearest route point, so they hold whatever the order of the lap. Edit here and run route_from_sketch.py.",
+  "tunnel_floor": {
+    "z_from": 3.8,
+    "z_to": 5.0,
+    "why": "beach tunnel under the Avenida Marginal, rises gently towards campus; found from the tunnel axis"
+  },
+  "tunnel_cover_m": 4.8,
+  "upper_level": {
+    "z": 14.5,
+    "from_at": [
+      97.0,
+      6.0
+    ],
+    "why": "upper campus level from the top of the east stairs, round the north, through the atrium to the terrace edge"
+  },
+  "anchors": [
+    {
+      "at": [
+        105.3,
+        -58.8
+      ],
+      "z": 11.2,
+      "zone": "lower plaza",
+      "why": "top of the sunken ramp from the tunnel (about 15 % from the portal)"
+    },
+    {
+      "at": [
+        104.0,
+        -14.0
+      ],
+      "z": 11.2,
+      "zone": "lower plaza",
+      "why": "foot of the east stairs (OSM steps, 2.5 m wide, 22 m long)"
+    },
+    {
+      "at": [
+        -5.38,
+        -117.54
+      ],
+      "z": 3.8,
+      "zone": "tunnel plaza",
+      "why": "plaza in front of the south portal"
+    }
+  ],
+  "link_gap_m": 60,
+  "smooth_m": 20,
+  "blend_m": 20,
+  "max_grade_warn": 0.15,
+  "surfaces": [
+    {
+      "from_at": [
+        -17.0,
+        132.0
+      ],
+      "surface": "concrete_sand",
+      "why": "start/finish north of the Student Center"
+    },
+    {
+      "from_at": [
+        -1.0,
+        56.0
+      ],
+      "surface": "calcada",
+      "why": "lawn path after the wedge"
+    },
+    {
+      "from_at": [
+        -96.0,
+        23.0
+      ],
+      "surface": "asphalt",
+      "why": "Marginal side, roundabout, west loop, beach side"
+    },
+    {
+      "from_at": [
+        -125.0,
+        -147.0
+      ],
+      "surface": "sand",
+      "why": "sand patch (Noah #20)"
+    },
+    {
+      "from_at": [
+        -104.0,
+        -156.0
+      ],
+      "surface": "concrete_sand",
+      "why": "promenade, tunnel plaza, tunnel, ramp"
+    },
+    {
+      "from_at": [
+        104.0,
+        -14.0
+      ],
+      "surface": "terracotta",
+      "why": "east stairs (drivable, rumble from Role 1)"
+    },
+    {
+      "from_at": [
+        97.0,
+        6.0
+      ],
+      "surface": "concrete_sand",
+      "why": "east side, north round the building"
+    }
+  ],
+  "waypoints": "route_waypoints.json",
+  "passages": [
+    {
+      "building": "Edifício Principal",
+      "from_waypoint": 1,
+      "to_waypoint": 5,
+      "why": "the atrium (covered, Noah #1-#5)"
+    },
+    {
+      "building": "Student Central",
+      "from_waypoint": 34,
+      "to_waypoint": 36,
+      "why": "covered stretch on the east side (Noah: z 98-150)"
+    },
+    {
+      "building": "Edifício Principal",
+      "from_waypoint": 34,
+      "to_waypoint": 36,
+      "why": "covered stretch: the east side cuts the building corner next to Student Central (Noah: covered z 98-150)"
+    }
+  ],
+  "kicker": {
+    "type": "wedge",
+    "slope_deg": 35,
+    "why": "concrete wedge at the west end of the roof terrace (video IMG_7723 0-12 s): smooth slab down to the lawn, no step"
+  },
+  "surface_overrides": true
+}
