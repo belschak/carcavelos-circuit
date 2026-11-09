@@ -133,20 +133,33 @@ namespace CarcavelosCircuit.Visuals.Editor
                 Debug.LogWarning("CampusWorldBuilder: URP Lit not found, using Standard.");
                 lit = Shader.Find("Standard");
             }
+            // Light sources (lamp heads, tunnel and atrium lights, lighthouse lamp) use Unlit: Lit needs the
+            // _EMISSION keyword, and model/texture re-imports during the batch build kept clearing it, so they never glowed.
+            Shader unlit = Shader.Find("Universal Render Pipeline/Unlit");
             EnsureFolder(MatDir);
             var result = new Dictionary<string, Material>();
             foreach (MatInfo m in list.materials)
             {
                 string path = MatDir + "/" + m.name + ".mat";
+                bool lamp = unlit != null && m.emission != null && m.emission.strength > 0f && m.emission.colour != null && m.emission.colour.Length >= 3;
+                Shader shader = lamp ? unlit : lit;
                 Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
                 if (mat == null)
                 {
-                    mat = new Material(lit);
+                    mat = new Material(shader);
                     AssetDatabase.CreateAsset(mat, path);
                 }
                 else
                 {
-                    mat.shader = lit;
+                    mat.shader = shader;
+                }
+                if (lamp)
+                {
+                    SetColor(mat, new Color(Mathf.Clamp01(m.emission.colour[0]), Mathf.Clamp01(m.emission.colour[1]), Mathf.Clamp01(m.emission.colour[2]), 1f), "_BaseColor");
+                    mat.enableInstancing = true;
+                    EditorUtility.SetDirty(mat);
+                    result[m.name] = mat;
+                    continue;
                 }
                 Texture2D albedo = Tex(m.albedo), normal = Tex(m.normal), mask = Tex(m.metallic_smoothness);
                 // with a texture the tint stays white: the texture carries the colour (its average = the palette)
