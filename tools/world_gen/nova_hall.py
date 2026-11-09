@@ -45,6 +45,7 @@ GALLERY_Z = 5.2              # first floor
 GALLERY_DEPTH = 7.0          # depth of the galleries along the walls
 BRIDGE_U = (22.0, 27.0)      # gallery bridge across the east half of the atrium (the staircase arrives here)
 WALL = 0.35                  # wall thickness (outer face offset)
+SOLID_NORTH_U = 3.0          # facade pieces of the atrium closer than this to the north side are closed white walls
 DOOR_H = 3.2
 
 # doors: world position read from Noah's map (snapped to the nearest facade), width
@@ -182,8 +183,12 @@ def shell(m, f, polys, door_map):
                 continue
             tx, ty = (b[0] - a[0]) / L, (b[1] - a[1]) / L
             inside = (-ty, tx) if ccw else (ty, -tx)
-            mid_o = f.uo((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)[1]
-            style = "solid" if (poly is long_room and mid_o > 15) else "glass"   # long room: glass west, service rooms east
+            mid_u, mid_o = f.uo((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+            style = "glass"
+            if poly is long_room and mid_o > 15:                       # long room: glass west, service rooms east
+                style = "solid"
+            if poly is atrium and mid_u < SOLID_NORTH_U:               # atrium north facade: closed white wall (Noah)
+                style = "solid"
             facade(m, a, b, inside, H, door_map.get(edge_key(a, b), []), style)
 
 
