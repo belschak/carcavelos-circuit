@@ -51,14 +51,15 @@ PLINTH = 5.0                 # outer walls go this far below the hall floor (the
 SOLID_NORTH_U = 3.0          # facade pieces of the atrium closer than this to the north side are closed white walls
 DOOR_H = 3.2
 
-# doors: world position read from Noah's map (snapped to the nearest facade), width
-DOORS = {
-    "D1_main_entrance": ((8.3, 141.0), 4.2),
-    "D3_terrace": ((39.6, 63.3), 3.6),          # where the route leaves the building onto the CTT terrace (u 103.5)
-    "D4_entrance_room": ((62.5, 107.0), 3.4),
-    "D5_out_north_east": ((71.4, 169.9), 3.4),
+# doors in hall coordinates (u, o) and width. They sit where Noah's route crosses the facades (route.json), so the
+# track outside joins without a jog; the track doors are wide enough for the karts.
+DOORS_UO = {
+    "D1_main_entrance": ((25.5, 0.0), 9.5),     # route in at u 25.5 (IMG_7722 start)
+    "D3_terrace": ((103.5, 0.0), 9.5),          # route out onto the CTT terrace, towards the jump
+    "D4_entrance_room": ((70.9, 36.9), 6.0),    # route in from the south (IMG_7725); the facade piece is only 7 m long
+    "D5_out_north_east": ((23.4, 68.3), 7.5),   # route out on the east facade
 }
-D2_O = (6.2, 10.4)           # opening in the artwork wall (o from .. to): the way into the long room
+D2_O = (8.5, 17.5)           # opening in the artwork wall (o from .. to): the track into the long room
 
 
 def footprint():
@@ -84,11 +85,140 @@ def regions(f):
     return atrium, long_room, rest
 
 
+# ---------- the track through the building ----------
+# Centre lines in hall coordinates (u, o) as straight pieces with rounded corners (radius per corner). They follow Noah's
+# route plan: west part = main entrance, right turn, through the artwork wall into the long room, out to the terrace;
+# east part = in from the south (entrance room door), through the east half of the atrium, out on the east facade.
+# The floor stays one even grey; only guard rails show the way. Furniture in the way is left out (free()),
+# columns, the stair, the stage and the white block stay and the line goes round them.
+ROADS = [
+    {"name": "west", "width": 7.0, "radii": [9.0, 9.0],
+     "points": [(25.5, -8.0), (25.5, 13.0), (103.5, 13.0), (103.5, -10.0)]},
+    {"name": "east", "width": 6.0, "radii": [5.0, 5.0, 6.0, 6.0, 4.0],
+     "points": [(82.0, 37.2), (66.0, 37.0), (60.0, 31.0), (40.0, 31.0), (34.0, 26.5), (23.4, 26.5), (23.4, 78.0)]},
+]
+RAIL_OFFSET = 0.35           # guard rail distance outside the road edge (m)
+RAIL_STOP = 1.2              # rails stop this far before a facade (the doors)
+
+
+def rounded_line(points, radii, step=0.5):
+    """Points every `step` m along a polyline whose corners are replaced by circular arcs of the given radii."""
+    pts = [points[0]]
+    for i in range(1, len(points) - 1):
+        a, c, b = points[i - 1], points[i], points[i + 1]
+        din = ((c[0] - a[0]), (c[1] - a[1]))
+        dout = ((b[0] - c[0]), (b[1] - c[1]))
+        lin, lout = math.hypot(*din), math.hypot(*dout)
+        din, dout = (din[0] / lin, din[1] / lin), (dout[0] / lout, dout[1] / lout)
+        turn = math.atan2(din[0] * dout[1] - din[1] * dout[0], din[0] * dout[0] + din[1] * dout[1])
+        R = radii[i - 1]
+        t = R * math.tan(abs(turn) / 2)
+        t1 = (c[0] - din[0] * t, c[1] - din[1] * t)
+        side = 1 if turn > 0 else -1                                    # left turn: centre on the left
+        centre = (t1[0] - din[1] * R * side, t1[1] + din[0] * R * side)
+        a0 = math.atan2(t1[1] - centre[1], t1[0] - centre[0])
+        n = max(2, int(abs(turn) * R / step))
+        pts.append(t1)
+        for k in range(1, n + 1):
+            ang = a0 + turn * k / n
+            pts.append((centre[0] + R * math.cos(ang), centre[1] + R * math.sin(ang)))
+    pts.append(points[-1])
+    dense = [pts[0]]                                                     # even spacing
+    for p, q in zip(pts, pts[1:]):
+        L = math.hypot(q[0] - p[0], q[1] - p[1])
+        for k in range(1, max(1, int(L / step)) + 1):
+            dense.append((p[0] + (q[0] - p[0]) * k / max(1, int(L / step)), p[1] + (q[1] - p[1]) * k / max(1, int(L / step))))
+    return dense
+
+
+for road in ROADS:
+    road["line"] = rounded_line(road["points"], road["radii"])
+
+
+def free(u, o, radius):
+    """False when something of this radius at (u, o) would stand on a road (with 0.3 m to spare)."""
+    for road in ROADS:
+        limit = road["width"] / 2 + radius + 0.3
+        for (pu, po) in road["line"]:
+            if (pu - u) ** 2 + (po - o) ** 2 < limit * limit:
+                return False
+    return True
+
+
+def guarded(fn, radius):
+    """Furniture part that is only placed where free() allows it."""
+    def place(m, f, u, o, *args, **kwargs):
+        if free(u, o, radius):
+            fn(m, f, u, o, *args, **kwargs)
+    return place
+
+
+round_table = guarded(K.round_table, 1.6)
+long_table = guarded(K.long_table, 1.8)
+planter = guarded(K.planter, 0.8)
+board = guarded(K.board, 1.0)
+big_plant = guarded(K.big_plant, 0.9)
+info_stand = guarded(K.info_stand, 0.6)
+grand_piano = guarded(K.grand_piano, 1.4)
+
+
+def inside_footprint(x, y, margin):
+    """Inside the building and at least `margin` m from its outer walls."""
+    poly = footprint()
+    if not E.inside_polygon(x, y, poly):
+        return False
+    for a, b in zip(poly, poly[1:] + poly[:1]):
+        L2 = (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2 or 1.0
+        t = max(0.0, min(1.0, ((x - a[0]) * (b[0] - a[0]) + (y - a[1]) * (b[1] - a[1])) / L2))
+        if math.hypot(a[0] + (b[0] - a[0]) * t - x, a[1] + (b[1] - a[1]) * t - y) < margin:
+            return False
+    return True
+
+
+def guard_rails(m, f):
+    """Rails on both sides of each road, like the ramp rails in the art reference: white posts every 2 m, a round orange
+    top tube at 1 m and a light lilac board below. They stop RAIL_STOP m before the facades (door openings)."""
+    for road in ROADS:
+        line = road["line"]
+        for side in (1, -1):
+            off = road["width"] / 2 + RAIL_OFFSET
+            pts = []
+            for k, (u, o) in enumerate(line):
+                a, b = line[max(k - 1, 0)], line[min(k + 1, len(line) - 1)]
+                du, do = b[0] - a[0], b[1] - a[1]
+                d = math.hypot(du, do) or 1.0
+                pu, po = u - do / d * off * side, o + du / d * off * side
+                x, y, _ = f.at(pu, po)
+                pts.append((pu, po) if inside_footprint(x, y, RAIL_STOP) else None)
+            runs, cur = [], []
+            for p in pts:
+                if p is None:
+                    if len(cur) > 1:
+                        runs.append(cur)
+                    cur = []
+                else:
+                    cur.append(p)
+            if len(cur) > 1:
+                runs.append(cur)
+            for run in runs:
+                sub = run[::2]                                           # one segment per metre
+                if sub[-1] != run[-1]:
+                    sub.append(run[-1])
+                for (u0, o0), (u1, o1) in zip(sub, sub[1:]):
+                    m.tube(f.at(u0, o0, 0.98), f.at(u1, o1, 0.98), 0.06, "rail_orange", 8)
+                    m.beam(f.at(u0, o0, 0.58), f.at(u1, o1, 0.58), 0.05, 0.16, "rail_lilac")
+                for (u0, o0) in run[::4]:                                # a post every 2 m
+                    p = f.at(u0, o0, 0)
+                    m.box((p[0], p[1], 0.5), 0.05, 0.05, 0.5, "wall", f.h)
+
+
 # ---------- outer walls with doors ----------
 def snapped_doors(polys):
     """Door centre on the nearest facade edge (edges of at least 5 m): {edge key: [(distance along edge, width, name)]}."""
     out = {}
-    for name, ((x, y), width) in DOORS.items():
+    f = building_frame()
+    for name, ((du, do), width) in DOORS_UO.items():
+        x, y, _ = f.at(du, do)
         best = None
         for poly in polys:
             for a, b in zip(poly, poly[1:] + poly[:1]):
@@ -260,7 +390,8 @@ def atrium_structure(m, f):
     gallery_slab(m, f, BRIDGE_U[0], BRIDGE_U[1], BRIDGE_O[0], BRIDGE_O[1], ("o0", "u1"), timber=True)
     gallery_slab(m, f, 44.0, SPLIT_U - 0.4, 0.6, 5.0, ("o1",), timber=True)
     for u in K.Frame().samples(G + 1.0, SPLIT_U - 2.0, 8.0):                                   # slim round columns
-        K.round_column(m, f, u, 67.8 - G - 0.3, 0, GALLERY_Z - 0.45, 0.22)
+        if free(u, 67.8 - G - 0.3, 0.3):                                                       # (one gives way to the track)
+            K.round_column(m, f, u, 67.8 - G - 0.3, 0, GALLERY_Z - 0.45, 0.22)
     for o in K.Frame().samples(6.0, 60.0, 8.0):
         K.round_column(m, f, G + 0.3, o, 0, GALLERY_Z - 0.45, 0.22)
     for u in (12.0, 19.5):
@@ -274,13 +405,13 @@ def atrium_structure(m, f):
     for o0 in (6.0, 18.0):
         K.block(m, f, 0.2, 0.3, o0, o0 + 2.0, 0.0, 2.4, "table")
         K.block(m, f, 0.3, 0.42, o0 + 0.6, o0 + 1.4, 2.6, 2.85, "red")
-    for u, o in ((36.0, 46.0), (36.0, 54.0), (46.0, 54.0), (56.0, 54.0), (46.0, 26.0), (56.0, 26.0), (30.0, 14.0)):
+    for u, o in ((36.0, 46.0), (36.0, 54.0), (46.0, 54.0), (56.0, 54.0), (46.0, 22.0), (56.0, 22.0)):
         K.round_column(m, f, u, o, 0, ATRIUM_H - 1.6, 0.24)                                    # free columns up to the roof
         m.cylinder(f.at(u, o, 0), 0.44, 0.5, "wall", 14, top_radius=0.25)                      # flared foot (IMG_7725)
 
     # the white "Hovione" wall block on the west side, south of the entrance, with an empty sign plate
-    K.block(m, f, 28.0, 42.0, 0.6, 9.0, 0, 9.0, "wall")
-    K.block(m, f, 27.94, 28.0, 2.0, 7.6, 4.2, 5.8, "table")
+    K.block(m, f, 30.5, 44.5, 0.6, 9.0, 0, 9.0, "wall")
+    K.block(m, f, 30.44, 30.5, 2.0, 7.6, 4.2, 5.8, "table")
     # the wide white staircase: from the floor at u 38 up to the bridge at u 27, o 34-39.5
     stair(m, f, 38.0, BRIDGE_U[1], 34.0, 39.5, GALLERY_Z)
     # "With great power ..." wall on the east side: light panel with a dark band (no text in the model)
@@ -311,10 +442,10 @@ def artwork_wall(m, f):
     for o0, o1 in ((0.0, D2_O[0]), (D2_O[1], o_end)):
         K.block(m, f, u - 0.15, u + 0.15, o0, o1, 0.0, ATRIUM_H + 0.8, "wall")
     K.block(m, f, u - 0.15, u + 0.15, D2_O[0], D2_O[1], LOW_Z, ATRIUM_H + 0.8, "wall")
-    for o0 in (12.0, 15.2):                                              # double doors
+    for o0 in (19.5, 22.7):                                              # double doors
         K.block(m, f, u - 0.2, u - 0.15, o0, o0 + 2.6, 0.0, 2.4, "table")
         K.block(m, f, u - 0.22, u - 0.2, o0 + 1.29, o0 + 1.31, 0.0, 2.4, "steel_dark")
-    for k, o0 in enumerate((19.0, 22.5, 1.2)):                           # artwork: coloured bars
+    for k, o0 in enumerate((26.0, 1.2, 4.6)):                            # artwork: coloured bars
         for j, c in enumerate(("red", "blue", "yellow", "blue")):
             z = 2.4 + (j % 2) * 0.5 + k * 0.2
             K.block(m, f, u - 0.2, u - 0.16, o0 + j * 0.6, o0 + j * 0.6 + 1.2, z, z + 0.2, c)
@@ -329,24 +460,24 @@ def atrium_furniture(m, f):
     # abstract sculpture straight ahead of the main entrance, arranged and sized like the real logo letters
     # (no readable logo, docs/decisions.md): tall block, ring standing on a long low plinth, a V, a chevron
     SO = 16.0                                                            # o of the row (across the view from the door)
-    K.block(m, f, 16.4, 18.0, SO - 0.3, SO + 0.3, 0.0, 2.6, "wall")
-    K.block(m, f, 18.4, 24.8, SO - 0.45, SO + 0.45, 0.0, 0.5, "wall")
+    K.block(m, f, 6.4, 8.0, SO - 0.3, SO + 0.3, 0.0, 2.6, "wall")
+    K.block(m, f, 8.4, 14.8, SO - 0.45, SO + 0.45, 0.0, 0.5, "wall")
     t, nrm = f.tangent(), f.left()
-    m.ring(f.at(20.4, SO - 0.3, 1.78), 1.28, 0.72, 0.6, "wall", basis=((0, 0, 1), (t[0], t[1], 0), (nrm[0], nrm[1], 0)))
-    K.rod(m, f, (25.2, SO, 2.6), (26.4, SO, 0.0), 0.6, "wall")          # V: point at the bottom
-    K.rod(m, f, (27.6, SO, 2.6), (26.4, SO, 0.0), 0.6, "wall")
-    K.rod(m, f, (28.0, SO, 0.0), (29.2, SO, 2.6), 0.6, "wall")          # chevron: point at the top
-    K.rod(m, f, (30.4, SO, 0.0), (29.2, SO, 2.6), 0.6, "wall")
+    m.ring(f.at(10.4, SO - 0.3, 1.78), 1.28, 0.72, 0.6, "wall", basis=((0, 0, 1), (t[0], t[1], 0), (nrm[0], nrm[1], 0)))
+    K.rod(m, f, (15.2, SO, 2.6), (16.4, SO, 0.0), 0.6, "wall")          # V: point at the bottom
+    K.rod(m, f, (17.6, SO, 2.6), (16.4, SO, 0.0), 0.6, "wall")
+    K.rod(m, f, (18.0, SO, 0.0), (19.2, SO, 2.6), 0.6, "wall")          # chevron: point at the top
+    K.rod(m, f, (20.4, SO, 0.0), (19.2, SO, 2.6), 0.6, "wall")
     for k in range(8):                                                   # dark blue boards and planter troughs behind it
         u = 14.0 + k * 2.6
         if k % 2 == 0:
-            K.board(m, f, u, 21.0, 1.8, 2.2)
+            board(m, f, u, 21.0, 1.8, 2.2)
         else:
-            K.planter(m, f, u, 20.6, 40 + k, palm=k % 4 == 1)
+            planter(m, f, u, 20.6, 40 + k, palm=k % 4 == 1)
     for k in range(9):                                                   # planters along the way to the artwork wall
-        K.planter(m, f, 44.0 + k * 2.6, 19.0, 60 + k, palm=k % 2 == 0)
+        planter(m, f, 44.0 + k * 2.6, 19.0, 60 + k, palm=k % 2 == 0)
     for u, o in ((14.5, 25.5), (19.5, 26.5), (25.0, 25.5), (31.0, 24.0), (36.0, 22.0)):
-        K.round_table(m, f, u, o, 4)
+        round_table(m, f, u, o, 4)
     K.block(m, f, 50.0, 50.6, 0.6, 0.9, 1.0, 1.8, "red")                 # fire hose cabinet
 
     # east zone (IMG_7725): stage, cube seats in an arc, study tables with boards, planters, sofas by the exit
@@ -358,15 +489,16 @@ def atrium_furniture(m, f):
         u, o = 50.0 + 6.5 * math.cos(a), 44.0 + 6.5 * math.sin(a)
         K.block(m, f, u - 0.27, u + 0.27, o - 0.27, o + 0.27, 0.0, 0.46, "grey")
     for u in (42.0, 46.5, 51.0, 55.5, 60.0):
-        K.long_table(m, f, u, 30.5, seats=2)
-    K.board(m, f, 44.2, 33.6, 1.8, 2.0)
-    K.board(m, f, 57.8, 33.6, 1.8, 2.0)
+        long_table(m, f, u, 30.5, seats=2)
+    board(m, f, 44.2, 33.6, 1.8, 2.0)
+    board(m, f, 57.8, 33.6, 1.8, 2.0)
     for k in range(10):
-        K.planter(m, f, 30.0 + k * 3.2, 65.6, 80 + k, palm=k % 3 == 0)
+        planter(m, f, 30.0 + k * 3.2, 65.6, 80 + k, palm=k % 3 == 0)
     for k in range(3):
-        K.block(m, f, 12.0 + k * 2.4, 14.0 + k * 2.4, 62.0, 63.0, 0.0, 0.75, "board")            # dark blue sofas
-    K.big_plant(m, f, 14.0, 58.0, 3)
-    K.big_plant(m, f, 60.0, 40.0, 4)
+        if free(13.0 + k * 2.4, 62.5, 1.2):
+            K.block(m, f, 12.0 + k * 2.4, 14.0 + k * 2.4, 62.0, 63.0, 0.0, 0.75, "board")        # dark blue sofas
+    big_plant(m, f, 14.0, 58.0, 3)
+    big_plant(m, f, 60.0, 40.0, 4)
 
 
 # ---------- long room ----------
@@ -393,7 +525,8 @@ def space_frame(m, f, u0, u1):
     step = FACADE_FRAME_STEP
     us = K.Frame().samples(u0, u1, step)
     zs = [0.6 + k * (H - 1.0) / 4 for k in range(5)]
-    door0, door1 = TERRACE_DOOR_U - 2.4, TERRACE_DOOR_U + 2.4
+    half = DOORS_UO["D3_terrace"][1] / 2 + 0.4
+    door0, door1 = TERRACE_DOOR_U - half, TERRACE_DOOR_U + half
 
     def in_door(a, b, z):
         return z < DOOR_H + 1.4 and b > door0 and a < door1
@@ -493,8 +626,8 @@ def long_room_end(m, f):
 
 def long_room_structure(m, f):
     glass_vestibule(m, f, 71.0, 77.5, 3.2)
-    for du in (-3.0, 3.0):                                               # tall planters both sides of the terrace door
-        tall_pot(m, f, TERRACE_DOOR_U + du, 2.2, 20 + int(du))
+    for du in (-5.8, 5.8):                                               # tall planters both sides of the terrace door
+        tall_pot(m, f, TERRACE_DOOR_U + du, 1.2, 20 + int(du))
     for u0 in K.Frame().samples(84.0, LONG_END_U - 26.0, 22.0):         # white boxes with dark brown recesses (east side)
         K.block(m, f, u0, u0 + 11.0, 26.5, 29.7, 0.0, 3.8, "brown")
         K.block(m, f, u0 - 1.0, u0 + 12.0, 25.2, 29.7, 3.8, 6.4, "wall")
@@ -507,17 +640,17 @@ def long_room_structure(m, f):
 def long_room_furniture(m, f):
     for u in K.Frame().samples(84.0, LONG_END_U - 4.0, 4.6):
         if abs(u - TERRACE_DOOR_U) > 3.5:                                # keep the terrace door free
-            K.long_table(m, f, u, 5.4, seats=3)
+            long_table(m, f, u, 5.4, seats=3)
     for k, u in enumerate(K.Frame().samples(84.0, LONG_END_U - 4.0, 4.0)):   # round tables in two staggered rows
-        K.round_table(m, f, u, 12.5 if k % 2 == 0 else 14.0, 4)
-        K.round_table(m, f, u + 2.0, 19.5 if k % 2 == 0 else 21.0, 4 if k % 3 else 3)
-    K.grand_piano(m, f, 92.0, 8.6, 90)
-    K.grand_piano(m, f, 113.0, 8.6, 90)
+        round_table(m, f, u, 12.5 if k % 2 == 0 else 14.0, 4)
+        round_table(m, f, u + 2.0, 19.5 if k % 2 == 0 else 21.0, 4 if k % 3 else 3)
+    grand_piano(m, f, 86.0, 5.4, 90)
+    grand_piano(m, f, 113.0, 8.6, 90)
     for k, u in enumerate(K.Frame().samples(82.0, LONG_END_U - 3.0, 16.0)):  # fig trees in pots along the glass
         if abs(u - TERRACE_DOOR_U) > 4.5:
-            K.big_plant(m, f, u, 2.4, 9 + k)
+            big_plant(m, f, u, 2.4, 9 + k)
     for k, (u, o) in enumerate(((71.0, 14.0), (86.0, 24.0), (150.0, 23.5), (180.0, 23.5))):
-        K.info_stand(m, f, u, o, k)
+        info_stand(m, f, u, o, k)
 
 
 # ---------- assembly ----------
@@ -531,7 +664,8 @@ def make_hall(col):
                         ("Hall_Roof", (lambda m: atrium_roof(m, f, polys[0]), lambda m: long_room_shell(m, f))),
                         ("Hall_Structure", (lambda m: atrium_structure(m, f), lambda m: artwork_wall(m, f),
                                             lambda m: long_room_end(m, f), lambda m: long_room_structure(m, f))),
-                        ("Hall_Furniture", (lambda m: atrium_furniture(m, f), lambda m: long_room_furniture(m, f)))):
+                        ("Hall_Furniture", (lambda m: atrium_furniture(m, f), lambda m: long_room_furniture(m, f))),
+                        ("Hall_Track_Rails", (lambda m: guard_rails(m, f),))):
         m = K.Mesh()
         for part in parts:
             part(m)
@@ -548,7 +682,7 @@ def export_fbx(path):
                              axis_forward="-Z", axis_up="Y", use_selection=True, use_triangles=True, mesh_smooth_type="FACE")
 
 
-FLOOR_Z = 14.47              # hall floor in the campus world (route_profile.json: atrium level 14.5 m, road 3 cm above)
+FLOOR_Z = 14.5               # hall floor in the campus world = the road level outside (route_profile.json: 14.5 m)
 
 
 def build_world_fbx():
