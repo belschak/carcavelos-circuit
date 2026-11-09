@@ -4,9 +4,8 @@ neighbouring buildings around it, so entrances and proportions can be checked ag
 What is in the scene (separate collections, each one an FBX object you can hide in Unity):
   Context_Ground       ground around the building (flat plaza level near the building, the elevation data further out)
   Context_Buildings    the neighbouring buildings as simple blocks (footprints from OpenStreetMap, heights from buildings.csv)
-  Ref_Building_Ghost   the Edificio Principal footprint as a see-through block (13 m, buildings.csv)
-  Ref_Outline          red kerb along the footprint (where the walls really are)
-  Nova_Hall            the hall from nova_hall.py, north doors on the north facade, glass facade along the west facade
+  Ref_Outline          red kerb along the Edificio Principal footprint (where the walls really are)
+  Nova_Hall            the building from nova_hall.py: outer walls with the doors from Noah's map, the interior
 
 Run:  blender -b -P nova_context.py   ->  out/NovaHallContext.blend, out/NovaHallContext.fbx, out/previews_context/*.png
 """
@@ -29,8 +28,6 @@ OUT = os.path.join(HERE, "out")
 BUILDING_ID = "w665606788"                       # Edificio Principal
 REGION = (-90.0, 170.0, 30.0, 235.0)             # x0, x1, y0, y1 of the piece of map that is copied (m)
 PLAZA_Z, PLAZA_CENTRE, PLAZA_FLAT, PLAZA_FADE = 14.45, (35.0, 125.0), 95.0, 150.0   # flat plaza level, blend to terrain
-NORTH_FACE = ((3.0, 160.0), (67.0, 184.0))       # the two north corners of the footprint (from world_data.json)
-FACADE_WEST_INSET = 0.0                          # hall glass facade distance from the west wall (m)
 
 
 def ctx_material(name, colour, rough=0.9, alpha=1.0):
@@ -41,12 +38,15 @@ def ctx_material(name, colour, rough=0.9, alpha=1.0):
 
 
 def heights_csv():
+    """{osm id: (height in m, absolute roof height or None)} from buildings.csv."""
     out = {}
     for row in csv.DictReader(open(os.path.join(HERE, "buildings.csv"), encoding="utf-8")):
         try:
-            out[row["id"]] = float(row["height_m"]) if row["height_m"] else (float(row["levels"]) * 3.5 if row["levels"] else 9.0)
+            h = float(row["height_m"]) if row["height_m"] else (float(row["levels"]) * 3.5 if row["levels"] else 9.0)
         except ValueError:
-            out[row["id"]] = 9.0
+            h = 9.0
+        roof = float(row["roof_z"]) if row.get("roof_z") else None
+        out[row["id"]] = (h, roof)
     return out
 
 
@@ -109,7 +109,6 @@ def build_buildings(col_ctx, col_ref):
     x0, x1, y0, y1 = REGION
     wall = ctx_material("N_ctx_wall", "#E6E4DE", 0.85)
     roof = ctx_material("N_ctx_roof", "#BDBBB5", 0.9)
-    ghost = ctx_material("N_ref_ghost", "#E86A5A", 0.9, 0.28)
     outline = ctx_material("N_ref_outline", "#D8352A", 0.8)
     footprint = None
     for b in E.DATA["buildings"]:
@@ -118,37 +117,26 @@ def build_buildings(col_ctx, col_ref):
         if not (x0 - 30 < cx < x1 + 30 and y0 - 30 < cy < y1 + 30):
             continue
         base = min(ground_height(x, y) for x, y in pts) - 0.3
-        h = heights.get(b["id"], 9.0)
+        h, roof_z = heights.get(b["id"], (9.0, None))
         if b["id"] == BUILDING_ID:
-            footprint = pts
-            prism(pts, base, base + h + 0.0, "Ref_Building_Ghost", col_ref, ghost, ghost)
+            footprint = pts                                    # the hall brings its own walls, only the outline is drawn
             continue
-        prism(pts, base, base + h, "B_" + (b["id"]), col_ctx, wall, roof)
-    # red kerb along the Edificio Principal footprint
+        prism(pts, base, roof_z if roof_z else base + h, "B_" + (b["id"]), col_ctx, wall, roof)
+    # red kerb just outside the Edificio Principal walls (so it never shows inside)
     m = K.Mesh()
+    ccw = K.signed_area(footprint) > 0
     for (ax, ay), (bx, by) in zip(footprint, footprint[1:] + footprint[:1]):
         length = math.hypot(bx - ax, by - ay)
         if length < 0.5:
             continue
-        mid = ((ax + bx) / 2, (ay + by) / 2)
-        z = ground_height(*mid) + 0.2
-        m.box((mid[0], mid[1], z), length / 2, 0.35, 0.2, "outline", math.atan2(by - ay, bx - ax))
+        tx, ty = (bx - ax) / length, (by - ay) / length
+        out = (ty, -tx) if ccw else (-ty, tx)                   # outward normal
+        mid = ((ax + bx) / 2 + out[0] * 0.8, (ay + by) / 2 + out[1] * 0.8)
+        z = ground_height(*mid) + 0.1
+        m.box((mid[0], mid[1], z), length / 2, 0.25, 0.12, "outline", math.atan2(ty, tx))
     K.MATERIALS["outline"] = lambda: outline
     m.to_object("Ref_Outline", col_ref)
     return footprint
-
-
-def hall_frame():
-    """Frame of the hall: north doors in the middle of the strip next to the west wall, axis perpendicular to the north facade."""
-    (ax, ay), (bx, by) = NORTH_FACE                    # west corner, east corner
-    d = math.hypot(bx - ax, by - ay)
-    tx, ty = (bx - ax) / d, (by - ay) / d              # along the north facade, towards the east
-    ux, uy = ty, -tx                                   # hall axis: perpendicular to the facade, pointing south
-    heading = math.atan2(uy, ux)
-    # left of the axis = (-uy, ux) = towards the east along the facade; the west wall lies H.B_RIGHT to the right of the axis
-    ox = ax + tx * (H.B_RIGHT + FACADE_WEST_INSET)
-    oy = ay + ty * (H.B_RIGHT + FACADE_WEST_INSET)
-    return K.Frame(ox, oy, math.degrees(heading))
 
 
 def build():
@@ -157,11 +145,10 @@ def build():
     col_ref, col_hall = E.collection("Ref"), E.collection("Nova_Hall")
     build_ground(col_ground)
     build_buildings(col_ctx, col_ref)
-    f = hall_frame()
-    floor_z = ground_height(f.x, f.y) + 0.02
-    for obj in H.make_hall(f, col_hall):
+    floor_z = PLAZA_Z + 0.02
+    for obj in H.make_hall(col_hall):
         obj.location.z = floor_z
-    print(f"  hall origin ({f.x:.1f}, {f.y:.1f}), heading {math.degrees(f.h):.1f} deg, floor z {floor_z:.2f}")
+    print(f"  hall floor z {floor_z:.2f}")
     os.makedirs(OUT, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, "NovaHallContext.blend"))
     H.export_fbx(os.path.join(OUT, "NovaHallContext.fbx"))

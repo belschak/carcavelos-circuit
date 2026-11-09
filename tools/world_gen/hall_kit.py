@@ -25,7 +25,7 @@ def _mat(name, colour, rough=0.6, metal=0.0, emission=None, alpha=1.0):
 
 
 MATERIALS = {
-    "floor": _mat("N_floor", "#5E513C", 0.12),                 # polished concrete, warm brown-grey (the videos)
+    "floor": _mat("N_floor", "#6A5B43", 0.28),                 # polished concrete, warm brown-grey (the videos)
     "wall": _mat("N_wall", "#E9E7E1", 0.85),
     "soffit": _mat("N_soffit", "#F4F3EF", 0.9),
     "steel_white": _mat("N_steel_white", "#ECECE8", 0.5, 0.3),
@@ -50,6 +50,8 @@ MATERIALS = {
     "blue": _mat("N_art_blue", "#2F5FA8", 0.8),
     "yellow": _mat("N_art_yellow", "#E9B93A", 0.8),
     "concrete": _mat("N_terrace", "#C9C6BE", 0.85),
+    "skylight": _mat("N_skylight", "#DDE9F2", 0.3, emission="#C9DBEA"),     # glass roof bands, lit by the sky
+    "stair": _mat("N_stair", "#F2F1EC", 0.55),                               # white stairs and gallery floors
 }
 
 
@@ -149,6 +151,9 @@ class Mesh:
             f.material_index = idx
 
     def to_object(self, name, col):
+        ngons = [f for f in self.bm.faces if len(f.verts) > 4]
+        if ngons:
+            bmesh.ops.triangulate(self.bm, faces=ngons, quad_method="BEAUTY", ngon_method="EAR_CLIP")
         self.bm.normal_update()
         uv = self.bm.loops.layers.uv.verify()
         for f in self.bm.faces:                       # planar UVs in metres
@@ -183,6 +188,12 @@ class Frame:
         n = (-t[1], t[0])
         return (self.x + t[0] * u + n[0] * o, self.y + t[1] * u + n[1] * o, z)
 
+    def uo(self, x, y):
+        """World (x, y) -> hall coordinates (u, o)."""
+        t = (math.cos(self.h), math.sin(self.h))
+        dx, dy = x - self.x, y - self.y
+        return (dx * t[0] + dy * t[1], -dx * t[1] + dy * t[0])
+
     def tangent(self, u=0.0):
         return (math.cos(self.h), math.sin(self.h))
 
@@ -195,6 +206,31 @@ class Frame:
     def samples(self, u0, u1, step=2.0):
         n = max(1, int(math.ceil((u1 - u0) / step)))
         return [u0 + (u1 - u0) * i / n for i in range(n + 1)]
+
+
+# ---------- polygons (footprints) ----------
+def clip_polygon(poly, keep):
+    """Sutherland-Hodgman clip of a polygon by a half plane. keep(p) returns a signed value, >= 0 = keep.
+    Points on the cut get the exact crossing position."""
+    out = []
+    n = len(poly)
+    for i in range(n):
+        a, b = poly[i], poly[(i + 1) % n]
+        ka, kb = keep(a), keep(b)
+        if ka >= 0:
+            out.append(a)
+        if (ka >= 0) != (kb >= 0):
+            t = ka / (ka - kb)
+            out.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t))
+    return out
+
+
+def signed_area(poly):
+    return 0.5 * sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(poly, poly[1:] + poly[:1]))
+
+
+def polygon_face(m, poly, z, material, up=True):
+    m.face([(x, y, z) for x, y in (poly if up == (signed_area(poly) > 0) else poly[::-1])], material, (0, 0, 1 if up else -1))
 
 
 # ---------- surfaces ----------
