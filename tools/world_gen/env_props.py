@@ -54,7 +54,7 @@ CAMPUS_LAMP_STEP, CAMPUS_LAMP_OFFSET = 30.0, 6.5
 ROAD_LAMP_STEP, ROAD_LAMP_OFFSETS = 35.0, (6.5, 7.5, 8.5, 9.5)
 RAILING_OFFSET, RAILING_LENGTH = 4.6, 2.0
 JUMP_GAP = 12.0                     # no deck railing within 6 m of the jump take-off
-RAMP_S = (86.0, 150.0)              # north tunnel ramp, railings on both sides
+# north tunnel ramp (railings on both sides) = the "ramp" points that follow the tunnel, whatever the route
 SEAWALL_GROUND_Z = 4.0              # promenade railing where the route's ground_z is below this
 BENCH_STEP, BENCH_OFFSET = 25.0, 7.0
 BOLLARD_OFFSETS = (6.5, 8.0, 9.5, 11.0, 12.5)   # a row of 5 on each side, outside the 8 m road
@@ -519,7 +519,7 @@ def place(seed=SEED, write=True, avoid=()):
     Campus lamps every ~30 m, alternating sides, 6.5 m from the centreline on the upper and lower plaza and on
     the lawns near campus. Road lamps every ~35 m on the coastal road and the promenade, on the sea side.
     Railings 4.6 m out: both sides of the terrace deck (gap of 12 m at the jump), both sides of the north
-    tunnel ramp (s 86-150), the sea side of the promenade (route ground_z < 4). Benches every ~25 m on the
+    tunnel ramp (the ramp points right after the tunnel), the sea side of the promenade (route ground_z < 4). Benches every ~25 m on the
     promenade's land side, a bin beside every second bench and every third campus lamp. A row of 5 bollards
     on each side across the tunnel plaza (south portal) and the lower plaza (top of the north ramp). Lounge
     chairs in small groups on the deck, 7-12 m from the centreline and inside the roof edge. Parasols at the
@@ -605,8 +605,18 @@ def place(seed=SEED, write=True, avoid=()):
     for run in _runs(deck):
         for side in (1, -1):
             placed += _railing_run(site, run, side, lambda p: p["track_z"], f"deck {side:+d}", own_roof=deck_roof)
-    ramp = [i for i, p in enumerate(pts) if RAMP_S[0] <= p["s"] <= RAMP_S[1] and not p["building"]
-            and p.get("zone") not in NO_PROP_ZONES]
+    ramp, after_tunnel = [], False
+    for i in list(range(n)) + list(range(n)):
+        zone = pts[i % n].get("zone")
+        if zone == "tunnel":
+            after_tunnel = True
+        elif zone == "ramp" and after_tunnel:
+            if i % n not in ramp and not pts[i % n]["building"]:
+                ramp.append(i % n)
+        elif after_tunnel and ramp:
+            break
+        else:
+            after_tunnel = after_tunnel and zone == "tunnel"
     for run in _runs(ramp):
         for side in (1, -1):
             placed += _railing_run(site, run, side, lambda p: p["track_z"], f"ramp {side:+d}")

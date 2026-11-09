@@ -147,8 +147,11 @@ def unity_track():
     pts, n = route["points"], len(route["points"])
     jump = route["jump"]["index"]
     # start/finish: the straightest point on the promenade (long straight by the beach, fort in view)
-    cands = [i for i, p in enumerate(pts) if p["zone"] == "promenade" and not p["tunnel"]]
-    start = min(cands, key=lambda i: heading_change(pts, i, 15))
+    if "start_index" in route:                          # waypoint routes: start/finish = point 0 (Noah's #0)
+        start = route["start_index"]
+    else:
+        cands = [i for i, p in enumerate(pts) if p["zone"] == "promenade" and not p["tunnel"]]
+        start = min(cands, key=lambda i: heading_change(pts, i, 15))
     step = n / CHECKPOINTS
     cps = []
     for c in range(CHECKPOINTS):

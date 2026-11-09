@@ -23,7 +23,7 @@ SHOULDER = {"ramp": 9.0, "tunnel plaza": 10.0, "lower plaza": 14.0, "upper plaza
 DEFAULT_SHOULDER = 12.0
 CUT_ZONES = {"ramp", "tunnel plaza", "tunnel"}   # "tunnel" = the few open metres in front of a portal
 FRACTIONS = [k / 26.0 for k in range(0, 13)] + [k / 26.0 for k in range(14, 27, 2)]   # 1 m, then 2 m steps
-SKIP_ZONES = {"terrace deck"}           # on the CTT roof: the building carries the road
+SKIP_ZONES = {"terrace deck", "kicker"}           # on the CTT roof: the building carries the road
 
 _state = {"pts": [], "frames": [], "width": [], "cells": {}}
 

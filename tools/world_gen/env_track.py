@@ -19,11 +19,12 @@ ROAD_LIFT = 0.06            # road surface above the terrain bed
 VERGE = 2.5                 # metres beside the road
 TILE_M = {                  # real-world size of one texture tile (m), so UVs are in tiles
     "asphalt": 2.0, "concrete_sand": 2.0, "concrete_polished": 2.0, "concrete_light": 2.0, "tunnel_floor": 2.0,
-    "calcada": 1.0, "terracotta": 1.0, "lawn": 2.0, "kerb": 2.0, "cut_wall": 2.0,
+    "calcada": 1.0, "terracotta": 1.0, "lawn": 2.0, "kerb": 2.0, "cut_wall": 2.0, "sand": 4.0,
 }
 SURFACE_COLOUR = {          # used until textures exist (env_materials upgrades them)
     "asphalt": "asphalt", "concrete_sand": "concrete_sand", "concrete_polished": "#9A9C9E", "concrete_light": "concrete_light",
     "tunnel_floor": "#8E8A82", "calcada": "calcada", "terracotta": "terracotta", "lawn": "lawn", "cut_wall": "concrete_sand",
+    "sand": "sand",
 }
 OUTDOOR_NO_VERGE = {"tunnel", "atrium", "terrace deck"}
 KERB_ZONES = {"lawn and paths", "coastal road", "promenade", "lower plaza", "upper plaza", "tunnel plaza"}
@@ -68,6 +69,8 @@ def road_z(p):
 
 
 def is_drop(a, b):
+    if "kicker" in (a["zone"], b["zone"]):
+        return False                                   # the concrete wedge is a steep but continuous slab
     return abs(a["track_z"] - b["track_z"]) > 1.5
 
 
@@ -328,7 +331,39 @@ def build_cut_walls(pts, fr, col):
     return E.new_object("Track_CutWalls", mesh, col)
 
 
+def build_wedge(pts, fr, col, wedge):
+    """Concrete wedge at the terrace edge (videos IMG_7723 0-12 s): the road runs down its sloped top (build_road),
+    this adds the solid body under it: two side walls from the road edge to the lawn and the end face at the foot."""
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    run = [wedge[0] - 1] + wedge + [wedge[-1] + 1]          # from the crest to the foot
+    n = len(pts)
+    for side in (1, -1):
+        for a_i, b_i in zip(run, run[1:]):
+            a, b = pts[a_i % n], pts[b_i % n]
+            (_, na), (_, nb) = fr[a_i % n], fr[b_i % n]
+            ha, hb = E.half_width(a) + 0.15, E.half_width(b) + 0.15
+            ta = (a["x"] + side * na[0] * ha, a["y"] + side * na[1] * ha)
+            tb = (b["x"] + side * nb[0] * hb, b["y"] + side * nb[1] * hb)
+            za, zb = road_z(a), road_z(b)
+            ga, gb = E.coarse_ground_z(*ta) - 0.3, E.coarse_ground_z(*tb) - 0.3
+            vs = [bm.verts.new((ta[0], ta[1], ga)), bm.verts.new((tb[0], tb[1], gb)),
+                  bm.verts.new((tb[0], tb[1], zb)), bm.verts.new((ta[0], ta[1], za))]
+            face = bm.faces.new(vs if side == 1 else vs[::-1])
+            for loop, (u, v) in zip(face.loops, ((a["s"] / 2, ga / 2), (b["s"] / 2, gb / 2), (b["s"] / 2, zb / 2), (a["s"] / 2, za / 2))):
+                loop[uv].uv = (u, v if side == 1 else v)
+    bm.normal_update()
+    mesh = bpy.data.meshes.new("Track_JumpKicker")
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(surface_material("concrete_light"))
+    return E.new_object("Track_JumpKicker", mesh, col)
+
+
 def build_kicker(pts, fr, col):
+    wedge = [i for i, p in enumerate(pts) if p["zone"] == "kicker"]
+    if wedge:
+        return build_wedge(pts, fr, col, wedge)
     j = E.ROUTE["jump"]["index"]
     p, (t, nrm) = pts[j], fr[j]
     z = road_z(p)

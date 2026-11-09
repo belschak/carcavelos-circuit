@@ -113,22 +113,6 @@
    "smoothness": 0.1
   },
   {
-   "name": "W_B_interior_wall",
-   "colour": [
-    0.9434,
-    0.9353,
-    0.9152
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.2
-  },
-  {
    "name": "W_B_wall_0",
    "colour": [
     0.9353,
@@ -191,6 +175,22 @@
    "alpha": 1.0,
    "metallic_smoothness": null,
    "smoothness": 0.1
+  },
+  {
+   "name": "W_B_interior_wall",
+   "colour": [
+    0.9434,
+    0.9353,
+    0.9152
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.2
   },
   {
    "name": "W_backdrop_building",
@@ -790,6 +790,22 @@
    "smoothness": 0.3
   },
   {
+   "name": "W_T_concrete_light",
+   "colour": [
+    0.7832,
+    0.7673,
+    0.7317
+   ],
+   "metallic": 0.0,
+   "albedo": "concrete_polished_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": "concrete_polished_metallic_smoothness.png",
+   "smoothness": 0.1
+  },
+  {
    "name": "W_T_kerb",
    "colour": [
     1.0,
@@ -838,22 +854,6 @@
    "smoothness": 0.2
   },
   {
-   "name": "W_T_concrete_light",
-   "colour": [
-    0.7832,
-    0.7673,
-    0.7317
-   ],
-   "metallic": 0.0,
-   "albedo": "concrete_polished_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": "concrete_polished_metallic_smoothness.png",
-   "smoothness": 0.1
-  },
-  {
    "name": "W_T_concrete_polished",
    "colour": [
     0.5984,
@@ -884,6 +884,22 @@
    "alpha": 1.0,
    "metallic_smoothness": "concrete_sand_metallic_smoothness.png",
    "smoothness": 0.1
+  },
+  {
+   "name": "W_T_sand",
+   "colour": [
+    0.887,
+    0.7633,
+    0.5481
+   ],
+   "metallic": 0.0,
+   "albedo": "sand_albedo.png",
+   "normal": "sand_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.05
   },
   {
    "name": "W_T_terracotta",

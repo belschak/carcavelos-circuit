@@ -37,6 +37,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_T_sand
+    second: {fileID: 2100000, guid: cb4df7b947503462aa1302ab6f94d9ff, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_T_terracotta
     second: {fileID: 2100000, guid: 846434ce738da40d399a8c58986dbfa3, type: 2}
   - first:

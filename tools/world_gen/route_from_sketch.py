@@ -207,7 +207,7 @@ def wall_blockers(route, beach_tunnel, tunnel_len):
             if k in inside[i % n]:
                 run.append(i % n)
                 continue
-            if len(run) >= 4:                               # a real passage (8 m+), not a corner clip
+            if len(run) >= 4 and passage_allowed([route[j] for j in run], b):   # a real passage, not a clip
                 for j in range(run[0] - 6, run[-1] + 7):
                     keep[j % n] = True
                     passable[j % n].add(k)
@@ -305,6 +305,128 @@ def road_widths(route, beach_tunnel, tunnel_len):
     return [round(sum(narrow[(i + k) % n] for k in range(-3, 4)) / 7, 2) for i in range(n)]
 
 
+_WAYPOINTS = {"points": None}      # set by waypoint_route(); used for the passage rule in wall_blockers()
+KICKER = {}                        # wedge kicker facts from apply_profile(), written into route.json
+
+
+def catmull_closed(pts, samples=16):
+    """Closed centripetal Catmull-Rom spline through the points (no loops or overshoot at sharp corners)."""
+    n, out = len(pts), []
+    for i in range(n):
+        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[(i + 1) % n], pts[(i + 2) % n]
+        t0 = 0.0
+        t1 = t0 + max(math.dist(p0, p1), 1e-6) ** 0.5
+        t2 = t1 + max(math.dist(p1, p2), 1e-6) ** 0.5
+        t3 = t2 + max(math.dist(p2, p3), 1e-6) ** 0.5
+
+        def lerp(a, b, ta, tb, t):
+            return tuple(((tb - t) * a[j] + (t - ta) * b[j]) / (tb - ta) for j in range(2))
+        for k in range(samples):
+            t = t1 + (t2 - t1) * k / samples
+            a1, a2, a3 = lerp(p0, p1, t0, t1, t), lerp(p1, p2, t1, t2, t), lerp(p2, p3, t2, t3, t)
+            b1, b2 = lerp(a1, a2, t0, t2, t), lerp(a2, a3, t1, t3, t)
+            out.append(lerp(b1, b2, t1, t2, t))
+    return out
+
+
+def waypoint_route(beach_tunnel):
+    """Route from a waypoint list (route_profile.json "waypoints", e.g. Noah's route_waypoints.json).
+
+    Waypoints of the tunnel itself are replaced by the real tunnel axis (8 m beyond both portals), then a smooth
+    spline, 2 m spacing, point 0 = the start waypoint. Returns (route, waypoints, report lines)."""
+    W = json.load(open(os.path.join(HERE, PROFILE["waypoints"])))
+    wps = list(W["points"])
+    if len(wps) > 2 and math.dist((wps[-1]["x"], wps[-1]["y"]), (wps[0]["x"], wps[0]["y"])) < 6:
+        wps = wps[:-1]                                   # "back to start" duplicates the start point
+    _WAYPOINTS["points"] = wps
+    notes, pts = fix_waypoints(wps), []
+    tun = [i for i, p in enumerate(wps) if p["section"].startswith("tunnel") and "plaza" not in p["section"]]
+    a, b = beach_tunnel[0], beach_tunnel[-1]
+    length = math.dist(a, b)
+    u = ((b[0] - a[0]) / length, (b[1] - a[1]) / length)
+    axis = [(a[0] - u[0] * 8, a[1] - u[1] * 8)] + [tuple(q) for q in beach_tunnel] + [(b[0] + u[0] * 8, b[1] + u[1] * 8)]
+    for i, p in enumerate(wps):
+        if tun and i == tun[0]:
+            for k in tun:
+                off = dist_to_polyline((wps[k]["x"], wps[k]["y"]), beach_tunnel)
+                notes.append(f"waypoint #{wps[k]['n']} ({wps[k]['x']:.0f}, {wps[k]['y']:.0f}) {wps[k]['section']}: "
+                             f"{off:.0f} m from the tunnel axis -> replaced by the axis")
+            pts += axis
+        elif i not in tun:
+            pts.append((p["x"], p["y"]))
+    route = resample_closed(smooth_closed(resample_closed(catmull_closed(pts), SPACING), window=3, passes=2), SPACING)
+    s0 = wps[W.get("start_waypoint", 0)]
+    k = min(range(len(route)), key=lambda i: math.dist(route[i], (s0["x"], s0["y"])))
+    return route[k:] + route[:k], wps, notes
+
+
+WAYPOINT_CLEAR = 4.5     # m from a wall for a corrected waypoint (the line clearance does the rest)
+
+
+def waypoint_passage(n, building):
+    return any(s["building"] == (building.get("name") or building["id"]) and s["from_waypoint"] <= n <= s["to_waypoint"]
+               for s in PROFILE.get("passages", []))
+
+
+def fix_waypoints(wps):
+    """Waypoints read off a sketch can sit inside a building. Move each one out through the nearest wall, to
+    WAYPOINT_CLEAR m outside (allowed passages, the roof deck and open roofs excepted). Returns report lines."""
+    notes = []
+    for p in wps:
+        x0, y0 = x, y = p["x"], p["y"]
+        hit = []
+        for _ in range(4):
+            changed = False
+            for b in DATA["buildings"]:
+                if b["osm_building"] == "roof" or b.get("drive_on_roof") or waypoint_passage(p["n"], b):
+                    continue
+                poly = [tuple(q) for q in b["points"]]
+                xs, ys = [q[0] for q in poly], [q[1] for q in poly]
+                if x < min(xs) - 10 or x > max(xs) + 10 or y < min(ys) - 10 or y > max(ys) + 10:
+                    continue
+                best = None
+                for (ax, ay), (bx, by) in zip(poly, poly[1:] + poly[:1]):
+                    dx, dy = bx - ax, by - ay
+                    L2 = dx * dx + dy * dy or 1e-9
+                    t = max(0.0, min(1.0, ((x - ax) * dx + (y - ay) * dy) / L2))
+                    qx, qy = ax + t * dx, ay + t * dy
+                    d = math.hypot(x - qx, y - qy)
+                    if best is None or d < best[0]:
+                        L = L2 ** 0.5
+                        best = (d, qx, qy, dy / L, -dx / L)       # outward normal of a counter-clockwise ring
+                inside = Path(poly).contains_point((x, y))
+                if inside or best[0] < WAYPOINT_CLEAR - 0.05:
+                    _, qx, qy, nx, ny = best
+                    x, y = qx + nx * WAYPOINT_CLEAR, qy + ny * WAYPOINT_CLEAR
+                    hit.append(b["name"] or b["id"])
+                    changed = True
+            if not changed:
+                break
+        if math.hypot(x - x0, y - y0) > 1.0:
+            notes.append(f"waypoint #{p['n']} ({x0:.0f}, {y0:.0f}) {p['section']}: inside or too close to "
+                         f"{', '.join(dict.fromkeys(hit))} -> moved {math.hypot(x - x0, y - y0):.0f} m to ({x:.0f}, {y:.0f})")
+            p["x"], p["y"] = round(x, 1), round(y, 1)
+    return notes
+
+
+def nearest_waypoint(p):
+    wps = _WAYPOINTS["points"]
+    return min(range(len(wps)), key=lambda k: (wps[k]["x"] - p[0]) ** 2 + (wps[k]["y"] - p[1]) ** 2)
+
+
+def passage_allowed(run_points, building):
+    """Old rule (no "passages" in the profile): every drive-through building may be crossed.
+    With "passages": only the named building, and only near the given waypoints (e.g. the atrium #1-#5)."""
+    specs = PROFILE.get("passages")
+    if not specs:
+        return True
+    specs = [s for s in specs if s["building"] == (building.get("name") or building["id"])]
+    if not specs or _WAYPOINTS["points"] is None:
+        return False
+    ok = sum(1 for p in run_points if any(s["from_waypoint"] <= nearest_waypoint(p) <= s["to_waypoint"] for s in specs))
+    return ok * 2 >= len(run_points)
+
+
 def apply_profile(points, buildings):
     """Sets track_z (driving height), zone, surface and level on every route point.
 
@@ -329,10 +451,22 @@ def apply_profile(points, buildings):
     zone = [""] * n
 
     t = PROFILE["tunnel_floor"]
-    a, b = idx(t["s_from"]), idx(t["s_to"])
-    for i in range(a, b + 1):
-        f = (i - a) / max(b - a, 1)
-        fixed[i] = t["z_from"] + (t["z_to"] - t["z_from"]) * f
+    if "s_from" in t:
+        a, b = idx(t["s_from"]), idx(t["s_to"])
+    else:                                              # the longest run of tunnel points, in driving order
+        runs, cur = [], []
+        for i in list(range(n)) + list(range(n)):
+            if points[i]["tunnel"] and len(cur) < n:
+                cur.append(i)
+            elif cur:
+                runs.append(cur)
+                cur = []
+        run = max(runs, key=len)
+        a, b = run[0], run[-1]
+    span = (b - a) % n
+    tunnel_idx = [(a + k) % n for k in range(span + 1)]
+    for k, i in enumerate(tunnel_idx):
+        fixed[i] = t["z_from"] + (t["z_to"] - t["z_from"]) * k / max(span, 1)
         zone[i] = "tunnel"
 
     deck = next(((bd, path) for bd, path in buildings if bd.get("drive_on_roof") and bd.get("roof_z") is not None), None)
@@ -342,11 +476,35 @@ def apply_profile(points, buildings):
         if on_deck:
             edge = on_deck[-1]
             up = PROFILE["upper_level"]
-            for i in range(place(up, "from_s", "from_at"), edge + 1):
+            i = place(up, "from_s", "from_at")
+            while True:                                 # may wrap past point 0 (start inside the upper level)
                 fixed[i] = up["z"]
                 zone[i] = "upper plaza"
+                if i == edge:
+                    break
+                i = (i + 1) % n
             for i in on_deck:
                 zone[i] = "terrace deck"
+    wedge = []
+    kick = PROFILE.get("kicker", {})
+    if edge is not None and kick.get("type") == "wedge":
+        # concrete wedge at the terrace edge (videos IMG_7723 0-12 s): a smooth slab from the deck down to the
+        # lawn, no step. Fast karts take off at the crest and land on the lawn, slow ones roll down it.
+        top, rise = fixed[edge], math.tan(math.radians(kick.get("slope_deg", 35)))
+        k = 1
+        while k < 20:
+            i = (edge + k) % n
+            z_k = top - k * step * rise
+            if z_k <= smooth[i] + 0.05:
+                break
+            fixed[i] = z_k
+            zone[i] = "kicker"
+            wedge.append(i)
+            k += 1
+        foot = (edge + k) % n
+        fixed[foot] = smooth[foot]
+        KICKER.update({"type": "wedge", "slope_deg": kick.get("slope_deg", 35), "length_m": round(k * step, 1),
+                       "drop_m": round(top - smooth[foot], 2), "foot_index": foot})
     for anchor in PROFILE["anchors"]:
         i = place(anchor, "s", "at")
         fixed[i] = anchor["z"]
@@ -369,7 +527,7 @@ def apply_profile(points, buildings):
         gap = b - a
         if gap <= 1:
             continue
-        hard_drop = a == edge                              # never smooth across the jump
+        hard_drop = a == edge and not wedge                # never smooth across a hard drop
         za, zb = fixed[a % n], fixed[b % n]
         for k in range(1, gap):
             i = (a + k) % n
@@ -394,41 +552,64 @@ def apply_profile(points, buildings):
         p["zone"] = zone[i]
         p["level"] = "terrace deck" if zone[i] == "terrace deck" else ""
         p["surface"] = surface_at[i] or "asphalt"
+        if PROFILE.get("surface_overrides"):            # by place type, whatever the order of the lap
+            if zone[i] in ("kicker", "terrace deck"):
+                p["surface"] = "concrete_light"
+            elif zone[i] == "tunnel":
+                p["surface"] = "tunnel_floor"
+            elif zone[i] == "atrium":
+                p["surface"] = "concrete_polished"
 
     notes = []
-    worst = max(((abs(z[(i + 1) % n] - z[i]) / step, i) for i in range(n) if i != edge), key=lambda g: g[0])
+    skip = {edge} | set(wedge)
+    worst = max(((abs(z[(i + 1) % n] - z[i]) / step, i) for i in range(n) if i not in skip), key=lambda g: g[0])
     notes.append(f"steepest slope {worst[0] * 100:.0f} % at s = {points[worst[1]]['s']:.0f} m ({points[worst[1]]['zone']})")
     for i in range(n):
         g = abs(z[(i + 1) % n] - z[i]) / step
-        if i != edge and g > PROFILE["max_grade_warn"]:
+        if i not in skip and g > PROFILE["max_grade_warn"]:
             notes.append(f"  warning: {g * 100:.0f} % at s = {points[i]['s']:.0f} m")
     if edge is not None:
-        notes.append(f"upper level {PROFILE['upper_level']['z']} m from s = {PROFILE['upper_level']['from_s']} to "
-                     f"{points[edge]['s']:.0f} m, drop at the terrace edge {z[edge] - z[(edge + 1) % n]:.1f} m")
+        up = PROFILE["upper_level"]
+        notes.append(f"upper level {up['z']} m from s = {points[place(up, 'from_s', 'from_at')]['s']:.0f} to "
+                     f"{points[edge]['s']:.0f} m (wraps past the start if needed)")
+        if wedge:
+            notes.append(f"concrete wedge at the terrace edge: {KICKER['length_m']} m long, {KICKER['slope_deg']} deg, "
+                         f"{KICKER['drop_m']} m down to the lawn")
+        else:
+            notes.append(f"drop at the terrace edge {z[edge] - z[(edge + 1) % n]:.1f} m")
     return (edge if edge is not None else 0), notes
 
 
 def main():
-    red, jump_mark = sketch_strokes()
-    path, left_over = order_loop(thin(red), TUNNEL_START)
-    route = resample_closed(smooth_closed(path), SPACING)
-    # drive direction: from the beach heading north into the tunnel (blue arrows)
-    k = min(range(len(route)), key=lambda i: math.dist(route[i], TUNNEL_START))
-    if route[(k + 5) % len(route)][1] < route[k][1]:
-        route.reverse()
-    k = min(range(len(route)), key=lambda i: math.dist(route[i], TUNNEL_START))
-    route = route[k:] + route[:k]               # point 0 = in front of the beach tunnel
-
-    # the sketch passes 5-10 m beside the real tunnel: put that part exactly on the tunnel axis
     beach_tunnel = next(p["points"] for p in DATA["paths"] if p["tunnel"] and p["name"] == "Sagres Beach Way")
-    route = resample_closed(smooth_closed(snap_to_line(route, beach_tunnel), window=2, passes=1), SPACING)
-    k = min(range(len(route)), key=lambda i: math.dist(route[i], beach_tunnel[0]))
-    route = route[k:] + route[:k]               # point 0 = south portal of the beach tunnel
     tunnel_len = sum(math.dist(a, b) for a, b in zip(beach_tunnel, beach_tunnel[1:]))
+    if PROFILE.get("waypoints"):
+        # waypoint list (Noah's route, PR #35): point 0 = the start waypoint
+        route, waypoints, source_notes = waypoint_route(beach_tunnel)
+        jw = waypoints[json.load(open(os.path.join(HERE, PROFILE["waypoints"]))).get("jump_waypoint", 7)]
+        jump_mark, left_over, start_mark = (jw["x"], jw["y"]), 0, route[0]
+        source = "waypoints: " + PROFILE["waypoints"]
+    else:
+        red, jump_mark = sketch_strokes()
+        path, left_over = order_loop(thin(red), TUNNEL_START)
+        route = resample_closed(smooth_closed(path), SPACING)
+        # drive direction: from the beach heading north into the tunnel (blue arrows)
+        k = min(range(len(route)), key=lambda i: math.dist(route[i], TUNNEL_START))
+        if route[(k + 5) % len(route)][1] < route[k][1]:
+            route.reverse()
+        k = min(range(len(route)), key=lambda i: math.dist(route[i], TUNNEL_START))
+        route = route[k:] + route[:k]               # point 0 = in front of the beach tunnel
+        start_mark, source_notes, source = beach_tunnel[0], [], "Luc's sketch on preview_top.png, 2026-11-08"
+
+    # the line may pass 5-10 m beside the real tunnel: put that part exactly on the tunnel axis
+    route = resample_closed(smooth_closed(snap_to_line(route, beach_tunnel), window=2, passes=1), SPACING)
+    k = min(range(len(route)), key=lambda i: math.dist(route[i], start_mark))
+    route = route[k:] + route[:k]
     route, clear_notes = clear_of_walls(route, beach_tunnel, tunnel_len)
+    clear_notes = source_notes + clear_notes
     route = resample_closed(route, SPACING)
-    k = min(range(len(route)), key=lambda i: math.dist(route[i], beach_tunnel[0]))
-    route = route[k:] + route[:k]               # point 0 stays the south portal
+    k = min(range(len(route)), key=lambda i: math.dist(route[i], start_mark))
+    route = route[k:] + route[:k]               # point 0 = the start (sketch: south portal of the tunnel)
     widths = road_widths(route, beach_tunnel, tunnel_len)
     narrow = [i for i, w in enumerate(widths) if w < MAX_WIDTH - 0.05]
     if narrow:
@@ -457,10 +638,12 @@ def main():
         print(line)
     landing = points[(jump_i + 1) % len(points)]
     length = len(points) * SPACING
-    result = {"source": "Luc's sketch on preview_top.png, 2026-11-08", "spacing_m": SPACING, "length_m": length,
+    result = {"source": source, "spacing_m": SPACING, "length_m": length, "start_index": 0,
               "closed_loop": True, "direction": "point order = driving direction (north through the beach tunnel)",
               "jump": {"index": jump_i, "x": points[jump_i]["x"], "y": points[jump_i]["y"], "s": points[jump_i]["s"],
-                       "take_off_z": points[jump_i]["track_z"], "drop_m": round(points[jump_i]["track_z"] - landing["track_z"], 2),
+                       "take_off_z": points[jump_i]["track_z"],
+                       "drop_m": KICKER.get("drop_m", round(points[jump_i]["track_z"] - landing["track_z"], 2)),
+                       "kicker": dict(KICKER) or {"type": "kicker on the deck, hard drop"},
                        "sketch_mark": {"index": jump_sketch_i, "s": points[jump_sketch_i]["s"],
                                        "note": "Luc's green mark; moved to the terrace edge (decided 2026-11-08)"}},
               "heights": "ground_z = terrain from the elevation data; track_z = driving height (route_profile.json); zone and surface per point",
