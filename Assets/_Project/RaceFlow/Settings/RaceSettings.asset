@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9ecfe4a95896a04b9cf7aaacb938b2a, type: 3}
+  m_Name: RaceSettings
+  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.RaceSettings
+  trackSceneName: Track_Campus
+  fallbackTrackSceneName: RaceFlow_PlaceholderTrack
+  countdownFrom: 3
+  countdownStepSeconds: 1
+  retryCountdownStepSeconds: 0.5
+  splitPopupSeconds: 2
+  hintSeconds: 2.5
+  fallRecoverHeight: -20
+  fallCheckCooldownSeconds: 0.5
+  bronzeSeconds: 12
+  silverSeconds: 11
+  goldSeconds: 10.2
+  deansListSeconds: 9.6
+  coachNoDriftSeconds: 5
+  coachHintSeconds: 3.5

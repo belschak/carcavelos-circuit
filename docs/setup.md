@@ -38,4 +38,8 @@ Windows:
 Mac: `/Applications/Unity/Hub/Editor/6000.3.28f1/Unity.app/Contents/MacOS/Unity` with the same arguments. Or in the Editor: Window > General > Test Runner > EditMode > Run All.
 
 ## Web build (Role 3, or the build backup)
-File > Build Profiles > Web > Switch Platform. Player Settings > Web > Publishing Settings: Compression **Gzip**, Decompression Fallback **off** (turn on only if itch shows a decompression error). Build into `Build-Web/` (ignored by Git). Zip the folder contents so `index.html` is at the zip root, upload to itch.io as HTML, "This file will be played in the browser", viewport 1280x720, click-to-play on, SharedArrayBuffer off. Log it in `docs/builds.md`.
+All Web settings are set in code by `Assets/_Project/RaceFlow/Editor/Role4WebBuild.cs`, so do not change them by hand in Player Settings (the script overwrites them on every build). Menu **Carcavelos Circuit > Web Build**, or with Unity closed:
+```
+"C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -buildTarget WebGL -executeMethod CarcavelosCircuit.RaceFlow.Editor.Role4WebBuild.Build -quit -logFile Logs/web-build.log
+```
+It builds into `Build-Web/` (ignored by Git) with compression Disabled and hashed file names, which works on GitHub Pages (Pages gzips on the fly) and on itch.io. Add `-webHost=itch` for a pre-gzipped itch.io build. The build takes several minutes (link time optimisation). The log lists every file with its size. Test it with `python tools/serve_web_build.py`. For itch.io: zip the folder contents so `index.html` is at the zip root, upload as HTML, "This file will be played in the browser", viewport 1280x720, click-to-play on, SharedArrayBuffer off. Log it in `docs/builds.md`.

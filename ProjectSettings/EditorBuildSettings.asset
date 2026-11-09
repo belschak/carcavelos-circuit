@@ -11,6 +11,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Project/Track/Scenes/Track_Campus.unity
     guid: 4f14ff89a7d8e9b409b7ce04b67a799b
+  - enabled: 1
+    path: Assets/_Project/RaceFlow/Scenes/RaceFlow_PlaceholderTrack.unity
+    guid: c8e853439a7cf50498f0c6016cbd3aa8
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

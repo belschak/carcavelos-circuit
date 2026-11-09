@@ -1,0 +1,383 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!-- The whole HUD. Works like HTML: elements with names (RaceHud.cs finds them by name) and classes (RaceHud.uss styles them).
+         Nothing here is hidden with display:none. RaceHud.cs puts a state class on hud-root (st-ready, st-countdown,
+         st-racing, st-results) and "is-shown" on parts, and the USS fades and slides them (see "Animation pattern" in RaceHud.uss).
+         Empty elements named "...-host" get a shape drawn in code (UI/SpeedArc.cs, UI/CalcadaWave.cs, UI/AzulejoPattern.cs). -->
+    <Style src="RaceHud.uss" />
+    <ui:VisualElement name="hud-root" class="hud-root st-ready">
+
+        <!-- Boost edge glow: orange light on the left and right screen edge while boosting (peripheral vision cue) -->
+        <ui:VisualElement name="edge-glow-left" class="edge-glow edge-glow--left" />
+        <ui:VisualElement name="edge-glow-right" class="edge-glow edge-glow--right" />
+
+        <!-- ===== Race layer: everything shown while driving (faded out on the start and results screens) ===== -->
+        <ui:VisualElement name="race-layer" class="race-layer">
+            <ui:VisualElement class="hud-safe">
+
+                <ui:VisualElement class="hud-top">
+                    <ui:VisualElement class="top-left">
+                        <!-- Lap time + best time in one panel -->
+                        <ui:VisualElement name="time-panel" class="panel panel--accent time-panel">
+                            <ui:VisualElement class="row">
+                                <ui:Label text="LAP TIME" class="caption f-ui" />
+                                <ui:Label name="lap-counter" text="LAP 1/1" class="lap-counter f-ui" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="timer-row" class="timer-row">
+                                <ui:Label name="timer-main" text="0:00" class="timer-main f-num" />
+                                <ui:Label name="timer-fraction" text=".000" class="timer-fraction f-num" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="best-row">
+                                <ui:Label text="BEST" class="caption caption--small f-ui" />
+                                <ui:Label name="best" text="--" class="best f-num" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+
+                        <!-- Next medal to aim for: gem in the medal colour, name, lap time needed. Dims once the lap is too slow for it -->
+                        <ui:VisualElement name="medal-target" class="medal-target medal--bronze">
+                            <ui:VisualElement class="medal-gem" />
+                            <ui:Label name="medal-target-name" text="BRONZE" class="medal-target-name f-ui" />
+                            <ui:Label name="medal-target-time" text="0:12.000" class="medal-target-time f-num" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Checkpoint progress: "2/3" and one diamond per checkpoint plus the finish (pips made in RaceHud.cs) -->
+                    <ui:VisualElement name="cp-panel" class="panel cp-panel">
+                        <ui:VisualElement class="row cp-head">
+                            <ui:Label text="CHECKPOINT" class="caption f-ui" />
+                            <ui:Label name="cp-count" text="0/3" class="cp-count f-num" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="cp-pips" class="cp-pips" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement class="hud-bottom">
+                    <!-- Drift meter: two stage diamonds, a bar that fills while drifting, BOOST on release -->
+                    <ui:VisualElement name="drift-panel" class="panel drift-panel">
+                        <ui:VisualElement class="row drift-head">
+                            <ui:Label name="drift-label" text="DRIFT" class="drift-label f-ui" />
+                            <ui:VisualElement name="drift-pip-1" class="drift-pip drift-pip--1" />
+                            <ui:VisualElement name="drift-pip-2" class="drift-pip drift-pip--2" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="drift-bar" class="drift-bar">
+                            <ui:VisualElement name="drift-fill" class="drift-fill" />
+                            <ui:VisualElement name="drift-tick" class="drift-tick" />
+                            <ui:VisualElement name="drift-shine" class="drift-shine" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Speed gauge: arc drawn in code (SpeedArc) with the number in the middle -->
+                    <ui:VisualElement name="speed-gauge" class="speed-gauge">
+                        <ui:VisualElement name="speed-arc-host" class="speed-arc-host" />
+                        <ui:VisualElement class="speed-centre">
+                            <ui:Label name="speed" text="0" class="speed f-num" />
+                            <ui:Label text="KM/H" class="caption caption--small f-ui" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Checkpoint split: a colour block that slides in, blue = ahead of your best, coral = behind -->
+            <ui:VisualElement name="split" class="split">
+                <ui:VisualElement name="split-chip" class="split-chip">
+                    <ui:VisualElement class="split-words">
+                        <ui:Label name="split-cp" text="CP 1" class="split-cp f-ui" />
+                        <ui:Label name="split-word" text="AHEAD" class="split-word f-ui" />
+                    </ui:VisualElement>
+                    <ui:Label name="split-value" text="-0.000" class="split-value f-num" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Callouts under the split. Only one shows at a time (RaceHud.cs picks): hint > wrong way > stuck -->
+            <ui:VisualElement name="hint" class="callout">
+                <ui:VisualElement class="callout-chip hint-chip">
+                    <ui:Label name="hint-icon" text="!" class="hint-icon f-display" />
+                    <ui:Label name="hint-text" text="" class="hint-text f-ui" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="wrong-way" class="callout">
+                <ui:VisualElement name="wrong-way-chip" class="callout-chip wrong-way-chip">
+                    <ui:Label text="WRONG WAY" class="wrong-way-title f-display" />
+                    <ui:Label text="TURN AROUND" class="wrong-way-sub f-ui" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="stuck" class="callout">
+                <ui:VisualElement class="callout-chip stuck-chip">
+                    <ui:Label text="STUCK?" class="stuck-title f-ui" />
+                    <ui:VisualElement class="keycap keycap--big"><ui:Label text="R" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="RECOVER" class="stuck-title f-ui" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Footer key hint: shown during the countdown and the first seconds of racing, then it fades out -->
+            <ui:VisualElement name="controls-hint" class="controls-hint">
+                <ui:VisualElement class="keycap"><ui:Label text="R" class="f-ui" /></ui:VisualElement>
+                <ui:Label text="RECOVER" class="key-text f-ui" />
+                <ui:VisualElement class="keycap keycap--wide"><ui:Label text="ENTER" class="f-ui" /></ui:VisualElement>
+                <ui:Label text="RETRY" class="key-text key-text--last f-ui" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ===== Countdown: diamond tile with 3 / 2 / 1 / GO! and three lamps, in the upper third (above the kart) ===== -->
+        <ui:VisualElement name="countdown" class="cd">
+            <ui:VisualElement name="countdown-tile" class="cd-tile">
+                <ui:Label name="countdown-number" text="3" class="cd-num f-display" />
+            </ui:VisualElement>
+            <ui:VisualElement name="countdown-lamps" class="cd-lamps">
+                <ui:VisualElement class="cd-lamp" />
+                <ui:VisualElement class="cd-lamp" />
+                <ui:VisualElement class="cd-lamp" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="go-flash" class="go-flash" />
+
+        <!-- ===== Start screen (state Ready) ===== -->
+        <ui:VisualElement name="start-screen" class="overlay start-screen">
+            <ui:VisualElement name="start-bg" class="overlay-bg" />
+            <ui:VisualElement name="start-pattern-host" class="pattern-host" />
+            <ui:VisualElement name="start-content" class="start-content">
+                <ui:Label text="TIME TRIAL  ·  1 LAP  ·  PRAIA DE CARCAVELOS" class="kicker f-ui intro intro--1" />
+                <ui:Label text="CARCAVELOS" class="title f-display intro intro--2" />
+                <ui:VisualElement name="start-wave-host" class="wave-host intro intro--3" />
+                <ui:Label text="CIRCUIT" class="title-2 f-display intro intro--3" />
+                <ui:Label name="press-any-key" text="CLICK OR PRESS ANY KEY" class="pill f-ui intro intro--4" />
+                <ui:VisualElement class="controls-row intro intro--5">
+                    <ui:VisualElement class="keycap"><ui:Label text="W" class="f-ui" /></ui:VisualElement>
+                    <ui:VisualElement class="keycap"><ui:Label text="A" class="f-ui" /></ui:VisualElement>
+                    <ui:VisualElement class="keycap"><ui:Label text="S" class="f-ui" /></ui:VisualElement>
+                    <ui:VisualElement class="keycap"><ui:Label text="D" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="DRIVE" class="key-text f-ui" />
+                    <ui:VisualElement class="keycap keycap--wide"><ui:Label text="SPACE" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="DRIFT, LET GO = BOOST" class="key-text f-ui" />
+                    <ui:VisualElement class="keycap"><ui:Label text="R" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="RECOVER" class="key-text f-ui" />
+                    <ui:VisualElement class="keycap keycap--wide"><ui:Label text="ENTER" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="RETRY" class="key-text key-text--last f-ui" />
+                </ui:VisualElement>
+                <ui:Label name="start-best" text="" class="start-best f-num intro intro--5" />
+                <!-- Menu buttons (task P7). The keys O, C and M do the same, and never start the race -->
+                <ui:VisualElement name="start-menu" class="menu-row intro intro--6">
+                    <ui:VisualElement name="start-settings" class="menu-pill">
+                        <ui:VisualElement class="keycap keycap--small"><ui:Label text="O" class="f-ui" /></ui:VisualElement>
+                        <ui:Label text="SETTINGS" class="menu-pill-text f-ui" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="start-credits" class="menu-pill">
+                        <ui:VisualElement class="keycap keycap--small"><ui:Label text="C" class="f-ui" /></ui:VisualElement>
+                        <ui:Label text="CREDITS" class="menu-pill-text f-ui" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="start-sound" class="menu-pill">
+                        <ui:VisualElement class="keycap keycap--small"><ui:Label text="M" class="f-ui" /></ui:VisualElement>
+                        <ui:Label name="start-sound-text" text="SOUND ON" class="menu-pill-text f-ui" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ===== Results screen (state Results). Stagger timing lives in the USS (transition-delay) ===== -->
+        <ui:VisualElement name="results-screen" class="overlay results-screen">
+            <ui:VisualElement name="results-bg" class="overlay-bg" />
+            <ui:VisualElement name="results-pattern-host" class="pattern-host" />
+            <ui:VisualElement name="results-card" class="card">
+                <ui:Label name="record" text="NEW RECORD" class="record f-display" />
+                <ui:Label text="TIME TRIAL  ·  1 LAP" class="res-kicker f-ui" />
+                <ui:Label text="FINISH" class="res-headline f-display" />
+                <ui:Label name="final-time" text="0:00.000" class="final-time f-num" />
+                <ui:VisualElement name="results-wave-host" class="wave-host wave-host--small" />
+                <!-- Medal stamp: its own row, so it never covers other text (the NEW RECORD stamp hangs over the top edge instead) -->
+                <ui:VisualElement name="res-medal" class="res-medal">
+                    <ui:VisualElement name="res-medal-badge" class="medal-badge medal--none">
+                        <ui:VisualElement class="medal-gem medal-gem--big" />
+                        <ui:Label name="res-medal-name" text="NO MEDAL" class="medal-badge-name f-display" />
+                    </ui:VisualElement>
+                    <ui:Label name="res-medal-next" text="" class="res-medal-next f-ui" />
+                </ui:VisualElement>
+                <ui:VisualElement name="res-delta" class="res-delta">
+                    <ui:Label name="res-delta-value" text="+0.000 s" class="res-delta-value f-num" />
+                    <ui:Label name="res-delta-text" text="vs your best" class="res-delta-text f-ui" />
+                </ui:VisualElement>
+                <ui:Label name="res-best" text="" class="res-best f-num" />
+                <!-- Lap report: four numbers from RunStats, filled once when the lap ends -->
+                <ui:VisualElement name="res-stats" class="res-stats">
+                    <ui:VisualElement name="stat-speed" class="stat">
+                        <ui:Label name="stat-speed-value" text="0" class="stat-value f-num" />
+                        <ui:Label text="TOP KM/H" class="stat-caption f-ui" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="stat-drifts" class="stat">
+                        <ui:Label name="stat-drifts-value" text="0" class="stat-value f-num" />
+                        <ui:Label text="DRIFTS" class="stat-caption f-ui" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="stat-boosts" class="stat">
+                        <ui:Label name="stat-boosts-value" text="0" class="stat-value f-num" />
+                        <ui:Label text="BOOSTS" class="stat-caption f-ui" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="stat-air" class="stat stat--last">
+                        <ui:Label name="stat-air-value" text="0.0 s" class="stat-value f-num" />
+                        <ui:Label text="AIR TIME" class="stat-caption f-ui" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="res-actions" class="res-actions">
+                    <ui:Button name="retry-button" text="RETRY" class="retry-button f-ui" />
+                    <ui:VisualElement class="keycap keycap--wide"><ui:Label text="ENTER" class="f-ui" /></ui:VisualElement>
+                    <ui:VisualElement name="results-settings" class="menu-pill menu-pill--results">
+                        <ui:VisualElement class="keycap keycap--small"><ui:Label text="O" class="f-ui" /></ui:VisualElement>
+                        <ui:Label text="SETTINGS" class="menu-pill-text f-ui" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ===== Pause (task P7): the tab or window lost focus during the countdown or the race ===== -->
+        <ui:VisualElement name="pause-screen" class="overlay pause-screen">
+            <ui:VisualElement class="pause-bg" />
+            <ui:VisualElement name="pause-pattern-host" class="pattern-host" />
+            <ui:VisualElement class="pause-content">
+                <ui:Label text="PAUSED" class="pause-title f-display" />
+                <ui:VisualElement name="pause-wave-host" class="wave-host wave-host--small" />
+                <ui:Label text="CLICK OR PRESS ANY KEY TO CONTINUE" class="pill pause-pill f-ui" />
+                <ui:Label text="THE CLOCK IS STOPPED" class="pause-note f-ui" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ===== Settings (task P7), key O on the start and results screen. Volume cells are made in UI/SettingsPanel.cs ===== -->
+        <ui:VisualElement name="settings-screen" class="menu-overlay">
+            <ui:VisualElement name="settings-bg" class="menu-bg" />
+            <ui:VisualElement name="settings-card" class="menu-card">
+                <ui:Label text="SETTINGS" class="menu-title f-display" />
+                <ui:VisualElement name="settings-wave-host" class="wave-host wave-host--small" />
+                <ui:VisualElement name="set-master" class="set-row">
+                    <ui:Label text="MASTER VOLUME" class="set-name f-ui" />
+                    <ui:VisualElement class="set-control">
+                        <ui:VisualElement class="set-step set-step--down"><ui:VisualElement class="set-step-bar" /></ui:VisualElement>
+                        <ui:VisualElement class="set-bar" />
+                        <ui:VisualElement class="set-step set-step--up"><ui:VisualElement class="set-step-bar" /><ui:VisualElement class="set-step-bar set-step-bar--v" /></ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label text="100 %" class="set-value f-num" />
+                </ui:VisualElement>
+                <ui:VisualElement name="set-music" class="set-row">
+                    <ui:Label text="MUSIC" class="set-name f-ui" />
+                    <ui:VisualElement class="set-control">
+                        <ui:VisualElement class="set-step set-step--down"><ui:VisualElement class="set-step-bar" /></ui:VisualElement>
+                        <ui:VisualElement class="set-bar" />
+                        <ui:VisualElement class="set-step set-step--up"><ui:VisualElement class="set-step-bar" /><ui:VisualElement class="set-step-bar set-step-bar--v" /></ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label text="100 %" class="set-value f-num" />
+                </ui:VisualElement>
+                <ui:VisualElement name="set-effects" class="set-row">
+                    <ui:Label text="EFFECTS" class="set-name f-ui" />
+                    <ui:VisualElement class="set-control">
+                        <ui:VisualElement class="set-step set-step--down"><ui:VisualElement class="set-step-bar" /></ui:VisualElement>
+                        <ui:VisualElement class="set-bar" />
+                        <ui:VisualElement class="set-step set-step--up"><ui:VisualElement class="set-step-bar" /><ui:VisualElement class="set-step-bar set-step-bar--v" /></ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label text="100 %" class="set-value f-num" />
+                </ui:VisualElement>
+                <ui:VisualElement name="set-sound" class="set-row set-row--toggle">
+                    <ui:Label text="SOUND" class="set-name f-ui" />
+                    <ui:VisualElement class="set-control">
+                        <ui:VisualElement class="set-switch"><ui:VisualElement class="set-knob" /></ui:VisualElement>
+                        <ui:Label text="ALSO KEY M, ANY TIME" class="set-note f-ui" />
+                    </ui:VisualElement>
+                    <ui:Label text="ON" class="set-value f-ui" />
+                </ui:VisualElement>
+                <ui:VisualElement name="set-motion" class="set-row set-row--toggle">
+                    <ui:Label text="REDUCED MOTION" class="set-name f-ui" />
+                    <ui:VisualElement class="set-control">
+                        <ui:VisualElement class="set-switch"><ui:VisualElement class="set-knob" /></ui:VisualElement>
+                        <ui:Label text="NO SHAKE, NO BOUNCE" class="set-note f-ui" />
+                    </ui:VisualElement>
+                    <ui:Label text="OFF" class="set-value f-ui" />
+                </ui:VisualElement>
+                <ui:VisualElement class="menu-keys">
+                    <ui:VisualElement class="keycap"><ui:Label text="W" class="f-ui" /></ui:VisualElement>
+                    <ui:VisualElement class="keycap"><ui:Label text="S" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="CHOOSE" class="key-text f-ui" />
+                    <ui:VisualElement class="keycap"><ui:Label text="A" class="f-ui" /></ui:VisualElement>
+                    <ui:VisualElement class="keycap"><ui:Label text="D" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="CHANGE" class="key-text f-ui" />
+                    <ui:VisualElement class="keycap keycap--wide"><ui:Label text="SPACE" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="ON / OFF" class="key-text key-text--last f-ui" />
+                </ui:VisualElement>
+                <ui:VisualElement name="settings-close" class="menu-pill menu-pill--close">
+                    <ui:VisualElement class="keycap keycap--small"><ui:Label text="O" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="CLOSE" class="menu-pill-text f-ui" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ===== Credits (task P7), key C on the start screen. Two pages, A/D or NEXT PAGE to turn ===== -->
+        <ui:VisualElement name="credits-screen" class="menu-overlay">
+            <ui:VisualElement name="credits-bg" class="menu-bg" />
+            <ui:VisualElement name="credits-card" class="menu-card">
+                <ui:Label text="CREDITS" class="menu-title f-display" />
+                <ui:VisualElement name="credits-wave-host" class="wave-host wave-host--small" />
+                <ui:VisualElement class="credits-pages">
+                    <!-- Page 1: the team, names and roles as in docs/team.md -->
+                    <ui:VisualElement name="credits-page-1" class="credits-page">
+                        <ui:Label text="THE TEAM" class="credits-head f-ui" />
+                        <ui:VisualElement class="credits-team">
+                            <ui:VisualElement class="credit-person">
+                                <ui:VisualElement class="credit-badge"><ui:Label text="1" class="credit-badge-num f-display" /></ui:VisualElement>
+                                <ui:VisualElement class="credit-words">
+                                    <ui:Label text="ALESSANDRO ROSSI" class="credit-name f-ui" />
+                                    <ui:Label text="DRIVING + CAMERA" class="credit-role f-ui" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="credit-person">
+                                <ui:VisualElement class="credit-badge"><ui:Label text="2" class="credit-badge-num f-display" /></ui:VisualElement>
+                                <ui:VisualElement class="credit-words">
+                                    <ui:Label text="NOAH" class="credit-name f-ui" />
+                                    <ui:Label text="CAMPUS TRACK + RACE RULES" class="credit-role f-ui" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="credit-person">
+                                <ui:VisualElement class="credit-badge"><ui:Label text="3" class="credit-badge-num f-display" /></ui:VisualElement>
+                                <ui:VisualElement class="credit-words">
+                                    <ui:Label text="LUC TIPPMANN" class="credit-name f-ui" />
+                                    <ui:Label text="KART, VISUALS + WEB RELEASE" class="credit-role f-ui" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="credit-person">
+                                <ui:VisualElement class="credit-badge"><ui:Label text="4" class="credit-badge-num f-display" /></ui:VisualElement>
+                                <ui:VisualElement class="credit-words">
+                                    <ui:Label text="DAVID BELSCHAK" class="credit-name f-ui" />
+                                    <ui:Label text="RACE FLOW, UI + SOUND" class="credit-role f-ui" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Label text="Student team project for Intro to Programming, Nova SBE, Fall 2026." class="credits-foot f-ui" />
+                    </ui:VisualElement>
+                    <!-- Page 2: tools and sources (as in THIRD_PARTY.md and the README credits) -->
+                    <ui:VisualElement name="credits-page-2" class="credits-page">
+                        <ui:Label text="BUILT WITH" class="credits-head f-ui" />
+                        <ui:Label text="Unity 6.3 LTS  ·  Universal Render Pipeline  ·  UI Toolkit  ·  Input System  ·  Blender" class="credit-text f-ui" />
+                        <ui:Label text="SOUND" class="credits-head credits-head--next f-ui" />
+                        <ui:Label text="Sound effects: elevenlabs.io (kart engine and drift by Luc Tippmann, boost by David Belschak). Music and all other sounds: our own synthesised work." class="credit-text f-ui" />
+                        <ui:Label text="MAP DATA" class="credits-head credits-head--next f-ui" />
+                        <ui:Label text="Route traced over OpenStreetMap. Map data © OpenStreetMap contributors (ODbL)." class="credit-text f-ui" />
+                        <ui:Label text="Original game, not affiliated with Nova SBE." class="credits-foot f-ui" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="credits-footer">
+                    <ui:VisualElement name="credits-dot-1" class="credits-dot" />
+                    <ui:VisualElement name="credits-dot-2" class="credits-dot" />
+                    <ui:VisualElement name="credits-next" class="menu-pill menu-pill--next">
+                        <ui:VisualElement class="keycap keycap--small"><ui:Label text="D" class="f-ui" /></ui:VisualElement>
+                        <ui:Label text="NEXT PAGE" class="menu-pill-text f-ui" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="credits-close" class="menu-pill menu-pill--close">
+                        <ui:VisualElement class="keycap keycap--small"><ui:Label text="C" class="f-ui" /></ui:VisualElement>
+                        <ui:Label text="CLOSE" class="menu-pill-text f-ui" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- ===== Toast (task P7): "SOUND OFF" / "SOUND ON" for a moment after M ===== -->
+        <ui:VisualElement name="toast" class="toast">
+            <ui:VisualElement class="keycap keycap--small"><ui:Label text="M" class="f-ui" /></ui:VisualElement>
+            <ui:Label name="toast-text" text="SOUND OFF" class="toast-text f-ui" />
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

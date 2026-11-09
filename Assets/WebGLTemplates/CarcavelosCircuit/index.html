@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>{{{ PRODUCT_NAME }}}: seaside campus kart time trial</title>
+    <meta name="description" content="Carcavelos Circuit: race a kart around a seaside campus in Portugal, drift for boosts and beat your best lap. Free browser game, a student project made with Unity.">
+    <meta name="theme-color" content="#123B5E">
+    <meta name="color-scheme" content="dark">
+    <!-- Link previews (WhatsApp, Discord, LinkedIn ...). No og:image: it needs a full https URL of the host, which itch.io and GitHub Pages add themselves. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{{ PRODUCT_NAME }}}">
+    <meta property="og:title" content="{{{ PRODUCT_NAME }}}: seaside campus kart time trial">
+    <meta property="og:description" content="Drift for boosts and beat your best lap on a seaside campus track. Free in the browser, best on a laptop with a keyboard.">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary">
+    <!-- Favicon: the diamond tile from the HUD countdown (inline SVG, no extra download). -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23123B5E'/%3E%3Crect x='7' y='7' width='18' height='18' rx='4' transform='rotate(45 16 16)' fill='%23EAEAEC'/%3E%3Crect x='11.5' y='11.5' width='9' height='9' rx='2' transform='rotate(45 16 16)' fill='%23FF8A1F'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="TemplateData/style.css">
+  </head>
+  <body>
+    <!-- Carcavelos Circuit Web template (Role 4, tasks P2 + P8). Plain HTML/CSS/JS: no web fonts, no images, no external requests.
+         The canvas always fills the window; Unity renders at that size (capped device pixel ratio).
+         Test the cards in a real build with ?test=mobile, ?test=nowebgl or ?test=error at the end of the address. -->
+    <canvas id="cc-canvas" tabindex="-1" aria-label="Carcavelos Circuit game"></canvas>
+
+    <div id="cc-loader">
+      <!-- Background: sky, rising sun (moves up with the loading progress), sea, azulejo tiles, calcada wave. Pure CSS. -->
+      <div class="cc-sky" aria-hidden="true"></div>
+      <div class="cc-sun" aria-hidden="true"></div>
+      <div class="cc-sea" aria-hidden="true"></div>
+      <div class="cc-tiles" aria-hidden="true"></div>
+
+      <main class="cc-center">
+        <div class="cc-emblem" aria-hidden="true"><span></span></div>
+        <p class="cc-kicker">Campus time trial</p>
+        <h1 class="cc-title">Carcavelos <span class="cc-title-accent">Circuit</span></h1>
+
+        <!-- Only one of these panels shows at a time (showPanel in the script below). -->
+        <section class="cc-panel" id="cc-panel-loading" aria-live="polite">
+          <div class="cc-road" role="progressbar" aria-label="Loading the game" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="cc-fill"></div>
+            <div class="cc-lane"></div>
+            <div class="cc-finish"></div>
+            <div class="cc-kart"></div>
+          </div>
+          <div class="cc-status">
+            <span class="cc-phase">Loading the track</span>
+            <span class="cc-percent">0%</span>
+          </div>
+          <p class="cc-tip">Hold Space in a corner to drift, let go for a boost.</p>
+        </section>
+
+        <section class="cc-panel" id="cc-panel-play" hidden>
+          <button class="cc-play" id="cc-play-button" type="button">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            <span>Click to play</span>
+          </button>
+          <p class="cc-play-hint">or press any key &middot; sound on</p>
+        </section>
+
+        <section class="cc-panel cc-card" id="cc-panel-mobile" hidden>
+          <svg class="cc-card-icon" viewBox="0 0 48 32" width="64" height="43" aria-hidden="true">
+            <rect x="8" y="3" width="32" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="3"/>
+            <path d="M3 27h42" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+            <rect x="21" y="9" width="6" height="6" rx="1.5" transform="rotate(45 24 12)" fill="#FF8A1F"/>
+          </svg>
+          <h2>Best on a laptop with a keyboard</h2>
+          <p>You drive with the keys below and there are no touch controls. Open this page on a laptop or desktop for the full race.</p>
+          <div class="cc-actions">
+            <button class="cc-button" id="cc-load-anyway" type="button">Load anyway</button>
+          </div>
+          <p class="cc-small">Loading anyway downloads the whole game, which is big on mobile data.</p>
+        </section>
+
+        <section class="cc-panel cc-card" id="cc-panel-error" role="alert" hidden>
+          <svg class="cc-card-icon" viewBox="0 0 48 32" width="64" height="43" aria-hidden="true">
+            <rect x="13" y="5" width="22" height="22" rx="4" transform="rotate(45 24 16)" fill="none" stroke="#FF8A1F" stroke-width="3"/>
+            <path d="M24 9.5v8" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+            <circle cx="24" cy="23" r="2.2" fill="currentColor"/>
+          </svg>
+          <h2 class="cc-error-title">The game could not start</h2>
+          <p class="cc-error-text">Something went wrong while loading. Reloading the page usually fixes it.</p>
+          <ul class="cc-error-steps" hidden></ul>
+          <div class="cc-actions">
+            <button class="cc-button" id="cc-reload" type="button">Reload the page</button>
+          </div>
+          <details class="cc-details" hidden>
+            <summary>Technical details</summary>
+            <p class="cc-error-message"></p>
+          </details>
+        </section>
+      </main>
+
+      <!-- Controls legend (same keys as the start screen in the game). -->
+      <div class="cc-dock">
+        <ul class="cc-controls" aria-label="Controls">
+          <li><span class="cc-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span class="cc-or">or</span><span class="cc-keys"><kbd aria-label="Arrow keys">&larr;&uarr;&darr;&rarr;</kbd></span><span class="cc-key-text">Drive</span></li>
+          <li><kbd class="cc-wide">Space</kbd><span class="cc-key-text">Drift, let go = boost</span></li>
+          <li><kbd>R</kbd><span class="cc-key-text">Recover</span></li>
+          <li><kbd class="cc-wide">Enter</kbd><span class="cc-key-text">Retry</span></li>
+          <li><kbd>M</kbd><span class="cc-key-text">Sound</span></li>
+          <li><kbd>O</kbd><span class="cc-key-text">Settings</span></li>
+        </ul>
+      </div>
+
+      <div class="cc-wave" aria-hidden="true"></div>
+      <p class="cc-credits">Student project, Intro to Programming, Nova SBE 2026 &middot; Sounds: our own synth + elevenlabs.io &middot; Not affiliated with Nintendo or Nova SBE &middot; v{{{ PRODUCT_VERSION }}}</p>
+    </div>
+
+    <button id="cc-fullscreen" type="button" title="Fullscreen" aria-label="Fullscreen" hidden>
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+
+    <div id="cc-toast" hidden></div>
+
+    <script>
+      var canvas = document.getElementById("cc-canvas");
+      var loader = document.getElementById("cc-loader");
+      var road = loader.querySelector(".cc-road");
+      var fill = loader.querySelector(".cc-fill");
+      var kart = loader.querySelector(".cc-kart");
+      var phaseText = loader.querySelector(".cc-phase");
+      var percentText = loader.querySelector(".cc-percent");
+      var tipLine = loader.querySelector(".cc-tip");
+      var errorPanel = document.getElementById("cc-panel-error");
+
+      // ?test=mobile, ?test=nowebgl or ?test=error shows that card in a real build (for the team's browser check).
+      var testCard = new URLSearchParams(window.location.search).get("test");
+
+      // ---------- Panels: only one shows in the middle of the loading screen ----------
+      function showPanel(id) {
+        var panels = loader.querySelectorAll(".cc-panel");
+        for (var i = 0; i < panels.length; i++) {
+          panels[i].hidden = panels[i].id !== id;
+        }
+      }
+
+      // ---------- Loading tips (a new one every few seconds) ----------
+      var tips = [
+        "Hold Space in a corner to drift, let go for a boost.",
+        "Drift longer: blue sparks, then orange sparks, then a bigger boost.",
+        "Off the track? Press R to go back to the last checkpoint.",
+        "Press Enter after the finish to try again.",
+        "Your best lap is saved in this browser."
+      ];
+      var tipIndex = 0;
+      var tipTimer = 0;
+      function startTips() {
+        tipTimer = setInterval(function () {
+          tipIndex = (tipIndex + 1) % tips.length;
+          tipLine.classList.add("cc-tip-out"); // short fade (style.css), then the new text
+          setTimeout(function () {
+            tipLine.textContent = tips[tipIndex];
+            tipLine.classList.remove("cc-tip-out");
+          }, 250);
+        }, 4000);
+      }
+
+      // ---------- Error card ----------
+      // title + text are friendly words; steps is an optional list of things to try; details is the raw error for bug reports.
+      function showError(title, text, steps, details) {
+        clearInterval(tipTimer);
+        loader.hidden = false;                 // errors after the start show on top of the game
+        loader.classList.remove("cc-done");
+        loader.classList.add("cc-failed");
+        errorPanel.querySelector(".cc-error-title").textContent = title;
+        errorPanel.querySelector(".cc-error-text").textContent = text;
+
+        var list = errorPanel.querySelector(".cc-error-steps");
+        list.textContent = "";
+        if (steps) {
+          for (var i = 0; i < steps.length; i++) {
+            var item = document.createElement("li");
+            item.textContent = steps[i];
+            list.appendChild(item);
+          }
+        }
+        list.hidden = !steps;
+
+        var detailsBox = errorPanel.querySelector(".cc-details");
+        errorPanel.querySelector(".cc-error-message").textContent = details ? String(details) : "";
+        detailsBox.hidden = !details;
+        showPanel("cc-panel-error");
+      }
+
+      function showLoadError(error) {
+        showError(
+          "The game could not start",
+          "Something went wrong while loading. Reloading the page usually fixes it.",
+          ["If it happens again, try a current Chrome, Edge or Firefox.", "Switch on hardware acceleration in the browser settings."],
+          error
+        );
+      }
+
+      document.getElementById("cc-reload").addEventListener("click", function () {
+        window.location.reload();
+      });
+
+      // Unity calls this for warnings (short toast) and errors (error card).
+      function showBanner(message, type) {
+        if (type === "error") {
+          showLoadError(message);
+          return;
+        }
+        var toast = document.getElementById("cc-toast");
+        toast.textContent = String(message);
+        toast.hidden = false;
+        setTimeout(function () { toast.hidden = true; }, 5000);
+      }
+
+      // ---------- Sound unlock ----------
+      // Browsers keep sound off until the first click or key press. We remember every AudioContext the game creates
+      // (Unity makes one while it starts) and switch it on in the same click that closes the "Click to play" screen.
+      var audioContexts = [];
+      var NativeAudioContext = window.AudioContext || window.webkitAudioContext;
+      if (NativeAudioContext) {
+        try {
+          var TrackedAudioContext = class extends NativeAudioContext {
+            constructor(options) {
+              super(options);
+              audioContexts.push(this);
+            }
+          };
+          window.AudioContext = TrackedAudioContext;
+          window.webkitAudioContext = TrackedAudioContext;
+        } catch (e) {
+          // Very old browser: Unity still switches the sound on by itself after the first click.
+        }
+      }
+
+      function unlockSound() {
+        for (var i = 0; i < audioContexts.length; i++) {
+          if (audioContexts[i].state === "suspended") {
+            audioContexts[i].resume();
+          }
+        }
+      }
+
+      // ---------- Progress: 0 to 0.9 = downloading, 0.9 to 1 = starting the engine ----------
+      function onProgress(progress) {
+        var percent = Math.round(progress * 100);
+        fill.style.transform = "scaleX(" + progress + ")";
+        kart.style.left = percent + "%";
+        loader.style.setProperty("--cc-progress", String(progress)); // the sun rises with the progress (style.css)
+        road.setAttribute("aria-valuenow", String(percent));
+        percentText.textContent = percent + "%";
+        phaseText.textContent = progress < 0.9 ? "Loading the track" : "Starting the engine";
+      }
+
+      // ---------- After loading: "Click to play" ----------
+      // The click lands on this screen, not on the game, so it cannot press a button on the game's start screen by accident.
+      // It gives the page keyboard focus (needed inside the itch.io frame) and switches the sound on.
+      // A key press works too: the game gets that key as well (any key starts the race on its start screen).
+      function onReady(unityInstance) {
+        clearInterval(tipTimer);
+        onProgress(1);
+        loader.classList.add("cc-ready");
+        showPanel("cc-panel-play");
+        var started = false;
+        function startGame(event) {
+          if (started || loader.classList.contains("cc-failed")) {
+            return;
+          }
+          if (event.type === "keydown" && (event.key === "Tab" || event.key === "Shift" || event.key === "Control" || event.key === "Alt" || event.key === "Meta")) {
+            return; // keyboard users can still move around the page without starting
+          }
+          started = true;
+          unlockSound();
+          window.focus();
+          canvas.focus();
+          loader.classList.add("cc-done");
+          setTimeout(function () { loader.hidden = true; }, 450);
+          showFullscreenButton(unityInstance);
+        }
+        // "click", not "pointerdown": the browser moves keyboard focus on mouse down, so only after it can the canvas keep it.
+        // The play button is inside the loader, so its clicks (also Enter or Space on it) arrive here too.
+        loader.addEventListener("click", startGame);
+        window.addEventListener("keydown", startGame);
+      }
+
+      // ---------- Fullscreen button (top centre, hides while you drive) ----------
+      function showFullscreenButton(unityInstance) {
+        var fullscreenButton = document.getElementById("cc-fullscreen");
+        fullscreenButton.hidden = false;
+        fullscreenButton.addEventListener("click", function () {
+          unityInstance.SetFullscreen(1);
+          canvas.focus(); // keys go to the game, not to the button
+        });
+
+        // Auto-hide: any key (driving) hides the button at once; moving the mouse shows it for 2.5 s.
+        var idleTimer = 0;
+        function hideButton() { fullscreenButton.classList.add("cc-idle"); }
+        document.addEventListener("keydown", hideButton);
+        document.addEventListener("mousemove", function () {
+          fullscreenButton.classList.remove("cc-idle");
+          clearTimeout(idleTimer);
+          idleTimer = setTimeout(hideButton, 2500);
+        });
+        idleTimer = setTimeout(hideButton, 2500);
+      }
+
+      // ---------- Start loading the game ----------
+      function loadGame() {
+        showPanel("cc-panel-loading");
+        startTips();
+        if (testCard === "error") {
+          showLoadError("Test error (?test=error in the address).");
+          return;
+        }
+        var config = {
+          arguments: [],
+          dataUrl: "Build/{{{ DATA_FILENAME }}}",
+          frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_WASM
+          codeUrl: "Build/{{{ CODE_FILENAME }}}",
+#endif
+          streamingAssetsUrl: "StreamingAssets",
+          companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+          productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+          productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+          // Sharp on high-DPI laptop screens, but at most 1.5x the window size so the GPU keeps up.
+          devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
+          showBanner: showBanner
+        };
+
+        var script = document.createElement("script");
+        script.src = "Build/{{{ LOADER_FILENAME }}}";
+        script.onload = function () {
+          createUnityInstance(canvas, config, onProgress).then(onReady).catch(showLoadError);
+        };
+        script.onerror = function () {
+          showError(
+            "The game files did not download",
+            "Check the internet connection, then reload the page.",
+            null,
+            "Could not load Build/{{{ LOADER_FILENAME }}}"
+          );
+        };
+        document.body.appendChild(script);
+      }
+
+      // Can this browser run the game? WebGL 2 (3D graphics) and WebAssembly (the game code) are both needed.
+      function browserCanRunGame() {
+        if (testCard === "nowebgl" || typeof WebAssembly !== "object") {
+          return false;
+        }
+        var gl = document.createElement("canvas").getContext("webgl2");
+        if (!gl) {
+          return false;
+        }
+        var loseContext = gl.getExtension("WEBGL_lose_context");
+        if (loseContext) {
+          loseContext.loseContext(); // the test context is not needed any more
+        }
+        return true;
+      }
+
+      // Phone or tablet without a mouse or trackpad ("coarse" pointer only).
+      function isTouchOnlyDevice() {
+        if (testCard === "mobile") {
+          return true;
+        }
+        return window.matchMedia("(pointer: coarse)").matches && !window.matchMedia("(any-pointer: fine)").matches;
+      }
+
+      if (window.location.protocol === "file:") {
+        showError(
+          "Open the game through a web server",
+          "Browsers do not run Web games straight from a file on disk.",
+          ["Run: python tools/serve_web_build.py", "Then open http://localhost:8000"],
+          null
+        );
+      } else if (!browserCanRunGame()) {
+        showError(
+          "This browser cannot show the 3D track",
+          "The game needs WebGL 2, which this browser has switched off or does not have.",
+          ["Use a current Chrome, Edge, Firefox or Safari (15 or newer).", "Switch on hardware acceleration in the browser settings, then reload.", "Update the graphics driver if it still does not work."],
+          null
+        );
+      } else if (isTouchOnlyDevice()) {
+        showPanel("cc-panel-mobile");
+        document.getElementById("cc-load-anyway").addEventListener("click", function () {
+          loadGame();
+        });
+      } else {
+        loadGame();
+      }
+    </script>
+  </body>
+</html>
