@@ -176,8 +176,8 @@ def inside_footprint(x, y, margin):
 
 
 def guard_rails(m, f):
-    """Rails on both sides of each road, like the ramp rails in the art reference: white posts every 2 m, a round orange
-    top tube at 1 m and a light lilac board below. They stop RAIL_STOP m before the facades (door openings)."""
+    """Low rails on both sides of each road: white posts every 2 m and a light lilac board (no top tube, Noah).
+    They stop RAIL_STOP m before the facades (door openings)."""
     for road in ROADS:
         line = road["line"]
         for side in (1, -1):
@@ -205,11 +205,10 @@ def guard_rails(m, f):
                 if sub[-1] != run[-1]:
                     sub.append(run[-1])
                 for (u0, o0), (u1, o1) in zip(sub, sub[1:]):
-                    m.tube(f.at(u0, o0, 0.98), f.at(u1, o1, 0.98), 0.06, "rail_orange", 8)
                     m.beam(f.at(u0, o0, 0.58), f.at(u1, o1, 0.58), 0.05, 0.16, "rail_lilac")
                 for (u0, o0) in run[::4]:                                # a post every 2 m
                     p = f.at(u0, o0, 0)
-                    m.box((p[0], p[1], 0.5), 0.05, 0.05, 0.5, "wall", f.h)
+                    m.box((p[0], p[1], 0.36), 0.05, 0.05, 0.36, "wall", f.h)
 
 
 # ---------- outer walls with doors ----------
