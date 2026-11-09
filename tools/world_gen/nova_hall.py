@@ -137,13 +137,14 @@ def facade(m, a, b, inside, H, openings, style):
         s = c1
     pieces.append((s, L))
     top = 4.4                                                         # top of the ground floor band
+    glazed_ground = style in ("glass", "glass_low")                      # glass_low: glass on the ground floor only
     for s0, s1 in pieces:
-        band(s0, s1, 0.0, top, "glass" if style == "glass" else "wall")
-        if style == "glass":
+        band(s0, s1, 0.0, top, "glass" if glazed_ground else "wall")
+        if glazed_ground:
             for k in range(int((s1 - s0) / 1.6) + 1):                # mullions
                 m.box(P(s0 + k * 1.6, top / 2, False), 0.05, 0.06, top / 2, "steel_dark", heading)
     for c0, c1 in cuts:
-        band(c0, c1, DOOR_H + 0.4, top, "glass" if style == "glass" else "wall")
+        band(c0, c1, DOOR_H + 0.4, top, "glass" if glazed_ground else "wall")
         door(m, P((c0 + c1) / 2, 0.0), (tx, ty), (nx, ny), c1 - c0)
     if style == "glass":
         band(0, L, top, GALLERY_Z + 0.6, "wall")                       # white band at the first floor
@@ -208,8 +209,8 @@ def shell(m, f, polys, door_map):
             inside = (-ty, tx) if ccw else (ty, -tx)
             mid_u, mid_o = f.uo((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
             style = "glass"
-            if poly is long_room and mid_o > 15:                       # long room: glass west, service rooms east
-                style = "solid"
+            if poly is long_room and mid_o > 15:                       # long room east side (towards the steps):
+                style = "glass_low"                                    # glass at table level, white wall above (Noah)
             if poly is atrium and mid_u < SOLID_NORTH_U:               # atrium north facade: closed white wall (Noah)
                 style = "solid"
             facade(m, a, b, inside, H, door_map.get(edge_key(a, b), []), style)
