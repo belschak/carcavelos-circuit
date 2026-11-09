@@ -24,9 +24,23 @@ namespace CarcavelosCircuit.Track.Editor
                     }
                     break;
                 case "olive":
-                    // Olive tree: short thick grey trunk, round dense grey-green crown.
-                    batch.For(look.OliveTrunk).Prism(p, 0.4f * s, 1.6f * s, 7);
-                    batch.For(look.Olive).Dome(p + new Vector3(0f, 2.6f * s, 0f), 1.9f * s, 1.2f * s, 0.8f * s, 10, 3);
+                    // Lone campus olive (video IMG_7723): short gnarled trunk splitting into two limbs, a big lumpy
+                    // crown about 5 m wide and nearly as tall, dark green with a grey sheen.
+                    {
+                        batch.For(look.OliveTrunk).Prism(p - Vector3.up * 0.3f, 0.5f * s, 1.5f * s, 8);
+                        for (int limb = 0; limb < 2; limb++)
+                        {
+                            Quaternion lean = yaw * Quaternion.Euler(0f, limb * 180f, 24f);
+                            batch.For(look.OliveTrunk).Box(p + yaw * new Vector3(limb == 0 ? -0.35f * s : 0.35f * s, 1.9f * s, 0f), new Vector3(0.45f * s, 1.6f * s, 0.45f * s), lean, 1f);
+                        }
+                        Vector3 crown = p + new Vector3(0f, 3.0f * s, 0f);
+                        batch.For(look.Olive).Dome(crown, 2.4f * s, 1.9f * s, 1.2f * s, 12, 3);
+                        for (int lump = 0; lump < 5; lump++)
+                        {
+                            Vector3 off = yaw * Quaternion.Euler(0f, lump * 72f, 0f) * new Vector3(1.7f * s, (lump % 2 == 0 ? 0.6f : -0.2f) * s, 0f);
+                            batch.For(look.Olive).Dome(crown + off, 1.35f * s, 1.0f * s, 0.8f * s, 9, 2);
+                        }
+                    }
                     break;
                 case "palm":
                     // Canary date palm: thick straight trunk, big round crown of arching fronds in two rings.

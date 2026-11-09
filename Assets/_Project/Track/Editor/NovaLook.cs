@@ -23,12 +23,14 @@ namespace CarcavelosCircuit.Track.Editor
         public const string GrassDark = "#4F5A2C";
         public const string CalcadaStone = "#D6C0A8";
         public const string CalcadaJoint = "#77634F";
+        public const string PathStone = "#D9D5C4";  // lawn paths, video IMG_7723 f0021: pale grey limestone mosaic
+        public const string PathJoint = "#8C8876";
         public const string SandstoneCap = "#E6D0B8";
         public const string Asphalt = "#4A4D52";
         public const string Sand = "#D9C7A0";
         public const string Sea = "#6E8596";
         public const string PineFoliage = "#2F3A2A";
-        public const string OliveFoliage = "#5F6249";
+        public const string OliveFoliage = "#4B5539"; // video IMG_7723 f0016
         public const string PalmFoliage = "#56693A";
         public const string Trunk = "#6B5442";
         public const string RailingMetal = "#6E7276";
@@ -59,6 +61,7 @@ namespace CarcavelosCircuit.Track.Editor
         public Material Grass;
         public Material Concrete;    // terraces and plazas off the road
         public Material Calcada;
+        public Material CalcadaPath; // footpaths across the lawns
         public Material SandMat;
         public Material SeaMat;
         public Material AsphaltMat;
@@ -111,6 +114,7 @@ namespace CarcavelosCircuit.Track.Editor
             look.Grass = Lit("NovaGrass", "#FFFFFF", 0f, NovaTextures.Grass(Hex(GrassLight), Hex(GrassDark), Hex(GrassDry)));
             look.Concrete = Lit("NovaConcrete", ConcreteTerrace, 0.1f, concreteTex);
             look.Calcada = Lit("NovaCalcada", "#FFFFFF", 0.1f, calcadaTex);
+            look.CalcadaPath = Lit("NovaCalcadaPath", "#FFFFFF", 0.1f, NovaTextures.Calcada(Hex(PathStone), Hex(PathJoint), "NovaCalcadaPath"));
             look.SandMat = Lit("NovaSand", Sand, 0f, null);
             look.SeaMat = Lit("NovaSea", Sea, 0.6f, null);
             look.AsphaltMat = Lit("NovaAsphalt", Asphalt, 0.2f, null);

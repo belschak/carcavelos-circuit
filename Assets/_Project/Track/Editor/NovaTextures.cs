@@ -71,7 +71,7 @@ namespace CarcavelosCircuit.Track.Editor
         }
 
         // Portuguese pavement (calcada): irregular light stones with dark joints, made with a Voronoi pattern.
-        public static Texture2D Calcada(Color stone, Color joint)
+        public static Texture2D Calcada(Color stone, Color joint, string name = "NovaCalcada")
         {
             int size = 256;
             int cells = 12;
@@ -117,7 +117,7 @@ namespace CarcavelosCircuit.Track.Editor
                     t.SetPixel(x, y, c);
                 }
             }
-            return Save(t, "NovaCalcada");
+            return Save(t, name);
         }
 
         // An ORIGINAL mural for the tunnel walls in the spirit of the real one (flat bold shapes, grids, stars).

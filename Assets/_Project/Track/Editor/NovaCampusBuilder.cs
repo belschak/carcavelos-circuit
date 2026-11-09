@@ -541,6 +541,32 @@ namespace CarcavelosCircuit.Track.Editor
         }
 
         // Flat paved areas from the data (terraces, plazas, calcada, car parks, sand), the Marginal road and the sea.
+        // Footpath across the lawn: small pale calcada between white kerbs (video IMG_7723 f0019-f0036). The zone is a
+        // ribbon (left side, then right side backwards), so edges n-1 and 2n-1 are the two ends and get no kerb.
+        private static void AddLawnPath(NovaZone zone, NovaBatch batch, NovaLook look)
+        {
+            Vector2[] outline = NovaBuildings.CounterClockwise(zone.pts);
+            batch.For(look.CalcadaPath).FlatPolygon(outline, zone.y + 0.02f, 2f);
+            int n = outline.Length / 2;
+            for (int i = 0; i < outline.Length; i++)
+            {
+                if (i == n - 1 || i == outline.Length - 1)
+                {
+                    continue;
+                }
+                Vector2 a = outline[i];
+                Vector2 c = outline[(i + 1) % outline.Length];
+                float length = Vector2.Distance(a, c);
+                if (length < 0.05f)
+                {
+                    continue;
+                }
+                Vector2 mid = (a + c) * 0.5f;
+                Quaternion along = Quaternion.LookRotation(new Vector3(c.x - a.x, 0f, c.y - a.y));
+                batch.For(look.Kerb).Box(new Vector3(mid.x, zone.y + 0.05f, mid.y), new Vector3(0.18f, 0.16f, length + 0.1f), along, 1f);
+            }
+        }
+
         private static void AddZonesAndSea(NovaBatch batch, NovaLook look)
         {
             for (int i = 0; data.zones != null && i < data.zones.Length; i++)
@@ -548,6 +574,11 @@ namespace CarcavelosCircuit.Track.Editor
                 NovaZone zone = data.zones[i];
                 if (zone.pts == null || zone.pts.Length < 3)
                 {
+                    continue;
+                }
+                if (zone.kind == "path")
+                {
+                    AddLawnPath(zone, batch, look);
                     continue;
                 }
                 Material m = look.Concrete;
