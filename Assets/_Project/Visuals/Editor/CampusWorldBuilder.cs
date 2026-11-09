@@ -8,14 +8,18 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 
 namespace CarcavelosCircuit.Visuals.Editor
 {
-    // Builds Luc's Carcavelos campus world into Track_CampusWorld.unity (Role 3, task V4).
+    // Builds Luc's Carcavelos campus world (Role 3, tasks V4 and V8).
     // Input: Assets/_Project/Visuals/CampusWorld/{Models,Textures,Data}, exported by the world generator
-    // (world-gen/export_unity_bundle.py, outside this repo). Output, all made through the Unity API:
-    // URP Lit materials, one prefab per tree/prop kind, and the scene with world, track surface, 904 trees and
-    // props, a sun, and the race placeholders (checkpoints, spawn) that RaceFlow already understands.
+    // (tools/world_gen/export_unity_bundle.py). Output, all made through the Unity API:
+    // - URP Lit materials and one prefab per tree/prop kind;
+    // - CampusWorld.prefab: everything you see and drive on (world with colliders, track surface, trees and props,
+    //   sun and sky light). Role 2 puts this one prefab into Track_Campus; a new export updates it there by itself;
+    // - Track_CampusWorld.unity: Role 3's preview = the prefab plus the race placeholders (checkpoints, spawn) that
+    //   RaceFlow already understands, and a preview camera. The real checkpoints are Role 2's (from Data/track.json).
     // Axes: x = east, y = up, z = north, 1 unit = 1 m. Run it again after every new export.
     public static class CampusWorldBuilder
     {
@@ -26,6 +30,8 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string MatDir = Root + "/Materials";
         private const string PrefabDir = Root + "/Prefabs";
         private const string ScenePath = "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity";
+        private const string WorldPrefabPath = Root + "/CampusWorld.prefab";
+        private const string WorldRootName = "CampusWorld";                  // root of the prefab and of its instance
         private static readonly string[] Models = { "CampusWorld", "TrackSurface", "RouteGuide", "Dressing_Prototypes" };
 
         [Serializable] private class Emission { public float[] colour; public float strength; }
@@ -252,13 +258,14 @@ namespace CarcavelosCircuit.Visuals.Editor
             box.size = b.size;
         }
 
-        // ---------- scene ----------
+        // ---------- world prefab + preview scene ----------
         private static void BuildScene(Dictionary<string, GameObject> prefabs)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            var root = new GameObject("CampusWorld (Role 3)");
+            var root = new GameObject(WorldRootName);
 
             GameObject world = Instance("CampusWorld", root.transform);
+            world.name = "World";                                     // buildings, terrain, beach, tunnel (CampusWorld.fbx)
             foreach (MeshFilter mf in world.GetComponentsInChildren<MeshFilter>(true))
             {
                 string n = mf.gameObject.name;
@@ -305,10 +312,16 @@ namespace CarcavelosCircuit.Visuals.Editor
                 MarkStatic(go);
             }
 
-            TrackData data = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json"));
-            AddRaceParts(root, data);
             AddSunAndSky(root);
-            AddPreviewCamera(root, data);
+            // One prefab for everything you see and drive on. Saving over the old file keeps its GUID, so the
+            // instance in Role 2's Track_Campus stays linked and shows the new world after every rebuild.
+            PrefabUtility.SaveAsPrefabAssetAndConnect(root, WorldPrefabPath, InteractionMode.AutomatedAction);
+
+            // Preview only (never in the prefab): placeholders so the scene races on its own, and a camera.
+            TrackData data = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json"));
+            var preview = new GameObject("Preview (Role 3)");
+            AddRaceParts(preview, data);
+            AddPreviewCamera(preview, data);
             EditorSceneManager.SaveScene(scene, ScenePath);
         }
 
@@ -357,7 +370,8 @@ namespace CarcavelosCircuit.Visuals.Editor
         }
 
         // docs/art-style.md: bright late-morning sun from one side, soft shadows, light-blue sky, no fog.
-        // The race makes this scene the active one, so these settings apply in the race.
+        // The sun is part of the prefab; the sky light is a scene setting, so CampusWorldLighting (on the prefab root)
+        // writes it into whichever scene holds the prefab while that scene is active (the race makes the track active).
         private static void AddSunAndSky(GameObject root)
         {
             var sunObject = new GameObject("Sun");
@@ -370,13 +384,13 @@ namespace CarcavelosCircuit.Visuals.Editor
             float az = 135f * Mathf.Deg2Rad, el = 40f * Mathf.Deg2Rad;              // from the south-east, 40 degrees up
             var towardsSun = new Vector3(Mathf.Sin(az) * Mathf.Cos(el), Mathf.Sin(el), Mathf.Cos(az) * Mathf.Cos(el));
             sunObject.transform.rotation = Quaternion.LookRotation(-towardsSun);
-            RenderSettings.sun = sun;
-            RenderSettings.ambientMode = AmbientMode.Trilight;                         // no baking needed
-            RenderSettings.ambientSkyColor = new Color(0.62f, 0.72f, 0.86f);
-            RenderSettings.ambientEquatorColor = new Color(0.62f, 0.62f, 0.6f);
-            RenderSettings.ambientGroundColor = new Color(0.38f, 0.36f, 0.32f);
-            RenderSettings.skybox = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Skybox.mat");
-            RenderSettings.fog = false;
+
+            CampusWorldLighting lighting = root.AddComponent<CampusWorldLighting>();   // colours: its defaults
+            var so = new SerializedObject(lighting);
+            so.FindProperty("sun").objectReferenceValue = sun;
+            so.FindProperty("skybox").objectReferenceValue = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Skybox.mat");
+            so.ApplyModifiedPropertiesWithoutUndo();
+            lighting.ApplyIfActiveScene();                         // the preview scene is active here: save it with the look
         }
 
         // For looking at the scene alone; RaceBootstrap switches track-scene cameras off in the race.
@@ -401,13 +415,14 @@ namespace CarcavelosCircuit.Visuals.Editor
             var report = new StringBuilder("CampusWorld self-test\n");
             int failures = 0;
             Dressing dressing = JsonUtility.FromJson<Dressing>(File.ReadAllText(DataDir + "/dressing.json"));
-            GameObject dressingRoot = GameObject.Find("CampusWorld (Role 3)/Dressing");
+            GameObject dressingRoot = GameObject.Find(WorldRootName + "/Dressing");
             int placed = dressingRoot != null ? dressingRoot.GetComponentsInChildren<MeshRenderer>(true).Length : 0;
             report.AppendLine("dressing: " + placed + " of " + dressing.items.Length + " placed");
             if (placed != dressing.items.Length)
             {
                 failures++;
             }
+            failures += PrefabTest(report);
 
             int bad = 0;
             foreach (Renderer r in UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -484,9 +499,59 @@ namespace CarcavelosCircuit.Visuals.Editor
             {
                 failures++;
             }
+            failures += LightingTest(report);
             report.AppendLine(failures == 0 ? "RESULT: PASS" : "RESULT: FAIL (" + failures + ")");
             Debug.Log(report.ToString());
             return failures;
+        }
+
+        // CampusWorld.prefab is what Role 2 uses. The scene root must be a clean instance of it (no overrides), and the
+        // prefab must hold the world with its colliders and light but nothing race-specific (no placeholders, no
+        // camera), so Role 2's scene never ends up with two sets of checkpoints.
+        private static int PrefabTest(StringBuilder report)
+        {
+            GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(WorldPrefabPath);
+            GameObject instance = GameObject.Find(WorldRootName);
+            bool linked = instance != null && PrefabUtility.IsOutermostPrefabInstanceRoot(instance) &&
+                          PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(instance) == WorldPrefabPath;
+            bool clean = linked && !PrefabUtility.HasPrefabInstanceAnyOverrides(instance, false);
+            int raceParts = asset == null ? -1 : asset.GetComponentsInChildren<PlaceholderTrack>(true).Length +
+                asset.GetComponentsInChildren<PlaceholderCheckpoint>(true).Length + asset.GetComponentsInChildren<Camera>(true).Length;
+            CampusWorldLighting lighting = asset != null ? asset.GetComponent<CampusWorldLighting>() : null;
+            bool lit = lighting != null && new SerializedObject(lighting).FindProperty("sun").objectReferenceValue != null;
+            int colliders = asset != null ? asset.GetComponentsInChildren<MeshCollider>(true).Length : 0;
+            report.AppendLine("prefab: " + (asset != null ? "saved" : "MISSING") + ", scene instance linked " + linked +
+                              ", without overrides " + clean + ", race parts or cameras inside " + raceParts +
+                              ", light with sun " + lit + ", mesh colliders " + colliders);
+            return asset != null && clean && raceParts == 0 && lit && colliders > 0 ? 0 : 1;
+        }
+
+        // Role 2's case: a scene holding only the prefab gets the campus sky light once it is the active scene, and
+        // while another scene is active (Main.unity while the race loads the track) that scene's light is left alone.
+        private static int LightingTest(StringBuilder report)
+        {
+            Scene preview = SceneManager.GetActiveScene();
+            GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(WorldPrefabPath);
+            Scene holder = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+
+            SceneManager.SetActiveScene(preview);
+            RenderSettings.ambientMode = AmbientMode.Flat;                 // stands in for another scene's own setting
+            var first = (GameObject)PrefabUtility.InstantiatePrefab(asset, holder);
+            bool leftAlone = RenderSettings.ambientMode == AmbientMode.Flat;
+            RenderSettings.ambientMode = AmbientMode.Trilight;            // the preview's own value again
+            UnityEngine.Object.DestroyImmediate(first);
+
+            SceneManager.SetActiveScene(holder);
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.fog = true;
+            var second = (GameObject)PrefabUtility.InstantiatePrefab(asset, holder);
+            bool applied = RenderSettings.ambientMode == AmbientMode.Trilight && !RenderSettings.fog &&
+                           RenderSettings.sun != null && RenderSettings.sun.transform.IsChildOf(second.transform);
+
+            SceneManager.SetActiveScene(preview);
+            EditorSceneManager.CloseScene(holder, true);
+            report.AppendLine("light in a scene with only the prefab: applied " + applied + ", other active scene left alone " + leftAlone);
+            return applied && leftAlone ? 0 : 1;
         }
 
         // Kart's-eye views at a few places of the lap, for comparing with the Blender renders.
