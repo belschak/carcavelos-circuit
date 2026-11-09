@@ -458,24 +458,24 @@ def atrium_furniture(m, f):
     K.desk(m, f, 16.5, 3.4, 1.2, 5.0)                                     # welcome desk, left of the doors
     # abstract sculpture straight ahead of the main entrance, arranged and sized like the real logo letters
     # (no readable logo, docs/decisions.md): tall block, ring standing on a long low plinth, a V, a chevron
-    SO = 16.0                                                            # o of the row (across the view from the door)
-    K.block(m, f, 6.4, 8.0, SO - 0.3, SO + 0.3, 0.0, 2.6, "wall")
-    K.block(m, f, 8.4, 14.8, SO - 0.45, SO + 0.45, 0.0, 0.5, "wall")
+    SO = 21.0                                                            # between the two track parts, north-east of the door
+    K.block(m, f, 9.5, 11.1, SO - 0.3, SO + 0.3, 0.0, 2.6, "wall")
+    K.block(m, f, 11.5, 17.9, SO - 0.45, SO + 0.45, 0.0, 0.5, "wall")
     t, nrm = f.tangent(), f.left()
-    m.ring(f.at(10.4, SO - 0.3, 1.78), 1.28, 0.72, 0.6, "wall", basis=((0, 0, 1), (t[0], t[1], 0), (nrm[0], nrm[1], 0)))
-    K.rod(m, f, (15.2, SO, 2.6), (16.4, SO, 0.0), 0.6, "wall")          # V: point at the bottom
-    K.rod(m, f, (17.6, SO, 2.6), (16.4, SO, 0.0), 0.6, "wall")
-    K.rod(m, f, (18.0, SO, 0.0), (19.2, SO, 2.6), 0.6, "wall")          # chevron: point at the top
-    K.rod(m, f, (20.4, SO, 0.0), (19.2, SO, 2.6), 0.6, "wall")
-    for k in range(8):                                                   # dark blue boards and planter troughs behind it
-        u = 14.0 + k * 2.6
+    m.ring(f.at(13.5, SO - 0.3, 1.78), 1.28, 0.72, 0.6, "wall", basis=((0, 0, 1), (t[0], t[1], 0), (nrm[0], nrm[1], 0)))
+    K.rod(m, f, (18.3, SO, 2.6), (19.5, SO, 0.0), 0.6, "wall")          # V: point at the bottom
+    K.rod(m, f, (20.7, SO, 2.6), (19.5, SO, 0.0), 0.6, "wall")
+    K.rod(m, f, (21.1, SO, 0.0), (22.3, SO, 2.6), 0.6, "wall")          # chevron: point at the top
+    K.rod(m, f, (23.5, SO, 0.0), (22.3, SO, 2.6), 0.6, "wall")
+    for k in range(6):                                                   # dark blue boards and planter troughs behind it
+        u = 8.5 + k * 2.0
         if k % 2 == 0:
-            board(m, f, u, 21.0, 1.8, 2.2)
+            board(m, f, u, SO + 4.5, 1.8, 2.2)
         else:
-            planter(m, f, u, 20.6, 40 + k, palm=k % 4 == 1)
+            planter(m, f, u, SO + 4.1, 40 + k, palm=k % 4 == 1)
     for k in range(9):                                                   # planters along the way to the artwork wall
         planter(m, f, 44.0 + k * 2.6, 19.0, 60 + k, palm=k % 2 == 0)
-    for u, o in ((14.5, 25.5), (19.5, 26.5), (25.0, 25.5), (31.0, 24.0), (36.0, 22.0)):
+    for u, o in ((11.0, 34.0), (16.5, 35.0), (31.0, 24.0), (36.0, 22.0)):
         round_table(m, f, u, o, 4)
     K.block(m, f, 50.0, 50.6, 0.6, 0.9, 1.0, 1.8, "red")                 # fire hose cabinet
 
