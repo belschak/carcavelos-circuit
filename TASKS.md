@@ -36,7 +36,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 |---|---|---|---|
 | V1 | `docs/art-style.md`: palette (5-6 colours), shape language, 1 reference image | Sun 8 | todo |
 | V2 | Scale test: 1 m cube from Blender as FBX imports at 1 m, forward = +Z; record export settings in `docs/art-style.md` | Sun 8 | todo |
-| V3 | Kart + simple seated driver FBX, fits `Kart/Visual` (agree pivot/size with Role 1) | Wed 11 | todo |
+| V3 | Kart + simple seated driver FBX, fits `Kart/Visual` (agree pivot/size with Role 1) | Wed 11 | in review: `KartVisual_Classic_Rookie` prefab (quick version: hands don't follow the wheel yet, needs Animation Rigging) |
 | V4 | 2-3 low-poly campus landmarks from the photos (e.g. library facade, EDP Plaza, D/B ramp) | Fri 13 | todo |
 | V5 | `KartEffects`: drift sparks + boost flame, reads `IKartState` only | Thu 12 | todo |
 | V6 | Complete race at the itch.io URL, logged in `docs/builds.md` | Thu 12 | todo |
