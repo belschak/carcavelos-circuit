@@ -53,9 +53,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.35
-  m_Height: 5.54513
+  m_Height: 5.434943
   m_Direction: 1
-  m_Center: {x: 0, y: 2.772565, z: 0}
+  m_Center: {x: 0, y: 2.7174716, z: 0}
 --- !u!1 &2723672229035712157
 GameObject:
   m_ObjectHideFlags: 0
@@ -123,8 +123,8 @@ MeshRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: d3854d7c8bcda4edd87047448c08209d, type: 2}
-  - {fileID: 2100000, guid: 1eb4a177c3bfd43c9930ddfeea63171a, type: 2}
-  - {fileID: 2100000, guid: 5949daa92e08e44248d6a029b5de9bc7, type: 2}
+  - {fileID: 2100000, guid: 3dfec1305af704ba9897c3c7a3382463, type: 2}
+  - {fileID: 2100000, guid: fde37f334806c4f5a8da21ce47468b7c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

@@ -8,14 +8,16 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace CarcavelosCircuit.Visuals.Editor
 {
     // Builds Luc's Carcavelos campus world into Track_CampusWorld.unity (Role 3, task V4).
     // Input: Assets/_Project/Visuals/CampusWorld/{Models,Textures,Data}, exported by the world generator
     // (world-gen/export_unity_bundle.py, outside this repo). Output, all made through the Unity API:
-    // URP Lit materials, one prefab per tree/prop kind, and the scene with world, track surface, 904 trees and
-    // props, a sun, and the race placeholders (checkpoints, spawn) that RaceFlow already understands.
+    // URP Lit materials, one prefab per tree/prop kind, and the scene with world, track surface, about 1,070 trees,
+    // props and furniture, the golden-hour sun, the painted sky, the look volume, and the race placeholders
+    // (checkpoints, spawn) that RaceFlow already understands.
     // Axes: x = east, y = up, z = north, 1 unit = 1 m. Run it again after every new export.
     public static class CampusWorldBuilder
     {
@@ -25,6 +27,11 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string DataDir = Root + "/Data";
         private const string MatDir = Root + "/Materials";
         private const string PrefabDir = Root + "/Prefabs";
+        private const string SettingsDir = Root + "/Settings";
+        private const string SkyTexture = TexDir + "/sky_panorama.png";       // world-gen/make_sky.py
+        private const string LookProfile = SettingsDir + "/CampusWorld_Look.asset";
+        // Golden hour (design pass 2026-11-09): low warm sun from the west-south-west. Must match make_sky.py.
+        private const float SunAzimuth = 245f, SunElevation = 19f;
         private const string ScenePath = "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity";
         private static readonly string[] Models = { "CampusWorld", "TrackSurface", "RouteGuide", "Dressing_Prototypes" };
 
@@ -93,6 +100,10 @@ namespace CarcavelosCircuit.Visuals.Editor
                     continue;
                 }
                 string file = Path.GetFileName(path);
+                if (path == SkyTexture)
+                {
+                    continue;                                                   // a cubemap, see below
+                }
                 bool normal = file.EndsWith("_normal.png", StringComparison.Ordinal);
                 bool mask = file.EndsWith("_metallic_smoothness.png", StringComparison.Ordinal);
                 bool big = file.StartsWith("ground_colour", StringComparison.Ordinal) || file.StartsWith("mural", StringComparison.Ordinal);
@@ -104,6 +115,23 @@ namespace CarcavelosCircuit.Visuals.Editor
                 ti.mipmapEnabled = true;
                 ti.anisoLevel = 4;
                 ti.SaveAndReimport();
+            }
+            // The painted sky (2:1 lat-long picture) becomes a cubemap: the skybox and the reflections on glass
+            // and gloss use it, so no lighting bake is needed.
+            if (AssetImporter.GetAtPath(SkyTexture) is TextureImporter sky)
+            {
+                sky.textureType = TextureImporterType.Default;
+                sky.textureShape = TextureImporterShape.TextureCube;
+                var cube = new TextureImporterSettings();
+                sky.ReadTextureSettings(cube);
+                cube.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
+                cube.cubemapConvolution = TextureImporterCubemapConvolution.Specular;   // blurred mips: glossy reflections
+                sky.SetTextureSettings(cube);
+                sky.sRGBTexture = true;
+                sky.mipmapEnabled = true;
+                sky.wrapMode = TextureWrapMode.Clamp;
+                sky.maxTextureSize = 1024;                                      // per cube face
+                sky.SaveAndReimport();
             }
             foreach (string name in Models)
             {
@@ -356,27 +384,88 @@ namespace CarcavelosCircuit.Visuals.Editor
             tso.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        // docs/art-style.md: bright late-morning sun from one side, soft shadows, light-blue sky, no fog.
-        // The race makes this scene the active one, so these settings apply in the race.
+        // Golden hour (design reference, 2026-11-09): a low warm sun from the west-south-west, long soft shadows,
+        // cool blue fill, a painted sky with cumulus clouds (also the reflection source), and a gentle warm grade.
+        // No fog, no bake. The race makes this scene the active one, so these settings apply in the race.
         private static void AddSunAndSky(GameObject root)
         {
             var sunObject = new GameObject("Sun");
             sunObject.transform.SetParent(root.transform, false);
             Light sun = sunObject.AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.intensity = 1.3f;
-            sun.color = new Color(1f, 0.96f, 0.9f);
+            sun.intensity = 1.25f;
+            sun.color = new Color(1f, 0.878f, 0.71f);                                // #FFE0B5
             sun.shadows = LightShadows.Soft;
-            float az = 135f * Mathf.Deg2Rad, el = 40f * Mathf.Deg2Rad;              // from the south-east, 40 degrees up
+            sun.shadowStrength = 0.85f;                                              // shade stays readable
+            float az = SunAzimuth * Mathf.Deg2Rad, el = SunElevation * Mathf.Deg2Rad;
             var towardsSun = new Vector3(Mathf.Sin(az) * Mathf.Cos(el), Mathf.Sin(el), Mathf.Cos(az) * Mathf.Cos(el));
             sunObject.transform.rotation = Quaternion.LookRotation(-towardsSun);
             RenderSettings.sun = sun;
             RenderSettings.ambientMode = AmbientMode.Trilight;                         // no baking needed
-            RenderSettings.ambientSkyColor = new Color(0.62f, 0.72f, 0.86f);
-            RenderSettings.ambientEquatorColor = new Color(0.62f, 0.62f, 0.6f);
-            RenderSettings.ambientGroundColor = new Color(0.38f, 0.36f, 0.32f);
-            RenderSettings.skybox = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Skybox.mat");
+            RenderSettings.ambientSkyColor = new Color(0.70f, 0.76f, 0.87f);           // #B3C2DE cool fill
+            RenderSettings.ambientEquatorColor = new Color(0.66f, 0.66f, 0.66f);
+            RenderSettings.ambientGroundColor = new Color(0.62f, 0.55f, 0.46f);        // warm bounce from the paving
             RenderSettings.fog = false;
+            Cubemap cube = AssetDatabase.LoadAssetAtPath<Cubemap>(SkyTexture);
+            if (cube != null)
+            {
+                EnsureFolder(MatDir);
+                string path = MatDir + "/Sky_Painted.mat";
+                Material sky = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (sky == null)
+                {
+                    sky = new Material(Shader.Find("Skybox/Cubemap"));
+                    AssetDatabase.CreateAsset(sky, path);
+                }
+                sky.SetTexture("_Tex", cube);
+                sky.SetFloat("_Exposure", 1f);
+                sky.SetFloat("_Rotation", 0f);
+                EditorUtility.SetDirty(sky);
+                RenderSettings.skybox = sky;
+                RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
+                RenderSettings.customReflectionTexture = cube;
+                RenderSettings.reflectionIntensity = 1f;
+            }
+            else
+            {
+                Debug.LogWarning("CampusWorldBuilder: no " + SkyTexture + ", using Unity's default sky.");
+                RenderSettings.skybox = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Skybox.mat");
+            }
+            var look = new GameObject("Look (global volume)");
+            look.transform.SetParent(root.transform, false);
+            Volume volume = look.AddComponent<Volume>();
+            volume.isGlobal = true;
+            volume.priority = 1f;
+            volume.sharedProfile = BuildLookProfile();
+        }
+
+        // Tonemapping + a gentle grade, made by code so every laptop gets the same look. Bloom stays in Role 4's
+        // RaceCameraVolume (Main.unity); the overrides do not overlap.
+        private static VolumeProfile BuildLookProfile()
+        {
+            EnsureFolder(SettingsDir);
+            if (AssetDatabase.LoadAssetAtPath<VolumeProfile>(LookProfile) != null)
+            {
+                AssetDatabase.DeleteAsset(LookProfile);
+            }
+            var profile = ScriptableObject.CreateInstance<VolumeProfile>();
+            AssetDatabase.CreateAsset(profile, LookProfile);
+            Tonemapping tone = profile.Add<Tonemapping>(true);
+            tone.mode.Override(TonemappingMode.Neutral);
+            ColorAdjustments grade = profile.Add<ColorAdjustments>(true);
+            grade.postExposure.Override(0.1f);
+            grade.contrast.Override(8f);
+            grade.saturation.Override(12f);
+            WhiteBalance warm = profile.Add<WhiteBalance>(true);
+            warm.temperature.Override(4f);
+            foreach (VolumeComponent c in profile.components)
+            {
+                c.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
+                AssetDatabase.AddObjectToAsset(c, profile);
+            }
+            EditorUtility.SetDirty(profile);
+            AssetDatabase.SaveAssets();
+            return profile;
         }
 
         // For looking at the scene alone; RaceBootstrap switches track-scene cameras off in the race.
@@ -499,9 +588,15 @@ namespace CarcavelosCircuit.Visuals.Editor
             cam.fieldOfView = 60f;
             cam.nearClipPlane = 0.3f;
             cam.farClipPlane = 3000f;
-            var rt = new RenderTexture(1280, 720, 24);
+            cam.allowHDR = true;
+            cam.GetUniversalAdditionalCameraData().renderPostProcessing = true;    // the grade, as in the race
+            var rt = new RenderTexture(1280, 720, 24) { antiAliasing = 4 };
             cam.targetTexture = rt;
-            foreach (float s in new[] { 30f, 120f, 240f, 400f, 490f, 560f, 700f, 980f, 1048f, 1150f })
+            string extra = Argument("-campusWorldShotS");                          // e.g. "60,575" (metres)
+            float[] stations = string.IsNullOrEmpty(extra)
+                ? new[] { 16f, 60f, 100f, 150f, 200f, 330f, 470f, 575f, 610f, 700f, 860f, 965f, 1060f, 1100f, 1150f, 1260f }
+                : extra.Split(',').Select(x => float.Parse(x, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+            foreach (float s in stations)
             {
                 int i = Mathf.RoundToInt(s / 2f) % data.points.Length;
                 int back = (i - 3 + data.points.Length) % data.points.Length;

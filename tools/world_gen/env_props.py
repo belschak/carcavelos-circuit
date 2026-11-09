@@ -41,9 +41,14 @@ PLACEMENTS_FILE = os.path.join(E.OUT, "placements_props.json")
 SEED = 20261108
 
 TRI_BUDGET = {"Prop_LampCampus": 120, "Prop_LampRoad": 150, "Prop_Bench": 60, "Prop_LoungeChair": 150,
-              "Prop_Bollard": 40, "Prop_RailingSegment": 100, "Prop_Bin": 60, "Prop_Parasol": 100}
+              "Prop_Bollard": 40, "Prop_RailingSegment": 100, "Prop_Bin": 60, "Prop_Parasol": 100,
+              # design pass 2026-11-09 (Deep-Research catalogue, Phase 1): cafe kit, planters, atrium
+              "Prop_BistroTable": 112, "Prop_BistroChair": 120, "Prop_TroughBloom": 210, "Prop_PlanterRound": 180,
+              "Prop_StudyTable": 96, "Prop_GrandPiano": 180}
 FOOTPRINT = {"Prop_LampCampus": 0.3, "Prop_LampRoad": 0.3, "Prop_Bench": 1.0, "Prop_LoungeChair": 0.6,
-             "Prop_Bollard": 0.15, "Prop_RailingSegment": 0.0, "Prop_Bin": 0.3, "Prop_Parasol": 1.6}
+             "Prop_Bollard": 0.15, "Prop_RailingSegment": 0.0, "Prop_Bin": 0.3, "Prop_Parasol": 1.6,
+             "Prop_BistroTable": 0.4, "Prop_BistroChair": 0.3, "Prop_TroughBloom": 0.85, "Prop_PlanterRound": 0.45,
+             "Prop_StudyTable": 0.95, "Prop_GrandPiano": 1.2}
 
 # Placement rules (metres along the lap = route s, offsets from the centreline; + = left of the driving direction)
 NO_PROP_ZONES = {"tunnel", "atrium"}                  # indoors / underground: nothing stands there
@@ -68,44 +73,23 @@ ROAD_TYPES = {"primary", "primary_link", "secondary", "tertiary", "residential",
               "living_street"}
 REPORT = {}                         # filled by place(): what could not be placed and why
 
+# Design pass 2026-11-09 (design reference: busy cafe terraces, planters lining the track, a furnished atrium)
+CAFE_ZONES = {"upper plaza": 4, "promenade": 2, "lower plaza": 1}   # cafe groups per zone (at most)
+CAFE_STEP = 38.0                    # m of route between cafe groups
+CAFE_OFFSETS = (9.5, 10.5, 11.5, 12.5, 14.0)   # group centre from the route centreline
+TROUGH_ZONES = {"upper plaza", "lower plaza", "promenade"}
+TROUGH_STEP, TROUGH_OFFSET = 18.0, 6.6          # a pair of flower troughs every ~18 m on straights
+HALL_ROAD_BAND = 5.6                # atrium: furniture stays this far from the centreline (1.6 m off the road)
+HALL_WALL_BAND = 1.25               # ... and this far inside the hall wall (columns stand at wall - 0.6)
+HALL_STEP = 6                       # route points (12 m) between furniture bays in the atrium
+HALL_PROTOS = {"Prop_BistroTable", "Prop_BistroChair", "Prop_StudyTable", "Prop_GrandPiano", "Prop_PlanterRound",
+               "Prop_TroughBloom"}       # may stand indoors (atrium bays), checked by the hall rules
+
 
 # =====================================================================================================
 # Geometry helpers
 # =====================================================================================================
-class MeshBuilder:
-    """Collects vertices and faces (each face with a material slot) and turns them into one clean mesh."""
-
-    def __init__(self):
-        self.verts, self.faces, self.mats = [], [], []
-
-    def v(self, co):
-        self.verts.append(Vector((co[0], co[1], co[2])))
-        return len(self.verts) - 1
-
-    def f(self, idx, mat):
-        self.faces.append(tuple(idx))
-        self.mats.append(mat)
-
-    def build(self, name, materials, col):
-        mesh = bpy.data.meshes.new(name)
-        mesh.from_pydata([tuple(v) for v in self.verts], [], self.faces)
-        for m in materials:
-            mesh.materials.append(m)
-        mesh.polygons.foreach_set("material_index", self.mats)
-        bm = bmesh.new()
-        bm.from_mesh(mesh)
-        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
-        bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method="BEAUTY", ngon_method="BEAUTY")
-        loose = [v for v in bm.verts if not v.link_faces]
-        if loose:
-            bmesh.ops.delete(bm, geom=loose, context="VERTS")
-        bm.to_mesh(mesh)
-        bm.free()
-        for poly in mesh.polygons:
-            poly.use_smooth = False
-        mesh.validate()
-        mesh.update()
-        return E.new_object(name, mesh, col)
+from env_vegetation import MeshBuilder, puff_lobe   # noqa: E402  same builder (flat or smooth "puffy" faces)
 
 
 def box(mb, x0, x1, y0, y1, z0, z1, mat, skip=("bottom",)):
@@ -280,6 +264,111 @@ def parasol(name, canopy, pole, base, col):
     return mb.build(name, [canopy, pole, base], col)
 
 
+def bistro_table(name, top, metal, col):
+    """Round cafe table (our own design), 0.76 m across, 0.755 m high: disc foot, slim pedestal, round top with
+    a bevelled rim. The parasol of a cafe group stands through its centre."""
+    mb = MeshBuilder()
+    TOP, METAL = 0, 1
+    lathe(mb, [(0.22, -0.02), (0.22, 0.03), (0.045, 0.07), (0.04, 0.70)], 6, METAL)
+    lathe(mb, [(0.04, 0.70), (0.33, 0.70), (0.38, 0.715), (0.38, 0.75), (0.0, 0.755)], 10, TOP)
+    return mb.build(name, [top, metal], col)
+
+
+def bistro_chair(name, wood, metal, col):
+    """Cafe chair (our own design): slim dark frame, wooden seat and a slightly raked two-slat back.
+    0.45 m wide, 0.84 m high, seat at 0.48 m; the sitter looks along -y (back at +y)."""
+    mb = MeshBuilder()
+    WOOD, METAL = 0, 1
+    for x in (-0.19, 0.19):
+        box(mb, x - 0.018, x + 0.018, -0.208, -0.172, -0.02, 0.44, METAL, skip=("bottom", "top"))   # front legs
+        box(mb, x - 0.018, x + 0.018, 0.172, 0.208, -0.02, 0.84, METAL, skip=("bottom",))         # back legs
+    box(mb, -0.225, 0.225, -0.225, 0.2, 0.44, 0.48, WOOD)
+    for z0, z1 in ((0.56, 0.64), (0.70, 0.80)):
+        extrude(mb, [(0.165, z0), (0.19, z0), (0.19 + (z1 - z0) * 0.12, z1), (0.165 + (z1 - z0) * 0.12, z1)],
+                "x", -0.2, 0.2, WOOD)
+    return mb.build(name, [wood, metal], col)
+
+
+def trough_bloom(name, body, rim, soil, leaf, bloom, bloom_light, col):
+    """Long planter (1.6 x 0.55 m, 0.5 m high) in the event violet with a cream rim, full of round purple
+    flower mounds on green leaves (design reference: planters lining the track). Runs along x."""
+    rng = random.Random(name)
+    mb = MeshBuilder()
+    BODY, RIM, SOIL, LEAF, BLOOM, LIGHT = 0, 1, 2, 3, 4, 5
+    profile = [(-0.27, -0.05), (0.27, -0.05), (0.27, 0.44), (0.235, 0.5), (-0.235, 0.5), (-0.27, 0.44)]
+    extrude(mb, profile, "x", -0.8, 0.8, [BODY, BODY, RIM, SOIL, RIM, BODY, BODY])
+    for k, x in enumerate((-0.58, -0.2, 0.2, 0.58)):
+        c = (x + rng.uniform(-0.04, 0.04), rng.uniform(-0.04, 0.04), 0.52)
+        puff_lobe(mb, c, (0.27, 0.22, 0.17), rng, lambda z: LEAF, (x, 0.0, 0.4), subdiv=1, floor=-0.4)
+    for k, x in enumerate((-0.62, -0.3, 0.02, 0.33, 0.62)):
+        c = (x + rng.uniform(-0.05, 0.05), rng.uniform(-0.08, 0.08), 0.66 + rng.uniform(-0.03, 0.04))
+        tone = LIGHT if k % 2 == 0 else BLOOM            # whole heads alternate light / mid violet
+        puff_lobe(mb, c, (0.15, 0.14, 0.12), rng, lambda z, t=tone: t, (x, 0.0, 0.55),
+                  subdiv=1, floor=-0.6, blend=0.4)
+    return mb.build(name, [body, rim, soil, leaf, bloom, bloom_light], col)
+
+
+def planter_round(name, pot, soil, crown, crown_top, col):
+    """Round cream planter (0.84 m across, 0.55 m high) with a clipped round bush (design reference: round,
+    soft greens along the plazas)."""
+    rng = random.Random(name)
+    mb = MeshBuilder()
+    POT, SOIL, CROWN, TOP = 0, 1, 2, 3
+    lathe(mb, [(0.30, -0.05), (0.40, 0.50), (0.42, 0.55), (0.36, 0.55), (0.36, 0.49), (0.0, 0.49)], 10,
+          [POT, POT, POT, POT, SOIL])
+    puff_lobe(mb, (0.0, 0.0, 0.98), (0.46, 0.44, 0.44), rng, lambda z: TOP if z > -0.35 else CROWN, (0.0, 0.0, 0.9),
+              floor=-0.75)
+    return mb.build(name, [pot, soil, crown, crown_top], col)
+
+
+def study_table(name, top, metal, col):
+    """Long study table for the atrium (1.8 x 0.8 m, 0.75 m high): light timber top on four slim dark legs.
+    Runs along x."""
+    mb = MeshBuilder()
+    TOP, METAL = 0, 1
+    box(mb, -0.9, 0.9, -0.4, 0.4, 0.70, 0.75, TOP, skip=())
+    for x in (-0.82, 0.82):
+        for y in (-0.32, 0.32):
+            box(mb, x - 0.025, x + 0.025, y - 0.025, y + 0.025, -0.02, 0.70, METAL, skip=("bottom", "top"))
+    return mb.build(name, [top, metal], col)
+
+
+def grand_piano(name, gloss, keys, col):
+    """Grand piano (our own simple outline, the atrium has one): wing-shaped case on three legs, lid propped
+    open on the curved side, keyboard at the front. 1.5 m wide, 2.0 m deep; the player sits at -y."""
+    mb = MeshBuilder()
+    GLOSS, KEYS = 0, 1
+    outline = [(-0.74, 0.0), (0.74, 0.0), (0.74, 0.35), (0.62, 0.75), (0.42, 1.05), (0.24, 1.35), (0.12, 1.68),
+               (-0.04, 1.93), (-0.3, 2.03), (-0.58, 2.0), (-0.74, 1.86)]
+
+    def slab(pts, z0, z1, lift=None):
+        """Prism over the outline; lift(x, y, z) -> point lets the lid tilt about its hinge."""
+        f = lift or (lambda x, y, z: (x, y, z))
+        lo = [mb.v(f(x, y, z0)) for x, y in pts]
+        hi = [mb.v(f(x, y, z1)) for x, y in pts]
+        n = len(pts)
+        for k in range(n):
+            mb.f((lo[k], lo[(k + 1) % n], hi[(k + 1) % n], hi[k]), GLOSS)
+        mb.f(lo[::-1], GLOSS)
+        mb.f(hi, GLOSS)
+
+    slab(outline, 0.60, 0.98)
+    ang = math.radians(16)                                  # lid hinged along the straight long side (x = -0.74)
+
+    def lid(x, y, z):
+        dx, dz = x + 0.74, z - 0.98
+        return (-0.74 + dx * math.cos(ang) - dz * math.sin(ang), y, 0.98 + dx * math.sin(ang) + dz * math.cos(ang))
+
+    slab([(x, y) for x, y in outline if y >= 0.3] + [(-0.74, 0.3)], 0.985, 1.01, lift=lid)
+    box(mb, 0.36, 0.39, 0.95, 0.98, 0.98, 0.98 + 1.13 * math.sin(ang), GLOSS, skip=("bottom",))    # lid stick
+    box(mb, -0.72, 0.72, -0.28, 0.0, 0.66, 0.74, GLOSS, skip=("bottom", "top"))                    # key bed
+    box(mb, -0.70, 0.70, -0.27, 0.0, 0.74, 0.76, KEYS, skip=("bottom",))                           # keys
+    box(mb, -0.45, 0.45, 0.10, 0.13, 0.98, 1.24, GLOSS, skip=("bottom",))                          # music desk
+    for x, y in ((-0.62, 0.14), (0.62, 0.14), (-0.42, 1.78)):
+        box(mb, x - 0.05, x + 0.05, y - 0.05, y + 0.05, -0.02, 0.60, GLOSS, skip=("bottom", "top"))
+    return mb.build(name, [gloss, keys], col)
+
+
 def build_prototypes():
     """Creates every prop prototype in collection Proto_Props and returns {name: object}.
     Rebuilding replaces the old objects. Raises if a prototype breaks its triangle budget."""
@@ -305,8 +394,26 @@ def build_prototypes():
         "Prop_RailingSegment": railing("Prop_RailingSegment", steel, col),
         "Prop_Bin": litter_bin("Prop_Bin", m("bin_body", "#5D646B", roughness=0.6, metallic=0.3), steel,
                                m("gloss_black", roughness=0.5), col),
-        "Prop_Parasol": parasol("Prop_Parasol", m("parasol_canvas", "#F2EEE6", roughness=0.9),
+        "Prop_Parasol": parasol("Prop_Parasol", m("parasol_canvas", "#F2E3C8", roughness=0.9),
                                 m("bark_light", roughness=0.8), m("concrete_light", roughness=0.9), col),
+        "Prop_BistroTable": bistro_table("Prop_BistroTable", m("cafe_table_top", "#E9DFCB", roughness=0.7),
+                                         m("cafe_metal", "#3E3B3A", roughness=0.5, metallic=0.5), col),
+        "Prop_BistroChair": bistro_chair("Prop_BistroChair", m("cafe_wood", "#B98A5B", roughness=0.75),
+                                         m("cafe_metal", "#3E3B3A", roughness=0.5, metallic=0.5), col),
+        "Prop_TroughBloom": trough_bloom("Prop_TroughBloom", m("event_violet", "#5C377D", roughness=0.85),
+                                         m("planter_cream", "#D9CFBB", roughness=0.85),
+                                         m("soil", "#5E4A3A", roughness=1.0),
+                                         m("bloom_leaf", "#536E49", roughness=0.9),
+                                         m("bloom", "#80679B", roughness=0.85),
+                                         m("bloom_light", "#BCA0D8", roughness=0.85), col),
+        "Prop_PlanterRound": planter_round("Prop_PlanterRound", m("planter_cream", "#D9CFBB", roughness=0.85),
+                                           m("soil", "#5E4A3A", roughness=1.0),
+                                           m("olive_crown_b", "#5F7F4F", roughness=0.9),
+                                           m("olive_crown_top_b", "#9DB06E", roughness=0.9), col),
+        "Prop_StudyTable": study_table("Prop_StudyTable", m("study_wood", "#B18C67", roughness=0.7),
+                                       m("cafe_metal", "#3E3B3A", roughness=0.5, metallic=0.5), col),
+        "Prop_GrandPiano": grand_piano("Prop_GrandPiano", m("piano_gloss", "#1D1D1F", roughness=0.2),
+                                       m("piano_keys", "#E8E2D2", roughness=0.5), col),
     }
     for name, obj in protos.items():
         tris = triangles(obj)
@@ -725,6 +832,160 @@ def place(seed=SEED, write=True, avoid=()):
                     taken.append((gx, gy))
                     break
     REPORT["lounge_chairs"] = chairs
+
+    # cafe groups beside the track (design reference: busy terraces) -------------------------------------------
+    def group_fits(items, clear=E.KEEP_CLEAR):
+        """Every member passes the site rules and keeps clear of earlier props and the plants."""
+        return all(site.ok(x, y, clear=clear, footprint=FOOTPRINT[pr]) and free(x, y, pr) for pr, x, y, _r in items)
+
+    def cafe_layout(gx, gy, tx, ty, nx, ny, parasols=True, trough=True):
+        """One cafe group around (gx, gy): two round tables with three chairs each (and a parasol through each
+        table outdoors), a flower trough between them and the road, a round planter at one end.
+        u along the route (tx, ty), v away from it (nx, ny)."""
+        def at(u, v):
+            return gx + tx * u + nx * v, gy + ty * u + ny * v
+        items = []
+        for u, v in ((-1.15, 0.0), (1.15, 0.55)):
+            cx, cy = at(u, v)
+            items.append(("Prop_BistroTable", cx, cy, rng.uniform(-math.pi, math.pi)))
+            if parasols:
+                items.append(("Prop_Parasol", cx, cy, rng.uniform(-math.pi, math.pi)))
+            a0 = rng.uniform(0, 2 * math.pi)
+            for q in range(3):
+                a = a0 + 2 * math.pi * q / 3 + rng.uniform(-0.15, 0.15)
+                px, py = cx + math.cos(a) * 0.64, cy + math.sin(a) * 0.64
+                items.append(("Prop_BistroChair", px, py, _facing(cx - px, cy - py) + rng.uniform(-0.25, 0.25)))
+        if trough:
+            rx, ry = at(0.0, -1.95)
+            items.append(("Prop_TroughBloom", rx, ry, math.atan2(ty, tx)))
+        px, py = at(2.9, 0.2)
+        items.append(("Prop_PlanterRound", px, py, rng.uniform(-math.pi, math.pi)))
+        return items
+
+    cafes = []
+    for zone, limit in CAFE_ZONES.items():
+        idx = [i for i, p in enumerate(pts) if p.get("zone") == zone and not p["building"]]
+        side, made = 1, 0
+        for i in _every(site, idx, CAFE_STEP):
+            if made >= limit:
+                break
+            land = -_sea_side(site, range(i - 10, i + 11)) if zone == "promenade" else None
+            spot = None
+            for sd in ((land,) if land else (side, -side)):
+                for di in (0, 2, -2, 4, -4, 6, -6):
+                    for off in CAFE_OFFSETS:
+                        p, (tx, ty), (nx, ny) = site.frame(i + di)
+                        gx, gy = p["x"] + nx * off * sd, p["y"] + ny * off * sd
+                        items = cafe_layout(gx, gy, tx, ty, nx * sd, ny * sd)
+                        if group_fits(items):
+                            spot = (sd, items, (i + di) % n)
+                            break
+                    if spot:
+                        break
+                if spot:
+                    break
+            if not spot:
+                continue
+            sd, items, j = spot
+            for pr, x, y, rot in items:
+                placed.append(_entry(pr, x, y, _prop_z(x, y), rot))
+            cafes.append((zone, round(pts[j]["s"])))
+            made += 1
+            side = -sd
+    REPORT["cafe_groups"] = cafes
+
+    # pairs of flower troughs on the straights of the plazas and the promenade ---------------------------------
+    def straight(i, span=4, limit=0.25):
+        _p, (ax, ay), _n = site.frame(i - span)
+        _p, (bx, by), _n = site.frame(i + span)
+        return abs(_wrap(math.atan2(by, bx) - math.atan2(ay, ax))) < limit
+
+    troughs, side = 0, 1
+    for zone_run in _runs([i for i, p in enumerate(pts) if p.get("zone") in TROUGH_ZONES and not p["building"]]):
+        for i in _every(site, zone_run, TROUGH_STEP):
+            if not straight(i):
+                continue
+            p, (tx, ty), (nx, ny) = site.frame(i)
+            for sd in (side, -side):
+                pair = [("Prop_TroughBloom", p["x"] + nx * TROUGH_OFFSET * sd + tx * u,
+                         p["y"] + ny * TROUGH_OFFSET * sd + ty * u, math.atan2(ty, tx)) for u in (-0.95, 0.95)]
+                if group_fits(pair):
+                    for pr, x, y, rot in pair:
+                        placed.append(_entry(pr, x, y, _prop_z(x, y), rot))
+                    troughs += 2
+                    side = -sd
+                    break
+    REPORT["trough_pairs"] = troughs // 2
+
+    # the atrium: cafe tables, study tables and the piano in the bays of the wide hall (env_interior) ----------
+    import env_interior as I
+    atrium = {"piano": 0, "cafe": 0, "study": 0}
+    for piece in I.passages():
+        if piece["building"]["name"] not in I.WIDE_HALLS:
+            continue
+        P, W = piece["points"], piece["widths"]
+        inside = [k for k, q in enumerate(P) if q["building"] == piece["building"]["name"]]
+        if len(inside) < 10:
+            continue
+
+        def kframe(k):
+            a, b = P[max(k - 1, 0)], P[min(k + 1, len(P) - 1)]
+            d = math.hypot(b["x"] - a["x"], b["y"] - a["y"]) or 1.0
+            return ((b["x"] - a["x"]) / d, (b["y"] - a["y"]) / d), (-(b["y"] - a["y"]) / d, (b["x"] - a["x"]) / d)
+
+        def in_hall(x, y, proto):
+            k = min(inside, key=lambda q: (P[q]["x"] - x) ** 2 + (P[q]["y"] - y) ** 2)
+            _t, (nx, ny) = kframe(k)
+            v = (x - P[k]["x"]) * nx + (y - P[k]["y"]) * ny
+            half = W[k][0] if v > 0 else W[k][1]
+            r = FOOTPRINT[proto] * 0.5
+            return (HALL_ROAD_BAND + r <= abs(v) <= half - HALL_WALL_BAND - r
+                    and E.distance_to_route(x, y) >= HALL_ROAD_BAND + r and free(x, y, proto))
+
+        def band(k, side, span=2):
+            ks = range(max(k - span, 0), min(k + span, len(P) - 1) + 1)
+            return min(W[q][0 if side == 1 else 1] for q in ks) - HALL_WALL_BAND - HALL_ROAD_BAND
+
+        bays = [(k, side) for k in inside[2:-2:HALL_STEP] for side in (1, -1) if band(k, side) >= 2.4]
+        order = ["piano", "cafe", "study"]
+        bays.sort(key=lambda b: -band(*b))
+        piano_bay = bays[0] if bays and band(*bays[0]) >= 3.0 and not atrium["piano"] else None   # one piano
+        plan = ([(piano_bay, "piano")] if piano_bay else []) + [
+            (b, order[1 + n_ % 2]) for n_, b in enumerate(sorted((b for b in bays if b != piano_bay), key=lambda b: b[0]))]
+        for (k, side), kind in plan:
+            p = P[k]
+            (tx, ty), (nx, ny) = kframe(k)
+            nx, ny = nx * side, ny * side
+            vc = HALL_ROAD_BAND + band(k, side) / 2 + 0.2
+            gx, gy = p["x"] + nx * vc, p["y"] + ny * vc
+            if kind == "piano":
+                rot = _facing(-nx, -ny) + math.radians(30) * side
+                items = [("Prop_GrandPiano", gx, gy, rot)]
+                bx, by = gx - nx * 1.2 + tx * 0.2, gy - ny * 1.2 + ty * 0.2       # the player's seat
+                items.append(("Prop_BistroChair", bx, by, _facing(gx - bx, gy - by)))
+                items.append(("Prop_PlanterRound", gx + tx * 2.4 + nx * 0.6, gy + ty * 2.4 + ny * 0.6, 0.0))
+            elif kind == "cafe":
+                items = cafe_layout(gx, gy, tx, ty, nx, ny, parasols=False, trough=False)
+            else:
+                items = []
+                for u in (-1.0, 1.0):
+                    items.append(("Prop_StudyTable", gx + tx * u, gy + ty * u, math.atan2(ty, tx)))
+                for u in (-1.45, -0.55, 0.55, 1.45):
+                    for sv in (1, -1):
+                        cx, cy = gx + tx * u + nx * 0.68 * sv, gy + ty * u + ny * 0.68 * sv
+                        items.append(("Prop_BistroChair", cx, cy, _facing(-nx * sv, -ny * sv) + rng.uniform(-0.2, 0.2)))
+            ok = [it for it in items if in_hall(it[1], it[2], it[0])]
+            core = {"piano": "Prop_GrandPiano", "cafe": "Prop_BistroTable", "study": "Prop_StudyTable"}[kind]
+            if sum(1 for it in ok if it[0] == core) < sum(1 for it in items if it[0] == core):
+                continue                                 # the main pieces must fit, else skip the whole bay
+            for pr, x, y, rot in ok:
+                placed.append(_entry(pr, x, y, p["track_z"], rot))
+            atrium[kind] += 1
+            # a flower trough between the bay and the road
+            rx, ry = p["x"] + nx * (HALL_ROAD_BAND + 0.55), p["y"] + ny * (HALL_ROAD_BAND + 0.55)
+            if in_hall(rx, ry, "Prop_TroughBloom"):
+                placed.append(_entry("Prop_TroughBloom", rx, ry, p["track_z"], math.atan2(ty, tx)))
+    REPORT["atrium"] = atrium
 
     if write:
         os.makedirs(E.OUT, exist_ok=True)
