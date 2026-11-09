@@ -603,6 +603,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             sso.FindProperty("checkpointChime").objectReferenceValue = Clip("sfx_checkpoint_chime");
             sso.FindProperty("finishJingle").objectReferenceValue = Clip("sfx_finish_jingle");
             sso.FindProperty("newRecordSting").objectReferenceValue = Clip("sfx_new_record");
+            sso.FindProperty("medalStamp").objectReferenceValue = Clip("sfx_landing_thud");        // task P6b
+            sso.FindProperty("newMedalSparkle").objectReferenceValue = Clip("sfx_drift_stage2");   // task P6b
             sso.FindProperty("retryClick").objectReferenceValue = Clip("ui_click");
             sso.FindProperty("respawnWhoosh").objectReferenceValue = Clip("sfx_respawn");
             sso.ApplyModifiedPropertiesWithoutUndo();

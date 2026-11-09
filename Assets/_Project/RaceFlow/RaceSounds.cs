@@ -4,6 +4,9 @@ namespace CarcavelosCircuit.RaceFlow
 {
     // Task R5 (race part) + P4 polish: countdown beeps, checkpoint chime, finish jingle, new-record sting,
     // click on retry, whoosh on respawn, warning cue for a missed checkpoint.
+    // P6b: a soft thud when the medal badge lands on the results card, plus a small ping for a new medal.
+    // Results card sounds wait for the finish beat (FinishMoment.BeatFor) and count in REAL time, because the
+    // finish slow motion changes Time.timeScale (PlayDelayed and Time.unscaledTime both ignore it).
     // It listens to the RaceManager's events. The sound files live in Audio/Clips; their loudness is set in the
     // files (tools/audio-synth/process_wavs.py), so every sound plays at full volume here.
     // Kart sounds (engine, drift, boost) are in the Audio module (KartAudio), because they only read IKartState.
@@ -36,6 +39,12 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField]
         private AudioClip newRecordSting;
 
+        [SerializeField, Tooltip("Soft thud when the medal badge lands on the results card (task P6b, sfx_landing_thud)")]
+        private AudioClip medalStamp;
+
+        [SerializeField, Tooltip("Small ping right after the thud when the lap earned a better medal than ever (task P6b, sfx_drift_stage2)")]
+        private AudioClip newMedalSparkle;
+
         [SerializeField, Tooltip("Short click when the player restarts (Enter or the Retry button)")]
         private AudioClip retryClick;
 
@@ -57,8 +66,16 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Range(0f, 1f), Tooltip("Coach tips and praise reuse the retry click this much quieter (a gentle 'look here', not an alarm)")]
         private float coachClickVolume = 0.4f;
 
+        [SerializeField, Range(0f, 1f), Tooltip("The medal thud sits under the music and the jingle: a felt landing, not a bang")]
+        private float medalStampVolume = 0.7f;
+
+        [SerializeField, Range(0f, 1f), Tooltip("The new-medal ping, quieter than the record sting")]
+        private float newMedalSparkleVolume = 0.55f;
+
         private RaceState stateLastFrame = RaceState.Ready;
         private float lastHintUntil;
+        private float stampAt = -1f;    // Time.unscaledTime when the medal thud plays, -1 = none waiting
+        private float sparkleAt = -1f;  // same for the new-medal ping
 
         private void OnEnable()
         {
@@ -96,6 +113,19 @@ namespace CarcavelosCircuit.RaceFlow
                 }
             }
             lastHintUntil = raceManager.HintVisibleUntil;
+
+            // The medal sounds wait in real time (task P6b). They play on the first source, so they never replace
+            // the record sting that waits on the second one.
+            if (stampAt >= 0f && Time.unscaledTime >= stampAt)
+            {
+                stampAt = -1f;
+                Play(medalStamp, medalStampVolume);
+            }
+            if (sparkleAt >= 0f && Time.unscaledTime >= sparkleAt)
+            {
+                sparkleAt = -1f;
+                Play(newMedalSparkle, newMedalSparkleVolume);
+            }
 
             // Remembered for OnCountdownStep: a countdown that starts after Racing or Results is a retry.
             stateLastFrame = raceManager.State;
@@ -135,13 +165,25 @@ namespace CarcavelosCircuit.RaceFlow
         {
             Play(finishJingle);
             Duck(-12f, finishJingle);
+
+            // The results card comes in after the finish beat (0.6 s, none with reduced motion), and its stamps
+            // land at fixed times after that (FinishMoment, matched to RaceHud.uss).
+            float beat = FinishMoment.BeatFor(raceManager.ReducedMotion);
+            Medal medal = raceManager.LastMedal;
+            if (medal != Medal.None)
+            {
+                stampAt = Time.unscaledTime + beat + FinishMoment.MedalStampLandsSeconds;
+                bool newMedal = medal > raceManager.PreviousBestMedal;
+                sparkleAt = newMedal ? stampAt + 0.04f : -1f; // just after the thud, so both are heard
+            }
             if (newRecord)
             {
                 // With the NEW RECORD stamp, not on top of the jingle's first notes.
-                PlayLater(newRecordSting, recordStingDelay);
+                float stingDelay = beat + recordStingDelay;
+                PlayLater(newRecordSting, stingDelay);
                 if (music != null && newRecordSting != null)
                 {
-                    music.Duck(-12f, recordStingDelay + newRecordSting.length * 0.6f);
+                    music.Duck(-12f, stingDelay + newRecordSting.length * 0.6f);
                 }
             }
         }
@@ -149,6 +191,9 @@ namespace CarcavelosCircuit.RaceFlow
         private void OnRestarted()
         {
             // A sting still waiting from the old lap is stopped by the delayed first beep (PlayLater replaces it).
+            // The medal sounds of the old lap are cancelled here.
+            stampAt = -1f;
+            sparkleAt = -1f;
             Play(retryClick);
         }
 
