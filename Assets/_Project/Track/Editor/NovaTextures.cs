@@ -48,6 +48,26 @@ namespace CarcavelosCircuit.Track.Editor
             return Save(t, name);
         }
 
+        // Set-back top storey of the wings (video IMG_7723 f0001-f0012): dark grey louvre wall, fine vertical fins
+        // every 0.3 m. One tile = 4 m wide, 4 m tall.
+        public static Texture2D Louvre(Color wall, Color fin)
+        {
+            int size = 256;
+            Texture2D t = NewTexture(size);
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float mx = x / (float)size * 4f;
+                    float k = (mx % 0.3f) / 0.3f;
+                    Color c = k < 0.18f ? fin : wall * Mathf.Lerp(0.92f, 1.04f, k);
+                    c.a = 1f;
+                    t.SetPixel(x, y, c);
+                }
+            }
+            return Save(t, "NovaLouvre");
+        }
+
         // Light concrete with expansion joints every 2 m (one tile = 4 m) and a little noise.
         public static Texture2D Concrete(Color baseColour)
         {

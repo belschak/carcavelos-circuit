@@ -16,6 +16,8 @@ namespace CarcavelosCircuit.Track.Editor
         public const string WingGlass = "#A3ABAF";       // video IMG_7723: wing glass mirrors the overcast sky
         public const string WingGlassShade = "#4D5557";  // recessed ground floor glass, in the shade of the slab
         public const string WingFrame = "#1C2124";
+        public const string LouvreWall = "#55585A";      // set-back top storey, video f0001-f0012
+        public const string LouvreFin = "#74787A";
         public const string ConcreteTerrace = "#C6C1B5";
         public const string BeigeRamp = "#D2B98C";
         public const string TerracottaStairs = "#BE7254";
@@ -67,6 +69,7 @@ namespace CarcavelosCircuit.Track.Editor
         public Material AsphaltMat;
         public Material Facade;      // white with glass bands
         public Material FacadeGround; // recessed ground floor of the wings
+        public Material Louvre;       // dark set-back top storey of the wings
         public Material PlainWhite;
         public Material GlassMat;
         public Material Terracotta;
@@ -119,6 +122,7 @@ namespace CarcavelosCircuit.Track.Editor
             look.SeaMat = Lit("NovaSea", Sea, 0.6f, null);
             look.AsphaltMat = Lit("NovaAsphalt", Asphalt, 0.2f, null);
             look.Facade = Lit("NovaFacade", "#FFFFFF", 0.35f, facadeTex);
+            look.Louvre = Lit("NovaLouvre", "#FFFFFF", 0.2f, NovaTextures.Louvre(Hex(LouvreWall), Hex(LouvreFin)));
             look.FacadeGround = Lit("NovaFacadeGround", "#FFFFFF", 0.4f, groundTex);
             look.PlainWhite = Lit("NovaWhite", WhiteFacade, 0.3f, null);
             look.GlassMat = Lit("NovaGlass", Glass, 0.7f, null);

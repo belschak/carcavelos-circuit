@@ -73,6 +73,7 @@ namespace CarcavelosCircuit.Track.Editor
             if (kind == "wing")
             {
                 AddWingGroundFloor(b, outline, batch, look);
+                AddWingTopFloor(b, outline, top, batch, look);
             }
             if (kind == "hall")
             {
@@ -113,6 +114,120 @@ namespace CarcavelosCircuit.Track.Editor
                 Vector2 slabMid = (a + c) * 0.5f + outward * 1.75f;
                 batch.For(look.PlainWhite).Box(new Vector3(slabMid.x, slabY + 0.2f, slabMid.y), new Vector3(3.5f, 0.4f, edgeLength), edgeRot, 4f);
             }
+        }
+
+        // Set-back top storey (video IMG_7723 f0001-f0012): a dark louvred box 5 m in from the facade on the roof
+        // terrace, 3.2 m tall, with its own thin white roof plate. Skipped where the footprint is too narrow.
+        private static void AddWingTopFloor(NovaBuilding b, Vector2[] outline, float top, NovaBatch batch, NovaLook look)
+        {
+            if (b.height < 7.5f)
+            {
+                return;
+            }
+            Vector2[] inner = MiterInset(outline, 5f);
+            if (!InsetIsClean(outline, inner, 4.5f))
+            {
+                return;
+            }
+            float roofY = top + 3.2f;
+            float u = 0f;
+            for (int i = 0; i < inner.Length; i++)
+            {
+                Vector2 a = inner[i];
+                Vector2 c = inner[(i + 1) % inner.Length];
+                float length = Vector2.Distance(a, c);
+                Vector3 a0 = new Vector3(a.x, top, a.y);
+                Vector3 c0 = new Vector3(c.x, top, c.y);
+                Vector3 a1 = new Vector3(a.x, roofY, a.y);
+                Vector3 c1 = new Vector3(c.x, roofY, c.y);
+                batch.For(look.Louvre).Quad(a0, a1, c1, c0, new Vector2(u / 4f, 0f), new Vector2(u / 4f, 0.8f), new Vector2((u + length) / 4f, 0.8f), new Vector2((u + length) / 4f, 0f));
+                if (length > 0.5f)
+                {
+                    Vector2 o = Outward(a, c);
+                    Vector3 mid = new Vector3((a.x + c.x) * 0.5f + o.x * 0.6f, roofY + 0.15f, (a.y + c.y) * 0.5f + o.y * 0.6f);
+                    Quaternion along = Quaternion.LookRotation(new Vector3(c.x - a.x, 0f, c.y - a.y));
+                    batch.For(look.PlainWhite).Box(mid, new Vector3(1.4f, 0.3f, length + 1.2f), along, 4f);
+                }
+                u += length;
+            }
+            batch.For(look.Concrete).FlatPolygon(inner, roofY, 4f);
+        }
+
+        // Moves every edge of a counter-clockwise outline inwards by exactly "by" (mitred corners, capped at 3x).
+        private static Vector2[] MiterInset(Vector2[] outline, float by)
+        {
+            int n = outline.Length;
+            Vector2[] result = new Vector2[n];
+            for (int i = 0; i < n; i++)
+            {
+                Vector2 prev = outline[(i - 1 + n) % n];
+                Vector2 cur = outline[i];
+                Vector2 next = outline[(i + 1) % n];
+                Vector2 n0 = -Outward(prev, cur);
+                Vector2 n1 = -Outward(cur, next);
+                Vector2 bis = n0 + n1;
+                if (bis.sqrMagnitude < 0.0001f)
+                {
+                    result[i] = cur + n0 * by;
+                    continue;
+                }
+                bis.Normalize();
+                float cos = Mathf.Max(Vector2.Dot(bis, n0), 0.34f);
+                result[i] = cur + bis * (by / cos);
+            }
+            return result;
+        }
+
+        // True when the inset outline is a simple polygon that stays at least minGap inside every original edge.
+        private static bool InsetIsClean(Vector2[] outline, Vector2[] inner, float minGap)
+        {
+            if (NovaTriangulator.SignedArea(inner) < 60f)
+            {
+                return false;
+            }
+            for (int i = 0; i < inner.Length; i++)
+            {
+                for (int k = 0; k < outline.Length; k++)
+                {
+                    if (SegmentDistance(inner[i], outline[k], outline[(k + 1) % outline.Length]) < minGap)
+                    {
+                        return false;
+                    }
+                }
+                for (int j = i + 2; j < inner.Length; j++)
+                {
+                    if (i == 0 && j == inner.Length - 1)
+                    {
+                        continue;
+                    }
+                    if (SegmentsCross(inner[i], inner[(i + 1) % inner.Length], inner[j], inner[(j + 1) % inner.Length]))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        private static float SegmentDistance(Vector2 p, Vector2 a, Vector2 c)
+        {
+            Vector2 ac = c - a;
+            float t = ac.sqrMagnitude < 0.0001f ? 0f : Mathf.Clamp01(Vector2.Dot(p - a, ac) / ac.sqrMagnitude);
+            return Vector2.Distance(p, a + ac * t);
+        }
+
+        private static bool SegmentsCross(Vector2 p1, Vector2 p2, Vector2 q1, Vector2 q2)
+        {
+            float d1 = Cross(q2 - q1, p1 - q1);
+            float d2 = Cross(q2 - q1, p2 - q1);
+            float d3 = Cross(p2 - p1, q1 - p1);
+            float d4 = Cross(p2 - p1, q2 - p1);
+            return d1 * d2 < 0f && d3 * d4 < 0f;
+        }
+
+        private static float Cross(Vector2 a, Vector2 b)
+        {
+            return a.x * b.y - a.y * b.x;
         }
 
         // Wing ground floor (video IMG_7723): the glass sits in the shade of the first-floor slab, which rests on
