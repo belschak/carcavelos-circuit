@@ -77,6 +77,11 @@ namespace CarcavelosCircuit.Tests.PlayMode
 
             yield return StartAndWaitForGo();
             Assert.IsTrue(race.Kart.InputEnabled, "input is on after GO");
+            PlaceholderChaseCamera chase = Object.FindAnyObjectByType<PlaceholderChaseCamera>();
+            if (chase != null && Object.FindAnyObjectByType<MapFlyover>() != null)
+            {
+                Assert.IsTrue(chase.enabled, "after GO the map fly-over has handed the camera back to the chase camera");
+            }
 
             int finishedLaps = 0;
             float finishedTime = 0f;

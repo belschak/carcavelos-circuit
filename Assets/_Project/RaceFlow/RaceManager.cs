@@ -33,6 +33,7 @@ namespace CarcavelosCircuit.RaceFlow
         public int CountdownFrom { get { return settings.CountdownFrom; } }
         public Transform KartTransform { get { return kartTransform; } }
         public string TrackName { get; private set; } = ""; // the track scene we race on (save keys, ghost check)
+        public Vector3[] TrackPoints { get; private set; } = new Vector3[0]; // checkpoint positions in driving order (fly-over camera)
         public float LapMetres { get; private set; } // lap length checkpoint to checkpoint (medal times scale with it)
         public int CheckpointCount { get { return checkpointList == null ? 0 : checkpointList.Length; } } // incl. the start/finish line
         public int CheckpointsPassed { get { return rules == null ? 0 : rules.LastValidCheckpoint; } } // this lap, in order
@@ -118,7 +119,8 @@ namespace CarcavelosCircuit.RaceFlow
 
             // Medal times, stretched to this track's length (MedalScaling). A save from before medals existed gets the
             // medal its best time is worth.
-            LapMetres = MedalScaling.LoopLength(CheckpointPositions(checkpoints));
+            TrackPoints = CheckpointPositions(checkpoints);
+            LapMetres = MedalScaling.LoopLength(TrackPoints);
             medalThresholds = MedalScaling.ScaleTimes(settings.MedalThresholds(), settings.MedalReferenceLapMetres, LapMetres);
             Debug.Log("RaceManager: racing " + trackName + ", " + checkpointCount + " checkpoints, lap about "
                 + Mathf.RoundToInt(LapMetres) + " m checkpoint to checkpoint, Bronze " + RaceTimer.Format(medalThresholds[0])

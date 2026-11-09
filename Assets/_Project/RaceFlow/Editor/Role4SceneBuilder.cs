@@ -128,7 +128,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             switch (rootName)
             {
                 case "Main Camera":
-                    return new[] { typeof(Transform), typeof(Camera), typeof(AudioListener), typeof(PlaceholderChaseCamera), typeof(UniversalAdditionalCameraData) };
+                    return new[] { typeof(Transform), typeof(Camera), typeof(AudioListener), typeof(PlaceholderChaseCamera), typeof(MapFlyover), typeof(UniversalAdditionalCameraData) };
                 case "PostProcessing":
                     return new[] { typeof(Transform), typeof(Volume) };
                 case "RaceSystems":
@@ -649,6 +649,13 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             bso.FindProperty("raceManager").objectReferenceValue = manager;
             bso.FindProperty("chaseCamera").objectReferenceValue = chase;
             bso.ApplyModifiedPropertiesWithoutUndo();
+
+            // Start screen and finish: the camera flies over the whole map (MapFlyover); while driving the chase camera.
+            MapFlyover flyover = cameraObject.AddComponent<MapFlyover>();
+            SerializedObject fso = new SerializedObject(flyover);
+            fso.FindProperty("raceManager").objectReferenceValue = manager;
+            fso.FindProperty("chaseCamera").objectReferenceValue = chase;
+            fso.ApplyModifiedPropertiesWithoutUndo();
 
             SerializedObject sso = new SerializedObject(sounds);
             sso.FindProperty("raceManager").objectReferenceValue = manager;
