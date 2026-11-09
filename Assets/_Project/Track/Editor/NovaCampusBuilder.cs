@@ -73,10 +73,12 @@ namespace CarcavelosCircuit.Track.Editor
             AddGround(ground, look);
             AddZonesAndSea(ground, look);
             AddMarginalEdge(props, look);
+            NovaBuildings.Route = centre;
             for (int i = 0; data.buildings != null && i < data.buildings.Length; i++)
             {
                 NovaBuildings.Add(data.buildings[i], buildings, look);
             }
+            LiftThingsOntoBerms();
             for (int i = 0; data.things != null && i < data.things.Length; i++)
             {
                 NovaProps.Add(data.things[i], props, look);
@@ -386,6 +388,89 @@ namespace CarcavelosCircuit.Track.Editor
             return Mathf.Abs(x - m[0].x) < Mathf.Abs(x - m[m.Length - 1].x) ? m[0].z : m[m.Length - 1].z;
         }
 
+        // Berm with the run-out next to the road ("fromRoad" = metres from the road edge).
+        private static float BermAt(float x, float z, float fromRoad)
+        {
+            return Berm(x, z) * Mathf.SmoothStep(0f, 1f, (fromRoad - 4f) / 8f);
+        }
+
+        // Props on the lawns stand on the berms, not inside them.
+        private static void LiftThingsOntoBerms()
+        {
+            for (int i = 0; data.things != null && i < data.things.Length; i++)
+            {
+                NovaThing t = data.things[i];
+                if (t.y < data.campusY - 0.5f)
+                {
+                    continue; // beach level
+                }
+                int near = NovaRouteMath.ClosestIndex(centre, new Vector3(t.x, 0f, t.z));
+                float d = new Vector2(centre[near].x - t.x, centre[near].z - t.z).magnitude - width[near] * 0.5f;
+                t.y += BermAt(t.x, t.z, d);
+            }
+        }
+
+        private const float BermHeight = 2.5f;
+        private const float BermReach = 18f;
+
+        // Height of the lawn berm at (x, z): highest against a campus building wall, gone BermReach metres away.
+        private static float Berm(float x, float z)
+        {
+            float best = BermReach;
+            Vector2 p = new Vector2(x, z);
+            for (int b = 0; data.buildings != null && b < data.buildings.Length; b++)
+            {
+                NovaBuilding building = data.buildings[b];
+                if (building.kind == "plain" || building.pts == null || building.pts.Length < 3)
+                {
+                    continue; // only the campus itself has berms, not the town blocks around it
+                }
+                for (int k = 0; k < building.pts.Length; k++)
+                {
+                    NovaPoint a = building.pts[k];
+                    NovaPoint c = building.pts[(k + 1) % building.pts.Length];
+                    best = Mathf.Min(best, DistanceToSegment(p, new Vector2(a.x, a.z), new Vector2(c.x, c.z)));
+                }
+            }
+            if (best >= BermReach)
+            {
+                return 0f;
+            }
+            // Paved areas (plazas, calcada, terraces, car parks) stay flat, with a 6 m run-out around them.
+            float paved = 6f;
+            for (int i = 0; data.zones != null && i < data.zones.Length && paved > 0f; i++)
+            {
+                NovaZone zone = data.zones[i];
+                if (zone.kind == "sand" || zone.kind == "headland" || zone.kind == "grass" || zone.pts == null || zone.pts.Length < 3)
+                {
+                    continue;
+                }
+                bool inside = false;
+                for (int k = 0, m = zone.pts.Length - 1; k < zone.pts.Length; m = k++)
+                {
+                    NovaPoint a = zone.pts[k];
+                    NovaPoint c = zone.pts[m];
+                    if ((a.z > z) != (c.z > z) && x < (c.x - a.x) * (z - a.z) / (c.z - a.z) + a.x)
+                    {
+                        inside = !inside;
+                    }
+                    paved = Mathf.Min(paved, DistanceToSegment(p, new Vector2(a.x, a.z), new Vector2(c.x, c.z)));
+                }
+                if (inside)
+                {
+                    paved = 0f;
+                }
+            }
+            return BermHeight * Mathf.SmoothStep(0f, 1f, 1f - best / BermReach) * Mathf.SmoothStep(0f, 1f, paved / 6f);
+        }
+
+        private static float DistanceToSegment(Vector2 p, Vector2 a, Vector2 b)
+        {
+            Vector2 ab = b - a;
+            float t = ab.sqrMagnitude < 0.0001f ? 0f : Mathf.Clamp01(Vector2.Dot(p - a, ab) / ab.sqrMagnitude);
+            return Vector2.Distance(p, a + ab * t);
+        }
+
         // A 4 m grass grid that follows the road's height next to it and leaves holes where the road dips into the ramp/tunnel.
         private static void AddGround(NovaBatch batch, NovaLook look)
         {
@@ -413,8 +498,10 @@ namespace CarcavelosCircuit.Track.Editor
                     float roadY = centre[near].y - 0.05f;
                     if (roadY < g - TrenchDip)
                     {
-                        trench[ix, iz] = d < Mathf.Max(0.5f, (g - roadY) * Batter - 0.3f); // room for the battered wall; the ramp plaza strips cover the rest
-                        h[ix, iz] = g;
+                        // Shallow start of the ramp: only a small hole over the road itself (the strips do not reach there yet).
+                        bool shallow = g - roadY < 1.5f;
+                        trench[ix, iz] = shallow ? d < 0.5f : d < Mathf.Max(0.5f, (g - roadY) * Batter - 0.3f); // room for the battered wall; the ramp plaza strips cover the rest
+                        h[ix, iz] = g; // grass stays on top: seen from the road it hides behind the sloped wall
                     }
                     else if (d < 1.5f)
                     {
@@ -423,6 +510,9 @@ namespace CarcavelosCircuit.Track.Editor
                     else
                     {
                         h[ix, iz] = Mathf.Lerp(roadY, g, Mathf.SmoothStep(0f, 1f, (d - 1.5f) / 10f));
+                        // Campus buildings sit half sunk into lawn berms (video IMG_7723): grass rises towards their walls,
+                        // but never right next to the road.
+                        h[ix, iz] += BermAt(x, z, d);
                     }
                 }
             }
