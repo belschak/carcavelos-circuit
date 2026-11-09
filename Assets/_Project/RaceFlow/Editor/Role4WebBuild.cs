@@ -30,6 +30,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             bool gzipForItch = HasArgument("-webHost=itch");
             ApplyWebSettings(gzipForItch);
 
+            // Every track scene that is merged into main goes into the build (CI runs only this method).
+            Role4SceneBuilder.MergeBuildScenes(AssetDatabase.LoadAssetAtPath<RaceSettings>(Role4SceneBuilder.SettingsPath));
+
             // Build with the Web URP asset as the project default, so the build does not also carry the shader variants
             // of the PC asset (Forward+, SSAO). The editor's default is put back afterwards, even if the build fails.
             RenderPipelineAsset webPipeline = Role4WebQuality.SetUp();
