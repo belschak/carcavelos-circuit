@@ -10,36 +10,42 @@ namespace CarcavelosCircuit.Track.Editor
     {
         public const string Folder = "Assets/_Project/Track/Textures/Nova/";
 
-        // White facade with one dark glass band per floor (one tile = 4 m wide, 4 m tall = one floor).
-        public static Texture2D Facade(Color wall, Color glass, Color frame)
+        // Campus wing facade (video IMG_7723): per floor a white slab band, then a full-height band of light
+        // silver-grey glass (it mirrors the overcast sky) in a dense near-black frame grid: 2 m panes, two transoms,
+        // a heavier double mullion every 4 m. One tile = 4 m wide, 4 m tall = one floor.
+        public static Texture2D Facade(Color wall, Color glass, Color frame, string name = "NovaFacade")
         {
             int size = 256;
             Texture2D t = NewTexture(size);
             for (int y = 0; y < size; y++)
             {
                 float metres = y / (float)size * 4f;
-                bool band = metres > 0.5f && metres < 3.3f; // thin slab edge, glass ribbon 2.8 m (about 70 % glass, as in the photos)
+                bool band = metres > 0.75f && metres < 3.95f; // white slab 0.8 m, glass 3.2 m
                 for (int x = 0; x < size; x++)
                 {
                     float mx = x / (float)size * 4f;
                     Color c = wall;
                     if (band)
                     {
-                        bool mullion = (mx % (4f / 3f)) < 0.04f || mx > 3.96f;
-                        bool rail = Mathf.Abs(metres - 1.45f) < 0.03f; // balcony handrail inside the glass band
-                        float sheen = Mathf.Lerp(0.85f, 1.15f, (metres - 0.5f) / 2.8f); // lighter at the top, like the sky reflecting
-                        c = mullion ? frame : (rail ? new Color(0.60f, 0.64f, 0.67f) : glass * sheen);
+                        float g = metres - 0.75f;
+                        bool heavy = mx < 0.07f || mx > 3.93f;
+                        bool mullion = heavy || Mathf.Abs(mx - 2f) < 0.035f;
+                        bool transom = Mathf.Abs(g - 1.07f) < 0.03f || Mathf.Abs(g - 2.13f) < 0.03f || g < 0.05f || g > 3.15f;
+                        // Lighter towards the top of each pane (sky reflection), a touch darker in the lowest row.
+                        float row = (g % 1.067f) / 1.067f;
+                        float sheen = Mathf.Lerp(0.9f, 1.08f, row) * (g < 1.07f ? 0.94f : 1f);
+                        c = mullion || transom ? frame : glass * sheen;
                         c.a = 1f;
                     }
-                    else if (Mathf.Abs(metres - 3.3f) < 0.03f || Mathf.Abs(metres - 0.5f) < 0.03f)
+                    else if (metres > 0.7f && metres <= 0.75f)
                     {
-                        c = wall * 0.9f; // thin shadow line under the slab edge
+                        c = wall * 0.82f; // shadow line under the slab nose
                         c.a = 1f;
                     }
                     t.SetPixel(x, y, c);
                 }
             }
-            return Save(t, "NovaFacade");
+            return Save(t, name);
         }
 
         // Light concrete with expansion joints every 2 m (one tile = 4 m) and a little noise.

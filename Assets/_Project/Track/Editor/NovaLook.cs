@@ -13,6 +13,9 @@ namespace CarcavelosCircuit.Track.Editor
         public const string WhiteFacade = "#E9EBEC";
         public const string Glass = "#3E4E5C";
         public const string GlassFrame = "#2A3138";
+        public const string WingGlass = "#A3ABAF";       // video IMG_7723: wing glass mirrors the overcast sky
+        public const string WingGlassShade = "#4D5557";  // recessed ground floor glass, in the shade of the slab
+        public const string WingFrame = "#1C2124";
         public const string ConcreteTerrace = "#C6C1B5";
         public const string BeigeRamp = "#D2B98C";
         public const string TerracottaStairs = "#BE7254";
@@ -60,6 +63,7 @@ namespace CarcavelosCircuit.Track.Editor
         public Material SeaMat;
         public Material AsphaltMat;
         public Material Facade;      // white with glass bands
+        public Material FacadeGround; // recessed ground floor of the wings
         public Material PlainWhite;
         public Material GlassMat;
         public Material Terracotta;
@@ -94,7 +98,8 @@ namespace CarcavelosCircuit.Track.Editor
                 mural[i] = Hex(MuralColours[i]);
             }
             Texture2D muralTex = NovaTextures.Mural(mural, Hex("#F2EEE6"));
-            Texture2D facadeTex = NovaTextures.Facade(Hex(WhiteFacade), Hex(Glass), Hex(GlassFrame));
+            Texture2D facadeTex = NovaTextures.Facade(Hex(WhiteFacade), Hex(WingGlass), Hex(WingFrame));
+            Texture2D groundTex = NovaTextures.Facade(Hex(WhiteFacade), Hex(WingGlassShade), Hex(WingFrame), "NovaFacadeGround");
 
             look.Road = Lit("NovaRoad", ConcreteTerrace, 0.15f, concreteTex);
             look.RampBeige = Lit("NovaRampBeige", OchreConcrete, 0.1f, concreteTex);
@@ -110,6 +115,7 @@ namespace CarcavelosCircuit.Track.Editor
             look.SeaMat = Lit("NovaSea", Sea, 0.6f, null);
             look.AsphaltMat = Lit("NovaAsphalt", Asphalt, 0.2f, null);
             look.Facade = Lit("NovaFacade", "#FFFFFF", 0.35f, facadeTex);
+            look.FacadeGround = Lit("NovaFacadeGround", "#FFFFFF", 0.4f, groundTex);
             look.PlainWhite = Lit("NovaWhite", WhiteFacade, 0.3f, null);
             look.GlassMat = Lit("NovaGlass", Glass, 0.7f, null);
             look.Terracotta = Lit("NovaTerracotta", TerracottaStairs, 0.1f, null);

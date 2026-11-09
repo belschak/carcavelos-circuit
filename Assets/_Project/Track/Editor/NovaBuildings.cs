@@ -70,6 +70,10 @@ namespace CarcavelosCircuit.Track.Editor
                 }
             }
 
+            if (kind == "wing")
+            {
+                AddWingGroundFloor(b, outline, batch, look);
+            }
             if (kind == "hall")
             {
                 AddHallFacades(b, outline, top, batch, look);
@@ -108,6 +112,48 @@ namespace CarcavelosCircuit.Track.Editor
                 }
                 Vector2 slabMid = (a + c) * 0.5f + outward * 1.75f;
                 batch.For(look.PlainWhite).Box(new Vector3(slabMid.x, slabY + 0.2f, slabMid.y), new Vector3(3.5f, 0.4f, edgeLength), edgeRot, 4f);
+            }
+        }
+
+        // Wing ground floor (video IMG_7723): the glass sits in the shade of the first-floor slab, which rests on
+        // slender white columns about every 7 m; the slab nose sticks out 0.6 m.
+        private static void AddWingGroundFloor(NovaBuilding b, Vector2[] outline, NovaBatch batch, NovaLook look)
+        {
+            if (b.height < 6f)
+            {
+                return; // single-storey annexes have no colonnade
+            }
+            float u = 0f;
+            for (int i = 0; i < outline.Length; i++)
+            {
+                Vector2 a = outline[i];
+                Vector2 c = outline[(i + 1) % outline.Length];
+                float length = Vector2.Distance(a, c);
+                if (length >= 8f)
+                {
+                    Vector2 o = Outward(a, c) * 0.03f;
+                    float lo = b.baseY - 1f;
+                    float hi = b.baseY + 4f;
+                    Vector3 a0 = new Vector3(a.x + o.x, lo, a.y + o.y);
+                    Vector3 c0 = new Vector3(c.x + o.x, lo, c.y + o.y);
+                    Vector3 a1 = new Vector3(a.x + o.x, hi, a.y + o.y);
+                    Vector3 c1 = new Vector3(c.x + o.x, hi, c.y + o.y);
+                    batch.For(look.FacadeGround).Quad(a0, a1, c1, c0, new Vector2(u / 4f, -0.25f), new Vector2(u / 4f, 1f), new Vector2((u + length) / 4f, 1f), new Vector2((u + length) / 4f, -0.25f));
+
+                    Vector2 dir = (c - a) / length;
+                    Vector2 out1 = Outward(a, c);
+                    Quaternion along = Quaternion.LookRotation(new Vector3(dir.x, 0f, dir.y));
+                    Vector2 mid = (a + c) * 0.5f + out1 * 0.3f;
+                    batch.For(look.PlainWhite).Box(new Vector3(mid.x, b.baseY + 4.375f, mid.y), new Vector3(0.6f, 0.75f, length), along, 4f);
+                    int count = Mathf.Max(1, Mathf.RoundToInt(length / 7f));
+                    float step = length / count;
+                    for (int k = 0; k <= count; k++)
+                    {
+                        Vector2 p = a + dir * Mathf.Clamp(k * step, 0.3f, length - 0.3f) + out1 * 0.35f;
+                        batch.For(look.PlainWhite).Box(new Vector3(p.x, b.baseY + 1.75f, p.y), new Vector3(0.3f, 4.5f, 0.3f), along, 4f);
+                    }
+                }
+                u += length;
             }
         }
 
