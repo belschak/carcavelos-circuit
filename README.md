@@ -34,6 +34,8 @@ In the Unity Editor: Window > General > Test Runner > EditMode > Run All. Comman
 ```
 "C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -runTests -batchmode -projectPath . -testPlatform EditMode -testResults TestResults/editmode.xml
 ```
+Play Mode tests (a robot plays the real game in `Main.unity` on the track it loads: clean lap, skipped checkpoint, recover, retry): Test Runner > PlayMode > Run All, or the same command with `-testPlatform PlayMode -testResults TestResults/playmode.xml`.
+
 macOS: `/Applications/Unity/Hub/Editor/6000.3.28f1/Unity.app/Contents/MacOS/Unity` with the same arguments.
 
 ## Quick start

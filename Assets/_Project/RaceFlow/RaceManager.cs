@@ -336,7 +336,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 if (!MenuUsesInput && RaceKeys.AnyKeyOrClickPressed())
                 {
-                    stateMachine.BeginCountdown(settings.CountdownStepSeconds);
+                    BeginRace();
                 }
                 return;
             }
@@ -364,6 +364,16 @@ namespace CarcavelosCircuit.RaceFlow
                 {
                     Recover();
                 }
+            }
+        }
+
+        // Leaves the start screen: the first countdown begins. Called by the first key or click, and by the
+        // automated race test (Tests/PlayMode). Does nothing outside the start screen.
+        public void BeginRace()
+        {
+            if (IsSetUp && State == RaceState.Ready && !pause.IsPaused)
+            {
+                stateMachine.BeginCountdown(settings.CountdownStepSeconds);
             }
         }
 
