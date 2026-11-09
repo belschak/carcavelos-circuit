@@ -394,6 +394,7 @@ namespace CarcavelosCircuit.RaceFlow
             HasSplitDelta = false;
             HintText = "";
             HintVisibleUntil = 0f;
+            waitingCoachHint = CoachHint.None; // a tip queued in the old attempt must not pop up right after GO
             runStats.Reset();
             stateMachine.BeginCountdown(settings.RetryCountdownStepSeconds);
             if (Restarted != null) Restarted();

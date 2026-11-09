@@ -604,7 +604,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             cameraObject.tag = "MainCamera";
             Camera cam = cameraObject.AddComponent<Camera>();
             cam.nearClipPlane = 0.1f;
-            cam.farClipPlane = 500f;
+            cam.farClipPlane = 2000f; // the campus world (#33) has sea, backdrop and fort beyond 500 m
             cameraObject.AddComponent<AudioListener>();
             cameraObject.transform.position = new Vector3(0f, 6f, -40f);
             PlaceholderChaseCamera chase = cameraObject.AddComponent<PlaceholderChaseCamera>();

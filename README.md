@@ -15,7 +15,7 @@ Unity **6000.3.28f1** (6.3 LTS) · C# · Blender (FBX) · Web build
 | Noah _TBD_ | _TBD_ | 2 Campus track + race rules |
 
 ## Run the app
-- **Deployed:** open the URL above in Chrome, Edge or Firefox on a laptop and click to start. Keys: W/S or arrows to drive, Space to drift, R to recover, Enter to retry after the finish.
+- **Deployed:** open the URL above in Chrome, Edge or Firefox on a laptop and click to start. Keys: W/A/S/D or arrows to drive and steer, Space to drift, R to recover, Enter to retry after the finish, O settings, C credits, M mute.
 - **Locally:** install Unity Hub + Editor `6000.3.28f1` ([docs/setup.md](docs/setup.md)), then
   ```
   git clone https://github.com/belschak/carcavelos-circuit.git

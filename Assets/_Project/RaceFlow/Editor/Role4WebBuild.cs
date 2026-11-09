@@ -94,6 +94,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             PlayerSettings.SetIl2CppCodeGeneration(web, Il2CppCodeGeneration.OptimizeSize);
             PlayerSettings.SetManagedStrippingLevel(web, ManagedStrippingLevel.High); // RaceFlow/link.xml keeps what UI Toolkit needs
             PlayerSettings.stripEngineCode = true;
+            // Mesh colliders are cooked at build time, not while the scene loads in the browser (single-threaded there;
+            // the campus world has a mesh collider on every building).
+            PlayerSettings.bakeCollisionMeshes = true;
             PlayerSettings.WebGL.wasm2023 = true; // native Wasm exceptions + SIMD; Chrome 95+, Firefox 100+, Safari 15.2+
             PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly;
             PlayerSettings.WebGL.linkerTarget = WebGLLinkerTarget.Wasm;
