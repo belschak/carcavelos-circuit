@@ -60,6 +60,7 @@ Suggested order for the live walkthrough (about 5 minutes):
 | Bloom via one global Volume in Main | Luc's request: drift sparks and boost flames should glow. The profile asset is created once and then left alone, so Role 3 can tune it. |
 | `RaceSettings` ScriptableObject | All tuning numbers in one asset, no magic numbers in code (team rule). |
 | Medals, lap report and coach tips (task P5) | A fresh browser has no personal best, no splits, nothing to beat. Medal times give the first lap a goal, the lap report shows the drift system was used, and the coach teaches drifting without anyone explaining it at the demo. Each is one small plain C# class with tests. |
+| Settings, credits, pause on focus loss (task P7) | Demo-room safety (mute the music while presenting with M, a tab switch never ruins a lap) and accessibility (reduced motion). Rules in small plain C# classes with tests; the UI is plain C# created by `RaceHud`, so the scene needed no change. |
 | Countdown 1 s per step on the first start, 0.5 s on retry | Time-trial players retry a lot, a quick restart feels better. |
 | "Press any key to start" screen | Browsers block sound until the first click or key press; our start screen forces that press before the race. |
 | Enter = retry, not Escape | In a browser Escape leaves fullscreen. |
@@ -124,6 +125,7 @@ Decides which phase we are in. No Unity types, only numbers and events, so fully
 - `CountsAsStartKey(Key)`: false for modifiers (Shift, Ctrl, Alt, Windows/Cmd), F1 to F24 and system keys (Escape, Tab, Caps Lock, Print Screen ...). "Alt-Tab or F11 for fullscreen must not start the countdown by accident." Public so `RaceKeysTests` can check it.
 - `RetryPressed()`: Enter or numpad Enter.
 - `RecoverPressed()`: R.
+- Menu keys (task P7): `SettingsPressed()` O, `CreditsPressed()` C, `MutePressed()` M, `MenuVertical()` / `MenuHorizontal()` (-1, 0, +1 from W/S/arrows and A/D/arrows), `MenuTogglePressed()` Space, `TryGetMousePosition`. O, C and M are not start keys: opening the settings must not also start the race.
 - Every method checks `Keyboard.current != null` (no keyboard = null).
 - How I would explain it: "All race keys in one place. `wasPressedThisFrame` is true only in the one frame the key goes down, so holding Enter does not retry 60 times a second."
 - Concept: Input System (new). The kart uses `isPressed` (held), race flow uses `wasPressedThisFrame` (tap).
@@ -402,6 +404,41 @@ One recorded lap: the kart's position and rotation every 0.05 s (20 Hz) from GO.
 - `GhostPlayer.LateUpdate()`: once the race is set up, `BuildBody()` copies only the meshes of the kart's `Visual` child into a new `GhostKart` object (same place relative to the kart, every sub-mesh with our copy of `Ghost.mat`, no shadows). No Rigidbody, no collider, no script, so it can never hit the kart or count a checkpoint; no meshes = a kart-sized box. The ghost's clock: 0 in Ready and Countdown, exactly `LapSeconds` while racing (the same clock as the recording, so it is in sync), keeps counting in Results. After its last sample it rolls on, slowing to a stop, while fading out. Alpha = `maxAlpha` (0.4) x `GhostFade.Combined(distance to kart, distance to camera, time after the end)`: at GO it stands on your kart and is invisible, it appears as you separate, and it never fills the screen in front of the camera. Your own ghost is light blue, the Dean's ghost warm gold. `Restarted` reloads (a record from the lap before drives along from now on); the save text is only parsed again when it changed.
 - How I would explain it: "The recorder writes, PlayerPrefs is the hand-over, the player reads. The ghost has no physics at all, it is only a picture we move every frame."
 
+### 3.27 `RaceFlow/GameSettings.cs` + `SettingsItem.cs` + `SettingsStore.cs` + `SoundLevels.cs` (task P7, settings)
+
+`GameSettings` is plain C#: `MasterVolume`, `MusicVolume`, `EffectsVolume` (0..1), `Muted`, `ReducedMotion`. `SettingsItem` is the enum of the five rows (Master, Music, Effects, Sound, ReducedMotion).
+
+- Volumes move in 10 % steps: `Level(volume)` = 0..10, `SetVolumeLevel(item, level)` clamps to 0..10, `Change(item, direction)` is one step left or right (on/off rows: left = off, right = on), `Toggle(item)` flips an on/off row. Each returns `true` only if something changed, so the HUD saves only then.
+- Mute keeps the master volume: `ListenerVolume` = 0 while muted, else `MasterVolume`. Turning the master up (also at 100 %) or clicking a diamond of the master bar unmutes ("I want to hear it"); turning it down while muted stays muted.
+- `ToSaveString()` -> `"0.8|0.3|0|1|1"`, `FromSaveString(text)`: InvariantCulture, every broken or missing part keeps its default, NaN and out-of-range values are clamped.
+- `SettingsStore` (static, the Unity glue): `Load()` / `Save()` with PlayerPrefs key `CarcavelosCircuit.Settings`; `Apply()` sets `AudioListener.volume` (master + mute for every sound at once) and `SoundLevels.Music` / `.Effects`.
+- `SoundLevels` (static, two floats): read by `RaceMusic` and `RaceSounds` (P4) to scale music and effects. Static, because they are on other objects and need no extra Inspector reference.
+- How I would explain it: "One small class holds the numbers and the rules, one static class saves and applies them. The HUD only draws them."
+
+### 3.28 `RaceFlow/RacePause.cs` + the pause in `RaceManager` (task P7)
+
+`RacePause` decides, `RaceManager` does it.
+
+- `CanPauseIn(state)`: only Countdown and Racing (nothing runs on the start or results screen). `OnFocusLost(state)` returns `true` only on the frame the pause starts (a second focus loss changes nothing). `TryResume(keyOrClick)` ends it only on a key or click; getting focus back alone does not. `Clear()` for Retry.
+- `RaceManager.OnApplicationFocus(false)` / `OnApplicationPause(true)` (Unity calls them on every MonoBehaviour when the tab or window loses focus) -> `StartPause()`: remembers `Time.timeScale`, sets it to 0, kart input off, `AudioListener.pause = true`.
+- `Update()` while paused: input stays off, sound stays paused (P4's `RaceMusic` unpauses sound when focus comes back, the race is still paused), and a key or click calls `EndPause()`. Then `return`: the key that continues does nothing else, so Enter never also retries.
+- Why the lap time is fair: `timeScale = 0` freezes physics, `Time.deltaTime` and `Time.timeAsDouble`; the official time is two `timeAsDouble` timestamps, so paused seconds never count. `OnDestroy` and `Retry` call `EndPause()`, so the game is never left frozen.
+- `pauseOnFocusLoss` (Inspector, default on) switches it off for testing in the Editor.
+- `MenuUsesInput` (set by the HUD): while true, the start screen ignores "any key", so a click on SETTINGS does not start the race.
+- How I would explain it: "Focus lost during the race: time scale 0, everything stands still, the clock too. Any key or click continues."
+
+### 3.29 `RaceFlow/UI/HudMenus.cs` + `SettingsPanel.cs` + `CreditsPanel.cs` (task P7, the menus)
+
+Plain C# classes (no MonoBehaviour): `RaceHud.OnEnable` creates `HudMenus`, `RaceHud.Update` calls `menus.Update(state)`. That is why `Role4SceneBuilder` needed no change.
+
+- `HudMenus`: loads and applies the settings; M = `ToggleMute()` with a toast for 1.4 s (`Time.unscaledTime`, works while paused); O opens/closes the settings (start and results screen), C the credits (start screen); closes the menus when the race starts (Enter on the results screen still retries); shows the PAUSED overlay while `raceManager.IsPaused`; puts `reduce-motion` on `hud-root`; switches clicks on only for visible buttons (`HudFx.SetClickable`).
+- `MouseOnStartButton()`: `panel.Pick(point)` finds the element under the mouse (screen y flipped first: screen pixels start bottom left, the panel top left). On the start screen only the menu buttons catch clicks, so if the mouse is on one of them, `MenuUsesInput` is true before the click arrives.
+- Clicks use `ClickEvent` (mouse button up), so the button press itself happened while the menu was still open or the mouse was on a button: it never leaks into "press any key".
+- `SettingsPanel`: five rows from `RaceHud.uxml` (`set-master` ... `set-motion`); ten diamond cells per volume bar made in code; W/S choose (wraps, `MenuNavigation.Wrap`), A/D change, Space flips on/off; the mouse moves the highlight (`PointerEnterEvent`), `-`/`+`, a click on diamond 7 = 70 %, a click on an on/off row flips it. `Refresh()` only switches classes and uses cached "0 %" ... "100 %" strings.
+- `CreditsPanel`: two pages (team, tools and sources) that fade in with `is-shown`; A/D, Space or NEXT PAGE turn, the dots jump. Texts are in the UXML (names as in `docs/team.md`, credits as in `THIRD_PARTY.md`).
+- Reduced motion: one class on the root; the last block of `RaceHud.uss` sets `translate: 0 0`, `scale: 1 1` and the final rotation for every slide, shake, punch and stamp, one class more specific than the rule it beats. Fades stay. The breathing start pill is an inline style (beats all USS), so `RaceHud.UpdateStartScreen` checks `menus.ReducedMotion`.
+- How I would explain it: "The menus are classes that switch CSS classes. The USS decides how it looks, the RaceManager decides what the race does."
+
 ---
 
 ## 4. Tests
@@ -428,6 +465,9 @@ All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceF
 | `MedalRulesTests` | Default times valid; each tier from 13 s (none) to 9.1 s (Dean's List); exactly on a threshold earns it, 1 ms slower does not; a time that reads the same on screen earns it; no lap = no medal; out of order, equal, missing or zero times rejected (and give no medal); next target one tier up, none at the top; names and colour classes. |
 | `RunStatsTests` | A 3 s drift counts once, two drifts twice; boosts on the rising edge; top speed keeps the max (reverse counts); air time sums only airborne frames, longest jump keeps the max; recoveries counted and end the jump; negative frame time ignored; Reset clears everything. |
 | `OnboardingCoachTests` | "How to drift" after 5 s, once; not at all if the player drifted first; "hold longer" on a stage 0 release, once, not after a stage 1 release; praise on the first stage 2 boost (also one frame late), once, and no "hold longer" after it; nothing while not racing and that time does not count; a drift ended by the finish gives no tip; saved flags stop all tips; every tip has text and a kind. |
+| `GameSettingsTests` | Defaults (100 %, sound on, motion on); 10 % steps stop at 0 and 100 %; levels clamped to 0..10; mute silences the listener and keeps the master volume; master up unmutes, down does not; music/effects never touch mute; on/off rows (left off, right on, click flips); save string round trip with a dot; empty, broken or partly broken saves keep defaults; out-of-range values clamped; an odd saved volume snaps to the grid. |
+| `RacePauseTests` | Focus loss pauses in Countdown and Racing, not on the start or results screen; a second focus loss changes nothing; stays paused until a key or click (focus alone does not resume); a key while not paused is no resume; Clear ends it. |
+| `MenuNavigationTests` | Down wraps to the top, up from the top goes to the last row, two pages flip, an empty list is safe. `RaceKeysTests` adds: O, C and M never start the race. |
 | `PersonalBestTests` (P5 additions) | Best medal only goes up; survives the save string; a save from before medals loads with no medal; a broken medal number keeps the time but no medal. `HudFormatTests` adds `OneDecimal` (0.84 -> "0.8", 1.25 -> "1.3", negative -> "0.0"). |
 | `GhostRecordingTests` | Empty recording has no pose; uneven frames still give samples exactly every 0.05 s; halfway between two samples = halfway position and rotation; clamped before the start and after the end; one sample works at any time; a teleport jumps instead of gliding (also inside one frame); repeated or old times add nothing; stops at 120 s; `Clear` starts over; end velocity; save text round trip (under 1 cm, under 0.2 degrees); yaw across 360 stays a small change; same text on a Portuguese laptop; a 60 s lap stays under 40 KB; other track or checkpoint count = ignored; broken texts = no ghost. |
 | `GhostLoaderTests` | Own ghost wins over the shipped one; fresh browser races the shipped ghost; broken or outdated own ghost falls back to the shipped one; nothing valid (or a shipped ghost from the old layout) = no ghost; save key next to the personal best. |
@@ -475,7 +515,7 @@ Do it on a branch `role4/<task-id>-swap-contract`, after `git pull` of `main` wi
 
 1. **Why is the race logic not all in one MonoBehaviour?** Plain C# classes (`RaceStateMachine`, `RaceTimer`, `PersonalBest`) can be unit tested without a scene. The MonoBehaviour `RaceManager` only connects them to Unity (frames, keys, kart).
 2. **What is the difference between `Awake`, `Start`, `Update`, `FixedUpdate`, `LateUpdate`?** Awake: once, when the object is created (cache components). Start: once, before the first frame (our bootstrap). Update: every frame (input, race logic, HUD). FixedUpdate: fixed physics step (kart forces). LateUpdate: after all Updates (camera).
-3. **Why multiply by `Time.deltaTime`?** Frames have different lengths on different laptops. Adding the real frame time makes the timer and smoothing correct at any FPS. We never change `Time.timeScale`, so scaled and unscaled time are equal; if we added a pause with `timeScale = 0`, the lap timer would stop on its own (`Time.unscaledDeltaTime` would keep running).
+3. **Why multiply by `Time.deltaTime`?** Frames have different lengths on different laptops. Adding the real frame time makes the timer and smoothing correct at any FPS. `Time.timeScale` is 1 except while paused (task P7): then it is 0, so `Time.deltaTime` is 0 and `Time.timeAsDouble` stands still, and the lap timer stops on its own. Things that must move during the pause (the toast, music fades) use `Time.unscaledTime` / `unscaledDeltaTime`.
 4. **How does the HUD know what to show?** It reads public read-only properties of the `RaceManager` every frame (polling). Sounds use events instead, because they should play once, not every frame.
 5. **What is an event and why `-=` in `OnDisable`/`OnDestroy`?** A list of methods to call when something happens; the sender does not know the listeners. Unsubscribing prevents calls to destroyed objects.
 6. **How does a checkpoint count?** Trigger collider -> `CheckpointRelay.OnTriggerEnter` -> `RaceManager.OnCheckpointEntered(index)` -> lap rules decide (only the next expected one counts). Finish = index 0 after all others.
@@ -495,6 +535,8 @@ Do it on a branch `role4/<task-id>-swap-contract`, after `git pull` of `main` wi
 20. **How does the drift counter not count every frame?** Rising edge: `RunStats` remembers last frame's `IsDrifting` and counts only the frame it turns from false to true.
 21. **How are the coach tips remembered?** Each tip is one bit (1, 2, 4) of an int saved in PlayerPrefs. `(DoneFlags & 2) != 0` means tip 2 was already shown.
 22. **How does the ghost stay in sync with you?** Recording and replay use the same clock, the race timer `LapSeconds` (0 at GO). At 12.3 s on your timer the ghost shows where the recorded kart was at 12.3 s, blended between the two nearest of its 20-per-second samples. It has no Rigidbody or collider, so it cannot push you or count a checkpoint.
+23. **What happens when I switch the browser tab mid-lap?** `RaceManager.OnApplicationFocus(false)` sets `Time.timeScale = 0`: physics, `Time.deltaTime` and `Time.timeAsDouble` stand still, so the lap time (two `timeAsDouble` timestamps) gains nothing. The PAUSED overlay waits for a click or key, and that key does nothing else.
+24. **How does reduced motion work without an `if` in every animation?** One class `reduce-motion` on the HUD root. The USS rules at the end of `RaceHud.uss` override every slide, shake and punch with its resting value, so the C# that adds the pop classes stays the same. Only the breathing pill (an inline style) needs one `if`.
 
 ---
 
@@ -511,6 +553,9 @@ Fixed on 2026-11-08 and no longer weak spots: drift boost after the finish, drif
 - **Bloom not yet checked in a Web build with real effects**: it depends on Role 3's sparks and flames being bright enough (above threshold 0.9). Check it looks right and the frame rate stays fine on a normal laptop.
 - **P4 audio not yet heard in a real build** (written without opening Unity): gear-change feel, ducking amounts, music start on GO and gapless loops (smpl + 2048 pad) must be checked in the Web build with headphones (`audio-polish-plan.md` section 7).
 - **Medal times are placeholders** (12.0 / 11.0 / 10.2 / 9.6 s on the placeholder track). Re-tune them in `RaceSettings.asset` once the campus track lands; the personal-best key is per track scene, so the new track starts fresh anyway.
+- **Settings, credits, pause (P7) not yet seen in Unity**: compiled and unit tested outside Unity, but the card layout (row widths, credit page height, the results row with Retry + Enter + Settings) and the reduced-motion overrides were never rendered. Check at 1280x720 and in a small window.
+- **Music and effects sliders need P4's one-line hooks** (`SoundLevels.Music` / `.Effects` in `RaceMusic.Apply` and `RaceSounds.Play`); master and mute work without them.
+- **Pause on the Web**: Unity stops the game loop when the tab loses focus (Run In Background is off), so the PAUSED card appears when the player comes back; the click that gives the canvas focus may or may not count as the "continue" click, a second click always does.
 - **Coach tips are not yet playtested** with a first-time player (5 s trigger, wording). Medal colours, like coral, still need Luc's OK in `docs/art-style.md`.
 - **Ghost (stretch item) not yet seen in Unity**: the code compiles and has tests, but the look (alpha 0.4, fade 1.5 to 8 m, colours), the transparent material in the Web build and the copy of Role 3's real kart meshes still need a Play Mode and a Web build check. The Dean's ghost must be recorded on the final track (after T6/D6) and again after every track change, otherwise the game ignores it (no error, simply no ghost). If the real kart's `Visual` child has effect meshes that are switched on at spawn, they are copied into the ghost too.
 - **By design, worth remembering**: the builder rewrites its own root objects in `Main.unity` on every run (values set by hand on them are lost; added components or children make it stop and ask); other root objects, the Volume profile and `RaceSettings` values are kept.

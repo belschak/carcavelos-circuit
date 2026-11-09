@@ -6,7 +6,8 @@ namespace CarcavelosCircuit.RaceFlow
 {
     // Task R3: shows the race on screen. Layout = UI/RaceHud.uxml, look = UI/RaceHud.uss (like HTML + CSS).
     // Every frame it reads the RaceManager and the kart. It never changes the race (except the Retry button,
-    // which calls the same public Retry() as the Enter key).
+    // which calls the same public Retry() as the Enter key, and RaceManager.MenuUsesInput, so a click on a menu
+    // button does not also start the race). Settings, credits, mute and the pause overlay: UI/HudMenus.cs (task P7).
     //
     // How the HUD animates (details at the top of RaceHud.uss):
     // - One state class on the root (st-ready, st-countdown, st-racing, st-results) fades whole screens in and out.
@@ -18,6 +19,7 @@ namespace CarcavelosCircuit.RaceFlow
     // A label only gets a new text when the number it shows changes (see ShownNumber): building strings every frame
     // makes garbage, and in a Web build the garbage collector cleans up all at once, which shows as a hitch.
     [RequireComponent(typeof(UIDocument))]
+    [DefaultExecutionOrder(-50)] // writes MenuUsesInput before RaceManager reads it in the same frame (task P7)
     public class RaceHud : MonoBehaviour
     {
         [SerializeField]
@@ -107,6 +109,7 @@ namespace CarcavelosCircuit.RaceFlow
         // ---- Logic helpers (plain C#, tested in Edit Mode) ----
         private readonly WrongWayDetector wrongWayDetector = new WrongWayDetector();
         private readonly StuckDetector stuckDetector = new StuckDetector();
+        private HudMenus menus; // settings, credits, mute, pause overlay, reduced motion (task P7, UI/HudMenus.cs)
 
         // What each label shows right now, so we only rebuild its text when this number changes.
         private readonly ShownNumber shownState = new ShownNumber();        // RaceState as int
@@ -148,6 +151,7 @@ namespace CarcavelosCircuit.RaceFlow
             // Decorations never catch clicks. Only the Retry button does, and only while the results show.
             HudFx.IgnoreClicksDeep(root);
             retryButton.focusable = false; // after a mouse click it must not keep focus, or Space/Enter would press it again
+            menus = new HudMenus(root, raceManager); // after IgnoreClicksDeep: it switches on the clicks of its own buttons
 
             // Narrow windows (4:3, 16:10): the HUD scales by height, so the panel gets less width than the 1280 reference.
             // Then the centred hint chip would cover the lap time and the key bar the drift panel: "hud--narrow" moves them.
@@ -168,6 +172,7 @@ namespace CarcavelosCircuit.RaceFlow
         private void OnDisable()
         {
             hudRoot.UnregisterCallback<GeometryChangedEvent>(OnHudResized);
+            raceManager.MenuUsesInput = false; // a menu that disappears with the HUD must not block the start
             retryButton.clicked -= OnRetryClicked;
             raceManager.CountdownStep -= OnCountdownStep;
             raceManager.CheckpointPassed -= OnCheckpointPassed;
@@ -519,6 +524,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 EnterState(state);
             }
+            menus.Update(state);
 
             if (state == RaceState.Ready)
             {
@@ -585,8 +591,16 @@ namespace CarcavelosCircuit.RaceFlow
         private void UpdateStartScreen()
         {
             // The pill "breathes" (scale, not opacity: it stays fully readable). Scale is a transform, no layout pass.
-            float breathe = 1f + 0.035f * (0.5f + 0.5f * Mathf.Sin(Time.time * 3.2f));
-            pressAnyKey.style.scale = new Scale(new Vector3(breathe, breathe, 1f));
+            // Not with reduced motion: an inline style beats every USS rule, so this one is switched off here.
+            if (menus.ReducedMotion)
+            {
+                pressAnyKey.style.scale = StyleKeyword.Null;
+            }
+            else
+            {
+                float breathe = 1f + 0.035f * (0.5f + 0.5f * Mathf.Sin(Time.time * 3.2f));
+                pressAnyKey.style.scale = new Scale(new Vector3(breathe, breathe, 1f));
+            }
 
             float best = raceManager.BestSeconds;
             if (shownStartBest.Changed(best > 0f ? RaceTimer.ToMilliseconds(best) : -1))
