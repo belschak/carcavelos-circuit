@@ -20,6 +20,7 @@ stair (the name may be used, Noah 2026-11-10). hall_kit.py has the parts.
 Run:  /Applications/Blender.app/Contents/MacOS/Blender -b -P nova_hall.py   ->  out/NovaHall.blend, out/NovaHall.fbx
       ... -b -P nova_hall.py -- world   ->  out/NovaHallWorld.fbx (at its place in Luc's campus world, for Unity)
 """
+import json
 import math
 import os
 import sys
@@ -98,7 +99,8 @@ ROADS = [
      "points": [(82.0, 37.2), (66.0, 37.0), (60.0, 31.0), (40.0, 31.0), (34.0, 26.5), (23.4, 26.5), (23.4, 78.0)]},
 ]
 RAIL_OFFSET = 0.35           # guard rail distance outside the road edge (m)
-RAIL_STOP = 1.2              # rails stop this far before a facade (the doors)
+RAIL_STOP = 0.15             # rails stop this far inside a facade; at a door they then end exactly at the frame
+RAIL_FLARE = 8.0             # within this many metres of a door the rails swing out (or in) to the door frame
 
 
 def rounded_line(points, radii, step=0.5):
@@ -175,18 +177,53 @@ def inside_footprint(x, y, margin):
     return True
 
 
-def guard_rails(m, f):
+def door_list(door_map):
+    """Every door in world coordinates: centre, tangent along the facade, normal into the building, width."""
+    doors = []
+    for key, items in door_map.items():
+        a, b = (key[0], key[1]), (key[2], key[3])
+        L = math.hypot(b[0] - a[0], b[1] - a[1])
+        t = ((b[0] - a[0]) / L, (b[1] - a[1]) / L)
+        for s, width, name in items:
+            c = (a[0] + t[0] * s, a[1] + t[1] * s)
+            n = (-t[1], t[0])
+            if not E.inside_polygon(c[0] + n[0], c[1] + n[1], footprint()):
+                n = (-n[0], -n[1])
+            doors.append({"name": name, "c": c, "t": t, "n": n, "width": width})
+    return doors
+
+
+def write_doors_json(door_map):
+    """HallDoors.json for Unity (x = east, z = north): the test scene lines the road up with each door."""
+    out = [{"name": d["name"], "x": round(d["c"][0], 3), "z": round(d["c"][1], 3), "nx": round(d["n"][0], 4),
+            "nz": round(d["n"][1], 4), "width": d["width"]} for d in door_list(door_map)]
+    os.makedirs(OUT, exist_ok=True)
+    with open(os.path.join(OUT, "HallDoors.json"), "w") as fh:
+        json.dump({"doors": out}, fh, indent=1)
+
+
+def guard_rails(m, f, door_map):
     """Low rails on both sides of each road: white posts every 2 m and a light lilac board (no top tube, Noah).
-    They stop RAIL_STOP m before the facades (door openings)."""
+    Near a door they swing to the door frame and end exactly at its edge, so the fence outside can join them."""
+    frames = []                                                          # (door centre, half width, two frame points) in u/o
+    for d in door_list(door_map):
+        cu = f.uo(*d["c"])
+        edges = [f.uo(d["c"][0] + d["t"][0] * sg * d["width"] / 2, d["c"][1] + d["t"][1] * sg * d["width"] / 2) for sg in (1, -1)]
+        frames.append((cu, d["width"] / 2, edges))
     for road in ROADS:
         line = road["line"]
         for side in (1, -1):
-            off = road["width"] / 2 + RAIL_OFFSET
             pts = []
             for k, (u, o) in enumerate(line):
                 a, b = line[max(k - 1, 0)], line[min(k + 1, len(line) - 1)]
                 du, do = b[0] - a[0], b[1] - a[1]
                 d = math.hypot(du, do) or 1.0
+                off = road["width"] / 2 + RAIL_OFFSET
+                for cu, half, _edges in frames:                          # swing out (or in) to the door frame
+                    near = math.hypot(u - cu[0], o - cu[1])
+                    if near < RAIL_FLARE:
+                        x = 1.0 - near / RAIL_FLARE
+                        off += (half - off) * x * x * (3 - 2 * x)
                 pu, po = u - do / d * off * side, o + du / d * off * side
                 x, y, _ = f.at(pu, po)
                 pts.append((pu, po) if inside_footprint(x, y, RAIL_STOP) else None)
@@ -201,12 +238,24 @@ def guard_rails(m, f):
             if len(cur) > 1:
                 runs.append(cur)
             for run in runs:
+                for end in (0, -1):                                      # end at a door frame: add its exact edge point
+                    best = None
+                    for _cu, _half, edges in frames:
+                        for e in edges:
+                            dist = math.hypot(e[0] - run[end][0], e[1] - run[end][1])
+                            if dist < 2.5 and (best is None or dist < best[0]):
+                                best = (dist, e)
+                    if best is not None:
+                        if end == 0:
+                            run.insert(0, best[1])
+                        else:
+                            run.append(best[1])
                 sub = run[::2]                                           # one segment per metre
                 if sub[-1] != run[-1]:
                     sub.append(run[-1])
                 for (u0, o0), (u1, o1) in zip(sub, sub[1:]):
                     m.beam(f.at(u0, o0, 0.58), f.at(u1, o1, 0.58), 0.05, 0.16, "rail_lilac")
-                for (u0, o0) in run[::4]:                                # a post every 2 m
+                for (u0, o0) in run[::4] + [run[-1]]:                    # a post every 2 m and one at the end
                     p = f.at(u0, o0, 0)
                     m.box((p[0], p[1], 0.36), 0.05, 0.05, 0.36, "wall", f.h)
 
@@ -666,7 +715,7 @@ def make_hall(col):
                         ("Hall_Structure", (lambda m: atrium_structure(m, f), lambda m: artwork_wall(m, f),
                                             lambda m: long_room_end(m, f), lambda m: long_room_structure(m, f))),
                         ("Hall_Furniture", (lambda m: atrium_furniture(m, f), lambda m: long_room_furniture(m, f))),
-                        ("Hall_Track_Rails", (lambda m: guard_rails(m, f),))):
+                        ("Hall_Track_Rails", (lambda m: guard_rails(m, f, door_map),))):
         m = K.Mesh()
         for part in parts:
             part(m)
@@ -694,6 +743,7 @@ def build_world_fbx():
     from mathutils import Matrix
     bpy.ops.wm.read_factory_settings(use_empty=True)
     objects = make_hall(E.collection("Nova_Hall"))
+    write_doors_json(snapped_doors(regions(building_frame())[:2]))
     turn = Matrix.Rotation(math.pi, 4, "Z")
     for obj in objects:
         obj.location.z = FLOOR_Z
