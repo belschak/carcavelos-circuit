@@ -353,6 +353,41 @@ def ui_click():
     return normalise(out, -6.0)
 
 
+def menu_notes(names):
+    # Two quick soft blips (sine + a little octave), the same voice as ui_click, for opening and closing a card.
+    out = []
+    for i, name in enumerate(names):
+        length = 0.09
+        x = tone(note_freq(name), length, partials=((1, 1.0), (2, 0.2)))
+        x = mul(x, mul(exp_decay(len(x), 0.08), envelope(len(x), 0.002, 0.03)))
+        mix_into(out, x, i * 0.06, 0.8)
+    return normalise(out, -6.0)
+
+
+def ui_open():
+    # Settings or credits open (audit 10): two notes going up, "here it is".
+    return menu_notes(("E6", "A6"))
+
+
+def ui_close():
+    # A card closes: the same two notes going down.
+    return menu_notes(("A6", "E6"))
+
+
+def ui_page():
+    # Credits page turn: a short paper swish (noise through a band-pass that sweeps up) with a soft tap at the end.
+    seconds = 0.16
+    n = int(seconds * SR)
+    centers = [1200.0 + 3500.0 * (i / n) for i in range(n)]
+    swish = bandpass(noise(n, 51), centers, q=1.4)
+    swish = mul(swish, envelope(n, 0.03, 0.08))
+    tap = mul(highpass(noise(n, 53), 3000.0), exp_decay(n, 0.01))
+    out = [0.0] * n
+    mix_into(out, swish, 0.0, 1.0)
+    mix_into(out, tap[:int(0.04 * SR)], 0.11, 0.3)
+    return normalise(out[:n], -6.0)
+
+
 def respawn_whoosh():
     # Airy whoosh that rises, plus a soft sparkle on top: "you are back on the track".
     seconds = 0.6
@@ -525,6 +560,9 @@ SOUNDS = {
     "sfx_hint_warning": hint_warning,
     "sfx_shift_pop": shift_pop,
     "music_results_loop": results_loop,
+    "ui_open": ui_open,
+    "ui_close": ui_close,
+    "ui_page": ui_page,
 }
 
 

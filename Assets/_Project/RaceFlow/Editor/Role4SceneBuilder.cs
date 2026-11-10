@@ -644,6 +644,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             RaceBootstrap bootstrap = systems.AddComponent<RaceBootstrap>();
             AudioSource uiSource = AddAudioSource(systems, null, false);
             AudioSource delayedSource = AddAudioSource(systems, null, false); // record sting, retry beep
+            AudioSource menuSource = AddAudioSource(systems, null, false);    // menu sounds (audit 10)
+            menuSource.ignoreListenerPause = true; // the mute click and the pause cue must play while AudioListener.pause is on
             RaceSounds sounds = systems.AddComponent<RaceSounds>();
 
             // Music: race loop + results loop, and RaceMusic, which follows the race and ducks under the beeps.
@@ -693,6 +695,10 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             sso.FindProperty("newMedalSparkle").objectReferenceValue = Clip("sfx_drift_stage2");   // task P6b
             sso.FindProperty("retryClick").objectReferenceValue = Clip("ui_click");
             sso.FindProperty("respawnWhoosh").objectReferenceValue = Clip("sfx_respawn");
+            sso.FindProperty("menuSource").objectReferenceValue = menuSource;
+            sso.FindProperty("menuOpen").objectReferenceValue = Clip("ui_open");     // audit 10
+            sso.FindProperty("menuClose").objectReferenceValue = Clip("ui_close");
+            sso.FindProperty("pageTurn").objectReferenceValue = Clip("ui_page");
             sso.ApplyModifiedPropertiesWithoutUndo();
 
             // HUD (UI Toolkit).
@@ -704,6 +710,11 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             SerializedObject hso = new SerializedObject(raceHud);
             hso.FindProperty("raceManager").objectReferenceValue = manager;
             hso.ApplyModifiedPropertiesWithoutUndo();
+
+            // The HUD's menus ask RaceSounds for their sounds (audit 10). The HUD exists only now, so it is wired here.
+            SerializedObject soundsToHud = new SerializedObject(sounds);
+            soundsToHud.FindProperty("hud").objectReferenceValue = raceHud;
+            soundsToHud.ApplyModifiedPropertiesWithoutUndo();
 
             BuildGhost(manager);
 

@@ -60,6 +60,9 @@ PLAN = {
     "music_results_loop": (-16.0, True, False),
     # interface
     "ui_click": (-20.0, False, False),
+    "ui_open": (-21.0, False, False),
+    "ui_close": (-21.0, False, False),
+    "ui_page": (-23.0, False, False),
 }
 
 

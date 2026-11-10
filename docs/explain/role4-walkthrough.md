@@ -199,6 +199,7 @@ Race interface sounds on two 2D `AudioSource`s (one for sounds that play now, on
 - `Update()`: plays `sfx_hint_warning` once when a new "Missed a checkpoint" hint appears. There is no hint event, but `HintVisibleUntil` moves forward every time a hint is shown, so "later than last frame" = new hint.
 - Every stinger calls `music.Duck(dB, 0.6 x clip length)`: the music dips under it and comes back.
 - `Play(clip)`: `source.PlayOneShot(clip, volume)`, skips missing clips. `PlayLater(clip, delay)`: `delayedSource.PlayDelayed(delay)`; a new one replaces a waiting one (a retry stops a record sting).
+- Menu sounds (audit 10): `OnMenuSound(MenuSound)` answers `RaceHud.MenuSoundRequested` with one `switch`: `ui_open` / `ui_close` for a card, `ui_page` for a credits page, and the retry click (`ui_click`) for a volume step (pitch 1), an on/off row (0.85) and M (1.12). They play on a third source, `menuSource`, which the builder creates with `ignoreListenerPause = true`, so M still clicks while the race is paused. "HudMenus fires the event after it applied the new settings, so a step on the Effects bar clicks at the new level: that is the audible preview." Muting sets `AudioListener.volume` to 0 at once, so only "sound on" is heard.
 - Concept: `OnEnable`/`OnDisable` are the right pair for subscribing, they also run when the component is switched on and off.
 
 ### 3.11b `RaceFlow/RaceMusic.cs` (MonoBehaviour, on the Music object)
@@ -335,6 +336,8 @@ Pure Python (only standard library: `math`, `random`, `wave`, `array`). Builds s
 
 Since P4 it also makes `sfx_hint_warning` (missed checkpoint), `sfx_shift_pop` (gear change) and `music_results_loop` (16 s, 120 BPM, C major).
 
+Polish pass (2026-11-10): `ui_open` / `ui_close` (`menu_notes`: two quick blips E6 -> A6 and back, 0.15 s) and `ui_page` (band-passed noise sweeping up, a paper swish, 0.16 s) for the menus.
+
 `tools/audio-synth/process_wavs.py` is the mastering step, run after the synth script (standard library only):
 1. Re-level by loudness (RMS) to a target per sound (for example countdown beep -15 dBFS, engine loops unchanged at about -16.5), never a peak above -1 dBFS. "Peak normalising makes a short beep and a long engine loop look equally loud but sound very different; RMS is closer to what we hear."
 2. Loops: 2048 samples of silence at the start plus a `smpl` chunk (loop start 2048, loop end = last sample).
@@ -436,7 +439,8 @@ Plain C# classes (no MonoBehaviour): `RaceHud.OnEnable` creates `HudMenus`, `Rac
 - `MouseOnStartButton()`: `panel.Pick(point)` finds the element under the mouse (screen y flipped first: screen pixels start bottom left, the panel top left). On the start screen only the menu buttons catch clicks, so if the mouse is on one of them, `MenuUsesInput` is true before the click arrives.
 - Clicks use `ClickEvent` (mouse button up), so the button press itself happened while the menu was still open or the mouse was on a button: it never leaks into "press any key".
 - `SettingsPanel`: five rows from `RaceHud.uxml` (`set-master` ... `set-motion`); ten diamond cells per volume bar made in code; W/S choose (wraps, `MenuNavigation.Wrap`), A/D change, Space flips on/off; the mouse moves the highlight (`PointerEnterEvent`), `-`/`+`, a click on diamond 7 = 70 %, a click on an on/off row flips it. `Refresh()` only switches classes and uses cached "0 %" ... "100 %" strings.
-- `CreditsPanel`: two pages (team, tools and sources) that fade in with `is-shown`; A/D, Space or NEXT PAGE turn, the dots jump. Texts are in the UXML (names as in `docs/team.md`, credits as in `THIRD_PARTY.md`).
+- `CreditsPanel`: two pages (team, tools and sources) that fade in with `is-shown`; A/D, Space or NEXT PAGE turn, the dots jump. Texts are in the UXML (names as in `docs/team.md`, credits as in `THIRD_PARTY.md`). `GoTo(page)` calls the `pageTurned` callback only if the page really changes.
+- Menu sounds (audit 10): `HudMenus.SoundRequested` (an `Action<MenuSound>` event, enum in `RaceFlow/MenuSound.cs`) fires on open, close, page turn, a volume step, an on/off row and mute. `SoundFor(item)` (static, tested) picks `SliderStep` for the three volume rows and `Toggle` for the on/off rows. `SettingsPanel` reports which row changed (`Action<SettingsItem>`). Closing because the race starts (`HideMenus`) is silent, so it never covers the retry click. `RaceHud` passes the event on as `MenuSoundRequested`, because `HudMenus` is made new in every `RaceHud.OnEnable`, while `RaceSounds` needs one object to subscribe to.
 - Reduced motion: one class on the root; the last block of `RaceHud.uss` sets `translate: 0 0`, `scale: 1 1` and the final rotation for every slide, shake, punch and stamp, one class more specific than the rule it beats. Fades stay. The breathing start pill is an inline style (beats all USS), so `RaceHud.UpdateStartScreen` checks `menus.ReducedMotion`.
 - How I would explain it: "The menus are classes that switch CSS classes. The USS decides how it looks, the RaceManager decides what the race does."
 
@@ -484,6 +488,7 @@ All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceF
 | `PersonalBestTests` (P5 additions) | Best medal only goes up; survives the save string; a save from before medals loads with no medal; a broken medal number keeps the time but no medal. `HudFormatTests` adds `OneDecimal` (0.84 -> "0.8", 1.25 -> "1.3", negative -> "0.0"). |
 | `GhostRecordingTests` | Empty recording has no pose; uneven frames still give samples exactly every 0.05 s; halfway between two samples = halfway position and rotation; clamped before the start and after the end; one sample works at any time; a teleport jumps instead of gliding (also inside one frame); repeated or old times add nothing; stops at 120 s; `Clear` starts over; end velocity; save text round trip (under 1 cm, under 0.2 degrees); yaw across 360 stays a small change; same text on a Portuguese laptop; a 60 s lap stays under 40 KB; other track or checkpoint count = ignored; broken texts = no ghost. |
 | `GhostLoaderTests` | Own ghost wins over the shipped one; fresh browser races the shipped ghost; broken or outdated own ghost falls back to the shipped one; nothing valid (or a shipped ghost from the old layout) = no ghost; save key next to the personal best. |
+| `MenuSoundTests` | Audit 10: the three volume rows ask for the slider-step sound, the two on/off rows for the switch sound. |
 | `GhostFadeTests` | Hidden close, full far away, half in the middle, never weaker further away; bad settings do not break it; end fade 1 to 0; the strongest fade wins (camera, kart, end). |
 
 Run: Unity Editor, Window > General > Test Runner > EditMode > Run All. Command line (Unity closed), Windows:

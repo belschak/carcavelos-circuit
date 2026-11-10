@@ -115,6 +115,10 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly StuckDetector stuckDetector = new StuckDetector();
         private HudMenus menus; // settings, credits, mute, pause overlay, reduced motion (task P7, UI/HudMenus.cs)
 
+        // Menu sounds (audit 10): HudMenus says what happened, RaceSounds listens here and plays the clip.
+        // RaceHud passes the event on because HudMenus is made new in every OnEnable, while this component stays.
+        public event System.Action<MenuSound> MenuSoundRequested;
+
         // What each label shows right now, so we only rebuild its text when this number changes.
         private readonly ShownNumber shownState = new ShownNumber();        // RaceState as int
         private readonly ShownNumber shownTimer = new ShownNumber();        // lap time in ms (fraction label)
@@ -162,6 +166,7 @@ namespace CarcavelosCircuit.RaceFlow
             HudFx.IgnoreClicksDeep(root);
             retryButton.focusable = false; // after a mouse click it must not keep focus, or Space/Enter would press it again
             menus = new HudMenus(root, raceManager); // after IgnoreClicksDeep: it switches on the clicks of its own buttons
+            menus.SoundRequested += OnMenuSound;
 
             // Narrow windows (4:3, 16:10): the HUD scales by height, so the panel gets less width than the 1280 reference.
             // Then the centred hint chip would cover the lap time and the key bar the drift panel: "hud--narrow" moves them.
@@ -189,6 +194,7 @@ namespace CarcavelosCircuit.RaceFlow
             raceManager.LapFinished -= OnLapFinished;
             raceManager.Restarted -= OnRestarted;
             raceManager.Recovered -= OnRecovered;
+            menus.SoundRequested -= OnMenuSound;
             HudTextures.Destroy(startGradient);
             HudTextures.Destroy(resultsGradient);
             HudTextures.Destroy(glowLeftTexture);
@@ -332,6 +338,11 @@ namespace CarcavelosCircuit.RaceFlow
         private void OnRetryClicked()
         {
             raceManager.Retry();
+        }
+
+        private void OnMenuSound(MenuSound sound)
+        {
+            if (MenuSoundRequested != null) MenuSoundRequested(sound);
         }
 
         // ================= Events from the RaceManager =================
