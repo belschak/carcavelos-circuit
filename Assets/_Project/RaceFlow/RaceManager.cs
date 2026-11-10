@@ -1,5 +1,6 @@
 using System;
 using CarcavelosCircuit.Shared;
+using CarcavelosCircuit.Track;
 using UnityEngine;
 
 namespace CarcavelosCircuit.RaceFlow
@@ -73,10 +74,10 @@ namespace CarcavelosCircuit.RaceFlow
         private CoachHint waitingCoachHint;    // a tip that waits until the hint chip is free
         private const string CoachSaveKey = "CarcavelosCircuit.CoachDone"; // one key for all tracks: it is about the player
         private RaceStateMachine stateMachine;
-        private PlaceholderLapRules rules;   // swap to RaceRules (Role 2) once T5 is merged
-        private PlaceholderTrack track;      // swap to TrackInfo (Role 2) once T4 is merged
+        private RaceRules rules;   // Role 2's lap rules (T5)
+        private TrackInfo track;   // Role 2's track contract (T4) on the track scene's root
         private PersonalBest personalBest;
-        private PlaceholderCheckpoint[] checkpointList; // the track's checkpoints (index 0 = start/finish), read by the HUD
+        private Checkpoint[] checkpointList; // the track's checkpoints (index 0 = start/finish), read by the HUD
         private FallCheck fallCheck;
         private IKartState kart;
         private Transform kartTransform;
@@ -85,7 +86,7 @@ namespace CarcavelosCircuit.RaceFlow
         private string saveKey;
 
         // Called once by RaceBootstrap after the track is loaded and the kart is spawned.
-        public void SetUp(GameObject kartObject, PlaceholderTrack loadedTrack, string trackName)
+        public void SetUp(GameObject kartObject, TrackInfo loadedTrack, string trackName)
         {
             kart = kartObject.GetComponent<IKartState>();
             if (kart == null)
@@ -101,15 +102,15 @@ namespace CarcavelosCircuit.RaceFlow
             kartBodies = kartObject.GetComponentsInChildren<Rigidbody>(true);
             kartColliders = kartObject.GetComponentsInChildren<Collider>(true);
 
-            PlaceholderCheckpoint[] checkpoints = track.Checkpoints;
+            Checkpoint[] checkpoints = track.Checkpoints;
             if (checkpoints == null)
             {
-                checkpoints = new PlaceholderCheckpoint[0];
+                checkpoints = new Checkpoint[0];
             }
             checkpointList = checkpoints;
             int checkpointCount = checkpoints.Length;
             CheckCheckpoints(checkpoints); // only logs errors, the race still starts so the kart can be tested
-            rules = new PlaceholderLapRules(checkpointCount);
+            rules = new RaceRules(checkpointCount);
             fallCheck = new FallCheck(settings.FallRecoverHeight, settings.FallCheckCooldownSeconds);
 
             // The best time is saved per track in PlayerPrefs (in the browser Unity keeps them in the site's IndexedDB storage).
@@ -157,7 +158,7 @@ namespace CarcavelosCircuit.RaceFlow
 
         // Where the checkpoints stand in driving order (index 0, 1, 2 ...), for the lap length. The list on the track
         // may be in any order, so we look each index up. A missing index is skipped.
-        private static Vector3[] CheckpointPositions(PlaceholderCheckpoint[] checkpoints)
+        private static Vector3[] CheckpointPositions(Checkpoint[] checkpoints)
         {
             var positions = new System.Collections.Generic.List<Vector3>();
             for (int index = 0; index < checkpoints.Length; index++)
@@ -176,7 +177,7 @@ namespace CarcavelosCircuit.RaceFlow
 
         // Unity sends OnTriggerEnter to the GameObject that owns the trigger collider. Role 2 may put the collider
         // on the checkpoint object itself or on a child, so a relay goes onto every object with a trigger collider.
-        private void AddRelays(PlaceholderCheckpoint checkpoint)
+        private void AddRelays(Checkpoint checkpoint)
         {
             Collider[] colliders = checkpoint.GetComponentsInChildren<Collider>(true);
             for (int i = 0; i < colliders.Length; i++)
@@ -192,7 +193,7 @@ namespace CarcavelosCircuit.RaceFlow
 
         // Swap-day safety net: a wrong track setup gives a clear red error instead of a lap that never finishes.
         // Rules (docs/interfaces.md): no empty entries, a trigger collider on every checkpoint, indices exactly 0..N-1.
-        private void CheckCheckpoints(PlaceholderCheckpoint[] checkpoints)
+        private void CheckCheckpoints(Checkpoint[] checkpoints)
         {
             int[] indices = new int[checkpoints.Length];
             for (int i = 0; i < checkpoints.Length; i++)
@@ -215,7 +216,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        private static bool HasTriggerCollider(PlaceholderCheckpoint checkpoint)
+        private static bool HasTriggerCollider(Checkpoint checkpoint)
         {
             Collider[] colliders = checkpoint.GetComponentsInChildren<Collider>(true);
             for (int i = 0; i < colliders.Length; i++)

@@ -4,6 +4,7 @@
     "references": [
         "UnityEngine.TestRunner",
         "CarcavelosCircuit.Shared",
+        "CarcavelosCircuit.Track",
         "CarcavelosCircuit.RaceFlow"
     ],
     "includePlatforms": [],
