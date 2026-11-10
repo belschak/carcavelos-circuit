@@ -186,13 +186,14 @@ namespace CarcavelosCircuit.Track.Editor
         // One side of the road (side = +1 right, -1 left, seen in driving direction). Returns the number of posts.
         private static int AddSide(NovaMesh fence, NovaMesh wall, float side)
         {
+            bool[] ok = FenceRuns(side);
             int n = points.Length;
             int posts = 0;
             float sinceLastPost = 0f;
             for (int i = 0; i < n; i++)
             {
                 int j = (i + 1) % n;
-                if (!HasFence(i, side))
+                if (!ok[i])
                 {
                     continue;
                 }
@@ -207,8 +208,8 @@ namespace CarcavelosCircuit.Track.Editor
                 {
                     a -= Forward(i) * TunnelEndShift;
                 }
-                bool runStarts = !HasFence((i - 1 + n) % n, side);
-                bool runEnds = !HasFence(j, side);
+                bool runStarts = !ok[(i - 1 + n) % n];
+                bool runEnds = !ok[j];
 
                 AddBoards(fence, a, b);
                 AddWall(wall, a, b, Right(i) * (side * WallThickness * 0.5f)); // wall just outside the fence line
@@ -259,6 +260,41 @@ namespace CarcavelosCircuit.Track.Editor
 
         // A piece of fence from point i to i+1 exists if it is not fully inside the tunnel
         // and neither end stands on another part of the road (where the route crosses or touches itself).
+        // HasFence for every point of one side, without leftover pieces shorter than 3 m (they look like a kink).
+        private static bool[] FenceRuns(float side)
+        {
+            int n = points.Length;
+            bool[] ok = new bool[n];
+            for (int i = 0; i < n; i++)
+            {
+                ok[i] = HasFence(i, side);
+            }
+            int k = 0;
+            while (k < n)
+            {
+                if (!ok[k])
+                {
+                    k++;
+                    continue;
+                }
+                int start = k;
+                float length = 0f;
+                while (k < n && ok[k])
+                {
+                    length += Vector3.Distance(FencePoint(k, side), FencePoint((k + 1) % n, side));
+                    k++;
+                }
+                if (length < 3f)
+                {
+                    for (int r = start; r < k; r++)
+                    {
+                        ok[r] = false;
+                    }
+                }
+            }
+            return ok;
+        }
+
         private static bool HasFence(int i, float side)
         {
             int j = (i + 1) % points.Length;
@@ -281,6 +317,11 @@ namespace CarcavelosCircuit.Track.Editor
             if (NearHallCourse(FencePoint(i, side)) || NearHallCourse(FencePoint(j, side)))
             {
                 return false; // the hall course reaches out through the door: no second fence next to it
+            }
+            Vector3 piece = FencePoint(j, side) - FencePoint(i, side);
+            if (Vector3.Dot(piece, Pos(j) - Pos(i)) <= 0f)
+            {
+                return false; // on the inside of a very tight turn the fence line folds back: leave that bit out
             }
             return !OnOtherRoad(i, side) && !OnOtherRoad(j, side);
         }
