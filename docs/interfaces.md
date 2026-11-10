@@ -32,6 +32,17 @@ namespace CarcavelosCircuit.Shared
 
 `Steer` added 2026-11-10 (Role 3's request Q11, OK from Role 3 and Role 4, `docs/decisions.md`): read only, for the steering wheel and front wheels of the kart model. Every class that implements `IKartState` must have it.
 
+## Shared (Role 4): `IKartBoost` in `Assets/_Project/Shared/IKartBoost.cs` (optional, item boxes, 2026-11-10)
+
+```csharp
+public interface IKartBoost
+{
+    void AddBoost(float seconds, float speedMultiplier); // adds boost time (boosts chain); top speed = MaxSpeed * the higher of the kart's own boost multiplier and this one
+}
+```
+
+Optional second interface, so `IKartState` stays as agreed: a kart without it still races, the items then give no speed. RaceFlow's `ItemSystem` calls it when the player uses an item (E). The kart decides how it accelerates; while the boost runs `IsBoosting` must be true (Role 3's boost flame and Role 4's boost sound read that). `ResetTo` ends an item boost like any boost. Implemented by `PlaceholderKart`; `KartController` via help PR (request Q15 in `TASKS.md`).
+
 ## Driving (Role 1) provides: `KartController : MonoBehaviour, IKartState` on the `Kart` prefab root
 
 Approach (decided, see `docs/decisions.md`): our own simple **sphere-based** arcade controller. An invisible Rigidbody sphere rolls and carries the physics, the kart model follows it and is aligned to the ground with one raycast. It cannot flip, has few tuning values and every line can be explained. Read [Mix and Jam MarioKart-Drift](https://github.com/mixandjam/MarioKart-Drift) (MIT, 2019, old APIs) and [UniKart](https://github.com/eviltwo/UniKart) (MIT, Unity 6) as references only; credit them in `THIRD_PARTY.md` if you copy ideas closely.
@@ -77,4 +88,4 @@ public void Reset();
 - Audio: engine pitch from `IKartState.Speed / MaxSpeed`, drift/boost SFX from the state flags, music. Sound only starts after the first click or key press (browser rule).
 
 ## Controls (proposal, confirm at kickoff)
-W/A/S/D and arrow keys to drive, Space = drift, R = recover, Enter = start / retry.
+W/A/S/D and arrow keys to drive, Space = drift, R = recover, Enter = start / retry, E = use the item in the HUD slot (item boxes, 2026-11-10; the phone's touch item button sends E).

@@ -604,6 +604,18 @@ def results_loop():
     return normalise(soft_clip(out, 1.1), -3.0)
 
 
+# ---------- item boxes (task R7) ----------
+# Box break, ready, Bica and Onda come from ElevenLabs (el_item_*.wav, see THIRD_PARTY.md); only the tick is ours.
+
+def item_roll_tick():
+    # One click of the spinning slot: a very short, bright blip.
+    seconds = 0.03
+    n = int(seconds * SR)
+    x = tone(1600.0, seconds, partials=((1, 1.0), (2, 0.25)))
+    x = mul(x, mul(exp_decay(n, 0.012), envelope(n, 0.001, 0.005)))
+    return normalise(x, -3.0)
+
+
 SOUNDS = {
     "sfx_countdown_beep": countdown_beep,
     "sfx_go_beep": go_beep,
@@ -629,6 +641,7 @@ SOUNDS = {
     "sfx_wall_bump": wall_bump,
     "sfx_takeoff_whoosh": takeoff_whoosh,
     "amb_seaside_loop": seaside_loop,
+    "sfx_item_roll_tick": item_roll_tick,
 }
 
 
