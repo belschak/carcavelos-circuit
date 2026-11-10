@@ -30,6 +30,13 @@ namespace CarcavelosCircuit.Track.Editor
         private const float BandTop = 0.85f;
         private const float BandThickness = 0.06f;
 
+        // Checking that the lane between the rails is really drivable: step outwards from the middle of the road
+        // and stop at the first thing standing in the way (a column, a wall, a planter).
+        private const float ScanStep = 0.25f;
+        private const float ScanLow = 0.25f;   // ignore the road surface itself
+        private const float ScanHigh = 1.4f;   // roughly kart height: what would be hit when driving
+        private const float MinHalfWidth = 2f; // under 4 m total the lane is reported as too narrow
+
         // Same field names as Role 3's track.json, so JsonUtility can read it.
         [System.Serializable]
         private class TrackPoint
@@ -86,6 +93,32 @@ namespace CarcavelosCircuit.Track.Editor
             // (ours replaces it and looks the same).
             int switchedOff = ClearOtherRailings(scene, centre, width);
 
+            // Only now, with the other railings gone, measure how far the road is really free on each side.
+            Physics.SyncTransforms();
+            float[,] half = new float[count, 2];
+            int narrowed = 0;
+            float worst = float.MaxValue;
+            Vector3 worstAt = Vector3.zero;
+            for (int i = 0; i < count; i++)
+            {
+                for (int k = 0; k < 2; k++)
+                {
+                    float wanted = width[i] * 0.5f + OutsideOffset;
+                    float free = FreeHalfWidth(centre, i, k == 0 ? -1f : 1f, wanted);
+                    half[i, k] = free;
+                    if (free < wanted - 0.01f)
+                    {
+                        narrowed++;
+                    }
+                }
+                float lane = half[i, 0] + half[i, 1];
+                if (!gap[i] && lane < worst)
+                {
+                    worst = lane;
+                    worstAt = centre[i];
+                }
+            }
+
             EnsureFolder(MeshFolder.TrimEnd('/'));
             NovaBatch batch = new NovaBatch(GroupName, false, true);
             int placed = 0;
@@ -99,14 +132,15 @@ namespace CarcavelosCircuit.Track.Editor
                     {
                         continue;
                     }
-                    Vector3 a = RailPoint(centre, width, i, side);
+                    Vector3 a = centre[i] + NovaRouteMath.Right(centre, i) * (half[i, k] * side);
                     AddPost(batch, white, a, centre, i);
                     placed++;
                     if (gap[j])
                     {
                         continue;
                     }
-                    AddBand(batch, lilac, a, RailPoint(centre, width, j, side));
+                    Vector3 b = centre[j] + NovaRouteMath.Right(centre, j) * (half[j, k] * side);
+                    AddBand(batch, lilac, a, b);
                 }
             }
             batch.Flush(null, MeshFolder); // Flush makes its own root object called "Guardrails"
@@ -114,14 +148,35 @@ namespace CarcavelosCircuit.Track.Editor
             AssetDatabase.SaveAssets();
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log("CampusWorldGuardrails: " + placed + " posts with band in " + scene.name + ", "
-                + switchedOff + " other railings switched off. Save the scene (Cmd+S) to keep this.");
+                + switchedOff + " other railings switched off, " + narrowed + " rail sides pulled in so the lane stays free."
+                + " Narrowest lane " + worst.ToString("F1") + " m at " + worstAt.ToString("F0")
+                + ". Save the scene (Cmd+S) to keep this.");
+            if (worst < MinHalfWidth * 2f)
+            {
+                Debug.LogWarning("CampusWorldGuardrails: the lane gets as narrow as " + worst.ToString("F1")
+                    + " m at " + worstAt.ToString("F0") + ". That is too tight to drive: the route has to go around"
+                    + " what is standing there (route data: " + DataPath + ").");
+            }
         }
 
-        // The point on the road edge (pushed slightly outwards) at ring i.
-        private static Vector3 RailPoint(Vector3[] centre, float[] width, int i, float side)
+        // How far the road is free on one side of ring i, at most "wanted" metres. Steps outwards from the middle
+        // and stops in front of the first thing a kart would hit, so the lane between the rails is really drivable.
+        private static float FreeHalfWidth(Vector3[] centre, int i, float side, float wanted)
         {
-            Vector3 right = NovaRouteMath.Right(centre, i);
-            return centre[i] + right * (width[i] * 0.5f * side + OutsideOffset * side);
+            Vector3 right = NovaRouteMath.Right(centre, i) * side;
+            Quaternion along = Quaternion.LookRotation(NovaRouteMath.Forward(centre, i), Vector3.up);
+            Vector3 size = new Vector3(ScanStep, ScanHigh - ScanLow, ScanStep) * 0.5f;
+            float free = 0f;
+            while (free + ScanStep <= wanted)
+            {
+                Vector3 p = centre[i] + right * (free + ScanStep * 0.5f) + Vector3.up * ((ScanLow + ScanHigh) * 0.5f);
+                if (Physics.CheckBox(p, size, along, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    return free; // something is standing here: the rail goes in front of it
+                }
+                free += ScanStep;
+            }
+            return wanted;
         }
 
         // One square white post, turned so its flat sides follow the road.
