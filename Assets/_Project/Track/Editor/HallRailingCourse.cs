@@ -15,6 +15,7 @@ namespace CarcavelosCircuit.Track.Editor
         private const float MaxPostWidth = 0.5f;   // a post is narrower than this (seen from above) ...
         private const float MinPostHeight = 0.4f;  // ... and taller than this
         private const float MaxLink = 4f;          // two posts further apart than this are never neighbours
+        private const string FenceName = "WhiteGuardrails"; // our own fence in the scene, ignored by the floor check
 
         [System.Serializable]
         public class Course
@@ -32,10 +33,21 @@ namespace CarcavelosCircuit.Track.Editor
                 Debug.LogError("HallRailingCourse: select the hall railing in the Hierarchy first.");
                 return;
             }
-            List<Vector3> feet = new List<Vector3>();
+            List<Bounds> found = new List<Bounds>();
             foreach (MeshFilter mf in railing.GetComponentsInChildren<MeshFilter>(true))
             {
-                FindPosts(mf, feet);
+                FindPosts(mf, found);
+            }
+
+            // The white fence replaces it, so switch the old railing off (in the open scene only, undo works).
+            // Off first, so the floor check below hits the hall floor and not the old posts.
+            Undo.RecordObject(railing, "Switch off hall railing");
+            railing.SetActive(false);
+            Physics.SyncTransforms();
+            List<Vector3> feet = new List<Vector3>();
+            for (int i = 0; i < found.Count; i++)
+            {
+                feet.Add(FloorUnder(found[i]));
             }
             if (feet.Count < 2)
             {
@@ -47,11 +59,7 @@ namespace CarcavelosCircuit.Track.Editor
             course.links = LinkNeighbours(course.posts);
             File.WriteAllText(CoursePath, JsonUtility.ToJson(course, true));
             AssetDatabase.ImportAsset(CoursePath);
-
-            // The white fence replaces it, so switch the old railing off (in the open scene only, undo works).
-            Undo.RecordObject(railing, "Switch off hall railing");
-            railing.SetActive(false);
-            Debug.Log("HallRailingCourse: " + feet.Count + " posts, " + (course.links.Length / 2) + " fence pieces saved to " + CoursePath
+            Debug.Log("HallRailingCourse: " + feet.Count + " posts (floor at " + feet[0].y.ToString("F2") + " m), " + (course.links.Length / 2) + " fence pieces saved to " + CoursePath
                 + ". " + railing.name + " switched off. Now run Build White Guardrails.");
         }
 
@@ -64,8 +72,31 @@ namespace CarcavelosCircuit.Track.Editor
             return JsonUtility.FromJson<Course>(File.ReadAllText(CoursePath));
         }
 
-        // Splits the mesh into separate pieces (triangles that share corners) and keeps the pieces shaped like a post.
-        private static void FindPosts(MeshFilter mf, List<Vector3> feet)
+        // The old posts reach into the floor, so the white fence stands on the floor right under each post instead.
+        // Falls back to the post's own foot if nothing is below it.
+        private static Vector3 FloorUnder(Bounds post)
+        {
+            Vector3 top = new Vector3(post.center.x, post.max.y + 0.5f, post.center.z);
+            Vector3 foot = new Vector3(post.center.x, post.min.y, post.center.z);
+            bool hitFloor = false;
+            foreach (RaycastHit hit in Physics.RaycastAll(top, Vector3.down, post.size.y + 2f))
+            {
+                if (hit.collider.gameObject.name == FenceName)
+                {
+                    continue; // our own fence's collision wall is not the floor
+                }
+                // The highest hit below the start is the floor surface.
+                if (!hitFloor || hit.point.y > foot.y)
+                {
+                    foot = hit.point;
+                    hitFloor = true;
+                }
+            }
+            return foot;
+        }
+
+        // Splits the mesh into separate pieces (triangles that share corners) and keeps the box of every post-shaped piece.
+        private static void FindPosts(MeshFilter mf, List<Bounds> posts)
         {
             Mesh mesh = mf.sharedMesh;
             if (mesh == null)
@@ -123,7 +154,7 @@ namespace CarcavelosCircuit.Track.Editor
             {
                 if (b.size.x < MaxPostWidth && b.size.z < MaxPostWidth && b.size.y > MinPostHeight)
                 {
-                    feet.Add(new Vector3(b.center.x, b.min.y, b.center.z));
+                    posts.Add(b);
                 }
             }
         }
