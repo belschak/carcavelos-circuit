@@ -532,6 +532,24 @@ Eleven Role 4 files the audit found unmentioned. Each: what it does, the functio
 
 - P pause (audit 9): 3.6 and 3.28. Menu sounds (audit 10): 3.11 and 3.29, enum `RaceFlow/MenuSound.cs`. Wall bump, take-off, chained boost (audit 11): 3.15 and 3.15b. Seaside ambience (audit 12): 3.11b and 3.19. Ghost chip (audit 13): 3.26. Ahead/behind chime, wrong-way and pause cues (audit 19): 3.11 and 3.29b. Loader keys and credits (audit 20, 21): 3.18 and 3.29. KartEffects on the kart (Q10): 3.17 step 4b. `MusicPlayer` deleted (audit 18): 3.16.
 - Every new clip is our own synth (`tools/audio-synth/synth_sfx.py`): `ui_open`, `ui_close`, `ui_page`, `sfx_wall_bump`, `sfx_takeoff_whoosh`, `amb_seaside_loop`.
+- Item boxes (task R7): 3.33.
+
+### 3.33 Item boxes (task R7, 2026-11-10)
+
+Three items, all boosts (no rivals yet, so nothing to throw): **Bica** (one 1.0 s boost, x1.4 top speed), **Triple Bica** (three 0.9 s boosts, they chain), **Onda** (the Atlantic wave, 2.5 s at x1.6, rare). Boxes are azulejo tile cubes that spin, burst into shards and come back after 3 s.
+
+Files (all Role 4): `Shared/IKartBoost.cs` (the optional contract), `RaceFlow/ItemKind.cs`, `ItemSlot.cs`, `ItemOdds.cs`, `ItemBoxState.cs`, `ItemBoxLayout.cs` (plain C#, the rules), `ItemSettings.cs` (ScriptableObject, numbers in `Settings/ItemSettings.asset`), `ItemBoxTexture.cs`, `ItemBox.cs`, `ItemSystem.cs` (MonoBehaviours), `UI/ItemSlotHud.cs` + `UI/ItemIcon.cs` (the HUD slot), `RaceKeys.UseItemPressed()` (E). Built into `Main.unity` by `Role4SceneBuilder.BuildItems` as the root object "Items".
+
+**Chain 1, driving through a box:** `ItemBox.OnTriggerEnter` (`ItemBox.cs:73`, only if the box is there and the collider is our kart) -> `ItemSystem.OnBoxHit` (`ItemSystem.cs:113`: only while Racing, breaks the box, plays `el_item_box_break`) -> `ItemOdds.WeightsFor` + `ItemOdds.Pick` (catch-up odds from the last split against the personal best) -> `ItemSlot.TryStartRoll` (false if the slot is busy: the box still breaks, you get nothing).
+**Chain 2, the roll:** `ItemSystem.Update` (`ItemSystem.cs:57`) calls `slot.Tick` every frame; each new roll step plays the tick, the landing plays `el_item_ready` and fires `ItemReady` (the HUD pops).
+**Chain 3, pressing E:** `ItemSystem.Update` -> `RaceKeys.UseItemPressed()` -> `ItemSystem.UseItem` (`ItemSystem.cs:92`: only Racing with input on) -> `ItemSlot.TryUse` -> `IKartBoost.AddBoost(seconds, multiplier)` on the kart -> plays `el_item_bica` or `el_item_onda` and fires `ItemUsed` (callout "BICA!"/"ONDA!", blue wave for Onda).
+
+- Point at: `ItemOdds` rows. Ahead 60/30/10, level 45/35/20, behind 30/40/30, more than 2 s behind 15/40/45 (Bica/Triple/Onda %). The further behind, the more Onda: classic catch-up.
+- Point at: `ItemBoxLayout.RowPositions`: three boxes per row across the road, at right angles to the driving direction, 14 m after every second checkpoint. Placed in code from the checkpoints at race start, so the boxes follow Noah's and Luc's map without anyone editing their scenes.
+- Question: "Why a new interface instead of adding `AddBoost` to `IKartState`?" Answer: "Changing `IKartState` would break every class that implements it. `IKartBoost` is optional: `ItemSystem` looks it up with `GetComponent<IKartBoost>()` (`ItemSystem.cs:197`); without it the item is still used, just without a boost, and a Console line says so (`ItemSystem.cs:200`)."
+- Question: "What happens if you hit a box while holding an item?" Answer: "`TryStartRoll` returns false, the box breaks anyway, the item you hold stays. One slot, no stacking."
+- Question: "Why does the E that ends a pause not use the item?" Answer: "`resumeFrame` remembers the frame the pause ended (`ItemSystem.cs:182`); `Update` skips `UseItem` in that frame (`ItemSystem.cs:84`)."
+- Sounds: box break, ready, Bica and Onda from ElevenLabs (David's Creator plan, `THIRD_PARTY.md`), the 25 ms roll tick from our own `synth_sfx.py`, all mastered by `process_wavs.py`.
 
 ---
 
@@ -578,12 +596,18 @@ All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceF
 | `BoostCueTests` | One whoosh per new boost (same frame or one frame after the release); a chained boost whooshes again; a sparkless drift, a wall, the air or input off while boosting do not; Reset forgets the running boost. |
 | `MenuSoundTests` | Audit 10: the three volume rows ask for the slider-step sound, the two on/off rows for the switch sound. |
 | `GhostFadeTests` | Hidden close, full far away, half in the middle, never weaker further away; bad settings do not break it; end fade 1 to 0; the strongest fade wins (camera, kart, end). |
+| `ItemSlotTests` | R7: new slot empty; the roll lands exactly once, then the item is ready; no use while rolling; a busy slot refuses a new item; None is never rolled; Bica one use, Triple Bica three uses and still blocks a new box with charges left; Clear empties even while rolling; roll steps grow from 0 to all, never go back and slow down towards the end; the icon cycles through the three items. |
+| `ItemOddsTests` | R7: every row adds up to 100; no best lap yet = level odds; the split picks the right row (ahead, level, behind, far behind); further behind = more Onda; `Pick` splits the roll by the weights and never returns None. |
+| `ItemBoxStateTests` | R7: a new box is there; a hit removes it and a second hit does nothing; it comes back after the respawn time, once; Reset brings it back at once. |
+| `ItemBoxLayoutTests` | R7: which checkpoints get a row; direction ignores height; the row sits the given metres along the road and stays inside a short gap; boxes are spaced across the road, centred and at right angles to the driving direction; zero boxes = empty. |
 
 Run: Unity Editor, Window > General > Test Runner > EditMode > Run All. Command line (Unity closed), Windows:
 
 ```
 "C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -runTests -batchmode -projectPath . -testPlatform EditMode -testResults TestResults/editmode.xml
 ```
+
+Play Mode (`Assets/_Project/Tests/PlayMode/ItemBoxPlayTests.cs`, R7, loads `Main` on `Track_CampusWorld`): boxes are placed on the track (17 in 6 rows); driving into a box rolls an item and E uses it as a boost (`IsBoosting` true); a full slot breaks the box but keeps the item; a box comes back and Retry resets the slot and every box; no items before the race starts. Run with `-testPlatform PlayMode`.
 
 How I would explain it: "Edit Mode tests run without pressing Play, in under a second. That only works because the rules are plain C# classes that do not need a scene."
 

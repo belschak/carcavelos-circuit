@@ -82,5 +82,37 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             Assert.AreEqual(0, ItemBoxLayout.RowPositions(Vector3.zero, Vector3.zero, Vector3.forward, 0, 2f).Length);
         }
+
+        [Test]
+        public void RowDirection_UsesTheRoadForward_NotTheShortcutToTheNextCheckpoint()
+        {
+            // the next checkpoint is straight ahead (+Z), but the road leaves this checkpoint towards +X (a bend)
+            Vector3 dir = ItemBoxLayout.RowDirection(Vector3.zero, new Vector3(0f, 0f, 50f), new Vector3(2f, 0f, 0f));
+            Assert.AreEqual(1f, dir.x, 0.0001f);
+            Assert.AreEqual(0f, dir.z, 0.0001f);
+        }
+
+        [Test]
+        public void RowDirection_IgnoresHeight_AndFallsBackToTheNextCheckpoint()
+        {
+            Vector3 tilted = ItemBoxLayout.RowDirection(Vector3.zero, Vector3.forward, new Vector3(0f, 5f, 1f));
+            Assert.AreEqual(0f, tilted.y, 0.0001f);
+            Assert.AreEqual(1f, tilted.z, 0.0001f);
+            Vector3 none = ItemBoxLayout.RowDirection(Vector3.zero, new Vector3(30f, 0f, 0f), Vector3.zero);
+            Assert.AreEqual(1f, none.x, 0.0001f); // no respawn point: the line to the next checkpoint
+            Vector3 straightUp = ItemBoxLayout.RowDirection(Vector3.zero, new Vector3(30f, 0f, 0f), Vector3.up);
+            Assert.AreEqual(1f, straightUp.x, 0.0001f); // pointing straight up says nothing about the road
+        }
+
+        [Test]
+        public void RowAlongADirection_IsAheadOnTheRoad_AndAcrossIt()
+        {
+            Vector3 centre = ItemBoxLayout.RowCentre(Vector3.zero, new Vector3(0f, 0f, 100f), Vector3.right, 14f);
+            Assert.AreEqual(14f, centre.x, 0.0001f);
+            Vector3[] row = ItemBoxLayout.RowPositions(centre, Vector3.right, 3, 2f);
+            Assert.AreEqual(3, row.Length);
+            Assert.AreEqual(14f, row[0].x, 0.0001f); // across the road = along Z when driving along X
+            Assert.AreEqual(2f, Mathf.Abs(row[2].z - row[1].z), 0.0001f);
+        }
     }
 }
