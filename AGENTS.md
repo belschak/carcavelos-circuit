@@ -92,4 +92,4 @@ Read `docs/interfaces.md`. Kart exposes `IKartState`, the track exposes `TrackIn
 - Never claim "tested" or "works" unless a human actually ran it. Say what still needs a playtest.
 
 ## When unsure
-Stop and ask your human. Don't guess ownership, don't "fix" another module, don't expand scope (out of scope: items, AI opponents, multiplayer, kart selection, touch controls).
+Stop and ask your human. Don't guess ownership, don't "fix" another module, don't expand scope (out of scope: items, AI opponents, multiplayer, kart selection; touch controls are in scope since 2026-11-10, see `docs/decisions.md`).
