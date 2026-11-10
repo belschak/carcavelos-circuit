@@ -14,8 +14,8 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 ## Role 1: Driving + camera (Alessandro)
 | ID | Task | Due | Status |
 |---|---|---|---|
-| D1 | Placeholder kart prefab (box + 4 cylinders, or Kenney CC0 kart) with a sphere-based `KartController` implementing `IKartState` (approach in `docs/interfaces.md`): accelerate, brake/reverse, steer on `Driving_TestBed` | Mon 9 | in review (Alessandro, 2026-11-09) |
-| D2 | Chase camera (Cinemachine) that follows smoothly | Mon 9 | todo |
+| D1 | Placeholder kart prefab (box + 4 cylinders, or Kenney CC0 kart) with a sphere-based `KartController` implementing `IKartState` (approach in `docs/interfaces.md`): accelerate, brake/reverse, steer on `Driving_TestBed` | Mon 9 | done (Alessandro, 2026-11-10) |
+| D2 | Chase camera (Cinemachine) that follows smoothly | Mon 9 | in review (Alessandro, 2026-11-09) |
 | D3 | Drift that charges a boost; release when charged = short boost; early release = nothing | Wed 11 | todo |
 | D4 | Ramp jump: airborne state, lands upright, no flipping; `IsGrounded` | Wed 11 | todo |
 | D5 | `ResetTo(position, rotation)` for recovery and retry (zero velocity, clear drift/boost) | Wed 11 | todo |
@@ -67,3 +67,4 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | Q6 | 4 -> 1 | `Kart` prefab whose root has `KartController : IKartState` (D1). Name the prefab `Kart` and keep it under `Assets/_Project/Driving/`: the Role 4 scene builder then picks it up automatically for Main.unity (no Inspector change needed). Until then `PlaceholderKart` drives. `InputEnabled = false` must stop all driving input, `ResetTo` must zero velocity and clear drift/boost | open |
 | Q7 | 3 -> 2 | Route decision: Luc's sketch route in `Visuals/Scenes/Track_CampusWorld.unity` (1,184 m, atrium drive-through, terrace jump) vs. help PR #31 (968 m), or a mix. When T4 is on `main`, swap the race placeholders in `CampusWorldBuilder.AddRaceParts` to `TrackInfo`/`Checkpoint` (two lines, marked) | done 2026-11-09: the team takes the campus world with Noah's route (Q9, PR #35); built into `Track_CampusWorld` |
 | Q8 | 3 -> 4 | If the team picks the campus world: add `Track_CampusWorld` to the build list and `RaceSettings` (checkpoints and spawn are already there for RaceFlow's placeholders) | done 2026-11-10 (#50): `Track_CampusWorld` + `Track_NovaCampus` in the committed build list, `RaceSettings` already tried them since #36 |
+| Q13 | 1 -> 4 | Chase camera (D2) is ready as the prefab `Driving/ChaseCamera.prefab` (Cinemachine: Follow + Rotation Composer, offset 0/3/-6). To use it in `Main.unity` instead of `PlaceholderChaseCamera`: put a `CinemachineBrain` on the Main Camera, add the prefab, and when the kart spawns set the prefab's `CinemachineCamera.Follow` (Tracking Target) to the kart. After `ResetTo` (retry / recovery) call `CinemachineCamera.OnTargetObjectWarped(kartTransform, newPosition - oldPosition)` so the camera jumps with the kart instead of flying across the track. Your decision when to swap (Role 4 owns `Main.unity`); I can pair on it | open |
