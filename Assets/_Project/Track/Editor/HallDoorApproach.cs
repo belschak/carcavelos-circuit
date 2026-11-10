@@ -82,6 +82,8 @@ namespace CarcavelosCircuit.Track.Editor
                         continue;                                // inside: the hall floor and the hall fence take over
                     }
                     float weight = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-Reach, -Full, depth));
+                    // ... and fades out along the route too, so a sharp turn right after the door leaves no kink
+                    weight *= Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(Run, Run / 2, Mathf.Abs(k)));
                     centre[i] -= along * (Vector3.Dot(rel, along) * weight);
                     width[i] = Mathf.Lerp(width[i], d.width - 2f * FenceGap, weight);
                     if (Mathf.Abs(depth) < Mathf.Abs(Vector3.Dot(Flat(centre[onFacade] - c), inward)))
