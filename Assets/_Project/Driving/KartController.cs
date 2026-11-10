@@ -125,6 +125,12 @@ namespace CarcavelosCircuit.Driving
             {
                 boostSecondsLeft -= dt;
             }
+            // Input switched off (finish line, results, pause): a running boost ends too, so the kart rolls out
+            // by itself instead of being pushed on for the rest of the boost.
+            if (!InputActive)
+            {
+                boostSecondsLeft = 0f;
+            }
             UpdateDrift(dt);
             body.angularVelocity = Vector3.zero; // a wall hit must not spin the kart, only steering turns it
 
