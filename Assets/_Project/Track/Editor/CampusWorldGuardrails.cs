@@ -9,16 +9,16 @@ namespace CarcavelosCircuit.Track.Editor
     // Puts guardrails along the road of the campus world scene that is open right now (Role 3's Track_CampusWorld
     // or the interior test copy). They use Role 3's own railing prefab, so they look like every other railing in
     // his world; only where they stand is decided here, from the route in his track.json.
-    // Nothing of his is edited: the prefab is only placed, and his own railings stay where they are.
+    // Railings of his that stand on the road are switched off, so the track is clear and no railing is doubled.
+    // That happens in the open scene only: his prefab, his models and his scene file are never edited.
     // Run it again after the world was rebuilt: a rebuild makes a new scene without the rails.
     public static class CampusWorldGuardrails
     {
         private const string DataPath = "Assets/_Project/Visuals/CampusWorld/Data/track.json";
         private const string RailPrefabPath = "Assets/_Project/Visuals/CampusWorld/Prefabs/Prop_RailingSegment.prefab";
         private const string GroupName = "Guardrails";
-        private const int JumpGap = 6;         // rings left free before and after the jump, so the ramp stays clear
-        private const float TooClose = 2.5f;   // a new railing this near one of Role 3's would look like a double rail
         private const float OutsideOffset = 0.15f; // the rail stands this far outside the road edge
+        private const float ClearMargin = 2f;      // Role 3's own railings this near the road are switched off
 
         // Same field names as Role 3's track.json, so JsonUtility can read it.
         [System.Serializable]
@@ -31,7 +31,6 @@ namespace CarcavelosCircuit.Track.Editor
         [System.Serializable]
         private class TrackData
         {
-            public int jump_index;
             public TrackPoint[] points;
         }
 
@@ -68,17 +67,15 @@ namespace CarcavelosCircuit.Track.Editor
                 TrackPoint p = data.points[i];
                 centre[i] = new Vector3(p.x, p.y, p.z);
                 width[i] = p.width;
-                // No rail in the tunnel (it has walls) and around the jump (the kart flies over the edge there).
-                gap[i] = p.tunnel || Near(i, data.jump_index, count, JumpGap);
+                gap[i] = p.tunnel; // only the tunnel keeps no rail: it has walls of its own
             }
 
-            // Role 3's world already has railings in places. Leave those spots free instead of standing a
-            // second railing next to his.
-            List<Vector3> existing = FindExistingRailings(scene);
+            // Role 3's world has railings of its own, and some of them stand on the road. Switch those off, so the
+            // track is clear and only one railing runs along each edge. Only in this scene, never in his files.
+            int switchedOff = ClearRailingsOnTheRoad(scene, centre, width);
 
             GameObject group = new GameObject(GroupName);
             int placed = 0;
-            int skipped = 0;
             for (int i = 0; i < count; i++)
             {
                 if (gap[i])
@@ -90,11 +87,6 @@ namespace CarcavelosCircuit.Track.Editor
                 {
                     float side = k == 0 ? -1f : 1f;
                     Vector3 spot = centre[i] + right * (width[i] * 0.5f * side + OutsideOffset * side);
-                    if (!IsFree(spot, existing))
-                    {
-                        skipped++;
-                        continue;
-                    }
                     // The prefab's panel runs along its local x and is thin along its local z, so its forward
                     // has to point away from the road (same as Role 3's own segments).
                     GameObject rail = (GameObject)PrefabUtility.InstantiatePrefab(railPrefab, scene);
@@ -106,15 +98,16 @@ namespace CarcavelosCircuit.Track.Editor
             }
 
             EditorSceneManager.MarkSceneDirty(scene);
-            Debug.Log("CampusWorldGuardrails: " + placed + " railings placed in " + scene.name + " ("
-                + existing.Count + " of Role 3's own railings found, " + skipped + " spots left to them)."
-                + " Save the scene (Cmd+S) to keep them.");
+            Debug.Log("CampusWorldGuardrails: " + placed + " railings placed in " + scene.name + ", "
+                + switchedOff + " of Role 3's own railings switched off because they stood on the road."
+                + " Save the scene (Cmd+S) to keep this.");
         }
 
-        // Every railing Role 3's world already placed, as world positions.
-        private static List<Vector3> FindExistingRailings(UnityEngine.SceneManagement.Scene scene)
+        // Switches off every railing of Role 3's that stands on the road or right at its edge, so nothing is
+        // in the way and no second railing shows up next to ours. His railings elsewhere stay as they are.
+        private static int ClearRailingsOnTheRoad(UnityEngine.SceneManagement.Scene scene, Vector3[] centre, float[] width)
         {
-            List<Vector3> found = new List<Vector3>();
+            int off = 0;
             foreach (GameObject root in scene.GetRootGameObjects())
             {
                 if (root.name == GroupName)
@@ -123,35 +116,21 @@ namespace CarcavelosCircuit.Track.Editor
                 }
                 foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
                 {
-                    if (t.name.StartsWith("Prop_RailingSegment"))
+                    if (!t.name.StartsWith("Prop_RailingSegment"))
                     {
-                        found.Add(t.position);
+                        continue;
+                    }
+                    int i = NovaRouteMath.ClosestIndex(centre, t.position);
+                    Vector3 d = centre[i] - t.position;
+                    d.y = 0f;
+                    if (d.magnitude < width[i] * 0.5f + ClearMargin)
+                    {
+                        t.gameObject.SetActive(false);
+                        off++;
                     }
                 }
             }
-            return found;
-        }
-
-        // No railing of Role 3's standing within "TooClose" metres of this spot (height ignored: same storey is enough).
-        private static bool IsFree(Vector3 spot, List<Vector3> existing)
-        {
-            for (int i = 0; i < existing.Count; i++)
-            {
-                Vector3 d = existing[i] - spot;
-                d.y = 0f;
-                if (d.sqrMagnitude < TooClose * TooClose)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        // True when ring "i" is at most "range" rings away from "target" on the closed loop.
-        private static bool Near(int i, int target, int count, int range)
-        {
-            int d = Mathf.Abs(i - target);
-            return Mathf.Min(d, count - d) <= range;
+            return off;
         }
 
         // A second run should replace the rails, not stack a new set on top of the old one.
