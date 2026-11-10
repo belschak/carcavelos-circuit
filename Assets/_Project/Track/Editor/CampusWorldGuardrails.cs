@@ -10,8 +10,9 @@ namespace CarcavelosCircuit.Track.Editor
     // or the interior test copy). They copy the look of the railing inside the Nova building ("Hall_Track_Rails"):
     // chunky white posts with a wide lilac band, in the hall model's own two materials.
     // Where they stand comes from the route in Role 3's track.json.
-    // There is only ever one kind of guardrail: every other railing along the track is switched off first, in the
-    // open scene only, never in anyone's files.
+    // Inside the hall its own railing stays and does the job; everywhere else Role 3's railing pieces that stand
+    // on the road are switched off, so only one kind of guardrail is left. That happens in the open scene only,
+    // never in anyone's files.
     // Run it again after the world was rebuilt: a rebuild makes a new scene without the rails.
     public static class CampusWorldGuardrails
     {
@@ -19,7 +20,6 @@ namespace CarcavelosCircuit.Track.Editor
         private const string HallModelPath = "Assets/_Preview/NovaHallWorld.fbx";
         private const string MeshFolder = "Assets/_Project/Track/Meshes/CampusWorld/";
         private const string GroupName = "Guardrails";
-        private const string HallRailName = "Hall_Track_Rails";  // the building's own railing along the track
         private const string OtherRailName = "Prop_RailingSegment"; // Role 3's railing pieces
 
         private const float OutsideOffset = 0.15f; // the rail stands this far outside the road edge
@@ -30,12 +30,10 @@ namespace CarcavelosCircuit.Track.Editor
         private const float BandTop = 0.85f;
         private const float BandThickness = 0.06f;
 
-        // Inside the building the route data says 8 m, but the hall is much wider and the lane should use it.
-        // TUNING: AtriumWidth is the distance between the two rails inside the hall, in metres. AtriumShift
-        // moves that lane sideways (plus = to the right seen in driving direction) when it is not centred.
+        // Inside the building the hall model brings its own railing ("Hall_Track_Rails"). It already runs through
+        // the doorways at the right width, which no rail built from the route data can do. So we leave the whole
+        // hall stretch to it and only build the rails outside. Ours look the same (same two materials).
         private const string AtriumZone = "atrium";
-        private const float AtriumWidth = 16f;
-        private const float AtriumShift = 0f;
 
         // Same field names as Role 3's track.json, so JsonUtility can read it.
         [System.Serializable]
@@ -87,18 +85,13 @@ namespace CarcavelosCircuit.Track.Editor
             {
                 TrackPoint p = data.points[i];
                 centre[i] = new Vector3(p.x, p.y, p.z);
-                gap[i] = p.tunnel; // only the tunnel keeps no rail: it has walls of its own
+                width[i] = p.width;
+                shift[i] = 0f;
+                // No rail of ours in the tunnel (it has walls) and none inside the hall (it has its own railing).
+                gap[i] = p.tunnel || p.zone == AtriumZone;
                 if (p.zone == AtriumZone)
                 {
-                    // The hall is wide: use the tuning values above instead of the 8 m in the route data.
-                    width[i] = AtriumWidth;
-                    shift[i] = AtriumShift;
                     inAtrium++;
-                }
-                else
-                {
-                    width[i] = p.width;
-                    shift[i] = 0f;
                 }
             }
 
@@ -135,8 +128,8 @@ namespace CarcavelosCircuit.Track.Editor
             AssetDatabase.SaveAssets();
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log("CampusWorldGuardrails: " + placed + " posts with band in " + scene.name + ", "
-                + switchedOff + " other railings switched off, " + inAtrium + " route points inside the hall widened to "
-                + AtriumWidth.ToString("F0") + " m. Save the scene (Cmd+S) to keep this.");
+                + switchedOff + " of Role 3's railings switched off, " + inAtrium
+                + " points inside the hall left to the building's own railing. Save the scene (Cmd+S) to keep this.");
         }
 
         // The point on the road edge (pushed slightly outwards) at ring i.
@@ -195,22 +188,17 @@ namespace CarcavelosCircuit.Track.Editor
                 }
                 foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
                 {
-                    bool isHallRail = t.name.StartsWith(HallRailName);
-                    bool isOtherRail = t.name.StartsWith(OtherRailName);
-                    if (!isHallRail && !isOtherRail)
+                    if (!t.name.StartsWith(OtherRailName))
+                    {
+                        continue; // the hall's own railing stays: inside the building it is the guardrail
+                    }
+                    // Role 3 also has railings far from the track (terraces, stairs); those stay.
+                    int i = NovaRouteMath.ClosestIndex(centre, t.position);
+                    Vector3 d = centre[i] - t.position;
+                    d.y = 0f;
+                    if (d.magnitude >= width[i] * 0.5f + ClearMargin)
                     {
                         continue;
-                    }
-                    if (isOtherRail)
-                    {
-                        // Role 3 also has railings far from the track (terraces, stairs); those stay.
-                        int i = NovaRouteMath.ClosestIndex(centre, t.position);
-                        Vector3 d = centre[i] - t.position;
-                        d.y = 0f;
-                        if (d.magnitude >= width[i] * 0.5f + ClearMargin)
-                        {
-                            continue;
-                        }
                     }
                     t.gameObject.SetActive(false);
                     off++;
