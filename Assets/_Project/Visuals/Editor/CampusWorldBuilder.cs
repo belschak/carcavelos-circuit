@@ -432,7 +432,9 @@ namespace CarcavelosCircuit.Visuals.Editor
             GameObject track = Instance("TrackSurface", root.transform);
             foreach (MeshFilter mf in track.GetComponentsInChildren<MeshFilter>(true))
             {
-                if (!mf.gameObject.name.StartsWith("Track_EdgeLines", StringComparison.Ordinal))  // paint, not a bump
+                // Edge lines and kerbs are paint, not bumps: a collider on the kerbs' ramp faces launched karts.
+                if (!mf.gameObject.name.StartsWith("Track_EdgeLines", StringComparison.Ordinal)
+                    && !mf.gameObject.name.StartsWith("Track_Kerbs", StringComparison.Ordinal))
                 {
                     mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
                 }
@@ -466,6 +468,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 MarkStatic(go);
             }
 
+            AddTunnelGuards(root, JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json")));
             AddGrassTufts(root);
             AddSunAndSky(root);
             // One prefab for everything you see and drive on. Saving over the old file keeps its GUID, so the
@@ -478,6 +481,42 @@ namespace CarcavelosCircuit.Visuals.Editor
             AddRaceParts(preview, data);
             AddPreviewCamera(preview, data);
             EditorSceneManager.SaveScene(scene, ScenePath);
+        }
+
+        // The tunnel walls lean outwards at 45 degrees. A kart that touches such a wall is thrown up it like a ramp.
+        // So along the tunnel an invisible upright wall (colliders only, nothing to see) stands at each wall foot,
+        // 0.6 m outside the road edge: a kart now slides along it instead of climbing the mural.
+        private static void AddTunnelGuards(GameObject root, TrackData data)
+        {
+            // The walls reach 1 m below the road as well, so on the sloping tunnel floor no wall ends above the ground
+            // (a kart could wedge under such an end).
+            const float outside = 0.6f, thickness = 0.3f, height = 3f, below = 1f;
+            var guards = new GameObject("TunnelGuards");
+            guards.transform.SetParent(root.transform, false);
+            int n = data.points.Length;
+            for (int i = 0; i < n; i++)
+            {
+                TrackPoint a = data.points[i], b = data.points[(i + 1) % n];
+                if (!a.tunnel || !b.tunnel)
+                {
+                    continue;
+                }
+                Vector3 from = Pos(a), to = Pos(b);
+                Vector3 along = to - from;
+                Vector3 flat = new Vector3(along.x, 0f, along.z).normalized;
+                Vector3 right = Vector3.Cross(Vector3.up, flat);
+                float half = Mathf.Max(a.width, b.width) * 0.5f + outside + thickness * 0.5f;
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    var wall = new GameObject("Guard");
+                    wall.transform.SetParent(guards.transform, false);
+                    wall.transform.SetPositionAndRotation((from + to) * 0.5f + right * (side * half) + Vector3.up * (height * 0.5f - below),
+                        Quaternion.LookRotation(along.normalized));
+                    BoxCollider box = wall.AddComponent<BoxCollider>();
+                    box.size = new Vector3(thickness, height, along.magnitude + 0.3f);
+                    MarkStatic(wall);
+                }
+            }
         }
 
         private static void AddRaceParts(GameObject root, TrackData data)
