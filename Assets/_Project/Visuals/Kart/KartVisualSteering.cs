@@ -21,8 +21,7 @@ public class KartVisualSteering : MonoBehaviour
     public float frontWheelMaxAngle = 25f;      // front-wheel turn at full lock, in degrees
     public float wheelRadius = 0.21f;           // tyre radius in metres
     public float steerSmoothing = 12f;          // higher = the wheel follows the input faster
-    public Vector3 steeringAxis = new Vector3(0f, 0.56f, -0.83f);   // steering column, pointing at the driver
-    public float maxLean = 10f;                 // driver's upper body lean at full lock, in degrees
+    public float maxLean = 10f;                // driver's upper body lean at full lock, in degrees
     public float maxTwist = 14f;                // shoulders turn with the wheel at full lock (keeps the outer hand on the rim)
     public Transform driverLean;                // "Lean_Driver" on the driver (found by name)
 
@@ -30,6 +29,7 @@ public class KartVisualSteering : MonoBehaviour
     Quaternion leanRest;            // rotation of Lean_Driver relative to the kart when driving straight
     float shownSteer;               // smoothed steering value that is actually shown
     float rollAngle;                // how far the wheels have rolled, in degrees
+    float rollSign = 1f;            // -1 when the wheels' parent faces backwards (the kart FBX arrives turned 180°)
 
     void Awake()
     {
@@ -39,6 +39,9 @@ public class KartVisualSteering : MonoBehaviour
         if (wheelRL == null) wheelRL = FindPart("Wheel_RL");
         if (wheelRR == null) wheelRR = FindPart("Wheel_RR");
         steeringWheelRest = steeringWheel.localRotation;
+        // The wheels roll around their parent's X axis. In Kart_Classic that axis points to the kart's left, so a
+        // positive angle would roll them backwards; compare it with the kart's own right to get the sign.
+        rollSign = Vector3.Dot(wheelFL.parent.right, transform.right) >= 0f ? 1f : -1f;
         if (driverLean == null) driverLean = FindPart("Lean_Driver", optional: true);
         if (driverLean != null) leanRest = Quaternion.Inverse(transform.rotation) * driverLean.rotation;
     }
@@ -63,11 +66,12 @@ public class KartVisualSteering : MonoBehaviour
 
     void Apply()
     {
-        // steering wheel: turn around the steering column
-        steeringWheel.localRotation = Quaternion.AngleAxis(shownSteer * steeringWheelMaxAngle, steeringAxis.normalized) * steeringWheelRest;
+        // steering wheel: turn around its own Y axis, which is the steering column (it points at the driver).
+        // Positive = the top of the rim moves to the right, like turning a real wheel to the right.
+        steeringWheel.localRotation = steeringWheelRest * Quaternion.AngleAxis(shownSteer * steeringWheelMaxAngle, Vector3.up);
 
         // wheels: roll around the axle (local X), front wheels also turn around the kart's up axis (Y)
-        Quaternion roll = Quaternion.Euler(rollAngle, 0f, 0f);
+        Quaternion roll = Quaternion.Euler(rollAngle * rollSign, 0f, 0f);
         Quaternion turn = Quaternion.Euler(0f, shownSteer * frontWheelMaxAngle, 0f);
         wheelFL.localRotation = turn * roll;
         wheelFR.localRotation = turn * roll;
