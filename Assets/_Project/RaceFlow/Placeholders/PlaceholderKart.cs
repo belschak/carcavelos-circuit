@@ -79,6 +79,9 @@ namespace CarcavelosCircuit.RaceFlow
 
         public bool IsGrounded { get; private set; }
 
+        // Steer was added to IKartState for Role 3's steering wheel (2026-11-10); the stand-in kart never reports it.
+        public float Steer => 0f;
+
         public bool InputEnabled { get; set; }
 
         private void Awake()
