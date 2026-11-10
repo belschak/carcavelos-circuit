@@ -48,6 +48,8 @@ PLAN = {
     "sfx_landing_thud": (-15.0, False, False),
     "sfx_respawn": (-15.0, False, False),
     "sfx_shift_pop": (-15.0, False, False),
+    "sfx_wall_bump": (-15.0, False, False),
+    "sfx_takeoff_whoosh": (-17.0, False, False),
     # stingers bus (played at volume 1.0, the level lives in the file)
     "sfx_countdown_beep": (-15.0, False, False),
     "sfx_go_beep": (-13.0, False, False),

@@ -326,6 +326,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             so.FindProperty("boostClip").objectReferenceValue = Clip("el_boost_whoosh");
             so.FindProperty("landClip").objectReferenceValue = Clip("sfx_landing_thud");
             so.FindProperty("shiftClip").objectReferenceValue = Clip("sfx_shift_pop");
+            so.FindProperty("bumpClip").objectReferenceValue = Clip("sfx_wall_bump");          // audit 11
+            so.FindProperty("takeOffClip").objectReferenceValue = Clip("sfx_takeoff_whoosh");
             so.ApplyModifiedPropertiesWithoutUndo();
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(go, KartAudioPrefabPath);

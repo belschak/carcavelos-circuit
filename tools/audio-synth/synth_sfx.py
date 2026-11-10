@@ -287,6 +287,30 @@ def landing_thud():
     return normalise(soft_clip(out, 1.6), -2.0)
 
 
+def wall_bump():
+    # Wall hit (audit 11): a short low knock (a plastic bumper on a padded barrier) and a dull body thump.
+    # Shorter and rounder than the landing thud, so the two never sound alike.
+    seconds = 0.22
+    n = int(seconds * SR)
+    body = tone(90.0, seconds, partials=((1, 1.0), (2.1, 0.25)), glide_to=60.0)
+    body = mul(body, exp_decay(n, 0.15))
+    knock = bandpass(noise(n, 71), 650.0, q=2.5)
+    knock = mul(knock, exp_decay(n, 0.04))
+    out = [b + k * 2.2 for b, k in zip(body, knock)]
+    out = mul(out, envelope(n, 0.001, 0.04))
+    return normalise(soft_clip(out, 1.8), -2.0)
+
+
+def takeoff_whoosh():
+    # Take-off from a ramp (audit 11): air rushing past that rises and fades, lighter than the boost whoosh.
+    seconds = 0.45
+    n = int(seconds * SR)
+    centers = [500.0 + 2600.0 * (i / n) ** 0.7 for i in range(n)]
+    air = bandpass(noise(n, 81), centers, q=1.8)
+    air = mul(air, envelope(n, 0.06, 0.3))
+    return normalise(soft_clip(air, 1.2), -3.0)
+
+
 def engine_loop():
     # Two-stroke kart engine at idle-to-mid revs. Base firing rate 110 Hz; Unity's pitch (0.8 to 1.8)
     # raises it to about 200 Hz at top speed. 2 s = exactly 220 cycles, so harmonics loop without a click.
@@ -563,6 +587,8 @@ SOUNDS = {
     "ui_open": ui_open,
     "ui_close": ui_close,
     "ui_page": ui_page,
+    "sfx_wall_bump": wall_bump,
+    "sfx_takeoff_whoosh": takeoff_whoosh,
 }
 
 

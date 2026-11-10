@@ -269,9 +269,21 @@ Nine 2D AudioSources: five loops that always run (engine low, engine high, tyre 
 - Teleport check at the start of `Update`: if the kart moved more than `teleportDistance` (10 m) in one frame, it was put back (R, fall, retry), so `airSeconds = 0` and `wasGrounded = true`. "Audio may only read `IKartState`, it cannot hear the RaceManager's `Recovered` event. Without this, landing on the respawn point after a fall would play a thud on top of the whoosh."
 - `UpdateDrift`: chirp on the frame a drift starts; squeal fades in/out with `Mathf.MoveTowards`; sparks volume/pitch from `DriftSound` by stage; chime each time the stage goes up, pitched higher per stage, alternating between `stageSource` and `secondStageSource`. "The chime is 1.2 s long and stage 2 comes 0.8 s after stage 1. Changing the pitch of a source that still rings would bend the first chime."
 - `UpdateWind`: volume `0.35 * speed01^2` (only audible when fast), pitch 0.8 to 1.2. "The cheapest way to make speed feel fast."
-- `UpdateBoostAndLanding`: whoosh on the first frame of a boost (`IsBoosting && !wasBoosting`); landing thud after at least 0.3 s in the air.
+- `UpdateBoostAndLanding(dt, bumped)`: boost whoosh when `BoostCue.Update` says so (a new boost, or a chained one, see below); take-off whoosh (`sfx_takeoff_whoosh`) when `TakeOffDetector.Update` says so; landing thud after at least 0.3 s in the air.
+- `UpdateWallBump(dt)` (audit 11): `WallBumpDetector.Update(Speed, IsGrounded, InputEnabled, dt)`; on a bump `sfx_wall_bump`, louder for a harder hit (`VolumeFor`: 0.5 at a 4 m/s drop, 1 at 15 m/s). It returns `bumped`, so a drift that a wall cancelled never sounds like a chained boost.
+- The teleport check also resets the three detectors (a respawn stops the kart on purpose and may drop it onto the road: no thud, no take-off whoosh).
 - How I would explain it: "Two engine recordings, low and high revs. Playing a recording faster raises its pitch like a tape, and between low and high revs one fades into the other. I remember last frame's values (`wasDrifting`, `wasBoosting`, `lastDriftStage`, `wasGrounded`) to detect the moment something starts."
 - Concept: edge detection with a 'was' flag; `Audio` asmdef only references `Shared`.
+
+### 3.15b `Audio/WallBumpDetector.cs` + `TakeOffDetector.cs` + `BoostCue.cs` (plain C#, audit 11)
+
+Three guesses from `IKartState` alone, because the contract has no "hit a wall", "took off" or "boost extended" event. Each is one small class with an `Update(...)` that returns `true` on the one frame a sound should play.
+
+- `WallBumpDetector.Update(speed, grounded, canDrive, dt)`: a bump = on the ground, input on, the speed fell by at least 4 m/s in ONE frame AND that drop divided by the frame time is above 60 m/s2. "The kart brakes at 30 m/s2 at most, so even a 0.2 s hitch on a slow laptop (6 m/s lost while braking) stays silent." Then a 0.4 s cooldown, so grinding along a wall is one thud. Reverse counts by size (`Mathf.Abs`). `Reset()` after a teleport. Point at: the two `if`s before `LastDrop = drop`.
+- `TakeOffDetector.Update(grounded, canDrive, dt)`: counts air time; at 0.15 s it fires once per jump. It is only "armed" after the kart stood on the ground, so spawning above the grid or dropping onto a respawn point is no jump. Works with `IsGrounded`, so Role 1's ramp jump (D4) needs no contract change.
+- `BoostCue.Update(boosting, drifting, stage, grounded, canDrive, bumped)`: whoosh when the boost starts (rising edge), or when a drift with sparks ends while a boost is still running (Role 1's `KartController` then makes the running boost longer, `if (earned > boostSecondsLeft)`, so `IsBoosting` never goes false and the edge never fires). Not in the air, not without input, not on a wall bump: those end the drift without a boost.
+- Likely question: "How do you know the kart hit a wall if Role 1 never tells you?" Answer: "I do not know it, I guess it: a drop that is far faster than any brake can only be a hit. The rule is one line, and `WallBumpDetectorTests` proves a hard brake in a slow frame does not count."
+- Honest limit: the thresholds are first guesses, written without a playtest on the campus track; tune `bumpMinSpeedDrop` / `bumpMinDeceleration` on the `KartAudio` prefab (through the builder) if the thud fires too often or never.
 
 ### 3.16 `Audio/MusicPlayer.cs` (no longer used in Main since P4)
 
@@ -334,7 +346,7 @@ The template `Assets/WebGLTemplates/CarcavelosCircuit/` (`index.html` + `Templat
 
 Pure Python (only standard library: `math`, `random`, `wave`, `array`). Builds sounds from sine partials, filtered noise and envelopes and writes 16-bit mono 44.1 kHz WAV. `SOUNDS` maps file names to functions: countdown beep (440 Hz), GO beep (880 Hz), checkpoint chime, finish jingle, new-record sting, drift pings, `ui_click`, `sfx_respawn`, the `amb_wind_loop`, plus synth versions of boost/engine/drift sounds (`sfx_boost_whoosh`, `loop_engine`, `loop_drift`, `sfx_drift_stage1/2`, kept as CC0 backups; the prefab uses Luc's `kart_*` files and the ElevenLabs boost) and a 32 s music loop (120 BPM, A minor). `loop_crossfade()` fades the extra tail over the start, so loops have no click. Seeded `random.Random(seed)` = the same output every run.
 
-Since P4 it also makes `sfx_hint_warning` (missed checkpoint), `sfx_shift_pop` (gear change) and `music_results_loop` (16 s, 120 BPM, C major).
+Since P4 it also makes `sfx_hint_warning` (missed checkpoint), `sfx_shift_pop` (gear change) and `music_results_loop` (16 s, 120 BPM, C major). Audit 11: `sfx_wall_bump` (low knock + body thump, 0.22 s) and `sfx_takeoff_whoosh` (rising band-passed air, 0.45 s).
 
 Polish pass (2026-11-10): `ui_open` / `ui_close` (`menu_notes`: two quick blips E6 -> A6 and back, 0.15 s) and `ui_page` (band-passed noise sweeping up, a paper swish, 0.16 s) for the menus.
 
@@ -488,6 +500,9 @@ All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceF
 | `PersonalBestTests` (P5 additions) | Best medal only goes up; survives the save string; a save from before medals loads with no medal; a broken medal number keeps the time but no medal. `HudFormatTests` adds `OneDecimal` (0.84 -> "0.8", 1.25 -> "1.3", negative -> "0.0"). |
 | `GhostRecordingTests` | Empty recording has no pose; uneven frames still give samples exactly every 0.05 s; halfway between two samples = halfway position and rotation; clamped before the start and after the end; one sample works at any time; a teleport jumps instead of gliding (also inside one frame); repeated or old times add nothing; stops at 120 s; `Clear` starts over; end velocity; save text round trip (under 1 cm, under 0.2 degrees); yaw across 360 stays a small change; same text on a Portuguese laptop; a 60 s lap stays under 40 KB; other track or checkpoint count = ignored; broken texts = no ghost. |
 | `GhostLoaderTests` | Own ghost wins over the shipped one; fresh browser races the shipped ghost; broken or outdated own ghost falls back to the shipped one; nothing valid (or a shipped ghost from the old layout) = no ghost; save key next to the personal best. |
+| `WallBumpDetectorTests` | Audit 11: a 15 m/s drop in one frame is a bump; the hardest brake in a 0.2 s frame is not; a small scrape, the air, the countdown, the first frame, a reset and a paused frame are not; grinding gives one thud, another after the cooldown; reverse counts; volume 0.5 to 1. |
+| `TakeOffDetectorTests` | One whoosh after 0.15 s of air; a short hop is silent; the next jump fires again; nothing without input; after spawn or a reset it waits until the kart touched the ground. |
+| `BoostCueTests` | One whoosh per new boost (same frame or one frame after the release); a chained boost whooshes again; a sparkless drift, a wall, the air or input off while boosting do not; Reset forgets the running boost. |
 | `MenuSoundTests` | Audit 10: the three volume rows ask for the slider-step sound, the two on/off rows for the switch sound. |
 | `GhostFadeTests` | Hidden close, full far away, half in the middle, never weaker further away; bad settings do not break it; end fade 1 to 0; the strongest fade wins (camera, kart, end). |
 
