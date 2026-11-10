@@ -154,9 +154,27 @@ namespace CarcavelosCircuit.Track.Editor
             if (worst < MinHalfWidth * 2f)
             {
                 Debug.LogWarning("CampusWorldGuardrails: the lane gets as narrow as " + worst.ToString("F1")
-                    + " m at " + worstAt.ToString("F0") + ". That is too tight to drive: the route has to go around"
-                    + " what is standing there (route data: " + DataPath + ").");
+                    + " m at " + worstAt.ToString("F0") + ", blocked by " + WhatIsThere(worstAt)
+                    + ". That is too tight to drive: either that has to go, or the route has to go around it"
+                    + " (route data: " + DataPath + ").");
             }
+        }
+
+        // The names of the things standing on the road at this spot, so the narrow place can be found quickly.
+        private static string WhatIsThere(Vector3 spot)
+        {
+            Vector3 middle = spot + Vector3.up * ((ScanLow + ScanHigh) * 0.5f);
+            Collider[] hits = Physics.OverlapBox(middle, new Vector3(1f, (ScanHigh - ScanLow) * 0.5f, 1f),
+                Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+            List<string> names = new List<string>();
+            for (int i = 0; i < hits.Length && names.Count < 3; i++)
+            {
+                if (!names.Contains(hits[i].name))
+                {
+                    names.Add(hits[i].name);
+                }
+            }
+            return names.Count == 0 ? "something without a collider" : string.Join(", ", names);
         }
 
         // How far the road is free on one side of ring i, at most "wanted" metres. Steps outwards from the middle
