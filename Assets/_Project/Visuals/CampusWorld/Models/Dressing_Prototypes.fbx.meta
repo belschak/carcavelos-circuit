@@ -1,0 +1,286 @@
+fileFormatVersion: 2
+guid: 9abaebbe9420a4ea992c48c2856daf8f
+ModelImporter:
+  serializedVersion: 24300
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_bark
+    second: {fileID: 2100000, guid: 7f53831f45e604f978125ad33430631e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_bark_light
+    second: {fileID: 2100000, guid: 1e80239acc1e248cb85bf516610feee6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_bench_wood
+    second: {fileID: 2100000, guid: 05912dabfe80242ed8a607d1babbc5de, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_bin_body
+    second: {fileID: 2100000, guid: 0867b629cf0554bf5b17543da61a01ce, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_bollard_cap
+    second: {fileID: 2100000, guid: 5c2453c3c73164701aea8e0491ebc22b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_chair_cushion
+    second: {fileID: 2100000, guid: 94ac615b5fe3343f1beeb741830d3109, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_chair_frame
+    second: {fileID: 2100000, guid: c58cc12fa978e47eba5c607a8b2eb36c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_concrete_light
+    second: {fileID: 2100000, guid: 120a30de9dd4b463aa14df1171afe0ba, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_concrete_sand
+    second: {fileID: 2100000, guid: 75f3cddc185974e5eb1b11e435f2ca32, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_gloss_black
+    second: {fileID: 2100000, guid: d5524e2b70b174b80b3ffc359a9e9c09, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_lamp_foot
+    second: {fileID: 2100000, guid: 66c915b8d95c9407c9b72948e4a3f255, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_lamp_light
+    second: {fileID: 2100000, guid: 5bb2bfa8977854e0d9b28ef7ba29ff26, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_lamp_metal
+    second: {fileID: 2100000, guid: f00d3206dc6a445df919028291ece1ea, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_leaf
+    second: {fileID: 2100000, guid: a0f4673442f834c58bf948e8ae278aed, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_leaf_dark
+    second: {fileID: 2100000, guid: 1a75760506f4f478eae847ce2e4a52bb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_olive_bark
+    second: {fileID: 2100000, guid: d3854d7c8bcda4edd87047448c08209d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_olive_bark_b
+    second: {fileID: 2100000, guid: 8fc1fdc057765410aa3b373d521bfd0f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_olive_leaf
+    second: {fileID: 2100000, guid: 1eb4a177c3bfd43c9930ddfeea63171a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_olive_leaf_b
+    second: {fileID: 2100000, guid: 00c57355917cd47f8bb6f93b87fdc3a1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_olive_leaf_light
+    second: {fileID: 2100000, guid: 5949daa92e08e44248d6a029b5de9bc7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_olive_leaf_light_b
+    second: {fileID: 2100000, guid: 2ef21d541f8e14e3a87af0e3929ec729, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_palm_leaf
+    second: {fileID: 2100000, guid: a3a15a9603f5e4f92897cc6cc5cf5fbc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_palm_leaf_b
+    second: {fileID: 2100000, guid: f79490751997d429ea917d6ca187a5ce, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_palm_leaf_dark
+    second: {fileID: 2100000, guid: a9e4946f39157482bab9859dcd3f8e83, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_palm_leaf_dark_b
+    second: {fileID: 2100000, guid: 74057fb0890294aba93d65ab004bccc9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_palm_trunk
+    second: {fileID: 2100000, guid: 5de376aded18d45f28aa7ba5130a9399, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_pampas_leaf
+    second: {fileID: 2100000, guid: 05f10ca8515b4444a828b0171f44a917, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_pampas_plume
+    second: {fileID: 2100000, guid: bf8f38bd39d8d43e6b5ac6f020a1d7aa, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_parasol_canvas
+    second: {fileID: 2100000, guid: 39b4b160e6d4944569a84c7d4a5b9d6a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_pine_bark
+    second: {fileID: 2100000, guid: cacfe346b69bc4c1095173f164ece19e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_pine_needles_b
+    second: {fileID: 2100000, guid: 0ac3528c09b04465d91dd728c76d1ff5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_pine_top_b
+    second: {fileID: 2100000, guid: 764b7675f20164b73be69a9b26bff584, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_shrub_leaf_b
+    second: {fileID: 2100000, guid: 257e440f72f73479d94fd05fb92dfd6b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_shrub_leaf_dark_b
+    second: {fileID: 2100000, guid: 9b6fb66eddb7c427a9c70380410c8bf6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_steel
+    second: {fileID: 2100000, guid: ef1f319485b9b4726a6b67bfdf900cb2, type: 2}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+    searchTexturesGlobally: 0
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 0
+    importCameras: 0
+    importLights: 0
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 0
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
