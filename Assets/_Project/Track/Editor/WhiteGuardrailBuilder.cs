@@ -9,6 +9,8 @@ namespace CarcavelosCircuit.Track.Editor
     // the prefab Track/Prefabs/WhiteGuardrails.prefab, its meshes and one white material.
     // The prefab sits at (0, 0, 0): drag it into a scene at the origin and the fence lines up with the road.
     // No fence inside the tunnel (it ends with a post right at the tunnel mouth) and none at the terrace jump.
+    // Inside the Nova hall the route data does not match the building, so there the fence follows lines drawn by hand
+    // (GuardrailPath objects in the open scene, saved to HallGuardrailLines.json).
     // Rerun after Role 3 exports a new track.json; the prefab keeps its GUID, so scenes keep their reference.
     public static class WhiteGuardrailBuilder
     {
@@ -31,6 +33,21 @@ namespace CarcavelosCircuit.Track.Editor
         private const float WallHeight = 1.0f;      // invisible collision wall behind the fence
         private const float WallThickness = 0.3f;
         private const string JumpZone = "kicker";    // zone name of the terrace jump in track.json
+        private const string HallZone = "atrium";    // zone name of the Nova hall in track.json
+        private const string HandLinesPath = "Assets/_Project/Track/Editor/HallGuardrailLines.json";
+
+        // Hand-drawn lines inside the hall (from GuardrailPath objects), saved as JSON so they survive without the scene.
+        [System.Serializable]
+        private class HandLine
+        {
+            public Vector3[] points;
+        }
+
+        [System.Serializable]
+        private class HandLineList
+        {
+            public HandLine[] lines = new HandLine[0];
+        }
 
         // Same field names as Role 3's track.json, so JsonUtility can read it.
         [System.Serializable]
@@ -48,6 +65,7 @@ namespace CarcavelosCircuit.Track.Editor
         }
 
         private static TrackPoint[] points;
+        private static HandLine[] handLines = new HandLine[0];
 
         [MenuItem("Carcavelos Circuit/Build White Guardrails (Role 2)")]
         public static void Build()
@@ -58,6 +76,7 @@ namespace CarcavelosCircuit.Track.Editor
                 return;
             }
             points = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataPath)).points;
+            handLines = LoadHandLines();
             EnsureFolder(PrefabFolder);
             EnsureFolder(MeshFolder);
 
@@ -66,6 +85,10 @@ namespace CarcavelosCircuit.Track.Editor
             int posts = 0;
             posts += AddSide(fence, wall, 1f);
             posts += AddSide(fence, wall, -1f);
+            for (int i = 0; i < handLines.Length; i++)
+            {
+                posts += AddHandLine(fence, wall, handLines[i].points);
+            }
 
             Mesh fenceMesh = SaveMesh(fence.ToMesh("WhiteGuardrails_Fence"), MeshFolder + "/WhiteGuardrails_Fence.asset");
             Mesh wallMesh = SaveMesh(wall.ToMesh("WhiteGuardrails_Wall"), MeshFolder + "/WhiteGuardrails_Wall.asset");
@@ -78,7 +101,39 @@ namespace CarcavelosCircuit.Track.Editor
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             Object.DestroyImmediate(root);
             AssetDatabase.SaveAssets();
-            Debug.Log("WhiteGuardrailBuilder: saved " + PrefabPath + " with " + posts + " posts. Drag it into the scene at position 0, 0, 0.");
+            Debug.Log("WhiteGuardrailBuilder: saved " + PrefabPath + " with " + posts + " posts and " + handLines.Length
+                + " hand-drawn hall lines. Drag it into the scene at position 0, 0, 0.");
+        }
+
+        // If the open scene has GuardrailPath objects, their points become the hall lines and are saved to the JSON.
+        // Otherwise the lines saved last time are used, so the fence also builds without the test scene.
+        private static HandLine[] LoadHandLines()
+        {
+            GuardrailPath[] paths = Object.FindObjectsByType<GuardrailPath>(FindObjectsSortMode.InstanceID);
+            if (paths.Length > 0)
+            {
+                HandLineList list = new HandLineList();
+                list.lines = new HandLine[paths.Length];
+                for (int p = 0; p < paths.Length; p++)
+                {
+                    Transform t = paths[p].transform;
+                    list.lines[p] = new HandLine();
+                    list.lines[p].points = new Vector3[t.childCount];
+                    for (int c = 0; c < t.childCount; c++)
+                    {
+                        list.lines[p].points[c] = t.GetChild(c).position;
+                    }
+                }
+                File.WriteAllText(HandLinesPath, JsonUtility.ToJson(list, true));
+                AssetDatabase.ImportAsset(HandLinesPath);
+                Debug.Log("WhiteGuardrailBuilder: saved " + paths.Length + " hall lines from the open scene to " + HandLinesPath);
+                return list.lines;
+            }
+            if (File.Exists(HandLinesPath))
+            {
+                return JsonUtility.FromJson<HandLineList>(File.ReadAllText(HandLinesPath)).lines;
+            }
+            return new HandLine[0];
         }
 
         // One side of the road (side = +1 right, -1 left, seen in driving direction). Returns the number of posts.
@@ -109,32 +164,53 @@ namespace CarcavelosCircuit.Track.Editor
                 bool runEnds = !HasFence(j, side);
 
                 AddBoards(fence, a, b);
-                AddWall(wall, a, b, side, i);
+                AddWall(wall, a, b, Right(i) * (side * WallThickness * 0.5f)); // wall just outside the fence line
+                posts += AddPosts(fence, a, b, runStarts, runEnds, ref sinceLastPost);
+            }
+            return posts;
+        }
 
-                // Posts: one at the start of every run, then every PostSpacing metres, and one at the end of every run.
-                float length = Vector3.Distance(a, b);
-                if (runStarts)
+        // One hand-drawn line from inside the hall: same boards and posts, a post at both ends.
+        private static int AddHandLine(NovaMesh fence, NovaMesh wall, Vector3[] line)
+        {
+            int posts = 0;
+            float sinceLastPost = 0f;
+            for (int i = 0; i + 1 < line.Length; i++)
+            {
+                AddBoards(fence, line[i], line[i + 1]);
+                AddWall(wall, line[i], line[i + 1], Vector3.zero); // drawn line = the middle of the wall
+                posts += AddPosts(fence, line[i], line[i + 1], i == 0, i + 2 == line.Length, ref sinceLastPost);
+            }
+            return posts;
+        }
+
+        // Posts from a to b: one at the start of a run, then every PostSpacing metres, and one at the end of a run.
+        // sinceLastPost carries the distance to the last post over to the next piece. Returns the number of posts.
+        private static int AddPosts(NovaMesh fence, Vector3 a, Vector3 b, bool runStarts, bool runEnds, ref float sinceLastPost)
+        {
+            int posts = 0;
+            float length = Vector3.Distance(a, b);
+            if (runStarts)
+            {
+                AddPost(fence, a);
+                posts++;
+                sinceLastPost = 0f;
+            }
+            float next = PostSpacing - sinceLastPost;
+            while (next < length)
+            {
+                if (!runEnds || length - next > PostSpacing * 0.4f) // no two posts squeezed together at the run end
                 {
-                    AddPost(fence, a);
+                    AddPost(fence, Vector3.Lerp(a, b, next / length));
                     posts++;
-                    sinceLastPost = 0f;
                 }
-                float next = PostSpacing - sinceLastPost;
-                while (next < length)
-                {
-                    if (!runEnds || length - next > PostSpacing * 0.4f) // no two posts squeezed together at the run end
-                    {
-                        AddPost(fence, Vector3.Lerp(a, b, next / length));
-                        posts++;
-                    }
-                    next += PostSpacing;
-                }
-                sinceLastPost = length - (next - PostSpacing);
-                if (runEnds)
-                {
-                    AddPost(fence, b);
-                    posts++;
-                }
+                next += PostSpacing;
+            }
+            sinceLastPost = length - (next - PostSpacing);
+            if (runEnds)
+            {
+                AddPost(fence, b);
+                posts++;
             }
             return posts;
         }
@@ -151,6 +227,10 @@ namespace CarcavelosCircuit.Track.Editor
             if (points[i].zone == JumpZone || points[j].zone == JumpZone)
             {
                 return false; // the kart flies off the terrace here; a fence would hang in the air
+            }
+            if (handLines.Length > 0 && (points[i].zone == HallZone || points[j].zone == HallZone))
+            {
+                return false; // inside the hall the hand-drawn lines take over
             }
             return !OnOtherRoad(i, side) && !OnOtherRoad(j, side);
         }
@@ -201,15 +281,14 @@ namespace CarcavelosCircuit.Track.Editor
             fence.Box(centre, new Vector3(PostSize, PostHeight - bottom, PostSize), Quaternion.identity, 1f);
         }
 
-        // Invisible collision wall just outside the fence line (only used by the MeshCollider, never drawn).
-        private static void AddWall(NovaMesh wall, Vector3 a, Vector3 b, float side, int i)
+        // Invisible collision wall along the fence, moved sideways by "outward" (only used by the MeshCollider, never drawn).
+        private static void AddWall(NovaMesh wall, Vector3 a, Vector3 b, Vector3 outward)
         {
             Vector3 dir = b - a;
             if (dir.sqrMagnitude < 0.0001f)
             {
                 return;
             }
-            Vector3 outward = Right(i) * (side * WallThickness * 0.5f);
             Vector3 mid = (a + b) * 0.5f + outward + Vector3.up * (WallHeight * 0.5f - 0.1f);
             wall.Box(mid, new Vector3(WallThickness, WallHeight, dir.magnitude + 0.1f), Quaternion.LookRotation(dir), 1f);
         }
