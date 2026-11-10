@@ -30,6 +30,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | T4 | `Checkpoint`, `SpawnPoint`, respawn points, `TrackInfo` | Tue 10 | in review (Noah, PR #48) |
 | T5 | `RaceRules` (plain C#) + Edit Mode tests: order, wrong way, duplicate finish, missed checkpoint | Wed 11 | in review (Noah, PR #47) |
 | T6 | Lap time 35-60 s check with the real kart; adjust route | Fri 13 | todo |
+| T7 | White guardrails along the road on `Track_NovaCampus` (like the balustrades in the Nova building), built by `NovaCampusBuilder` | Fri 13 | claimed (Noah, 2026-11-10) |
 
 ## Role 3: Kart, visuals + web release (Luc)
 | ID | Task | Due | Status |
