@@ -9,7 +9,7 @@ namespace CarcavelosCircuit.RaceFlow
         public const int RollIconSteps = 14; // how many times the icon changes during one roll
 
         public ItemKind Held { get; private set; } = ItemKind.None; // the item in the slot (also while rolling)
-        public int Charges { get; private set; }                    // uses left (Triple Bica starts with 3)
+        public int Charges { get; private set; }                    // uses left (every item has 1 right now)
         public bool IsRolling { get; private set; }
 
         private float rollSeconds;
@@ -53,20 +53,21 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        // During the roll the icons go round Bica -> Triple Bica -> Onda -> Bica ...
+        // During the roll the icons go round Espresso -> Seagull Delivery -> Carcavelos Wave -> Dean's List -> ...
         public static ItemKind IconForStep(int step)
         {
-            int index = step % 3;
-            if (index == 0) return ItemKind.Bica;
-            if (index == 1) return ItemKind.TripleBica;
-            return ItemKind.Onda;
+            int index = step % 4;
+            if (index == 0) return ItemKind.Espresso;
+            if (index == 1) return ItemKind.SeagullDelivery;
+            if (index == 2) return ItemKind.CarcavelosWave;
+            return ItemKind.DeansList;
         }
 
-        // How many times an item can be used before the slot is empty again.
+        // How many times an item can be used before the slot is empty again. Every item is one use right now
+        // (the Seagull's three rings come from one use); an item with more uses would return a bigger number here.
         public static int ChargesFor(ItemKind kind)
         {
-            if (kind == ItemKind.None) return 0;
-            return kind == ItemKind.TripleBica ? 3 : 1;
+            return kind == ItemKind.None ? 0 : 1;
         }
 
         // A box was hit. Starts the roll towards "result". False (and nothing changes) if the slot is busy.

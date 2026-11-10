@@ -20,11 +20,23 @@ MonoBehaviour:
   hoverHeight: 1.1
   respawnSeconds: 3
   rollSeconds: 1.1
-  bicaSeconds: 1
-  bicaMultiplier: 1.4
-  tripleBicaSeconds: 0.9
-  tripleBicaMultiplier: 1.4
-  ondaSeconds: 2.5
-  ondaMultiplier: 1.6
+  espressoSeconds: 2
+  espressoMultiplier: 1.4
+  waveSeconds: 3
+  waveMultiplier: 1.6
+  ringCount: 3
+  ringFirstMetres: 18
+  ringSpacingMetres: 14
+  ringRadius: 1.7
+  ringLifeSeconds: 9
+  ringBoostSeconds: 0.9
+  ringBoostMultiplier: 1.5
+  deansBoostSeconds: 1.5
+  deansBoostMultiplier: 1.5
+  shieldSeconds: 8
+  shieldRefundSeconds: 1.2
+  shieldRefundMultiplier: 1.5
+  bumpMinDrop: 4
+  bumpDropShare: 0.3
   levelSeconds: 0.5
   farBehindSeconds: 2

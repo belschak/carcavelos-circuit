@@ -100,9 +100,13 @@ namespace CarcavelosCircuit.Tests.PlayMode
             int chargesBefore = items.Slot.Charges;
 
             Assert.IsTrue(items.UseItem(), "E uses a ready item");
-            int chargesLeft = items.Slot.Charges; // 0 = slot empty again (Bica, Onda), 2 = Triple Bica
+            int chargesLeft = items.Slot.Charges; // 0 = slot empty again (every item is one use)
             Assert.AreEqual(chargesBefore - 1, chargesLeft, held + " lost exactly one charge");
-            if (race.KartTransform.GetComponent<IKartBoost>() != null)
+            if (held == ItemKind.SeagullDelivery)
+            {
+                Assert.Greater(items.RingsWaiting, 0, "the Seagull dropped rings (its boost comes from the rings)");
+            }
+            else if (race.KartTransform.GetComponent<IKartBoost>() != null)
             {
                 yield return new WaitForFixedUpdate();
                 Assert.IsTrue(race.Kart.IsBoosting, "the item boost reached the kart through IKartBoost");
@@ -156,6 +160,69 @@ namespace CarcavelosCircuit.Tests.PlayMode
             Assert.IsTrue(items.Slot.IsEmpty);
             Assert.IsFalse(items.UseItem());
             yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator EveryItem_CanBeUsed()
+        {
+            yield return StartAndWaitForGo();
+            ItemKind[] all = { ItemKind.Espresso, ItemKind.SeagullDelivery, ItemKind.CarcavelosWave, ItemKind.DeansList };
+            for (int i = 0; i < all.Length; i++)
+            {
+                Assert.IsTrue(items.Slot.TryStartRoll(all[i], 0f), all[i] + " goes into the empty slot");
+                Assert.IsTrue(items.UseItem(), all[i] + " can be used");
+                Assert.IsTrue(items.Slot.IsEmpty, all[i] + " empties the slot");
+                yield return null;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator SeagullDelivery_DropsRings_AndARingBoostsTheKart()
+        {
+            yield return StartAndWaitForGo();
+            items.Slot.TryStartRoll(ItemKind.SeagullDelivery, 0f);
+            Assert.IsTrue(items.UseItem());
+            Debug.Log("ItemBoxPlayTests: the gull dropped " + items.RingCount + " rings on " + race.TrackName);
+            Assert.Greater(items.RingCount, 0, "at least one ring found road ahead of the kart");
+            Assert.AreEqual(items.RingCount, items.RingsWaiting, "no ring is collected before the kart gets there");
+
+            yield return new WaitForSeconds(0.8f); // the rings pop in one after the other
+            SeagullRing ring = items.RingAt(0);
+            Quaternion rotation = race.KartTransform.rotation;
+            race.Kart.ResetTo(ring.transform.position + Vector3.up * 50f, rotation);
+            yield return WaitPhysics();
+            race.Kart.ResetTo(ring.transform.position, rotation);
+            yield return WaitPhysics();
+            Assert.IsTrue(ring == null || ring.IsCollected, "the kart drove through the ring");
+            Assert.AreEqual(items.RingCount - 1, items.RingsWaiting, "one ring less on the road");
+            if (race.KartTransform.GetComponent<IKartBoost>() != null)
+            {
+                Assert.IsTrue(race.Kart.IsBoosting, "the ring boost reached the kart through IKartBoost");
+            }
+
+            race.Retry();
+            yield return null;
+            Assert.AreEqual(0, items.RingsWaiting, "retry takes every ring away");
+        }
+
+        [UnityTest]
+        public IEnumerator DeansList_ShieldIsOn_AndRetryClearsIt()
+        {
+            yield return StartAndWaitForGo();
+            items.Slot.TryStartRoll(ItemKind.DeansList, 0f);
+            Assert.IsTrue(items.UseItem());
+            Assert.IsTrue(items.ShieldActive, "the shield is on after Dean's List");
+            yield return new WaitForSeconds(0.5f);
+            Assert.IsTrue(items.ShieldActive, "driving on without a bump keeps the shield");
+
+            race.Recover(); // speed to 0 on purpose: must not count as a bump
+            yield return null;
+            yield return null;
+            Assert.IsTrue(items.ShieldActive, "a recover is not a bump");
+
+            race.Retry();
+            yield return null;
+            Assert.IsFalse(items.ShieldActive, "retry switches the shield off");
         }
 
         private IEnumerator StartAndWaitForGo()

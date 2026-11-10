@@ -5,10 +5,12 @@ namespace CarcavelosCircuit.RaceFlow
 {
     // The item slot on the HUD (task R7). On the "Items" object in Main.unity, with its own UIDocument on the same
     // PanelSettings as the race HUD, drawn just below it (sorting order -1) so the pause card and menus cover it.
-    // Built in code (no UXML): a rounded tile under the checkpoint panel with the item icon (ItemIcon), an "x3"
-    // badge for the Triple Bica and an "E" key cap. While the slot rolls the icons spin; when the item is ready the
-    // tile pops and its border flashes sand; while you hold an item it breathes gently. On use a "BICA!" or "ONDA!"
-    // callout pops under the slot, and the Onda also sends a blue wave across the screen.
+    // Built in code (no UXML): a rounded tile under the checkpoint panel with the item icon (ItemIcon), a charge
+    // badge (only for an item with more than one use; none has that right now) and an "E" key cap. While the slot
+    // rolls the icons spin; when the item is ready the tile pops and its border flashes sand; while you hold an item
+    // it breathes gently. On use the item's name pops under the slot ("ESPRESSO!", "CARCAVELOS WAVE!" ...).
+    // Extras: the Wave sends a blue wave across the screen; the Seagull's rings count up ("RING 2/3", "PERFECT
+    // DELIVERY!"); while the Dean's List shield is on the screen edge glows gold, and a bump shows "BLOCKED!".
     // Like RaceHud everything animates on real time (Time.unscaledTime), so the finish slow motion never slows it.
     [RequireComponent(typeof(UIDocument))]
     public class ItemSlotHud : MonoBehaviour
@@ -17,6 +19,7 @@ namespace CarcavelosCircuit.RaceFlow
         private const float PopSeconds = 0.35f;
         private const float CalloutSeconds = 0.9f;
         private const float WaveSeconds = 0.6f;
+        private static readonly Color Gold = new Color(1f, 0.78f, 0.2f, 1f); // the Dean's List coins (ItemSystem)
 
         [SerializeField]
         private RaceManager raceManager;
@@ -30,10 +33,11 @@ namespace CarcavelosCircuit.RaceFlow
         private Label badge;
         private Label callout;
         private VisualElement wave;
+        private VisualElement goldEdge;  // Dean's List shield: a gold frame round the screen
 
         private float readyAt = -10f;    // real time the last item landed (pop + sand flash)
-        private float usedAt = -10f;     // real time the last item was used (callout)
-        private float waveAt = -10f;     // real time the last Onda was used (screen wave)
+        private float usedAt = -10f;     // real time the last callout started
+        private float waveAt = -10f;     // real time the last Carcavelos Wave was used (screen wave)
         private bool shown;
 
         private void OnEnable()
@@ -43,6 +47,8 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 items.ItemReady += OnItemReady;
                 items.ItemUsed += OnItemUsed;
+                items.RingCollected += OnRingCollected;
+                items.ShieldBlocked += OnShieldBlocked;
             }
         }
 
@@ -52,6 +58,8 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 items.ItemReady -= OnItemReady;
                 items.ItemUsed -= OnItemUsed;
+                items.RingCollected -= OnRingCollected;
+                items.ShieldBlocked -= OnShieldBlocked;
             }
         }
 
@@ -62,13 +70,48 @@ namespace CarcavelosCircuit.RaceFlow
 
         private void OnItemUsed(ItemKind kind)
         {
-            usedAt = Time.unscaledTime;
-            callout.text = kind == ItemKind.Onda ? "ONDA!" : "BICA!";
-            callout.style.color = kind == ItemKind.Onda ? HudColors.Blue : HudColors.Orange;
-            if (kind == ItemKind.Onda)
+            if (kind == ItemKind.Espresso)
             {
+                ShowCallout("ESPRESSO!", HudColors.Orange);
+            }
+            else if (kind == ItemKind.SeagullDelivery)
+            {
+                ShowCallout("SEAGULL DELIVERY!", HudColors.White);
+            }
+            else if (kind == ItemKind.CarcavelosWave)
+            {
+                ShowCallout("CARCAVELOS WAVE!", HudColors.Blue);
                 waveAt = Time.unscaledTime;
             }
+            else if (kind == ItemKind.DeansList)
+            {
+                ShowCallout("DEAN'S LIST!", Gold);
+            }
+        }
+
+        // A ring of the Seagull Delivery: count up, and praise a clean sweep.
+        private void OnRingCollected(int collected, int dropped)
+        {
+            if (collected >= dropped && dropped > 1)
+            {
+                ShowCallout("PERFECT DELIVERY!", HudColors.Sand);
+            }
+            else
+            {
+                ShowCallout("RING " + collected + "/" + dropped, HudColors.White);
+            }
+        }
+
+        private void OnShieldBlocked()
+        {
+            ShowCallout("BLOCKED!", Gold);
+        }
+
+        private void ShowCallout(string text, Color colour)
+        {
+            usedAt = Time.unscaledTime;
+            callout.text = text;
+            callout.style.color = colour;
         }
 
         private void Update()
@@ -91,6 +134,23 @@ namespace CarcavelosCircuit.RaceFlow
             UpdateSlot(itemSlot, now);
             UpdateCallout(now);
             UpdateWave(now);
+            UpdateGoldEdge(now);
+        }
+
+        // While the Dean's List shield is on: a gold frame that breathes, and blinks in the last two seconds.
+        private void UpdateGoldEdge(float now)
+        {
+            if (!items.ShieldActive || !shown)
+            {
+                goldEdge.style.opacity = 0f;
+                return;
+            }
+            float glow = 0.45f + 0.25f * Mathf.Sin(now * 5f);
+            if (items.ShieldSecondsLeft < 2f && Mathf.Repeat(now * 6f, 1f) < 0.35f)
+            {
+                glow = 0.1f;
+            }
+            goldEdge.style.opacity = glow;
         }
 
         private void UpdateSlot(ItemSlot itemSlot, float now)
@@ -98,7 +158,7 @@ namespace CarcavelosCircuit.RaceFlow
             icon.Kind = itemSlot.ShownIcon;
             icon.SteamPhase = Mathf.Repeat(now * 0.8f, 1f);
 
-            // Charge badge only for a ready Triple Bica.
+            // Charge badge only for a ready item with more than one use left.
             bool showBadge = itemSlot.IsReady && itemSlot.Charges > 1;
             badge.style.opacity = showBadge ? 1f : 0f;
             badge.text = "x" + itemSlot.Charges;
@@ -148,7 +208,7 @@ namespace CarcavelosCircuit.RaceFlow
             callout.style.opacity = p < 0.7f ? 1f : 1f - (p - 0.7f) / 0.3f;
         }
 
-        // The Onda wave: a blue band rises from the bottom of the screen and fades out over the top.
+        // The Carcavelos Wave: a blue band rises from the bottom of the screen and fades out over the top.
         private void UpdateWave(float now)
         {
             float since = now - waveAt;
@@ -179,7 +239,7 @@ namespace CarcavelosCircuit.RaceFlow
             root.style.overflow = Overflow.Hidden;
             documentRoot.Add(root);
 
-            // Onda wave (behind the slot): full width, starts below the screen.
+            // Carcavelos Wave screen wave (behind the slot): full width, starts below the screen.
             wave = new VisualElement();
             wave.name = "item-wave";
             wave.pickingMode = PickingMode.Ignore;
@@ -195,6 +255,23 @@ namespace CarcavelosCircuit.RaceFlow
             wave.style.borderTopColor = HudColors.White;
             wave.style.opacity = 0f;
             root.Add(wave);
+
+            // Dean's List shield frame: a gold border round the whole screen, see-through in the middle.
+            goldEdge = new VisualElement();
+            goldEdge.name = "item-gold-edge";
+            goldEdge.pickingMode = PickingMode.Ignore;
+            goldEdge.style.position = Position.Absolute;
+            goldEdge.style.left = 0f;
+            goldEdge.style.right = 0f;
+            goldEdge.style.top = 0f;
+            goldEdge.style.bottom = 0f;
+            SetBorderWidth(goldEdge, 12f);
+            goldEdge.style.borderTopColor = Gold;
+            goldEdge.style.borderBottomColor = Gold;
+            goldEdge.style.borderLeftColor = Gold;
+            goldEdge.style.borderRightColor = Gold;
+            goldEdge.style.opacity = 0f;
+            root.Add(goldEdge);
 
             // Same safe frame as RaceHud.uss (.hud-safe): max 1600 wide, 26 px from the top, 34 px from the side.
             VisualElement safe = new VisualElement();
@@ -261,7 +338,7 @@ namespace CarcavelosCircuit.RaceFlow
             SetRadius(key, 6f);
             slot.Add(key);
 
-            callout = MakeLabel("BICA!", 34f, HudColors.Orange);
+            callout = MakeLabel("ESPRESSO!", 34f, HudColors.Orange);
             callout.style.marginTop = 16f;
             callout.style.letterSpacing = 2f;
             callout.style.opacity = 0f;
