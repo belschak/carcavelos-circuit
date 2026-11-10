@@ -23,6 +23,7 @@ namespace CarcavelosCircuit.Visuals
         public bool IsBoosting { get; private set; }
         public bool IsGrounded { get { return true; } }
         public bool InputEnabled { get; set; }
+        public float Steer { get { return 0f; } }   // preview-only: IKartState gained Steer in #55
 
         private float clock;
 
