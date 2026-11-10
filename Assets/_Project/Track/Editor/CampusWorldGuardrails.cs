@@ -30,11 +30,19 @@ namespace CarcavelosCircuit.Track.Editor
         private const float BandTop = 0.85f;
         private const float BandThickness = 0.06f;
 
+        // Inside the building the route data says 8 m, but the hall is much wider and the lane should use it.
+        // TUNING: AtriumWidth is the distance between the two rails inside the hall, in metres. AtriumShift
+        // moves that lane sideways (plus = to the right seen in driving direction) when it is not centred.
+        private const string AtriumZone = "atrium";
+        private const float AtriumWidth = 16f;
+        private const float AtriumShift = 0f;
+
         // Same field names as Role 3's track.json, so JsonUtility can read it.
         [System.Serializable]
         private class TrackPoint
         {
             public float x, y, z, width;
+            public string zone;
             public bool tunnel;
         }
 
@@ -72,13 +80,26 @@ namespace CarcavelosCircuit.Track.Editor
             int count = data.points.Length;
             Vector3[] centre = new Vector3[count];
             float[] width = new float[count];
+            float[] shift = new float[count];
             bool[] gap = new bool[count];
+            int inAtrium = 0;
             for (int i = 0; i < count; i++)
             {
                 TrackPoint p = data.points[i];
                 centre[i] = new Vector3(p.x, p.y, p.z);
-                width[i] = p.width;
                 gap[i] = p.tunnel; // only the tunnel keeps no rail: it has walls of its own
+                if (p.zone == AtriumZone)
+                {
+                    // The hall is wide: use the tuning values above instead of the 8 m in the route data.
+                    width[i] = AtriumWidth;
+                    shift[i] = AtriumShift;
+                    inAtrium++;
+                }
+                else
+                {
+                    width[i] = p.width;
+                    shift[i] = 0f;
+                }
             }
 
             // Exactly one kind of guardrail on the whole map: every other railing along the track goes off first.
@@ -99,14 +120,14 @@ namespace CarcavelosCircuit.Track.Editor
                     {
                         continue;
                     }
-                    Vector3 a = RailPoint(centre, width, i, side);
+                    Vector3 a = RailPoint(centre, width, shift, i, side);
                     AddPost(batch, white, a, centre, i);
                     placed++;
                     if (gap[j])
                     {
                         continue;
                     }
-                    AddBand(batch, lilac, a, RailPoint(centre, width, j, side));
+                    AddBand(batch, lilac, a, RailPoint(centre, width, shift, j, side));
                 }
             }
             batch.Flush(null, MeshFolder); // Flush makes its own root object called "Guardrails"
@@ -114,14 +135,15 @@ namespace CarcavelosCircuit.Track.Editor
             AssetDatabase.SaveAssets();
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log("CampusWorldGuardrails: " + placed + " posts with band in " + scene.name + ", "
-                + switchedOff + " other railings switched off. Save the scene (Cmd+S) to keep this.");
+                + switchedOff + " other railings switched off, " + inAtrium + " route points inside the hall widened to "
+                + AtriumWidth.ToString("F0") + " m. Save the scene (Cmd+S) to keep this.");
         }
 
         // The point on the road edge (pushed slightly outwards) at ring i.
-        private static Vector3 RailPoint(Vector3[] centre, float[] width, int i, float side)
+        private static Vector3 RailPoint(Vector3[] centre, float[] width, float[] shift, int i, float side)
         {
             Vector3 right = NovaRouteMath.Right(centre, i);
-            return centre[i] + right * (width[i] * 0.5f * side + OutsideOffset * side);
+            return centre[i] + right * (width[i] * 0.5f * side + OutsideOffset * side + shift[i]);
         }
 
         // One square white post, turned so its flat sides follow the road.
