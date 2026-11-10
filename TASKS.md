@@ -15,8 +15,8 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | ID | Task | Due | Status |
 |---|---|---|---|
 | D1 | Placeholder kart prefab (box + 4 cylinders, or Kenney CC0 kart) with a sphere-based `KartController` implementing `IKartState` (approach in `docs/interfaces.md`): accelerate, brake/reverse, steer on `Driving_TestBed` | Mon 9 | done (Alessandro, 2026-11-10) |
-| D2 | Chase camera (Cinemachine) that follows smoothly | Mon 9 | in review (Alessandro, 2026-11-09) |
-| D3 | Drift that charges a boost; release when charged = short boost; early release = nothing | Wed 11 | todo |
+| D2 | Chase camera (Cinemachine) that follows smoothly | Mon 9 | done (Alessandro, 2026-11-10) |
+| D3 | Drift that charges a boost; release when charged = short boost; early release = nothing | Wed 11 | in review (Alessandro, 2026-11-09) |
 | D4 | Ramp jump: airborne state, lands upright, no flipping; `IsGrounded` | Wed 11 | todo |
 | D5 | `ResetTo(position, rotation)` for recovery and retry (zero velocity, clear drift/boost) | Wed 11 | todo |
 | D6 | All tuning values in `KartTuning` ScriptableObject; tune on the grey campus track | Fri 13 | todo |
