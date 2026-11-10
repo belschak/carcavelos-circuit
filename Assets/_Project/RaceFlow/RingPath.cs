@@ -3,9 +3,9 @@ using UnityEngine;
 namespace CarcavelosCircuit.RaceFlow
 {
     // Where the Seagull Delivery drops its lifebuoy rings (task R7). Plain C#, Edit Mode tested.
-    // The road ahead is not a straight line from the kart's nose, so the rings follow a path:
-    // kart -> next checkpoint -> the checkpoint after it (checkpoints sit on the road, in driving order).
-    // A ring at distance d stands d metres along that path and faces along it, so the kart drives through it.
+    // The rings stand along a path of corner points (ItemSystem.RoadAhead: right now a straight line from the
+    // kart's nose; a path through checkpoints cut the bends in the web build). A ring at distance d stands
+    // d metres along that path and faces along it, so the kart drives through it.
     public static class RingPath
     {
         // path = the corner points, distances = metres from path[0], one per ring (growing).

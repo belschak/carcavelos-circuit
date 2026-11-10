@@ -314,7 +314,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        // Seagull Delivery: the rings stand on the road ahead, along kart -> next checkpoint -> the one after.
+        // Seagull Delivery: the rings stand in a line ahead of the kart (RoadAhead, RingPath).
         private void DropRings()
         {
             ClearRings();
@@ -340,18 +340,19 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        // The corner points of the road ahead: the kart, the next checkpoint and the one after it.
+        // Where the rings go: straight ahead of the kart's nose, where the player is looking.
+        // (First version went kart -> next checkpoint -> the one after; in the web build that line cut the bend
+        // and put the rings on the grass, 2026-11-10. A ring that would stand in a wall is skipped.)
         private Vector3[] RoadAhead()
         {
             Vector3 kart = raceManager.KartTransform.position;
-            Vector3[] points = raceManager.TrackPoints;
-            if (points.Length < 2)
+            Vector3 forward = raceManager.KartTransform.forward;
+            forward.y = 0f;
+            if (forward.sqrMagnitude < 0.0001f)
             {
-                return new Vector3[] { kart, kart + raceManager.KartTransform.forward * 100f };
+                forward = Vector3.forward;
             }
-            int next = (raceManager.CheckpointsPassed + 1) % points.Length;
-            int after = (next + 1) % points.Length;
-            return new Vector3[] { kart, points[next], points[after] };
+            return new Vector3[] { kart, kart + forward.normalized * 100f };
         }
 
         // Like a box: only where there is ground below and no wall inside the ring.
