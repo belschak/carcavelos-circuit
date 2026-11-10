@@ -1,6 +1,6 @@
 # Role 4 walkthrough: race flow, HUD, sound (David's cheat sheet)
 
-For the live code walkthrough at the final presentation. Every file below is described as it really is in the repo on 2026-11-08. Line numbers are approximate pointers (`File.cs:NN`), so you can jump there while presenting.
+For the live code walkthrough at the final presentation. Every file below is described as it really is in the repo on 2026-11-10 (polish pass: audit items 6, 9-13, 18-21 and Luc's Q10). Line numbers are approximate pointers (`File.cs:NN`), so you can jump there while presenting.
 
 ---
 
@@ -480,6 +480,59 @@ When the kart crosses the line, the game slows down for a moment, the lap time g
 - `ConfettiBurst` (a `VisualElement`, last child of the results screen): draws each piece as a turned rectangle with `painter2D` in white, blue, orange, sand. It ignores the mouse and only asks for a redraw while pieces fly.
 - How I would explain it: "One class knows the timing, the RaceManager bends time, the HUD waits a beat and runs on real time, so the clock on screen is exact while the world slows down."
 
+### 3.31 Small helpers that were missing from this sheet (audit 6)
+
+Eleven Role 4 files the audit found unmentioned. Each: what it does, the function to point at, one likely question with an answer.
+
+**`RaceFlow/MedalScaling.cs`** (static, plain C#). Makes the four medal times fit any track: `RaceSettings` holds them for a reference lap of `medalReferenceLapMetres` (158.1 m, the placeholder loop), and a longer track gets proportionally longer times.
+- Point at: `LoopLength(points)` (straight lines checkpoint to checkpoint in driving order, the last one back to the start; under 2 points = 0) and `ScaleTimes(times, referenceLength, trackLength)` (times x `trackLength / referenceLength`, rounded to a tenth; if rounding would make two tiers equal on a tiny track it keeps the exact values; a missing length keeps the reference times). Called once in `RaceManager.SetUp`.
+- Question: "Why measure straight lines, not the real driving line?" Answer: "It is shorter than the real line, but measured the same way on every track, and a ratio is all the scaling needs." (Honest: the reference times still come from the placeholder loop, so the final medal times must be re-tuned on the real track.)
+
+**`RaceFlow/WrongWayDetector.cs`** (plain C#). Decides when the HUD shows WRONG WAY.
+- Point at: `Update(kartForward, signedSpeed, toNextCheckpoint, dt)`: the dot product of the moving direction (forward, or backwards when reversing) and the direction to the next checkpoint, both flat (y = 0). Below -0.25 (more than about 105 degrees away) for 1 s = wrong way; above 0.15 for 0.4 s = right way again; in between nothing changes. Under 2 m/s it keeps its last answer. `RaceHud.UpdateCallouts` calls it; `Reset()` on GO, Retry and Recover.
+- Question: "Why two thresholds and two timers?" Answer: "Hysteresis: with one threshold the warning would flicker on and off in every tight corner. The gap between -0.25 and 0.15 is a dead band where nothing changes."
+
+**`RaceFlow/StuckDetector.cs`** (plain C#). Decides when the HUD shows "STUCK? R RECOVER".
+- Point at: `Update(speed, dt)`: slower than 1.5 m/s for 3 s = stuck, but only once "armed" (the kart was faster than 3 m/s once since GO or the last recover), so a player waiting at the start is never told to press R.
+- Question: "Why the arming?" Answer: "Without it the hint would pop up 3 s after GO for anyone who has not pressed W yet."
+
+**`RaceFlow/FlyoverPath.cs`** (static, plain C#). The maths of the start-screen map fly-over (`MapFlyover` on the Main Camera moves the camera with it, then hands over to `ChaseCameraRig`).
+- Point at: `Measure(points, out centre, out radius)` (box around the checkpoints, the farthest one gives the radius), `OrbitPosition(centre, radius, angle, minHeight)` (a circle above the track, high enough to see all of it), `Ease(t)` (smoothstep `t*t*(3-2t)`), `Glide(from, to, t, hump)` (lerp with a sine hump so the camera does not skim through buildings on the way down to the kart).
+- Question: "Why a hump?" Answer: "A straight line from high above to just behind the kart can cut through roofs; `sin(e * pi)` lifts the middle of the path and is 0 at both ends, so start and end stay exact."
+
+**`RaceFlow/CheckpointProgress.cs`** (static, plain C#). The checkpoint pips on the HUD.
+- Point at: `CheckpointsToPass(count)` (count - 1, because checkpoint 0 is the start/finish line) and `StateOf(pip, passed)` (Passed / Next / Ahead). `RaceHud.UpdateCheckpoints` draws one diamond per checkpoint plus the finish.
+- Question: "A track with 4 checkpoints shows how many pips?" Answer: "4: three to pass and the finish."
+
+**`RaceFlow/HudEasing.cs`** (static, plain C#). The two HUD animations C# drives itself; everything else is a USS transition.
+- Point at: `EaseOutCubic(t) = 1 - (1 - t)^3` (fast start, soft landing) and `CountUp(elapsed, delay, duration)` (the results time counting up after a delay; 0 s duration jumps at the delay).
+- Question: "Why not a USS transition for the count-up?" Answer: "USS can animate a property, not the digits of a text. So C# writes the number each frame and `HudEasing` decides how far along it is."
+
+**`RaceFlow/UI/SpeedArc.cs`** (a `VisualElement`). The round speed gauge, a 270-degree arc drawn with `painter2D`.
+- Point at: `Set(value01, colour)` (redraws only if the change is visible: 0.2 % or a new colour, via `MarkDirtyRepaint`) and `Draw` (background arc, ten ticks, the fill from 135 degrees to `135 + 270 x value`).
+- Question: "Does it redraw every frame?" Answer: "No. `generateVisualContent` only runs after `MarkDirtyRepaint`, and `Set` calls that only for a visible change."
+
+**`RaceFlow/UI/HudColors.cs`** (static). The HUD palette for C# (the gauge and the gradient textures cannot read USS variables). Same values as the tokens at the top of `RaceHud.uss`, from `docs/art-style.md`.
+- Point at: `DriftStage(stage)` (white, blue, orange) and `WithAlpha`.
+- Question: "Why is the palette written twice?" Answer: "USS variables only exist for USS. Code-drawn parts need real `Color` values, so both lists must change together; the comment at the top says so."
+
+**`RaceFlow/UI/HudTextures.cs`** (static). Unity 6.3's USS has no `linear-gradient`, so gradients are tiny 1x128 / 128x1 textures made at runtime and stretched with bilinear filtering.
+- Point at: `VerticalGradient(stops)` (start and results backgrounds), `EdgeGlow(colour, alpha, left)` (the orange boost glow: `alpha x fade x fade`, very soft towards the middle), `Destroy` (called in `RaceHud.OnDisable`, textures made in code are not cleaned up by themselves).
+- Question: "Why destroy them by hand?" Answer: "A `Texture2D` made with `new` lives until it is destroyed; without `Destroy` every re-enable of the HUD would leak four textures."
+
+**`RaceFlow/UI/AzulejoPattern.cs`** (a `VisualElement`). The tile pattern behind the start, results and pause screens: per 72 px tile a diamond, a small inner diamond and a quarter circle in the corner that joins into full circles across tiles. Drawn once per resize, low opacity set in USS.
+- Point at: `Draw`: one path for all tiles, one `Stroke()` at the end.
+- Question: "Why one path?" Answer: "One stroke call for about 180 tiles is one mesh; a stroke per tile would be 180."
+
+**`RaceFlow/UI/CalcadaWave.cs`** (a `VisualElement`). The Lisbon "mar largo" pavement wave used as a divider on the start, results, pause, settings and credits cards: a white band with black stone below a sine wave.
+- Point at: `Draw`: white rectangle, then a filled shape whose top edge follows `middle + amplitude x sin(x / 28 px x 2 pi)`, sampled every 2 px.
+- Question: "Where do the shapes come from, any asset?" Answer: "No asset: drawn in code with `painter2D`, our own work, so nothing to license."
+
+### 3.32 Added in the polish pass (2026-11-10), where to find them
+
+- P pause (audit 9): 3.6 and 3.28. Menu sounds (audit 10): 3.11 and 3.29, enum `RaceFlow/MenuSound.cs`. Wall bump, take-off, chained boost (audit 11): 3.15 and 3.15b. Seaside ambience (audit 12): 3.11b and 3.19. Ghost chip (audit 13): 3.26. Ahead/behind chime, wrong-way and pause cues (audit 19): 3.11 and 3.29b. Loader keys and credits (audit 20, 21): 3.18 and 3.29. KartEffects on the kart (Q10): 3.17 step 4b. `MusicPlayer` deleted (audit 18): 3.16.
+- Every new clip is our own synth (`tools/audio-synth/synth_sfx.py`): `ui_open`, `ui_close`, `ui_page`, `sfx_wall_bump`, `sfx_takeoff_whoosh`, `amb_seaside_loop`.
+
 ---
 
 ## 4. Tests
@@ -513,6 +566,12 @@ All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceF
 | `PersonalBestTests` (P5 additions) | Best medal only goes up; survives the save string; a save from before medals loads with no medal; a broken medal number keeps the time but no medal. `HudFormatTests` adds `OneDecimal` (0.84 -> "0.8", 1.25 -> "1.3", negative -> "0.0"), and for the ghost chip (audit 13) `TimeTenths` (62456 ms -> "1:02.4", 58199 -> "0:58.1", cut not rounded, negative -> "0:00.0", digits wrapped) and `GhostName`. |
 | `GhostRecordingTests` | Empty recording has no pose; uneven frames still give samples exactly every 0.05 s; halfway between two samples = halfway position and rotation; clamped before the start and after the end; one sample works at any time; a teleport jumps instead of gliding (also inside one frame); repeated or old times add nothing; stops at 120 s; `Clear` starts over; end velocity; save text round trip (under 1 cm, under 0.2 degrees); yaw across 360 stays a small change; same text on a Portuguese laptop; a 60 s lap stays under 40 KB; other track or checkpoint count = ignored; broken texts = no ghost. |
 | `GhostLoaderTests` | Own ghost wins over the shipped one; fresh browser races the shipped ghost; broken or outdated own ghost falls back to the shipped one; nothing valid (or a shipped ghost from the old layout) = no ghost; save key next to the personal best. |
+| `MedalScalingTests` | A 10 m square is 40 m; the placeholder loop matches the reference length in `RaceSettings`; under 2 points = 0; same length keeps the times, twice the length doubles them; rounded to a tenth and still valid; a tiny track keeps the tiers apart; no usable length keeps the reference; null stays null; default track scene order. |
+| `WrongWayDetectorTests` | Driving towards the checkpoint is fine; 1 s away = wrong way; turning round clears it after the exit time; sideways never triggers; standing still keeps the answer; reversing towards the checkpoint is fine; height is ignored; Reset clears it. |
+| `StuckDetectorTests` | Waiting at the start is never stuck; after driving, 3 s still = stuck; grinding slower than 1.5 m/s counts as still; driving again clears it; reversing fast also arms it; Reset disarms. |
+| `FlyoverPathTests` | Centre and radius of a square; no points = 0; a big track is seen from high and far enough, a tiny one never below the minimum; `Ease` stays in 0..1; `Glide` ends exactly at the target with a hump on the way. |
+| `CheckpointProgressTests` | The start/finish line is not a checkpoint to pass; first pip next at the start; after two, two passed and the third next; after all, the finish pip is next. |
+| `HudEasingTests` | Ease-out starts at 0, ends at 1, is fast at the start, clamps, never goes back; the count-up waits for its delay, a 0 s count-up jumps at the delay. |
 | `SplitChimeTests` | Audit 19: ahead +2, behind -2, no best lap 0; exactly even and -0.4 ms count as behind like the chip, -0.6 ms as ahead; pitch 1, 1.1225, 0.8909, 2 for 0, +2, -2, +12. |
 | `WallBumpDetectorTests` | Audit 11: a 15 m/s drop in one frame is a bump; the hardest brake in a 0.2 s frame is not; a small scrape, the air, the countdown, the first frame, a reset and a paused frame are not; grinding gives one thud, another after the cooldown; reverse counts; volume 0.5 to 1. |
 | `TakeOffDetectorTests` | One whoosh after 0.15 s of air; a short hop is silent; the next jump fires again; nothing without input; after spawn or a reset it waits until the kart touched the ground. |
@@ -588,6 +647,8 @@ Do it on a branch `role4/<task-id>-swap-contract`, after `git pull` of `main` wi
 23. **What happens when I switch the browser tab mid-lap?** `RaceManager.OnApplicationFocus(false)` sets `Time.timeScale = 0`: physics, `Time.deltaTime` and `Time.timeAsDouble` stand still, so the lap time (two `timeAsDouble` timestamps) gains nothing. The PAUSED overlay waits for a click or key, and that key does nothing else.
 24. **How does reduced motion work without an `if` in every animation?** One class `reduce-motion` on the HUD root. The USS rules at the end of `RaceHud.uss` override every slide, shake and punch with its resting value, so the C# that adds the pop classes stays the same. Only the breathing pill (an inline style) needs one `if`.
 25. **Why does the HUD use `Time.unscaledTime` at the finish?** The finish slow motion sets `Time.timeScale` to 0.3, and `Time.time` / `Time.deltaTime` follow it. The results count-up, the stamp timings and the confetti would then run three times slower and get out of step with the USS transitions (UI Toolkit animates in real time). `Time.unscaledTime` ignores the time scale. The lap time itself is safe either way: it was taken from two `Time.timeAsDouble` timestamps before the slow motion started.
+26. **Why does P pause and not Escape?** In a browser Escape leaves fullscreen and cannot be caught reliably. P goes through exactly the same `RacePause` rule as a lost focus (`OnPauseKey` and `OnFocusLost` both call `TryStart`), so there is one pause, not two.
+27. **How can sound play while the game is paused?** The pause sets `AudioListener.pause = true`, which stops every source except those with `ignoreListenerPause`. `RaceSounds.Awake` sets that on the menu source only, so M and the pause/resume cues are heard and the engine and music stay silent.
 
 ---
 
@@ -602,10 +663,10 @@ Fixed on 2026-11-08 and no longer weak spots: drift boost after the finish, drif
 - **Camera object is switched off as a whole** (`RaceBootstrap.cs:97`, `SetActive(false)`): anything else on that GameObject or its children goes off too. Fine as long as test cameras sit on their own object.
 - **Kart prefab name is strict** (`Role4SceneBuilder.FindRealKartPrefab`): exactly `Kart`, under `Driving/`, `IKartState` on the root. A prefab called "Kart Variant" or with the controller on a child is ignored and the placeholder stays, silently apart from the missing Console line.
 - **Bloom not yet checked in a Web build with real effects**: it depends on Role 3's sparks and flames being bright enough (above threshold 0.9). Check it looks right and the frame rate stays fine on a normal laptop.
-- **P4 audio not yet heard in a real build** (written without opening Unity): gear-change feel, ducking amounts, music start on GO and gapless loops (smpl + 2048 pad) must be checked in the Web build with headphones (`audio-polish-plan.md` section 7).
+- **Polish-pass sounds not yet heard in a Web build** (P4 audio was, see `docs/builds.md`): menu sounds, wall bump, take-off, chained boost, seaside ambience, ahead/behind chime, wrong-way and pause cues are unit tested and compile, but loudness and feel need one lap in Chrome with headphones. The wall-bump thresholds (4 m/s in one frame, 60 m/s2) are first guesses.
+- **New HUD parts not yet seen rendered**: the ghost chip under the medal chip, the P key in the countdown key bar (left out in narrow windows), the longer PAUSED pill text. Check at 1280x720 and in a 4:3 window.
 - **Medal times are placeholders** (12.0 / 11.0 / 10.2 / 9.6 s on the placeholder track). Re-tune them in `RaceSettings.asset` once the campus track lands; the personal-best key is per track scene, so the new track starts fresh anyway.
 - **Settings, credits, pause (P7) not yet seen in Unity**: compiled and unit tested outside Unity, but the card layout (row widths, credit page height, the results row with Retry + Enter + Settings) and the reduced-motion overrides were never rendered. Check at 1280x720 and in a small window.
-- **Music and effects sliders need P4's one-line hooks** (`SoundLevels.Music` / `.Effects` in `RaceMusic.Apply` and `RaceSounds.Play`); master and mute work without them.
 - **Pause on the Web**: Unity stops the game loop when the tab loses focus (Run In Background is off), so the PAUSED card appears when the player comes back; the click that gives the canvas focus may or may not count as the "continue" click, a second click always does.
 - **Coach tips are not yet playtested** with a first-time player (5 s trigger, wording). Medal colours, like coral, still need Luc's OK in `docs/art-style.md`.
 - **Ghost (stretch item) not yet seen in Unity**: the code compiles and has tests, but the look (alpha 0.4, fade 1.5 to 8 m, colours), the transparent material in the Web build and the copy of Role 3's real kart meshes still need a Play Mode and a Web build check. The Dean's ghost must be recorded on the final track (after T6/D6) and again after every track change, otherwise the game ignores it (no error, simply no ghost). If the real kart's `Visual` child has effect meshes that are switched on at spawn, they are copied into the ghost too.
