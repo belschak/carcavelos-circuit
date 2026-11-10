@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: RaceSettings
   m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.RaceSettings
   trackSceneName: Track_Campus
+  otherTrackSceneNames:
+  - Track_CampusWorld
+  - Track_NovaCampus
   fallbackTrackSceneName: RaceFlow_PlaceholderTrack
   countdownFrom: 3
   countdownStepSeconds: 1
@@ -21,6 +24,7 @@ MonoBehaviour:
   hintSeconds: 2.5
   fallRecoverHeight: -20
   fallCheckCooldownSeconds: 0.5
+  medalReferenceLapMetres: 158.1
   bronzeSeconds: 12
   silverSeconds: 11
   goldSeconds: 10.2
