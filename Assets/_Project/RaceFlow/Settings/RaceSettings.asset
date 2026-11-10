@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9ecfe4a95896a04b9cf7aaacb938b2a, type: 3}
   m_Name: RaceSettings
   m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.RaceSettings
-  trackSceneName: Track_Campus
+  trackSceneName: Track_CampusWorld_Interior
   fallbackTrackSceneName: RaceFlow_PlaceholderTrack
   countdownFrom: 3
   countdownStepSeconds: 1
