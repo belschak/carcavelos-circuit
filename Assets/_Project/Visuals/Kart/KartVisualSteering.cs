@@ -43,6 +43,7 @@ public class KartVisualSteering : MonoBehaviour
         // positive angle would roll them backwards; compare it with the kart's own right to get the sign.
         rollSign = Vector3.Dot(wheelFL.parent.right, transform.right) >= 0f ? 1f : -1f;
         if (driverLean == null) driverLean = FindPart("Lean_Driver", optional: true);
+        if (driverLean == null) driverLean = FindPart("Spine", optional: true);   // Char_Rookie: the chest bone
         if (driverLean != null) leanRest = Quaternion.Inverse(transform.rotation) * driverLean.rotation;
     }
 

@@ -201,6 +201,7 @@ namespace CarcavelosCircuit.Visuals.Kart.Editor
             var steering = root.AddComponent<KartVisualSteering>();
             steering.wheelRadius = TyreRadius;
             root.AddComponent<KartVisualFromState>();
+            root.AddComponent<KartDriverArms>();      // hands stay on the rim while the wheel turns
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             UnityEngine.Object.DestroyImmediate(root);
         }
@@ -260,6 +261,26 @@ namespace CarcavelosCircuit.Visuals.Kart.Editor
             }
             Bounds all = Bounds(go);
             report.AppendLine("size (m): " + all.size.ToString("0.00"));
+
+            // Hands on the rim: turn the wheel from full left to full right, the hands must stay where they hold it.
+            var steering = go.GetComponent<KartVisualSteering>();
+            var arms = go.GetComponent<KartDriverArms>();
+            float worstGrip = 0f;
+            arms.SolveNow();   // first call records the grips, so the wheel must still be straight here
+            foreach (float steer in new[] { -1f, -0.5f, 0f, 0.5f, 1f })
+            {
+                steering.steer = steer;
+                steering.ShowNow();
+                arms.SolveNow();
+                float error = arms.WorstGripError();
+                worstGrip = Mathf.Max(worstGrip, error);
+                report.AppendLine("  steer " + steer.ToString("+0.0;-0.0;0.0") + ": hand furthest from its grip " + (error * 100f).ToString("0.0") + " cm");
+            }
+            report.AppendLine("hands stay on the rim: worst " + (worstGrip * 100f).ToString("0.0") + " cm (limit 1.0 cm)");
+            if (worstGrip > 0.01f)
+            {
+                failures++;
+            }
             UnityEngine.Object.DestroyImmediate(go);
             report.AppendLine(failures == 0 ? "RESULT: PASS" : "RESULT: FAIL (" + failures + ")");
             Debug.Log(report.ToString());
@@ -302,6 +323,7 @@ namespace CarcavelosCircuit.Visuals.Kart.Editor
             {
                 steering.steer = v.steer;
                 steering.ShowNow();
+                kart.GetComponent<KartDriverArms>().SolveNow();
                 cam.transform.position = v.pos;
                 cam.transform.LookAt(new Vector3(0f, 0.45f, 0f));
                 cam.Render();
