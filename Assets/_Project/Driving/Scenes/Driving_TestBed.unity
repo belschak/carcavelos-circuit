@@ -528,11 +528,6 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
---- !u!4 &1417969561 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 5352721781652628705, guid: 6a261bc954aa7e14aa0aeb6310eadc3f, type: 3}
-  m_PrefabInstance: {fileID: 1775264350673814000}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1775264350673814000
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -594,6 +589,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6a261bc954aa7e14aa0aeb6310eadc3f, type: 3}
+--- !u!4 &1417969561 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5352721781652628705, guid: 6a261bc954aa7e14aa0aeb6310eadc3f, type: 3}
+  m_PrefabInstance: {fileID: 1775264350673814000}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4014357677033729266
 PrefabInstance:
   m_ObjectHideFlags: 0
