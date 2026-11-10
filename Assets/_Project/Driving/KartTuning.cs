@@ -89,6 +89,16 @@ namespace CarcavelosCircuit.Driving
         [SerializeField, Tooltip("Boost length after releasing a stage 2 drift, in seconds")]
         private float stage2BoostSeconds = 1.2f;
 
+        [Header("Air (ramp jump)")]
+        [SerializeField, Tooltip("Steering in the air as a share of normal steering (0.25 = a quarter)")]
+        private float airSteerFraction = 0.25f;
+
+        [SerializeField, Tooltip("Gravity multiplier while falling (after the top of the jump). Above 1 = lands sooner, feels less floaty")]
+        private float fallGravityMultiplier = 1.5f;
+
+        [SerializeField, Tooltip("How fast the kart model tilts to the slope (and back to level in the air). Higher = snappier")]
+        private float visualTiltSpeed = 10f;
+
         public float MaxSpeed { get { return maxSpeed; } }
         public float MaxReverseSpeed { get { return maxReverseSpeed; } }
         public float Acceleration { get { return acceleration; } }
@@ -115,5 +125,9 @@ namespace CarcavelosCircuit.Driving
         public float BoostAcceleration { get { return boostAcceleration; } }
         public float Stage1BoostSeconds { get { return stage1BoostSeconds; } }
         public float Stage2BoostSeconds { get { return stage2BoostSeconds; } }
+
+        public float AirSteerFraction { get { return airSteerFraction; } }
+        public float FallGravityMultiplier { get { return fallGravityMultiplier; } }
+        public float VisualTiltSpeed { get { return visualTiltSpeed; } }
     }
 }
