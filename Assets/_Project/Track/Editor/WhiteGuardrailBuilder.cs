@@ -35,6 +35,7 @@ namespace CarcavelosCircuit.Track.Editor
         private const string JumpZone = "kicker";    // zone name of the terrace jump in track.json
         private const string HallZone = "atrium";    // zone name of the Nova hall in track.json
         private const float HallJoin = 2f;          // the outside fence stops this close to a post of the hall course
+        private const float HallReach = 6f;         // ... and then gets one more board to the hall's end post, if this near
 
         // Same field names as Role 3's track.json, so JsonUtility can read it.
         [System.Serializable]
@@ -106,6 +107,41 @@ namespace CarcavelosCircuit.Track.Editor
             return hall.posts.Length;
         }
 
+        // Board from the outside fence's last post p to the nearest end post of the hall course (a post with one neighbour).
+        private static void JoinHall(NovaMesh fence, NovaMesh wall, Vector3 p)
+        {
+            int best = -1;
+            float bestDistance = HallReach;
+            for (int k = 0; k < hall.posts.Length; k++)
+            {
+                float d = Vector3.Distance(p, hall.posts[k]);
+                if (d < bestDistance && Neighbours(k) == 1)
+                {
+                    best = k;
+                    bestDistance = d;
+                }
+            }
+            if (best >= 0)
+            {
+                AddBoards(fence, p, hall.posts[best]);
+                AddWall(wall, p, hall.posts[best], Vector3.zero);
+            }
+        }
+
+        // How many boards start or end at hall post k.
+        private static int Neighbours(int k)
+        {
+            int count = 0;
+            for (int l = 0; l < hall.links.Length; l++)
+            {
+                if (hall.links[l] == k)
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
+
         // True if p is close to a post of the hall course (there the hall fence takes over).
         private static bool NearHallCourse(Vector3 p)
         {
@@ -150,6 +186,15 @@ namespace CarcavelosCircuit.Track.Editor
                 AddBoards(fence, a, b);
                 AddWall(wall, a, b, Right(i) * (side * WallThickness * 0.5f)); // wall just outside the fence line
                 posts += AddPosts(fence, a, b, runStarts, runEnds, ref sinceLastPost);
+                // Where the fence stops at the hall course, one more board closes the gap to the hall's end post.
+                if (runStarts)
+                {
+                    JoinHall(fence, wall, a);
+                }
+                if (runEnds)
+                {
+                    JoinHall(fence, wall, b);
+                }
             }
             return posts;
         }
