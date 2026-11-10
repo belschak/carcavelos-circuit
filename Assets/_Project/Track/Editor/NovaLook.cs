@@ -74,7 +74,6 @@ namespace CarcavelosCircuit.Track.Editor
         public Material GlassMat;
         public Material Terracotta;
         public Material Metal;
-        public Material GuardrailWhite; // white guardrails along the road, like the balustrades in the Nova building
         public Material Lounge;
         public Material Pine;
         public Material Olive;
@@ -129,7 +128,6 @@ namespace CarcavelosCircuit.Track.Editor
             look.GlassMat = Lit("NovaGlass", Glass, 0.7f, null);
             look.Terracotta = Lit("NovaTerracotta", TerracottaStairs, 0.1f, null);
             look.Metal = Lit("NovaMetal", RailingMetal, 0.5f, null);
-            look.GuardrailWhite = Lit("NovaGuardrailWhite", "#F4F5F4", 0.45f, null);
             look.Lounge = Lit("NovaLounge", LoungeGrey, 0.2f, null);
             look.Pine = Lit("NovaPine", PineFoliage, 0f, null);
             look.Olive = Lit("NovaOlive", OliveFoliage, 0f, null);
