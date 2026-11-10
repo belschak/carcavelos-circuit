@@ -212,7 +212,7 @@ namespace CarcavelosCircuit.RaceFlow
             VisualElement column = new VisualElement();
             column.pickingMode = PickingMode.Ignore;
             column.style.marginTop = 86f;
-            column.style.alignItems = Align.Center;
+            column.style.alignItems = Align.FlexEnd; // right edge of the screen: the callout grows to the left, never off screen (phone check 2026-11-10)
             column.style.opacity = 0f;
             safe.Add(column);
 
@@ -265,6 +265,7 @@ namespace CarcavelosCircuit.RaceFlow
             callout.style.marginTop = 16f;
             callout.style.letterSpacing = 2f;
             callout.style.opacity = 0f;
+            callout.style.transformOrigin = new TransformOrigin(Length.Percent(100f), Length.Percent(50f)); // pop from the right edge
             column.Add(callout);
         }
 

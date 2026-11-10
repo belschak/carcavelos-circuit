@@ -209,6 +209,7 @@ namespace CarcavelosCircuit.RaceFlow
             liveMaterial.EnableKeyword("_EMISSION");
 
             Vector3[] points = raceManager.TrackPoints;
+            Vector3[] forwards = raceManager.TrackForwards;
             int rows = 0;
             for (int i = 0; i < points.Length; i++)
             {
@@ -218,8 +219,10 @@ namespace CarcavelosCircuit.RaceFlow
                 }
                 Vector3 from = points[i];
                 Vector3 to = points[(i + 1) % points.Length];
-                Vector3 centre = ItemBoxLayout.RowCentre(from, to, settings.RowAheadMetres);
-                Vector3[] spots = ItemBoxLayout.RowPositions(centre, from, to, settings.BoxesPerRow, settings.BoxSpacing);
+                Vector3 roadForward = i < forwards.Length ? forwards[i] : Vector3.zero;
+                Vector3 direction = ItemBoxLayout.RowDirection(from, to, roadForward);
+                Vector3 centre = ItemBoxLayout.RowCentre(from, to, direction, settings.RowAheadMetres);
+                Vector3[] spots = ItemBoxLayout.RowPositions(centre, direction, settings.BoxesPerRow, settings.BoxSpacing);
                 int before = boxes.Count;
                 for (int b = 0; b < spots.Length; b++)
                 {
