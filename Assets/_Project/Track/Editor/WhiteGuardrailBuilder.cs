@@ -9,7 +9,8 @@ namespace CarcavelosCircuit.Track.Editor
     // the prefab Track/Prefabs/WhiteGuardrails.prefab, its meshes and one white material.
     // The prefab sits at (0, 0, 0): drag it into a scene at the origin and the fence lines up with the road.
     // No fence inside the tunnel (it ends with a post right at the tunnel mouth) and none at the terrace jump.
-    // None inside the Nova hall either: the hall has its own railing, which leads cleanly through the doors.
+    // Inside the Nova hall the route data does not fit the building: there the fence follows the course of the hall's
+    // own railing (copied by HallRailingCourse), and the outside fence stops where that course begins.
     // Rerun after Role 3 exports a new track.json; the prefab keeps its GUID, so scenes keep their reference.
     public static class WhiteGuardrailBuilder
     {
@@ -33,6 +34,7 @@ namespace CarcavelosCircuit.Track.Editor
         private const float WallThickness = 0.3f;
         private const string JumpZone = "kicker";    // zone name of the terrace jump in track.json
         private const string HallZone = "atrium";    // zone name of the Nova hall in track.json
+        private const float HallJoin = 2f;          // the outside fence stops this close to a post of the hall course
 
         // Same field names as Role 3's track.json, so JsonUtility can read it.
         [System.Serializable]
@@ -50,6 +52,7 @@ namespace CarcavelosCircuit.Track.Editor
         }
 
         private static TrackPoint[] points;
+        private static HallRailingCourse.Course hall;
 
         [MenuItem("Carcavelos Circuit/Build White Guardrails (Role 2)")]
         public static void Build()
@@ -60,6 +63,7 @@ namespace CarcavelosCircuit.Track.Editor
                 return;
             }
             points = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataPath)).points;
+            hall = HallRailingCourse.Load();
             EnsureFolder(PrefabFolder);
             EnsureFolder(MeshFolder);
 
@@ -68,6 +72,7 @@ namespace CarcavelosCircuit.Track.Editor
             int posts = 0;
             posts += AddSide(fence, wall, 1f);
             posts += AddSide(fence, wall, -1f);
+            posts += AddHall(fence, wall);
 
             Mesh fenceMesh = SaveMesh(fence.ToMesh("WhiteGuardrails_Fence"), MeshFolder + "/WhiteGuardrails_Fence.asset");
             Mesh wallMesh = SaveMesh(wall.ToMesh("WhiteGuardrails_Wall"), MeshFolder + "/WhiteGuardrails_Wall.asset");
@@ -80,7 +85,38 @@ namespace CarcavelosCircuit.Track.Editor
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             Object.DestroyImmediate(root);
             AssetDatabase.SaveAssets();
-            Debug.Log("WhiteGuardrailBuilder: saved " + PrefabPath + " with " + posts + " posts. Drag it into the scene at position 0, 0, 0.");
+            Debug.Log("WhiteGuardrailBuilder: saved " + PrefabPath + " with " + posts + " posts (" + hall.posts.Length
+                + " of them in the hall). Drag it into the scene at position 0, 0, 0.");
+        }
+
+        // The fence inside the hall: a post where each post of the hall's own railing stands, boards between neighbours.
+        private static int AddHall(NovaMesh fence, NovaMesh wall)
+        {
+            for (int k = 0; k + 1 < hall.links.Length; k += 2)
+            {
+                Vector3 a = hall.posts[hall.links[k]];
+                Vector3 b = hall.posts[hall.links[k + 1]];
+                AddBoards(fence, a, b);
+                AddWall(wall, a, b, Vector3.zero);
+            }
+            for (int p = 0; p < hall.posts.Length; p++)
+            {
+                AddPost(fence, hall.posts[p]);
+            }
+            return hall.posts.Length;
+        }
+
+        // True if p is close to a post of the hall course (there the hall fence takes over).
+        private static bool NearHallCourse(Vector3 p)
+        {
+            for (int k = 0; k < hall.posts.Length; k++)
+            {
+                if (Vector3.Distance(p, hall.posts[k]) < HallJoin)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
 
@@ -164,7 +200,11 @@ namespace CarcavelosCircuit.Track.Editor
             }
             if (points[i].zone == HallZone || points[j].zone == HallZone)
             {
-                return false; // the hall has its own railing
+                return false; // inside the hall the fence follows the hall course instead
+            }
+            if (NearHallCourse(FencePoint(i, side)) || NearHallCourse(FencePoint(j, side)))
+            {
+                return false; // the hall course reaches out through the door: no second fence next to it
             }
             return !OnOtherRoad(i, side) && !OnOtherRoad(j, side);
         }
