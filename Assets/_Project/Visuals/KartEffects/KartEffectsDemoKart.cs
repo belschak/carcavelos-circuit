@@ -23,8 +23,7 @@ namespace CarcavelosCircuit.Visuals
         public bool IsBoosting { get; private set; }
         public bool IsGrounded { get { return true; } }
 
-        // The demo kart always turns right (more while drifting). Steer is in IKartState since #55; as a plain
-        // public property it also compiles before that PR is merged.
+        // The demo kart always turns right (more while drifting). Part of IKartState since #55.
         public float Steer { get { return IsDrifting ? 1f : 0.6f; } }
 
         public bool InputEnabled { get; set; }
