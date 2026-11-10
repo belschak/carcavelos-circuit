@@ -720,7 +720,11 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             soundsToHud.FindProperty("hud").objectReferenceValue = raceHud;
             soundsToHud.ApplyModifiedPropertiesWithoutUndo();
 
-            BuildGhost(manager);
+            // The ghost chip on the HUD reads the GhostPlayer (audit 13).
+            GhostPlayer ghostPlayer = BuildGhost(manager);
+            SerializedObject hudToGhost = new SerializedObject(raceHud);
+            hudToGhost.FindProperty("ghostPlayer").objectReferenceValue = ghostPlayer;
+            hudToGhost.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, MainScenePath);
 
@@ -735,7 +739,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
 
         // The "Ghost" root object: records every lap, replays the best one as a see-through kart. Called while
         // Main.unity is open, so the material and the text file are loaded after the scene switch (live references).
-        private static void BuildGhost(RaceManager manager)
+        private static GhostPlayer BuildGhost(RaceManager manager)
         {
             Material ghostMaterial = CreateGhostMaterial();
             TextAsset deansGhost = CreateDeansGhostFile();
@@ -758,6 +762,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             {
                 throw new System.Exception("Role4SceneBuilder: the ghost material or DeansGhost.txt is missing.");
             }
+            return player;
         }
 
         // URP Lit, "Surface Type: Transparent, Blending: Alpha", set the same way URP's material Inspector does.

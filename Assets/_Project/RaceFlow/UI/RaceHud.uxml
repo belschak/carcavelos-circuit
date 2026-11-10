@@ -38,6 +38,13 @@
                             <ui:Label name="medal-target-name" text="BRONZE" class="medal-target-name f-ui" />
                             <ui:Label name="medal-target-time" text="0:12.000" class="medal-target-time f-num" />
                         </ui:VisualElement>
+
+                        <!-- The ghost you race (audit 13): whose lap and its time, dot in the ghost's colour. Hidden without a ghost -->
+                        <ui:VisualElement name="ghost-chip" class="ghost-chip">
+                            <ui:VisualElement class="ghost-dot" />
+                            <ui:Label name="ghost-chip-name" text="GHOST: DEAN" class="ghost-chip-name f-ui" />
+                            <ui:Label name="ghost-chip-time" text="1:02.4" class="ghost-chip-time f-num" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
 
                     <!-- Checkpoint progress: "2/3" and one diamond per checkpoint plus the finish (pips made in RaceHud.cs) -->

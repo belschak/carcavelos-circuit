@@ -28,6 +28,9 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField]
         private RaceManager raceManager;
 
+        [SerializeField, Tooltip("The ghost replay (Ghost object). The ghost chip shows whose lap it is and its time (audit 13)")]
+        private GhostPlayer ghostPlayer;
+
         [SerializeField, Range(0f, 1f), Tooltip("Drift charge where stage 1 starts (tick mark on the drift bar). Placeholder kart: 0.8 s of 1.6 s")]
         private float stage1At = 0.5f;
 
@@ -91,6 +94,9 @@ namespace CarcavelosCircuit.RaceFlow
         private VisualElement medalTarget;     // next-medal chip under the time panel (task P5)
         private Label medalTargetName;
         private Label medalTargetTime;
+        private VisualElement ghostChip;       // "GHOST: DEAN 1:02.4" under the medal chip (audit 13)
+        private Label ghostChipName;
+        private Label ghostChipTime;
         private Label hintIcon;
         private VisualElement resultsMedalBadge;
         private Label resultsMedalName;
@@ -136,6 +142,7 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly ShownNumber shownFinal = new ShownNumber();        // results time in ms (count-up)
         private readonly ShownNumber shownTarget = new ShownNumber();       // next medal (Medal as int), -1 = no chip
         private readonly ShownNumber shownHintKind = new ShownNumber();     // HintKind as int
+        private readonly ShownNumber shownGhost = new ShownNumber();        // ghost lap in ms x 2 (+1 = Dean's), -1 = none
 
         private float resultsStartTime;
         private bool tickerDone;
@@ -259,6 +266,9 @@ namespace CarcavelosCircuit.RaceFlow
             medalTarget = root.Q<VisualElement>("medal-target");
             medalTargetName = root.Q<Label>("medal-target-name");
             medalTargetTime = root.Q<Label>("medal-target-time");
+            ghostChip = root.Q<VisualElement>("ghost-chip");
+            ghostChipName = root.Q<Label>("ghost-chip-name");
+            ghostChipTime = root.Q<Label>("ghost-chip-time");
             hintIcon = root.Q<Label>("hint-icon");
             resultsMedalBadge = root.Q<VisualElement>("res-medal-badge");
             resultsMedalName = root.Q<Label>("res-medal-name");
@@ -333,6 +343,7 @@ namespace CarcavelosCircuit.RaceFlow
             shownFinal.Forget();
             shownTarget.Forget();
             shownHintKind.Forget();
+            shownGhost.Forget();
         }
 
         private void OnRetryClicked()
@@ -562,6 +573,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             UpdateTimes();
             UpdateMedalTarget(state);
+            UpdateGhostChip(state);
             UpdateCheckpoints(state);
             UpdateSplit(state);
             UpdateCallouts(state);
@@ -741,6 +753,26 @@ namespace CarcavelosCircuit.RaceFlow
                     HudFx.Punch(medalTarget, "medal-target--pop");
                 }
             }
+        }
+
+        // Ghost chip (audit 13): "GHOST: DEAN 1:02.4" or "GHOST: YOUR BEST 0:58.1" during the countdown and the race,
+        // hidden when there is no ghost. GhostPlayer loads the ghost itself; we only read which one it is.
+        // One number holds both facts (lap in ms x 2, +1 for Dean's), so the texts are written only when one changes.
+        private void UpdateGhostChip(RaceState state)
+        {
+            bool hasGhost = ghostPlayer != null && ghostPlayer.HasGhost;
+            int key = -1;
+            if (hasGhost)
+            {
+                key = RaceTimer.ToMilliseconds(ghostPlayer.GhostLapSeconds) * 2 + (ghostPlayer.IsShippedGhost ? 1 : 0);
+            }
+            if (shownGhost.Changed(key) && hasGhost)
+            {
+                ghostChipName.text = HudFormat.GhostName(ghostPlayer.IsShippedGhost);
+                ghostChipTime.text = HudFormat.TimeTenths(RaceTimer.ToMilliseconds(ghostPlayer.GhostLapSeconds));
+                ghostChip.EnableInClassList("ghost-chip--deans", ghostPlayer.IsShippedGhost);
+            }
+            HudFx.SetShown(ghostChip, hasGhost && (state == RaceState.Countdown || state == RaceState.Racing));
         }
 
         // Checkpoint pips: passed = white, next = pulsing outline, later = dim. The last pip is the finish line.
