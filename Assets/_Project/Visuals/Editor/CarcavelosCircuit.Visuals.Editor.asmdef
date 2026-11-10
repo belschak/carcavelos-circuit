@@ -2,6 +2,7 @@
     "name": "CarcavelosCircuit.Visuals.Editor",
     "rootNamespace": "CarcavelosCircuit.Visuals.Editor",
     "references": [
+        "CarcavelosCircuit.Track",
         "CarcavelosCircuit.RaceFlow"
     ],
     "includePlatforms": [
