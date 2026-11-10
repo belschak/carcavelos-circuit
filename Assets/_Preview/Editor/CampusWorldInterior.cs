@@ -109,10 +109,10 @@ public static class CampusWorldInterior
         TrackPoint[] p = JsonUtility.FromJson<TrackList>(System.IO.File.ReadAllText(TrackData)).points;
         routeBefore = new Vector3[p.Length];
         widthBefore = new float[p.Length];
-        for (int i = 0; i < p.Length; i++)
+        for (int k = 0; k < p.Length; k++)
         {
-            routeBefore[i] = new Vector3(p[i].x, p[i].y, p[i].z);
-            widthBefore[i] = p[i].width;
+            routeBefore[k] = new Vector3(p[k].x, p[k].y, p[k].z);
+            widthBefore[k] = p[k].width;
         }
         routeAfter = (Vector3[])routeBefore.Clone();
         widthAfter = (float[])widthBefore.Clone();
