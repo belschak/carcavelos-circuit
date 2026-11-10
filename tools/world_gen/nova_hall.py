@@ -14,8 +14,8 @@ the way Noah marked it on the campus map (doors in red, video paths in green = I
 
 Coordinates: one Frame for the whole building: origin = north-west corner, u = metres south along the west wall,
 o = metres east from it, z = metres above the floor (nova_context.py lifts the objects to plaza height).
-Everything is a number in the constants below. No Nova logo (docs/decisions.md): the big letters of the real hall are
-an abstract white sculpture. hall_kit.py has the parts.
+Everything is a number in the constants below. The big white NOVA letters of the real hall stand in front of the
+stair (the name may be used, Noah 2026-11-10). hall_kit.py has the parts.
 
 Run:  /Applications/Blender.app/Contents/MacOS/Blender -b -P nova_hall.py   ->  out/NovaHall.blend, out/NovaHall.fbx
       ... -b -P nova_hall.py -- world   ->  out/NovaHallWorld.fbx (at its place in Luc's campus world, for Unity)
@@ -454,18 +454,21 @@ def artwork_wall(m, f):
 def atrium_furniture(m, f):
     # entrance zone (west, IMG_7722): reception desk left of the door, sculpture ahead, boards with planter troughs
     K.desk(m, f, 16.5, 3.4, 1.2, 5.0)                                     # welcome desk, left of the doors
-    # abstract sculpture straight ahead of the main entrance, arranged and sized like the real logo letters
-    # (no readable logo, docs/decisions.md): tall block, ring standing on a long low plinth, a V, a chevron
+    # the big white NOVA letters straight ahead of the main entrance, as in the real hall (Noah, 2026-11-10: the
+    # name may be used now). Read from the entrance: u runs south = left to right. All letters 2.6 m tall, 0.6 m deep.
     SO = 20.5                                                            # between the two track parts in front of the stair,
     U0 = 25.5                                                            # across the view from the main entrance (Noah's mark)
-    K.block(m, f, U0, U0 + 1.6, SO - 0.3, SO + 0.3, 0.0, 2.6, "wall")
-    K.block(m, f, U0 + 2.0, U0 + 8.4, SO - 0.45, SO + 0.45, 0.0, 0.5, "wall")
-    t, nrm = f.tangent(), f.left()
-    m.ring(f.at(U0 + 4.0, SO - 0.3, 1.78), 1.28, 0.72, 0.6, "wall", basis=((0, 0, 1), (t[0], t[1], 0), (nrm[0], nrm[1], 0)))
-    K.rod(m, f, (U0 + 8.8, SO, 2.6), (U0 + 10.0, SO, 0.0), 0.6, "wall")  # V: point at the bottom
-    K.rod(m, f, (U0 + 11.2, SO, 2.6), (U0 + 10.0, SO, 0.0), 0.6, "wall")
-    K.rod(m, f, (U0 + 11.6, SO, 0.0), (U0 + 12.8, SO, 2.6), 0.6, "wall")  # chevron: point at the top
-    K.rod(m, f, (U0 + 14.0, SO, 0.0), (U0 + 12.8, SO, 2.6), 0.6, "wall")
+    H = 2.6
+    K.rod(m, f, (U0 + 0.3, SO, 0.0), (U0 + 0.3, SO, H), 0.6, "wall")     # N: left stem
+    K.rod(m, f, (U0 + 0.3, SO, H), (U0 + 2.1, SO, 0.0), 0.6, "wall")     #    diagonal
+    K.rod(m, f, (U0 + 2.1, SO, 0.0), (U0 + 2.1, SO, H), 0.6, "wall")     #    right stem
+    t, nrm = f.tangent(), f.left()                                       # O: ring standing on the floor
+    m.ring(f.at(U0 + 4.2, SO - 0.3, H / 2), 1.28, 0.72, 0.6, "wall", basis=((0, 0, 1), (t[0], t[1], 0), (nrm[0], nrm[1], 0)))
+    K.rod(m, f, (U0 + 6.0, SO, H), (U0 + 7.2, SO, 0.0), 0.6, "wall")     # V: point at the bottom
+    K.rod(m, f, (U0 + 8.4, SO, H), (U0 + 7.2, SO, 0.0), 0.6, "wall")
+    K.rod(m, f, (U0 + 8.9, SO, 0.0), (U0 + 10.1, SO, H), 0.6, "wall")    # A: point at the top
+    K.rod(m, f, (U0 + 11.3, SO, 0.0), (U0 + 10.1, SO, H), 0.6, "wall")
+    K.rod(m, f, (U0 + 9.35, SO, 0.95), (U0 + 10.85, SO, 0.95), 0.4, "wall")  # A: crossbar
     for k in range(6):                                                   # dark blue boards and planter troughs (north part)
         u = 8.5 + k * 2.0
         if k % 2 == 0:
