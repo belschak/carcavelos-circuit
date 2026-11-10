@@ -21,7 +21,7 @@ on:
 
 concurrency:
   group: web-build
-  cancel-in-progress: true # a newer merge replaces a build that is still running
+  cancel-in-progress: false # a Unity build takes 20+ min; let it finish, the newest merge waits and builds next
 
 permissions:
   contents: read
@@ -37,6 +37,8 @@ jobs:
         run: |
           if [ "$HAS_LICENSE" != "true" ]; then
             echo "::warning::Unity secrets missing (UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD). See the comment at the top of .github/workflows/web-build.yml. Skipping the build."
+            # Shown on the run page, so a green tick is never mistaken for a real build.
+            echo "### NOT BUILT: the Unity secrets are missing, so this run built nothing and made no artifact." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       # The Unity build image is about 7.5 GB; the runner needs room for it and the build.

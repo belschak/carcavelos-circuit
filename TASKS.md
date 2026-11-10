@@ -14,10 +14,10 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 ## Role 1: Driving + camera (Alessandro)
 | ID | Task | Due | Status |
 |---|---|---|---|
-| D1 | Placeholder kart prefab (box + 4 cylinders, or Kenney CC0 kart) with a sphere-based `KartController` implementing `IKartState` (approach in `docs/interfaces.md`): accelerate, brake/reverse, steer on `Driving_TestBed` | Mon 9 | todo |
-| D2 | Chase camera (Cinemachine) that follows smoothly | Mon 9 | todo |
-| D3 | Drift that charges a boost; release when charged = short boost; early release = nothing | Wed 11 | todo |
-| D4 | Ramp jump: airborne state, lands upright, no flipping; `IsGrounded` | Wed 11 | todo |
+| D1 | Placeholder kart prefab (box + 4 cylinders, or Kenney CC0 kart) with a sphere-based `KartController` implementing `IKartState` (approach in `docs/interfaces.md`): accelerate, brake/reverse, steer on `Driving_TestBed` | Mon 9 | done (Alessandro, 2026-11-10) |
+| D2 | Chase camera (Cinemachine) that follows smoothly | Mon 9 | done (Alessandro, 2026-11-10) |
+| D3 | Drift that charges a boost; release when charged = short boost; early release = nothing | Wed 11 | done (Alessandro, 2026-11-10) |
+| D4 | Ramp jump: airborne state, lands upright, no flipping; `IsGrounded` | Wed 11 | in review (Alessandro, 2026-11-09) |
 | D5 | `ResetTo(position, rotation)` for recovery and retry (zero velocity, clear drift/boost) | Wed 11 | todo |
 | D6 | All tuning values in `KartTuning` ScriptableObject; tune on the grey campus track | Fri 13 | todo |
 
@@ -27,8 +27,8 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | T1 | Final route in `docs/route.md` from the campus walk (sketch, sections, lengths, ramp size) | Sat 7 | todo |
 | T2 | Grey-box loop in `Track_Campus` at real scale: road, walls, main buildings as blocks, elevation | Mon 9 | todo |
 | T3 | Ramp D/B wing, tunnel, beach promenade in grey | Wed 11 | todo |
-| T4 | `Checkpoint`, `SpawnPoint`, respawn points, `TrackInfo` | Tue 10 | todo |
-| T5 | `RaceRules` (plain C#) + Edit Mode tests: order, wrong way, duplicate finish, missed checkpoint | Wed 11 | todo |
+| T4 | `Checkpoint`, `SpawnPoint`, respawn points, `TrackInfo` | Tue 10 | in review (Noah, PR #48) |
+| T5 | `RaceRules` (plain C#) + Edit Mode tests: order, wrong way, duplicate finish, missed checkpoint | Wed 11 | in review (Noah, PR #47) |
 | T6 | Lap time 35-60 s check with the real kart; adjust route | Fri 13 | todo |
 
 ## Role 3: Kart, visuals + web release (Luc)
@@ -68,3 +68,4 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | Q7 | 3 -> 2 | Route decision: Luc's sketch route in `Visuals/Scenes/Track_CampusWorld.unity` (1,184 m, atrium drive-through, terrace jump) vs. help PR #31 (968 m), or a mix. When T4 is on `main`, swap the race placeholders in `CampusWorldBuilder.AddRaceParts` to `TrackInfo`/`Checkpoint` (two lines, marked) | done 2026-11-09: the team takes the campus world with Noah's route (Q9, PR #35); built into `Track_CampusWorld` |
 | Q8 | 3 -> 4 | If the team picks the campus world: add `Track_CampusWorld` to the build list and `RaceSettings` (checkpoints and spawn are already there for RaceFlow's placeholders) | open |
 | Q10 | 3 -> 4 | Kart effects (V5): add `Visuals/KartEffects/Prefabs/KartEffects.prefab` to `RaceBootstrap` > Kart Attachments, next to the KartAudio prefab (in `Role4SceneBuilder`). It finds `IKartState` on the kart by itself and needs nothing else; the Bloom volume (`RaceCameraVolume`) makes the sparks glow | open |
+| Q13 | 1 -> 4 | Chase camera (D2) is ready as the prefab `Driving/ChaseCamera.prefab` (Cinemachine: Follow + Rotation Composer, offset 0/3/-6). To use it in `Main.unity` instead of `PlaceholderChaseCamera`: put a `CinemachineBrain` on the Main Camera, add the prefab, and when the kart spawns set the prefab's `CinemachineCamera.Follow` (Tracking Target) to the kart. After `ResetTo` (retry / recovery) call `CinemachineCamera.OnTargetObjectWarped(kartTransform, newPosition - oldPosition)` so the camera jumps with the kart instead of flying across the track. Your decision when to swap (Role 4 owns `Main.unity`); I can pair on it | open |
