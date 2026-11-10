@@ -55,6 +55,10 @@ namespace CarcavelosCircuit.Driving
         // Simple "is the ground under the ball" check. The ramp jump (D4) builds on it.
         public bool IsGrounded { get { return grounded; } }
 
+        // What the player steers right now (-1 left .. +1 right), so the model's steering wheel can follow it.
+        // It is the key input itself, so it is 0 whenever input is off (countdown, results).
+        public float Steer { get { return steerInput; } }
+
         // RaceFlow writes this every frame. The kart never switches it on by itself.
         public bool InputEnabled { get; set; }
 
@@ -166,7 +170,7 @@ namespace CarcavelosCircuit.Driving
 
             body.linearVelocity = forward * forwardSpeed + right * sidewaysSpeed + groundNormal * upSpeed;
 
-            Steer(forwardSpeed, dt, 1f);
+            TurnKart(forwardSpeed, dt, 1f);
         }
 
         // In the air the pedals and the grip do nothing: the speed from the ramp carries the kart.
@@ -178,7 +182,7 @@ namespace CarcavelosCircuit.Driving
             {
                 body.AddForce(Physics.gravity * (tuning.FallGravityMultiplier - 1f), ForceMode.Acceleration);
             }
-            Steer(Vector3.Dot(velocity, transform.forward), dt, tuning.AirSteerFraction);
+            TurnKart(Vector3.Dot(velocity, transform.forward), dt, tuning.AirSteerFraction);
         }
 
         // Gas, brake/reverse, or roll out slowly when no key is pressed. Returns the new forward speed.
@@ -250,7 +254,7 @@ namespace CarcavelosCircuit.Driving
         // Turn the heading. Steering needs speed, and in reverse it turns the other way, like a real car.
         // In a drift the kart keeps turning into the corner; steering only makes the arc tighter or wider.
         // strength 1 = normal steering, less in the air.
-        private void Steer(float forwardSpeed, float dt, float strength)
+        private void TurnKart(float forwardSpeed, float dt, float strength)
         {
             float steerAmount = steerInput;
             if (IsDrifting)
