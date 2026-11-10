@@ -4,8 +4,10 @@ using UnityEngine.UIElements;
 namespace CarcavelosCircuit.RaceFlow
 {
     // The picture of an item in the HUD slot (task R7), drawn with UI Toolkit's vector API (Painter2D) like
-    // AzulejoPattern: no image files, own work. Bica = an espresso cup on a saucer with steam, Triple Bica = three
-    // cups, Onda = a curling Atlantic wave with foam. Drawn on a 72 x 72 grid and scaled to the element's size.
+    // AzulejoPattern: no image files, own work after Luc's four item designs (items_showcase.png, Role 3):
+    // Espresso = a cup on a saucer with steam, Carcavelos Wave = a curling turquoise wave with foam,
+    // Dean's List = a graduation cap on a ring of gold coins, Seagull Delivery = a seagull with a red and white
+    // lifebuoy. Drawn on a 72 x 72 grid and scaled to the element's size. Luc's real icons can replace these later.
     // generateVisualContent only runs when MarkDirtyRepaint is called: on a new icon, or every frame while the
     // steam moves (SteamPhase).
     public class ItemIcon : VisualElement
@@ -14,6 +16,14 @@ namespace CarcavelosCircuit.RaceFlow
         private static readonly Color Cup = new Color(0.97f, 0.95f, 0.90f, 1f);    // glazed white, like the box tiles
         private static readonly Color Coffee = new Color(0.36f, 0.20f, 0.10f, 1f);
         private static readonly Color Foam = new Color(1f, 1f, 1f, 1f);
+        private static readonly Color Turquoise = new Color(0.08f, 0.80f, 0.86f, 1f);   // Luc's wave
+        private static readonly Color TurquoiseDeep = new Color(0.04f, 0.50f, 0.62f, 1f);
+        private static readonly Color Gold = new Color(1f, 0.78f, 0.2f, 1f);            // Dean's List coins
+        private static readonly Color GoldDark = new Color(0.78f, 0.52f, 0.06f, 1f);
+        private static readonly Color CapBlack = new Color(0.10f, 0.12f, 0.20f, 1f);     // Nova navy-black
+        private static readonly Color BuoyRed = new Color(0.86f, 0.12f, 0.10f, 1f);
+        private static readonly Color GullGrey = new Color(0.62f, 0.68f, 0.80f, 1f);
+        private static readonly Color Beak = new Color(1f, 0.80f, 0.15f, 1f);
 
         private ItemKind kind = ItemKind.None;
         private float steamPhase;
@@ -44,7 +54,7 @@ namespace CarcavelosCircuit.RaceFlow
             set
             {
                 steamPhase = value;
-                if (kind == ItemKind.Bica || kind == ItemKind.TripleBica)
+                if (kind == ItemKind.Espresso)
                 {
                     MarkDirtyRepaint();
                 }
@@ -62,19 +72,21 @@ namespace CarcavelosCircuit.RaceFlow
             float unit = Mathf.Min(rect.width, rect.height) / Grid;
             Vector2 origin = new Vector2((rect.width - Grid * unit) * 0.5f, (rect.height - Grid * unit) * 0.5f);
 
-            if (kind == ItemKind.Bica)
+            if (kind == ItemKind.Espresso)
             {
                 DrawCup(painter, origin, unit, new Vector2(36f, 44f), 1.25f, 0f);
             }
-            else if (kind == ItemKind.TripleBica)
-            {
-                DrawCup(painter, origin, unit, new Vector2(20f, 54f), 0.72f, 0.33f);
-                DrawCup(painter, origin, unit, new Vector2(52f, 54f), 0.72f, 0.66f);
-                DrawCup(painter, origin, unit, new Vector2(36f, 30f), 0.72f, 0f);
-            }
-            else if (kind == ItemKind.Onda)
+            else if (kind == ItemKind.CarcavelosWave)
             {
                 DrawWave(painter, origin, unit);
+            }
+            else if (kind == ItemKind.DeansList)
+            {
+                DrawCap(painter, origin, unit);
+            }
+            else if (kind == ItemKind.SeagullDelivery)
+            {
+                DrawSeagull(painter, origin, unit);
             }
         }
 
@@ -150,8 +162,8 @@ namespace CarcavelosCircuit.RaceFlow
         // A wave curling over to the left, white foam on the crest, a second smaller wave behind it.
         private static void DrawWave(Painter2D painter, Vector2 origin, float unit)
         {
-            // Back wave (deep blue).
-            painter.fillColor = HudColors.BlueDeep;
+            // Back wave (deep turquoise).
+            painter.fillColor = TurquoiseDeep;
             painter.BeginPath();
             painter.MoveTo(P(origin, unit, 36f, 66f));
             painter.BezierCurveTo(P(origin, unit, 46f, 40f), P(origin, unit, 60f, 32f), P(origin, unit, 70f, 34f));
@@ -160,7 +172,7 @@ namespace CarcavelosCircuit.RaceFlow
             painter.Fill();
 
             // Main wave: rises from the right, curls over to the left and down into its own hollow.
-            painter.fillColor = HudColors.Blue;
+            painter.fillColor = Turquoise;
             painter.BeginPath();
             painter.MoveTo(P(origin, unit, 66f, 66f));
             painter.BezierCurveTo(P(origin, unit, 62f, 40f), P(origin, unit, 52f, 12f), P(origin, unit, 30f, 10f));
@@ -188,6 +200,96 @@ namespace CarcavelosCircuit.RaceFlow
             DrawDot(painter, P(origin, unit, 67f, 26f), 1.6f * unit);
             DrawDot(painter, P(origin, unit, 56f, 12f), 1.8f * unit);
             painter.lineCap = LineCap.Butt;
+        }
+
+        // Dean's List: a ring of gold coins (seen from the front: an oval of dots) with a mortarboard on top.
+        private static void DrawCap(Painter2D painter, Vector2 origin, float unit)
+        {
+            // Coins: dots on an oval, the back half darker.
+            for (int i = 0; i < 9; i++)
+            {
+                float a = i / 9f * Mathf.PI * 2f;
+                bool front = Mathf.Sin(a) > 0f;
+                painter.fillColor = front ? Gold : GoldDark;
+                DrawDot(painter, P(origin, unit, 36f + Mathf.Cos(a) * 26f, 56f + Mathf.Sin(a) * 7f), 5.2f * unit);
+            }
+
+            // Skull cap (the part that sits on the head).
+            painter.fillColor = CapBlack;
+            painter.BeginPath();
+            painter.MoveTo(P(origin, unit, 22f, 32f));
+            painter.LineTo(P(origin, unit, 50f, 32f));
+            painter.LineTo(P(origin, unit, 49f, 50f));
+            painter.BezierCurveTo(P(origin, unit, 42f, 54f), P(origin, unit, 30f, 54f), P(origin, unit, 23f, 50f));
+            painter.ClosePath();
+            painter.Fill();
+
+            // The square board, seen at an angle, with a gold rim.
+            painter.BeginPath();
+            painter.MoveTo(P(origin, unit, 4f, 26f));
+            painter.LineTo(P(origin, unit, 36f, 14f));
+            painter.LineTo(P(origin, unit, 68f, 26f));
+            painter.LineTo(P(origin, unit, 36f, 38f));
+            painter.ClosePath();
+            painter.fillColor = CapBlack;
+            painter.Fill();
+            painter.strokeColor = Gold;
+            painter.lineWidth = 2.4f * unit;
+            painter.Stroke();
+
+            // Tassel: from the button in the middle over the edge and down.
+            painter.lineWidth = 2.2f * unit;
+            painter.BeginPath();
+            painter.MoveTo(P(origin, unit, 36f, 26f));
+            painter.LineTo(P(origin, unit, 58f, 29f));
+            painter.LineTo(P(origin, unit, 58f, 42f));
+            painter.Stroke();
+            painter.fillColor = Gold;
+            DrawDot(painter, P(origin, unit, 36f, 26f), 2.6f * unit);
+            DrawDot(painter, P(origin, unit, 58f, 44f), 3f * unit);
+        }
+
+        // Seagull Delivery: a round white gull with a yellow beak, and its red and white lifebuoy beside it.
+        private static void DrawSeagull(Painter2D painter, Vector2 origin, float unit)
+        {
+            // Lifebuoy (behind the gull): a white ring with four red pieces.
+            Vector2 buoy = P(origin, unit, 50f, 46f);
+            painter.lineWidth = 8f * unit;
+            painter.strokeColor = Foam;
+            painter.BeginPath();
+            painter.Arc(buoy, 14f * unit, Angle.Degrees(0f), Angle.Degrees(360f));
+            painter.Stroke();
+            painter.strokeColor = BuoyRed;
+            for (int i = 0; i < 4; i++)
+            {
+                float start = i * 90f + 22f;
+                painter.BeginPath();
+                painter.Arc(buoy, 14f * unit, Angle.Degrees(start), Angle.Degrees(start + 45f));
+                painter.Stroke();
+            }
+
+            // Body, wing and head.
+            painter.fillColor = Foam;
+            DrawDot(painter, P(origin, unit, 24f, 48f), 14f * unit);
+            painter.fillColor = GullGrey;
+            painter.BeginPath();
+            painter.MoveTo(P(origin, unit, 14f, 42f));
+            painter.BezierCurveTo(P(origin, unit, 22f, 38f), P(origin, unit, 34f, 44f), P(origin, unit, 34f, 54f));
+            painter.BezierCurveTo(P(origin, unit, 26f, 56f), P(origin, unit, 16f, 52f), P(origin, unit, 14f, 42f));
+            painter.Fill();
+            painter.fillColor = Foam;
+            DrawDot(painter, P(origin, unit, 24f, 24f), 11f * unit);
+
+            // Beak pointing right, and an eye.
+            painter.fillColor = Beak;
+            painter.BeginPath();
+            painter.MoveTo(P(origin, unit, 31f, 22f));
+            painter.LineTo(P(origin, unit, 43f, 26f));
+            painter.LineTo(P(origin, unit, 31f, 30f));
+            painter.ClosePath();
+            painter.Fill();
+            painter.fillColor = CapBlack;
+            DrawDot(painter, P(origin, unit, 26f, 21f), 2.2f * unit);
         }
 
         private static void DrawDot(Painter2D painter, Vector2 centre, float radius)
