@@ -648,6 +648,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             AudioSource delayedSource = AddAudioSource(systems, null, false); // record sting, retry beep
             AudioSource menuSource = AddAudioSource(systems, null, false);    // menu sounds (audit 10)
             menuSource.ignoreListenerPause = true; // the mute click and the pause cue must play while AudioListener.pause is on
+            AudioSource chimeSource = AddAudioSource(systems, null, false);   // checkpoint chime, pitched ahead/behind (audit 19)
             RaceSounds sounds = systems.AddComponent<RaceSounds>();
 
             // Music: race loop + results loop + seaside ambience, and RaceMusic, which follows the race and ducks under the beeps.
@@ -700,6 +701,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             sso.FindProperty("retryClick").objectReferenceValue = Clip("ui_click");
             sso.FindProperty("respawnWhoosh").objectReferenceValue = Clip("sfx_respawn");
             sso.FindProperty("menuSource").objectReferenceValue = menuSource;
+            sso.FindProperty("chimeSource").objectReferenceValue = chimeSource;
             sso.FindProperty("menuOpen").objectReferenceValue = Clip("ui_open");     // audit 10
             sso.FindProperty("menuClose").objectReferenceValue = Clip("ui_close");
             sso.FindProperty("pageTurn").objectReferenceValue = Clip("ui_page");

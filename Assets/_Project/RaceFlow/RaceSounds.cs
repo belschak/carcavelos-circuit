@@ -6,6 +6,8 @@ namespace CarcavelosCircuit.RaceFlow
     // click on retry, whoosh on respawn, warning cue for a missed checkpoint.
     // P6b: a soft thud when the medal badge lands on the results card, plus a small ping for a new medal.
     // Audit 10: menu sounds (open, close, page turn, slider step, on/off, mute), asked for by the HUD's menus.
+    // Audit 19: the checkpoint chime is 2 semitones higher when you are ahead of your best, 2 lower when behind;
+    // one quiet warning each time the WRONG WAY chip appears; a short cue when the race pauses and resumes.
     // Results card sounds wait for the finish beat (FinishMoment.BeatFor) and count in REAL time, because the
     // finish slow motion changes Time.timeScale (PlayDelayed and Time.unscaledTime both ignore it).
     // It listens to the RaceManager's events. The sound files live in Audio/Clips; their loudness is set in the
@@ -30,6 +32,9 @@ namespace CarcavelosCircuit.RaceFlow
 
         [SerializeField, Tooltip("2D AudioSource for menu sounds, with Ignore Listener Pause on, so M still clicks while the race is paused")]
         private AudioSource menuSource;
+
+        [SerializeField, Tooltip("2D AudioSource only for the checkpoint chime: its pitch says ahead or behind (audit 19)")]
+        private AudioSource chimeSource;
 
         [SerializeField, Tooltip("Short low beep for 3, 2, 1")]
         private AudioClip countdownBeep;
@@ -88,6 +93,12 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Range(0f, 1f), Tooltip("The new-medal ping, quieter than the record sting")]
         private float newMedalSparkleVolume = 0.55f;
 
+        [SerializeField, Range(0f, 1f), Tooltip("WRONG WAY reuses the missed-checkpoint warning this much quieter (audit 19)")]
+        private float wrongWayVolume = 0.6f;
+
+        [SerializeField, Tooltip("Pitch of the pause and resume cues (the menu close and open notes, a bit lower)")]
+        private float pauseCuePitch = 0.8f;
+
         private RaceState stateLastFrame = RaceState.Ready;
         private float lastHintUntil;
         private float stampAt = -1f;    // Time.unscaledTime when the medal thud plays, -1 = none waiting
@@ -96,6 +107,9 @@ namespace CarcavelosCircuit.RaceFlow
         private void OnEnable()
         {
             if (hud != null) hud.MenuSoundRequested += OnMenuSound;
+            if (hud != null) hud.WrongWayShown += OnWrongWayShown;
+            raceManager.Paused += OnPaused;
+            raceManager.Resumed += OnResumed;
             raceManager.CountdownStep += OnCountdownStep;
             raceManager.CheckpointPassed += OnCheckpointPassed;
             raceManager.LapFinished += OnLapFinished;
@@ -106,6 +120,9 @@ namespace CarcavelosCircuit.RaceFlow
         private void OnDisable()
         {
             if (hud != null) hud.MenuSoundRequested -= OnMenuSound;
+            if (hud != null) hud.WrongWayShown -= OnWrongWayShown;
+            raceManager.Paused -= OnPaused;
+            raceManager.Resumed -= OnResumed;
             raceManager.CountdownStep -= OnCountdownStep;
             raceManager.CheckpointPassed -= OnCheckpointPassed;
             raceManager.LapFinished -= OnLapFinished;
@@ -173,10 +190,39 @@ namespace CarcavelosCircuit.RaceFlow
             Duck(-3f, countdownBeep);
         }
 
+        // RaceManager has already compared this checkpoint with your best lap (HasSplitDelta, LastSplitDelta),
+        // so the chime can say ahead or behind (SplitChime). It has its own source, so changing its pitch never
+        // bends another sound.
         private void OnCheckpointPassed(int index)
         {
-            Play(checkpointChime);
+            int semitones = SplitChime.Semitones(raceManager.HasSplitDelta, raceManager.LastSplitDelta);
+            if (chimeSource != null && checkpointChime != null)
+            {
+                chimeSource.pitch = SplitChime.Pitch(semitones);
+                chimeSource.PlayOneShot(checkpointChime, volume * SoundLevels.Effects);
+            }
+            else
+            {
+                Play(checkpointChime); // an old scene without the chime source: normal pitch
+            }
             Duck(-4f, checkpointChime);
+        }
+
+        private void OnWrongWayShown()
+        {
+            Play(hintWarning, wrongWayVolume);
+        }
+
+        // The menu notes, lower: falling = "stopped", rising = "go on". On the menu source, because the pause has
+        // just switched AudioListener.pause on and that source ignores it.
+        private void OnPaused()
+        {
+            PlayMenu(menuClose, pauseCuePitch);
+        }
+
+        private void OnResumed()
+        {
+            PlayMenu(menuOpen, pauseCuePitch);
         }
 
         private void OnLapFinished(float lapSeconds, bool newRecord)

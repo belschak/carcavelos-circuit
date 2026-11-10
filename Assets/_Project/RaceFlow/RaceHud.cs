@@ -125,6 +125,9 @@ namespace CarcavelosCircuit.RaceFlow
         // RaceHud passes the event on because HudMenus is made new in every OnEnable, while this component stays.
         public event System.Action<MenuSound> MenuSoundRequested;
 
+        // The WRONG WAY chip just appeared (audit 19). Fired once per show, so RaceSounds plays one warning, not one per frame.
+        public event System.Action WrongWayShown;
+
         // What each label shows right now, so we only rebuild its text when this number changes.
         private readonly ShownNumber shownState = new ShownNumber();        // RaceState as int
         private readonly ShownNumber shownTimer = new ShownNumber();        // lap time in ms (fraction label)
@@ -151,6 +154,7 @@ namespace CarcavelosCircuit.RaceFlow
         private float nextShineTime;
         private int countdownGeneration; // makes late scheduled GO-exit calls harmless after a quick retry
         private bool hintWasShown;
+        private bool wrongWayWasShown; // last frame's WRONG WAY chip, to fire WrongWayShown only when it appears
         private int lastStage;      // drift stage last frame, to spot a stage-up
         private bool lastBoosting;  // boost last frame, to spot the boost start
         private int targetMilliseconds = -1; // lap time the next medal needs, -1 = none
@@ -869,9 +873,15 @@ namespace CarcavelosCircuit.RaceFlow
                 isStuck = stuckDetector.Update(kart.Speed, Time.deltaTime);
             }
 
+            bool showWrongWay = isWrongWay && !showHint;
             HudFx.SetShown(hint, showHint);
-            HudFx.SetShown(wrongWay, isWrongWay && !showHint);
+            HudFx.SetShown(wrongWay, showWrongWay);
             HudFx.SetShown(stuck, isStuck && !showHint && !isWrongWay);
+            if (showWrongWay && !wrongWayWasShown && WrongWayShown != null)
+            {
+                WrongWayShown();
+            }
+            wrongWayWasShown = showWrongWay;
 
             if (showHint)
             {

@@ -61,6 +61,8 @@ namespace CarcavelosCircuit.RaceFlow
         public event Action<float, bool> LapFinished;    // lap time, new record?
         public event Action Restarted;
         public event Action Recovered;                   // kart put back after R or a fall (respawn sound)
+        public event Action Paused;                      // the pause started (focus lost or P), audit 19 pause cue
+        public event Action Resumed;                     // the pause ended and the race runs again
 
         private readonly RaceTimer timer = new RaceTimer();
         private readonly RunStats runStats = new RunStats();
@@ -596,6 +598,7 @@ namespace CarcavelosCircuit.RaceFlow
             frozen = true;
             kart.InputEnabled = false; // ends a drift without a boost (the kart's own rule), so resuming never surges
             AudioListener.pause = true;
+            if (Paused != null) Paused();
             return true;
         }
 
@@ -610,6 +613,7 @@ namespace CarcavelosCircuit.RaceFlow
             frozen = false;
             Time.timeScale = timeScaleBeforePause;
             AudioListener.pause = false;
+            if (Resumed != null) Resumed();
         }
 
         // The medal time for one tier in seconds (for the HUD), -1 if there is none.
