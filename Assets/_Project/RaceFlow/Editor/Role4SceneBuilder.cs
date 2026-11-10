@@ -1,6 +1,8 @@
 using CarcavelosCircuit.Audio;
 using CarcavelosCircuit.Shared;
 using CarcavelosCircuit.Shared.Editor;
+using CarcavelosCircuit.Track;
+using Unity.Cinemachine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -27,6 +29,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         private const string HudLayoutPath = Root + "RaceFlow/UI/RaceHud.uxml";
         private const string KartPrefabPath = Root + "RaceFlow/Prefabs/PlaceholderKart.prefab";
         private const string KartAudioPrefabPath = Root + "Audio/Prefabs/KartAudio.prefab";
+        private const string ChaseCameraPrefabPath = Root + "Driving/ChaseCamera.prefab"; // Role 1 (D2), used since Q13
         private const string ClipsFolder = Root + "Audio/Clips/";
         private const string MaterialsFolder = Root + "RaceFlow/Materials/";
         private const string MainScenePath = Root + "RaceFlow/Scenes/Main.unity";
@@ -128,7 +131,10 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             switch (rootName)
             {
                 case "Main Camera":
-                    return new[] { typeof(Transform), typeof(Camera), typeof(AudioListener), typeof(PlaceholderChaseCamera), typeof(MapFlyover), typeof(UniversalAdditionalCameraData) };
+                    return new[] { typeof(Transform), typeof(Camera), typeof(AudioListener), typeof(CinemachineBrain), typeof(ChaseCameraRig), typeof(MapFlyover), typeof(UniversalAdditionalCameraData) };
+                case "ChaseCamera":
+                    // Role 1's prefab instance (D2). Role 1 tunes it in the prefab, never here, so a rebuild loses nothing.
+                    return new[] { typeof(Transform), typeof(CinemachineCamera), typeof(CinemachineFollow), typeof(CinemachineRotationComposer) };
                 case "PostProcessing":
                     return new[] { typeof(Transform), typeof(Volume) };
                 case "RaceSystems":
@@ -136,8 +142,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 case "HUD":
                     return new[] { typeof(Transform), typeof(UIDocument), typeof(RaceHud) };
                 case "Music":
-                    // MusicPlayer = the old music script (before P4), still allowed so an old Main.unity can be rebuilt.
-                    return new[] { typeof(Transform), typeof(AudioSource), typeof(RaceMusic), typeof(MusicPlayer) };
+                    return new[] { typeof(Transform), typeof(AudioSource), typeof(RaceMusic) };
                 case "Ghost":
                     return new[] { typeof(Transform), typeof(GhostRecorder), typeof(GhostPlayer) };
                 default:
@@ -320,6 +325,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             so.FindProperty("boostClip").objectReferenceValue = Clip("el_boost_whoosh");
             so.FindProperty("landClip").objectReferenceValue = Clip("sfx_landing_thud");
             so.FindProperty("shiftClip").objectReferenceValue = Clip("sfx_shift_pop");
+            so.FindProperty("bumpClip").objectReferenceValue = Clip("sfx_wall_bump");          // audit 11
+            so.FindProperty("takeOffClip").objectReferenceValue = Clip("sfx_takeoff_whoosh");
             so.ApplyModifiedPropertiesWithoutUndo();
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(go, KartAudioPrefabPath);
@@ -381,6 +388,25 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             }
             Debug.Log("Role4SceneBuilder: placeholder kart shows Role 3's model " + best);
             return AssetDatabase.LoadAssetAtPath<GameObject>(best);
+        }
+
+        // Role 3's kart effects (V5: drift smoke, sparks, boost flame; Luc's request Q10): the prefab named exactly
+        // "KartEffects" anywhere under Visuals/ (it lives in Visuals/KartEffects/Prefabs/). null until it is merged,
+        // and then the race simply has no effects. Found by name like FindKartVisualPrefab, so the day Luc's PR
+        // lands, one builder run puts it on the kart with nobody touching this file.
+        private static GameObject FindKartEffectsPrefab()
+        {
+            string[] guids = AssetDatabase.FindAssets("KartEffects t:Prefab", new[] { Root + "Visuals" });
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (System.IO.Path.GetFileNameWithoutExtension(path) == "KartEffects")
+                {
+                    Debug.Log("Role4SceneBuilder: the kart gets Role 3's effects " + path);
+                    return AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                }
+            }
+            return null;
         }
 
         private static GameObject FindRealKartPrefab()
@@ -471,8 +497,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             return block;
         }
 
-        // A small rectangular loop (about 230 m, roughly 20 s per lap) to test the race flow until Role 2's campus
-        // track has a TrackInfo. Drive direction: anticlockwise seen from above, starting east on the south straight.
+        // A small rectangular loop (about 230 m, roughly 20 s per lap): the last fallback if no campus scene has a track,
+        // and a quick test bed for the race flow. Built with Role 2's real track parts (TrackInfo, Checkpoint, SpawnPoint,
+        // RespawnPoint). Drive direction: anticlockwise seen from above, starting east on the south straight.
         private static void BuildPlaceholderTrackScene()
         {
             Material asphalt = ColourMaterial("Asphalt", "#55585E", 0.2f);
@@ -487,7 +514,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             sun.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
 
             GameObject root = new GameObject("PlaceholderTrack");
-            PlaceholderTrack track = root.AddComponent<PlaceholderTrack>();
+            TrackInfo track = root.AddComponent<TrackInfo>();
 
             GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "Ground";
@@ -524,7 +551,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             // Checkpoints: 0 = start/finish, then east, north, west straights. Each gets a respawn pose a bit after it.
             Vector3[] positions = { new Vector3(0f, 2f, -22.5f), new Vector3(32.5f, 2f, 0f), new Vector3(0f, 2f, 22.5f), new Vector3(-32.5f, 2f, 0f) };
             float[] yaws = { 90f, 0f, -90f, 180f };
-            PlaceholderCheckpoint[] checkpoints = new PlaceholderCheckpoint[positions.Length];
+            Checkpoint[] checkpoints = new Checkpoint[positions.Length];
             for (int i = 0; i < positions.Length; i++)
             {
                 GameObject cp = new GameObject("Checkpoint " + i);
@@ -538,8 +565,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 GameObject respawn = new GameObject("RespawnPoint");
                 respawn.transform.SetParent(cp.transform, false);
                 respawn.transform.localPosition = new Vector3(0f, -1.5f, 4f); // 4 m after the line, 0.5 m above ground
+                respawn.AddComponent<RespawnPoint>(); // only draws the marker in the Scene view
 
-                PlaceholderCheckpoint checkpoint = cp.AddComponent<PlaceholderCheckpoint>();
+                Checkpoint checkpoint = cp.AddComponent<Checkpoint>();
                 SerializedObject cso = new SerializedObject(checkpoint);
                 cso.FindProperty("index").intValue = i;
                 cso.FindProperty("respawnPoint").objectReferenceValue = respawn.transform;
@@ -551,6 +579,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             spawn.transform.SetParent(root.transform, false);
             spawn.transform.localPosition = new Vector3(4f, 0.3f, -22.5f); // just after the start line, facing east
             spawn.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+            spawn.AddComponent<SpawnPoint>(); // only draws the marker in the Scene view
 
             SerializedObject tso = new SerializedObject(track);
             SerializedProperty list = tso.FindProperty("checkpoints");
@@ -599,7 +628,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             kartPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GetAssetPath(kartPrefab));
             kartAudioPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(KartAudioPrefabPath);
 
-            // Camera with the placeholder chase script and the only AudioListener.
+            // Camera with the only AudioListener. Role 1's Cinemachine chase camera (Q13) drives it through a
+            // CinemachineBrain; ChaseCameraRig connects that camera to the race.
             GameObject cameraObject = new GameObject("Main Camera");
             cameraObject.tag = "MainCamera";
             Camera cam = cameraObject.AddComponent<Camera>();
@@ -607,7 +637,18 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             cam.farClipPlane = 2000f; // the campus world (#33) has sea, backdrop and fort beyond 500 m
             cameraObject.AddComponent<AudioListener>();
             cameraObject.transform.position = new Vector3(0f, 6f, -40f);
-            PlaceholderChaseCamera chase = cameraObject.AddComponent<PlaceholderChaseCamera>();
+            cameraObject.AddComponent<CinemachineBrain>();
+            ChaseCameraRig chase = cameraObject.AddComponent<ChaseCameraRig>();
+            GameObject chasePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ChaseCameraPrefabPath);
+            if (chasePrefab == null)
+            {
+                throw new System.Exception("Role4SceneBuilder: " + ChaseCameraPrefabPath + " not found (Role 1, task D2). Pull main first.");
+            }
+            GameObject chaseObject = (GameObject)PrefabUtility.InstantiatePrefab(chasePrefab, scene);
+            chaseObject.name = "ChaseCamera";
+            SerializedObject cso = new SerializedObject(chase);
+            cso.FindProperty("chaseCamera").objectReferenceValue = chaseObject.GetComponent<CinemachineCamera>();
+            cso.ApplyModifiedPropertiesWithoutUndo();
 
             // Bloom makes the drift sparks and boost flames glow (Role 3's request). The camera must allow
             // post-processing, and one global Volume applies the profile. Role 3 tunes the values in the asset.
@@ -623,17 +664,21 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             RaceBootstrap bootstrap = systems.AddComponent<RaceBootstrap>();
             AudioSource uiSource = AddAudioSource(systems, null, false);
             AudioSource delayedSource = AddAudioSource(systems, null, false); // record sting, retry beep
+            AudioSource menuSource = AddAudioSource(systems, null, false);    // menu sounds (audit 10), RaceSounds.Awake lets it ignore the pause
+            AudioSource chimeSource = AddAudioSource(systems, null, false);   // checkpoint chime, pitched ahead/behind (audit 19)
             RaceSounds sounds = systems.AddComponent<RaceSounds>();
 
-            // Music: race loop + results loop, and RaceMusic, which follows the race and ducks under the beeps.
+            // Music: race loop + results loop + seaside ambience, and RaceMusic, which follows the race and ducks under the beeps.
             GameObject music = new GameObject("Music");
             AudioSource raceMusicSource = AddAudioSource(music, Clip("music_campus_loop"), true);
             AudioSource resultsMusicSource = AddAudioSource(music, Clip("music_results_loop"), true);
+            AudioSource ambienceSource = AddAudioSource(music, Clip("amb_seaside_loop"), true); // waves + gulls (audit 12)
             RaceMusic raceMusic = music.AddComponent<RaceMusic>();
             SerializedObject muso = new SerializedObject(raceMusic);
             muso.FindProperty("raceManager").objectReferenceValue = manager;
             muso.FindProperty("raceMusic").objectReferenceValue = raceMusicSource;
             muso.FindProperty("resultsMusic").objectReferenceValue = resultsMusicSource;
+            muso.FindProperty("ambience").objectReferenceValue = ambienceSource;
             muso.ApplyModifiedPropertiesWithoutUndo();
 
             SerializedObject mso = new SerializedObject(manager);
@@ -643,9 +688,15 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             SerializedObject bso = new SerializedObject(bootstrap);
             bso.FindProperty("settings").objectReferenceValue = settings;
             bso.FindProperty("kartPrefab").objectReferenceValue = kartPrefab;
+            // Spawned as children of the kart: our engine sounds, and Role 3's effects once they exist (Q10).
             SerializedProperty attachments = bso.FindProperty("kartAttachments");
-            attachments.arraySize = 1;
+            GameObject kartEffectsPrefab = FindKartEffectsPrefab();
+            attachments.arraySize = kartEffectsPrefab != null ? 2 : 1;
             attachments.GetArrayElementAtIndex(0).objectReferenceValue = kartAudioPrefab;
+            if (kartEffectsPrefab != null)
+            {
+                attachments.GetArrayElementAtIndex(1).objectReferenceValue = kartEffectsPrefab;
+            }
             bso.FindProperty("raceManager").objectReferenceValue = manager;
             bso.FindProperty("chaseCamera").objectReferenceValue = chase;
             bso.ApplyModifiedPropertiesWithoutUndo();
@@ -672,6 +723,11 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             sso.FindProperty("newMedalSparkle").objectReferenceValue = Clip("sfx_drift_stage2");   // task P6b
             sso.FindProperty("retryClick").objectReferenceValue = Clip("ui_click");
             sso.FindProperty("respawnWhoosh").objectReferenceValue = Clip("sfx_respawn");
+            sso.FindProperty("menuSource").objectReferenceValue = menuSource;
+            sso.FindProperty("chimeSource").objectReferenceValue = chimeSource;
+            sso.FindProperty("menuOpen").objectReferenceValue = Clip("ui_open");     // audit 10
+            sso.FindProperty("menuClose").objectReferenceValue = Clip("ui_close");
+            sso.FindProperty("pageTurn").objectReferenceValue = Clip("ui_page");
             sso.ApplyModifiedPropertiesWithoutUndo();
 
             // HUD (UI Toolkit).
@@ -684,7 +740,16 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             hso.FindProperty("raceManager").objectReferenceValue = manager;
             hso.ApplyModifiedPropertiesWithoutUndo();
 
-            BuildGhost(manager);
+            // The HUD's menus ask RaceSounds for their sounds (audit 10). The HUD exists only now, so it is wired here.
+            SerializedObject soundsToHud = new SerializedObject(sounds);
+            soundsToHud.FindProperty("hud").objectReferenceValue = raceHud;
+            soundsToHud.ApplyModifiedPropertiesWithoutUndo();
+
+            // The ghost chip on the HUD reads the GhostPlayer (audit 13).
+            GhostPlayer ghostPlayer = BuildGhost(manager);
+            SerializedObject hudToGhost = new SerializedObject(raceHud);
+            hudToGhost.FindProperty("ghostPlayer").objectReferenceValue = ghostPlayer;
+            hudToGhost.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, MainScenePath);
 
@@ -699,7 +764,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
 
         // The "Ghost" root object: records every lap, replays the best one as a see-through kart. Called while
         // Main.unity is open, so the material and the text file are loaded after the scene switch (live references).
-        private static void BuildGhost(RaceManager manager)
+        private static GhostPlayer BuildGhost(RaceManager manager)
         {
             Material ghostMaterial = CreateGhostMaterial();
             TextAsset deansGhost = CreateDeansGhostFile();
@@ -722,6 +787,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             {
                 throw new System.Exception("Role4SceneBuilder: the ghost material or DeansGhost.txt is missing.");
             }
+            return player;
         }
 
         // URP Lit, "Surface Type: Transparent, Blending: Alpha", set the same way URP's material Inspector does.

@@ -940,6 +940,8 @@ MonoBehaviour:
   boostClip: {fileID: 8300000, guid: b4244317d61e3304aae720cc80fba033, type: 3}
   landClip: {fileID: 8300000, guid: 6dce6cb5c356a234d828301931c882b2, type: 3}
   shiftClip: {fileID: 8300000, guid: 9ae3823dd67e0514da7aa84056df7858, type: 3}
+  bumpClip: {fileID: 8300000, guid: e0f60d932ff75ff499fbfb6e2e26f197, type: 3}
+  takeOffClip: {fileID: 8300000, guid: 3133036e83cfd6045b5697ccfebf092c, type: 3}
   revRisePerSecond: 2.5
   revFallPerSecond: 2.2
   revBonus: 0.1
@@ -953,3 +955,8 @@ MonoBehaviour:
   windFullVolume: 0.35
   minAirSeconds: 0.3
   teleportDistance: 10
+  bumpMinSpeedDrop: 4
+  bumpFullSpeedDrop: 15
+  bumpMinDeceleration: 60
+  bumpCooldownSeconds: 0.4
+  takeOffAirSeconds: 0.15

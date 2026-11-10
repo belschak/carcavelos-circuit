@@ -1,4 +1,6 @@
 using System.Collections;
+using CarcavelosCircuit.Track;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -21,8 +23,8 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField]
         private RaceManager raceManager;
 
-        [SerializeField, Tooltip("Follows the kart. Replaced by the Role 1 chase camera later; may be left empty then")]
-        private PlaceholderChaseCamera chaseCamera;
+        [SerializeField, Tooltip("Role 1's Cinemachine chase camera, connected to the race (Q13). May be empty: the race still runs")]
+        private ChaseCameraRig chaseCamera;
 
         // Start can be a coroutine: Unity waits for each "yield return" without freezing the game.
         private IEnumerator Start()
@@ -34,7 +36,7 @@ namespace CarcavelosCircuit.RaceFlow
             // Try the track scenes in RaceSettings order (Role 2's campus scene first, then the team's other campus
             // scenes, our small test loop last). The first one that is in the build list and has a track wins.
             string[] candidates = settings.TrackScenesInOrder();
-            PlaceholderTrack track = null;
+            TrackInfo track = null;
             string trackScene = "";
             for (int i = 0; i < candidates.Length && track == null; i++)
             {
@@ -47,10 +49,8 @@ namespace CarcavelosCircuit.RaceFlow
                 else if (SceneManager.GetSceneByName(candidates[i]).isLoaded)
                 {
                     // A scene without a track (still being built): close it so its test camera or lights do not show
-                    // up in the race. A warning, not a log line: on swap day Role 2's TrackInfo may already be in it
-                    // while this code still looks for PlaceholderTrack, and we would race another track unnoticed.
-                    Debug.LogWarning("RaceBootstrap: no PlaceholderTrack found in " + candidates[i] + ", trying the next track scene. "
-                        + "If Role 2's TrackInfo is already in it, do the swap (docs/explain/role4-walkthrough.md, section 5).");
+                    // up in the race. A plain log line: an empty track scene is normal while its owner builds it.
+                    Debug.Log("RaceBootstrap: no TrackInfo found in " + candidates[i] + ", trying the next track scene.");
                     yield return SceneManager.UnloadSceneAsync(candidates[i]);
                 }
             }
@@ -77,13 +77,13 @@ namespace CarcavelosCircuit.RaceFlow
                 }
             }
 
-            // The race first, the camera after: the placeholder camera is removed once Role 1's camera exists,
-            // and a missing camera must never stop the race from being set up.
+            // The race first, the camera after: a missing camera must never stop the race from being set up.
             raceManager.SetUp(kartObject, track, trackScene);
             if (chaseCamera != null)
             {
                 chaseCamera.SetTarget(kartObject.transform);
                 raceManager.Restarted += chaseCamera.SnapBehindTarget;
+                raceManager.Recovered += chaseCamera.SnapBehindTarget; // R or a fall teleports the kart: cut, do not swoop
             }
         }
 
@@ -93,6 +93,7 @@ namespace CarcavelosCircuit.RaceFlow
             if (chaseCamera != null && raceManager != null)
             {
                 raceManager.Restarted -= chaseCamera.SnapBehindTarget;
+                raceManager.Recovered -= chaseCamera.SnapBehindTarget;
             }
         }
 
@@ -112,7 +113,7 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // A track scene may have its own camera for testing it alone. In the race only Main's camera may render
-        // and listen (two AudioListeners = Unity warning, two cameras = wrong picture).
+        // and listen (two AudioListeners = Unity warning, two cameras = wrong picture, two Cinemachine cameras = a fight).
         private static void TurnOffTestCameras(string sceneName)
         {
             GameObject[] roots = SceneManager.GetSceneByName(sceneName).GetRootGameObjects();
@@ -126,11 +127,17 @@ namespace CarcavelosCircuit.RaceFlow
                 {
                     listener.enabled = false;
                 }
+                // A test Cinemachine camera in a track scene would compete with Main's chase camera for the brain.
+                foreach (CinemachineCamera testCamera in roots[i].GetComponentsInChildren<CinemachineCamera>())
+                {
+                    testCamera.enabled = false;
+                }
             }
         }
 
-        // Looks through the scene's top-level objects for the track component.
-        private static PlaceholderTrack FindTrackIn(string sceneName)
+        // Looks through the scene's top-level objects for Role 2's TrackInfo. The old RaceFlow stand-in
+        // PlaceholderTrack is a TrackInfo too (a subclass), so scenes built before the swap are still found.
+        private static TrackInfo FindTrackIn(string sceneName)
         {
             Scene scene = SceneManager.GetSceneByName(sceneName);
             if (!scene.isLoaded)
@@ -140,7 +147,7 @@ namespace CarcavelosCircuit.RaceFlow
             GameObject[] roots = scene.GetRootGameObjects();
             for (int i = 0; i < roots.Length; i++)
             {
-                PlaceholderTrack track = roots[i].GetComponentInChildren<PlaceholderTrack>();
+                TrackInfo track = roots[i].GetComponentInChildren<TrackInfo>();
                 if (track != null)
                 {
                     return track;

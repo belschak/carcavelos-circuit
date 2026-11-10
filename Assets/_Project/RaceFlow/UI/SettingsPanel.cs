@@ -17,14 +17,14 @@ namespace CarcavelosCircuit.RaceFlow
         private static readonly string[] LevelTexts = MakeLevelTexts();
 
         private readonly GameSettings settings;
-        private readonly Action changed; // HudMenus saves and applies the settings
+        private readonly Action<SettingsItem> changed; // HudMenus saves and applies the settings, and plays the step sound
         private readonly VisualElement[] rows = new VisualElement[RowNames.Length];
         private readonly Label[] values = new Label[RowNames.Length];
         private readonly VisualElement[][] cells = new VisualElement[RowNames.Length][];
         private readonly List<VisualElement> clickables = new List<VisualElement>();
         private int selected;
 
-        public SettingsPanel(VisualElement card, GameSettings settings, Action changed)
+        public SettingsPanel(VisualElement card, GameSettings settings, Action<SettingsItem> changed)
         {
             this.settings = settings;
             this.changed = changed;
@@ -145,7 +145,7 @@ namespace CarcavelosCircuit.RaceFlow
             Select(item);
             if (settings.Change(item, direction))
             {
-                changed();
+                changed(item);
             }
             Refresh();
         }
@@ -155,7 +155,7 @@ namespace CarcavelosCircuit.RaceFlow
             Select(item);
             if (settings.SetVolumeLevel(item, level))
             {
-                changed();
+                changed(item);
             }
             Refresh();
         }
@@ -165,7 +165,7 @@ namespace CarcavelosCircuit.RaceFlow
             Select(item);
             if (settings.Toggle(item))
             {
-                changed();
+                changed(item);
             }
             Refresh();
         }
