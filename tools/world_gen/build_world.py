@@ -404,6 +404,7 @@ def build_route_guide():
 
 
 PASSAGE_RUNS = []                   # route pieces inside drive-through buildings (for env_interior)
+PASSAGE_EXTENTS = []                # per piece: hall widths (left, right) per point for the atrium, None for the plain ones
 PASSAGE_WIDTH = ROUTE_WIDTH + 2.0   # metres, a bit wider than the road so the walls don't touch it
 PASSAGE_HEIGHT = 7.0                # metres of clear height above the road (the atrium roof stays on top)
 PASSAGE_EXTEND = 5                  # route points (2 m each) the cut reaches past each wall
@@ -418,19 +419,24 @@ def inside_polygon(x, y, poly):
     return hit
 
 
-def passage_cutter(run):
-    """Closed box swept along route points: the space the kart drives through inside a building."""
+def passage_cutter(run, extents=None):
+    """Closed box swept along route points: the space the kart drives through inside a building.
+    extents = [(left, right)] per point makes it the atrium hall (wider, taller, see env_interior.py)."""
     bm = bmesh.new()
     rings = []
     for k, p in enumerate(run):
         a, b = run[max(k - 1, 0)], run[min(k + 1, len(run) - 1)]
         d = math.hypot(b["x"] - a["x"], b["y"] - a["y"]) or 1.0
-        sx, sy = -(b["y"] - a["y"]) / d * PASSAGE_WIDTH / 2, (b["x"] - a["x"]) / d * PASSAGE_WIDTH / 2
+        nx, ny = -(b["y"] - a["y"]) / d, (b["x"] - a["x"]) / d                  # left normal
+        left, right = (extents[k] if extents else (PASSAGE_WIDTH / 2, PASSAGE_WIDTH / 2))
+        height = env_interior.HALL_HEIGHT if extents else PASSAGE_HEIGHT
         ground, drive = ground_z(p["x"], p["y"]), p.get("track_z", ground_z(p["x"], p["y"]))
         bottom = drive              # the building keeps a floor at driving height (no gap beside the road)
-        top = max(drive, ground) + PASSAGE_HEIGHT
-        rings.append([bm.verts.new((p["x"] + sx, p["y"] + sy, bottom)), bm.verts.new((p["x"] - sx, p["y"] - sy, bottom)),
-                      bm.verts.new((p["x"] - sx, p["y"] - sy, top)), bm.verts.new((p["x"] + sx, p["y"] + sy, top))])
+        top = max(drive, ground) + height
+        rings.append([bm.verts.new((p["x"] + nx * left, p["y"] + ny * left, bottom)),
+                      bm.verts.new((p["x"] - nx * right, p["y"] - ny * right, bottom)),
+                      bm.verts.new((p["x"] - nx * right, p["y"] - ny * right, top)),
+                      bm.verts.new((p["x"] + nx * left, p["y"] + ny * left, top))])
     for r0, r1 in zip(rings, rings[1:]):
         for i in range(4):
             bm.faces.new((r0[i], r0[(i + 1) % 4], r1[(i + 1) % 4], r1[i]))
@@ -469,14 +475,17 @@ def carve_drive_throughs():
         obj = objects[b["id"]]
         for run in runs:
             idx = [(run[0] - k) % n for k in range(PASSAGE_EXTEND, 0, -1)] + run + [(run[-1] + k) % n for k in range(1, PASSAGE_EXTEND + 1)]
-            cutter_mesh = passage_cutter([pts[i] for i in idx])
+            run_pts = [pts[i] for i in idx]
+            ext = env_interior.extents(run_pts, b["points"]) if env_interior.is_atrium(b["name"], run_pts) else None
+            cutter_mesh = passage_cutter(run_pts, ext)
             cutter_mesh.materials.append(E.material("B_interior_wall", "#F1EFEA", 0.8))
             cutter = new_object("Cutter_" + b["id"], cutter_mesh, tmp)
             mod = obj.modifiers.new("passage", "BOOLEAN")
             mod.operation, mod.solver, mod.object = "DIFFERENCE", "EXACT", cutter
             if hasattr(mod, "material_mode"):
                 mod.material_mode = "TRANSFER"       # the cut faces get the interior wall material
-            PASSAGE_RUNS.append([pts[i] for i in idx])
+            PASSAGE_RUNS.append(run_pts)
+            PASSAGE_EXTENTS.append(ext)
             carved = bpy.data.meshes.new_from_object(obj.evaluated_get(bpy.context.evaluated_depsgraph_get()))
             obj.modifiers.remove(mod)
             old = obj.data
@@ -578,7 +587,7 @@ def main():
     env_trackside.build()                  # edge lines + corner signs (readability), exported with the track
     env_tunnel.build()
     carve_drive_throughs()
-    env_interior.dress(PASSAGE_RUNS, PASSAGE_WIDTH)
+    env_interior.dress(PASSAGE_RUNS, PASSAGE_WIDTH, PASSAGE_EXTENTS)
     env_backdrop.build(heights)
     add_origin_marker()
     env_materials.upgrade_all()

@@ -84,11 +84,11 @@ def passage_lights():
     pts = [p for p in E.route_points() if p["zone"] == "atrium"]
     for k, p in enumerate(pts[::5]):
         light = bpy.data.lights.new(f"HallLight{k}", type="AREA")
-        light.energy = 900.0
-        light.size = 4.0
+        light.energy = 2600.0                  # the atrium is 10 m high (env_interior.HALL_HEIGHT)
+        light.size = 6.0
         light.color = (1.0, 0.97, 0.9)
         obj = bpy.data.objects.new(f"HallLight{k}", light)
-        obj.location = (p["x"], p["y"], p["track_z"] + 6.7)
+        obj.location = (p["x"], p["y"], p["track_z"] + 8.6)
         col.objects.link(obj)
 
 
