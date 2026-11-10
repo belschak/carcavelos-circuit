@@ -361,7 +361,7 @@
                     <!-- Page 2: tools and sources (as in THIRD_PARTY.md and the README credits) -->
                     <ui:VisualElement name="credits-page-2" class="credits-page">
                         <ui:Label text="BUILT WITH" class="credits-head f-ui" />
-                        <ui:Label text="Unity 6.3 LTS  ·  Universal Render Pipeline  ·  UI Toolkit  ·  Input System  ·  Blender" class="credit-text f-ui" />
+                        <ui:Label text="Unity 6.3 LTS  ·  Universal Render Pipeline  ·  Cinemachine  ·  UI Toolkit  ·  Input System  ·  Blender" class="credit-text f-ui" />
                         <ui:Label text="SOUND" class="credits-head credits-head--next f-ui" />
                         <ui:Label text="Sound effects: elevenlabs.io (kart engine and drift by Luc Tippmann, boost by David Belschak). Music and all other sounds: our own synthesised work." class="credit-text f-ui" />
                         <ui:Label text="MAP DATA" class="credits-head credits-head--next f-ui" />
