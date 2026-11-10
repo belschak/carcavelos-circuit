@@ -441,6 +441,45 @@ def wind_loop():
     return normalise(out, -6.0)
 
 
+def gull_call(seed):
+    # One distant gull "kyow": a falling, wobbly cry with a few harmonics, softened like it is far away.
+    rnd = random.Random(seed)
+    length = 0.28 + 0.06 * rnd.random()
+    start = 1900.0 + 200.0 * rnd.random()
+    x = tone(start, length, partials=((1, 1.0), (2, 0.35), (3, 0.12)), vibrato=0.4, vib_rate=11.0,
+             glide_to=start * 0.62)
+    x = mul(x, envelope(len(x), 0.03, length * 0.6))
+    return lowpass(x, 3000.0)
+
+
+def seaside_loop():
+    # Praia de Carcavelos (audit 12): two waves rolling in and washing back, plus three distant gull calls.
+    # 8 s loop. RaceMusic plays it quietly (about -20 dB) under everything; standing still is no longer silent.
+    seconds = 8.0
+    fade = 0.5
+    n = int((seconds + fade) * SR)
+    # Waves: deep rumble (low-passed noise) and the hiss of the wash (band-passed noise), both swelling with
+    # the wave envelope. Two waves per loop, the second one smaller, so the loop does not sound like a clock.
+    rumble = lowpass(noise(n, 91), 220.0)
+    hiss = bandpass(noise(n, 93), 1800.0, q=0.7)
+    swell = [0.0] * n
+    for start, size in ((0.0, 1.0), (4.2, 0.7)):
+        for i in range(n):
+            t = i / SR - start
+            if t < 0.0:
+                t += seconds  # the tail of a wave from the end of the loop
+            if 0.0 <= t < 4.6:
+                rise = min(1.0, t / 1.6)           # the wave builds up
+                fall = math.exp(-max(0.0, t - 1.6) / 1.1)  # breaks and washes back
+                swell[i] = max(swell[i], size * rise * rise * fall)
+    waves = [(r * 2.2 + h * (0.4 + 0.8 * s)) * (0.15 + s) for r, h, s in zip(rumble, hiss, swell)]
+    out = list(waves)
+    for start, seed in ((1.3, 101), (1.75, 103), (5.6, 107)):
+        mix_into(out, gull_call(seed), start, 0.18)
+    out = loop_crossfade(out[:n], fade)
+    return normalise(out, -6.0)
+
+
 # ---------- music ----------
 
 def music_loop():
@@ -589,6 +628,7 @@ SOUNDS = {
     "ui_page": ui_page,
     "sfx_wall_bump": wall_bump,
     "sfx_takeoff_whoosh": takeoff_whoosh,
+    "amb_seaside_loop": seaside_loop,
 }
 
 

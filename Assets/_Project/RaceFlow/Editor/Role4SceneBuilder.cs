@@ -650,15 +650,17 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             menuSource.ignoreListenerPause = true; // the mute click and the pause cue must play while AudioListener.pause is on
             RaceSounds sounds = systems.AddComponent<RaceSounds>();
 
-            // Music: race loop + results loop, and RaceMusic, which follows the race and ducks under the beeps.
+            // Music: race loop + results loop + seaside ambience, and RaceMusic, which follows the race and ducks under the beeps.
             GameObject music = new GameObject("Music");
             AudioSource raceMusicSource = AddAudioSource(music, Clip("music_campus_loop"), true);
             AudioSource resultsMusicSource = AddAudioSource(music, Clip("music_results_loop"), true);
+            AudioSource ambienceSource = AddAudioSource(music, Clip("amb_seaside_loop"), true); // waves + gulls (audit 12)
             RaceMusic raceMusic = music.AddComponent<RaceMusic>();
             SerializedObject muso = new SerializedObject(raceMusic);
             muso.FindProperty("raceManager").objectReferenceValue = manager;
             muso.FindProperty("raceMusic").objectReferenceValue = raceMusicSource;
             muso.FindProperty("resultsMusic").objectReferenceValue = resultsMusicSource;
+            muso.FindProperty("ambience").objectReferenceValue = ambienceSource;
             muso.ApplyModifiedPropertiesWithoutUndo();
 
             SerializedObject mso = new SerializedObject(manager);

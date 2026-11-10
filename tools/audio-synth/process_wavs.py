@@ -42,6 +42,7 @@ PLAN = {
     "kart_drift_squeal": (None, True, False),
     "kart_drift_sparks": (-21.0, True, False),
     "amb_wind_loop": (-22.0, True, False),
+    "amb_seaside_loop": (-22.0, True, False),  # audit 12, RaceMusic plays it about 20 dB lower again
     "kart_drift_start": (-15.0, False, False),
     "kart_drift_stage_up": (-15.0, False, False),
     "el_boost_whoosh": (-15.0, False, False),

@@ -10,6 +10,8 @@ namespace CarcavelosCircuit.RaceFlow
     // - Finish: race music fades out under the jingle, then the calm results loop starts.
     // - Ducking: RaceSounds calls Duck() so the music dips under beeps, chimes and jingles.
     // - The engine and kart effects get quieter on the results screen (KartAudio.SetMixLevels).
+    // - Seaside ambience (audit 12): waves and distant gulls loop quietly the whole time, a bit lower while racing
+    //   (the engine and the music fill the space) and a bit higher on the results screen (a calm beach).
     // - Browser tab hidden or game window unfocused: all sound pauses (AudioListener.pause).
     // Unity's Web build only supports volume changes (no mixer effects), so every level here is a script fade
     // in dB instead of an AudioMixer snapshot. Numbers from audio-polish-plan.md section 2.2.
@@ -24,11 +26,22 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("Looping results music (music_results_loop)")]
         private AudioSource resultsMusic;
 
+        [SerializeField, Tooltip("Looping seaside ambience: waves and distant gulls (amb_seaside_loop, audit 12)")]
+        private AudioSource ambience;
+
         [Header("Music level per phase (dB, 0 = the file's own level)")]
         [SerializeField] private float titleDb = -10f;
         [SerializeField] private float racingDb = -8f;
         [SerializeField] private float finalStretchDb = -5f;
         [SerializeField] private float resultsDb = -2f;
+
+        [Header("Seaside ambience per phase (dB, audit 12). Follows the Effects slider")]
+        [SerializeField] private float ambienceTitleDb = -20f;
+        [SerializeField] private float ambienceRacingDb = -24f;
+        [SerializeField] private float ambienceResultsDb = -18f;
+
+        [SerializeField, Tooltip("Seconds of the ambience fades (slow: the beach never jumps)")]
+        private float ambienceFadeSeconds = 1.5f;
 
         [Header("Engine and kart effects per phase (dB)")]
         [SerializeField] private float engineCountdownDb = -3f;
@@ -65,6 +78,7 @@ namespace CarcavelosCircuit.RaceFlow
         private LevelFade resultsLevel;
         private LevelFade engineLevel;
         private LevelFade effectsLevel;
+        private LevelFade ambienceLevel;
         private DuckEnvelope duck;
         private KartAudio kartAudio;
         private bool onFinalStretch; // true from the last checkpoint until the next GO
@@ -77,6 +91,7 @@ namespace CarcavelosCircuit.RaceFlow
             resultsLevel = new LevelFade(Decibels.Silent);
             engineLevel = new LevelFade(0f);
             effectsLevel = new LevelFade(0f);
+            ambienceLevel = new LevelFade(ambienceTitleDb);
             duck = new DuckEnvelope(200f, 15f); // down in about 0.03 s, back up at 15 dB per second
         }
 
@@ -106,6 +121,11 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 resultsMusic.loop = true;
             }
+            if (ambience != null)
+            {
+                ambience.loop = true;
+                ambience.Play(); // runs from the title screen on; only its volume changes, like the kart loops
+            }
             Apply();
         }
 
@@ -126,6 +146,7 @@ namespace CarcavelosCircuit.RaceFlow
                 resultsLevel.FadeTo(Decibels.Silent, countdownFadeSeconds);
                 engineLevel.FadeTo(engineCountdownDb, countdownFadeSeconds);
                 effectsLevel.FadeTo(effectsCountdownDb, countdownFadeSeconds);
+                ambienceLevel.FadeTo(ambienceTitleDb, ambienceFadeSeconds); // a retry from the results: back to the start level
                 return;
             }
 
@@ -145,6 +166,7 @@ namespace CarcavelosCircuit.RaceFlow
             raceLevel.FadeTo(racingDb, goFadeSeconds);
             engineLevel.FadeTo(0f, goFadeSeconds);
             effectsLevel.FadeTo(0f, goFadeSeconds);
+            ambienceLevel.FadeTo(ambienceRacingDb, ambienceFadeSeconds);
         }
 
         private void OnCheckpointPassed(int index)
@@ -163,6 +185,7 @@ namespace CarcavelosCircuit.RaceFlow
             raceLevel.FadeTo(Decibels.Silent, resultsFadeSeconds);
             engineLevel.FadeTo(engineResultsDb, resultsFadeSeconds);
             effectsLevel.FadeTo(effectsResultsDb, resultsFadeSeconds);
+            ambienceLevel.FadeTo(ambienceResultsDb, ambienceFadeSeconds);
             if (resultsMusic != null && resultsMusic.clip != null)
             {
                 resultsMusic.Stop();
@@ -179,6 +202,7 @@ namespace CarcavelosCircuit.RaceFlow
             resultsLevel.Tick(dt);
             engineLevel.Tick(dt);
             effectsLevel.Tick(dt);
+            ambienceLevel.Tick(dt);
             duck.Tick(dt);
 
             // Final stretch pitch lift: glide up, never jump (a jump would sound like a broken tape).
@@ -203,6 +227,11 @@ namespace CarcavelosCircuit.RaceFlow
             if (resultsMusic != null)
             {
                 resultsMusic.volume = Decibels.ToVolume(resultsLevel.CurrentDb + duck.CurrentDb) * SoundLevels.Music;
+            }
+            if (ambience != null)
+            {
+                // Not ducked: the sea does not get quieter for a beep. It is a sound effect, so the Effects slider sets it.
+                ambience.volume = Decibels.ToVolume(ambienceLevel.CurrentDb) * SoundLevels.Effects;
             }
 
             // The kart (and its KartAudio child) is spawned at runtime, so we look it up once it exists.
