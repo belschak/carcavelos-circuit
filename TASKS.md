@@ -27,7 +27,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | T1 | Final route in `docs/route.md` from the campus walk (sketch, sections, lengths, ramp size) | Sat 7 | todo |
 | T2 | Grey-box loop in `Track_Campus` at real scale: road, walls, main buildings as blocks, elevation | Mon 9 | todo |
 | T3 | Ramp D/B wing, tunnel, beach promenade in grey | Wed 11 | todo |
-| T4 | `Checkpoint`, `SpawnPoint`, respawn points, `TrackInfo` | Tue 10 | todo |
+| T4 | `Checkpoint`, `SpawnPoint`, respawn points, `TrackInfo` | Tue 10 | in review (Noah, PR #48) |
 | T5 | `RaceRules` (plain C#) + Edit Mode tests: order, wrong way, duplicate finish, missed checkpoint | Wed 11 | in review (Noah, PR #47) |
 | T6 | Lap time 35-60 s check with the real kart; adjust route | Fri 13 | todo |
 
