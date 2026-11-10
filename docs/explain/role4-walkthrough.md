@@ -29,7 +29,8 @@ RaceManager.Update()  every frame
   |
   +--> RaceHud (UI Toolkit)  polls State, LapSeconds, BestSeconds, Kart ... every frame, new text only on change
   +--> RaceSounds            listens to events CountdownStep, CheckpointPassed, LapFinished, Restarted, Recovered
-  '--> KartAudio (Audio)     reads IKartState of its parent kart every frame; MusicPlayer loops music
+  +--> RaceMusic             listens to the same events: music, seaside ambience and the mix levels per phase
+  '--> KartAudio (Audio)     reads IKartState of its parent kart every frame (engine, drift, boost, bump, jump)
 ```
 
 Suggested order for the live walkthrough (about 5 minutes):
@@ -287,9 +288,9 @@ Three guesses from `IKartState` alone, because the contract has no "hit a wall",
 - Likely question: "How do you know the kart hit a wall if Role 1 never tells you?" Answer: "I do not know it, I guess it: a drop that is far faster than any brake can only be a hit. The rule is one line, and `WallBumpDetectorTests` proves a hard brake in a slow frame does not count."
 - Honest limit: the thresholds are first guesses, written without a playtest on the campus track; tune `bumpMinSpeedDrop` / `bumpMinDeceleration` on the `KartAudio` prefab (through the builder) if the thud fires too often or never.
 
-### 3.16 `Audio/MusicPlayer.cs` (no longer used in Main since P4)
+### 3.16 `Audio/MusicPlayer.cs` (deleted 2026-11-10, audit 18)
 
-`[RequireComponent(typeof(AudioSource))]`; `Start()` sets loop, volume 0.3, 2D, plays the clip if set. Replaced in `Main.unity` by `RaceFlow/RaceMusic` (3.11b); the file stays until it is deleted in the Unity Editor. "Browsers mute audio until the first input; Unity resumes it then, and the start screen guarantees that input."
+The first music script (loop one clip at volume 0.3) was replaced by `RaceFlow/RaceMusic` (3.11b) in P4 and had no reference left in any scene or prefab, so it and its builder allowance are gone. The synth clips `loop_drift`, `loop_engine`, `sfx_boost_whoosh`, `sfx_drift_stage1` are also unused on purpose: CC0 backups of Luc's ElevenLabs kart sounds (`THIRD_PARTY.md`), not referenced by any scene, so they are not in the Web build.
 
 ### 3.17 `RaceFlow/Editor/Role4SceneBuilder.cs` (editor only)
 

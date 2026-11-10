@@ -142,8 +142,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 case "HUD":
                     return new[] { typeof(Transform), typeof(UIDocument), typeof(RaceHud) };
                 case "Music":
-                    // MusicPlayer = the old music script (before P4), still allowed so an old Main.unity can be rebuilt.
-                    return new[] { typeof(Transform), typeof(AudioSource), typeof(RaceMusic), typeof(MusicPlayer) };
+                    return new[] { typeof(Transform), typeof(AudioSource), typeof(RaceMusic) };
                 case "Ghost":
                     return new[] { typeof(Transform), typeof(GhostRecorder), typeof(GhostPlayer) };
                 default:

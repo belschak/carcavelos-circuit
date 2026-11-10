@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace CarcavelosCircuit.RaceFlow
 {
-    // Task P4: the music and the overall mix, following the race (replaces Audio/MusicPlayer in Main.unity).
+    // Task P4: the music and the overall mix, following the race (it replaced the first, much simpler music script).
     // - Title screen: race music quietly. Countdown: music fades out, so the beeps are alone.
     // - GO: the race music starts again from bar 1, so its first beat lands on GO (120 BPM = the countdown rhythm).
     // - Last checkpoint passed: the music glides up one semitone and gets a bit louder (the "final stretch" lift).
