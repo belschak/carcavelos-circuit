@@ -9,8 +9,7 @@ namespace CarcavelosCircuit.Track.Editor
     // the prefab Track/Prefabs/WhiteGuardrails.prefab, its meshes and one white material.
     // The prefab sits at (0, 0, 0): drag it into a scene at the origin and the fence lines up with the road.
     // No fence inside the tunnel (it ends with a post right at the tunnel mouth) and none at the terrace jump.
-    // Inside the Nova hall the route data does not match the building, so there the fence follows lines drawn by hand
-    // (GuardrailPath objects in the open scene, saved to HallGuardrailLines.json).
+    // None inside the Nova hall either: the hall has its own railing, which leads cleanly through the doors.
     // Rerun after Role 3 exports a new track.json; the prefab keeps its GUID, so scenes keep their reference.
     public static class WhiteGuardrailBuilder
     {
@@ -34,21 +33,6 @@ namespace CarcavelosCircuit.Track.Editor
         private const float WallThickness = 0.3f;
         private const string JumpZone = "kicker";    // zone name of the terrace jump in track.json
         private const string HallZone = "atrium";    // zone name of the Nova hall in track.json
-        private const float HallExtraWidth = 3f;     // starting lines in the hall stand this much further out than outside
-        private const string HandLinesPath = "Assets/_Project/Track/Editor/HallGuardrailLines.json";
-
-        // Hand-drawn lines inside the hall (from GuardrailPath objects), saved as JSON so they survive without the scene.
-        [System.Serializable]
-        private class HandLine
-        {
-            public Vector3[] points;
-        }
-
-        [System.Serializable]
-        private class HandLineList
-        {
-            public HandLine[] lines = new HandLine[0];
-        }
 
         // Same field names as Role 3's track.json, so JsonUtility can read it.
         [System.Serializable]
@@ -66,7 +50,6 @@ namespace CarcavelosCircuit.Track.Editor
         }
 
         private static TrackPoint[] points;
-        private static HandLine[] handLines = new HandLine[0];
 
         [MenuItem("Carcavelos Circuit/Build White Guardrails (Role 2)")]
         public static void Build()
@@ -77,7 +60,6 @@ namespace CarcavelosCircuit.Track.Editor
                 return;
             }
             points = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataPath)).points;
-            handLines = LoadHandLines();
             EnsureFolder(PrefabFolder);
             EnsureFolder(MeshFolder);
 
@@ -86,10 +68,6 @@ namespace CarcavelosCircuit.Track.Editor
             int posts = 0;
             posts += AddSide(fence, wall, 1f);
             posts += AddSide(fence, wall, -1f);
-            for (int i = 0; i < handLines.Length; i++)
-            {
-                posts += AddHandLine(fence, wall, handLines[i].points);
-            }
 
             Mesh fenceMesh = SaveMesh(fence.ToMesh("WhiteGuardrails_Fence"), MeshFolder + "/WhiteGuardrails_Fence.asset");
             Mesh wallMesh = SaveMesh(wall.ToMesh("WhiteGuardrails_Wall"), MeshFolder + "/WhiteGuardrails_Wall.asset");
@@ -102,101 +80,9 @@ namespace CarcavelosCircuit.Track.Editor
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             Object.DestroyImmediate(root);
             AssetDatabase.SaveAssets();
-            Debug.Log("WhiteGuardrailBuilder: saved " + PrefabPath + " with " + posts + " posts and " + handLines.Length
-                + " hand-drawn hall lines. Drag it into the scene at position 0, 0, 0.");
+            Debug.Log("WhiteGuardrailBuilder: saved " + PrefabPath + " with " + posts + " posts. Drag it into the scene at position 0, 0, 0.");
         }
 
-        // Starting point for drawing by hand: one GuardrailPath per side of each hall passage, made from the route
-        // (a point every 6 m, wider in the middle, normal width at the doors). Then drag the points to where the fence belongs.
-        [MenuItem("Carcavelos Circuit/Start Hall Guardrail Lines From Route (Role 2)")]
-        public static void StartHallLines()
-        {
-            points = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataPath)).points;
-            int n = points.Length;
-            int made = 0;
-            for (int i = 1; i < n; i++)
-            {
-                // A passage starts where the zone switches to the hall; it runs until the zone switches back.
-                if (points[i].zone != HallZone || points[i - 1].zone == HallZone)
-                {
-                    continue;
-                }
-                int last = i;
-                while (last + 1 < n && points[last + 1].zone == HallZone)
-                {
-                    last++;
-                }
-                if (last + 1 >= n)
-                {
-                    continue; // the hall would reach the end of the data; never happens with the current track.json
-                }
-                made++;
-                MakeHallLine("HallRail " + made + " Right", i - 1, last + 1, 1f);
-                MakeHallLine("HallRail " + made + " Left", i - 1, last + 1, -1f);
-            }
-            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
-            Debug.Log("WhiteGuardrailBuilder: made " + (made * 2) + " hall lines from the route. Drag their points, then Build White Guardrails.");
-        }
-
-        // One line from route point "from" to "to" (both just outside the hall, where the outside fence ends).
-        private static void MakeHallLine(string name, int from, int to, float side)
-        {
-            GameObject line = new GameObject(name);
-            Undo.RegisterCreatedObjectUndo(line, "Start hall guardrail lines");
-            line.transform.position = new Vector3(0f, points[from + 1].y, 0f); // Shift + click draws at the hall floor height
-            line.AddComponent<GuardrailPath>();
-            int count = 0;
-            for (int i = from; i <= to; i += 3)
-            {
-                AddHallPoint(line.transform, i, from, to, side, count);
-                count++;
-            }
-            if ((to - from) % 3 != 0)
-            {
-                AddHallPoint(line.transform, to, from, to, side, count); // always end exactly at the outside fence
-            }
-        }
-
-        private static void AddHallPoint(Transform line, int i, int from, int to, float side, int count)
-        {
-            // 0 at the doors, 1 after 8 m inside the hall: the lane widens smoothly.
-            float fromDoor = Mathf.Min(i - from, to - i) * 2f;
-            float extra = HallExtraWidth * Mathf.Clamp01(fromDoor / 8f);
-            GameObject point = new GameObject("Point " + count);
-            point.transform.SetParent(line, false);
-            point.transform.position = Pos(i) + Right(i) * (side * (points[i].width * 0.5f + EdgeOffset + extra));
-        }
-
-        // If the open scene has GuardrailPath objects, their points become the hall lines and are saved to the JSON.
-        // Otherwise the lines saved last time are used, so the fence also builds without the test scene.
-        private static HandLine[] LoadHandLines()
-        {
-            GuardrailPath[] paths = Object.FindObjectsByType<GuardrailPath>(FindObjectsSortMode.InstanceID);
-            if (paths.Length > 0)
-            {
-                HandLineList list = new HandLineList();
-                list.lines = new HandLine[paths.Length];
-                for (int p = 0; p < paths.Length; p++)
-                {
-                    Transform t = paths[p].transform;
-                    list.lines[p] = new HandLine();
-                    list.lines[p].points = new Vector3[t.childCount];
-                    for (int c = 0; c < t.childCount; c++)
-                    {
-                        list.lines[p].points[c] = t.GetChild(c).position;
-                    }
-                }
-                File.WriteAllText(HandLinesPath, JsonUtility.ToJson(list, true));
-                AssetDatabase.ImportAsset(HandLinesPath);
-                Debug.Log("WhiteGuardrailBuilder: saved " + paths.Length + " hall lines from the open scene to " + HandLinesPath);
-                return list.lines;
-            }
-            if (File.Exists(HandLinesPath))
-            {
-                return JsonUtility.FromJson<HandLineList>(File.ReadAllText(HandLinesPath)).lines;
-            }
-            return new HandLine[0];
-        }
 
         // One side of the road (side = +1 right, -1 left, seen in driving direction). Returns the number of posts.
         private static int AddSide(NovaMesh fence, NovaMesh wall, float side)
@@ -228,20 +114,6 @@ namespace CarcavelosCircuit.Track.Editor
                 AddBoards(fence, a, b);
                 AddWall(wall, a, b, Right(i) * (side * WallThickness * 0.5f)); // wall just outside the fence line
                 posts += AddPosts(fence, a, b, runStarts, runEnds, ref sinceLastPost);
-            }
-            return posts;
-        }
-
-        // One hand-drawn line from inside the hall: same boards and posts, a post at both ends.
-        private static int AddHandLine(NovaMesh fence, NovaMesh wall, Vector3[] line)
-        {
-            int posts = 0;
-            float sinceLastPost = 0f;
-            for (int i = 0; i + 1 < line.Length; i++)
-            {
-                AddBoards(fence, line[i], line[i + 1]);
-                AddWall(wall, line[i], line[i + 1], Vector3.zero); // drawn line = the middle of the wall
-                posts += AddPosts(fence, line[i], line[i + 1], i == 0, i + 2 == line.Length, ref sinceLastPost);
             }
             return posts;
         }
@@ -290,9 +162,9 @@ namespace CarcavelosCircuit.Track.Editor
             {
                 return false; // the kart flies off the terrace here; a fence would hang in the air
             }
-            if (handLines.Length > 0 && (points[i].zone == HallZone || points[j].zone == HallZone))
+            if (points[i].zone == HallZone || points[j].zone == HallZone)
             {
-                return false; // inside the hall the hand-drawn lines take over
+                return false; // the hall has its own railing
             }
             return !OnOtherRoad(i, side) && !OnOtherRoad(j, side);
         }
