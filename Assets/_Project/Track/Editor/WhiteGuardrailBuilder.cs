@@ -54,6 +54,7 @@ namespace CarcavelosCircuit.Track.Editor
 
         private static TrackPoint[] points;
         private static HallRailingCourse.Course hall;
+        private static bool[] inHall;   // route points just inside a hall door (HallDoorApproach)
 
         [MenuItem("Carcavelos Circuit/Build White Guardrails (Role 2)")]
         public static void Build()
@@ -65,6 +66,7 @@ namespace CarcavelosCircuit.Track.Editor
             }
             points = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataPath)).points;
             hall = HallRailingCourse.Load();
+            LineUpWithHallDoors();
             EnsureFolder(PrefabFolder);
             EnsureFolder(MeshFolder);
 
@@ -88,6 +90,31 @@ namespace CarcavelosCircuit.Track.Editor
             AssetDatabase.SaveAssets();
             Debug.Log("WhiteGuardrailBuilder: saved " + PrefabPath + " with " + posts + " posts (" + hall.posts.Length
                 + " of them in the hall). Drag it into the scene at position 0, 0, 0.");
+        }
+
+        // Where the hall test has door data, the route runs straight into each door at the door's width, so the fence
+        // reaches the door frame exactly (the hall test scene moves the road the same way).
+        private static void LineUpWithHallDoors()
+        {
+            Vector3[] centre = new Vector3[points.Length];
+            float[] width = new float[points.Length];
+            inHall = new bool[points.Length];
+            for (int i = 0; i < points.Length; i++)
+            {
+                centre[i] = Pos(i);
+                width[i] = points[i].width;
+            }
+            int moved = HallDoorApproach.Apply(centre, width, inHall);
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i].x = centre[i].x;
+                points[i].z = centre[i].z;
+                points[i].width = width[i];
+            }
+            if (moved > 0)
+            {
+                Debug.Log("WhiteGuardrailBuilder: route lined up with the hall doors (" + moved + " points).");
+            }
         }
 
         // The fence inside the hall: a post where each post of the hall's own railing stands, boards between neighbours.
@@ -246,6 +273,10 @@ namespace CarcavelosCircuit.Track.Editor
             if (points[i].zone == HallZone || points[j].zone == HallZone)
             {
                 return false; // inside the hall the fence follows the hall course instead
+            }
+            if (inHall[i] || inHall[j])
+            {
+                return false; // just behind a hall door: inside the building already
             }
             if (NearHallCourse(FencePoint(i, side)) || NearHallCourse(FencePoint(j, side)))
             {
