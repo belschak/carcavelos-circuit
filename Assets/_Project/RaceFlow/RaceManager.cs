@@ -33,6 +33,8 @@ namespace CarcavelosCircuit.RaceFlow
         public int CountdownFrom { get { return settings.CountdownFrom; } }
         public Transform KartTransform { get { return kartTransform; } }
         public string TrackName { get; private set; } = ""; // the track scene we race on (save keys, ghost check)
+        public Vector3[] TrackPoints { get; private set; } = new Vector3[0]; // checkpoint positions in driving order (fly-over camera)
+        public float LapMetres { get; private set; } // lap length checkpoint to checkpoint (medal times scale with it)
         public int CheckpointCount { get { return checkpointList == null ? 0 : checkpointList.Length; } } // incl. the start/finish line
         public int CheckpointsPassed { get { return rules == null ? 0 : rules.LastValidCheckpoint; } } // this lap, in order
         public int LapCount { get { return 1; } } // a time trial is one lap; the HUD shows a lap counter only if this is > 1
@@ -115,8 +117,14 @@ namespace CarcavelosCircuit.RaceFlow
             saveKey = "CarcavelosCircuit.Best." + trackName;
             personalBest = PersonalBest.FromSaveString(PlayerPrefs.GetString(saveKey, ""), checkpointCount);
 
-            // Medal times. A save from before medals existed gets the medal its best time is worth.
-            medalThresholds = settings.MedalThresholds();
+            // Medal times, stretched to this track's length (MedalScaling). A save from before medals existed gets the
+            // medal its best time is worth.
+            TrackPoints = CheckpointPositions(checkpoints);
+            LapMetres = MedalScaling.LoopLength(TrackPoints);
+            medalThresholds = MedalScaling.ScaleTimes(settings.MedalThresholds(), settings.MedalReferenceLapMetres, LapMetres);
+            Debug.Log("RaceManager: racing " + trackName + ", " + checkpointCount + " checkpoints, lap about "
+                + Mathf.RoundToInt(LapMetres) + " m checkpoint to checkpoint, Bronze " + RaceTimer.Format(medalThresholds[0])
+                + ", Dean's List " + RaceTimer.Format(medalThresholds[MedalRules.TierCount - 1]) + ".");
             if (!MedalRules.AreValid(medalThresholds))
             {
                 Debug.LogError("RaceManager: the medal times in RaceSettings must be positive and each faster than the one before (Bronze > Silver > Gold > Dean's List). No medals this session.");
@@ -145,6 +153,25 @@ namespace CarcavelosCircuit.RaceFlow
 
             PutKartOnStartGrid();
             kart.InputEnabled = false;
+        }
+
+        // Where the checkpoints stand in driving order (index 0, 1, 2 ...), for the lap length. The list on the track
+        // may be in any order, so we look each index up. A missing index is skipped.
+        private static Vector3[] CheckpointPositions(PlaceholderCheckpoint[] checkpoints)
+        {
+            var positions = new System.Collections.Generic.List<Vector3>();
+            for (int index = 0; index < checkpoints.Length; index++)
+            {
+                for (int i = 0; i < checkpoints.Length; i++)
+                {
+                    if (checkpoints[i] != null && checkpoints[i].Index == index)
+                    {
+                        positions.Add(checkpoints[i].transform.position);
+                        break;
+                    }
+                }
+            }
+            return positions.ToArray();
         }
 
         // Unity sends OnTriggerEnter to the GameObject that owns the trigger collider. Role 2 may put the collider
@@ -311,7 +338,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 if (!MenuUsesInput && RaceKeys.AnyKeyOrClickPressed())
                 {
-                    stateMachine.BeginCountdown(settings.CountdownStepSeconds);
+                    BeginRace();
                 }
                 return;
             }
@@ -342,6 +369,16 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
+        // Leaves the start screen: the first countdown begins. Called by the first key or click, and by the
+        // automated race test (Tests/PlayMode). Does nothing outside the start screen.
+        public void BeginRace()
+        {
+            if (IsSetUp && State == RaceState.Ready && !pause.IsPaused)
+            {
+                stateMachine.BeginCountdown(settings.CountdownStepSeconds);
+            }
+        }
+
         // Full reset: kart back on the grid, rules, timer and effects cleared, quick countdown again.
         // Public so the HUD's Retry button can call it.
         public void Retry()
@@ -359,6 +396,7 @@ namespace CarcavelosCircuit.RaceFlow
             HasSplitDelta = false;
             HintText = "";
             HintVisibleUntil = 0f;
+            waitingCoachHint = CoachHint.None; // a tip queued in the old attempt must not pop up right after GO
             runStats.Reset();
             stateMachine.BeginCountdown(settings.RetryCountdownStepSeconds);
             if (Restarted != null) Restarted();

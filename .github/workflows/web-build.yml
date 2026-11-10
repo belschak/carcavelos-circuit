@@ -37,6 +37,8 @@ jobs:
         run: |
           if [ "$HAS_LICENSE" != "true" ]; then
             echo "::warning::Unity secrets missing (UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD). See the comment at the top of .github/workflows/web-build.yml. Skipping the build."
+            # Shown on the run page, so a green tick is never mistaken for a real build.
+            echo "### NOT BUILT: the Unity secrets are missing, so this run built nothing and made no artifact." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       # The Unity build image is about 7.5 GB; the runner needs room for it and the build.

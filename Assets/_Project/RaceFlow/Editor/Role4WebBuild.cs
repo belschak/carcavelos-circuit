@@ -30,6 +30,11 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             bool gzipForItch = HasArgument("-webHost=itch");
             ApplyWebSettings(gzipForItch);
 
+            // CI runs only this method, so first rebuild Main.unity and the placeholder kart from what is on main now
+            // (Role 1's kart, Role 3's kart model, every merged track scene). Then the build is always the integrated game.
+            Role4SceneBuilder.BuildAll();
+            Role4SceneBuilder.MergeBuildScenes(AssetDatabase.LoadAssetAtPath<RaceSettings>(Role4SceneBuilder.SettingsPath));
+
             // Build with the Web URP asset as the project default, so the build does not also carry the shader variants
             // of the PC asset (Forward+, SSAO). The editor's default is put back afterwards, even if the build fails.
             RenderPipelineAsset webPipeline = Role4WebQuality.SetUp();
@@ -89,6 +94,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             PlayerSettings.SetIl2CppCodeGeneration(web, Il2CppCodeGeneration.OptimizeSize);
             PlayerSettings.SetManagedStrippingLevel(web, ManagedStrippingLevel.High); // RaceFlow/link.xml keeps what UI Toolkit needs
             PlayerSettings.stripEngineCode = true;
+            // Mesh colliders are cooked at build time, not while the scene loads in the browser (single-threaded there;
+            // the campus world has a mesh collider on every building).
+            PlayerSettings.bakeCollisionMeshes = true;
             PlayerSettings.WebGL.wasm2023 = true; // native Wasm exceptions + SIMD; Chrome 95+, Firefox 100+, Safari 15.2+
             PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly;
             PlayerSettings.WebGL.linkerTarget = WebGLLinkerTarget.Wasm;
