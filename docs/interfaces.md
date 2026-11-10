@@ -5,7 +5,7 @@ Each module only talks to another module through what is listed here. Build agai
 Namespace per module: `CarcavelosCircuit.Shared`, `.Driving`, `.Track`, `.Visuals`, `.RaceFlow`, `.Audio`. One class per file, file name = class name.
 
 Each module folder has its own assembly definition (`.asmdef`) with the same name as the namespace. Allowed references (nothing else, no cycles):
-`Driving -> Shared`, `Visuals -> Shared`, `Audio -> Shared`, `RaceFlow -> Shared, Track`, `Tests.EditMode -> Track, RaceFlow`. Track and Shared reference no other module. Nobody references `Driving` directly: everyone talks to the kart through `IKartState`.
+`Driving -> Shared`, `Visuals -> Shared`, `Audio -> Shared`, `RaceFlow -> Shared, Track, Audio` (Audio added 2026-11-08, `docs/decisions.md`), `Tests.EditMode -> Shared, Track, RaceFlow, Audio`, `Tests.PlayMode -> Shared, RaceFlow`. Plus Unity packages (Input System, URP); Editor-only builder assemblies may reference their own module. Track and Shared reference no other module. Nobody references `Driving` directly: everyone talks to the kart through `IKartState`.
 
 ## Shared (Role 4): `IKartState` in `Assets/_Project/Shared/IKartState.cs`
 
@@ -23,11 +23,14 @@ namespace CarcavelosCircuit.Shared
         int DriftStage { get; }         // 0 none, 1 blue sparks, 2 orange sparks
         bool IsBoosting { get; }
         bool IsGrounded { get; }        // false while in the air (ramp jump)
+        float Steer { get; }            // -1 full left .. +1 full right, what the player steers now (0 when input is off)
         bool InputEnabled { get; set; } // RaceFlow turns input off during countdown/results
         void ResetTo(Vector3 position, Quaternion rotation); // teleport + zero velocity + clear drift/boost
     }
 }
 ```
+
+`Steer` added 2026-11-10 (Role 3's request Q11, OK from Role 3 and Role 4, `docs/decisions.md`): read only, for the steering wheel and front wheels of the kart model. Every class that implements `IKartState` must have it.
 
 ## Driving (Role 1) provides: `KartController : MonoBehaviour, IKartState` on the `Kart` prefab root
 

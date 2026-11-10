@@ -69,6 +69,7 @@ namespace CarcavelosCircuit.Track.Editor
 
             AddRoad(road, look);
             AddEdges(walls, look, root.transform);
+            NovaGuardrail.Add(walls, look, centre, width, RailGaps());
             AddTunnel(walls, look);
             AddGround(ground, look);
             AddZonesAndSea(ground, look);
@@ -256,6 +257,23 @@ namespace CarcavelosCircuit.Track.Editor
             }
         }
 
+        // Where the white guardrail is left out: tunnel, ramps and the beach way (they have walls) and every ring
+        // where the road sits in a trench (the wall already reaches the grass there).
+        private static bool[] RailGaps()
+        {
+            bool[] gap = new bool[centre.Length];
+            for (int i = 0; i < centre.Length; i++)
+            {
+                gap[i] = IsRampOrTunnel(i);
+                for (int k = 0; k < 2 && !gap[i]; k++)
+                {
+                    Vector3 e = Edge(i, k == 0 ? -1f : 1f);
+                    gap[i] = e.y < BaseY(e.x, e.z) - TrenchDip;
+                }
+            }
+            return gap;
+        }
+
         // Pale beige paving along the top of the ramp walls (as in the photos); it also hides the grass holes cut for the trench.
         private static void AddRampPlaza(NovaBatch batch, NovaLook look, int i, int j, float side, float groundA, float groundB, Vector3 shiftA, Vector3 shiftB)
         {
@@ -281,7 +299,7 @@ namespace CarcavelosCircuit.Track.Editor
             }
         }
 
-        // White precast cap on the ramp wall and a grey steel railing with posts, as in the photos.
+        // White precast cap on the ramp wall and a white railing with posts, as in the photos.
         private static void AddCapAndRailing(NovaBatch batch, NovaLook look, Vector3 a, Vector3 b, float topA, float topB)
         {
             Vector3 a1 = new Vector3(a.x, topA, a.z);
@@ -295,9 +313,9 @@ namespace CarcavelosCircuit.Track.Editor
             float length = dir.magnitude;
             Vector3 mid = (a1 + b1) * 0.5f;
             batch.For(look.Kerb).Box(mid + Vector3.up * 0.12f, new Vector3(0.5f, 0.25f, length + 0.05f), along, 1f);
-            batch.For(look.Metal).Box(mid + Vector3.up * 1.15f, new Vector3(0.06f, 0.06f, length + 0.05f), along, 1f);
-            batch.For(look.Metal).Box(mid + Vector3.up * 0.65f, new Vector3(0.04f, 0.04f, length + 0.05f), along, 1f);
-            batch.For(look.Metal).Box(a1 + Vector3.up * 0.65f, new Vector3(0.06f, 1.0f, 0.06f), along, 1f);
+            batch.For(look.GuardrailWhite).Box(mid + Vector3.up * 1.15f, new Vector3(0.06f, 0.06f, length + 0.05f), along, 1f);
+            batch.For(look.GuardrailWhite).Box(mid + Vector3.up * 0.65f, new Vector3(0.04f, 0.04f, length + 0.05f), along, 1f);
+            batch.For(look.GuardrailWhite).Box(a1 + Vector3.up * 0.65f, new Vector3(0.06f, 1.0f, 0.06f), along, 1f);
         }
 
         // Ceiling with light strips over the tunnel section, and the Avenida Marginal's asphalt on top of it.
