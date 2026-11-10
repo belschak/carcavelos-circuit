@@ -13,9 +13,11 @@ namespace CarcavelosCircuit.Driving
     // Ramp jump (D4): when the ground ends the kart is airborne. Gravity and its speed carry it through the air,
     // steering is weaker, and after the top of the jump it falls faster. It always lands upright, because only its
     // heading can change. The model (Visual) tilts to the slope and levels out in the air, only for looks.
+    // Item boosts (Role 4's item boxes, IKartBoost): RaceFlow adds boost time from outside; the faster multiplier
+    // of the drift boost and the item boost wins while the boost runs.
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(SphereCollider))]
-    public class KartController : MonoBehaviour, IKartState
+    public class KartController : MonoBehaviour, IKartState, IKartBoost
     {
         [SerializeField, Tooltip("All the driving numbers (Driving/Settings/KartTuning.asset)")]
         private KartTuning tuning;
@@ -33,6 +35,7 @@ namespace CarcavelosCircuit.Driving
         private float steerInput;      // +1 right, -1 left
         private bool driftHeld;        // drift key (Space) is down
         private float boostSecondsLeft;
+        private float itemBoostMultiplier = 1f; // from an item (IKartBoost), 1 = no item boost running
         private bool grounded;
         private Vector3 groundNormal = Vector3.up;
 
@@ -128,6 +131,10 @@ namespace CarcavelosCircuit.Driving
             if (boostSecondsLeft > 0f)
             {
                 boostSecondsLeft -= dt;
+                if (boostSecondsLeft <= 0f)
+                {
+                    itemBoostMultiplier = 1f; // the item boost is used up
+                }
             }
             UpdateDrift(dt);
             body.angularVelocity = Vector3.zero; // a wall hit must not spin the kart, only steering turns it
@@ -191,7 +198,7 @@ namespace CarcavelosCircuit.Driving
         {
             if (IsBoosting)
             {
-                float boostTop = tuning.MaxSpeed * tuning.BoostSpeedMultiplier;
+                float boostTop = tuning.MaxSpeed * Mathf.Max(tuning.BoostSpeedMultiplier, itemBoostMultiplier);
                 return Mathf.MoveTowards(forwardSpeed, boostTop, tuning.BoostAcceleration * dt);
             }
             if (throttleInput > 0f)
@@ -311,10 +318,18 @@ namespace CarcavelosCircuit.Driving
             steerInput = 0f;
             driftHeld = false;
             boostSecondsLeft = 0f;
+            itemBoostMultiplier = 1f;
             if (drift != null)
             {
                 drift.Cancel();
             }
+        }
+
+        // IKartBoost (Role 4's item boxes): adds boost time, so boosts chain; the faster multiplier wins.
+        public void AddBoost(float seconds, float speedMultiplier)
+        {
+            boostSecondsLeft += seconds;
+            itemBoostMultiplier = Mathf.Max(itemBoostMultiplier, speedMultiplier);
         }
     }
 }
