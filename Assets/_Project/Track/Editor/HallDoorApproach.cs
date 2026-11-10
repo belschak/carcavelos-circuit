@@ -7,7 +7,7 @@ namespace CarcavelosCircuit.Track.Editor
     // straight along the door's axis, as wide as the door minus the fence gap (so the fence lands on the door frame),
     // and one route point sits exactly on the facade (so the road can end there with a clean edge).
     // The doors come from the hall generator (HallDoors.json in the hall test folder). Without that file nothing changes.
-    // Used by WhiteGuardrailBuilder (the fence) and by the hall test scene builder (the road mesh).
+    // Used by WhiteGuardrailBuilder (the fence) and by the hall test scene builder (new road pieces at the doors).
     public static class HallDoorApproach
     {
         public const string DoorsPath = "Assets/_Preview/HallDoors.json";
@@ -96,31 +96,6 @@ namespace CarcavelosCircuit.Track.Editor
                 centre[onFacade] = new Vector3(d.x, centre[onFacade].y, d.z);
             }
             return moved;
-        }
-
-        // Moves a road mesh vertex the same way its nearest route point moved (before = route before Apply).
-        public static Vector3 Warp(Vector3 v, Vector3[] before, float[] widthBefore, Vector3[] after, float[] widthAfter)
-        {
-            int i = 0;
-            for (int k = 1; k < before.Length; k++)
-            {
-                if (Flat(before[k] - v).sqrMagnitude < Flat(before[i] - v).sqrMagnitude)
-                {
-                    i = k;
-                }
-            }
-            if (before[i] == after[i] && Mathf.Approximately(widthBefore[i], widthAfter[i]))
-            {
-                return v; // this part of the road did not move
-            }
-            Vector3 f0 = Forward(before, i);
-            Vector3 f1 = Forward(after, i);
-            Vector3 r0 = Vector3.Cross(Vector3.up, f0);
-            Vector3 r1 = Vector3.Cross(Vector3.up, f1);
-            Vector3 rel = Flat(v - before[i]);
-            float side = Vector3.Dot(rel, r0) * (widthAfter[i] / Mathf.Max(0.1f, widthBefore[i]));
-            Vector3 moved = Flat(after[i]) + f1 * Vector3.Dot(rel, f0) + r1 * side;
-            return new Vector3(moved.x, v.y, moved.z);
         }
 
         private static Vector3 Forward(Vector3[] c, int i)
