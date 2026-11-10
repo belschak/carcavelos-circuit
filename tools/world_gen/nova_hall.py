@@ -101,6 +101,7 @@ ROADS = [
 RAIL_OFFSET = 0.35           # guard rail distance outside the road edge (m)
 RAIL_STOP = 0.15             # rails stop this far inside a facade; at a door they then end exactly at the frame
 RAIL_FLARE = 8.0             # within this many metres of a door the rails swing out (or in) to the door frame
+FRAME_REACH = 4.5            # a rail ending this close to a door frame is joined to it (with a curve beyond 2.5 m)
 
 
 def rounded_line(points, radii, step=0.5):
@@ -240,16 +241,35 @@ def guard_rails(m, f, door_map):
             for run in runs:
                 for end in (0, -1):                                      # end at a door frame: add its exact edge point
                     best = None
-                    for _cu, _half, edges in frames:
+                    for cu, _half, edges in frames:
                         for e in edges:
                             dist = math.hypot(e[0] - run[end][0], e[1] - run[end][1])
-                            if dist < 2.5 and (best is None or dist < best[0]):
-                                best = (dist, e)
-                    if best is not None:
-                        if end == 0:
-                            run.insert(0, best[1])
-                        else:
-                            run.append(best[1])
+                            if dist < FRAME_REACH and (best is None or dist < best[0]):
+                                best = (dist, e, cu)
+                    if best is None:
+                        continue
+                    dist, e, cu = best
+                    if dist < 2.5:
+                        bridge = [e]                                     # close: straight to the frame
+                    else:
+                        # further away (D4 sits in a niche): a soft curve that leaves the frame straight into the hall
+                        ax, ay = cu[0] - e[0], cu[1] - e[1]                # along the door line, towards its centre
+                        al = math.hypot(ax, ay) or 1.0
+                        rx, ry = run[end][0] - e[0], run[end][1] - e[1]
+                        # control point: straight in from the frame, i.e. the run-end direction minus its part along the door
+                        dot = (rx * ax + ry * ay) / al
+                        ctrl = (e[0] + (rx - ax / al * dot) * 0.7, e[1] + (ry - ay / al * dot) * 0.7)
+                        bridge = []
+                        for k in range(8, -1, -1):                       # from the run end (k=8 excluded) to the frame
+                            t = k / 8
+                            bridge.append(((1 - t) ** 2 * e[0] + 2 * (1 - t) * t * ctrl[0] + t * t * run[end][0],
+                                           (1 - t) ** 2 * e[1] + 2 * (1 - t) * t * ctrl[1] + t * t * run[end][1]))
+                        bridge = bridge[1:]
+                    if end == 0:
+                        for p in bridge:
+                            run.insert(0, p)
+                    else:
+                        run.extend(bridge)
                 sub = run[::2]                                           # one segment per metre
                 if sub[-1] != run[-1]:
                     sub.append(run[-1])
@@ -337,7 +357,8 @@ def facade(m, a, b, inside, H, openings, style):
 
 
 def door(m, c, t, n, width):
-    """Sliding glass door: stainless posts, two leaves slid open, header with the motor, exit signs, door mat."""
+    """Sliding glass door: stainless posts, two leaves slid open, header with the motor, exit signs (no door mat: the
+    track runs through, Noah)."""
     h = math.atan2(t[1], t[0])
     for side in (-1, 1):
         p = (c[0] + t[0] * side * (width / 2 + 0.08), c[1] + t[1] * side * (width / 2 + 0.08))   # in the wall, not the opening
@@ -347,8 +368,6 @@ def door(m, c, t, n, width):
         e = (c[0] + n[0] * 0.25 + t[0] * side * width * 0.3, c[1] + n[1] * 0.25 + t[1] * side * width * 0.3)
         m.box((e[0], e[1], DOOR_H + 0.25), 0.3, 0.04, 0.12, "exit", h)
     m.box((c[0], c[1], DOOR_H + 0.2), width / 2 + 0.1, 0.18, 0.2, "rail", h)
-    mat = (c[0] + n[0] * 1.6, c[1] + n[1] * 1.6)
-    m.box((mat[0], mat[1], 0.002), width / 2 - 0.2, 1.4, 0.002, "mat", h)          # 4 mm: nothing for the kart to hit
 
 
 def rest_of_wing(m, f, poly):
