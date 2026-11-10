@@ -1,0 +1,399 @@
+"""Track surface along the route (a proposal for Role 2's drivable road, built from route.json).
+
+Objects in collection Track_Surface:
+  Track_Road      8 m road, one material per surface type (route_profile.json "surfaces"), UVs in real metres
+  Track_Verges    2.5 m strips beside the road that blend into the terrain (outdoors only)
+  Track_Kerbs     striped kerbs on the inside of tight corners
+  Track_CutWalls  sloped concrete walls where the road runs in a cutting deeper than 1 m
+  Track_JumpKicker small kicker ending at the terrace edge
+"""
+import math
+
+import bmesh
+import bpy
+
+import env_common as E
+
+HALF = E.ROUTE_WIDTH / 2
+ROAD_LIFT = 0.06            # road surface above the terrain bed
+VERGE = 2.5                 # metres beside the road
+TILE_M = {                  # real-world size of one texture tile (m), so UVs are in tiles
+    "asphalt": 2.0, "concrete_sand": 2.0, "concrete_polished": 2.0, "concrete_light": 2.0, "tunnel_floor": 2.0,
+    "calcada": 1.0, "terracotta": 1.0, "lawn": 2.0, "kerb": 2.0, "cut_wall": 2.0, "sand": 4.0,
+}
+SURFACE_COLOUR = {          # used until textures exist (env_materials upgrades them)
+    "asphalt": "asphalt", "concrete_sand": "concrete_sand", "concrete_polished": "#9A9C9E", "concrete_light": "concrete_light",
+    "tunnel_floor": "#8E8A82", "calcada": "calcada", "terracotta": "terracotta", "lawn": "lawn", "cut_wall": "concrete_sand",
+    "sand": "sand",
+}
+OUTDOOR_NO_VERGE = {"tunnel", "atrium", "terrace deck"}
+KERB_ZONES = {"lawn and paths", "coastal road", "promenade", "lower plaza", "upper plaza", "tunnel plaza"}
+
+
+def surface_material(name):
+    colour = SURFACE_COLOUR.get(name, "asphalt")
+    hexcol = colour if colour.startswith("#") else E.PALETTE[colour]
+    rough = 0.35 if name == "concrete_polished" else 0.9
+    return E.material("T_" + name, hexcol, roughness=rough)
+
+
+def frames(pts):
+    """Unit tangent and left normal at every route point (closed loop)."""
+    n = len(pts)
+    out = []
+    for i in range(n):
+        a, b = pts[(i - 1) % n], pts[(i + 1) % n]
+        dx, dy = b["x"] - a["x"], b["y"] - a["y"]
+        d = math.hypot(dx, dy) or 1.0
+        out.append(((dx / d, dy / d), (-dy / d, dx / d)))
+    return out
+
+
+def curvature(pts, i, span=3):
+    """Signed curvature (1/m) around point i; > 0 = turning left."""
+    n = len(pts)
+    a, b, c = pts[(i - span) % n], pts[i], pts[(i + span) % n]
+    h1 = math.atan2(b["y"] - a["y"], b["x"] - a["x"])
+    h2 = math.atan2(c["y"] - b["y"], c["x"] - b["x"])
+    turn = (h2 - h1 + math.pi) % (2 * math.pi) - math.pi
+    return turn / (span * 2.0)
+
+
+INDOOR = ("atrium", "terrace deck")   # the road lies on a building floor / roof at track_z
+
+
+def road_z(p):
+    """Road surface height. Same lift everywhere: indoors it used to be 2 cm, within z-fighting distance of
+    the passage floor and the CTT roof (coplanar check ~1,250 points)."""
+    return p["track_z"] + ROAD_LIFT
+
+
+def is_drop(a, b):
+    if "kicker" in (a["zone"], b["zone"]):
+        return False                                   # the concrete wedge is a steep but continuous slab
+    return abs(a["track_z"] - b["track_z"]) > 1.5
+
+
+def build_road(pts, fr, col):
+    surfaces = sorted({p["surface"] for p in pts})
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    n = len(pts)
+    for i in range(n):
+        a, b = pts[i], pts[(i + 1) % n]
+        if is_drop(a, b):
+            continue                               # the jump: no road across the drop
+        tile = TILE_M.get(a["surface"], 2.0)
+        (_, na), (_, nb) = fr[i], fr[(i + 1) % n]
+        za, zb = road_z(a), road_z(b)
+        ha, hb = E.half_width(a), E.half_width(b)      # narrower in the alley (route.json 'width')
+        quad = [bm.verts.new((a["x"] + na[0] * ha, a["y"] + na[1] * ha, za)),
+                bm.verts.new((a["x"] - na[0] * ha, a["y"] - na[1] * ha, za)),
+                bm.verts.new((b["x"] - nb[0] * hb, b["y"] - nb[1] * hb, zb)),
+                bm.verts.new((b["x"] + nb[0] * hb, b["y"] + nb[1] * hb, zb))]
+        face = bm.faces.new(quad)
+        face.material_index = surfaces.index(a["surface"])
+        sa, sb = a["s"] / tile, (a["s"] + 2.0) / tile
+        ua0, ua1 = (HALF - ha) / tile, (HALF + ha) / tile    # u stays centred on the road axis
+        ub0, ub1 = (HALF - hb) / tile, (HALF + hb) / tile
+        for loop, (u, v) in zip(face.loops, ((ua0, sa), (ua1, sa), (ub1, sb), (ub0, sb))):
+            loop[uv].uv = (u, v)
+        if a["zone"] in INDOOR and b["zone"] in INDOOR:
+            # side skirts down to the floor: the raised road reads as a slab, not a floating sheet
+            def down(v, p):
+                return bm.verts.new((v.co.x, v.co.y, p["track_z"] - 0.01))
+            for top_a, top_b in ((quad[1], quad[2]), (quad[3], quad[0])):
+                pa, pb = (a, b) if top_a is quad[1] else (b, a)
+                skirt = bm.faces.new((top_b, top_a, down(top_a, pa), down(top_b, pb)))
+                skirt.material_index = surfaces.index(a["surface"])
+    bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=0.01)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    mesh = bpy.data.meshes.new("Track_Road")
+    bm.to_mesh(mesh)
+    bm.free()
+    for name in surfaces:
+        mesh.materials.append(surface_material(name))
+    return E.new_object("Track_Road", mesh, col)
+
+
+def verge_material(p):
+    if p["zone"] in ("lawn and paths",):
+        return "lawn"
+    if p["zone"] == "coastal road":
+        return "concrete_light"
+    return p["surface"]
+
+
+def near_portal(p, metres=18.0):
+    portals = [q for q in E.route_points() if q["tunnel"]]
+    ends = (portals[0], portals[-1]) if portals else ()
+    return any(math.hypot(p["x"] - e["x"], p["y"] - e["y"]) < metres for e in ends)
+
+
+def build_verges(pts, fr, col):
+    walls = getattr(build_cut_walls, "walls", {1: [0] * len(pts), -1: [0] * len(pts)})
+    names = []
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    n = len(pts)
+    for i in range(n):
+        a, b = pts[i], pts[(i + 1) % n]
+        if a["zone"] in OUTDOOR_NO_VERGE or b["zone"] in OUTDOOR_NO_VERGE or is_drop(a, b) or near_portal(a):
+            continue
+        name = verge_material(a)
+        if name not in names:
+            names.append(name)
+        (_, na), (_, nb) = fr[i], fr[(i + 1) % n]
+        for side in (1, -1):
+            if walls[side][i] > 0 or walls[side][(i + 1) % n] > 0:
+                continue                                 # the cut wall covers this side
+            inner_a = (a["x"] + side * na[0] * HALF, a["y"] + side * na[1] * HALF)
+            inner_b = (b["x"] + side * nb[0] * HALF, b["y"] + side * nb[1] * HALF)
+            outer_a = (a["x"] + side * na[0] * (HALF + VERGE), a["y"] + side * na[1] * (HALF + VERGE))
+            outer_b = (b["x"] + side * nb[0] * (HALF + VERGE), b["y"] + side * nb[1] * (HALF + VERGE))
+            vs = [bm.verts.new((*inner_a, road_z(a) - 0.01)), bm.verts.new((*outer_a, E.ground_z(*outer_a) + 0.03)),
+                  bm.verts.new((*outer_b, E.ground_z(*outer_b) + 0.03)), bm.verts.new((*inner_b, road_z(b) - 0.01))]
+            face = bm.faces.new(vs if side == 1 else vs[::-1])
+            face.material_index = names.index(name)
+            tile = TILE_M.get(name, 2.0)
+            for loop, (u, v) in zip(face.loops, ((0, a["s"] / tile), (VERGE / tile, a["s"] / tile),
+                                                 (VERGE / tile, (a["s"] + 2) / tile), (0, (a["s"] + 2) / tile))):
+                loop[uv].uv = (u, v)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    for f in bm.faces:                               # make sure the strips face up
+        if f.normal.z < 0:
+            f.normal_flip()
+    mesh = bpy.data.meshes.new("Track_Verges")
+    bm.to_mesh(mesh)
+    bm.free()
+    for name in names:
+        mesh.materials.append(surface_material(name))
+    return E.new_object("Track_Verges", mesh, col)
+
+
+def build_kerbs(pts, fr, col):
+    """Kerbs on the inside of corners tighter than 35 m radius (both sides below 20 m)."""
+    n = len(pts)
+    flags = []
+    for i in range(n):
+        k = curvature(pts, i)
+        radius = 1 / abs(k) if abs(k) > 1e-6 else 1e9
+        sides = []
+        if pts[i]["zone"] in KERB_ZONES and radius < 35:
+            sides.append(1 if k > 0 else -1)
+            if radius < 20:
+                sides.append(-1 if k > 0 else 1)
+        flags.append(sides)
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    for side in (1, -1):
+        run = []
+        for i in range(n + 1):
+            on = side in flags[i % n] and not is_drop(pts[i % n], pts[(i + 1) % n])
+            if on:
+                run.append(i % n)
+            if (not on or i == n) and len(run) >= 4:
+                add_kerb_run(bm, uv, pts, fr, run, side)
+            if not on:
+                run = []
+    mesh = bpy.data.meshes.new("Track_Kerbs")
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(E.material("T_kerb", "#FF8A1F", roughness=0.7))
+    return E.new_object("Track_Kerbs", mesh, col)
+
+
+def add_kerb_run(bm, uv, pts, fr, run, side):
+    rings = []
+    for i in run:
+        p, (_, nrm) = pts[i], fr[i]
+        z = road_z(p)
+        ring = []
+        h = E.half_width(p)
+        for offset, dz in ((h - 0.9, 0.005), (h - 0.6, 0.08), (h + 0.1, 0.08), (h + 0.3, -0.05)):
+            ring.append(bm.verts.new((p["x"] + side * nrm[0] * offset, p["y"] + side * nrm[1] * offset, z + dz)))
+        rings.append((ring, p["s"]))
+    for (r0, s0), (r1, s1) in zip(rings, rings[1:]):
+        for k in range(3):
+            vs = [r0[k], r0[k + 1], r1[k + 1], r1[k]]
+            face = bm.faces.new(vs if side == -1 else vs[::-1])
+            for loop, (u, v) in zip(face.loops, ((k / 3, s0 / 2), ((k + 1) / 3, s0 / 2), ((k + 1) / 3, s1 / 2), (k / 3, s1 / 2))):
+                loop[uv].uv = (u, v)
+
+
+CUT_ZONES = {"ramp", "tunnel plaza"}
+
+
+def wall_heights(pts, fr, side):
+    """Per route point: how high the 45 degree cut wall on this side must go (0 = no wall), smoothed."""
+    raw = []
+    for i, p in enumerate(pts):
+        (_, nrm) = fr[i]
+        h = 0.0
+        if p["zone"] in CUT_ZONES:
+            for k in range(1, 30):                       # walk up the 45 degree plane until it meets the terrain
+                o = HALF + k * 0.3
+                x, y = p["x"] + side * nrm[0] * o, p["y"] + side * nrm[1] * o
+                if p["track_z"] + (o - HALF) >= E.ground_z(x, y) - 0.02:
+                    h = o - HALF
+                    break
+            else:
+                h = 9.0
+        raw.append(h if h > 0.6 else 0.0)
+    n = len(raw)
+    out = []
+    for i in range(n):                                   # smooth so the wall top doesn't zig-zag
+        window = [raw[(i + k) % n] for k in range(-3, 4)]
+        out.append(sum(window) / 7 if raw[i] > 0 else 0.0)
+    return out
+
+
+_WALLS = {}
+HOLE_EXTRA = 1.0            # terrain hole reaches this far past the wall top
+CAP_EXTRA = 3.6             # the cap reaches this far past the hole (covers the 5 m terrain cells)
+
+
+def compute_walls():
+    """Wall heights per route point and side; call before the ground is built (it decides the holes)."""
+    pts = E.route_points()
+    fr = frames(pts)
+    _WALLS.clear()
+    _WALLS.update({1: wall_heights(pts, fr, 1), -1: wall_heights(pts, fr, -1)})
+    return _WALLS
+
+
+def in_cut_hole(x, y):
+    """True if a terrain face centred at (x, y) lies where a cut wall and its cap replace the terrain."""
+    if not _WALLS:
+        return False
+    pts = E.route_points()
+    p = E.nearest_route_point(x, y)
+    i = pts.index(p)
+    (_, nrm) = frames([pts[(i - 1) % len(pts)], p, pts[(i + 1) % len(pts)]])[1]
+    off = (x - p["x"]) * nrm[0] + (y - p["y"]) * nrm[1]
+    if p["tunnel"]:
+        # just in front of / at a portal mouth: no terrain across the opening
+        return near_portal(p, 6.0) and abs(off) <= HALF + 6.0
+    if p["zone"] not in CUT_ZONES:
+        return False
+    side = 1 if off > 0 else -1
+    h = _WALLS[side][i]
+    if abs(off) <= HALF:
+        return h > 0 or _WALLS[-side][i] > 0 or near_portal(p, 12.0)   # under the road in a cutting
+    return h > 0 and abs(off) <= HALF + h + HOLE_EXTRA
+
+
+def build_cut_walls(pts, fr, col):
+    """Sloped (45 degree) concrete walls where the road runs in a cutting (the sunken tunnel approaches)."""
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    n = len(pts)
+    walls = {}
+    for side in (1, -1):
+        hs = _WALLS[side] if _WALLS else wall_heights(pts, fr, side)
+        walls[side] = hs
+        for i in range(n):
+            a, b = pts[i], pts[(i + 1) % n]
+            ha, hb = hs[i], hs[(i + 1) % n]
+            if ha <= 0 or hb <= 0 or is_drop(a, b) or a["tunnel"] and b["tunnel"]:
+                continue
+            (_, na), (_, nb) = fr[i], fr[(i + 1) % n]
+            def at(p, nrm, o, z):
+                return (p["x"] + side * nrm[0] * o, p["y"] + side * nrm[1] * o, z)
+            vs = [at(a, na, HALF - 0.05, road_z(a) - 0.02), at(a, na, HALF + ha + 0.1, a["track_z"] + ha + 0.12),
+                  at(b, nb, HALF + hb + 0.1, b["track_z"] + hb + 0.12), at(b, nb, HALF - 0.05, road_z(b) - 0.02)]
+            face = bm.faces.new([bm.verts.new(v) for v in (vs if side == 1 else vs[::-1])])
+            face.material_index = 0
+            for loop, c in zip(face.loops, ((0, a["s"] / 2), (1.5, a["s"] / 2), (1.5, (a["s"] + 2) / 2), (0, (a["s"] + 2) / 2))
+                               if side == 1 else ((0, (a["s"] + 2) / 2), (1.5, (a["s"] + 2) / 2), (1.5, a["s"] / 2), (0, a["s"] / 2))):
+                loop[uv].uv = c
+            # cap: from the wall top outwards over the terrain hole, in the ground's own colour map
+            ta, tb = HALF + ha + 0.1, HALF + hb + 0.1
+            ea = HALF + ha + HOLE_EXTRA + CAP_EXTRA
+            eb = HALF + hb + HOLE_EXTRA + CAP_EXTRA
+            cap = [at(a, na, ta, a["track_z"] + ha + 0.12), at(a, na, ea, E.ground_z(*at(a, na, ea, 0)[:2]) + 0.04),
+                   at(b, nb, eb, E.ground_z(*at(b, nb, eb, 0)[:2]) + 0.04), at(b, nb, tb, b["track_z"] + hb + 0.12)]
+            cface = bm.faces.new([bm.verts.new(v) for v in (cap if side == 1 else cap[::-1])])
+            cface.material_index = 1
+            for loop in cface.loops:
+                co = loop.vert.co
+                loop[uv].uv = ((co.x - E.X0) / (E.X1 - E.X0), (co.y - E.Y0) / (E.Y1 - E.Y0))
+    bm.normal_update()
+    for f in bm.faces:
+        if f.normal.z < 0:
+            f.normal_flip()
+    mesh = bpy.data.meshes.new("Track_CutWalls")
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(surface_material("cut_wall"))
+    mesh.materials.append(E.material("ground_map", "#A6AA82", roughness=0.95))
+    build_cut_walls.walls = walls
+    return E.new_object("Track_CutWalls", mesh, col)
+
+
+def build_wedge(pts, fr, col, wedge):
+    """Concrete wedge at the terrace edge (videos IMG_7723 0-12 s): the road runs down its sloped top (build_road),
+    this adds the solid body under it: two side walls from the road edge to the lawn and the end face at the foot."""
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    run = [wedge[0] - 1] + wedge + [wedge[-1] + 1]          # from the crest to the foot
+    n = len(pts)
+    for side in (1, -1):
+        for a_i, b_i in zip(run, run[1:]):
+            a, b = pts[a_i % n], pts[b_i % n]
+            (_, na), (_, nb) = fr[a_i % n], fr[b_i % n]
+            ha, hb = E.half_width(a) + 0.15, E.half_width(b) + 0.15
+            ta = (a["x"] + side * na[0] * ha, a["y"] + side * na[1] * ha)
+            tb = (b["x"] + side * nb[0] * hb, b["y"] + side * nb[1] * hb)
+            za, zb = road_z(a), road_z(b)
+            ga, gb = E.coarse_ground_z(*ta) - 0.3, E.coarse_ground_z(*tb) - 0.3
+            vs = [bm.verts.new((ta[0], ta[1], ga)), bm.verts.new((tb[0], tb[1], gb)),
+                  bm.verts.new((tb[0], tb[1], zb)), bm.verts.new((ta[0], ta[1], za))]
+            face = bm.faces.new(vs if side == 1 else vs[::-1])
+            for loop, (u, v) in zip(face.loops, ((a["s"] / 2, ga / 2), (b["s"] / 2, gb / 2), (b["s"] / 2, zb / 2), (a["s"] / 2, za / 2))):
+                loop[uv].uv = (u, v if side == 1 else v)
+    bm.normal_update()
+    mesh = bpy.data.meshes.new("Track_JumpKicker")
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(surface_material("concrete_light"))
+    return E.new_object("Track_JumpKicker", mesh, col)
+
+
+def build_kicker(pts, fr, col):
+    wedge = [i for i, p in enumerate(pts) if p["zone"] == "kicker"]
+    if wedge:
+        return build_wedge(pts, fr, col, wedge)
+    j = E.ROUTE["jump"]["index"]
+    p, (t, nrm) = pts[j], fr[j]
+    z = road_z(p)
+    length, height = 4.0, 0.5
+    verts = []
+    for along, top in ((-length, 0.0), (0.0, height)):
+        for side in (1, -1):
+            x = p["x"] + t[0] * along + side * nrm[0] * HALF
+            y = p["y"] + t[1] * along + side * nrm[1] * HALF
+            verts += [(x, y, z), (x, y, z + top)]
+    # verts: back-left low/high, back-right low/high, front-left low/high, front-right low/high
+    faces = [(0, 2, 6, 4), (1, 5, 7, 3), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6)]
+    mesh = bpy.data.meshes.new("Track_JumpKicker")
+    mesh.from_pydata(verts, [], faces)
+    mesh.validate()
+    uv = mesh.uv_layers.new(name="UVMap")
+    for loop in mesh.loops:                              # stripes run across the kicker
+        co = mesh.vertices[loop.vertex_index].co
+        uv.data[loop.index].uv = (((co.x - p["x"]) * nrm[0] + (co.y - p["y"]) * nrm[1]) / 2.0, co.z)
+    mesh.materials.append(E.material("T_kerb", "#FF8A1F", roughness=0.7))
+    return E.new_object("Track_JumpKicker", mesh, col)
+
+
+def build():
+    pts = E.route_points()
+    if not pts:
+        return
+    col = E.collection("Track_Surface")
+    fr = frames(pts)
+    build_road(pts, fr, col)
+    # cut walls and verges are now part of the high-res corridor terrain (env_corridor.py)
+    build_kerbs(pts, fr, col)
+    build_kicker(pts, fr, col)

@@ -11,7 +11,7 @@ Unity **6000.3.28f1** (6.3 LTS) · C# · Blender (FBX) · Web build
 |---|---|---|
 | David Belschak | _TBD_ | 4 Race flow, UI + sound |
 | Luc Tippmann | _TBD_ | 3 Kart, visuals + web release |
-| Alessandro Rossi | _TBD_ | 1 Driving + camera |
+| Alessandro Rossi | 78527 | 1 Driving + camera |
 | Noah _TBD_ | _TBD_ | 2 Campus track + race rules |
 
 ## Run the app
