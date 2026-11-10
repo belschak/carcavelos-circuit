@@ -34,6 +34,13 @@ ROAD_LIFT = 0.06            # env_track.ROAD_LIFT: road surface above track_z
 CHECKPOINTS = 12
 EXTRA_TEXTURES = ["sky_panorama.png"]   # make_sky.py: skybox + reflections (CampusWorldBuilder.AddSunAndSky)
 
+# The grass tufts have no Blender material (CampusWorldBuilder builds them): their entry for materials.json.
+GRASS_TUFT = {"name": "W_grass_tuft", "colour": [1.0, 1.0, 1.0], "metallic": 0.0, "albedo": "grass_tuft_cutout_albedo.png",
+              "normal": None, "normal_strength": 1.0, "emission": None, "alpha": 1.0, "metallic_smoothness": None,
+              "smoothness": 0.1, "alpha_clip": 0.45, "double_sided": True,
+              "wind": {"shader": "CarcavelosCircuit/Foliage", "bend": 0.0, "flutter": 0.07, "upright": True,
+                       "shrink_from": 52.0, "shrink_to": 64.0}}       # tufts sink into the lawn before their cell is hidden
+
 DUMP = r'''
 import bpy, json, sys
 from mathutils import Vector
@@ -66,7 +73,19 @@ for obj in bpy.data.objects:
         if not m or m.name in mats:
             continue
         e = {"name": m.name, "colour": srgb(m.diffuse_color), "roughness": 0.85, "metallic": 0.0,
-             "albedo": None, "rough": None, "normal": None, "normal_strength": 1.0, "emission": None, "alpha": 1.0}
+             "albedo": None, "rough": None, "normal": None, "normal_strength": 1.0, "emission": None, "alpha": 1.0,
+             # leaf cutouts (env_vegetation.cutout_material): alpha clipping cutoff (0 = off), both faces drawn
+             "alpha_clip": round(float(m.get("alpha_clip", 0.0)), 3), "double_sided": bool(m.get("double_sided", 0))}
+        if m.get("wind_shader"):        # swaying trees (env_vegetation.set_wind): shader + metres of bend and flutter
+            e["wind"] = {"shader": m["wind_shader"], "bend": round(float(m["wind_bend"]), 3),
+                         "flutter": round(float(m["wind_flutter"]), 3)}
+        if m.get("ground_shader"):      # detailed lawn and sand (env_materials.upgrade_all): shader + its textures
+            e["ground"] = {"shader": m["ground_shader"], "mask": m["ground_mask"], "detail": m["ground_detail"],
+                           "detail_normal": m["ground_detail_normal"]}
+        if m.get("water_shader"):       # the moving sea (env_backdrop.sea_water_data): shader + its textures and numbers
+            e["water"] = {"shader": m["water_shader"], "normal": m["water_normal"], "shore_map": m["water_shore_map"],
+                          "shore_rect": [round(v, 3) for v in m["water_shore_rect"]],
+                          "shore_range": float(m["water_shore_range"]), "coast": float(m["water_coast"])}
         b = m.node_tree.nodes.get("Principled BSDF") if m.node_tree else None
         if b:
             e["colour"] = srgb(b.inputs["Base Color"].default_value)
@@ -189,6 +208,12 @@ def main():
         for key in ("albedo", "normal"):
             if e[key]:
                 shutil.copy2(os.path.join(tex, e[key]), os.path.join(BUNDLE, "Textures", e[key]))
+        for key in ("mask", "detail", "detail_normal"):        # textures of the ground shader
+            if e.get("ground") and os.path.exists(os.path.join(tex, e["ground"][key])):
+                shutil.copy2(os.path.join(tex, e["ground"][key]), os.path.join(BUNDLE, "Textures", e["ground"][key]))
+        for key in ("normal", "shore_map"):                    # textures of the sea shader
+            if e.get("water") and os.path.exists(os.path.join(tex, e["water"][key])):
+                shutil.copy2(os.path.join(tex, e["water"][key]), os.path.join(BUNDLE, "Textures", e["water"][key]))
         if e["rough"]:
             ms = e["rough"].replace("_rough.png", "_metallic_smoothness.png")
             smoothness_map(os.path.join(tex, e["rough"]), os.path.join(BUNDLE, "Textures", ms))
@@ -201,6 +226,11 @@ def main():
         if os.path.exists(os.path.join(tex, extra)):
             shutil.copy2(os.path.join(tex, extra), os.path.join(BUNDLE, "Textures", extra))
     data = os.path.join(BUNDLE, "Data")
+    tufts = os.path.join(OUT, "grass_tufts.json")            # make_grass_tufts.py: 3D grass tufts, built in Unity
+    if os.path.exists(tufts):
+        shutil.copy2(tufts, os.path.join(data, "grass_tufts.json"))
+        shutil.copy2(os.path.join(tex, GRASS_TUFT["albedo"]), os.path.join(BUNDLE, "Textures", GRASS_TUFT["albedo"]))
+        info["materials"].append(dict(GRASS_TUFT))
     json.dump({"materials": info["materials"]}, open(os.path.join(data, "materials.json"), "w"), indent=1)
     dressing = unity_dressing()
     json.dump(dressing, open(os.path.join(data, "dressing.json"), "w"), indent=0)

@@ -37,8 +37,68 @@ def build_sea(col):
     verts = [(-s, -s, SEA_LEVEL), (s, -s, SEA_LEVEL), (s, COAST_Y, SEA_LEVEL), (-s, COAST_Y, SEA_LEVEL),
              (xa, COAST_Y, SEA_LEVEL), (xb, COAST_Y, SEA_LEVEL), (xb, 150.0, SEA_LEVEL), (xa, 150.0, SEA_LEVEL)]
     mesh.from_pydata(verts, [], [(0, 1, 2, 3), (4, 5, 6, 7)])
-    mesh.materials.append(E.material("sea_water", "#2D8CD6", roughness=0.12, metallic=0.0))
+    mat = E.material("sea_water", "#2D8CD6", roughness=0.12, metallic=0.0)
+    for key, value in sea_water_data().items():      # export_unity_bundle.py -> materials.json "water" -> Sea.shader
+        mat[key] = value
+    mesh.materials.append(mat)
     E.new_object("Backdrop_Sea", mesh, col)
+
+
+SEA_SHADER = "CarcavelosCircuit/Sea"       # Assets/_Project/Visuals/Shaders/Sea.shader (flat URP Lit sea if missing)
+SHORE_MAP = "sea_shore_data.png"           # R = distance to the shore in the sea, 0 .. SHORE_RANGE m (linear data)
+SHORE_RANGE = 60.0
+WAVE_NORMAL = "sea_waves_normal.png"       # make_textures.py sea_waves
+
+
+def sea_water_data():
+    """What the moving sea needs besides the mesh: shader name, its two textures, the world rectangle the shore map
+    covers (x0, y0, x1, y1, see shore_rect) and the straight coast line used outside that rectangle."""
+    return {"water_shader": SEA_SHADER, "water_normal": WAVE_NORMAL, "water_shore_map": SHORE_MAP,
+            "water_shore_rect": list(shore_rect()), "water_shore_range": SHORE_RANGE, "water_coast": COAST_Y}
+
+
+def shore_rect(margin=(300.0, 400.0)):
+    return (E.X0 - margin[0], E.Y0 - margin[1], E.X1 + margin[0], E.Y1)
+
+
+def write_shore_map(size=1024, margin=(300.0, 400.0)):
+    """textures/sea_shore_data.png: for every point of the world, how far it is from the shore, measured in the
+    sea (0 on land and at the water's edge, 1 = SHORE_RANGE metres or more). Land is whatever a ray from the sky
+    hits above SEA_LEVEL (terrain, land skirt, fort), sea is where it hits the water plane first: exactly the
+    shoreline the 3D world shows. So call this when the ground and the backdrop exist (build() does). The map
+    covers the world bounds plus `margin` metres to the west/east and to the south (SHORE_RECT). The sea shader
+    reads it by world position for the turquoise shallows and the foam band, so the sea needs no depth texture
+    and no extra geometry. Row 0 of the image is the south edge."""
+    import numpy as np
+    from mathutils import Vector
+    x0, y0, x1, y1 = shore_rect(margin)
+    dx, dy = (x1 - x0) / size, (y1 - y0) / size
+    bpy.context.view_layer.update()
+    deps = bpy.context.evaluated_depsgraph_get()
+    scene, down = bpy.context.scene, Vector((0, 0, -1))
+    land = np.zeros((size, size), bool)
+    for j in range(size):
+        y = y0 + (j + 0.5) * dy
+        for i in range(size):
+            hit, loc, _n, _i, _obj, _m = scene.ray_cast(deps, Vector((x0 + (i + 0.5) * dx, y, 500.0)), down)
+            land[j, i] = hit and loc.z > SEA_LEVEL + 0.02
+    dist = np.where(land, 0.0, 1e6)
+    diag = math.hypot(dx, dy)
+    steps = ((1, 0, dx), (-1, 0, dx), (0, 1, dy), (0, -1, dy), (1, 1, diag), (1, -1, diag), (-1, 1, diag), (-1, -1, diag))
+    for _ in range(int(SHORE_RANGE / min(dx, dy)) + 2):          # grow the distance outwards from the land
+        padded = np.pad(dist, 1, mode="edge")
+        for sx, sy, cost in steps:
+            dist = np.minimum(dist, padded[1 + sy:1 + sy + size, 1 + sx:1 + sx + size] + cost)
+    value = np.clip((dist - 0.5 * min(dx, dy)) / SHORE_RANGE, 0.0, 1.0)
+    rgba = np.repeat(value[:, :, None], 4, axis=2)
+    rgba[:, :, 3] = 1.0
+    os.makedirs(E.TEXTURES, exist_ok=True)
+    img = bpy.data.images.new("sea_shore_data", size, size, alpha=False, is_data=True)
+    img.pixels = rgba.ravel().tolist()                             # bpy rows run bottom-up: row 0 = south
+    img.filepath_raw, img.file_format = os.path.join(E.TEXTURES, SHORE_MAP), "PNG"
+    img.save()
+    print(f"  shore map: {SHORE_MAP} {size} px, {dx:.2f} x {dy:.2f} m per pixel, {100.0 * (1.0 - land.mean()):.0f} % sea")
+    return land
 
 
 def build_skirt(heights, col):
@@ -225,3 +285,4 @@ def build(heights):
     build_outer_buildings(heights, col)
     build_far_town(col)
     build_fort(col)
+    write_shore_map()                      # last: it looks at the finished ground and backdrop from above
