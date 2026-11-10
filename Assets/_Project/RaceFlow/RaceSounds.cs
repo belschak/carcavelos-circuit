@@ -30,7 +30,7 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("The HUD: its menus ask for menu sounds through RaceHud.MenuSoundRequested (audit 10)")]
         private RaceHud hud;
 
-        [SerializeField, Tooltip("2D AudioSource for menu sounds, with Ignore Listener Pause on, so M still clicks while the race is paused")]
+        [SerializeField, Tooltip("2D AudioSource for menu sounds. Awake makes it ignore AudioListener.pause, so M still clicks while the race is paused")]
         private AudioSource menuSource;
 
         [SerializeField, Tooltip("2D AudioSource only for the checkpoint chime: its pitch says ahead or behind (audit 19)")]
@@ -103,6 +103,16 @@ namespace CarcavelosCircuit.RaceFlow
         private float lastHintUntil;
         private float stampAt = -1f;    // Time.unscaledTime when the medal thud plays, -1 = none waiting
         private float sparkleAt = -1f;  // same for the new-medal ping
+
+        // ignoreListenerPause is not saved in scene files (it only exists at runtime), so it is set here, not by the
+        // builder. With it, the menu source keeps playing while the pause holds AudioListener.pause on.
+        private void Awake()
+        {
+            if (menuSource != null)
+            {
+                menuSource.ignoreListenerPause = true;
+            }
+        }
 
         private void OnEnable()
         {
@@ -281,7 +291,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        // Menu sounds have their own source: it ignores AudioListener.pause (set in the editor builder), and its
+        // Menu sounds have their own source: it ignores AudioListener.pause (set in Awake), and its
         // pitch can change without bending a race sound that is still ringing on the first source.
         private void PlayMenu(AudioClip clip, float pitch)
         {

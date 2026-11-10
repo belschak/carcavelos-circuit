@@ -664,8 +664,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             RaceBootstrap bootstrap = systems.AddComponent<RaceBootstrap>();
             AudioSource uiSource = AddAudioSource(systems, null, false);
             AudioSource delayedSource = AddAudioSource(systems, null, false); // record sting, retry beep
-            AudioSource menuSource = AddAudioSource(systems, null, false);    // menu sounds (audit 10)
-            menuSource.ignoreListenerPause = true; // the mute click and the pause cue must play while AudioListener.pause is on
+            AudioSource menuSource = AddAudioSource(systems, null, false);    // menu sounds (audit 10), RaceSounds.Awake lets it ignore the pause
             AudioSource chimeSource = AddAudioSource(systems, null, false);   // checkpoint chime, pitched ahead/behind (audit 19)
             RaceSounds sounds = systems.AddComponent<RaceSounds>();
 
