@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using CarcavelosCircuit.Track.Editor;
 
 public static class CampusWorldInterior
 {
@@ -13,6 +14,15 @@ public static class CampusWorldInterior
     private const string HallModel = "Assets/_Preview/NovaHallWorld.fbx";
     private const string CutMeshDir = "Assets/_Preview/CutMeshes";
     private const string BuildingId = "w665606788";          // Edificio Principal in Luc's CampusWorld model
+    private const string TrackData = "Assets/_Project/Visuals/CampusWorld/Data/track.json";
+    private const string RailingProto = "Prop_RailingSegment"; // Luc's metal railing; the white fence replaces it
+    private const float RailingReach = 8f;                     // railings this close to the route are switched off
+
+    // The route before and after HallDoorApproach lined it up with the hall doors (for moving the road mesh).
+    [System.Serializable] private class TrackPoint { public float x, y, z, width; }
+    [System.Serializable] private class TrackList { public TrackPoint[] points; }
+    private static Vector3[] routeBefore, routeAfter;
+    private static float[] widthBefore, widthAfter;
 
     // Edificio Principal footprint (world_data.json, metres; Unity x = east, z = north)
     private static readonly float[] Footprint =
@@ -37,7 +47,9 @@ public static class CampusWorldInterior
 
         // Switch off the old building block and the old drive-through dressing; cut the ground and the old road out
         // of the footprint so the hall floor is the only floor inside (all in the copy only).
-        int hidden = 0, cut = 0;
+        // The road runs straight into each hall door at the door's width (same rule as the white fence).
+        LoadRoute();
+        int hidden = 0, cut = 0, railings = 0;
         foreach (GameObject root in scene.GetRootGameObjects())
         {
             foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
@@ -46,6 +58,11 @@ public static class CampusWorldInterior
                 {
                     t.gameObject.SetActive(false);
                     hidden++;
+                }
+                else if (t.parent != null && t.parent.name == RailingProto && NearRoute(t.position))
+                {
+                    t.gameObject.SetActive(false);                // one kind of fence only: the white one
+                    railings++;
                 }
                 else if (t.name.StartsWith("World_Ground") || t.name.StartsWith("Track_"))
                 {
@@ -69,17 +86,53 @@ public static class CampusWorldInterior
         AssetDatabase.SaveAssets();
         Selection.activeGameObject = hall;
         if (SceneView.lastActiveSceneView != null) SceneView.lastActiveSceneView.FrameSelected();
-        Debug.Log("Campus world with Nova interior: " + CopyScene + " (" + hidden + " old objects switched off, " + cut + " meshes cut).");
+        Debug.Log("Campus world with Nova interior: " + CopyScene + " (" + hidden + " old objects switched off, " + cut + " meshes cut, "
+            + railings + " metal railings switched off).");
+    }
+
+    private static void LoadRoute()
+    {
+        TrackPoint[] p = JsonUtility.FromJson<TrackList>(System.IO.File.ReadAllText(TrackData)).points;
+        routeBefore = new Vector3[p.Length];
+        widthBefore = new float[p.Length];
+        for (int i = 0; i < p.Length; i++)
+        {
+            routeBefore[i] = new Vector3(p[i].x, p[i].y, p[i].z);
+            widthBefore[i] = p[i].width;
+        }
+        routeAfter = (Vector3[])routeBefore.Clone();
+        widthAfter = (float[])widthBefore.Clone();
+        int moved = HallDoorApproach.Apply(routeAfter, widthAfter, null);
+        Debug.Log("Campus world with Nova interior: road lined up with the hall doors (" + moved + " route points).");
+    }
+
+    private static bool NearRoute(Vector3 p)
+    {
+        for (int i = 0; i < routeAfter.Length; i++)
+        {
+            if (new Vector2(routeAfter[i].x - p.x, routeAfter[i].z - p.z).sqrMagnitude < RailingReach * RailingReach) return true;
+        }
+        return false;
     }
 
     // Copies the mesh without the triangles whose centre lies inside the footprint, saves it as an asset and uses it
-    // for the renderer and the collider of this object.
+    // for the renderer and the collider of this object. Road meshes (Track_...) first move with the route at the doors.
     private static bool CutOutFootprint(GameObject go)
     {
         MeshFilter mf = go.GetComponent<MeshFilter>();
         if (mf == null || mf.sharedMesh == null) return false;
         Mesh src = mf.sharedMesh;
         Vector3[] v = src.vertices;
+        int warped = 0;
+        if (go.name.StartsWith("Track_"))
+        {
+            for (int i = 0; i < v.Length; i++)
+            {
+                Vector3 w = go.transform.TransformPoint(v[i]);
+                Vector3 moved = HallDoorApproach.Warp(w, routeBefore, widthBefore, routeAfter, widthAfter);
+                if (moved != w) { v[i] = go.transform.InverseTransformPoint(moved); warped++; }
+            }
+        }
         var mesh = new Mesh { name = src.name + "_cut", indexFormat = src.indexFormat };
         mesh.vertices = v;
         mesh.normals = src.normals;
@@ -101,7 +154,7 @@ public static class CampusWorldInterior
             }
             mesh.SetTriangles(keep, s);
         }
-        if (removed == 0) return false;
+        if (removed == 0 && warped == 0) return false;
         mesh.RecalculateBounds();
         string path = CutMeshDir + "/" + go.name + "_cut.asset";
         AssetDatabase.DeleteAsset(path);
