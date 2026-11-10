@@ -58,6 +58,11 @@ PLAN = {
     "sfx_finish_jingle": (-12.0, False, False),
     "sfx_new_record": (-14.0, False, True),
     "sfx_hint_warning": (-15.0, False, False),
+    "sfx_item_box_break": (-16.0, False, True),  # item boxes (task R7)
+    "sfx_item_roll_tick": (-22.0, False, False),
+    "sfx_item_ready": (-16.0, False, True),
+    "sfx_item_bica": (-15.0, False, False),
+    "sfx_item_onda": (-14.0, False, False),
     # music
     "music_campus_loop": (-16.0, True, False),
     "music_results_loop": (-16.0, True, False),
