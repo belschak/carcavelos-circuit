@@ -31,26 +31,28 @@ namespace CarcavelosCircuit.RaceFlow
             // the smoothest; a fixed number would switch to a timer and judder.
             Application.targetFrameRate = -1;
 
-            string trackScene = settings.TrackSceneName;
-            yield return LoadSceneIfNeeded(trackScene);
-            PlaceholderTrack track = FindTrackIn(trackScene);
-
-            // While the campus scene is still empty (Role 2 is building it), use our small test loop.
-            if (track == null && settings.FallbackTrackSceneName != "")
+            // Try the track scenes in RaceSettings order (Role 2's campus scene first, then the team's other campus
+            // scenes, our small test loop last). The first one that is in the build list and has a track wins.
+            string[] candidates = settings.TrackScenesInOrder();
+            PlaceholderTrack track = null;
+            string trackScene = "";
+            for (int i = 0; i < candidates.Length && track == null; i++)
             {
-                // A warning, not a log line: on swap day Role 2's TrackInfo may already be in the campus scene while
-                // this code still looks for PlaceholderTrack. Then we would race the test loop without noticing.
-                Debug.LogWarning("RaceBootstrap: no PlaceholderTrack found in " + trackScene + ", racing the fallback "
-                    + settings.FallbackTrackSceneName + " instead. If Role 2's TrackInfo is already in " + trackScene
-                    + ", do the swap (docs/explain/role4-walkthrough.md, section 5).");
-                // Close the unfinished campus scene so its test camera or lights do not show up in the race.
-                if (SceneManager.GetSceneByName(trackScene).isLoaded)
+                yield return LoadSceneIfNeeded(candidates[i]);
+                track = FindTrackIn(candidates[i]);
+                if (track != null)
                 {
-                    yield return SceneManager.UnloadSceneAsync(trackScene);
+                    trackScene = candidates[i];
                 }
-                trackScene = settings.FallbackTrackSceneName;
-                yield return LoadSceneIfNeeded(trackScene);
-                track = FindTrackIn(trackScene);
+                else if (SceneManager.GetSceneByName(candidates[i]).isLoaded)
+                {
+                    // A scene without a track (still being built): close it so its test camera or lights do not show
+                    // up in the race. A warning, not a log line: on swap day Role 2's TrackInfo may already be in it
+                    // while this code still looks for PlaceholderTrack, and we would race another track unnoticed.
+                    Debug.LogWarning("RaceBootstrap: no PlaceholderTrack found in " + candidates[i] + ", trying the next track scene. "
+                        + "If Role 2's TrackInfo is already in it, do the swap (docs/explain/role4-walkthrough.md, section 5).");
+                    yield return SceneManager.UnloadSceneAsync(candidates[i]);
+                }
             }
 
             if (track == null)
@@ -58,6 +60,7 @@ namespace CarcavelosCircuit.RaceFlow
                 Debug.LogError("RaceBootstrap: no track to race on. Check the scene names in RaceSettings and File > Build Profiles.");
                 yield break;
             }
+            Debug.Log("RaceBootstrap: racing on " + trackScene + ".");
 
             // Use the track scene's light and sky.
             SceneManager.SetActiveScene(SceneManager.GetSceneByName(trackScene));
@@ -101,7 +104,8 @@ namespace CarcavelosCircuit.RaceFlow
             }
             if (!Application.CanStreamedLevelBeLoaded(sceneName))
             {
-                Debug.LogWarning("RaceBootstrap: scene " + sceneName + " is not in the build scene list.");
+                // Normal for a track scene that is not merged yet; a plain log so the Console stays free of warnings.
+                Debug.Log("RaceBootstrap: scene " + sceneName + " is not in the build scene list, skipped.");
                 yield break;
             }
             yield return SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);

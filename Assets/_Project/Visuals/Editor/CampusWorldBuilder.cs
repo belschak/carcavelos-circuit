@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using CarcavelosCircuit.RaceFlow;
+using CarcavelosCircuit.Track;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -481,11 +482,11 @@ namespace CarcavelosCircuit.Visuals.Editor
 
         private static void AddRaceParts(GameObject root, TrackData data)
         {
-            var race = new GameObject("Race (placeholders)");
+            var race = new GameObject("Race");
             race.transform.SetParent(root.transform, false);
-            PlaceholderTrack track = race.AddComponent<PlaceholderTrack>();          // swap to Role 2's TrackInfo with T4
+            TrackInfo track = race.AddComponent<TrackInfo>();          // Role 2's track parts (T4)
             int count = data.checkpoints.Length;
-            var checkpoints = new PlaceholderCheckpoint[count];
+            var checkpoints = new Checkpoint[count];
             for (int c = 0; c < count; c++)
             {
                 int i = data.checkpoints[c];
@@ -501,7 +502,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 respawn.transform.SetParent(cp.transform, false);
                 respawn.transform.SetPositionAndRotation(Pos(data.points[after]) + Vector3.up * 0.5f,
                     Quaternion.LookRotation(Forward(data, after)));
-                PlaceholderCheckpoint checkpoint = cp.AddComponent<PlaceholderCheckpoint>(); // swap to Role 2's Checkpoint with T4
+                Checkpoint checkpoint = cp.AddComponent<Checkpoint>();
                 var so = new SerializedObject(checkpoint);
                 so.FindProperty("index").intValue = c;
                 so.FindProperty("respawnPoint").objectReferenceValue = respawn.transform;

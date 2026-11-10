@@ -5,7 +5,7 @@ Each module only talks to another module through what is listed here. Build agai
 Namespace per module: `CarcavelosCircuit.Shared`, `.Driving`, `.Track`, `.Visuals`, `.RaceFlow`, `.Audio`. One class per file, file name = class name.
 
 Each module folder has its own assembly definition (`.asmdef`) with the same name as the namespace. Allowed references (nothing else, no cycles):
-`Driving -> Shared`, `Visuals -> Shared`, `Audio -> Shared`, `RaceFlow -> Shared, Track`, `Tests.EditMode -> Track, RaceFlow`. Track and Shared reference no other module. Nobody references `Driving` directly: everyone talks to the kart through `IKartState`.
+`Driving -> Shared`, `Visuals -> Shared`, `Audio -> Shared`, `RaceFlow -> Shared, Track, Audio` (Audio added 2026-11-08, `docs/decisions.md`), `Tests.EditMode -> Shared, Track, RaceFlow, Audio`, `Tests.PlayMode -> Shared, RaceFlow`. Plus Unity packages (Input System, URP); Editor-only builder assemblies may reference their own module. Track and Shared reference no other module. Nobody references `Driving` directly: everyone talks to the kart through `IKartState`.
 
 ## Shared (Role 4): `IKartState` in `Assets/_Project/Shared/IKartState.cs`
 
