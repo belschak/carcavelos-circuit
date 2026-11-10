@@ -97,6 +97,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: CarcavelosCircuit.Driving::CarcavelosCircuit.Driving.KartController
   tuning: {fileID: 11400000, guid: b0a8f9cf229c9e14ca6ca5d9af979338, type: 2}
   driveWithoutRaceFlow: 0
+  visual: {fileID: 6674486081818115137}
 --- !u!1 &2456319601223920757
 GameObject:
   m_ObjectHideFlags: 0
