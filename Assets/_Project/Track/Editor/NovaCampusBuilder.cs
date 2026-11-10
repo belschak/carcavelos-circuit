@@ -69,8 +69,7 @@ namespace CarcavelosCircuit.Track.Editor
 
             AddRoad(road, look);
             AddEdges(walls, look, root.transform);
-            bool[] railGaps = RailGaps();
-            NovaGuardrail.Add(walls, look, centre, width, railGaps, railGaps); // same gaps on both sides here
+            NovaGuardrail.Add(walls, look, centre, width, RailGaps());
             AddTunnel(walls, look);
             AddGround(ground, look);
             AddZonesAndSea(ground, look);

@@ -12,9 +12,8 @@ namespace CarcavelosCircuit.Track.Editor
         private const int PostEvery = 2;      // a post every 2nd route ring (about 4 m)
         private const float OutsideOffset = 0.15f; // rail stands a little outside the road edge
 
-        // "skipLeft[i]" / "skipRight[i]" = no guardrail on that side at ring i (tunnel and ramp walls have their own
-        // walls, and the campus world already has Role 3's own railings in some places).
-        public static void Add(NovaBatch batch, NovaLook look, Vector3[] centre, float[] width, bool[] skipLeft, bool[] skipRight)
+        // "skip[i]" = no guardrail at ring i (tunnel, ramp walls: they have their own walls already).
+        public static void Add(NovaBatch batch, NovaLook look, Vector3[] centre, float[] width, bool[] skip)
         {
             int count = centre.Length;
             for (int i = 0; i < count; i++)
@@ -23,7 +22,6 @@ namespace CarcavelosCircuit.Track.Editor
                 for (int k = 0; k < 2; k++)
                 {
                     float side = k == 0 ? -1f : 1f;
-                    bool[] skip = k == 0 ? skipLeft : skipRight;
                     if (skip[i])
                     {
                         continue;
@@ -45,9 +43,8 @@ namespace CarcavelosCircuit.Track.Editor
             }
         }
 
-        // The point on the road edge (pushed slightly outwards) at ring i. Public so a caller can ask
-        // "is there already a railing here?" at exactly the spot where a new one would stand.
-        public static Vector3 RailPoint(Vector3[] centre, float[] width, int i, float side)
+        // The point on the road edge (pushed slightly outwards) at ring i.
+        private static Vector3 RailPoint(Vector3[] centre, float[] width, int i, float side)
         {
             Vector3 right = NovaRouteMath.Right(centre, i);
             return centre[i] + right * (width[i] * 0.5f * side + OutsideOffset * side);
