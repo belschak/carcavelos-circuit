@@ -119,7 +119,75 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &66492545
+--- !u!1001 &107545702
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4810820321247827493, guid: e1e4ab41d2d446f43b81c2d3150fda2f, type: 3}
+      propertyPath: m_Name
+      value: ChaseCamera
+      objectReference: {fileID: 0}
+    - target: {fileID: 9183334968494322655, guid: e1e4ab41d2d446f43b81c2d3150fda2f, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9183334968494322655, guid: e1e4ab41d2d446f43b81c2d3150fda2f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 9183334968494322655, guid: e1e4ab41d2d446f43b81c2d3150fda2f, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -6
+      objectReference: {fileID: 0}
+    - target: {fileID: 9183334968494322655, guid: e1e4ab41d2d446f43b81c2d3150fda2f, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.9870875
+      objectReference: {fileID: 0}
+    - target: {fileID: 9183334968494322655, guid: e1e4ab41d2d446f43b81c2d3150fda2f, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.16018222
+      objectReference: {fileID: 0}
+    - target: {fileID: 9183334968494322655, guid: e1e4ab41d2d446f43b81c2d3150fda2f, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.000000010461886
+      objectReference: {fileID: 0}
+    - target: {fileID: 9183334968494322655, guid: e1e4ab41d2d446f43b81c2d3150fda2f, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.0000000016977304
+      objectReference: {fileID: 0}
+    - target: {fileID: 9183334968494322655, guid: e1e4ab41d2d446f43b81c2d3150fda2f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9183334968494322655, guid: e1e4ab41d2d446f43b81c2d3150fda2f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9183334968494322655, guid: e1e4ab41d2d446f43b81c2d3150fda2f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: e1e4ab41d2d446f43b81c2d3150fda2f, type: 3}
+--- !u!114 &107545703 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4872983683535663800, guid: e1e4ab41d2d446f43b81c2d3150fda2f, type: 3}
+  m_PrefabInstance: {fileID: 107545702}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
+--- !u!1 &385140478
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,12 +195,378 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 66492551}
-  - component: {fileID: 66492550}
-  - component: {fileID: 66492549}
-  - component: {fileID: 66492546}
-  - component: {fileID: 66492548}
-  - component: {fileID: 66492547}
+  - component: {fileID: 385140484}
+  - component: {fileID: 385140479}
+  - component: {fileID: 385140483}
+  - component: {fileID: 385140482}
+  - component: {fileID: 385140481}
+  - component: {fileID: 385140480}
+  m_Layer: 0
+  m_Name: RaceSystems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &385140479
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 385140478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07410d2e22d1d40448b74676be032b63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.RaceManager
+  settings: {fileID: 11400000, guid: 198ea1222b3236e428c19689c8a84285, type: 2}
+  pauseOnFocusLoss: 1
+--- !u!114 &385140480
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 385140478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56898b9173ed47347950eb0d53f9da33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.RaceSounds
+  raceManager: {fileID: 385140479}
+  music: {fileID: 1492165555}
+  source: {fileID: 385140482}
+  delayedSource: {fileID: 385140481}
+  countdownBeep: {fileID: 8300000, guid: 771939065a1066246a62617c1b9136d2, type: 3}
+  goBeep: {fileID: 8300000, guid: 383f630753324834394dd9e2dacd2bdd, type: 3}
+  checkpointChime: {fileID: 8300000, guid: 39a59584c7654b748964065d059275ed, type: 3}
+  finishJingle: {fileID: 8300000, guid: 522c4cc166451214f88dbac3f9c792fe, type: 3}
+  newRecordSting: {fileID: 8300000, guid: 56ed0f90eb8944345ae0f71df82eab9d, type: 3}
+  medalStamp: {fileID: 8300000, guid: 6dce6cb5c356a234d828301931c882b2, type: 3}
+  newMedalSparkle: {fileID: 8300000, guid: 8e56b4d3d3111da4c9bade55676780b3, type: 3}
+  retryClick: {fileID: 8300000, guid: ece823442547d3d4293f294c33b6c1b2, type: 3}
+  respawnWhoosh: {fileID: 8300000, guid: 1a2fba89e58c684449892e3feb734e08, type: 3}
+  hintWarning: {fileID: 8300000, guid: 37a868c9d63cd784bbb3675c811eda39, type: 3}
+  volume: 1
+  recordStingDelay: 1.25
+  retryBeepDelay: 0.1
+  coachClickVolume: 0.4
+  medalStampVolume: 0.7
+  newMedalSparkleVolume: 0.55
+--- !u!82 &385140481
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 385140478}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 0
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!82 &385140482
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 385140478}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 0
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &385140483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 385140478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b1f3663d3a9e54882f44aa79d7fd38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.RaceBootstrap
+  settings: {fileID: 11400000, guid: 198ea1222b3236e428c19689c8a84285, type: 2}
+  kartPrefab: {fileID: 327022427536572393, guid: 6a261bc954aa7e14aa0aeb6310eadc3f, type: 3}
+  kartAttachments:
+  - {fileID: 4447663131456866007, guid: 8e7c8a71c09fb604a82f99cc489b7d09, type: 3}
+  raceManager: {fileID: 385140479}
+  chaseCamera: {fileID: 1112298105}
+--- !u!4 &385140484
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 385140478}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &971416407
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 971416410}
+  - component: {fileID: 971416409}
+  - component: {fileID: 971416408}
+  m_Layer: 0
+  m_Name: HUD
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &971416408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 971416407}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74a2b645460a41d42b1ea487170a18e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.RaceHud
+  raceManager: {fileID: 385140479}
+  stage1At: 0.5
+  controlsHintSeconds: 8
+--- !u!114 &971416409
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 971416407}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: 626fd95f11852d54bb2629d11874d7fb, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: 46ac4e48f2eca5a448a8e874aeba3152, type: 3}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!4 &971416410
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 971416407}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1112298104
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1112298111}
+  - component: {fileID: 1112298110}
+  - component: {fileID: 1112298109}
+  - component: {fileID: 1112298108}
+  - component: {fileID: 1112298105}
+  - component: {fileID: 1112298107}
+  - component: {fileID: 1112298106}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -140,50 +574,48 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &66492546
+--- !u!114 &1112298105
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 66492545}
+  m_GameObject: {fileID: 1112298104}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8830a6facfa73914781a6052af3fcc86, type: 3}
+  m_Script: {fileID: 11500000, guid: 29611d52ac664554f95059af45260829, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.PlaceholderChaseCamera
-  distance: 6
-  height: 2.5
-  followSharpness: 6
-  minFieldOfView: 65
-  maxFieldOfView: 80
---- !u!114 &66492547
+  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.ChaseCameraRig
+  chaseCamera: {fileID: 107545703}
+  speedFieldOfViewBoost: 12
+  fieldOfViewSharpness: 4
+--- !u!114 &1112298106
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 66492545}
+  m_GameObject: {fileID: 1112298104}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 81a740675f4716a46af5e3cca85609cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.MapFlyover
-  raceManager: {fileID: 870006565}
-  chaseCamera: {fileID: 66492546}
+  raceManager: {fileID: 385140479}
+  chaseCamera: {fileID: 1112298105}
   orbitDegreesPerSecond: 6
   flyInSeconds: 2.7
   outroDelaySeconds: 1.6
   outroSeconds: 3
   minHeight: 35
   humpMetres: 12
---- !u!114 &66492548
+--- !u!114 &1112298107
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 66492545}
+  m_GameObject: {fileID: 1112298104}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
@@ -221,21 +653,53 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
---- !u!81 &66492549
+--- !u!114 &1112298108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1112298104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72ece51f2901e7445ab60da3685d6b5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineBrain
+  ShowDebugText: 0
+  ShowCameraFrustum: 1
+  IgnoreTimeScale: 0
+  WorldUpOverride: {fileID: 0}
+  ChannelMask: -1
+  UpdateMethod: 2
+  BlendUpdateMethod: 1
+  LensModeOverride:
+    Enabled: 0
+    DefaultMode: 2
+  DefaultBlend:
+    Style: 1
+    Time: 2
+    CustomCurve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  CustomBlends: {fileID: 0}
+--- !u!81 &1112298109
 AudioListener:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 66492545}
+  m_GameObject: {fileID: 1112298104}
   m_Enabled: 1
---- !u!20 &66492550
+--- !u!20 &1112298110
 Camera:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 66492545}
+  m_GameObject: {fileID: 1112298104}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
@@ -280,13 +744,13 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!4 &66492551
+--- !u!4 &1112298111
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 66492545}
+  m_GameObject: {fileID: 1112298104}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 6, z: -40}
@@ -295,7 +759,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &481547674
+--- !u!1 &1312599283
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -303,8 +767,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 481547676}
-  - component: {fileID: 481547675}
+  - component: {fileID: 1312599285}
+  - component: {fileID: 1312599284}
   m_Layer: 0
   m_Name: PostProcessing
   m_TagString: Untagged
@@ -312,13 +776,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &481547675
+--- !u!114 &1312599284
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 481547674}
+  m_GameObject: {fileID: 1312599283}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
@@ -329,13 +793,13 @@ MonoBehaviour:
   blendDistance: 0
   weight: 1
   sharedProfile: {fileID: 11400000, guid: 9a7c53aa225cd83408c7868ec0d1edb2, type: 2}
---- !u!4 &481547676
+--- !u!4 &1312599285
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 481547674}
+  m_GameObject: {fileID: 1312599283}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -344,7 +808,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &870006564
+--- !u!1 &1360080955
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -352,284 +816,59 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 870006570}
-  - component: {fileID: 870006565}
-  - component: {fileID: 870006569}
-  - component: {fileID: 870006568}
-  - component: {fileID: 870006567}
-  - component: {fileID: 870006566}
+  - component: {fileID: 1360080958}
+  - component: {fileID: 1360080957}
+  - component: {fileID: 1360080956}
   m_Layer: 0
-  m_Name: RaceSystems
+  m_Name: Ghost
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &870006565
+--- !u!114 &1360080956
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 870006564}
+  m_GameObject: {fileID: 1360080955}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07410d2e22d1d40448b74676be032b63, type: 3}
+  m_Script: {fileID: 11500000, guid: 5fde093130c0ef846a50ddc6835e6c3b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.RaceManager
-  settings: {fileID: 11400000, guid: 198ea1222b3236e428c19689c8a84285, type: 2}
-  pauseOnFocusLoss: 1
---- !u!114 &870006566
+  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.GhostPlayer
+  raceManager: {fileID: 385140479}
+  ghostMaterial: {fileID: 2100000, guid: 20be937a50faee44aa9beeca62919033, type: 2}
+  shippedGhost: {fileID: 4900000, guid: ae9624e9653deb8498c80dcaced6c4f6, type: 3}
+  ownGhostColour: {r: 0.55, g: 0.8, b: 1, a: 1}
+  deansGhostColour: {r: 1, g: 0.8, b: 0.4, a: 1}
+  maxAlpha: 0.4
+  hideDistance: 1.5
+  fullDistance: 8
+  cameraHideDistance: 2
+  cameraFullDistance: 5
+  endFadeSeconds: 0.8
+--- !u!114 &1360080957
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 870006564}
+  m_GameObject: {fileID: 1360080955}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 56898b9173ed47347950eb0d53f9da33, type: 3}
+  m_Script: {fileID: 11500000, guid: b7a2d70b275b7114cb1798c912a5b299, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.RaceSounds
-  raceManager: {fileID: 870006565}
-  music: {fileID: 1334610878}
-  source: {fileID: 870006568}
-  delayedSource: {fileID: 870006567}
-  countdownBeep: {fileID: 8300000, guid: 771939065a1066246a62617c1b9136d2, type: 3}
-  goBeep: {fileID: 8300000, guid: 383f630753324834394dd9e2dacd2bdd, type: 3}
-  checkpointChime: {fileID: 8300000, guid: 39a59584c7654b748964065d059275ed, type: 3}
-  finishJingle: {fileID: 8300000, guid: 522c4cc166451214f88dbac3f9c792fe, type: 3}
-  newRecordSting: {fileID: 8300000, guid: 56ed0f90eb8944345ae0f71df82eab9d, type: 3}
-  medalStamp: {fileID: 8300000, guid: 6dce6cb5c356a234d828301931c882b2, type: 3}
-  newMedalSparkle: {fileID: 8300000, guid: 8e56b4d3d3111da4c9bade55676780b3, type: 3}
-  retryClick: {fileID: 8300000, guid: ece823442547d3d4293f294c33b6c1b2, type: 3}
-  respawnWhoosh: {fileID: 8300000, guid: 1a2fba89e58c684449892e3feb734e08, type: 3}
-  hintWarning: {fileID: 8300000, guid: 37a868c9d63cd784bbb3675c811eda39, type: 3}
-  volume: 1
-  recordStingDelay: 1.25
-  retryBeepDelay: 0.1
-  coachClickVolume: 0.4
-  medalStampVolume: 0.7
-  newMedalSparkleVolume: 0.55
---- !u!82 &870006567
-AudioSource:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 870006564}
-  m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
-  m_PlayOnAwake: 0
-  m_Volume: 1
-  m_Pitch: 1
-  Loop: 0
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 0
-  MinDistance: 1
-  MaxDistance: 500
-  Pan2D: 0
-  rolloffMode: 0
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
---- !u!82 &870006568
-AudioSource:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 870006564}
-  m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
-  m_PlayOnAwake: 0
-  m_Volume: 1
-  m_Pitch: 1
-  Loop: 0
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 0
-  MinDistance: 1
-  MaxDistance: 500
-  Pan2D: 0
-  rolloffMode: 0
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
---- !u!114 &870006569
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 870006564}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 43b1f3663d3a9e54882f44aa79d7fd38, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.RaceBootstrap
-  settings: {fileID: 11400000, guid: 198ea1222b3236e428c19689c8a84285, type: 2}
-  kartPrefab: {fileID: 327022427536572393, guid: 6a261bc954aa7e14aa0aeb6310eadc3f, type: 3}
-  kartAttachments:
-  - {fileID: 4447663131456866007, guid: 8e7c8a71c09fb604a82f99cc489b7d09, type: 3}
-  raceManager: {fileID: 870006565}
-  chaseCamera: {fileID: 66492546}
---- !u!4 &870006570
+  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.GhostRecorder
+  raceManager: {fileID: 385140479}
+--- !u!4 &1360080958
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 870006564}
+  m_GameObject: {fileID: 1360080955}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -638,7 +877,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1295670297
+--- !u!1 &1492165554
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -646,81 +885,10 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1295670300}
-  - component: {fileID: 1295670299}
-  - component: {fileID: 1295670298}
-  m_Layer: 0
-  m_Name: HUD
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1295670298
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1295670297}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 74a2b645460a41d42b1ea487170a18e3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.RaceHud
-  raceManager: {fileID: 870006565}
-  stage1At: 0.5
-  controlsHintSeconds: 8
---- !u!114 &1295670299
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1295670297}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
-  m_PanelSettings: {fileID: 11400000, guid: 626fd95f11852d54bb2629d11874d7fb, type: 2}
-  m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 9197481963319205126, guid: 46ac4e48f2eca5a448a8e874aeba3152, type: 3}
-  m_SortingOrder: 0
-  m_Position: 0
-  m_WorldSpaceSizeMode: 1
-  m_WorldSpaceWidth: 1920
-  m_WorldSpaceHeight: 1080
-  m_PivotReferenceSize: 0
-  m_Pivot: 0
-  m_WorldSpaceCollider: {fileID: 0}
---- !u!4 &1295670300
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1295670297}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1334610877
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1334610881}
-  - component: {fileID: 1334610880}
-  - component: {fileID: 1334610879}
-  - component: {fileID: 1334610878}
+  - component: {fileID: 1492165558}
+  - component: {fileID: 1492165557}
+  - component: {fileID: 1492165556}
+  - component: {fileID: 1492165555}
   m_Layer: 0
   m_Name: Music
   m_TagString: Untagged
@@ -728,21 +896,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1334610878
+--- !u!114 &1492165555
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1334610877}
+  m_GameObject: {fileID: 1492165554}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b4ac8be797eaee549bdf7819f52afd52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.RaceMusic
-  raceManager: {fileID: 870006565}
-  raceMusic: {fileID: 1334610880}
-  resultsMusic: {fileID: 1334610879}
+  raceManager: {fileID: 385140479}
+  raceMusic: {fileID: 1492165557}
+  resultsMusic: {fileID: 1492165556}
   titleDb: -10
   racingDb: -8
   finalStretchDb: -5
@@ -759,13 +927,13 @@ MonoBehaviour:
   pitchGlideSeconds: 2
   musicStartSample: 2048
   pauseWhenUnfocused: 1
---- !u!82 &1334610879
+--- !u!82 &1492165556
 AudioSource:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1334610877}
+  m_GameObject: {fileID: 1492165554}
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
@@ -856,13 +1024,13 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!82 &1334610880
+--- !u!82 &1492165557
 AudioSource:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1334610877}
+  m_GameObject: {fileID: 1492165554}
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
@@ -953,82 +1121,13 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!4 &1334610881
+--- !u!4 &1492165558
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1334610877}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1771621374
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1771621377}
-  - component: {fileID: 1771621376}
-  - component: {fileID: 1771621375}
-  m_Layer: 0
-  m_Name: Ghost
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1771621375
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1771621374}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5fde093130c0ef846a50ddc6835e6c3b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.GhostPlayer
-  raceManager: {fileID: 870006565}
-  ghostMaterial: {fileID: 2100000, guid: 20be937a50faee44aa9beeca62919033, type: 2}
-  shippedGhost: {fileID: 4900000, guid: ae9624e9653deb8498c80dcaced6c4f6, type: 3}
-  ownGhostColour: {r: 0.55, g: 0.8, b: 1, a: 1}
-  deansGhostColour: {r: 1, g: 0.8, b: 0.4, a: 1}
-  maxAlpha: 0.4
-  hideDistance: 1.5
-  fullDistance: 8
-  cameraHideDistance: 2
-  cameraFullDistance: 5
-  endFadeSeconds: 0.8
---- !u!114 &1771621376
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1771621374}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7a2d70b275b7114cb1798c912a5b299, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.GhostRecorder
-  raceManager: {fileID: 870006565}
---- !u!4 &1771621377
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1771621374}
+  m_GameObject: {fileID: 1492165554}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -1041,9 +1140,10 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 66492551}
-  - {fileID: 481547676}
-  - {fileID: 870006570}
-  - {fileID: 1334610881}
-  - {fileID: 1295670300}
-  - {fileID: 1771621377}
+  - {fileID: 1112298111}
+  - {fileID: 107545702}
+  - {fileID: 1312599285}
+  - {fileID: 385140484}
+  - {fileID: 1492165558}
+  - {fileID: 971416410}
+  - {fileID: 1360080958}

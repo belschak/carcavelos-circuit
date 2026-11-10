@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using CarcavelosCircuit.RaceFlow;
+using CarcavelosCircuit.Shared;
 using CarcavelosCircuit.Track;
 using NUnit.Framework;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -91,10 +93,15 @@ namespace CarcavelosCircuit.Tests.PlayMode
 
             yield return StartAndWaitForGo();
             Assert.IsTrue(race.Kart.InputEnabled, "input is on after GO");
-            PlaceholderChaseCamera chase = Object.FindAnyObjectByType<PlaceholderChaseCamera>();
+            ChaseCameraRig chase = Object.FindAnyObjectByType<ChaseCameraRig>();
             if (chase != null && Object.FindAnyObjectByType<MapFlyover>() != null)
             {
                 Assert.IsTrue(chase.enabled, "after GO the map fly-over has handed the camera back to the chase camera");
+                Assert.IsTrue(chase.GetComponent<CinemachineBrain>().enabled, "after GO Cinemachine drives the Main Camera again");
+                CinemachineCamera chaseCamera = Object.FindAnyObjectByType<CinemachineCamera>();
+                Assert.IsNotNull(chaseCamera, "Main has Role 1's ChaseCamera (Q13)");
+                Assert.IsNotNull(chaseCamera.Follow, "the chase camera has a target");
+                Assert.AreSame(race.Kart, chaseCamera.Follow.GetComponent<IKartState>(), "the chase camera follows the spawned kart");
             }
 
             int finishedLaps = 0;

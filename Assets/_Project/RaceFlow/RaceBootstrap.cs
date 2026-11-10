@@ -1,5 +1,6 @@
 using System.Collections;
 using CarcavelosCircuit.Track;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -22,8 +23,8 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField]
         private RaceManager raceManager;
 
-        [SerializeField, Tooltip("Follows the kart. Replaced by the Role 1 chase camera later; may be left empty then")]
-        private PlaceholderChaseCamera chaseCamera;
+        [SerializeField, Tooltip("Role 1's Cinemachine chase camera, connected to the race (Q13). May be empty: the race still runs")]
+        private ChaseCameraRig chaseCamera;
 
         // Start can be a coroutine: Unity waits for each "yield return" without freezing the game.
         private IEnumerator Start()
@@ -76,13 +77,13 @@ namespace CarcavelosCircuit.RaceFlow
                 }
             }
 
-            // The race first, the camera after: the placeholder camera is removed once Role 1's camera exists,
-            // and a missing camera must never stop the race from being set up.
+            // The race first, the camera after: a missing camera must never stop the race from being set up.
             raceManager.SetUp(kartObject, track, trackScene);
             if (chaseCamera != null)
             {
                 chaseCamera.SetTarget(kartObject.transform);
                 raceManager.Restarted += chaseCamera.SnapBehindTarget;
+                raceManager.Recovered += chaseCamera.SnapBehindTarget; // R or a fall teleports the kart: cut, do not swoop
             }
         }
 
@@ -92,6 +93,7 @@ namespace CarcavelosCircuit.RaceFlow
             if (chaseCamera != null && raceManager != null)
             {
                 raceManager.Restarted -= chaseCamera.SnapBehindTarget;
+                raceManager.Recovered -= chaseCamera.SnapBehindTarget;
             }
         }
 
@@ -111,7 +113,7 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // A track scene may have its own camera for testing it alone. In the race only Main's camera may render
-        // and listen (two AudioListeners = Unity warning, two cameras = wrong picture).
+        // and listen (two AudioListeners = Unity warning, two cameras = wrong picture, two Cinemachine cameras = a fight).
         private static void TurnOffTestCameras(string sceneName)
         {
             GameObject[] roots = SceneManager.GetSceneByName(sceneName).GetRootGameObjects();
@@ -124,6 +126,11 @@ namespace CarcavelosCircuit.RaceFlow
                 foreach (AudioListener listener in roots[i].GetComponentsInChildren<AudioListener>())
                 {
                     listener.enabled = false;
+                }
+                // A test Cinemachine camera in a track scene would compete with Main's chase camera for the brain.
+                foreach (CinemachineCamera testCamera in roots[i].GetComponentsInChildren<CinemachineCamera>())
+                {
+                    testCamera.enabled = false;
                 }
             }
         }

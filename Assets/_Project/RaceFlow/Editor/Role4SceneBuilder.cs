@@ -2,6 +2,7 @@ using CarcavelosCircuit.Audio;
 using CarcavelosCircuit.Shared;
 using CarcavelosCircuit.Shared.Editor;
 using CarcavelosCircuit.Track;
+using Unity.Cinemachine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -28,6 +29,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         private const string HudLayoutPath = Root + "RaceFlow/UI/RaceHud.uxml";
         private const string KartPrefabPath = Root + "RaceFlow/Prefabs/PlaceholderKart.prefab";
         private const string KartAudioPrefabPath = Root + "Audio/Prefabs/KartAudio.prefab";
+        private const string ChaseCameraPrefabPath = Root + "Driving/ChaseCamera.prefab"; // Role 1 (D2), used since Q13
         private const string ClipsFolder = Root + "Audio/Clips/";
         private const string MaterialsFolder = Root + "RaceFlow/Materials/";
         private const string MainScenePath = Root + "RaceFlow/Scenes/Main.unity";
@@ -129,7 +131,10 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             switch (rootName)
             {
                 case "Main Camera":
-                    return new[] { typeof(Transform), typeof(Camera), typeof(AudioListener), typeof(PlaceholderChaseCamera), typeof(MapFlyover), typeof(UniversalAdditionalCameraData) };
+                    return new[] { typeof(Transform), typeof(Camera), typeof(AudioListener), typeof(CinemachineBrain), typeof(ChaseCameraRig), typeof(MapFlyover), typeof(UniversalAdditionalCameraData) };
+                case "ChaseCamera":
+                    // Role 1's prefab instance (D2). Role 1 tunes it in the prefab, never here, so a rebuild loses nothing.
+                    return new[] { typeof(Transform), typeof(CinemachineCamera), typeof(CinemachineFollow), typeof(CinemachineRotationComposer) };
                 case "PostProcessing":
                     return new[] { typeof(Transform), typeof(Volume) };
                 case "RaceSystems":
@@ -603,7 +608,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             kartPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GetAssetPath(kartPrefab));
             kartAudioPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(KartAudioPrefabPath);
 
-            // Camera with the placeholder chase script and the only AudioListener.
+            // Camera with the only AudioListener. Role 1's Cinemachine chase camera (Q13) drives it through a
+            // CinemachineBrain; ChaseCameraRig connects that camera to the race.
             GameObject cameraObject = new GameObject("Main Camera");
             cameraObject.tag = "MainCamera";
             Camera cam = cameraObject.AddComponent<Camera>();
@@ -611,7 +617,18 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             cam.farClipPlane = 2000f; // the campus world (#33) has sea, backdrop and fort beyond 500 m
             cameraObject.AddComponent<AudioListener>();
             cameraObject.transform.position = new Vector3(0f, 6f, -40f);
-            PlaceholderChaseCamera chase = cameraObject.AddComponent<PlaceholderChaseCamera>();
+            cameraObject.AddComponent<CinemachineBrain>();
+            ChaseCameraRig chase = cameraObject.AddComponent<ChaseCameraRig>();
+            GameObject chasePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ChaseCameraPrefabPath);
+            if (chasePrefab == null)
+            {
+                throw new System.Exception("Role4SceneBuilder: " + ChaseCameraPrefabPath + " not found (Role 1, task D2). Pull main first.");
+            }
+            GameObject chaseObject = (GameObject)PrefabUtility.InstantiatePrefab(chasePrefab, scene);
+            chaseObject.name = "ChaseCamera";
+            SerializedObject cso = new SerializedObject(chase);
+            cso.FindProperty("chaseCamera").objectReferenceValue = chaseObject.GetComponent<CinemachineCamera>();
+            cso.ApplyModifiedPropertiesWithoutUndo();
 
             // Bloom makes the drift sparks and boost flames glow (Role 3's request). The camera must allow
             // post-processing, and one global Volume applies the profile. Role 3 tunes the values in the asset.
