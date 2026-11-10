@@ -720,6 +720,12 @@
     translate: 78px 0;
 }
 
+/* That gap has no room for a third key, so the P key (audit 9) is left out there. It is still listed on the start
+   screen and on the PAUSED card. A static part of a hint, never animated, so display:none is fine here. */
+.hud--narrow .controls-hint .key--pause {
+    display: none;
+}
+
 /* Keycaps (also used on the start and results screens). */
 .keycap {
     min-width: 30px;
