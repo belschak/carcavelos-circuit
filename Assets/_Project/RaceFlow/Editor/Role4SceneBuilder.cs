@@ -811,8 +811,15 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             iso.FindProperty("boxBreak").objectReferenceValue = Clip("el_item_box_break");
             iso.FindProperty("rollTick").objectReferenceValue = Clip("sfx_item_roll_tick");
             iso.FindProperty("itemReady").objectReferenceValue = Clip("el_item_ready");
-            iso.FindProperty("bicaUse").objectReferenceValue = Clip("el_item_bica");
-            iso.FindProperty("ondaUse").objectReferenceValue = Clip("el_item_onda");
+            iso.FindProperty("ringSource").objectReferenceValue = AddAudioSource(itemsObject, null, false);
+            // Bica = Lisbon's word for an espresso, onda = Portuguese for wave: the clips kept their first names.
+            iso.FindProperty("espressoUse").objectReferenceValue = Clip("el_item_bica");
+            iso.FindProperty("waveUse").objectReferenceValue = Clip("el_item_onda");
+            iso.FindProperty("seagullCall").objectReferenceValue = Clip("el_item_seagull");
+            iso.FindProperty("ringCollect").objectReferenceValue = Clip("el_item_ring");
+            iso.FindProperty("deansOn").objectReferenceValue = Clip("el_item_deans_on");
+            iso.FindProperty("shieldBlock").objectReferenceValue = Clip("el_item_shield_block");
+            iso.FindProperty("shieldPop").objectReferenceValue = Clip("el_item_shield_pop");
             iso.ApplyModifiedPropertiesWithoutUndo();
 
             // Own UIDocument on the HUD's PanelSettings, drawn under the race HUD (menus and the pause card cover it).

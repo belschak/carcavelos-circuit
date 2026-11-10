@@ -3,7 +3,7 @@ using NUnit.Framework;
 
 namespace CarcavelosCircuit.Tests.EditMode
 {
-    // Role 4 tests (task R7): the HUD item slot. Roll, land once, use, Triple Bica charges, busy slot, retry.
+    // Role 4 tests (task R7): the HUD item slot. Roll, land once, use, one use per item, busy slot, retry.
     public class ItemSlotTests
     {
         [Test]
@@ -19,34 +19,34 @@ namespace CarcavelosCircuit.Tests.EditMode
         public void Roll_LandsExactlyOnce_ThenTheItemIsReady()
         {
             ItemSlot slot = new ItemSlot();
-            Assert.IsTrue(slot.TryStartRoll(ItemKind.Onda, 1f));
+            Assert.IsTrue(slot.TryStartRoll(ItemKind.CarcavelosWave, 1f));
             Assert.IsTrue(slot.IsRolling);
             Assert.IsFalse(slot.IsReady);
             Assert.IsFalse(slot.Tick(0.5f));
             Assert.IsTrue(slot.Tick(0.6f));   // lands on this frame
             Assert.IsFalse(slot.Tick(0.1f));  // never again
             Assert.IsTrue(slot.IsReady);
-            Assert.AreEqual(ItemKind.Onda, slot.ShownIcon);
+            Assert.AreEqual(ItemKind.CarcavelosWave, slot.ShownIcon);
         }
 
         [Test]
         public void WhileRolling_TheItemCannotBeUsed()
         {
             ItemSlot slot = new ItemSlot();
-            slot.TryStartRoll(ItemKind.Bica, 1f);
+            slot.TryStartRoll(ItemKind.Espresso, 1f);
             Assert.AreEqual(ItemKind.None, slot.TryUse());
-            Assert.AreEqual(ItemKind.Bica, slot.Held); // still in the slot
+            Assert.AreEqual(ItemKind.Espresso, slot.Held); // still in the slot
         }
 
         [Test]
         public void BusySlot_RefusesANewItem()
         {
             ItemSlot slot = new ItemSlot();
-            slot.TryStartRoll(ItemKind.Bica, 1f);
-            Assert.IsFalse(slot.TryStartRoll(ItemKind.Onda, 1f)); // rolling
+            slot.TryStartRoll(ItemKind.Espresso, 1f);
+            Assert.IsFalse(slot.TryStartRoll(ItemKind.CarcavelosWave, 1f)); // rolling
             slot.Tick(2f);
-            Assert.IsFalse(slot.TryStartRoll(ItemKind.Onda, 1f)); // ready
-            Assert.AreEqual(ItemKind.Bica, slot.Held);
+            Assert.IsFalse(slot.TryStartRoll(ItemKind.CarcavelosWave, 1f)); // ready
+            Assert.AreEqual(ItemKind.Espresso, slot.Held);
         }
 
         [Test]
@@ -58,58 +58,47 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
-        public void Bica_IsUsedOnce_ThenTheSlotIsEmpty()
+        public void Espresso_IsUsedOnce_ThenTheSlotIsEmpty()
         {
             ItemSlot slot = new ItemSlot();
-            slot.TryStartRoll(ItemKind.Bica, 0f); // 0 s = ready at once
+            slot.TryStartRoll(ItemKind.Espresso, 0f); // 0 s = ready at once
             Assert.IsTrue(slot.IsReady);
-            Assert.AreEqual(ItemKind.Bica, slot.TryUse());
+            Assert.AreEqual(ItemKind.Espresso, slot.TryUse());
             Assert.IsTrue(slot.IsEmpty);
             Assert.AreEqual(ItemKind.None, slot.TryUse());
         }
 
-        [Test]
-        public void TripleBica_HasThreeUses()
+        [TestCase(ItemKind.Espresso)]
+        [TestCase(ItemKind.SeagullDelivery)]
+        [TestCase(ItemKind.CarcavelosWave)]
+        [TestCase(ItemKind.DeansList)]
+        public void EveryItem_IsOneUse(ItemKind kind)
         {
             ItemSlot slot = new ItemSlot();
-            slot.TryStartRoll(ItemKind.TripleBica, 0f);
-            Assert.AreEqual(3, slot.Charges);
-            Assert.AreEqual(ItemKind.TripleBica, slot.TryUse());
-            Assert.AreEqual(2, slot.Charges);
-            Assert.AreEqual(ItemKind.TripleBica, slot.TryUse());
-            Assert.AreEqual(ItemKind.TripleBica, slot.TryUse());
+            slot.TryStartRoll(kind, 0f);
+            Assert.AreEqual(1, slot.Charges);
+            Assert.AreEqual(kind, slot.TryUse());
             Assert.IsTrue(slot.IsEmpty);
-            Assert.AreEqual(ItemKind.None, slot.TryUse());
-        }
-
-        [Test]
-        public void TripleBica_WithChargesLeft_StillBlocksANewBox()
-        {
-            ItemSlot slot = new ItemSlot();
-            slot.TryStartRoll(ItemKind.TripleBica, 0f);
-            slot.TryUse();
-            Assert.IsFalse(slot.TryStartRoll(ItemKind.Onda, 1f));
-            Assert.AreEqual(2, slot.Charges);
         }
 
         [Test]
         public void Clear_EmptiesTheSlot_EvenWhileRolling()
         {
             ItemSlot slot = new ItemSlot();
-            slot.TryStartRoll(ItemKind.Onda, 1f);
+            slot.TryStartRoll(ItemKind.CarcavelosWave, 1f);
             slot.Clear();
             Assert.IsTrue(slot.IsEmpty);
             Assert.IsFalse(slot.IsRolling);
             Assert.AreEqual(0, slot.Charges);
             Assert.IsFalse(slot.Tick(5f));
-            Assert.IsTrue(slot.TryStartRoll(ItemKind.Bica, 1f)); // free again
+            Assert.IsTrue(slot.TryStartRoll(ItemKind.Espresso, 1f)); // free again
         }
 
         [Test]
         public void RollSteps_GrowFromZeroToAll_AndNeverGoBack()
         {
             ItemSlot slot = new ItemSlot();
-            slot.TryStartRoll(ItemKind.Bica, 1.1f);
+            slot.TryStartRoll(ItemKind.Espresso, 1.1f);
             Assert.AreEqual(0, slot.RollSteps);
             int last = 0;
             for (int i = 0; i < 12; i++)
@@ -126,28 +115,30 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             // Ease-out: the first half of the time shows more icon changes than the second half.
             ItemSlot slot = new ItemSlot();
-            slot.TryStartRoll(ItemKind.Bica, 1f);
+            slot.TryStartRoll(ItemKind.Espresso, 1f);
             slot.Tick(0.5f);
             int firstHalf = slot.RollSteps;
             Assert.Greater(firstHalf, ItemSlot.RollIconSteps - firstHalf);
         }
 
         [Test]
-        public void IconForStep_CyclesThroughTheThreeItems()
+        public void IconForStep_CyclesThroughTheFourItems()
         {
-            Assert.AreEqual(ItemKind.Bica, ItemSlot.IconForStep(0));
-            Assert.AreEqual(ItemKind.TripleBica, ItemSlot.IconForStep(1));
-            Assert.AreEqual(ItemKind.Onda, ItemSlot.IconForStep(2));
-            Assert.AreEqual(ItemKind.Bica, ItemSlot.IconForStep(3));
+            Assert.AreEqual(ItemKind.Espresso, ItemSlot.IconForStep(0));
+            Assert.AreEqual(ItemKind.SeagullDelivery, ItemSlot.IconForStep(1));
+            Assert.AreEqual(ItemKind.CarcavelosWave, ItemSlot.IconForStep(2));
+            Assert.AreEqual(ItemKind.DeansList, ItemSlot.IconForStep(3));
+            Assert.AreEqual(ItemKind.Espresso, ItemSlot.IconForStep(4));
         }
 
         [Test]
         public void ChargesFor_EveryItem()
         {
             Assert.AreEqual(0, ItemSlot.ChargesFor(ItemKind.None));
-            Assert.AreEqual(1, ItemSlot.ChargesFor(ItemKind.Bica));
-            Assert.AreEqual(3, ItemSlot.ChargesFor(ItemKind.TripleBica));
-            Assert.AreEqual(1, ItemSlot.ChargesFor(ItemKind.Onda));
+            Assert.AreEqual(1, ItemSlot.ChargesFor(ItemKind.Espresso));
+            Assert.AreEqual(1, ItemSlot.ChargesFor(ItemKind.SeagullDelivery));
+            Assert.AreEqual(1, ItemSlot.ChargesFor(ItemKind.CarcavelosWave));
+            Assert.AreEqual(1, ItemSlot.ChargesFor(ItemKind.DeansList));
         }
     }
 }

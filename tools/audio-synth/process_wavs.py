@@ -63,6 +63,11 @@ PLAN = {
     "el_item_ready": (-16.0, False, True),
     "el_item_bica": (-15.0, False, True),
     "el_item_onda": (-14.0, False, True),
+    "el_item_seagull": (-16.0, False, True),     # Luc's four item designs (R7 redesign, 2026-11-10)
+    "el_item_ring": (-17.0, False, True),        # plays up to 3 times in a row, pitch rising
+    "el_item_deans_on": (-14.0, False, True),
+    "el_item_shield_block": (-15.0, False, True),
+    "el_item_shield_pop": (-17.0, False, True),
     # music
     "music_campus_loop": (-16.0, True, False),
     "music_results_loop": (-16.0, True, False),

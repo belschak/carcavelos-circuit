@@ -33,20 +33,56 @@ namespace CarcavelosCircuit.RaceFlow
         private float rollSeconds = 1.1f;
 
         [Header("Boosts (seconds, top speed multiplier; the drift boost is 0.4-1.2 s at 1.35)")]
-        [SerializeField, Tooltip("Bica: one short espresso kick")]
-        private float bicaSeconds = 1f;
+        [SerializeField, Tooltip("Espresso: one coffee kick (Luc's design: holds 2 s)")]
+        private float espressoSeconds = 2f;
         [SerializeField]
-        private float bicaMultiplier = 1.4f;
+        private float espressoMultiplier = 1.4f;
 
-        [SerializeField, Tooltip("Triple Bica: each of the three kicks")]
-        private float tripleBicaSeconds = 0.9f;
+        [SerializeField, Tooltip("Carcavelos Wave: you surf one long wave, the fastest thing in the game")]
+        private float waveSeconds = 3f;
         [SerializeField]
-        private float tripleBicaMultiplier = 1.4f;
+        private float waveMultiplier = 1.6f;
 
-        [SerializeField, Tooltip("Onda: one long Atlantic wave, the fastest thing in the game")]
-        private float ondaSeconds = 2.5f;
+        [Header("Seagull Delivery (lifebuoy rings on the road ahead)")]
+        [SerializeField, Tooltip("How many rings the gull drops")]
+        private int ringCount = 3;
+
+        [SerializeField, Tooltip("Metres from the kart to the first ring")]
+        private float ringFirstMetres = 18f;
+
+        [SerializeField, Tooltip("Metres between two rings")]
+        private float ringSpacingMetres = 14f;
+
+        [SerializeField, Tooltip("Radius of a ring in metres (the kart drives through the middle)")]
+        private float ringRadius = 1.7f;
+
+        [SerializeField, Tooltip("Seconds a ring stays on the road before the gull takes it back")]
+        private float ringLifeSeconds = 9f;
+
+        [SerializeField, Tooltip("Boost per ring you drive through (rings chain)")]
+        private float ringBoostSeconds = 0.9f;
         [SerializeField]
-        private float ondaMultiplier = 1.6f;
+        private float ringBoostMultiplier = 1.5f;
+
+        [Header("Dean's List (golden boost + bump shield)")]
+        [SerializeField, Tooltip("The golden boost the moment you use it")]
+        private float deansBoostSeconds = 1.5f;
+        [SerializeField]
+        private float deansBoostMultiplier = 1.5f;
+
+        [SerializeField, Tooltip("Seconds the shield waits for a bump before it runs out")]
+        private float shieldSeconds = 8f;
+
+        [SerializeField, Tooltip("The boost that gives your speed back after the shield took a bump")]
+        private float shieldRefundSeconds = 1.2f;
+        [SerializeField]
+        private float shieldRefundMultiplier = 1.5f;
+
+        [SerializeField, Tooltip("A bump = the speed falls by at least this many m/s from one frame to the next ...")]
+        private float bumpMinDrop = 4f;
+
+        [SerializeField, Tooltip("... and by at least this share of the speed (0.3 = 30 %); braking is much slower")]
+        private float bumpDropShare = 0.3f;
 
         [Header("Catch-up odds (ItemOdds)")]
         [SerializeField, Tooltip("Within +- this many seconds of your best split you count as level")]
@@ -65,22 +101,34 @@ namespace CarcavelosCircuit.RaceFlow
         public float RollSeconds { get { return rollSeconds; } }
         public float LevelSeconds { get { return levelSeconds; } }
         public float FarBehindSeconds { get { return farBehindSeconds; } }
+        public int RingCount { get { return ringCount; } }
+        public float RingFirstMetres { get { return ringFirstMetres; } }
+        public float RingSpacingMetres { get { return ringSpacingMetres; } }
+        public float RingRadius { get { return ringRadius; } }
+        public float RingLifeSeconds { get { return ringLifeSeconds; } }
+        public float RingBoostSeconds { get { return ringBoostSeconds; } }
+        public float RingBoostMultiplier { get { return ringBoostMultiplier; } }
+        public float ShieldSeconds { get { return shieldSeconds; } }
+        public float ShieldRefundSeconds { get { return shieldRefundSeconds; } }
+        public float ShieldRefundMultiplier { get { return shieldRefundMultiplier; } }
+        public float BumpMinDrop { get { return bumpMinDrop; } }
+        public float BumpDropShare { get { return bumpDropShare; } }
 
-        // Boost length for one use of this item (0 for None).
+        // The boost the moment this item is used (0 seconds = no boost on use: the Seagull's rings boost later).
         public float BoostSecondsFor(ItemKind kind)
         {
-            if (kind == ItemKind.Bica) return bicaSeconds;
-            if (kind == ItemKind.TripleBica) return tripleBicaSeconds;
-            if (kind == ItemKind.Onda) return ondaSeconds;
+            if (kind == ItemKind.Espresso) return espressoSeconds;
+            if (kind == ItemKind.CarcavelosWave) return waveSeconds;
+            if (kind == ItemKind.DeansList) return deansBoostSeconds;
             return 0f;
         }
 
-        // Top speed multiplier while this item's boost runs (1 for None).
+        // Top speed multiplier while that boost runs (1 = no boost).
         public float BoostMultiplierFor(ItemKind kind)
         {
-            if (kind == ItemKind.Bica) return bicaMultiplier;
-            if (kind == ItemKind.TripleBica) return tripleBicaMultiplier;
-            if (kind == ItemKind.Onda) return ondaMultiplier;
+            if (kind == ItemKind.Espresso) return espressoMultiplier;
+            if (kind == ItemKind.CarcavelosWave) return waveMultiplier;
+            if (kind == ItemKind.DeansList) return deansBoostMultiplier;
             return 1f;
         }
     }
