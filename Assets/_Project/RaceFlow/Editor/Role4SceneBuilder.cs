@@ -21,7 +21,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
     public static class Role4SceneBuilder
     {
         private const string Root = "Assets/_Project/";
-        private const string SettingsPath = Root + "RaceFlow/Settings/RaceSettings.asset";
+        public const string SettingsPath = Root + "RaceFlow/Settings/RaceSettings.asset";
         private const string ThemePath = Root + "RaceFlow/UI/RaceHudTheme.tss";
         private const string PanelPath = Root + "RaceFlow/UI/RaceHudPanelSettings.asset";
         private const string HudLayoutPath = Root + "RaceFlow/UI/RaceHud.uxml";
@@ -32,7 +32,6 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         private const string MainScenePath = Root + "RaceFlow/Scenes/Main.unity";
         private const string TrackScenePath = Root + "RaceFlow/Scenes/RaceFlow_PlaceholderTrack.unity";
         private const string VolumeProfilePath = Root + "RaceFlow/Settings/RaceCameraVolume.asset";
-        private const string CampusScenePath = Root + "Track/Scenes/Track_Campus.unity";
         private const string DeansGhostPath = Root + "RaceFlow/Settings/DeansGhost.txt"; // shipped team ghost (DeansGhostExporter)
 
         [MenuItem("Carcavelos Circuit/Build Role 4 Scenes")]
@@ -67,16 +66,28 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             BuildPlaceholderTrackScene();
             BuildMainScene(settings, panel, kart, kartAudio);
 
-            MergeBuildScenes();
+            MergeBuildScenes(settings);
             AssetDatabase.SaveAssets();
             Debug.Log("Role4SceneBuilder: done.");
         }
 
-        // Build order: Main first (the game starts there), then the tracks it can load, then every other scene that
-        // someone added to File > Build Profiles (kept with its tick box). Merged, never replaced.
-        private static void MergeBuildScenes()
+        // Build order: Main first (the game starts there), then every track scene RaceSettings may race on that exists
+        // in the project (wherever its owner keeps it), then every other scene someone added to File > Build Profiles
+        // (kept with its tick box). Merged, never replaced. The Web build calls this too, so a track scene that was
+        // merged into main is in the build without anyone touching the build list.
+        public static void MergeBuildScenes(RaceSettings settings)
         {
-            string[] ours = { MainScenePath, CampusScenePath, TrackScenePath };
+            var ours = new System.Collections.Generic.List<string>();
+            ours.Add(MainScenePath);
+            string[] trackNames = settings != null ? settings.TrackScenesInOrder() : new string[0];
+            for (int i = 0; i < trackNames.Length; i++)
+            {
+                string path = FindScenePath(trackNames[i]);
+                if (path != "" && !ours.Contains(path))
+                {
+                    ours.Add(path);
+                }
+            }
             var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
             foreach (string path in ours)
             {
@@ -84,12 +95,28 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             }
             foreach (EditorBuildSettingsScene existing in EditorBuildSettings.scenes)
             {
-                if (System.Array.IndexOf(ours, existing.path) < 0)
+                if (!ours.Contains(existing.path))
                 {
                     scenes.Add(existing);
                 }
             }
             EditorBuildSettings.scenes = scenes.ToArray();
+        }
+
+        // The project path of the scene file with exactly this name, e.g. "Track_CampusWorld" ->
+        // "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity". "" if there is none (not merged yet).
+        public static string FindScenePath(string sceneName)
+        {
+            string[] guids = AssetDatabase.FindAssets(sceneName + " t:Scene", new[] { "Assets/_Project" });
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                if (System.IO.Path.GetFileNameWithoutExtension(path) == sceneName)
+                {
+                    return path;
+                }
+            }
+            return "";
         }
 
         // ---------- guard for Main.unity ----------
@@ -101,7 +128,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             switch (rootName)
             {
                 case "Main Camera":
-                    return new[] { typeof(Transform), typeof(Camera), typeof(AudioListener), typeof(PlaceholderChaseCamera), typeof(UniversalAdditionalCameraData) };
+                    return new[] { typeof(Transform), typeof(Camera), typeof(AudioListener), typeof(PlaceholderChaseCamera), typeof(MapFlyover), typeof(UniversalAdditionalCameraData) };
                 case "PostProcessing":
                     return new[] { typeof(Transform), typeof(Volume) };
                 case "RaceSystems":
@@ -334,6 +361,28 @@ namespace CarcavelosCircuit.RaceFlow.Editor
 
         // Swap day for the kart is automatic: as soon as Role 1's prefab "Kart" exists in Driving/ and its root has
         // a component implementing IKartState, the builder puts it into Main instead of the placeholder.
+        // Role 3's kart model (Visuals/Kart/Prefabs/KartVisual_*.prefab), the first one by name. null until it is merged.
+        private static GameObject FindKartVisualPrefab()
+        {
+            string[] guids = AssetDatabase.FindAssets("KartVisual t:Prefab", new[] { Root + "Visuals" });
+            string best = "";
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                string name = System.IO.Path.GetFileNameWithoutExtension(path);
+                if (name.StartsWith("KartVisual") && (best == "" || string.CompareOrdinal(path, best) < 0))
+                {
+                    best = path;
+                }
+            }
+            if (best == "")
+            {
+                return null;
+            }
+            Debug.Log("Role4SceneBuilder: placeholder kart shows Role 3's model " + best);
+            return AssetDatabase.LoadAssetAtPath<GameObject>(best);
+        }
+
         private static GameObject FindRealKartPrefab()
         {
             string[] guids = AssetDatabase.FindAssets("Kart t:Prefab", new[] { Root + "Driving" });
@@ -378,9 +427,18 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             box.sharedMaterial = slippery;
             kart.AddComponent<PlaceholderKart>();
 
-            // "Visual" child = the part Role 3 swaps for the real model (docs/interfaces.md).
+            // "Visual" child = the part Role 3 swaps for the real model (docs/interfaces.md). Once Luc's KartVisual prefab
+            // is on main it sits here, so the race shows the real kart even before Role 1's Kart prefab exists.
             GameObject visual = new GameObject("Visual");
             visual.transform.SetParent(kart.transform, false);
+            GameObject kartVisual = FindKartVisualPrefab();
+            if (kartVisual != null)
+            {
+                PrefabUtility.InstantiatePrefab(kartVisual, visual.transform);
+                GameObject withModel = PrefabUtility.SaveAsPrefabAsset(kart, KartPrefabPath);
+                Object.DestroyImmediate(kart);
+                return withModel;
+            }
             VisualPart(PrimitiveType.Cube, "Body", visual.transform, new Vector3(0f, 0.35f, 0f), Vector3.zero, new Vector3(1.1f, 0.3f, 1.7f), white);
             VisualPart(PrimitiveType.Cube, "Seat", visual.transform, new Vector3(0f, 0.6f, -0.3f), Vector3.zero, new Vector3(0.6f, 0.3f, 0.5f), black);
             VisualPart(PrimitiveType.Cube, "Nose", visual.transform, new Vector3(0f, 0.4f, 0.85f), Vector3.zero, new Vector3(0.9f, 0.18f, 0.2f), orange);
@@ -546,7 +604,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             cameraObject.tag = "MainCamera";
             Camera cam = cameraObject.AddComponent<Camera>();
             cam.nearClipPlane = 0.1f;
-            cam.farClipPlane = 500f;
+            cam.farClipPlane = 2000f; // the campus world (#33) has sea, backdrop and fort beyond 500 m
             cameraObject.AddComponent<AudioListener>();
             cameraObject.transform.position = new Vector3(0f, 6f, -40f);
             PlaceholderChaseCamera chase = cameraObject.AddComponent<PlaceholderChaseCamera>();
@@ -591,6 +649,13 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             bso.FindProperty("raceManager").objectReferenceValue = manager;
             bso.FindProperty("chaseCamera").objectReferenceValue = chase;
             bso.ApplyModifiedPropertiesWithoutUndo();
+
+            // Start screen and finish: the camera flies over the whole map (MapFlyover); while driving the chase camera.
+            MapFlyover flyover = cameraObject.AddComponent<MapFlyover>();
+            SerializedObject fso = new SerializedObject(flyover);
+            fso.FindProperty("raceManager").objectReferenceValue = manager;
+            fso.FindProperty("chaseCamera").objectReferenceValue = chase;
+            fso.ApplyModifiedPropertiesWithoutUndo();
 
             SerializedObject sso = new SerializedObject(sounds);
             sso.FindProperty("raceManager").objectReferenceValue = manager;

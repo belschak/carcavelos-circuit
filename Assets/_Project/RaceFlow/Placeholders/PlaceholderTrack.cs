@@ -27,7 +27,7 @@ namespace CarcavelosCircuit.RaceFlow
         {
             for (int i = 0; i < checkpoints.Length; i++)
             {
-                if (checkpoints[i].Index == lastCheckpointIndex && checkpoints[i].RespawnPoint != null)
+                if (checkpoints[i] != null && checkpoints[i].Index == lastCheckpointIndex && checkpoints[i].RespawnPoint != null)
                 {
                     return checkpoints[i].RespawnPoint;
                 }
