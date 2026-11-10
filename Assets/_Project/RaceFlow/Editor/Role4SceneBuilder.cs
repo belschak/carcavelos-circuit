@@ -807,11 +807,11 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             iso.FindProperty("settings").objectReferenceValue = itemSettings;
             iso.FindProperty("boxMaterial").objectReferenceValue = boxMaterial;
             iso.FindProperty("source").objectReferenceValue = itemSource;
-            iso.FindProperty("boxBreak").objectReferenceValue = Clip("sfx_item_box_break");
+            iso.FindProperty("boxBreak").objectReferenceValue = Clip("el_item_box_break");
             iso.FindProperty("rollTick").objectReferenceValue = Clip("sfx_item_roll_tick");
-            iso.FindProperty("itemReady").objectReferenceValue = Clip("sfx_item_ready");
-            iso.FindProperty("bicaUse").objectReferenceValue = Clip("sfx_item_bica");
-            iso.FindProperty("ondaUse").objectReferenceValue = Clip("sfx_item_onda");
+            iso.FindProperty("itemReady").objectReferenceValue = Clip("el_item_ready");
+            iso.FindProperty("bicaUse").objectReferenceValue = Clip("el_item_bica");
+            iso.FindProperty("ondaUse").objectReferenceValue = Clip("el_item_onda");
             iso.ApplyModifiedPropertiesWithoutUndo();
 
             // Own UIDocument on the HUD's PanelSettings, drawn under the race HUD (menus and the pause card cover it).

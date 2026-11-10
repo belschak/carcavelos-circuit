@@ -605,24 +605,7 @@ def results_loop():
 
 
 # ---------- item boxes (task R7) ----------
-
-def item_box_break():
-    # A glazed azulejo tile cube shatters: a crack of bright noise plus a shower of tiny ceramic pings.
-    seconds = 0.4
-    n = int(seconds * SR)
-    rng = random.Random(71)
-    crack = highpass(noise(n, 72), 2500.0)
-    crack = mul(crack, exp_decay(n, 0.09))
-    out = [c * 0.9 for c in crack]
-    for k in range(9):
-        start = 0.004 + k * 0.022 + rng.uniform(0.0, 0.015)
-        freq = rng.uniform(2000.0, 6000.0)
-        ping = mul(tone(freq, 0.18, partials=((1, 1.0), (2.7, 0.3))), exp_decay(int(0.18 * SR), 0.05))
-        mix_into(out, ping, start, rng.uniform(0.18, 0.35))
-    thump = mul(tone(220.0, 0.12, glide_to=90.0), exp_decay(int(0.12 * SR), 0.05))
-    mix_into(out, thump, 0.0, 0.5)
-    return normalise(soft_clip(out, 1.2), -2.0)
-
+# Box break, ready, Bica and Onda come from ElevenLabs (el_item_*.wav, see THIRD_PARTY.md); only the tick is ours.
 
 def item_roll_tick():
     # One click of the spinning slot: a very short, bright blip.
@@ -631,56 +614,6 @@ def item_roll_tick():
     x = tone(1600.0, seconds, partials=((1, 1.0), (2, 0.25)))
     x = mul(x, mul(exp_decay(n, 0.012), envelope(n, 0.001, 0.005)))
     return normalise(x, -3.0)
-
-
-def item_ready():
-    # The slot stops: two rising bells, "ding-DING".
-    out = []
-    mix_into(out, bell(note_freq("G6"), 0.35), 0.0, 0.6)
-    mix_into(out, bell(note_freq("D7"), 0.55), 0.09, 0.75)
-    return normalise(out, -4.0)
-
-
-def item_bica():
-    # Espresso kick: the hiss of the steam wand, then an upward sweep that pushes you forward.
-    seconds = 0.65
-    n = int(seconds * SR)
-    hiss = bandpass(noise(n, 81), [5000.0 + 2500.0 * (i / n) for i in range(n)], q=1.2)
-    hiss = mul(hiss, envelope(n, 0.01, 0.35))
-    sweep = tone(330.0, seconds, partials=((1, 1.0), (2, 0.35), (3, 0.15)), glide_to=1320.0)
-    sweep = mul(sweep, mul(envelope(n, 0.03, 0.25), exp_decay(n, 0.6)))
-    out = [h * 0.8 + w * 0.55 for h, w in zip(hiss, sweep)]
-    return normalise(soft_clip(out, 1.3), -2.0)
-
-
-def item_onda():
-    # The big Atlantic wave: a deep swell that rises, then the crash of white water rolling out.
-    seconds = 1.7
-    n = int(seconds * SR)
-    swell_n = int(0.55 * SR)
-    centers = []
-    for i in range(n):
-        t = i / SR
-        if t < 0.55:
-            centers.append(200.0 + 1800.0 * (t / 0.55) ** 2)
-        else:
-            centers.append(2000.0 - 1400.0 * min(1.0, (t - 0.55) / 1.1))
-    water = bandpass(noise(n, 91), centers, q=0.9)
-    shape = []
-    for i in range(n):
-        t = i / SR
-        if t < 0.55:
-            shape.append((t / 0.55) ** 1.5)
-        else:
-            shape.append(math.exp(-(t - 0.55) * 2.2))
-    water = mul(water, shape)
-    crash = highpass(noise(n - swell_n, 92), 1200.0)
-    crash = mul(crash, exp_decay(len(crash), 0.5))
-    out = [w * 1.2 for w in water]
-    mix_into(out, crash, 0.55, 0.6)
-    rumble = mul(tone(70.0, seconds, glide_to=45.0), [s * 0.8 for s in shape])
-    out = [o + r * 0.5 for o, r in zip(out, rumble)]
-    return normalise(soft_clip(out, 1.4), -2.0)
 
 
 SOUNDS = {
@@ -708,11 +641,7 @@ SOUNDS = {
     "sfx_wall_bump": wall_bump,
     "sfx_takeoff_whoosh": takeoff_whoosh,
     "amb_seaside_loop": seaside_loop,
-    "sfx_item_box_break": item_box_break,
     "sfx_item_roll_tick": item_roll_tick,
-    "sfx_item_ready": item_ready,
-    "sfx_item_bica": item_bica,
-    "sfx_item_onda": item_onda,
 }
 
 
