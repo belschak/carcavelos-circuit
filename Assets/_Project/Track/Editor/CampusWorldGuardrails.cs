@@ -10,8 +10,8 @@ namespace CarcavelosCircuit.Track.Editor
     // or the interior test copy). They copy the look of the railing inside the Nova building ("Hall_Track_Rails"):
     // chunky white posts with a wide lilac band, in the hall model's own two materials.
     // Where they stand comes from the route in Role 3's track.json.
-    // Two things are cleared out of the way first, in the open scene only, never in anyone's files:
-    // Role 3's own railings that stand on the road, and our rails where the hall already has its own.
+    // There is only ever one kind of guardrail: every other railing along the track is switched off first, in the
+    // open scene only, never in anyone's files.
     // Run it again after the world was rebuilt: a rebuild makes a new scene without the rails.
     public static class CampusWorldGuardrails
     {
@@ -81,16 +81,14 @@ namespace CarcavelosCircuit.Track.Editor
                 gap[i] = p.tunnel; // only the tunnel keeps no rail: it has walls of its own
             }
 
-            // Role 3's world has railings of its own, and some of them stand on the road. Switch those off, so the
-            // track is clear and only one railing runs along each edge.
-            int switchedOff = ClearRailingsOnTheRoad(scene, centre, width);
-            // Inside the building the hall model already has this railing; leave those stretches to it.
-            List<Bounds> hallRails = FindHallRails(scene);
+            // Exactly one kind of guardrail on the whole map: every other railing along the track goes off first.
+            // Role 3's pieces only where they are on or beside the road, the building's track railing completely
+            // (ours replaces it and looks the same).
+            int switchedOff = ClearOtherRailings(scene, centre, width);
 
             EnsureFolder(MeshFolder.TrimEnd('/'));
             NovaBatch batch = new NovaBatch(GroupName, false, true);
             int placed = 0;
-            int leftToHall = 0;
             for (int i = 0; i < count; i++)
             {
                 int j = (i + 1) % count;
@@ -102,32 +100,21 @@ namespace CarcavelosCircuit.Track.Editor
                         continue;
                     }
                     Vector3 a = RailPoint(centre, width, i, side);
-                    if (Covered(a, hallRails))
-                    {
-                        leftToHall++;
-                        continue;
-                    }
                     AddPost(batch, white, a, centre, i);
+                    placed++;
                     if (gap[j])
                     {
                         continue;
                     }
-                    Vector3 b = RailPoint(centre, width, j, side);
-                    if (Covered(b, hallRails))
-                    {
-                        continue;
-                    }
-                    AddBand(batch, lilac, a, b);
-                    placed++;
+                    AddBand(batch, lilac, a, RailPoint(centre, width, j, side));
                 }
             }
             batch.Flush(null, MeshFolder); // Flush makes its own root object called "Guardrails"
 
             AssetDatabase.SaveAssets();
             EditorSceneManager.MarkSceneDirty(scene);
-            Debug.Log("CampusWorldGuardrails: " + placed + " rail pieces in " + scene.name + ", "
-                + switchedOff + " of Role 3's railings switched off (they stood on the road), "
-                + leftToHall + " spots left to the building's own railing. Save the scene (Cmd+S) to keep this.");
+            Debug.Log("CampusWorldGuardrails: " + placed + " posts with band in " + scene.name + ", "
+                + switchedOff + " other railings switched off. Save the scene (Cmd+S) to keep this.");
         }
 
         // The point on the road edge (pushed slightly outwards) at ring i.
@@ -173,64 +160,41 @@ namespace CarcavelosCircuit.Track.Editor
             return null;
         }
 
-        // Switches off every railing of Role 3's that stands on the road or right at its edge.
-        private static int ClearRailingsOnTheRoad(UnityEngine.SceneManagement.Scene scene, Vector3[] centre, float[] width)
+        // Switches off the railings that are not ours: the building's own track railing everywhere (ours takes its
+        // place and looks the same), and Role 3's pieces where they stand on the road or right at its edge.
+        private static int ClearOtherRailings(UnityEngine.SceneManagement.Scene scene, Vector3[] centre, float[] width)
         {
             int off = 0;
             foreach (GameObject root in scene.GetRootGameObjects())
             {
                 if (root.name == GroupName)
                 {
-                    continue; // our own rails, not his
+                    continue; // our own rails
                 }
                 foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
                 {
-                    if (!t.name.StartsWith(OtherRailName))
+                    bool isHallRail = t.name.StartsWith(HallRailName);
+                    bool isOtherRail = t.name.StartsWith(OtherRailName);
+                    if (!isHallRail && !isOtherRail)
                     {
                         continue;
                     }
-                    int i = NovaRouteMath.ClosestIndex(centre, t.position);
-                    Vector3 d = centre[i] - t.position;
-                    d.y = 0f;
-                    if (d.magnitude < width[i] * 0.5f + ClearMargin)
+                    if (isOtherRail)
                     {
-                        t.gameObject.SetActive(false);
-                        off++;
+                        // Role 3 also has railings far from the track (terraces, stairs); those stay.
+                        int i = NovaRouteMath.ClosestIndex(centre, t.position);
+                        Vector3 d = centre[i] - t.position;
+                        d.y = 0f;
+                        if (d.magnitude >= width[i] * 0.5f + ClearMargin)
+                        {
+                            continue;
+                        }
                     }
+                    t.gameObject.SetActive(false);
+                    off++;
                 }
             }
             return off;
-        }
-
-        // The areas the building's own railing already covers.
-        private static List<Bounds> FindHallRails(UnityEngine.SceneManagement.Scene scene)
-        {
-            List<Bounds> found = new List<Bounds>();
-            foreach (GameObject root in scene.GetRootGameObjects())
-            {
-                foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
-                {
-                    if (r.gameObject.activeInHierarchy && r.name.StartsWith(HallRailName))
-                    {
-                        found.Add(r.bounds);
-                    }
-                }
-            }
-            return found;
-        }
-
-        // Seen from above, is this spot inside one of those areas?
-        private static bool Covered(Vector3 spot, List<Bounds> areas)
-        {
-            for (int i = 0; i < areas.Count; i++)
-            {
-                Bounds b = areas[i];
-                if (spot.x > b.min.x && spot.x < b.max.x && spot.z > b.min.z && spot.z < b.max.z)
-                {
-                    return true;
-                }
-            }
-            return false;
         }
 
         // A second run should replace the rails, not stack a new set on top of the old one.
