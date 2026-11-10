@@ -34,6 +34,7 @@ namespace CarcavelosCircuit.Track.Editor
         private const float WallThickness = 0.3f;
         private const string JumpZone = "kicker";    // zone name of the terrace jump in track.json
         private const string HallZone = "atrium";    // zone name of the Nova hall in track.json
+        private const float HallExtraWidth = 3f;     // starting lines in the hall stand this much further out than outside
         private const string HandLinesPath = "Assets/_Project/Track/Editor/HallGuardrailLines.json";
 
         // Hand-drawn lines inside the hall (from GuardrailPath objects), saved as JSON so they survive without the scene.
@@ -103,6 +104,67 @@ namespace CarcavelosCircuit.Track.Editor
             AssetDatabase.SaveAssets();
             Debug.Log("WhiteGuardrailBuilder: saved " + PrefabPath + " with " + posts + " posts and " + handLines.Length
                 + " hand-drawn hall lines. Drag it into the scene at position 0, 0, 0.");
+        }
+
+        // Starting point for drawing by hand: one GuardrailPath per side of each hall passage, made from the route
+        // (a point every 6 m, wider in the middle, normal width at the doors). Then drag the points to where the fence belongs.
+        [MenuItem("Carcavelos Circuit/Start Hall Guardrail Lines From Route (Role 2)")]
+        public static void StartHallLines()
+        {
+            points = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataPath)).points;
+            int n = points.Length;
+            int made = 0;
+            for (int i = 1; i < n; i++)
+            {
+                // A passage starts where the zone switches to the hall; it runs until the zone switches back.
+                if (points[i].zone != HallZone || points[i - 1].zone == HallZone)
+                {
+                    continue;
+                }
+                int last = i;
+                while (last + 1 < n && points[last + 1].zone == HallZone)
+                {
+                    last++;
+                }
+                if (last + 1 >= n)
+                {
+                    continue; // the hall would reach the end of the data; never happens with the current track.json
+                }
+                made++;
+                MakeHallLine("HallRail " + made + " Right", i - 1, last + 1, 1f);
+                MakeHallLine("HallRail " + made + " Left", i - 1, last + 1, -1f);
+            }
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
+            Debug.Log("WhiteGuardrailBuilder: made " + (made * 2) + " hall lines from the route. Drag their points, then Build White Guardrails.");
+        }
+
+        // One line from route point "from" to "to" (both just outside the hall, where the outside fence ends).
+        private static void MakeHallLine(string name, int from, int to, float side)
+        {
+            GameObject line = new GameObject(name);
+            Undo.RegisterCreatedObjectUndo(line, "Start hall guardrail lines");
+            line.transform.position = new Vector3(0f, points[from + 1].y, 0f); // Shift + click draws at the hall floor height
+            line.AddComponent<GuardrailPath>();
+            int count = 0;
+            for (int i = from; i <= to; i += 3)
+            {
+                AddHallPoint(line.transform, i, from, to, side, count);
+                count++;
+            }
+            if ((to - from) % 3 != 0)
+            {
+                AddHallPoint(line.transform, to, from, to, side, count); // always end exactly at the outside fence
+            }
+        }
+
+        private static void AddHallPoint(Transform line, int i, int from, int to, float side, int count)
+        {
+            // 0 at the doors, 1 after 8 m inside the hall: the lane widens smoothly.
+            float fromDoor = Mathf.Min(i - from, to - i) * 2f;
+            float extra = HallExtraWidth * Mathf.Clamp01(fromDoor / 8f);
+            GameObject point = new GameObject("Point " + count);
+            point.transform.SetParent(line, false);
+            point.transform.position = Pos(i) + Right(i) * (side * (points[i].width * 0.5f + EdgeOffset + extra));
         }
 
         // If the open scene has GuardrailPath objects, their points become the hall lines and are saved to the JSON.
