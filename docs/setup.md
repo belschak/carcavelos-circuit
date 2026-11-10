@@ -37,6 +37,8 @@ Windows:
 ```
 Mac: `/Applications/Unity/Hub/Editor/6000.3.28f1/Unity.app/Contents/MacOS/Unity` with the same arguments. Or in the Editor: Window > General > Test Runner > EditMode > Run All.
 
+Play Mode tests (`Tests/PlayMode/RaceSmokeTests.cs`, Role 4): they load `Main.unity` and let a robot teleport the kart through the checkpoints of whatever track the race loads, so they check the race flow on the real track scene. Same command with `-testPlatform PlayMode -testResults TestResults/playmode.xml -logFile TestResults/playmode.log` (about a minute). They restore your saved best time, ghost and coach tips afterwards.
+
 ## Web build (Role 3, or the build backup)
 All Web settings are set in code by `Assets/_Project/RaceFlow/Editor/Role4WebBuild.cs`, so do not change them by hand in Player Settings (the script overwrites them on every build). Menu **Carcavelos Circuit > Web Build**, or with Unity closed:
 ```
