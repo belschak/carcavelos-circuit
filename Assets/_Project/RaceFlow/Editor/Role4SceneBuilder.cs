@@ -391,6 +391,25 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             return AssetDatabase.LoadAssetAtPath<GameObject>(best);
         }
 
+        // Role 3's kart effects (V5: drift smoke, sparks, boost flame; Luc's request Q10): the prefab named exactly
+        // "KartEffects" anywhere under Visuals/ (it lives in Visuals/KartEffects/Prefabs/). null until it is merged,
+        // and then the race simply has no effects. Found by name like FindKartVisualPrefab, so the day Luc's PR
+        // lands, one builder run puts it on the kart with nobody touching this file.
+        private static GameObject FindKartEffectsPrefab()
+        {
+            string[] guids = AssetDatabase.FindAssets("KartEffects t:Prefab", new[] { Root + "Visuals" });
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (System.IO.Path.GetFileNameWithoutExtension(path) == "KartEffects")
+                {
+                    Debug.Log("Role4SceneBuilder: the kart gets Role 3's effects " + path);
+                    return AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                }
+            }
+            return null;
+        }
+
         private static GameObject FindRealKartPrefab()
         {
             string[] guids = AssetDatabase.FindAssets("Kart t:Prefab", new[] { Root + "Driving" });
@@ -671,9 +690,15 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             SerializedObject bso = new SerializedObject(bootstrap);
             bso.FindProperty("settings").objectReferenceValue = settings;
             bso.FindProperty("kartPrefab").objectReferenceValue = kartPrefab;
+            // Spawned as children of the kart: our engine sounds, and Role 3's effects once they exist (Q10).
             SerializedProperty attachments = bso.FindProperty("kartAttachments");
-            attachments.arraySize = 1;
+            GameObject kartEffectsPrefab = FindKartEffectsPrefab();
+            attachments.arraySize = kartEffectsPrefab != null ? 2 : 1;
             attachments.GetArrayElementAtIndex(0).objectReferenceValue = kartAudioPrefab;
+            if (kartEffectsPrefab != null)
+            {
+                attachments.GetArrayElementAtIndex(1).objectReferenceValue = kartEffectsPrefab;
+            }
             bso.FindProperty("raceManager").objectReferenceValue = manager;
             bso.FindProperty("chaseCamera").objectReferenceValue = chase;
             bso.ApplyModifiedPropertiesWithoutUndo();
