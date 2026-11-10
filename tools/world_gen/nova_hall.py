@@ -291,7 +291,7 @@ def door(m, c, t, n, width):
     """Sliding glass door: stainless posts, two leaves slid open, header with the motor, exit signs, door mat."""
     h = math.atan2(t[1], t[0])
     for side in (-1, 1):
-        p = (c[0] + t[0] * side * width / 2, c[1] + t[1] * side * width / 2)
+        p = (c[0] + t[0] * side * (width / 2 + 0.08), c[1] + t[1] * side * (width / 2 + 0.08))   # in the wall, not the opening
         m.box((p[0], p[1], DOOR_H / 2), 0.08, 0.12, DOOR_H / 2, "rail", h)
         q = (c[0] + t[0] * side * (width / 2 + 0.55) + n[0] * 0.25, c[1] + t[1] * side * (width / 2 + 0.55) + n[1] * 0.25)
         m.box((q[0], q[1], (DOOR_H - 0.2) / 2), 0.55, 0.02, (DOOR_H - 0.2) / 2, "glass", h)
@@ -299,7 +299,7 @@ def door(m, c, t, n, width):
         m.box((e[0], e[1], DOOR_H + 0.25), 0.3, 0.04, 0.12, "exit", h)
     m.box((c[0], c[1], DOOR_H + 0.2), width / 2 + 0.1, 0.18, 0.2, "rail", h)
     mat = (c[0] + n[0] * 1.6, c[1] + n[1] * 1.6)
-    m.box((mat[0], mat[1], 0.012), width / 2 - 0.2, 1.4, 0.012, "mat", h)
+    m.box((mat[0], mat[1], 0.002), width / 2 - 0.2, 1.4, 0.002, "mat", h)          # 4 mm: nothing for the kart to hit
 
 
 def rest_of_wing(m, f, poly):
@@ -683,7 +683,8 @@ def export_fbx(path):
                              axis_forward="-Z", axis_up="Y", use_selection=True, use_triangles=True, mesh_smooth_type="FACE")
 
 
-FLOOR_Z = 14.5               # hall floor in the campus world = the road level outside (route_profile.json: 14.5 m)
+FLOOR_Z = 14.5 + 0.06        # hall floor = the road SURFACE outside: terrain 14.5 m (route_profile.json) + env_track's
+                             # ROAD_LIFT 0.06 m. At 14.5 the kart hit a 6 cm edge when it drove out through a door.
 
 
 def build_world_fbx():
