@@ -506,12 +506,14 @@ def make_window_band(W=1024, H=256, seed=99):
     pane = np.floor(X / pane_w).astype(int) % 4
     v = (Y - frame) / (H - 2 * frame)                           # 0 = top of the glass, 1 = sill
     # sky reflection: light at the top, fading into the dark blue-grey glass below mid height
-    refl = 0.50 * (1.0 - smoothstep(0.0, 0.66, v)) ** 1.25
+    # design pass 2026-11-09: brighter glass (design reference: light sky reflections, warm rooms behind)
+    refl = 0.72 * (1.0 - smoothstep(0.0, 0.75, v)) ** 1.1
     wisps = np.clip(noise((H, W), 34, rng, 6), 0, None) * (1.0 - smoothstep(0.05, 0.5, v))
     refl = refl + 0.07 * wisps
     refl = refl * np.array([1.0, 0.92, 1.06, 0.97])[pane]       # every pane reflects a bit differently
-    alb = lerp(rgb("glass"), rgb("#86A8C6"), refl[..., None])
-    alb = alb * (1.0 - 0.08 * smoothstep(0.6, 1.0, v))[..., None]
+    alb = lerp(rgb("#4D677D"), rgb("#B4CDE2"), np.clip(refl, 0, 1)[..., None])
+    room = smoothstep(0.55, 0.85, v) * (1.0 - smoothstep(0.93, 1.0, v)) * np.array([0.9, 0.5, 1.0, 0.7])[pane]
+    alb = lerp(alb, rgb("#C9AE86"), 0.35 * room[..., None])       # warm interiors glimpsed in the lower glass
     # crisp diagonal glints, two per pane at different offsets (classic stylised glass)
     lx = X - pane * pane_w
     glint = np.zeros((H, W))

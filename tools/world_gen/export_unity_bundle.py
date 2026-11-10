@@ -32,6 +32,7 @@ BLENDER = "/Applications/Blender.app/Contents/MacOS/Blender"
 MODELS = ["CampusWorld.fbx", "TrackSurface.fbx", "RouteGuide.fbx", "Dressing_Prototypes.fbx"]
 ROAD_LIFT = 0.06            # env_track.ROAD_LIFT: road surface above track_z
 CHECKPOINTS = 12
+EXTRA_TEXTURES = ["sky_panorama.png"]   # make_sky.py: skybox + reflections (CampusWorldBuilder.AddSunAndSky)
 
 DUMP = r'''
 import bpy, json, sys
@@ -196,6 +197,9 @@ def main():
             e["metallic_smoothness"] = None
         e["smoothness"] = round(1.0 - e.pop("roughness"), 3)
         del e["rough"]
+    for extra in EXTRA_TEXTURES:                    # not on a material: the importer uses them by name
+        if os.path.exists(os.path.join(tex, extra)):
+            shutil.copy2(os.path.join(tex, extra), os.path.join(BUNDLE, "Textures", extra))
     data = os.path.join(BUNDLE, "Data")
     json.dump({"materials": info["materials"]}, open(os.path.join(data, "materials.json"), "w"), indent=1)
     dressing = unity_dressing()
