@@ -408,9 +408,7 @@ def atrium_structure(m, f):
         K.round_column(m, f, u, o, 0, ATRIUM_H - 1.6, 0.24)                                    # free columns up to the roof
         m.cylinder(f.at(u, o, 0), 0.44, 0.5, "wall", 14, top_radius=0.25)                      # flared foot (IMG_7725)
 
-    # the white "Hovione" wall block on the west side, south of the entrance, with an empty sign plate
-    K.block(m, f, 30.5, 44.5, 0.6, 9.0, 0, 9.0, "wall")
-    K.block(m, f, 30.44, 30.5, 2.0, 7.6, 4.2, 5.8, "table")
+    # (the white "Hovione" wall block south of the entrance is left out: it stood in the way of the track, Noah)
     # the wide white staircase: from the floor at u 38 up to the bridge at u 27, o 34-39.5
     stair(m, f, 38.0, BRIDGE_U[1], 34.0, 39.5, GALLERY_Z)
     # "With great power ..." wall on the east side: light panel with a dark band (no text in the model)
