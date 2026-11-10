@@ -48,6 +48,17 @@ namespace CarcavelosCircuit.RaceFlow
             transform.LookAt(target.position + Vector3.up);
         }
 
+        // Where the camera rests behind the kart: the end of MapFlyover's glide. False before the kart exists.
+        public bool TryGetRestPose(out Vector3 position, out Quaternion rotation)
+        {
+            position = transform.position;
+            rotation = transform.rotation;
+            if (target == null) return false;
+            position = DesiredPosition();
+            rotation = Quaternion.LookRotation(target.position + Vector3.up - position);
+            return true;
+        }
+
         private void LateUpdate()
         {
             if (target == null) return;

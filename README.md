@@ -15,7 +15,7 @@ Unity **6000.3.28f1** (6.3 LTS) · C# · Blender (FBX) · Web build
 | Noah _TBD_ | _TBD_ | 2 Campus track + race rules |
 
 ## Run the app
-- **Deployed:** open the URL above in Chrome, Edge or Firefox on a laptop and click to start. Keys: W/S or arrows to drive, Space to drift, R to recover, Enter to retry after the finish.
+- **Deployed:** open the URL above in Chrome, Edge or Firefox on a laptop and click to start. Keys: W/A/S/D or arrows to drive and steer, Space to drift, R to recover, Enter to retry after the finish, O settings, C credits, M mute.
 - **Locally:** install Unity Hub + Editor `6000.3.28f1` ([docs/setup.md](docs/setup.md)), then
   ```
   git clone https://github.com/belschak/carcavelos-circuit.git
@@ -34,6 +34,8 @@ In the Unity Editor: Window > General > Test Runner > EditMode > Run All. Comman
 ```
 "C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -runTests -batchmode -projectPath . -testPlatform EditMode -testResults TestResults/editmode.xml
 ```
+Play Mode tests (a robot plays the real game in `Main.unity` on the track it loads: clean lap, skipped checkpoint, recover, retry): Test Runner > PlayMode > Run All, or the same command with `-testPlatform PlayMode -testResults TestResults/playmode.xml`.
+
 macOS: `/Applications/Unity/Hub/Editor/6000.3.28f1/Unity.app/Contents/MacOS/Unity` with the same arguments.
 
 ## Quick start
