@@ -101,7 +101,7 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 | R12 | Waves rolling onto the beach + 2-4 surfers riding them (new Role 4 folder `Ambience/`, placed at runtime, no edit to Luc's scene) | Tue 17 | todo |
 | R13 | After D7: new medal times + re-record the Dean's ghost on the final track | Tue 17 | todo |
 | R14 | Integration, deploy check with Luc (V6/G5), README for the submission | Sun 22 | todo |
-| R15 | Arcade UI restyle per art direction: OFL fonts, colour tokens, plates, motion; title, HUD, results, leaderboard, name entry | Fri 13 | claimed (David, 2026-11-11) |
+| R15 | Arcade UI restyle per art direction: OFL fonts, colour tokens, plates, motion; title, HUD, results, leaderboard, name entry | Fri 13 | in review (David, 2026-11-11, PR #71) |
 
 ## Course submission (official, `docs/course-requirements.md`)
 | ID | Task | Who | Due | Status |
