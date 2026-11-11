@@ -28,6 +28,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string FencePrefab = "Assets/_Project/Track/Prefabs/WhiteGuardrails.prefab";
         private const string BuildingId = "w665606788";            // Edificio Principal in the CampusWorld model
         private const string Passages = "Interior_Passages";        // the old drive-through dressing in the block
+        private const string DressingRoot = "Dressing";             // Luc's props (dressing.json), as Dressing/<type>/<prop>
         private const string RailingProto = "Prop_RailingSegment";  // Luc's metal railing; the white fence replaces it
         private const float RailingReach = 8f;                      // railings this close to the route are switched off
         private const string HallRails = "Hall_Track_Rails";        // the hall's lilac railing; the white fence replaces it
@@ -90,13 +91,21 @@ namespace CarcavelosCircuit.Visuals.Editor
             AssetDatabase.CreateFolder(CutMeshParent, "NovaHallCuts");
 
             LoadRoute();
-            int hidden = 0, cut = 0, railings = 0;
+            int hidden = 0, cut = 0, railings = 0, props = 0;
             foreach (Transform t in worldRoot.GetComponentsInChildren<Transform>(true))
             {
                 if (t.name.Contains(BuildingId) || t.name == Passages)
                 {
                     t.gameObject.SetActive(false);
                     hidden++;
+                }
+                // Luc's old atrium furniture (V4b: café tables, chairs, planters, piano) stood on the indoor lanes:
+                // every prop whose foot is inside the footprint goes, the hall brings its own interior.
+                else if (t.parent != null && t.parent.parent != null && t.parent.parent.name == DressingRoot &&
+                         Inside(t.position.x, t.position.z))
+                {
+                    t.gameObject.SetActive(false);
+                    props++;
                 }
                 else if (fence && t.parent != null && t.parent.name == RailingProto && NearRoute(t.position))
                 {
@@ -138,7 +147,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 fenceObject.transform.position = Vector3.zero;
             }
 
-            return "Nova hall in: " + hidden + " old objects off, " + cut + " meshes cut, " + doorPieces.Count +
+            return "Nova hall in: " + hidden + " old objects off, " + props + " old props off, " + cut + " meshes cut, " + doorPieces.Count +
                    " door roads, " + (fence ? "white fence in, " + railings + " metal railings off" : "no white fence prefab, railings stay");
         }
 
