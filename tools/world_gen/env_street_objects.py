@@ -1213,6 +1213,8 @@ def dress_promenade(veg, props):
     plants, ours, removed = promenade_placements(veg, props)
     gone = {id(p) for p in removed}
     veg2, props2 = list(veg) + plants, [p for p in props if id(p) not in gone] + ours
+    import env_coast                       # V16e: the coast section's own edits (berm, forecourt, cove, portal deck)
+    veg2, props2 = env_coast.dress(veg2, props2)
     for fname, items in (("placements_vegetation.json", veg2), ("placements_props.json", props2)):
         path = os.path.join(E.OUT, fname)
         data = json.load(open(path))
