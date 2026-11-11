@@ -45,8 +45,11 @@ SEAM = 0.05                         # m: where the plaza's collider meets the bo
 HALL_IN = True
 SEAM_STEPS = (-0.06, -0.03, 0.0, 0.03)   # heights over the road of the strip that passes through the road's surface, one
                                     # value per route point (2 m) towards the border
-JUDDER_M = 0.018                    # peak-to-peak height of the rounded ripple on the driving surface, one per step
-                                    # (V10i 1.0 cm; Luc, 2026-11-11: "the judder on the stairs can be a bit more")
+JUDDER_M = 0.016                    # peak-to-peak height of the rounded ripple on the driving surface, one per step
+                                    # (V10i 1.0 cm; Luc, 2026-11-11: "the judder on the stairs can be a bit more". 1.8 cm
+                                    # made one pass in 18 float 0.44 s over the stairs' top and the shortcut karts float
+                                    # over the climb's top, so 1.6 cm and the ripple ends one step earlier: JUDDER_END)
+JUDDER_END = 3                      # steps before the crest curve where the ripple has faded out (V10i: 2)
 
 
 def _unit(ax, ay, bx, by):
@@ -97,7 +100,7 @@ def judder(s):
     tread = STAIR_LEN / (STAIR_RISERS - 1)
     if s <= 0.0 or s >= STAIR_LEN:
         return 0.0
-    lo, hi = STAIR_SAG_M / 2, STAIR_LEN - STAIR_CREST_BEFORE_TOP - STAIR_CREST_M / 2 - 2 * tread   # the even slope only,
+    lo, hi = STAIR_SAG_M / 2, STAIR_LEN - STAIR_CREST_BEFORE_TOP - STAIR_CREST_M / 2 - JUDDER_END * tread   # the even slope only,
     # ending two steps before the crest curve (a kart that comes onto the curve with a ripple's kick floats over the top):
     fade = max(0.0, min(1.0, (s - lo) / (2 * tread), (hi - s) / (2 * tread)))            # no ripple on the crest curve
     return JUDDER_M * fade * (0.5 - 0.5 * math.cos(2 * math.pi * s / tread))
@@ -252,7 +255,7 @@ def climb_judder(s):
     """The same soft ripple as on the main stairs, one per visible step, on the even slope only."""
     tread = CLIMB_LEN / (CLIMB_RISERS - 1)
     lo = CLIMB_SAG_M
-    hi = CLIMB_SAG_M / 2 + (FLOOR1 - FLOOR0) / CLIMB_SLOPE - CLIMB_CREST_M / 2 - 2 * tread
+    hi = CLIMB_SAG_M / 2 + (FLOOR1 - FLOOR0) / CLIMB_SLOPE - CLIMB_CREST_M / 2 - JUDDER_END * tread
     fade = max(0.0, min(1.0, (s - lo) / (2 * tread), (hi - s) / (2 * tread)))
     return JUDDER_M * fade * (0.5 - 0.5 * math.cos(2 * math.pi * s / tread))
 
@@ -339,9 +342,9 @@ CLIMB_SLOT = [CLIMB_QW, CLIMB_Q, CLIMB_LANE[2], CLIMB_LANE[3]]
 # hedge boxes along the last metres of the slot's west side (no railing there) and 8 m on across the plaza: whoever
 # comes up the climb passes checkpoint 10 (route point 551, trigger 6 m to each side) at most 5.2 m left of its middle
 # V14 + hall: the red line now runs into the middle of the hall's atrium door (hall_join.py), so the last box no
-# longer points at (63.3, 102.0), which is on that line now: it ends 4.3 m left of checkpoint 10's middle and from
+# longer points at (63.3, 102.0), which is on that line now: it ends 5.7 m left of checkpoint 10's middle (its trigger reaches 6 m; a kart beside the box passes 4.6 m left at most) and from
 # there a second run leads to the door's left frame (the white fence is left out on this side, fence_free.py).
-FUNNEL = [climb_point(CLIMB_FENCE_TO + 0.5, -CLIMB_HALF - 0.6), climb_point(CLIMB_LEN, -CLIMB_HALF - 0.6), (62.6, 99.5), (59.6, 105.2)]
+FUNNEL = [climb_point(CLIMB_FENCE_TO + 0.5, -CLIMB_HALF - 0.6), climb_point(CLIMB_LEN, -CLIMB_HALF - 0.6), (61.8, 98.4), (59.6, 105.2)]
 COURTS = [COURT_SOUTH]
 # Stair down to Floor 0 (the slot): a parallelogram beside the race line (4.9 m from the centreline, the stair stays
 # on the right as in Luc's drawing 10), 6.5 m wide, 10 m long. Steps go down to the south; at the bottom a level
