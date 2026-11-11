@@ -64,6 +64,9 @@ def mat(key):
         return E.material("B_wall_white", "#EAEAEC", 0.85)
     if key == "steel":
         return E.material("plaza_rail", "#4A4E53", roughness=0.45, metallic=0.6)
+    if key == "bars":                   # V16f: the world's bar-railing sheet (vertical bars, galvanised)
+        import env_campus
+        return env_campus.railing_material()
     if key == "dark":
         return E.material("plaza_dark", "#3B3E42", 0.7)
     if key == "hedge":
@@ -724,7 +727,7 @@ def _bar(m, a, b, half_w, z0a, z0b, h, key):
 
 
 def build_fences(col):
-    m = Mesh("World_PlazaFences", ["white", "steel"])
+    m = Mesh("World_PlazaFences", ["white", "steel", "bars"])
     g = Mesh("World_PlazaGuard_ColliderOnly", ["white"])
     total = 0.0
     for line in fence_lines():
@@ -733,9 +736,13 @@ def build_fences(col):
             total += length
             _bar(m, a, b, 0.13, a[2] - 0.02, b[2] - 0.02, P.KERB_H, "white")                 # concrete kerb
             _bar(m, a, b, 0.03, a[2] + P.FENCE_H - 0.05, b[2] + P.FENCE_H - 0.05, 0.05, "steel")   # top rail
-            for h in (0.48, 0.78):
-                _bar(m, a, b, 0.012, a[2] + h, b[2] + h, 0.03, "steel")
-            posts = max(1, int(round(length / 1.5)))
+            posts = max(1, int(round(length / 2.0)))     # V16f (survey V15 fix 1): close vertical bars, posts every 2 m
+            for k in range(posts):                       # one sheet of the bar texture per module, on the kerb
+                p = [a[i] + (b[i] - a[i]) * k / posts for i in range(3)]
+                q = [a[i] + (b[i] - a[i]) * (k + 1) / posts for i in range(3)]
+                m.face([(p[0], p[1], p[2] + P.KERB_H - 0.02), (q[0], q[1], q[2] + P.KERB_H - 0.02),
+                        (q[0], q[1], q[2] + P.FENCE_H), (p[0], p[1], p[2] + P.FENCE_H)], "bars",
+                       uvs=[(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)])
             for k in range(posts + 1):
                 t = k / posts
                 x, y, z = a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t
