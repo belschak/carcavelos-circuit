@@ -80,6 +80,7 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 | ID | Task | Due | Status |
 |---|---|---|---|
 | V10 | **AI bots**: 5 rule-based bot drivers (your 3 NPC drivers, the Dean, one professor; made-up cartoon characters and names only), each a `Kart` driven by a bot `IKartInputSource` (follow `ITrackProgress.PointAt(distance + look-ahead)`, slow for corners, drift on long bends, light rubber band so the race stays close), registered as `IRacer`; you can ram them. Arcade style, no machine learning | Fri 13 (drive) / Tue 17 (polish) | claimed (Luc, 2026-11-10) |
+| V11 | **Boost pads** (like the picture Luc sent): glowing yellow/orange chevron fields on the road that give every kart (player and bots) a short boost through `Shared/IKartBoost` (0.8 s, x1.35, once per pass). `CampusWorldBuilder` places them from the route data: one 25 m before the jump, one 6 m before the edge (so the kart flies far), and a chain every 28 m in the tunnel. Plan + rule in plain C# with Edit Mode tests (`BoostPadTests`). Speed only reaches the real kart once #61 (Q15) is merged | Fri 13 | claimed (Luc, 2026-11-11) |
 | V6 | Complete race at the deployed URL, logged in `docs/builds.md` (with David) | Sun 22 | todo |
 
 ### Open pool (was on Luc's list, unassigned: claim one in the group chat before starting)
