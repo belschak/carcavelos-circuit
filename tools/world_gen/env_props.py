@@ -34,6 +34,7 @@ from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import env_common as E  # noqa: E402
+import env_corridor  # noqa: E402
 
 PROTO_COLLECTION = "Proto_Props"
 WORLD_COLLECTION = "World_Props"
@@ -719,13 +720,18 @@ def _every(site, indices, step, start=None):
     return out
 
 
-def _railing_run(site, idx, side, z_of, report_key, own_roof=None):
+def _railing_run(site, idx, side, z_of, report_key, own_roof=None, on_wall_top=False):
     """Railing segments end to end along route indices `idx`, RAILING_OFFSET m to one side. Each segment is
     exactly RAILING_LENGTH long (3-D), turned along the offset line and pitched to follow its slope.
     A segment that would cut into a building (other than `own_roof`, the deck it stands on) is left out."""
     line = []
     for i in idx:
         p, _t, (nx, ny) = site.frame(i)
+        top = env_corridor.railing_line(p, side) if on_wall_top else None
+        if top is not None:                             # V10g: on top of a flat cut wall, on the ground behind its edge
+            x, y = p["x"] + nx * top * side, p["y"] + ny * top * side
+            line.append(Vector((x, y, E.ground_z(x, y) + 0.03)))
+            continue
         line.append(Vector((p["x"] + nx * RAILING_OFFSET * side, p["y"] + ny * RAILING_OFFSET * side, z_of(p))))
     if len(line) < 2:
         return []
@@ -964,7 +970,7 @@ def place(seed=SEED, write=True, avoid=()):
             after_tunnel = after_tunnel and zone == "tunnel"
     for run in _runs(ramp):
         for side in (1, -1):
-            placed += _railing_run(site, run, side, lambda p: p["track_z"], f"ramp {side:+d}")
+            placed += _railing_run(site, run, side, lambda p: p["track_z"], f"ramp {side:+d}", on_wall_top=True)
     seawall = [i for i, p in enumerate(pts) if p["ground_z"] < SEAWALL_GROUND_Z and p.get("zone") not in NO_PROP_ZONES]
     for run in _runs(seawall) if SEAWALL_RAILING else ():
         placed += _railing_run(site, run, _sea_side(site, run), lambda p: p["track_z"], "promenade sea side")

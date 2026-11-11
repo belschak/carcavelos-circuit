@@ -34,6 +34,10 @@ Media helpers (walk videos and photos, local only): `extract_frames.py`, `photo_
 
 Closed loop, 1,184 m, point 0 = south portal of the beach tunnel, point order = driving direction. Tunnel 84 m (floor 3.8–5.0 m) → sunken ramp to the lower plaza (11.2 m) → terracotta steps as a ramp → upper level 14.5 m (plaza, atrium, terrace deck) → jump off the terrace edge (s = 506 m, 3.8 m drop) → lawns → Avenida Marginal → promenade (about 2–4 m) → tunnel plaza. Steepest slope 14 % (tunnel ramp).
 
+### Tunnel exit straightened (V10g, 2026-11-11, proposal for Noah)
+
+Noah's waypoint route (`route_waypoints.json`, PR #35) is the base since 2026-11-09: 1,344 m, point 0 = start/finish north of the Student Center. After the north portal its line swung east and came back. `route_profile.json` now has a `section_overrides` block that replaces only the points between the north portal (70.59, -64.84) and the foot of the terracotta stairs (111.07, -10.54): straight on along the tunnel axis for 46 m, one left bend (radius 18.6 m) through the gap between the main building and the Grand Auditorium, onto the old line at the stairs. 45 points become 36, the lap is 1,326 m (18 m shorter), every other point keeps its position, heights, width, zone and surface and is only renumbered (old 497-671 are now 488-662). Ramp 12.9 %, steepest in the section 13 % (before 15.5 %). `route_from_sketch.py apply_section_overrides()` does it after everything else, because a moved waypoint would shift every later point of the lap. Delete the block and run `route_from_sketch.py` to get the old line back. The ramp points are listed in `route.json "wall_cuts"`: there `env_corridor.py` builds flat 45 degree walls from the road edge up to the natural ground (sharp top edge, ochre render) and `env_props.py` puts the railings on top of them.
+
 ## What is in the world (modules)
 
 | Module | What it builds |

@@ -7,6 +7,8 @@ Its heights come straight from the driving profile (route.json track_z):
   road (+1 m)    flat at the driving height
   shoulder       smooth blend to the terrain
   cuttings       never above a 45 degree plane from the road edge; those faces get the concrete material
+  wall cuts      (V10g, route.json "wall_cuts") flat 45 degree walls from the road edge up to the natural ground
+                 with a sharp top edge, no shoulder: the straight sunken ramp at the north portal
   outer part     blends into the 5 m world terrain, which has a hole under the corridor (covers_cell) only where
                  corridor faces really exist (has_face), so no gap opens next to a drop, a portal or the jump
   cove kerb      on the sand side of the cove kerb (coast.COVE_KERB, the line of V10b's granite kerb) the ground
@@ -58,6 +60,55 @@ def is_portal(p):
     return p["tunnel"] and (not pts[(i - 1) % n]["tunnel"] or not pts[(i + 1) % n]["tunnel"])
 
 
+# V10g: straight sunken ramps (route.json "wall_cuts", written by route_from_sketch.py for a section override):
+# flat 45 degree walls from the road edge straight up to the natural ground, a sharp top edge, no soft shoulder
+# (Luc's photo of the north ramp, S01, S02, S08). Rows in these index ranges use wall_offsets()/the wall profile.
+WALL_CUTS = [(c["from_index"], c["to_index"]) for c in (E.ROUTE or {}).get("wall_cuts", [])]
+WALL_BLEND = 6.0          # m before the corridor's outer edge over which a wall row returns to the 5 m terrain
+_crest = {}
+
+
+def wall_row(p):
+    return any(a <= p["i"] <= b for a, b in WALL_CUTS)
+
+
+def natural_z(x, y):
+    """The terrain as it was before the route shaped it (elevation data)."""
+    return env_terrain._bilinear(E.DATA["grid"]["heights"], x, y)
+
+
+def wall_crest(p, side):
+    """Depth (m, measured outwards from the road edge = height) at which the 45 degree wall of a wall row meets
+    the natural ground on `side` (+1 left, -1 right)."""
+    key = (p["i"], side)
+    if key not in _crest:
+        nrm, half, road = _nrm(p), E.half_width(p), p["track_z"] - 0.05
+        limit = _state["width"][p["i"]][side] - WALL_BLEND - half - 0.5
+        c = 0.05
+        while c < limit and road + c < natural_z(p["x"] + nrm[0] * side * (half + c), p["y"] + nrm[1] * side * (half + c)):
+            c += 0.05
+        _crest[key] = c
+    return _crest[key]
+
+
+def wall_offsets(p, side):
+    """Sample offsets (> 0) of a wall row on one side, as many as a normal row has: the road, three on the wall
+    (the last exactly on its top edge), then out to the corridor edge, closer together near the wall."""
+    half, c, w = E.half_width(p), wall_crest(p, side), _state["width"][p["i"]][side]
+    road = [half * k / 4 for k in range(1, 5)]
+    wall = [half + c * k / 3 for k in range(1, 4)]
+    rest = len(FRACTIONS) - 1 - len(road) - len(wall)
+    return road + wall + [half + c + (w - half - c) * (k / rest) ** 1.5 for k in range(1, rest + 1)]
+
+
+def railing_line(p, side):
+    """(offset from the centreline, on the wall top?) for a ramp railing at route point p: on top of the wall of a
+    wall row (0.35 m behind its edge), None where the row is a normal one."""
+    if not wall_row(p) or not _state["width"]:
+        return None
+    return E.half_width(p) + wall_crest(p, side) + 0.35
+
+
 def smoothstep(t):
     t = min(max(t, 0.0), 1.0)
     return t * t * (3 - 2 * t)
@@ -105,6 +156,15 @@ def profile_height(p, offset, coarse):
     x = p["x"] + _nrm(p)[0] * offset
     y = p["y"] + _nrm(p)[1] * offset
     outer = coarse(x, y)
+    if wall_row(p):
+        side = 1 if offset > 0 else -1
+        if d <= half:
+            return road
+        c = wall_crest(p, side)
+        if d <= half + c:
+            return road + (d - half)
+        t = smoothstep((d - (_state["width"][p["i"]][side] - WALL_BLEND)) / WALL_BLEND)
+        return min(natural_z(x, y), road + (d - half)) * (1 - t) + outer * t
     if d <= road_half:
         z = road
     elif d <= road_half + shoulder:
@@ -382,6 +442,8 @@ def is_cut_face(p, o0, o1):
     lo, hi = min(abs(o0), abs(o1)), max(abs(o0), abs(o1))
     if lo < E.half_width(p) - 0.01 or (o0 > 0) != (o1 > 0):
         return False
+    if wall_row(p):                                     # exactly the wall, up to its top edge
+        return hi <= E.half_width(p) + wall_crest(p, 1 if o0 > 0 else -1) + 0.01
     mid = (o0 + o1) / 2
     return profile_height(p, mid, E.coarse_ground_z) < E.coarse_ground_z(p["x"] + _nrm(p)[0] * mid, p["y"] + _nrm(p)[1] * mid) - 0.3
 
@@ -399,6 +461,8 @@ def build_mesh():
         nrm = _nrm(p)
         w = _state["width"][p["i"]]
         offs = snap_to_kerb(p, [-f * w[-1] for f in reversed(FRACTIONS[1:])] + [f * w[1] for f in FRACTIONS])
+        if wall_row(p):
+            offs = [-o for o in reversed(wall_offsets(p, -1))] + [0.0] + wall_offsets(p, 1)
         shift = (0.0, 0.0)
         if is_portal(p):
             # 0.6 m into the tunnel, under its floor: the tunnel ring and this row use slightly different
