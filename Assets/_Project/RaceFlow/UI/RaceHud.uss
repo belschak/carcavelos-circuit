@@ -1786,7 +1786,7 @@
 }
 
 .credits-head--next {
-    margin-top: 16px;
+    margin-top: 12px;
 }
 
 .credits-team {

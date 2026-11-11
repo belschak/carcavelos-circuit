@@ -95,4 +95,4 @@ Official rubric from the course wiki; full Low/Mid/High table and our checklist:
 Web build steps: [docs/setup.md#web-build-role-3-or-the-build-backup](docs/setup.md#web-build-role-3-or-the-build-backup). Role 3 makes this reproducible by a second person (task V7).
 
 ## Credits
-Map data © OpenStreetMap contributors (ODbL). Sound effects: elevenlabs.io (kart engine and drift sounds made by Luc Tippmann, boost by David Belschak), all other sounds and the music are our own synthesised work. Third-party assets: [THIRD_PARTY.md](THIRD_PARTY.md). Original game, not affiliated with Nintendo or Nova SBE.
+Map data © OpenStreetMap contributors (ODbL). Sound effects: elevenlabs.io (kart engine and drift sounds made by Luc Tippmann, boost by David Belschak), all other sounds and the music are our own synthesised work. Characters: Microsoft Rocketbox Avatar Library (MIT, © 2020 Microsoft). Third-party assets: [THIRD_PARTY.md](THIRD_PARTY.md). Original game, not affiliated with Nintendo or Nova SBE.
