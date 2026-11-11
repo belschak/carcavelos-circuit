@@ -36,6 +36,7 @@ namespace CarcavelosCircuit.Driving
         private bool driftHeld;        // drift key (Space) is down
         private float boostSecondsLeft;
         private float itemBoostMultiplier = 1f; // from an item (IKartBoost), 1 = no item boost running
+        private float airSeconds;      // how long the kart has been in the air (for the wobble of the model)
         private bool grounded;
         private Vector3 groundNormal = Vector3.up;
 
@@ -275,16 +276,32 @@ namespace CarcavelosCircuit.Driving
             body.MoveRotation(Quaternion.Euler(0f, turnDegrees, 0f) * body.rotation);
         }
 
-        // Looks only: the model leans to the slope under the kart and levels out again in the air.
-        // The physics body never tilts, so this cannot affect driving or flipping.
+        // Looks only: on the ground the model leans to the slope under the kart. In the air (D10) the nose goes up
+        // while rising and down while falling, with a small wobble (FlyingPose has the rules, unit tested), and the
+        // model is level again after landing. The physics body never tilts, so this cannot affect driving or flipping.
         private void LateUpdate()
         {
-            if (visual == null || tuning == null)
+            if (visual == null || tuning == null || body == null)
             {
                 return;
             }
-            Quaternion level = Quaternion.FromToRotation(Vector3.up, groundNormal) * transform.rotation;
-            visual.rotation = Quaternion.Slerp(visual.rotation, level, tuning.VisualTiltSpeed * Time.deltaTime);
+
+            Quaternion target = Quaternion.FromToRotation(Vector3.up, groundNormal) * transform.rotation;
+            if (grounded)
+            {
+                airSeconds = 0f;
+            }
+            else
+            {
+                airSeconds += Time.deltaTime;
+                float pitch = FlyingPose.PitchDegrees(grounded, body.linearVelocity.y,
+                    tuning.MaxAirPitchDegrees, tuning.AirPitchFullSpeed);
+                float roll = FlyingPose.RollDegrees(grounded, airSeconds,
+                    tuning.AirWobbleDegrees, tuning.AirWobbleHertz);
+                // In Unity a positive turn around the sideways axis lowers the nose, so nose up is minus pitch.
+                target = transform.rotation * Quaternion.Euler(-pitch, 0f, roll);
+            }
+            visual.rotation = Quaternion.Slerp(visual.rotation, target, tuning.VisualTiltSpeed * Time.deltaTime);
         }
 
         // One ray from the centre of the ball straight down. Checkpoint triggers are ignored.
