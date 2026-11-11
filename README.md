@@ -58,7 +58,9 @@ Read AGENTS.md and follow its Git workflow section A before anything else: check
 |---|---|
 | [TASKS.md](TASKS.md) | The board: every task, owner role, due date, status |
 | [docs/team.md](docs/team.md) | Roles, owners, folders, scenes |
-| [docs/interfaces.md](docs/interfaces.md) | Contracts between modules (`IKartState`, `TrackInfo`, `RaceRules`) |
+| [docs/interfaces.md](docs/interfaces.md) | Contracts between modules (`IKartState`, `TrackInfo`, `RaceRules`, round 2: `IRacer`, `ITrackProgress`, `IKartDrivable`) |
+| [docs/round2-briefs.md](docs/round2-briefs.md) | Round 2: what each person builds, with a prompt to paste into your AI |
+| [docs/explain/](docs/explain/) | Walkthroughs for the presentation: how each part works, why, its limits |
 | [docs/plan.md](docs/plan.md) | Milestones + definition of done per role |
 | [docs/decisions.md](docs/decisions.md) | Why things are the way they are |
 | [docs/route.md](docs/route.md) | The campus route |
@@ -70,11 +72,12 @@ Read AGENTS.md and follow its Git workflow section A before anything else: check
 ## Deadlines
 | Date | |
 |---|---|
-| **Fri 13 Nov** | Every role's part merged into `main` |
-| Tue 17 Nov | Feature freeze |
-| Fri 20 Nov | Release candidate at the deployed URL |
+| Wed 11 Nov | Slower driving (D7) + `TrackProgress` (T8): bots, positions and medals build on them |
+| **Fri 13 Nov** | Every round 2 feature merged into `main` ([TASKS.md](TASKS.md) > Round 2) |
+| Tue 17 Nov | The map looks like the campus videos |
+| Sun 22 Nov | Feature freeze: only fixes after this |
 | **Mon 23 Nov 23:59** | **Moodle submission** (public repo link, see [docs/course-requirements.md](docs/course-requirements.md)) |
-| 24 Nov or 4 Dec | Presentation: live demo + code walkthrough |
+| Tue 24 Nov or Fri 4 Dec | Presentation: live demo + repository walkthrough |
 
 ## How to build
 Web build steps: [docs/setup.md#web-build-role-3-or-the-build-backup](docs/setup.md#web-build-role-3-or-the-build-backup). Role 3 makes this reproducible by a second person (task V7).
