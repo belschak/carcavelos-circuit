@@ -30,6 +30,7 @@ import env_backdrop             # noqa: E402
 import env_materials            # noqa: E402
 import env_interior             # noqa: E402
 import env_corridor             # noqa: E402
+import env_covebank             # noqa: E402  V10d: the cove bank outside the corridor
 import env_vegetation           # noqa: E402
 import env_props                # noqa: E402
 
@@ -109,8 +110,8 @@ def build_ground(heights):
         for i in range(COLS - 1):
             a = j * COLS + i
             cx, cy = X0 + (i + 0.5) * STEP, Y0 + (j + 0.5) * STEP
-            if env_terrain.in_portal_hole(cx, cy) or env_corridor.covers_cell(cx, cy):
-                continue                       # the tunnel portal / the cut walls close this gap
+            if env_terrain.in_portal_hole(cx, cy) or env_corridor.covers_cell(cx, cy) or env_covebank.covers_cell(cx, cy):
+                continue                       # the tunnel portal / the cut walls close this gap; V10d: the cove bank
             faces.append((a, a + 1, a + 1 + COLS, a + COLS))
             corner = [GRID["classes"][j][i], GRID["classes"][j][i + 1], GRID["classes"][j + 1][i], GRID["classes"][j + 1][i + 1]]
             mats.append(classes.index(max(set(corner), key=corner.count)))   # majority class of the 4 corners
@@ -565,8 +566,10 @@ def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     heights = env_terrain.apply()          # shapes the 5 m terrain to the driving profile
     env_corridor.build_data()              # high-res corridor along the track; from now on E.ground_z uses it
+    env_covebank.plan()                    # V10d: 0.5 m lattice where the cove kerb crosses the 5 m grid
     build_ground(heights)
     env_corridor.build_mesh()
+    env_covebank.build_mesh()
     build_paths()
     env_buildings.build()
     build_dressing()

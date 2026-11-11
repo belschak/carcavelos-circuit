@@ -274,7 +274,7 @@ def build_one(b, index):
         for m in materials(campus, index):
             mesh.materials.append(m)
         if kind == "atrium":
-            mesh.materials.append(E.material("B_solar", "#243349", roughness=0.35, metallic=0.2))
+            mesh.materials.append(E.material("B_solar", "#243349", roughness=0.75, metallic=0.0))   # V10d: matte, no sky glare
         if b.get("osm_building") in ("house", "detached"):
             mesh.materials[ROOF] = E.material("B_roof_tiles", "#C8664A", 0.85)
         meshes.append(mesh)
@@ -374,6 +374,13 @@ def add_hip_roof(bm, pts, centre, top):
         f.material_index = ROOF
 
 
+def ccw(ring):
+    """V10d: the ring counter-clockwise seen from above, so a cap faces up and walls built along it face out (the
+    roof panels' boxes were clockwise: their tops faced down and were culled, the spine roof showed through)."""
+    area = sum(ax * by - bx * ay for (ax, ay), (bx, by) in zip(ring, ring[1:] + ring[:1]))
+    return ring if area > 0 else ring[::-1]
+
+
 def add_roof_panels(bm, pts, centre, axis, top):
     """V10c: dark solar arrays on slightly raised flat boxes over the gallery spine (south of the atrium), with a
     few skylight strips between the rows. Rows sit across the spine every 9 m, two blocks per row with a service
@@ -392,8 +399,8 @@ def add_roof_panels(bm, pts, centre, axis, top):
                 for lo, hi in ((t0 + 3.0, mid - 1.2), (mid + 1.2, t1 - 3.0)):
                     if hi - lo < 4:
                         continue
-                    box = [(origin[0] + across[0] * u + axis[0] * v, origin[1] + across[1] * u + axis[1] * v)
-                           for u, v in ((lo, -2.6), (hi, -2.6), (hi, 2.6), (lo, 2.6))]
+                    box = ccw([(origin[0] + across[0] * u + axis[0] * v, origin[1] + across[1] * u + axis[1] * v)
+                               for u, v in ((lo, -2.6), (hi, -2.6), (hi, 2.6), (lo, 2.6))])
                     if not all(E.inside_polygon(x, y, pts) for x, y in box):
                         continue
                     z0, z1 = top + 0.02, top + 0.38
@@ -402,8 +409,8 @@ def add_roof_panels(bm, pts, centre, axis, top):
                         p, q = box[k], box[(k + 1) % 4]
                         add_quad(bm, [(*p, z0), (*q, z0), (*q, z1), (*p, z1)], STEEL)
                 if row % 3 == 1:                       # skylight strip in the gap between two rows
-                    sk = [(origin[0] + across[0] * u + axis[0] * v, origin[1] + across[1] * u + axis[1] * v)
-                          for u, v in ((mid - 0.8, 4.6), (mid + 0.8, 4.6), (mid + 0.8, 6.0), (mid - 0.8, 6.0))]
+                    sk = ccw([(origin[0] + across[0] * u + axis[0] * v, origin[1] + across[1] * u + axis[1] * v)
+                              for u, v in ((mid - 0.8, 4.6), (mid + 0.8, 4.6), (mid + 0.8, 6.0), (mid - 0.8, 6.0))])
                     if all(E.inside_polygon(x, y, pts) for x, y in sk):
                         add_quad(bm, [(*c, top + 0.1) for c in sk], GLASS_ROOF)
         t += 9.0

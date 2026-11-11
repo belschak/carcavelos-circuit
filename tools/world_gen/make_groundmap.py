@@ -27,20 +27,24 @@ MPP = (X1 - X0) / W                             # metres per pixel
 
 COLOURS = {
     "ground": (166, 170, 130), "grass": (143, 179, 122), "wood": (104, 140, 90), "paved": (201, 197, 188),
-    "pitch": (122, 170, 104), "sand": (219, 194, 150), "water": (64, 140, 200),
+    "pitch": (122, 170, 104), "sand": (232, 211, 174), "water": (64, 140, 200),
     "road": (85, 88, 94), "footway": (218, 213, 200), "steps": (200, 192, 178),
 }
 # the coast, stylised from the orthophoto samples (dry sand #d0ba9a, cove #c2aa8a, wet #b49c7a, rock #8e7d59)
-SAND_DRY = np.array((219, 194, 150), np.float32)       # main beach, a touch paler and warmer than the photo
-SAND_COVE = np.array((205, 181, 141), np.float32)      # the sheltered cove: a little darker
-SAND_WET = np.array((182, 156, 117), np.float32)       # the band the swash wets
-SEABED = np.array((150, 131, 102), np.float32)         # under the water (only a sliver at the waterline shows)
-ROCK = np.array((150, 127, 90), np.float32)            # ochre-brown limestone
-ROCK_DARK = np.array((96, 82, 60), np.float32)         # cracks and shadowed steps
-ROCK_WET = np.array((104, 97, 72), np.float32)         # rock in the swash: wet, a little green
+# V10d (2026-11-11): judged in Unity under the golden-hour light and grading, which warm and saturate the sand
+# (painted #DBC296 showed as about #BEA67C, hue saturation 0.35): paler and less saturated, still warm
+SAND_DRY = np.array((232, 211, 174), np.float32)       # main beach (#E8D3AE)
+SAND_COVE = np.array((219, 198, 162), np.float32)      # the sheltered cove: a little darker
+SAND_WET = np.array((193, 171, 137), np.float32)       # the band the swash wets
+SEABED = np.array((158, 140, 111), np.float32)         # under the water (only a sliver at the waterline shows)
+ROCK = np.array((150, 136, 104), np.float32)           # ochre to grey-brown limestone (tops; Ground.shader darkens
+ROCK_DARK = np.array((100, 90, 70), np.float32)        # the faces and wets the foot), cracks and strata lines
+ROCK_WET = np.array((118, 112, 92), np.float32)        # rock in the swash: wet, a little green
 WET_BAND = 11.0                                        # m of darker sand above the waterline
-ROCK_PAD = 0.8                                         # m: rock colour reaches this far beyond a rock outline
+ROCK_PAD = 0.25                                        # m: rock colour reaches this far beyond a rock piece (V10d:
+                                                       # the 3D rocks read their colour 0.9 m inside, so no halo)
 FILL_AS_AREA = set(coast.C.get("fill_as_area", []))      # OSM ways painted as filled paved areas (the promenade)
+OPEN_TO_PAVED = coast.C.get("open_to_paved", [])         # V10d: open ground that is paved (round the beach restaurants)
 ROADS = {"primary", "primary_link", "secondary", "tertiary", "residential", "unclassified", "service", "living_street"}
 
 
@@ -90,7 +94,7 @@ def coast_masks(w=W, h=H):
     sea = polygon_mask([coast.sea_polygon(inland=0.0, west_x=X0 - 50, south_y=Y0 - 50, east_x=X1 + 50)], w, h)
     beach = polygon_mask([coast.BEACH_ZONE], w, h) * (1.0 - sea)
     cove = polygon_mask([coast.COVE], w, h) * (1.0 - sea)
-    rock = polygon_mask([r["ring"] for r in coast.ROCKS], w, h, pad_m=ROCK_PAD)
+    rock = polygon_mask([p["ring"] for p in coast.rock_pieces()], w, h, pad_m=ROCK_PAD)   # V10d: the broken-up pieces
     metres = distance_transform_edt(sea < 0.5) * (X1 - X0) / w
     return sea, beach, cove, rock, metres
 
@@ -135,7 +139,7 @@ def paint_coast(arr, path_alpha):
     keep = 1.0 - path_alpha
     out = arr + (SEABED - arr) * sea[..., None]
     out = out + (sand - out) * (beach * keep)[..., None]
-    out = out + (rock_col - out) * (rock * (1.0 - sea) * keep)[..., None]
+    out = out + (rock_col - out) * (rock * keep)[..., None]               # V10d: also the pieces standing in the swash
     return out
 
 
@@ -151,6 +155,8 @@ def write_mask():
     sand further up), A = 1 - rock (the rock shelves; a mask without alpha reads as no rock)."""
     big = Image.new("RGB", (W * SS, H * SS), (140, 90, 0))      # open ground: dry scrub, part lawn and part sand
     draw = ImageDraw.Draw(big)
+    for ring in OPEN_TO_PAVED:                                   # V10d: paved (neither lawn nor sand)
+        draw.polygon([to_px(x, y, SS) for x, y in ring], fill=(0, 0, 0))
     for kind in ("grass", "wood", "paved", "pitch", "sand", "water"):
         fill = {"grass": (255, 0, 0), "wood": (255, 0, 0), "pitch": (255, 0, 0), "sand": (0, 255, 0)}.get(kind, (0, 0, 0))
         for area in DATA["areas"]:
@@ -171,7 +177,7 @@ def write_mask():
     land = 1.0 - sea
     lawn = mask[..., 0] * (1.0 - beach) * (1.0 - path) * land
     sand = np.clip(mask[..., 1] * land + beach, 0.0, 1.0) * (1.0 - rock) * (1.0 - path)
-    out = np.dstack([lawn, sand, np.clip(metres / WET_RANGE, 0.0, 1.0), 1.0 - rock * land])
+    out = np.dstack([lawn, sand, np.clip(metres / WET_RANGE, 0.0, 1.0), 1.0 - rock])
     Image.fromarray(np.round(out * 255.0).astype(np.uint8), "RGBA").save(os.path.join(HERE, "textures", "ground_mask_data.png"))
     print(f"ground_mask_data.png {MASK_W}x{mh} px (RGBA: lawn, sand, beach height, 1 - rock)")
 
@@ -180,6 +186,8 @@ def main():
     os.makedirs(os.path.join(HERE, "textures"), exist_ok=True)
     big = Image.new("RGB", (W * SS, H * SS), COLOURS["ground"])
     draw = ImageDraw.Draw(big)
+    for ring in OPEN_TO_PAVED:                           # V10d: under the OSM areas, so they still paint over it
+        draw.polygon([to_px(x, y, SS) for x, y in ring], fill=COLOURS["paved"])
     for kind in ("grass", "wood", "paved", "pitch", "sand", "water"):
         for area in DATA["areas"]:
             if area_kind(area) == kind:

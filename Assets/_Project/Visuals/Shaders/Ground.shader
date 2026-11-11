@@ -8,7 +8,8 @@
 //  - sand: the colour map paints the dry beach, the darker wet band and the cove (make_groundmap.py); the shader adds
 //    a soft sheen on the wet band (sun highlight and sky at flat angles) that fades up the beach;
 //  - rock shelves (mask alpha = 1 - rock): grain, blotches and thin strata lines from the detail texture read at a
-//    third, stretched scale, and a rougher normal.
+//    third, stretched scale, and a rougher normal. V10d: the shelves' steep faces (geometry normal) are darker and a
+//    little greyer with thin layer lines by height, the flat tops lighter, and rock near sea level wet and dark.
 // Lit like URP Lit without the specular term (except the wet sand's sheen): main light with received shadows, sky
 // light, fog, screen-space ambient occlusion when the renderer has it. Cost per pixel: 6 texture reads, no loops,
 // no branches.
@@ -30,6 +31,9 @@ Shader "CarcavelosCircuit/Ground"
         _WetSheen ("Wet sand sheen: sharpness, sun highlight, sky at flat angles, reach (beach height 0..1)", Vector) = (60, 0.35, 0.3, 0.5)
         _Rock ("Rock: grain, blotches, strata lines, normal", Vector) = (0.4, 0.3, 0.35, 0.9)
         _StrataTile ("Rock strata: tile m along x, along z", Vector) = (15, 5, 0, 0)
+        _RockFace ("Rock (linear): top brightness, face brightness, face layers per m, face greying", Vector) = (1.1, 0.45, 3.2, 0.3)
+        _RockWet ("Wet rock: fully wet below height m, dry above m, -, -", Vector) = (0.35, 1.3, 0, 0)
+        _RockWetTint ("Wet rock (linear multiplier rgb)", Vector) = (0.45, 0.46, 0.4, 0)
     }
     SubShader
     {
@@ -40,7 +44,7 @@ Shader "CarcavelosCircuit/Ground"
         CBUFFER_START(UnityPerMaterial)
             half4 _BaseColor, _WetColor;
             float4 _Detail, _StrataTile;
-            half4 _Grass, _Sand, _WetSheen, _Rock;
+            half4 _Grass, _Sand, _WetSheen, _Rock, _RockFace, _RockWet, _RockWetTint;
         CBUFFER_END
         ENDHLSL
 
@@ -118,7 +122,15 @@ Shader "CarcavelosCircuit/Ground"
 
                 // rock: coarse grain and blotches, thin dark strata lines (ridges of the ripple channel, stretched)
                 half strataLine = smoothstep(0.8, 0.96, strata) * fade;
-                half3 stone = macro * (1.0 + (fine.a - 0.5) * _Rock.x * fade + patch * _Rock.y) * (1.0 - _Rock.z * strataLine);
+                // V10d: steps of the shelves: faces darker, a little greyer, with thin layer lines by height (the
+                // strata read above stays on the tops); tops lighter; near sea level wet and dark (the swash)
+                half face = smoothstep(0.3, 0.8, 1.0 - normalize(i.normalWS).y);
+                half3 stone = macro * (1.0 + (fine.a - 0.5) * _Rock.x * fade + patch * _Rock.y) * (1.0 - _Rock.z * strataLine * (1.0 - face));
+                half layer = abs(frac(pw.y * _RockFace.z + patch * 2.0 + (fine.a - 0.5) * 0.25) - 0.5) * 2.0;
+                half layerLine = smoothstep(0.72, 0.95, layer) * face;
+                stone = lerp(stone, dot(stone, half3(0.30, 0.59, 0.11)).xxx, _RockFace.w * face);
+                stone *= lerp(_RockFace.x, _RockFace.y, face) * (1.0 - 0.35 * layerLine);
+                stone *= lerp(half3(1, 1, 1), _RockWetTint.rgb, 1.0 - smoothstep(_RockWet.x, _RockWet.y, pw.y));
 
                 half3 albedo = lerp(lerp(lerp(macro, lawn, mask.r), sand, mask.g), stone, rock);
                 half2 tilt = (bump.rg * (mask.r * _Grass.w + rock * _Rock.w) + bump.ba * (mask.g * _Sand.w * (1.0 - 0.6 * wet))) * fade;

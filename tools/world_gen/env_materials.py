@@ -30,7 +30,8 @@ TEXTURED = {
 }
 
 
-TEXTURED.update({"W_B_solar": ("solar_panel", 0.35), "W_T_cut_wall": ("render_ochre", 0.9)})   # V10c
+TEXTURED.update({"W_B_solar": ("solar_panel", 0.75), "W_T_cut_wall": ("render_ochre", 0.9)})   # V10c; V10d: solar matte
+# (at 0.35 / metallic 0.2 the panels mirrored the bright sky at the aerial camera's grazing angle and read light grey)
 
 MATTE = {"W_T_concrete_light"}   # use the albedo only, constant roughness (no polished-floor roughness map)
 

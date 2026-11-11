@@ -530,79 +530,133 @@ def build_far_town(col, count=900, seed=11):
     E.new_object("Backdrop_FarTown", mesh, col)
 
 
-ROCK_STEP = 2.0       # m between outline points of a rock shelf
-
-
-def _ring_ccw(ring):
-    area = sum(ax * by - bx * ay for (ax, ay), (bx, by) in zip(ring, ring[1:] + ring[:1]))
-    return ring if area > 0 else ring[::-1]
-
-
-def _densify(ring, step):
-    out = []
-    for (ax, ay), (bx, by) in zip(ring, ring[1:] + ring[:1]):
-        n = max(1, int(math.hypot(bx - ax, by - ay) / step))
-        out += [(ax + (bx - ax) * k / n, ay + (by - ay) * k / n) for k in range(n)]
-    return out
+ROCK_BURY = 0.3          # m: a rock piece's foot lies this far under the sand
+ROCK_UV_INSET = 0.9      # m: every rock vertex reads the colour map at least this far inside its piece
 
 
 def build_rocks(col, seed=505):
-    """Low limestone shelves and ribs (coast.ROCKS, K06/K07, marker 05). Per rock: the traced outline made ragged
-    by a smooth wobble, and four rings going in and up: 0.35 m under the sand, a ledge at half height, a shoulder
-    and a crest, whose heights wander along the outline (one end of a rib lower than the other), then a cap. So the
-    shelves step up from the sand in layers like the real ones. They follow the beach slope and may stand in the
-    swash (the foam wraps round them). Ground-map material with world UVs: the colour map paints the rock colour
-    under and on them, so no new material and no extra draw call."""
+    """Rock shelves (V10d, 2026-11-11, K03/K06/K07 and the ortho): the pieces of coast.rock_pieces() as low layered
+    limestone ledges. Per piece: a near-vertical wall from 0.3 m under the sand up to the first layer, then each
+    further layer set back by a width that wanders along the outline (0.1-2.8 m: a wide flat ledge here, one tall
+    wall there), a flat top that follows the beach and tilts along the piece, a skyline whose height wanders along
+    the outline; 1 layer under 0.45 m (and a fifth of the others), 3 on the tall big ones, else 2. Every ring of a piece lies on the rays
+    from its centre (the pieces are star-shaped), so the steps never cross; the top is a fan to the centre, so it
+    follows the sand under it. Plus the loose rocks of coast.rock_boulders(): flat-topped convex lumps, a third of
+    them under the sand. Flat shading (hard edges), ground-map material with UVs pulled ROCK_UV_INSET into the piece,
+    so walls and loose rocks read the piece's painted rock colour; Ground.shader darkens the faces, lightens the tops,
+    draws layer lines on the faces and wets the parts near the sea. No new material, no extra draw call."""
     import random
     rng = random.Random(seed)
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new("UVMap")
-    for rock in coast.ROCKS:
-        h = rock["height"]
-        outline = _ring_ccw(rock["ring"])
-        per = sum(math.hypot(bx - ax, by - ay) for (ax, ay), (bx, by) in zip(outline, outline[1:] + outline[:1]))
-        area = 0.5 * sum(ax * by - bx * ay for (ax, ay), (bx, by) in zip(outline, outline[1:] + outline[:1]))
-        width = 2.0 * area / per                                  # about the rock's width
-        ring = _densify(outline, ROCK_STEP)
+    uv_at = {}
+    pieces = coast.rock_pieces()
+    for piece in pieces:
+        ring, (cx, cy), h = piece["ring"], piece["centre"], piece["height"]
         n = len(ring)
-        phases = [rng.uniform(0, 2 * math.pi) for _ in range(4)]
+        radius = [math.hypot(x - cx, y - cy) or 1.0 for x, y in ring]
 
-        def wave(k, a, b):                                         # smooth noise along the outline, -1 .. 1
-            t = 2 * math.pi * k / n
-            return 0.6 * math.sin(a * t + phases[b]) + 0.4 * math.sin((a * 2 + 1) * t + phases[b + 1])
-        # (inset m, share of the height, jitter of that share)
-        rings = ((0.0, None, 0.0), (0.25, 0.45, 0.12), (min(0.9, 0.2 * width), 0.82, 0.1), (min(1.9, 0.38 * width), 1.0, 0.12))
-        loops = []
-        for inset, share, jit in rings:
+        def inset(k, d):
+            x, y = ring[k]
+            d = min(d, 0.6 * radius[k])
+            return x + (cx - x) / radius[k] * d, y + (cy - y) / radius[k] * d
+
+        # a ragged skyline: the height wanders along the outline (about 0.65-1.35 x), the same at every layer of a
+        # vertex, so the layers keep their order and the ledges stay flat across
+        ph = [rng.uniform(0, 2 * math.pi) for _ in range(2)]
+        skyline = [1.0 + 0.2 * math.sin(2 * math.pi * k / n * 3 + ph[0]) + 0.1 * math.sin(2 * math.pi * k / n * 7 + ph[1])
+                   + rng.uniform(-0.05, 0.05) for k in range(n)]
+
+        def level(x, y, share, k=None):                 # under water: the rock still stands h above the sea
+            s = 1.0 if k is None else skyline[k]
+            return max(E.ground_z(x, y), 0.0) + h * share * s * coast.piece_height_factor(piece, x, y)
+
+        def new_ring(depths, z_of):
             loop = []
-            for k, (x, y) in enumerate(ring):
-                (ax, ay), (bx, by) = ring[k - 1], ring[(k + 1) % n]
-                tl = math.hypot(bx - ax, by - ay) or 1.0
-                ix, iy = -(by - ay) / tl, (bx - ax) / tl          # inward normal (counter-clockwise outline)
-                rag = 0.45 * wave(k, 3, 0)                         # ragged outline
-                px, py = x + ix * (inset - rag), y + iy * (inset - rag)
-                if share is None:
-                    z = E.ground_z(px, py) - 0.35
-                else:
-                    lift = h * (0.8 + 0.3 * wave(k, 1, 2))         # one end higher than the other
-                    z = E.ground_z(px, py) + lift * (share + rng.uniform(-jit, jit))
-                loop.append(bm.verts.new((px, py, z)))
+            for k in range(n):
+                x, y = inset(k, depths[k])
+                v = bm.verts.new((x, y, z_of(x, y, k)))
+                uv_at[v] = inset(k, max(depths[k], ROCK_UV_INSET))
+                loop.append(v)
+            return loop
+
+        area = coast.ring_area(ring)
+        tiers = 1 if h < 0.45 or rng.random() < 0.2 else (2 if h < 1.0 or area < 60.0 else 3)
+        shares = {1: [1.0], 2: [rng.uniform(0.4, 0.6), 1.0],
+                  3: [rng.uniform(0.28, 0.4), rng.uniform(0.6, 0.72), 1.0]}[tiers]
+        depth = [0.0] * n
+        loops = [new_ring(depth, lambda x, y, k: E.ground_z(x, y) - ROCK_BURY)]
+        prev = None
+        for t, share in enumerate(shares):
+            if t > 0:                                   # ledge: set back, flat, at the layer below's height
+                # the set-back changes slowly along the outline: wide ledges on one side, on another the upper
+                # layer comes almost to the edge and the rock stands as one wall (no stacked-plates look)
+                step = rng.uniform(0.6, 1.5)
+                ph = [rng.uniform(0, 2 * math.pi) for _ in range(3)]
+                width = [step * max(0.12, 1.0 + 0.75 * math.sin(2 * math.pi * k / n * 2 + ph[0])
+                                    + 0.45 * math.sin(2 * math.pi * k / n * 5 + ph[1])) + rng.uniform(-0.15, 0.25)
+                         for k in range(n)]
+                depth = [d + max(0.12, w) for d, w in zip(depth, width)]
+                loops.append(new_ring(depth, lambda x, y, k, s=prev: level(x, y, s, k) + 0.02))
+            wobble = [rng.uniform(-0.04, 0.04) for _ in range(n)]
+            top = [d + 0.06 for d in depth]             # the wall leans back a little
+            loop = new_ring(top, lambda x, y, k, s=share: level(x, y, s, k))
+            for v, w in zip(loop, wobble):
+                v.co.z += w
             loops.append(loop)
+            depth, prev = top, share
         for a, b in zip(loops, loops[1:]):
             for k in range(n):
                 bm.faces.new((a[k], a[(k + 1) % n], b[(k + 1) % n], b[k]))
-        cap = bm.faces.new(loops[-1])
-        bmesh.ops.triangulate(bm, faces=[cap], quad_method="BEAUTY", ngon_method="EAR_CLIP")
-    for f in bm.faces:                                    # counter-clockwise outlines: all faces already face out
+        centre = bm.verts.new((cx, cy, level(cx, cy, 1.0)))
+        uv_at[centre] = (cx, cy)
+        top = loops[-1]
+        for k in range(n):
+            bm.faces.new((top[k], top[(k + 1) % n], centre))
+    pieces_tris = sum(len(f.verts) - 2 for f in bm.faces)
+
+    for b in coast.rock_boulders():                    # loose rocks: flat-topped convex lumps half sunk in the sand
+        r = random.Random(b["seed"])
+        (bx, by), (length, width, height), yaw = b["centre"], b["size"], b["yaw"]
+        piece = pieces[b["piece"]]
+        g = E.ground_z(bx, by)
+        height += max(0.0, -g)                          # in the swash: the top still stands out of the water
+        c = 0.8 * height
+        zc = g + height - 0.7 * c
+        cos_y, sin_y = math.cos(yaw), math.sin(yaw)
+        verts = []
+        for _ in range(11):
+            th, ph = r.uniform(0, 2 * math.pi), r.uniform(-1.2, 1.2)
+            lx, ly = 0.5 * length * math.cos(ph) * math.cos(th), 0.5 * width * math.cos(ph) * math.sin(th)
+            lz = min(c * math.sin(ph), 0.7 * c * r.uniform(0.9, 1.0))
+            v = bm.verts.new((bx + lx * cos_y - ly * sin_y, by + lx * sin_y + ly * cos_y, zc + lz))
+            uv_at[v] = piece["centre"]
+            verts.append(v)
+        verts.append(bm.verts.new((bx, by, zc - c)))     # the foot: always under the sand
+        uv_at[verts[-1]] = piece["centre"]
+        hull = bmesh.ops.convex_hull(bm, input=verts)
+        inner = list({g for g in hull["geom_interior"] + hull["geom_unused"] if isinstance(g, bmesh.types.BMVert)})
+        for v in inner:
+            uv_at.pop(v, None)
+        if inner:
+            bmesh.ops.delete(bm, geom=inner, context="VERTS")
+        faces = [g for g in hull["geom"] if isinstance(g, bmesh.types.BMFace) and g.is_valid]
+        bmesh.ops.recalc_face_normals(bm, faces=faces)
+    bmesh.ops.triangulate(bm, faces=[f for f in bm.faces if len(f.verts) > 4], quad_method="BEAUTY",
+                          ngon_method="EAR_CLIP")
+    for f in bm.faces:                                   # counter-clockwise rings: all faces already face out
+        f.smooth = False
         for loop in f.loops:
-            co = loop.vert.co
-            loop[uv].uv = ((co.x - E.X0) / (E.X1 - E.X0), (co.y - E.Y0) / (E.Y1 - E.Y0))
+            x, y = uv_at.get(loop.vert, (loop.vert.co.x, loop.vert.co.y))
+            loop[uv].uv = ((x - E.X0) / (E.X1 - E.X0), (y - E.Y0) / (E.Y1 - E.Y0))
     mesh = bpy.data.meshes.new("Coast_Rocks")
     bm.to_mesh(mesh)
     bm.free()
     mesh.materials.append(E.material("ground_map", "#A6AA82", roughness=0.95))
     E.new_object("Coast_Rocks", mesh, col)
-    print(f"  coast rocks: {len(coast.ROCKS)} shelves, {sum(len(p.vertices) - 2 for p in mesh.polygons)} triangles")
+    total = sum(len(p.vertices) - 2 for p in mesh.polygons)
+    print(f"  coast rocks: {len(pieces)} pieces of {len(coast.ROCKS)} shelves ({pieces_tris} triangles), "
+          f"{len(coast.rock_boulders())} loose rocks, {total} triangles")
 
 
 def build(heights):

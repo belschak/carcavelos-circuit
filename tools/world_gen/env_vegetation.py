@@ -34,6 +34,7 @@ import bpy
 from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import coast  # noqa: E402
 import env_common as E  # noqa: E402
 
 PROTO_COLLECTION = "Proto_Vegetation"
@@ -78,6 +79,7 @@ BEACH_CLEARINGS = (((-290.2, -60.5), 15.0), ((-309.0, -46.0), 9.0), ((-343.6, -3
                    ((-66.0, -182.0), 26.0), ((-46.0, -147.0), 6.0))      # checked for the pampas clumps (step 5)
 LOW_PINE_AREA = (-140.0, -152.0, -96.0, -130.0)   # x0, y0, x1, y1: the lawn islands by the promenade (K02): the real
 LOW_PINE_SCALE = (0.52, 0.62)                    # trees there are low, wind-shaped pines, not palms
+SAND_EDGE_CLEAR = 1.2                            # V10d: m a dune clump keeps from the beach's backshore line
 DECK_PALM_SCALE = (0.68, 0.78)                   # palms on Capricciosa's terrace (env_beachfront.deck_spots)
 ROAD_TYPES = {"primary", "primary_link", "secondary", "tertiary", "residential", "unclassified", "service",
               "living_street"}
@@ -1104,6 +1106,7 @@ def place(seed=SEED, write=True):
     for cx, cy in dune:
         if all(math.hypot(cx - sx, cy - sy) > 13.0 for sx, sy in seeds):
             seeds.append((cx, cy))
+    first_dune = len(placed)
     for cx, cy in seeds:
         for _ in range(rng.randint(3, 7)):
             if count(("shrub", "grass")) >= MAX_LOW:
@@ -1112,6 +1115,19 @@ def place(seed=SEED, write=True):
             if any(math.hypot(gx - bx, gy - by) < r + KIND["grass"]["crown"] for (bx, by), r in BEACH_CLEARINGS):
                 continue                                 # V10b: open sand at the terraces, parasol rows and cove
             add("grass", gx, gy, factor=0.9)
+    # V10d: no clumps on the sand itself: the beach zone and the cove of the traced coast (coast.py), a clump closer
+    # than SAND_EDGE_CLEAR to the backshore line, and the OSM sand areas (the beach east of the fort); nor on the
+    # open ground round the beach restaurants that the ground map now paints as paving (coast_trace open_to_paved).
+    # The clumps are placed as before and dropped afterwards, so every other plant keeps its place and its random
+    # numbers.
+    sand_areas = [a["ring"] for a in E.DATA["areas"] if a["kind"] == "sand"] + coast.C.get("open_to_paved", [])
+
+    def on_sand(x, y):
+        return (coast.in_beach(x, y) or coast.in_cove(x, y) or coast.backshore_distance(x, y) < SAND_EDGE_CLEAR
+                or any(coast.inside(x, y, [tuple(q) for q in ring]) for ring in sand_areas))
+    kept = [p for p in placed[first_dune:] if not on_sand(p["x"], p["y"])]
+    stats["dune_clumps_on_sand_dropped"] = len(placed) - first_dune - len(kept)
+    placed[first_dune:] = kept
 
     # caps (never expected to bite, but the game budget is a promise)
     trees = [p for p in placed if _kind(p["proto"]) in TREE_KINDS][:MAX_TREES]

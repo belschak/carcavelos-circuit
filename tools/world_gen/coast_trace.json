@@ -281,5 +281,9 @@
  ],
  "water_to_lawn_note": "OSM water areas containing these points are lawn in the orthophoto (the bed west of building D, GAME-06); the shallow pool at the north entrance of A (A02) stays water.",
  "fill_as_area": ["w482695608"],
- "fill_as_area_note": "OSM ways that are paved areas (the promenade, area=yes): painted filled in the ground map instead of as 5 m strokes along their outline (which left a pale band on the sand side of the kerb)."
+ "fill_as_area_note": "OSM ways that are paved areas (the promenade, area=yes): painted filled in the ground map instead of as 5 m strokes along their outline (which left a pale band on the sand side of the kerb).",
+ "open_to_paved": [
+  [[-336, -14], [-322, 0], [-300, -8], [-286, -18], [-268, -38], [-258, -52], [-254, -66], [-256, -82], [-262, -94], [-276, -94], [-300, -70], [-322, -44], [-338, -26]]
+ ],
+ "open_to_paved_note": "V10d (2026-11-11): unmapped open ground (olive in the ground map) round the two beach restaurants, which the orthophoto shows as their terraces, the forecourt and the car park on the land side: painted as paved instead of open ground (only where no OSM area, path or the beach zone paints over it)."
 }

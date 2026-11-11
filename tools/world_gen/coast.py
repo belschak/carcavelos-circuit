@@ -268,3 +268,167 @@ def _y_at(line, x):
         if ax <= x <= bx:
             return ay + (by - ay) * (x - ax) / ((bx - ax) or 1.0)
     return line[-1][1]
+
+
+# ------------------------------------------------------------------------------------------------------------------
+# V10d (2026-11-11): the rock shelves broken up and loose rocks in the swash. The traced shelves (ROCKS) read as flat
+# pancakes; the photos (K03, K06, K07) and the ortho show low limestone ledges broken into pieces with sand between
+# them, ragged stepped edges, and separate dark rocks in the swash. Plain Python and seeded, so the 3D rocks
+# (env_backdrop.build_rocks) and the ground map's rock paint (make_groundmap) see exactly the same pieces.
+# ------------------------------------------------------------------------------------------------------------------
+ROCK_PIECE_STEP = 1.5      # m between outline points of a rock piece (ragged edge)
+ROCK_SEED = 1105
+
+
+def ring_ccw(ring):
+    a = sum(ax * by - bx * ay for (ax, ay), (bx, by) in zip(ring, ring[1:] + ring[:1]))
+    return list(ring) if a > 0 else list(ring[::-1])
+
+
+def ring_area(ring):
+    return 0.5 * abs(sum(ax * by - bx * ay for (ax, ay), (bx, by) in zip(ring, ring[1:] + ring[:1])))
+
+
+def ring_centroid(ring):
+    a = cx = cy = 0.0
+    for (ax, ay), (bx, by) in zip(ring, ring[1:] + ring[:1]):
+        c = ax * by - bx * ay
+        a += c
+        cx += (ax + bx) * c
+        cy += (ay + by) * c
+    return cx / (3.0 * a), cy / (3.0 * a)
+
+
+def densify(ring, step):
+    out = []
+    for (ax, ay), (bx, by) in zip(ring, ring[1:] + ring[:1]):
+        n = max(1, int(round(math.hypot(bx - ax, by - ay) / step)))
+        out += [(ax + (bx - ax) * k / n, ay + (by - ay) * k / n) for k in range(n)]
+    return out
+
+
+def _clip(ring, nx, ny, d):
+    """The part of a ring where nx * x + ny * y >= d (Sutherland-Hodgman against one line)."""
+    out = []
+    for k, p in enumerate(ring):
+        q = ring[(k + 1) % len(ring)]
+        fp, fq = nx * p[0] + ny * p[1] - d, nx * q[0] + ny * q[1] - d
+        if fp >= 0:
+            out.append(p)
+        if (fp >= 0) != (fq >= 0):
+            t = fp / (fp - fq)
+            out.append((p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t))
+    return out
+
+
+def _long_axis(ring, cx, cy):
+    pts = densify(ring, 0.5)
+    sxx = sum((x - cx) ** 2 for x, _ in pts)
+    syy = sum((y - cy) ** 2 for _, y in pts)
+    sxy = sum((x - cx) * (y - cy) for x, y in pts)
+    ang = 0.5 * math.atan2(2.0 * sxy, sxx - syy)
+    return ang, (math.cos(ang), math.sin(ang))
+
+
+_PIECES = []
+
+
+def rock_pieces():
+    """The rock shelves as pieces: each traced shelf cut across its long axis about every 13 m (cut lines up to 29
+    degrees off square, 0.6-2.8 m of sand between the pieces), each piece with a ragged outline (outline points
+    1.5 m apart pulled 0-0.7 m towards the piece's centre, now and then a notch up to 2.1 m deep). A piece's height
+    varies (0.75-1.15 x its shelf's) and tilts along its long axis (one end up to 30 % higher).
+    Returns dicts: shelf, ring (counter-clockwise, star-shaped about centre), centre, height, axis, half, tilt."""
+    if _PIECES:
+        return _PIECES
+    import random
+    rng = random.Random(ROCK_SEED)
+    for rock in ROCKS:
+        ring = ring_ccw(rock["ring"])
+        cx, cy = ring_centroid(ring)
+        ang, (ax, ay) = _long_axis(ring, cx, cy)
+        proj = [(x - cx) * ax + (y - cy) * ay for x, y in ring]
+        t0, t1 = min(proj), max(proj)
+        n = max(1, min(4, int(round((t1 - t0) / 13.0 + rng.uniform(-0.3, 0.3)))))
+        cuts = []
+        for k in range(1, n):
+            t = t0 + (t1 - t0) * (k + rng.uniform(-0.15, 0.15)) / n
+            turn = rng.uniform(-0.5, 0.5)
+            nx, ny = math.cos(ang + turn), math.sin(ang + turn)
+            cuts.append((nx, ny, (cx + ax * t) * nx + (cy + ay * t) * ny, rng.uniform(0.6, 2.8)))
+        for k in range(n):
+            poly = ring
+            if k > 0:
+                nx, ny, d, gap = cuts[k - 1]
+                poly = _clip(poly, nx, ny, d + gap / 2)
+            if k < n - 1 and len(poly) >= 3:
+                nx, ny, d, gap = cuts[k]
+                poly = _clip(poly, -nx, -ny, -(d - gap / 2))
+            if len(poly) < 3 or ring_area(poly) < 5.0:
+                continue
+            pcx, pcy = ring_centroid(poly)
+            out = []
+            for x, y in densify(poly, ROCK_PIECE_STEP):
+                dx, dy = pcx - x, pcy - y
+                r = math.hypot(dx, dy) or 1.0
+                rag = rng.uniform(0.0, 0.7) + (rng.uniform(0.6, 1.4) if rng.random() < 0.15 else 0.0)
+                rag = min(rag, 0.3 * r)
+                out.append((x + dx / r * rag, y + dy / r * rag))
+            pang, (pax, pay) = _long_axis(out, pcx, pcy)
+            half = max(abs((x - pcx) * pax + (y - pcy) * pay) for x, y in out)
+            _PIECES.append({"shelf": rock["name"], "ring": out, "centre": (pcx, pcy),
+                            "height": rock["height"] * rng.uniform(0.75, 1.15), "axis": (pax, pay), "half": half,
+                            "tilt": rng.uniform(-0.3, 0.3)})
+    return _PIECES
+
+
+def piece_height_factor(piece, x, y):
+    """How much of the piece's height stands at (x, y): the piece tilts along its long axis."""
+    (cx, cy), (ax, ay) = piece["centre"], piece["axis"]
+    return min(1.4, max(0.6, 1.0 + piece["tilt"] * ((x - cx) * ax + (y - cy) * ay) / piece["half"]))
+
+
+_BOULDERS = []
+
+
+def rock_boulders():
+    """Loose rocks round the shelves, mostly on their seaward side and in the swash (K03, K07): per piece near the
+    water (signed distance under 30 m) 1-3, further up the beach at most 1; 0.5-1.7 m long, 0.3-0.9 m above the
+    sand. Never inside a piece, within 10 m of a road edge or more than 4 m out into the sea. Returns dicts: centre,
+    size (length, width, height above the sand), yaw, seed, piece (index into rock_pieces(), whose interior colour
+    the rock uses)."""
+    if _BOULDERS:
+        return _BOULDERS
+    import random
+    rng = random.Random(ROCK_SEED + 1)
+    pieces = rock_pieces()
+
+    def clear(x, y, r):
+        for p in pieces:
+            (cx, cy), ring = p["centre"], p["ring"]
+            if math.hypot(x - cx, y - cy) > 40:
+                continue
+            if inside(x, y, ring) or _closest(x, y, _segments(ring + ring[:1]))[0] < r + 0.3:
+                return False
+        return all(math.hypot(x - b["centre"][0], y - b["centre"][1]) > r + b["size"][0] / 2 + 0.4 for b in _BOULDERS)
+
+    for i, p in enumerate(pieces):
+        (cx, cy), ring = p["centre"], p["ring"]
+        near = signed_distance(cx, cy) < 30.0
+        want = rng.randint(1, 3) if near else rng.randint(0, 1)
+        for _ in range(want):
+            for _try in range(12):
+                cand = [ring[rng.randrange(len(ring))] for _ in range(3)]
+                x, y = min(cand, key=lambda q: signed_distance(*q)) if near else cand[0]
+                dx, dy = x - cx, y - cy
+                r = math.hypot(dx, dy) or 1.0
+                out = rng.uniform(0.7, 3.5)
+                bx, by = x + dx / r * out, y + dy / r * out
+                length = rng.uniform(0.5, 1.7)
+                size = (length, length * rng.uniform(0.55, 0.9), min(0.9, max(0.3, length * rng.uniform(0.4, 0.6))))
+                if signed_distance(bx, by) < -4.0 or _route_clearance(bx, by) < 10.0 or not clear(bx, by, length / 2):
+                    continue
+                _BOULDERS.append({"centre": (bx, by), "size": size, "yaw": rng.uniform(0, 2 * math.pi),
+                                  "seed": rng.randrange(1 << 30), "piece": i})
+                break
+    return _BOULDERS
