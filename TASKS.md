@@ -30,7 +30,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | T4 | `Checkpoint`, `SpawnPoint`, respawn points, `TrackInfo` | Tue 10 | done (Noah, #48) |
 | T5 | `RaceRules` (plain C#) + Edit Mode tests: order, wrong way, duplicate finish, missed checkpoint | Wed 11 | done (Noah, #47) |
 | T6 | Lap time 35-60 s check with the real kart; adjust route | Fri 13 | todo |
-| T7 | Low white fence (posts + two flat boards) along both road edges of the campus world `Track_CampusWorld`, none in the tunnel or at the terrace jump; prefab `Track/Prefabs/WhiteGuardrails.prefab` built by `WhiteGuardrailBuilder` from Role 3's `track.json` | Fri 13 | claimed (Noah, 2026-11-10) |
+| T7 | Low white fence (posts + two flat boards) along both road edges of the campus world `Track_CampusWorld`, none in the tunnel or at the terrace jump; prefab `Track/Prefabs/WhiteGuardrails.prefab` built by `WhiteGuardrailBuilder` from Role 3's `track.json` | Fri 13 | in review (Noah, PR #63) |
 
 ## Role 3: Kart, visuals + web release (Luc)
 | ID | Task | Due | Status |
@@ -71,7 +71,7 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 ### Role 2: Noah
 | ID | Task | Due | Status |
 |---|---|---|---|
-| T7 | Barriers / guardrails along the road (your draft #63) so karts cannot fall off or cut corners | Fri 13 | claimed (Noah, #63) |
+| T7 | Barriers / guardrails along the road (your draft #63) so karts cannot fall off or cut corners | Fri 13 | in review (Noah, #63) |
 | T8 | **`TrackProgress` implements `ITrackProgress`** on the `TrackInfo` root: racing line in driving order (start line first), `DistanceAlongLap`, `PointAt`, `DirectionAt`. May wrap `Shared/TrackPolyline`. Positions, minimap and bots read it | Wed 11 | todo |
 | T9 | Realistic main building inside: atrium, KPMG gallery, staircase (from your help PRs #44/#45), made by your own builder under `Track/` as a prefab; Luc places it in the campus world (request Q18) | Tue 17 | todo |
 | T10 | Piano in the atrium + piano sounds when a kart drives past or hits it (clip + script in your folder, CC0 or own recording, listed in `THIRD_PARTY.md`) | Tue 17 | todo |
