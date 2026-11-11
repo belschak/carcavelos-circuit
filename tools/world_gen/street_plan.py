@@ -336,6 +336,12 @@ def marginal():
     whole = cut(MEDIAN, west, east)
     # meadow north of the road (2026 state: a landscaped dry meadow with young trees, not the dusty car park)
     layer("D meadow", None, ribbon(cut(MEDIAN, med_s(-330.0), med_s(-150.0)), N_WALK[1], N_WALK[1] + 62.0), ground="meadow")
+    # pale gravel paths through it (ground colour only)
+    path = [med_pt(-158.0 - 14.0 * k, N_WALK[1] + 17.0 + 7.0 * math.sin(k * 1.1)) for k in range(12)]
+    layer("D meadow path", None, ribbon(path, -1.1, 1.1), ground="gravel")
+    layer("D meadow path", None, ribbon([med_pt(-226.0, N_WALK[1]), med_pt(-229.0, N_WALK[1] + 12.0),
+                                         med_pt(-238.0, N_WALK[1] + 34.0), med_pt(-252.0, N_WALK[1] + 60.0)], -1.0, 1.0),
+          ground="gravel")
     # belt between the road and the car park (lawn, shrubs, trees), down to the car park's north-east kerb
     # (its west end is the lawn island inside the hairpin)
     belt = (offset(cut(MEDIAN, med_s(-243.5), med_s(-148.4)), S_WALK[0]) + [(-138.0, -62.0), (-139.0, -108.5),
@@ -364,6 +370,10 @@ def marginal():
     for run in median_runs():                            # solid edge lines 0.3 m off the median, both sides
         for d in (MED_HALF + 0.3, -MED_HALF - 0.3):
             paint_ribbon("white", run, d - 0.07, d + 0.07, seg=5.0)
+    # the pedestrian crossing west of the restaurants: zebra bands across both carriageways
+    p, u = at_s(MEDIAN, med_s(-303.0))
+    stripes(p, u, -2.0, 2.0, WB[0] + 0.3, WB[1] - 0.2, 0.5, 0.5)
+    stripes(p, u, -2.0, 2.0, EB[0] + 0.2, EB[1] - 0.3, 0.5, 0.5)
     # eastbound optical speed bars towards the roundabout: pairs of white bars, the spacing shrinks
     for bx in (-242.5, -231.7, -217.5, -205.4, -195.0, -185.2, -177.5, -171.7, -167.9, -164.6, -160.4, -156.3):
         p, u = at_s(MEDIAN, med_s(bx))
@@ -454,6 +464,8 @@ def forecourt():
                                      hedge_pt(HEDGE_LEN + 1.5, WALL_S), hedge_pt(-1.0, WALL_S)], ground="bank")
     layer("E portal floor", "concrete", [hedge_pt(PORTAL_T[0], BAY[1]), hedge_pt(PORTAL_T[1], BAY[1]),
                                          hedge_pt(PORTAL_T[1], STAIR_S[0]), hedge_pt(PORTAL_T[0], STAIR_S[0])], conc_uv)
+    layer("E portal pit", None, [hedge_pt(PORTAL_T[0], STAIR_S[0]), hedge_pt(PORTAL_T[1], STAIR_S[0]),
+                                 hedge_pt(PORTAL_T[1], WALL_S + 1.0), hedge_pt(PORTAL_T[0], WALL_S + 1.0)], ground="paved")
     # brick-paver bays against the white wall
     layer("E brick bays", "brick", [brick_pt(0.0, 0.0), brick_pt(BRICK_LEN, 0.0), brick_pt(BRICK_LEN, BAY[1]),
                                     brick_pt(0.0, BAY[1])], frame_uv(BRICK_A, BRICK_U, BAY[0], -BAY[1]))
@@ -484,6 +496,7 @@ def forecourt():
     # dark sett bands: across the concrete from the throat (slot drain line) and north-south to mast M1
     layer("E sett band", "setts", ribbon([(-262.0, -30.0), (-252.0, -40.0)], -0.18, 0.18))
     layer("F sett band", "setts", ribbon([(-243.0, -46.0), (-243.0, -76.5)], -0.28, 0.28))
+    layer("E sett band at the ramp", "setts", ribbon([(-286.6, -12.6), (-280.4, -19.4)], -0.18, 0.18))
     # markings
     zebra = (-283.0, -17.0)                                    # zebra across the aisle at the top of the service ramp
     stripes(zebra, left_of(HEDGE_U), -3.0, 3.0, -2.75, 2.75, 0.5, 0.5)

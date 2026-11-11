@@ -222,7 +222,7 @@ def bollard_banded(name, col):
     g = Proto()
     for z0, z1, c in ((-0.15, 0.45, "black"), (0.45, 0.55, "yellow"), (0.55, 0.68, "black"), (0.68, 0.78, "yellow"),
                       (0.78, 0.86, "black")):
-        g.cyl(0.07, 0.07, z0, z1, 6, c, cap=z1 > 0.8)
+        g.cyl(0.07, 0.07, z0, z1, 5, c, cap=z1 > 0.8)
     return g.build(name, col)
 
 
@@ -419,12 +419,11 @@ def cabinet(name, col, colour, size):
 def sapling(name, col):
     """Young staked tree, 3 m: thin trunk, a small two-tone crown, three timber stakes."""
     g = Proto()
-    g.cyl(0.035, 0.025, -0.1, 1.9, 5, "wood_dark", cap=False)
-    g.cyl(0.25, 0.75, 1.5, 2.2, 6, "leaf_dark", cap=False)
-    g.cyl(0.75, 0.55, 2.2, 2.7, 6, "leaf", cap=False, phase=0.5)
-    g.cyl(0.55, 0.0, 2.7, 3.2, 6, "leaf", cap=False, phase=0.5)
-    for k in range(3):
-        a = 2 * math.pi * k / 3
+    g.cyl(0.035, 0.025, -0.1, 1.9, 4, "wood_dark", cap=False)
+    g.cyl(0.25, 0.75, 1.5, 2.2, 5, "leaf_dark", cap=False)
+    g.cyl(0.75, 0.0, 2.2, 3.2, 5, "leaf", cap=False, phase=0.6)
+    for k in range(2):
+        a = 2 * math.pi * k / 2 + 0.5
         g.box(0.4 * math.cos(a) - 0.03, 0.4 * math.cos(a) + 0.03, 0.4 * math.sin(a) - 0.03, 0.4 * math.sin(a) + 0.03,
               -0.1, 1.4, "timber")
     return g.build(name, col)
@@ -498,9 +497,9 @@ def build_prototypes():
         "Prop_CabinetGrey": cabinet("Prop_CabinetGrey", pc, "bin_grey", (1.2, 0.45, 1.1)),
         "Prop_CabinetTerracotta": cabinet("Prop_CabinetTerracotta", pc, "terracotta", (2.3, 1.0, 1.7)),
         "Veg_Sapling": sapling("Veg_Sapling", vc),
-        "Veg_FanPalm": fan_palm("Veg_FanPalm", vc, 31, 10.5, 0.19, 15, 1.9),
-        "Veg_FanPalm_B": fan_palm("Veg_FanPalm_B", vc, 47, 11.5, 0.2, 14, 1.8, "_b"),
-        "Veg_SlimPalm": fan_palm("Veg_SlimPalm", vc, 59, 8.6, 0.24, 17, 3.2),
+        "Veg_FanPalm": fan_palm("Veg_FanPalm", vc, 31, 10.5, 0.19, 13, 1.9),
+        "Veg_FanPalm_B": fan_palm("Veg_FanPalm_B", vc, 47, 11.5, 0.2, 12, 1.8, "_b"),
+        "Veg_SlimPalm": fan_palm("Veg_SlimPalm", vc, 59, 8.6, 0.24, 14, 3.2),
     })
     tris = {n: sum(len(p.vertices) - 2 for p in o.data.polygons) for n, o in protos.items()}
     print("  streets: prototypes " + ", ".join(f"{n} {t}" for n, t in tris.items()))
@@ -781,8 +780,9 @@ def placements():
     x, y = hp(S.HEDGE_LEN + 2.6, 7.0)
     add(plants, "Veg_Palm", x, y, 40.0, 0.62, clear=S.PROP_CLEAR + 4.0)
     for k in range(9):                                            # low shrubs in the strip behind the hedge
-        x, y = hp(1.5 + k * 5.3 + rng.uniform(-1, 1), 7.9 + rng.uniform(-0.3, 0.3))
-        if not S.PORTAL_T[0] - 0.5 < (1.5 + k * 5.3) < S.PORTAL_T[1] + 0.5:
+        t = 1.5 + k * 5.3 + rng.uniform(-1, 1)
+        x, y = hp(t, 7.9 + rng.uniform(-0.3, 0.3))
+        if not S.PORTAL_T[0] - 1.2 < t < S.PORTAL_T[1] + 1.2:
             add(plants, "Veg_Shrub" if k % 2 else "Veg_Shrub_B", x, y, rng.uniform(0, 360), rng.uniform(0.8, 1.1))
     # the grass island on the outside of the turn: high mast, direction board (grey back to the car park), low posts
     add(props, "Prop_LampMast", *S.MAST_A)
@@ -818,6 +818,11 @@ def placements():
     add(props, "Prop_LampGlobe", -297.0, -9.6)
     for k in (0, 2):                                              # blue signs at the disabled bays (at the wall)
         add(props, "Prop_SignParking", *bp(k * 2.5 + 2.5, 0.3), facing_rot((-S.left_of(bu)[0], -S.left_of(bu)[1])), 0.88)
+    px, py = bp(21.0, -2.6)                                       # one small palm on the bank
+    add(plants, "Veg_Palm_B", px, py, 70.0, 0.42, z=surface(*bp(21.0, 0.75)) + 0.45)
+    add(props, "Prop_LampMast", -335.0, -5.0)                     # the high mast beyond A Pastorinha
+    for d, face in ((S.N_WALK[0] + 0.6, 120.0), (S.S_WALK[1] - 0.6, 300.0)):       # the pedestrian crossing west of it
+        add(props, "Prop_SignCrossing", *S.med_pt(-303.0, d), facing_rot(S.bearing(face)))
     for k in range(7):                                            # ground cover on the bank
         x, y = bp(2.5 + k * 5.0 + rng.uniform(-1, 1), -2.0 - rng.uniform(0.0, 1.4))
         add(plants, "Veg_Shrub_B" if k % 2 else "Veg_Shrub", x, y, rng.uniform(0, 360), rng.uniform(0.7, 1.0),
@@ -857,6 +862,8 @@ def placements():
         t += 1.9
     for x, y in ((-243.0, -77.5), (-176.6, -86.6), (-121.0, -120.0)):
         add(props, "Prop_LampMast", x, y, clear=S.PROP_CLEAR + 0.6)
+    for x, y in ((-149.6, -108.6), (-146.0, -108.9)):             # blue signs at the disabled bays of the square
+        add(props, "Prop_SignParking", x, y, facing_rot(S.bearing(190.0)), 0.9)
     add(props, "Prop_PayMachine", -157.0, -101.0, facing_rot(sw))
     add(props, "Prop_SignParking", -156.2, -101.6, facing_rot(sw))
     add(props, "Prop_CabinetTerracotta", -180.0, -105.0, heading_rot(ku))
@@ -868,10 +875,13 @@ def placements():
                  (-298.0, 27.5), (-330.0, 46.0)):                 # north sidewalk lamps (single arm towards the road)
         s = S.s_of(S.MEDIAN, x, y)
         p, u = S.at_s(S.MEDIAN, s)
-        q = S.pt(p, u, 0.0, S.N_WALK[1] - 0.35)
+        off = S.N_WALK[1] - 0.35
+        while S.route_distance(*S.pt(p, u, 0.0, off)) < S.PROP_CLEAR + 0.25 and off < S.N_WALK[1] + 8.0:
+            off += 0.25                                           # the road lies on the sidewalk here: further out
+        q = S.pt(p, u, 0.0, off)
         add(props, "Prop_LampMarginal", q[0], q[1], heading_rot((u[1], -u[0])))
-    for k in range(46):                                           # staked young trees in the meadow (2026 state)
-        x = -322.0 + k * 3.9 + rng.uniform(-1.2, 1.2)
+    for k in range(38):                                           # staked young trees in the meadow (2026 state)
+        x = -322.0 + k * 4.7 + rng.uniform(-1.2, 1.2)
         d = S.N_WALK[1] + 4.0 + rng.uniform(0.0, 30.0) + (6.0 if k % 3 == 0 else 0.0)
         px, py = S.med_pt(x, d)
         add(plants, "Veg_Sapling", px, py, rng.uniform(0, 360), rng.uniform(0.8, 1.25), clear=S.PROP_CLEAR + 1.0,
@@ -902,7 +912,7 @@ def placements():
         x, yy = S.av_pt(y, S.AV_EAST_WALK[1] - 0.45)
         add(props, "Prop_LampSidewalk", x, yy, 180.0)
     for y in (80.0, 47.0, 14.5, -20.0):                           # double-arm lamps of the median (at its west edge:
-        x, yy = S.av_pt(y, 6.75)                                  # the real ones stand 1.25 m from our road edge)
+        x, yy = S.av_pt(y, 6.95)                                  # the real ones stand 1.25 m from our road edge)
         add(props, "Prop_LampAvenue", x, yy, 0.0)
     for x in (-89.0, -86.0):                                      # black bollards with two yellow bands, 3 m apart
         for k in range(8):
@@ -931,8 +941,12 @@ def placements():
         t = 70.0 + k * 2.5 + rng.uniform(-0.6, 0.6)
         x, y = kp(t, -(4.5 + rng.uniform(0.0, 5.0)))
         add(plants, "Veg_Shrub_B" if k % 2 else "Veg_Shrub", x, y, rng.uniform(0, 360), rng.uniform(1.8, 2.6), clear=S.PROP_CLEAR + 2.0)
+    left = {}
+    for name in skipped:
+        key = "parked cars" if name.startswith("Prop_Car") else name
+        left[key] = left.get(key, 0) + 1
     print(f"  streets: {len(plants)} plants, {len(props)} props placed"
-          + (f"; {len(skipped)} left out (too close to the road)" if skipped else ""))
+          + (f"; left out, too close to the road: {left}" if left else ""))
     return plants, props
 
 
@@ -953,7 +967,8 @@ def dress(veg, props):
             kept_v.append(p)
             continue
         top = S.layer_at(x, y)
-        if top is not None and top["mat"] is None and top["ground"] != "meadow" and not p["proto"].startswith("Veg_Palm"):
+        if top is not None and top["mat"] is None and top["ground"] not in ("meadow", "gravel") \
+                and not p["proto"].startswith("Veg_Palm"):
             kept_v.append(p)                             # lawn, bank, dusty ground: the other trees and shrubs stay
             continue
         real = p["proto"].startswith("Veg_Palm") and S.inside(x, y, belt) \

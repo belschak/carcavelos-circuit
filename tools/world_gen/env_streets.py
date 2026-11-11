@@ -359,7 +359,7 @@ def build_paving(col):
     soup = overlay(layers)
     soup.tris = [t for t in soup.tris if layers[t[3]]["mat"] is not None]
     counts = [len(soup.tris)]
-    soup.refine_near_route(2.6)
+    soup.refine_near_route(3.0)
     counts.append(len(soup.tris))
     soup.clip_route()
     counts.append(len(soup.tris))
@@ -512,7 +512,7 @@ def build_paint(col):
 # =====================================================================================================
 # The sunken restaurant terrace (survey 4.2: the restaurants stand 1.5-2 m below the forecourt)
 # =====================================================================================================
-FINE = 1.0
+FINE = 1.25
 SUB = int(round(E.STEP / FINE))
 REACH = 8.7            # m from the terrace outline to a cell centre
 BLEND = 2.0
@@ -601,7 +601,7 @@ def plan_terrace():
     for i, j in cand:
         x0, y0 = E.X0 + i * E.STEP, E.Y0 + j * E.STEP
         if any(abs(_target(x0 + u, y0 + v, E.coarse_ground_z(x0 + u, y0 + v)) - E.coarse_ground_z(x0 + u, y0 + v)) > 0.03
-               for u in (0.5, 1.5, 2.5, 3.5, 4.5) for v in (0.5, 1.5, 2.5, 3.5, 4.5)):
+               for u in (0.4, 1.3, 2.5, 3.7, 4.6) for v in (0.4, 1.3, 2.5, 3.7, 4.6)):
             changing.add((i, j))
     _T["cells"] = {(i, j) for i, j in cand if any((i + di, j + dj) in changing for di in (-1, 0, 1) for dj in (-1, 0, 1))}
     _T["z"] = {}
