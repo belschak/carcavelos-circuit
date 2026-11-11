@@ -25,6 +25,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         private const string Root = "Assets/_Project/";
         public const string SettingsPath = Root + "RaceFlow/Settings/RaceSettings.asset";
         private const string ItemSettingsPath = Root + "RaceFlow/Settings/ItemSettings.asset"; // item boxes (task R7)
+        public const string LeaderboardConfigPath = Root + "RaceFlow/Settings/LeaderboardConfig.asset"; // task R10, EMPTY in the repo
         private const string ThemePath = Root + "RaceFlow/UI/RaceHudTheme.tss";
         private const string PanelPath = Root + "RaceFlow/UI/RaceHudPanelSettings.asset";
         private const string HudLayoutPath = Root + "RaceFlow/UI/RaceHud.uxml";
@@ -60,6 +61,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
 
             SetUpAudioImport();
             RaceSettings settings = CreateSettings();
+            CreateLeaderboardConfig();
             PanelSettings panel = CreatePanelSettings();
             GameObject kartAudio = CreateKartAudioPrefab();
             GameObject kart = FindRealKartPrefab();
@@ -141,7 +143,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 case "RaceSystems":
                     return new[] { typeof(Transform), typeof(RaceManager), typeof(RaceBootstrap), typeof(AudioSource), typeof(RaceSounds) };
                 case "HUD":
-                    return new[] { typeof(Transform), typeof(UIDocument), typeof(RaceHud) };
+                    return new[] { typeof(Transform), typeof(UIDocument), typeof(RaceHud), typeof(TitleScreen), typeof(LeaderboardHud) };
                 case "Music":
                     return new[] { typeof(Transform), typeof(AudioSource), typeof(RaceMusic) };
                 case "Ghost":
@@ -768,6 +770,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             SerializedObject hso = new SerializedObject(raceHud);
             hso.FindProperty("raceManager").objectReferenceValue = manager;
             hso.ApplyModifiedPropertiesWithoutUndo();
+            AddStartScreenAndLeaderboard(hud, manager); // tasks R10 + R11
 
             // The HUD's menus ask RaceSounds for their sounds (audit 10). The HUD exists only now, so it is wired here.
             SerializedObject soundsToHud = new SerializedObject(sounds);
@@ -789,6 +792,44 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             {
                 throw new System.Exception("Role4SceneBuilder: a Main.unity reference is missing (settings, panel or a prefab).");
             }
+        }
+
+        // ---------- start screen title + leaderboard (tasks R11 + R10) ----------
+
+        // The connection asset of the online leaderboard. Always saved EMPTY: the CI Web build fills it from its
+        // secrets after this runs and empties it again (Role4WebBuild), so a key never ends up in a file in the repo,
+        // even if an earlier build was killed half-way.
+        private static void CreateLeaderboardConfig()
+        {
+            LeaderboardConfig config = AssetDatabase.LoadAssetAtPath<LeaderboardConfig>(LeaderboardConfigPath);
+            if (config == null)
+            {
+                config = ScriptableObject.CreateInstance<LeaderboardConfig>();
+                AssetDatabase.CreateAsset(config, LeaderboardConfigPath);
+            }
+            config.SetConnection("", "");
+            EditorUtility.SetDirty(config);
+        }
+
+        // On the HUD object, next to RaceHud and on its UIDocument: the title opener and the leaderboard cards.
+        // Called while Main.unity is open, so the config is loaded here (live reference).
+        private static void AddStartScreenAndLeaderboard(GameObject hud, RaceManager manager)
+        {
+            TitleScreen title = hud.AddComponent<TitleScreen>();
+            SerializedObject tso = new SerializedObject(title);
+            tso.FindProperty("raceManager").objectReferenceValue = manager;
+            tso.ApplyModifiedPropertiesWithoutUndo();
+
+            LeaderboardConfig config = AssetDatabase.LoadAssetAtPath<LeaderboardConfig>(LeaderboardConfigPath);
+            if (config == null)
+            {
+                throw new System.Exception("Role4SceneBuilder: " + LeaderboardConfigPath + " is missing.");
+            }
+            LeaderboardHud leaderboard = hud.AddComponent<LeaderboardHud>();
+            SerializedObject lso = new SerializedObject(leaderboard);
+            lso.FindProperty("raceManager").objectReferenceValue = manager;
+            lso.FindProperty("config").objectReferenceValue = config;
+            lso.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // ---------- item boxes (task R7, decision 2026-11-10) ----------

@@ -4,6 +4,8 @@
          st-racing, st-results) and "is-shown" on parts, and the USS fades and slides them (see "Animation pattern" in RaceHud.uss).
          Empty elements named "...-host" get a shape drawn in code (UI/SpeedArc.cs, UI/CalcadaWave.cs, UI/AzulejoPattern.cs). -->
     <Style src="RaceHud.uss" />
+    <Style src="StartScreen.uss" />
+    <Style src="Leaderboard.uss" />
     <ui:VisualElement name="hud-root" class="hud-root st-ready">
 
         <!-- Boost edge glow: orange light on the left and right screen edge while boosting (peripheral vision cue) -->
@@ -141,17 +143,62 @@
         </ui:VisualElement>
         <ui:VisualElement name="go-flash" class="go-flash" />
 
-        <!-- ===== Start screen (state Ready) ===== -->
+        <!-- ===== Start screen (state Ready), redesigned for task R11 "Carcavelos Round 3" =====
+             Left: the title lockup. The letters of CARCAVELOS are made in code (UI/TitleScreen.cs) so they can drop in one
+             after another and a light sweep can run over them; with reduced motion they are simply there.
+             Right: the leaderboard (top 10 of this track), filled in code by LeaderboardHud into "start-board-host".
+             Styles: UI/StartScreen.uss (title) and UI/Leaderboard.uss (board). Element names RaceHud and HudMenus use are unchanged. -->
         <ui:VisualElement name="start-screen" class="overlay start-screen">
             <ui:VisualElement name="start-bg" class="overlay-bg" />
             <ui:VisualElement name="start-pattern-host" class="pattern-host" />
-            <ui:VisualElement name="start-content" class="start-content">
-                <ui:Label text="TIME TRIAL  ·  1 LAP  ·  PRAIA DE CARCAVELOS" class="kicker f-ui intro intro--1" />
-                <ui:Label text="CARCAVELOS" class="title f-display intro intro--2" />
-                <ui:VisualElement name="start-wave-host" class="wave-host intro intro--3" />
-                <ui:Label text="CIRCUIT" class="title-2 f-display intro intro--3" />
-                <ui:Label name="press-any-key" text="CLICK OR PRESS ANY KEY" class="pill f-ui intro intro--4" />
-                <ui:VisualElement class="controls-row intro intro--5">
+            <!-- Racing livery stripes behind the title: blue, orange, sand, slanted like a kart's side -->
+            <ui:VisualElement name="start-stripes" class="ts-stripes">
+                <ui:VisualElement class="ts-stripe ts-stripe--blue" />
+                <ui:VisualElement class="ts-stripe ts-stripe--orange" />
+                <ui:VisualElement class="ts-stripe ts-stripe--sand" />
+            </ui:VisualElement>
+            <ui:VisualElement name="start-layout" class="ts-layout">
+                <ui:VisualElement name="start-content" class="start-content ts-hero">
+                    <ui:VisualElement name="title-lockup" class="ts-lockup">
+                        <ui:VisualElement class="ts-kicker-row intro intro--1">
+                            <ui:VisualElement class="ts-kicker-gem" />
+                            <ui:Label text="TIME TRIAL  ·  PRAIA DE CARCAVELOS" class="kicker ts-kicker f-ui" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="title-logo" class="ts-logo">
+                            <ui:VisualElement name="title-letters" class="ts-letters" />
+                            <ui:VisualElement name="title-glint" class="ts-glint">
+                                <ui:VisualElement name="title-glint-letters" class="ts-letters ts-letters--glint" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="ts-sub-row">
+                            <ui:VisualElement name="start-wave-host" class="wave-host ts-wave" />
+                            <ui:Label text="CIRCUIT" class="title-2 ts-circuit f-display" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <!-- The team's slogan as a stamp, the way NEW RECORD lands on the results card -->
+                    <ui:Label name="title-slogan" text="CARCAVELOS ROUND 3" class="ts-slogan f-display" />
+                    <ui:Label name="press-any-key" text="PRESS ANY KEY OR TAP TO START" class="pill ts-prompt f-ui intro intro--4" />
+                    <ui:Label name="start-best" text="" class="start-best ts-best f-num intro intro--5" />
+                    <!-- Menu buttons (task P7). The keys O, C and M do the same, and never start the race -->
+                    <ui:VisualElement name="start-menu" class="menu-row ts-menu intro intro--6">
+                        <ui:VisualElement name="start-settings" class="menu-pill">
+                            <ui:VisualElement class="keycap keycap--small"><ui:Label text="O" class="f-ui" /></ui:VisualElement>
+                            <ui:Label text="SETTINGS" class="menu-pill-text f-ui" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="start-credits" class="menu-pill">
+                            <ui:VisualElement class="keycap keycap--small"><ui:Label text="C" class="f-ui" /></ui:VisualElement>
+                            <ui:Label text="CREDITS" class="menu-pill-text f-ui" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="start-sound" class="menu-pill">
+                            <ui:VisualElement class="keycap keycap--small"><ui:Label text="M" class="f-ui" /></ui:VisualElement>
+                            <ui:Label name="start-sound-text" text="SOUND ON" class="menu-pill-text f-ui" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="start-board-host" class="lb-host lb-host--start" />
+            </ui:VisualElement>
+            <ui:VisualElement class="ts-footer">
+                <ui:VisualElement class="controls-row ts-controls intro intro--5">
                     <ui:VisualElement class="keycap"><ui:Label text="W" class="f-ui" /></ui:VisualElement>
                     <ui:VisualElement class="keycap"><ui:Label text="A" class="f-ui" /></ui:VisualElement>
                     <ui:VisualElement class="keycap"><ui:Label text="S" class="f-ui" /></ui:VisualElement>
@@ -165,22 +212,6 @@
                     <ui:Label text="RETRY" class="key-text f-ui" />
                     <ui:VisualElement class="keycap"><ui:Label text="P" class="f-ui" /></ui:VisualElement>
                     <ui:Label text="PAUSE" class="key-text key-text--last f-ui" />
-                </ui:VisualElement>
-                <ui:Label name="start-best" text="" class="start-best f-num intro intro--5" />
-                <!-- Menu buttons (task P7). The keys O, C and M do the same, and never start the race -->
-                <ui:VisualElement name="start-menu" class="menu-row intro intro--6">
-                    <ui:VisualElement name="start-settings" class="menu-pill">
-                        <ui:VisualElement class="keycap keycap--small"><ui:Label text="O" class="f-ui" /></ui:VisualElement>
-                        <ui:Label text="SETTINGS" class="menu-pill-text f-ui" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="start-credits" class="menu-pill">
-                        <ui:VisualElement class="keycap keycap--small"><ui:Label text="C" class="f-ui" /></ui:VisualElement>
-                        <ui:Label text="CREDITS" class="menu-pill-text f-ui" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="start-sound" class="menu-pill">
-                        <ui:VisualElement class="keycap keycap--small"><ui:Label text="M" class="f-ui" /></ui:VisualElement>
-                        <ui:Label name="start-sound-text" text="SOUND ON" class="menu-pill-text f-ui" />
-                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
@@ -236,6 +267,8 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
+            <!-- Leaderboard beside the card (task R10): "save your time" form + top 10, filled in code by LeaderboardHud -->
+            <ui:VisualElement name="results-board-host" class="lb-host lb-host--results" />
         </ui:VisualElement>
 
         <!-- ===== Pause (task P7): the tab or window lost focus, or P was pressed (audit 9), during the countdown or the race ===== -->
