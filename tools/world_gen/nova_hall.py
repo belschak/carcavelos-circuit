@@ -194,6 +194,16 @@ def door_list(door_map):
     return doors
 
 
+def write_rail_course_json():
+    """HallRailingCourse.json for Unity: the rail posts on the hall floor (x = east, y = up, z = north) and which posts
+    are neighbours. Role 2's white fence follows exactly this course inside the hall (no copying in Unity needed)."""
+    posts = [{"x": round(x, 3), "y": FLOOR_Z, "z": round(y, 3)} for x, y in RAIL_POSTS]
+    links = [i for pair in RAIL_LINKS for i in pair]
+    os.makedirs(OUT, exist_ok=True)
+    with open(os.path.join(OUT, "HallRailingCourse.json"), "w") as fh:
+        json.dump({"posts": posts, "links": links}, fh, indent=1)
+
+
 def write_doors_json(door_map):
     """HallDoors.json for Unity (x = east, z = north): the test scene lines the road up with each door."""
     out = [{"name": d["name"], "x": round(d["c"][0], 3), "z": round(d["c"][1], 3), "nx": round(d["n"][0], 4),
@@ -201,6 +211,9 @@ def write_doors_json(door_map):
     os.makedirs(OUT, exist_ok=True)
     with open(os.path.join(OUT, "HallDoors.json"), "w") as fh:
         json.dump({"doors": out}, fh, indent=1)
+
+
+RAIL_POSTS, RAIL_LINKS = [], []     # filled by guard_rails(): every rail post (world x, y) and neighbouring pairs
 
 
 def guard_rails(m, f, door_map):
@@ -275,8 +288,12 @@ def guard_rails(m, f, door_map):
                     sub.append(run[-1])
                 for (u0, o0), (u1, o1) in zip(sub, sub[1:]):
                     m.beam(f.at(u0, o0, 0.58), f.at(u1, o1, 0.58), 0.05, 0.16, "rail_lilac")
-                for (u0, o0) in run[::4] + [run[-1]]:                    # a post every 2 m and one at the end
+                ends = run[::4] if (len(run) - 1) % 4 == 0 else run[::4] + [run[-1]]
+                for k, (u0, o0) in enumerate(ends):                      # a post every 2 m and one at the end
                     p = f.at(u0, o0, 0)
+                    RAIL_POSTS.append((p[0], p[1]))                       # also kept for HallRailingCourse.json
+                    if k > 0:
+                        RAIL_LINKS.append((len(RAIL_POSTS) - 2, len(RAIL_POSTS) - 1))
                     m.box((p[0], p[1], 0.36), 0.05, 0.05, 0.36, "wall", f.h)
 
 
@@ -762,7 +779,9 @@ def build_world_fbx():
     from mathutils import Matrix
     bpy.ops.wm.read_factory_settings(use_empty=True)
     objects = make_hall(E.collection("Nova_Hall"))
+    write_rail_course_json()
     write_doors_json(snapped_doors(regions(building_frame())[:2]))
+    del RAIL_POSTS[:], RAIL_LINKS[:]
     turn = Matrix.Rotation(math.pi, 4, "Z")
     for obj in objects:
         obj.location.z = FLOOR_Z
