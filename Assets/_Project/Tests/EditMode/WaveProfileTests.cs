@@ -105,10 +105,10 @@ namespace CarcavelosCircuit.Tests.EditMode
         public void Section_StartsAndEndsFlatAndInvisible()
         {
             float offset, y, foam, alpha;
-            WaveProfile.Section(0, 2f, 1f, 0.3f, 0.5f, out offset, out y, out foam, out alpha);
+            WaveProfile.Section(0, 2f, 1f, 0.3f, 0.5f, 0f, out offset, out y, out foam, out alpha);
             Assert.AreEqual(0f, y, 0.0001f);
             Assert.AreEqual(0f, alpha, 0.0001f);
-            WaveProfile.Section(WaveProfile.SectionPoints - 1, 2f, 1f, 0.3f, 0.5f, out offset, out y, out foam, out alpha);
+            WaveProfile.Section(WaveProfile.SectionPoints - 1, 2f, 1f, 0.3f, 0.5f, 0f, out offset, out y, out foam, out alpha);
             Assert.AreEqual(0f, y, 0.0001f);
             Assert.AreEqual(0f, alpha, 0.0001f);
         }
@@ -117,8 +117,8 @@ namespace CarcavelosCircuit.Tests.EditMode
         public void Section_CurlThrowsTheLipForward()
         {
             float calmX, curlX, y, foam, alpha;
-            WaveProfile.Section(4, 2f, 1f, 0f, 0f, out calmX, out y, out foam, out alpha);
-            WaveProfile.Section(4, 2f, 1f, 0f, 1f, out curlX, out y, out foam, out alpha);
+            WaveProfile.Section(4, 2f, 1f, 0f, 0f, 0f, out calmX, out y, out foam, out alpha);
+            WaveProfile.Section(4, 2f, 1f, 0f, 1f, 0f, out curlX, out y, out foam, out alpha);
             Assert.Greater(curlX, calmX);
             Assert.AreEqual(1f, foam, 0.0001f, "a curling lip is white");
         }
@@ -127,7 +127,7 @@ namespace CarcavelosCircuit.Tests.EditMode
         public void Section_BrokenIsWhite()
         {
             float offset, y, foam, alpha;
-            WaveProfile.Section(3, 2f, 1f, 1f, 0f, out offset, out y, out foam, out alpha);
+            WaveProfile.Section(3, 2f, 1f, 1f, 0f, 0f, out offset, out y, out foam, out alpha);
             Assert.AreEqual(1f, foam, 0.0001f);
             Assert.AreEqual(1f, y, 0.0001f, "foam height, not water height");
         }
@@ -143,7 +143,7 @@ namespace CarcavelosCircuit.Tests.EditMode
                     for (int p = 0; p < WaveProfile.SectionPoints; p++)
                     {
                         float offset, y, foam, alpha;
-                        WaveProfile.Section(p, h, h * 0.5f, b, 0f, out offset, out y, out foam, out alpha);
+                        WaveProfile.Section(p, h, h * 0.5f, b, 0f, 5f, out offset, out y, out foam, out alpha);
                         Assert.IsFalse(float.IsNaN(offset) || float.IsNaN(y) || float.IsNaN(alpha));
                         if (p != 5)       // point 5 sits under the lip (4), so it may lie behind it
                         {
@@ -160,14 +160,91 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             WaveTuning t = Tuning();
             float front, back;
-            WaveProfile.SwashEdges(t, 0f, out front, out back);
+            WaveProfile.SwashEdges(t, 0f, 1f, out front, out back);
             Assert.Greater(back, front, "back edge on the sea side");
             float startFront = front;
-            WaveProfile.SwashEdges(t, 0.7f, out front, out back);
+            WaveProfile.SwashEdges(t, 0.7f, 1f, out front, out back);
             Assert.Less(front, startFront, "runs up the sand (negative = up the beach)");
             Assert.AreEqual(-t.RunUp, front, 0.0001f, "full run-up reached");
-            WaveProfile.SwashEdges(t, float.NaN, out front, out back);
+            WaveProfile.SwashEdges(t, float.NaN, float.NaN, out front, out back);
             Assert.IsFalse(float.IsNaN(front) || float.IsNaN(back));
+        }
+
+        [Test]
+        public void Swash_LobesReachLessFar()
+        {
+            WaveTuning t = Tuning();
+            float fullFront, shortFront, back;
+            WaveProfile.SwashEdges(t, 1f, 1f, out fullFront, out back);
+            WaveProfile.SwashEdges(t, 1f, 0f, out shortFront, out back);
+            Assert.Less(fullFront, shortFront, "lobe 1 runs further up the sand than lobe 0 (scalloped edge)");
+            Assert.AreEqual(-t.RunUp * 0.5f, shortFront, 0.0001f);
+            for (float along = -200f; along < 200f; along += 3.7f)
+            {
+                Assert.That(WaveProfile.Lobe(along, 7), Is.InRange(0f, 1f));
+            }
+            Assert.AreEqual(0.5f, WaveProfile.Lobe(float.NaN, 1));
+        }
+
+        [Test]
+        public void CrestShape_HighestAtThePeak()
+        {
+            float atPeak = WaveProfile.CrestShape(0f, 0f, 0);
+            float shoulder = WaveProfile.CrestShape(80f, 80f, 0);
+            Assert.Greater(atPeak, shoulder);
+            for (float along = -150f; along < 150f; along += 7f)
+            {
+                Assert.That(WaveProfile.CrestShape(along - 20f, along, 3), Is.InRange(0.7f, 1.05f));
+            }
+            Assert.AreEqual(1f, WaveProfile.CrestShape(float.NaN, 0f, 0));
+        }
+
+        [Test]
+        public void FoamTrail_StartsAtTheBreak_Grows_IsCapped()
+        {
+            WaveTuning t = Tuning();
+            Assert.AreEqual(0f, WaveProfile.TrailLength(t, 0f, 31f), 0.0001f, "not broken yet: no foam behind it");
+            Assert.AreEqual(8f, WaveProfile.TrailLength(t, 0f, 22f), 0.0001f, "2 s after the break at 4 m/s");
+            Assert.AreEqual(0f, WaveProfile.TrailLength(t, 30f, 22f), 0.0001f, "the break has not reached 30 m to the side");
+            Assert.AreEqual(WaveProfile.MaxTrail, WaveProfile.TrailLength(t, 0f, 0f), 0.0001f, "capped");
+            Assert.Greater(WaveProfile.TrailLength(t, 500f, 2f), 0f, "close to the sand everything broke");
+            Assert.AreEqual(0f, WaveProfile.TrailLength(t, float.NaN, 2f));
+        }
+
+        [Test]
+        public void Section_TrailStretchesOnlyTheBackOfTheFoam()
+        {
+            float shortBack, longBack, crestA, crestB, y, foam, alpha;
+            WaveProfile.Section(0, 2f, 1f, 1f, 0f, 0f, out shortBack, out y, out foam, out alpha);
+            WaveProfile.Section(0, 2f, 1f, 1f, 0f, 20f, out longBack, out y, out foam, out alpha);
+            Assert.AreEqual(shortBack - 20f, longBack, 0.0001f);
+            Assert.AreEqual(0f, alpha, 0.0001f, "the trail fades to nothing at its end");
+            WaveProfile.Section(3, 2f, 1f, 1f, 0f, 0f, out crestA, out y, out foam, out alpha);
+            WaveProfile.Section(3, 2f, 1f, 1f, 0f, 20f, out crestB, out y, out foam, out alpha);
+            Assert.AreEqual(crestA, crestB, 0.0001f);
+        }
+
+        [Test]
+        public void FoamIsAsTallAsTheWaveWhereItBreaks_ThenCollapses()
+        {
+            WaveTuning t = Tuning();
+            Assert.AreEqual(0.9f * t.BreakHeight, WaveProfile.FoamHeight(t, t.BreakDistance), 0.0001f);
+            Assert.Less(WaveProfile.FoamHeight(t, t.BreakDistance * 0.5f), 0.6f * t.BreakHeight);
+        }
+
+        [Test]
+        public void SurfersStandOnTheDrawnFace()
+        {
+            // HeightAtOffset must give the same water height as the drawn cross-section points 6 and 7.
+            for (float h = 0.5f; h <= 3f; h += 0.5f)
+            {
+                for (int p = 6; p <= 7; p++)
+                {
+                    float offset, y, foam, alpha;
+                    WaveProfile.Section(p, h, 0f, 0f, 0.4f, 0f, out offset, out y, out foam, out alpha);
+                    Assert.AreEqual(y, WaveProfile.HeightAtOffset(h, offset), 0.0001f, "point " + p + " height " + h);
+                }
+            }
         }
 
         [Test]

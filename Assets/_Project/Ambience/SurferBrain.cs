@@ -215,8 +215,8 @@ namespace CarcavelosCircuit.Ambience
             float wave = Mathf.Sin(carvePhase * Mathf.PI * 2f);      // +1 top of the face, -1 bottom
             float h = Mathf.Max(0.3f, w.Height);
             float popUp = Mathf.Clamp01(StateTime / Mathf.Max(0.05f, tuning.PopUpSeconds));
-            float faceOffset = Mathf.Lerp(0.85f, 0.3f, 0.5f + 0.5f * wave) * h;   // bottom of the face .. just under the lip
-            faceOffset = Mathf.Lerp(0.2f * h, faceOffset, popUp);
+            float faceOffset = Mathf.Lerp(1.05f, 0.5f, 0.5f + 0.5f * wave) * h;   // bottom of the face .. half way up, clear of the lip
+            faceOffset = Mathf.Lerp(0.55f * h, faceOffset, popUp);
             Distance = w.Crest - faceOffset;
             Height = WaveProfile.HeightAtOffset(h, faceOffset) + 0.08f;   // board on the water, not in it
             // Bottom turn: nose to the beach and along; top turn: nose up the face. Lean into the turn.

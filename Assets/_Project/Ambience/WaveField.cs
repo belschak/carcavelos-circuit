@@ -33,10 +33,17 @@ namespace CarcavelosCircuit.Ambience
             count = schedule.ActiveWaves(time, waves);
         }
 
-        // Smooth-water height of wave w at this spot (0 where it has broken or faded).
+        // Smooth-water height of wave w at this spot: grows towards the beach, bigger for set waves, highest at the
+        // wave's peak, 0 at the ends of the beach. The drawn wave and the surfers both use this one number.
         public float HeightOf(WaveState w, float along)
         {
-            return WaveProfile.UnbrokenHeight(tuning, w.Distance) * w.HeightScale * WaveProfile.EndFade(tuning, along);
+            return WaveProfile.UnbrokenHeight(tuning, w.Distance) * SizeAt(w, along);
+        }
+
+        // Everything that scales a wave at one spot along the beach (without the growth towards the beach).
+        private float SizeAt(WaveState w, float along)
+        {
+            return w.HeightScale * WaveProfile.EndFade(tuning, along) * WaveProfile.CrestShape(along - w.PeakAlong, along, w.Id);
         }
 
         public float SurfaceHeight(float along, float distance)
@@ -79,7 +86,7 @@ namespace CarcavelosCircuit.Ambience
                 {
                     continue;
                 }
-                float sizeAtBreak = tuning.BreakHeight * w.HeightScale * WaveProfile.EndFade(tuning, along);
+                float sizeAtBreak = tuning.BreakHeight * SizeAt(w, along);
                 if (sizeAtBreak < minHeight)
                 {
                     continue;

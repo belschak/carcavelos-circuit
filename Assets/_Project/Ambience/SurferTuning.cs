@@ -11,9 +11,9 @@ namespace CarcavelosCircuit.Ambience
         public float FallChance = 0.3f;      // 0..1 per ride
         public float FallSeconds = 1.3f;
         public float RespawnSeconds = 4f;
-        public float KickOutDistance = 11f;  // metres from the waterline: the ride ends here
+        public float KickOutDistance = 9f;   // metres from the waterline: the ride ends here
         public float CarveSeconds = 2.2f;    // one bottom turn + one top turn
-        public float LineupDistance = 34f;   // metres out where surfers wait (just behind the break)
+        public float LineupDistance = 30f;   // metres out where surfers wait (just behind the break)
         public float PopUpSeconds = 0.45f;   // lying -> standing
         public float BeachHalfLength = 63f;  // metres from the centre to where the rideable part of the beach ends
     }

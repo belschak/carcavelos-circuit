@@ -41,10 +41,31 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             BeachLine beach = StraightBeach(11);
             beach.Waterline[5] = 10f;                     // a bump in the coast
-            beach.SmoothFar(5);
+            beach.SmoothFar(null, 5);
             Assert.AreEqual(10f / 11f, beach.WaterlineFar[5], 0.0001f);
             Assert.AreEqual(10f, BeachLine.WaterlineFor(10f, 1f, 0f), 0.0001f, "at the sand: the real waterline");
             Assert.AreEqual(1f, BeachLine.WaterlineFor(10f, 1f, 60f), 0.0001f, "far out: the smoothed coast");
+            Assert.AreEqual(1f, BeachLine.WaterlineFor(10f, 1f, 14f), 0.0001f, "already where the waves break");
+        }
+
+        [Test]
+        public void BeachLine_MeasuredSandBeatsTheSlope()
+        {
+            BeachLine beach = StraightBeach(3);
+            for (int i = 0; i < beach.Samples; i++)
+            {
+                for (int k = 0; k < BeachLine.SandSteps; k++)
+                {
+                    beach.Sand[i * BeachLine.SandSteps + k] = k < 4 ? 0.2f * k : 0.6f;   // a sand bank, then flat
+                }
+            }
+            Assert.AreEqual(0.25f, beach.SandHeight(1, 2.5f), 0.0001f, "not measured yet: the slope 0.1");
+            beach.SandMeasured = true;
+            Assert.AreEqual(0.5f, beach.SandHeight(1, 2.5f), 0.0001f, "between the heights at 2 m and 3 m");
+            Assert.AreEqual(0.6f, beach.SandHeight(1, 40f), 0.0001f, "beyond the measured part: flat stays flat");
+            Assert.AreEqual(0f, beach.SandHeight(1, -3f), 0.0001f, "in the water");
+            Assert.AreEqual(0f, beach.SandHeight(1, float.NaN), 0.0001f);
+            Assert.AreEqual(0.5f + 0.04f, beach.Point(1, -2.5f, 0.04f).y, 0.0001f, "foam lies on the sand");
         }
 
         [Test]
@@ -105,6 +126,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             for (int v = 0; v < writer.Colours.Length; v++)
             {
                 Assert.AreEqual(0, writer.Colours[v].a);
+                Assert.AreEqual(0, writer.FoamColours[v].a, "no foam lace either");
             }
         }
 

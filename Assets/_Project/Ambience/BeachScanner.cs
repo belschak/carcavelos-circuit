@@ -99,6 +99,7 @@ namespace CarcavelosCircuit.Ambience
                     beach.Waterline[i] = c;
                     beach.Open[i] = IsOpenSea(basePoint + seaward * c, seaward, seaLevel, waveReach) ? 1f : 0f;
                     beach.Slope[i] = SandSlope(basePoint + seaward * c, seaward, seaLevel);
+                    MeasureSand(beach, i, basePoint + seaward * c, seaward, seaLevel);
                     found++;
                 }
                 else
@@ -123,10 +124,27 @@ namespace CarcavelosCircuit.Ambience
                 Problem = "the sea in front of the beach is not open (rocks, pier or land)";
                 return null;
             }
+            beach.SandMeasured = true;
             FillGaps(beach.Waterline);
+            float typical = Median(beach.Waterline);
+            float[] calm = new float[beach.Samples];
+            for (int i = 0; i < beach.Samples; i++)
+            {
+                // A headland, groyne or bay far off the beach's own line is not part of this beach: no waves there,
+                // and the swell line out at sea must not bend round it.
+                if (Mathf.Abs(beach.Waterline[i] - typical) > 22f)
+                {
+                    beach.Open[i] = 0f;
+                }
+                calm[i] = Mathf.Clamp(beach.Waterline[i], typical - 10f, typical + 10f);
+            }
             Smooth(beach.Waterline);
-            beach.SmoothFar(Mathf.Max(1, Mathf.RoundToInt(30f / Mathf.Max(0.5f, beach.Length / (beach.Samples - 1)))));  // about 30 m each side
-            Smooth(beach.Open);
+            // Waves fade over a few samples next to rocks and headlands instead of ending with a hard edge.
+            for (int pass = 0; pass < 4; pass++)
+            {
+                Smooth(beach.Open);
+            }
+            beach.SmoothFar(calm, Mathf.Max(1, Mathf.RoundToInt(30f / Mathf.Max(0.5f, beach.Length / (beach.Samples - 1)))));  // about 30 m each side
             return beach;
         }
 
@@ -247,6 +265,41 @@ namespace CarcavelosCircuit.Ambience
                 return Mathf.Clamp((h - seaLevel) / 6f, 0.01f, 0.5f);
             }
             return 0.05f;
+        }
+
+        // Sand heights every metre up the beach from the waterline (BeachLine.Sand). Never lower than the metre
+        // before, so a dip behind a sand bank cannot pull the foam under the sand.
+        private void MeasureSand(BeachLine beach, int i, Vector3 waterline, Vector3 seaward, float seaLevel)
+        {
+            float previous = 0f;
+            for (int k = 0; k < BeachLine.SandSteps; k++)
+            {
+                float h;
+                Vector3 p = waterline - seaward * k;
+                float height = previous + (k == 0 ? 0f : beach.Slope[i]);
+                if (ground.TryGetHeight(p.x, p.z, out h))
+                {
+                    height = Mathf.Max(previous, h - seaLevel);
+                }
+                if (k == 0)
+                {
+                    height = 0f;                 // the waterline itself is at sea level
+                }
+                beach.Sand[i * BeachLine.SandSteps + k] = height;
+                previous = height;
+            }
+        }
+
+        // The middle value (half of the samples are below it). Does not change 'values'.
+        public static float Median(float[] values)
+        {
+            if (values == null || values.Length == 0)
+            {
+                return 0f;
+            }
+            float[] sorted = (float[])values.Clone();
+            System.Array.Sort(sorted);
+            return sorted[sorted.Length / 2];
         }
 
         // A sample without a measured waterline takes the nearest measured one.

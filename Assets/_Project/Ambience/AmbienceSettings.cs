@@ -18,7 +18,7 @@ namespace CarcavelosCircuit.Ambience
         private float beachLength = 240f;
 
         [SerializeField, Tooltip("Points along the beach where the waterline is measured (more = follows the coast better)")]
-        private int beachSamples = 80;
+        private int beachSamples = 120;
 
         [SerializeField, Tooltip("Metres between two ground checks when walking from the racing line to the water")]
         private float scanStep = 2f;
@@ -31,28 +31,28 @@ namespace CarcavelosCircuit.Ambience
         private float spawnDistance = 105f;
 
         [SerializeField, Tooltip("Where the first part of a wave breaks (the peak)")]
-        private float breakDistance = 30f;
+        private float breakDistance = 26f;
 
         [SerializeField, Tooltip("How fast a wave rolls towards the beach, m/s")]
         private float waveSpeed = 4.2f;
 
         [SerializeField, Tooltip("Waves per set (surf comes in sets with a calm gap between them)")]
-        private int wavesPerSet = 4;
+        private int wavesPerSet = 5;
 
         [SerializeField, Tooltip("Seconds between two waves of a set")]
-        private float wavePeriod = 8.5f;
+        private float wavePeriod = 7f;
 
         [SerializeField, Tooltip("Extra calm seconds after a set")]
-        private float setLull = 14f;
+        private float setLull = 11f;
 
         [SerializeField, Tooltip("Height of a swell far out, in metres")]
         private float swellHeight = 0.45f;
 
         [SerializeField, Tooltip("Height of a set wave just before it breaks, in metres (stylised: a bit bigger than real)")]
-        private float breakHeight = 2.2f;
+        private float breakHeight = 2.3f;
 
-        [SerializeField, Tooltip("Height of the white foam roll after the break, as a share of the break height")]
-        private float whitewaterShare = 0.55f;
+        [SerializeField, Tooltip("Height of the white foam roll on its way in, as a share of the break height (right at the break the foam is as tall as the wave)")]
+        private float whitewaterShare = 0.5f;
 
         [SerializeField, Tooltip("How fast the breaking point travels along the wave (the 'peel'), m/s. Surfers ride just ahead of it")]
         private float peelSpeed = 5.2f;
@@ -61,7 +61,7 @@ namespace CarcavelosCircuit.Ambience
         private float runUp = 7f;
 
         [SerializeField, Tooltip("Seconds the foam needs to run up the sand and fade")]
-        private float swashSeconds = 4.5f;
+        private float swashSeconds = 7f;
 
         [SerializeField, Tooltip("Metres at each end of the beach where the waves fade out softly")]
         private float endFade = 32f;
@@ -82,6 +82,9 @@ namespace CarcavelosCircuit.Ambience
         [Header("Surfers")]
         [SerializeField, Tooltip("How many surfers (2 to 4)")]
         private int surferCount = 4;
+
+        [SerializeField, Tooltip("Size of the surfers and boards (1 = real size). A bit bigger reads better from the racing line, 80 m away")]
+        private float surferScale = 1.3f;
 
         [SerializeField, Tooltip("Paddling speed, m/s")]
         private float paddleSpeed = 1.4f;
@@ -105,7 +108,7 @@ namespace CarcavelosCircuit.Ambience
         private float respawnSeconds = 4f;
 
         [SerializeField, Tooltip("A ride ends (kick out over the back) when the wave is this close to the beach, m")]
-        private float kickOutDistance = 11f;
+        private float kickOutDistance = 9f;
 
         [SerializeField, Tooltip("Seconds for one carving turn (bottom turn + top turn)")]
         private float carveSeconds = 2.2f;
@@ -133,6 +136,7 @@ namespace CarcavelosCircuit.Ambience
         public Color CrestWater { get { return crestWater; } }
         public Color Foam { get { return foam; } }
         public int SurferCount { get { return surferCount; } }
+        public float SurferScale { get { return float.IsNaN(surferScale) ? 1f : Mathf.Clamp(surferScale, 0.5f, 3f); } }
         public Color[] WetsuitColours { get { return wetsuitColours; } }
         public Color[] BoardColours { get { return boardColours; } }
         public Color[] SkinColours { get { return skinColours; } }

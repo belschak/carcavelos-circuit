@@ -16,10 +16,15 @@ namespace CarcavelosCircuit.Tests.EditMode
             public float HoleFromZ = float.NaN, HoleToZ = float.NaN;
             public float RockFromZ = float.NaN, RockToZ = float.NaN;
             public float Tilt;               // the coast turns: waterline z changes by Tilt per metre of x
+            public float HeadlandFromX = float.NaN;   // from this x on the land reaches 40 m further out to sea
 
             public bool TryGetHeight(float x, float z, out float height)
             {
                 height = 5f + 0.1f * (z - Tilt * x);
+                if (!float.IsNaN(HeadlandFromX) && x >= HeadlandFromX)
+                {
+                    height = 5f + 0.1f * (z + 40f);
+                }
                 if (!float.IsNaN(HoleFromZ) && z <= HoleFromZ && z >= HoleToZ)
                 {
                     return false;
@@ -60,7 +65,9 @@ namespace CarcavelosCircuit.Tests.EditMode
                 Assert.AreEqual(0f, beach.Waterline[i], 1.1f);
                 Assert.AreEqual(1f, beach.Open[i], 0.0001f);
                 Assert.AreEqual(0.1f, beach.Slope[i], 0.02f, "the sand rises 0.1 m per metre");
+                Assert.AreEqual(0.5f, beach.SandHeight(i, 5f), 0.15f, "measured sand: 5 m inland = 0.5 m up");
             }
+            Assert.IsTrue(beach.SandMeasured);
         }
 
         [Test]
@@ -81,6 +88,38 @@ namespace CarcavelosCircuit.Tests.EditMode
             {
                 Assert.AreEqual(0f, beach.Waterline[i], 1.5f, "the base line now follows the coast");
             }
+        }
+
+        [Test]
+        public void Headland_GetsNoWaves_AndTheSwellDoesNotBendRoundIt()
+        {
+            var ground = new SlopedBeach();
+            ground.HeadlandFromX = 10f;
+            var scanner = new BeachScanner(ground, 1f, 200f);
+            BeachLine beach = scanner.Scan(Sea, 0f, Track(), 100f, 41, 60f);
+            Assert.IsNotNull(beach, scanner.Problem);
+            float typical = BeachScanner.Median(beach.Waterline);
+            for (int i = 0; i < beach.Samples; i++)
+            {
+                float x = beach.Point(i, 0f, 0f).x;
+                if (x > 15f)
+                {
+                    Assert.AreEqual(0f, beach.Open[i], 0.35f, "in front of the headland the waves fade out");
+                }
+                if (x < -15f)
+                {
+                    Assert.AreEqual(1f, beach.Open[i], 0.0001f, "the open beach keeps its waves");
+                }
+                Assert.LessOrEqual(Mathf.Abs(beach.WaterlineFar[i] - typical), 10.01f, "far out the wave line stays calm");
+            }
+        }
+
+        [Test]
+        public void Median_IsTheMiddleValue()
+        {
+            Assert.AreEqual(3f, BeachScanner.Median(new[] { 9f, 1f, 3f, 2f, 40f }));
+            Assert.AreEqual(0f, BeachScanner.Median(new float[0]));
+            Assert.AreEqual(0f, BeachScanner.Median(null));
         }
 
         [Test]

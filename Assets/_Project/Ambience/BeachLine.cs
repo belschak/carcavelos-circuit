@@ -14,8 +14,13 @@ namespace CarcavelosCircuit.Ambience
         public float Length;        // metres from the first to the last sample
         public float[] Waterline;   // metres seaward of the base line where the water meets the sand, per sample
         public float[] WaterlineFar; // the same, smoothed over about 25 m: far out the waves ignore small bumps of the coast
-        public float[] Slope;       // rise of the sand per metre inland, per sample
+        public float[] Slope;       // rise of the sand per metre inland, per sample (used where Sand was not measured)
+        public float[] Sand;        // measured sand height above the sea, SandSteps values per sample: 0, 1, 2 ... m inland
+        public bool SandMeasured;   // false = Sand is empty, the slope is used instead
         public float[] Open;        // 1 = open sea in front of this sample, 0 = rock, pier or fort (no waves)
+
+        // Metres of sand measured inland of the waterline (one height per metre): as far as foam ever runs up.
+        public const int SandSteps = 14;
 
         public BeachLine(int samples)
         {
@@ -23,6 +28,7 @@ namespace CarcavelosCircuit.Ambience
             Waterline = new float[n];
             WaterlineFar = new float[n];
             Slope = new float[n];
+            Sand = new float[n * SandSteps];
             Open = new float[n];
         }
 
@@ -40,12 +46,7 @@ namespace CarcavelosCircuit.Ambience
         {
             int k = Mathf.Clamp(i, 0, Samples - 1);
             Vector3 p = Origin + Along * AlongOf(k) + Seaward * (WaterlineFor(Waterline[k], WaterlineFar[k], distance) + distance);
-            float y = SeaLevel + height;
-            if (distance < 0f)
-            {
-                y += Slope[k] * -distance;
-            }
-            p.y = y;
+            p.y = SeaLevel + height + (distance < 0f ? SandHeight(k, -distance) : 0f);
             return p;
         }
 
@@ -62,22 +63,51 @@ namespace CarcavelosCircuit.Ambience
             int b = Mathf.Min(a + 1, Samples - 1);
             float t = index - a;
             float waterline = WaterlineFor(Mathf.Lerp(Waterline[a], Waterline[b], t), Mathf.Lerp(WaterlineFar[a], WaterlineFar[b], t), distance);
-            float slope = Mathf.Lerp(Slope[a], Slope[b], t);
             Vector3 p = Origin + Along * along + Seaward * (waterline + distance);
-            p.y = SeaLevel + height + (distance < 0f ? slope * -distance : 0f);
+            float sand = distance < 0f ? Mathf.Lerp(SandHeight(a, -distance), SandHeight(b, -distance), t) : 0f;
+            p.y = SeaLevel + height + sand;
             return p;
+        }
+
+        // Height of the sand above the sea, 'inland' metres up the beach from sample i's waterline. Foam that runs
+        // up the beach lies on this, so it neither sinks into the sand nor floats above it.
+        public float SandHeight(int i, float inland)
+        {
+            int k = Mathf.Clamp(i, 0, Samples - 1);
+            if (float.IsNaN(inland) || inland <= 0f)
+            {
+                return 0f;
+            }
+            if (!SandMeasured)
+            {
+                return Slope[k] * inland;
+            }
+            int last = SandSteps - 1;
+            if (inland >= last)
+            {
+                // Beyond the measured part: carry on at the slope of the last metre.
+                float lastRise = Sand[k * SandSteps + last] - Sand[k * SandSteps + last - 1];
+                return Sand[k * SandSteps + last] + Mathf.Max(0f, lastRise) * (inland - last);
+            }
+            int step = Mathf.FloorToInt(inland);
+            return Mathf.Lerp(Sand[k * SandSteps + step], Sand[k * SandSteps + step + 1], inland - step);
         }
 
         // Near the sand a wave follows the real waterline; further out it follows the smoothed coast, so the swell
         // stays a calm line and only bends to the beach as it arrives (like real waves do).
         public static float WaterlineFor(float near, float far, float distance)
         {
-            return Mathf.Lerp(near, far, WaveProfile.Smooth(4f, 30f, distance));
+            return Mathf.Lerp(near, far, WaveProfile.Smooth(2f, 14f, distance));
         }
 
-        // Fills WaterlineFar from Waterline: average over 'radius' samples to each side.
-        public void SmoothFar(int radius)
+        // Fills WaterlineFar from 'source' (the waterline without headlands): average over 'radius' samples to
+        // each side. source == null = from Waterline.
+        public void SmoothFar(float[] source, int radius)
         {
+            if (source == null || source.Length != Samples)
+            {
+                source = Waterline;
+            }
             int n = Samples;
             for (int i = 0; i < n; i++)
             {
@@ -87,7 +117,7 @@ namespace CarcavelosCircuit.Ambience
                 {
                     if (k >= 0 && k < n)
                     {
-                        sum += Waterline[k];
+                        sum += source[k];
                         count++;
                     }
                 }

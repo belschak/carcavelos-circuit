@@ -12,6 +12,7 @@ namespace CarcavelosCircuit.Ambience.Editor
         private const string Folder = "Assets/_Project/Ambience";
         public const string SettingsPath = Folder + "/Settings/AmbienceSettings.asset";
         private const string WaveMaterialPath = Folder + "/Materials/AmbienceWaves.mat";
+        private const string FoamMaterialPath = Folder + "/Materials/AmbienceFoam.mat";
         private const string SurferMaterialPath = Folder + "/Materials/AmbienceSurfers.mat";
         public const string ObjectName = "Ambience";
 
@@ -20,15 +21,17 @@ namespace CarcavelosCircuit.Ambience.Editor
         {
             AmbienceSettings settings = CreateSettings();
             Material waves = CreateWaveMaterial();
+            Material foam = CreateFoamMaterial();
             Material surfers = CreateSurferMaterial();
             var go = new GameObject(ObjectName);
             SeasideAmbience ambience = go.AddComponent<SeasideAmbience>();
             var so = new SerializedObject(ambience);
             so.FindProperty("settings").objectReferenceValue = settings;
             so.FindProperty("waveMaterial").objectReferenceValue = waves;
+            so.FindProperty("foamMaterial").objectReferenceValue = foam;
             so.FindProperty("surferMaterial").objectReferenceValue = surfers;
             so.ApplyModifiedPropertiesWithoutUndo();
-            if (settings == null || waves == null || surfers == null)
+            if (settings == null || waves == null || foam == null || surfers == null)
             {
                 throw new System.Exception("AmbienceBuilder: the settings asset or a material could not be made.");
             }
@@ -53,7 +56,19 @@ namespace CarcavelosCircuit.Ambience.Editor
         // underside), no depth writing so the waves blend into the sea.
         public static Material CreateWaveMaterial()
         {
-            Material material = LoadOrCreate(WaveMaterialPath, "Universal Render Pipeline/Particles/Unlit");
+            return CreateSeeThroughMaterial(WaveMaterialPath, (int)RenderQueue.Transparent);
+        }
+
+        // The foam lace layer: the same kind of material, drawn right after the water (queue + 1). Its picture is
+        // made in code when the game starts (FoamPattern), so there is no texture file to import.
+        public static Material CreateFoamMaterial()
+        {
+            return CreateSeeThroughMaterial(FoamMaterialPath, (int)RenderQueue.Transparent + 1);
+        }
+
+        private static Material CreateSeeThroughMaterial(string path, int queue)
+        {
+            Material material = LoadOrCreate(path, "Universal Render Pipeline/Particles/Unlit");
             if (material == null)
             {
                 return null;
@@ -69,7 +84,7 @@ namespace CarcavelosCircuit.Ambience.Editor
             material.SetFloat("_Cull", (float)CullMode.Off);
             material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             material.SetOverrideTag("RenderType", "Transparent");
-            material.renderQueue = (int)RenderQueue.Transparent;
+            material.renderQueue = queue;
             EditorUtility.SetDirty(material);
             return material;
         }

@@ -9,9 +9,9 @@ namespace CarcavelosCircuit.Ambience
     // Task R12: waves rolling onto Carcavelos beach and a few surfers riding them, so the seaside part of the lap
     // feels alive. Lives on the "Ambience" object in Main.unity (made by the Role 4 scene builder). When a track scene
     // is loaded it looks for the sea in it READ ONLY (Luc's scene is never changed), measures the beach next to the
-    // racing line and puts its own two meshes under this object: all waves (one transparent mesh) and all surfers
-    // (one opaque mesh). Two draw calls in total. No sea or no beach found = one log line and nothing else, the race
-    // never depends on this.
+    // racing line and puts its own meshes under this object: all waves (water layer + foam lace layer, the same
+    // points drawn twice) and all surfers (one opaque mesh). Three draw calls in total. No sea or no beach found =
+    // one log line and nothing else, the race never depends on this.
     public class SeasideAmbience : MonoBehaviour
     {
         [SerializeField, Tooltip("Every number of the waves and surfers (Ambience/Settings/AmbienceSettings.asset)")]
@@ -20,6 +20,9 @@ namespace CarcavelosCircuit.Ambience
         [SerializeField, Tooltip("Transparent vertex-colour material for the waves (made by AmbienceBuilder)")]
         private Material waveMaterial;
 
+        [SerializeField, Tooltip("Transparent material for the foam lace on top of the waves; its picture is made in code at the start (made by AmbienceBuilder)")]
+        private Material foamMaterial;
+
         [SerializeField, Tooltip("Lit vertex-colour material for the surfers and boards (made by AmbienceBuilder)")]
         private Material surferMaterial;
 
@@ -27,6 +30,9 @@ namespace CarcavelosCircuit.Ambience
         private BeachLine beach;
         private WaveMeshWriter waveWriter;
         private Mesh waveMesh;
+        private Mesh foamMesh;
+        private Texture2D foamTexture;
+        private GameObject foamObject;
         private Mesh surferMesh;
         private SurferBrain[] surfers;
         private Vector3[] surferVertices;
@@ -132,7 +138,7 @@ namespace CarcavelosCircuit.Ambience
         // Finds the sea in one scene and builds the waves and surfers. False = no sea there (nothing changed).
         public bool TryPlace(Scene scene)
         {
-            if (settings == null || waveMaterial == null || surferMaterial == null)
+            if (settings == null || waveMaterial == null || foamMaterial == null || surferMaterial == null)
             {
                 Debug.Log("SeasideAmbience: settings or materials missing (run the Role 4 scene builder), no waves.");
                 return true;
@@ -175,6 +181,9 @@ namespace CarcavelosCircuit.Ambience
             waveWriter.Write(field, beach);
             waveMesh.vertices = waveWriter.Vertices;
             waveMesh.colors32 = waveWriter.Colours;
+            foamMesh.vertices = waveWriter.Vertices;
+            foamMesh.colors32 = waveWriter.FoamColours;
+            foamMesh.uv = waveWriter.FoamUV;
             WriteSurfers();
             surferMesh.vertices = surferVertices;
             surferMesh.normals = surferNormals;
@@ -267,6 +276,16 @@ namespace CarcavelosCircuit.Ambience
             waveMesh.colors32 = waveWriter.Colours;
             waveObject = NewChild("Waves", waveMesh, waveMaterial, false);
 
+            // The foam lace: the same points and triangles again, drawn after the water with the foam picture.
+            foamMesh = NewMesh("Foam (R12)", waveWriter.Vertices, waveWriter.Indices, area);
+            foamMesh.colors32 = waveWriter.FoamColours;
+            foamMesh.uv = waveWriter.FoamUV;
+            foamObject = NewChild("Foam", foamMesh, foamMaterial, false);
+            foamTexture = MakeFoamTexture();
+            var block = new MaterialPropertyBlock();
+            block.SetTexture("_BaseMap", foamTexture);      // per renderer, so the material asset stays untouched
+            foamObject.GetComponent<MeshRenderer>().SetPropertyBlock(block);
+
             surferMesh = NewMesh("Surfers (R12)", surferVertices, surferIndices, area);
             surferMesh.normals = surferNormals;
             surferMesh.colors32 = surferColours;
@@ -284,7 +303,7 @@ namespace CarcavelosCircuit.Ambience
                 SurferBrain s = surfers[i];
                 Vector3 position = beach.PointAt(s.Along, s.Distance, s.Height);
                 Quaternion rotation = beach.Rotation(s.Heading) * Quaternion.Euler(s.Pitch * Mathf.Rad2Deg, 0f, s.Lean * 28f);
-                Matrix4x4 world = Matrix4x4.TRS(position, rotation, Vector3.one);
+                Matrix4x4 world = Matrix4x4.TRS(position, rotation, Vector3.one * settings.SurferScale);
                 Color32 hair = Pick(settings.HairColours, i, linear);
                 SurferBody.Write(s, world, Pick(suits, i, linear), Pick(skins, i, linear), hair, Pick(boards, i, linear),
                                  surferTuning.PopUpSeconds, joints, surferVertices, surferNormals, surferColours, i * SurferBody.VertsPerSurfer);
@@ -295,6 +314,23 @@ namespace CarcavelosCircuit.Ambience
         {
             Color c = colours != null && colours.Length > 0 ? colours[i % colours.Length] : Color.grey;
             return linear ? (Color32)c.linear : (Color32)c;
+        }
+
+        // The foam picture (FoamPattern) as a small repeating texture with mip maps, so far away foam turns into
+        // a soft white instead of flickering lines.
+        private static Texture2D MakeFoamTexture()
+        {
+            const int size = 128;
+            var pixels = new Color32[size * size];
+            FoamPattern.Fill(pixels, size, 6, 2026);
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, true);
+            texture.name = "Foam lace (R12)";
+            texture.wrapMode = TextureWrapMode.Repeat;
+            texture.filterMode = FilterMode.Trilinear;
+            texture.anisoLevel = 4;
+            texture.SetPixels32(pixels);
+            texture.Apply(true, true);       // make the mip maps, then free the copy in main memory
+            return texture;
         }
 
         private static Mesh NewMesh(string meshName, Vector3[] vertices, int[] indices, Bounds bounds)
@@ -329,6 +365,12 @@ namespace CarcavelosCircuit.Ambience
         private void Clear()
         {
             Remove(waveObject);
+            Remove(foamObject);
+            Remove(foamMesh);
+            Remove(foamTexture);
+            foamObject = null;
+            foamMesh = null;
+            foamTexture = null;
             Remove(surferObject);
             Remove(waveMesh);
             Remove(surferMesh);
