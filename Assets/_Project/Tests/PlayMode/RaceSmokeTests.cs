@@ -1,7 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using CarcavelosCircuit.RaceFlow;
+using CarcavelosCircuit.Shared;
+using CarcavelosCircuit.Track;
 using NUnit.Framework;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -67,6 +70,19 @@ namespace CarcavelosCircuit.Tests.PlayMode
             yield return null;
         }
 
+        // Swap guard (Q5): RaceFlow reads Role 2's TrackInfo. If a campus scene's track parts were not found, the race
+        // would quietly fall back to Role 4's small test loop and every other test here would still pass on it.
+        [UnityTest]
+        public IEnumerator RacesOnACampusTrack_NotTheTestLoop()
+        {
+            Assert.AreNotEqual("RaceFlow_PlaceholderTrack", race.TrackName,
+                "the race fell back to the test loop: no campus scene in the build list has a TrackInfo (see the RaceBootstrap lines in the Console)");
+            TrackInfo track = Object.FindAnyObjectByType<TrackInfo>();
+            Assert.IsNotNull(track, "no TrackInfo in the loaded track scene");
+            Assert.AreEqual(track.gameObject.scene.name, race.TrackName, "the race uses the TrackInfo of the scene it says it races on");
+            yield return null;
+        }
+
         [UnityTest]
         public IEnumerator CleanLap_FinishesOnce_WithATime_AndFullSpeedAfterTheSlowMotion()
         {
@@ -77,10 +93,15 @@ namespace CarcavelosCircuit.Tests.PlayMode
 
             yield return StartAndWaitForGo();
             Assert.IsTrue(race.Kart.InputEnabled, "input is on after GO");
-            PlaceholderChaseCamera chase = Object.FindAnyObjectByType<PlaceholderChaseCamera>();
+            ChaseCameraRig chase = Object.FindAnyObjectByType<ChaseCameraRig>();
             if (chase != null && Object.FindAnyObjectByType<MapFlyover>() != null)
             {
                 Assert.IsTrue(chase.enabled, "after GO the map fly-over has handed the camera back to the chase camera");
+                Assert.IsTrue(chase.GetComponent<CinemachineBrain>().enabled, "after GO Cinemachine drives the Main Camera again");
+                CinemachineCamera chaseCamera = Object.FindAnyObjectByType<CinemachineCamera>();
+                Assert.IsNotNull(chaseCamera, "Main has Role 1's ChaseCamera (Q13)");
+                Assert.IsNotNull(chaseCamera.Follow, "the chase camera has a target");
+                Assert.AreSame(race.Kart, chaseCamera.Follow.GetComponent<IKartState>(), "the chase camera follows the spawned kart");
             }
 
             int finishedLaps = 0;
@@ -188,7 +209,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
 
         private IEnumerator DriveIntoCheckpoint(int index)
         {
-            PlaceholderCheckpoint[] all = Object.FindObjectsByType<PlaceholderCheckpoint>(FindObjectsSortMode.None);
+            Checkpoint[] all = Object.FindObjectsByType<Checkpoint>(FindObjectsSortMode.None);
             for (int i = 0; i < all.Length; i++)
             {
                 if (all[i].Index == index)

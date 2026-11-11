@@ -542,6 +542,154 @@ kbd.cc-wide { padding: 0 11px; font-size: 12px; letter-spacing: 0.08em; }
   z-index: 3;
 }
 
+/* ---------- Touch controls (task P9, phones and tablets only) ---------- */
+/* Touch mode: the page never scrolls, zooms or selects text, and a long press opens no menu. */
+.cc-touch-mode, .cc-touch-mode body {
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The panel itself lets touches through to the game; only the buttons catch them. */
+#cc-touch {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  --pad-side: max(14px, env(safe-area-inset-left), env(safe-area-inset-right));
+  --pad-bottom: calc(max(84px, 25vh) + env(safe-area-inset-bottom)); /* above the HUD's drift bar and speedometer */
+  --size: clamp(60px, 17vmin, 84px);
+}
+
+.cc-touch-button, .cc-touch-pill {
+  pointer-events: auto;
+  touch-action: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid rgba(234, 234, 236, 0.45);
+  background: rgba(18, 59, 94, 0.38);
+  color: var(--kart-white);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  transition: transform 0.06s ease, background-color 0.06s ease;
+}
+
+.cc-touch-button {
+  width: var(--size);
+  height: var(--size);
+  border-radius: 22px;
+  font-size: 13px;
+}
+
+/* Pressed: orange, a little smaller (feels like a real button). */
+.cc-touch-button.cc-pressed, .cc-touch-pill.cc-pressed {
+  background: rgba(255, 138, 31, 0.78);
+  border-color: var(--boost-orange);
+  transform: scale(0.94);
+}
+
+.cc-touch-steer {
+  position: fixed;
+  left: var(--pad-side);
+  bottom: var(--pad-bottom);
+  display: flex;
+  gap: 12px;
+}
+.cc-touch-steer .cc-touch-button { width: calc(var(--size) * 1.1); }
+
+/* Right thumb: Gas at the bottom right, Drift beside it, Brake above Gas, the reserved Item slot above Drift. */
+.cc-touch-pedals {
+  position: fixed;
+  right: var(--pad-side);
+  bottom: var(--pad-bottom);
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas: "item brake" "drift gas";
+  gap: 10px;
+  align-items: end;
+  justify-items: center;
+}
+.cc-touch-item { grid-area: item; }
+.cc-touch-brake { grid-area: brake; height: calc(var(--size) * 0.72); }
+.cc-touch-drift { grid-area: drift; }
+.cc-touch-gas {
+  grid-area: gas;
+  width: calc(var(--size) * 1.15);
+  height: calc(var(--size) * 1.15);
+  border-radius: 50%;
+  border-color: rgba(255, 138, 31, 0.8);
+  font-size: 15px;
+}
+
+/* Recover, Retry (and fullscreen): small, top left, away from the thumbs. */
+.cc-touch-tools {
+  position: fixed;
+  left: var(--pad-side);
+  top: calc(env(safe-area-inset-top) + max(108px, 31vh)); /* under the lap time (the HUD scales with the height) */
+  display: flex;
+  gap: 8px;
+}
+.cc-touch-pill {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 17px;
+  font-size: 11px;
+}
+
+/* In touch mode the fullscreen button joins Recover and Retry (top centre is where the countdown appears)
+   and stays visible (there is no mouse to bring it back). */
+.cc-touch-tools #cc-fullscreen {
+  position: static;
+  transform: none;
+  width: 34px;
+  height: 34px;
+  border: 2px solid rgba(234, 234, 236, 0.45);
+  border-radius: 17px;
+  background: rgba(18, 59, 94, 0.38);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* "Turn your phone" hint: only in portrait, until closed. */
+#cc-rotate {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 10px);
+  transform: translateX(-50%);
+  display: none;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  padding: 6px 6px 6px 12px;
+  border-radius: 18px;
+  background: rgba(29, 29, 31, 0.8);
+  font-size: 13px;
+  z-index: 3;
+}
+#cc-rotate button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(234, 234, 236, 0.15);
+  color: var(--kart-white);
+  font-size: 18px;
+  line-height: 1;
+}
+@media (orientation: portrait) {
+  #cc-rotate { display: flex; }
+}
+#cc-rotate.cc-closed { display: none; }
+
 /* ---------- Animations (all switched off for "reduce motion", see the end) ---------- */
 @keyframes cc-rise { from { opacity: 0; transform: translateY(14px); } }
 @keyframes cc-pop { from { opacity: 0; transform: scale(0.85); } }

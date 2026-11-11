@@ -5,10 +5,11 @@ using UnityEngine.InputSystem;
 namespace CarcavelosCircuit.RaceFlow
 {
     // STAND-IN kart so the race flow, HUD and sound can be tested before Alessandro's KartController (Role 1) exists.
-    // It is deliberately simple (a box that slides) and only implements the IKartState contract.
+    // It is deliberately simple (a box that slides) and only implements the IKartState contract,
+    // plus IKartBoost so the item boxes (task R7) can be tested with it too.
     // Main.unity swaps it for the real Kart prefab: RaceBootstrap > Kart Prefab.
     [RequireComponent(typeof(Rigidbody))]
-    public class PlaceholderKart : MonoBehaviour, IKartState
+    public class PlaceholderKart : MonoBehaviour, IKartState, IKartBoost
     {
         [SerializeField, Tooltip("Top speed in metres per second (20 m/s = 72 km/h)")]
         private float maxSpeed = 20f;
@@ -43,6 +44,7 @@ namespace CarcavelosCircuit.RaceFlow
         private bool driftHeld;
         private float driftSeconds;
         private float boostSecondsLeft;
+        private float itemBoostMultiplier = 1f; // from an item (IKartBoost), 1 = no item boost running
 
         public float Speed
         {
@@ -115,6 +117,10 @@ namespace CarcavelosCircuit.RaceFlow
             if (boostSecondsLeft > 0f)
             {
                 boostSecondsLeft -= dt;
+                if (boostSecondsLeft <= 0f)
+                {
+                    itemBoostMultiplier = 1f; // the item boost is used up
+                }
             }
             UpdateDrift(dt);
 
@@ -125,7 +131,7 @@ namespace CarcavelosCircuit.RaceFlow
 
             Vector3 velocity = body.linearVelocity;
             float forwardSpeed = Vector3.Dot(velocity, transform.forward);
-            float topSpeed = IsBoosting ? maxSpeed * boostMultiplier : maxSpeed;
+            float topSpeed = IsBoosting ? maxSpeed * Mathf.Max(boostMultiplier, itemBoostMultiplier) : maxSpeed;
 
             // Gas, brake/reverse, or roll out slowly when no key is pressed.
             if (IsBoosting)
@@ -241,6 +247,14 @@ namespace CarcavelosCircuit.RaceFlow
             IsDrifting = false;
             driftSeconds = 0f;
             boostSecondsLeft = 0f;
+            itemBoostMultiplier = 1f;
+        }
+
+        // IKartBoost: an item adds boost time; the faster multiplier wins while the boost runs.
+        public void AddBoost(float seconds, float speedMultiplier)
+        {
+            boostSecondsLeft += seconds;
+            itemBoostMultiplier = Mathf.Max(itemBoostMultiplier, speedMultiplier);
         }
     }
 }
