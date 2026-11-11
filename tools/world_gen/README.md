@@ -19,6 +19,9 @@ $PY make_capricciosa_textures.py  # V16g: cap_rubble (rubble sea wall, parapet, 
 $PY make_sky.py            # painted golden-hour sky -> textures/sky_panorama.png (Unity skybox + reflections)
 $PY make_groundmap.py      # ground colour map from the OSM shapes and the traced coast -> textures/ground_colour.png, ground_mask_data.png
 $BL -b -P build_world.py   # -> out/CampusWorld.blend, CampusWorld.fbx, TrackSurface.fbx, RouteGuide.fbx, previews
+$BL -b out/CampusWorld.blend -P make_shadowmap.py   # V16h: bakes the sun's shadows and the sky occlusion onto the ground -> out/ground_shade_*.npy (about 3 min)
+$PY make_groundmap.py      # V16h: again, so the colour maps carry the baked shadow (alpha) and the occlusion
+$PY make_grass_tufts.py    # 3D grass tufts (near + far LOD) -> out/grass_tufts.json
 $BL -b -P render_beauty.py # -> out/beauty_*.png (EEVEE, sky, sun, kart-eye shots, hero kart)
 $PY export_unity_bundle.py # -> out/unity_export/: copy Models, Textures, Data into Assets/_Project/Visuals/CampusWorld/
 ```
@@ -61,6 +64,18 @@ Both were built apart and touch in five places; each is settled in the plan file
 - **Gallery east side**: V10c2's glass wall stands back under the roof, V10i's plaza and courtyard end at the roof edge (OSM outline). `plaza_plan.UNDERS` carries the Floor-0 paving on under the Gallery deck to the wall (courtyard, stairs' west void), `UNDER_ENDS` closes the strips, `FENCE_GALLERY` puts the courtyard's fence and guard collider on the Gallery deck's edge; the Gallery deck (`env_campus.build_main`) reaches 0.4 m past the roof edge north of the stairs so no groove is left between the two decks.
 - **Horizon Hall's undercroft**: `campus_plan.LOWER_PLAZA` reaches behind the set-back Floor-0 front and is level right up to V10i's stairs (`env_campus.lower_nodes`).
 - **Ground paint**: the Gallery arcade and Horizon Hall's undercroft are paving (`campus_plan.GROUND_PAINT`).
+
+### Sharp and deep surroundings (V16h, 2026-11-11)
+
+What it adds, and which step makes it (all script steps; rerun them after any change to buildings, trees or terrain):
+
+- **Baked sun shadows for the whole map** (`make_shadowmap.py`, Blender, after `build_world.py`; then `make_groundmap.py` again). A top-down Cycles render of the walkable surfaces, once with and once without shadow casters; the ratio is the shadow. It goes into the ALPHA of `ground_colour.png` (0.34 m per pixel) and of the new `ground_colour_near.png` (the lap's bounding box + 20 m at 0.2 m per pixel, rectangle in `ground_tiles.py`). The sky's ambient occlusion from the same bake is multiplied into the colour. `Ground.shader` and `WorldLit.shader` fade the baked shadow in between 30 and 42 m from the camera and combine it with the realtime shadow by `min()`: never darker than one shadow. The sun is the game's (`make_sky.py` constants). Noah's hall casts instead of the old main building (the script loads `NovaHallWorld.fbx` from the Unity folder; without it the old building casts and the log says so). Without `out/ground_shade_*.npy` everything still builds: alpha 255, no baked shadow.
+- **Ambient occlusion as vertex colours** (`env_shade.py`, called by `build_world.py` before the export; FBX `colors_type="LINEAR"`). `WorldLit.shader` (replaces URP Lit on every plain opaque material, same material count) reads it; `Foliage.shader` already tints by vertex colour, so crowns get dark undersides.
+- **Facades**: `make_textures.py facade window concrete_panel far_facade`: white render at 1024 px with grain, panel joints, rain streaks and a normal map; window band with normal and roughness maps (matt frames, mirror glass: the sky cubemap); fair-faced concrete with panel joints and tie holes; a generic house front for the backdrop. `env_materials.TINTED` gives walls of other colours the same neutral texture multiplied by their colour, and meshes without UVs read it by world position (`world_uv`).
+- **Ground**: painted at 0.2 m per pixel, worn lawn edges, dry patches, bare spots, fine mottling; detail to 250 m with a mid-scale layer (`Ground.shader`); far grass LOD (`make_grass_tufts.py`, 150 m).
+- **Backdrop**: `env_backdrop.build_horizon`: houses on the land skirt, the railway, two hill ridges.
+
+Order after `build_world.py`: `make_shadowmap.py` (Blender) -> `make_groundmap.py` -> `make_grass_tufts.py` -> `export_unity_bundle.py` -> the hall steps below -> Unity.
 
 ### Courtyard shortcut, Luc's yellow route (V14b, 2026-11-11)
 

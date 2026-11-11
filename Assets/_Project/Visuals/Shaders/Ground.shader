@@ -10,12 +10,23 @@
 //  - rock shelves (mask alpha = 1 - rock): grain, blotches and thin strata lines from the detail texture read at a
 //    third, stretched scale, and a rougher normal. V10d: the shelves' steep faces (geometry normal) are darker and a
 //    little greyer with thin layer lines by height, the flat tops lighter, and rock near sea level wet and dark.
+// V16h (sharp and deep surroundings):
+//  - a second, finer colour map over the lap and its surroundings (_NearMap, world rectangle _NearRect, about 0.2 m
+//    per pixel), blended in over 10 m at its border; outside it the world map is used as before;
+//  - both colour maps carry the BAKED SUN SHADOW in alpha (make_shadowmap.py: 1 = lit). The realtime shadow map only
+//    reaches 50 m (and fades out from 40 m); the baked shadow fades in from _BakedShadow.x to .y metres from the
+//    camera and is combined with the realtime one by min(): where both say "shadow" the ground is as dark as one
+//    shadow, never darker (no double shadow), and beyond the realtime range the baked one carries on alone;
+//  - paved and bare ground (neither lawn, sand nor rock in the mask) gets grain and soft patches too (_Bare);
+//  - the fine detail (blades, grain, detail normal) now reaches _Detail.w = 250 m, and a mid-scale read of the same
+//    detail texture (_Mid.x metres per tile, turned 37 degrees) takes over between, so the 6 m tile never shows as
+//    a pattern and big lawns keep texture far out.
 // Lit like URP Lit without the specular term (except the wet sand's sheen): main light with received shadows, sky
 // light, fog, screen-space ambient occlusion when the renderer has it.
 // V17 "AAA" pass: (1) the lawn glows warm when you look towards the low sun (light through the blades), (2) the
 // sky light reaches less into the gaps between blades and sand grains (micro shadows from the detail map, so the
 // shade side has texture too), (3) dry ground picks up a little sky at very flat angles (sheen far down the road).
-// Cost per pixel: 6 texture reads, no loops, no branches (the V17 terms are arithmetic only).
+// V16h: near detail, baked shadow and bare spots. Cost per pixel: 8 texture reads, no loops, no branches.
 // World-space detail UVs, so static batching changes nothing. Made by CampusWorldBuilder.BuildMaterials from the
 // "ground" block in Data/materials.json; if this shader is missing, the ground stays URP Lit with the colour map.
 Shader "CarcavelosCircuit/Ground"
@@ -27,7 +38,12 @@ Shader "CarcavelosCircuit/Ground"
         [NoScaleOffset] _GroundMask ("Mask: R lawn, G sand, B beach height, A 1 - rock (linear)", 2D) = "black" {}
         [NoScaleOffset] _DetailMap ("Detail: R blades, G patches, B ripples, A grain (linear)", 2D) = "gray" {}
         [NoScaleOffset] _DetailNormal ("Detail normal: RG lawn, BA sand (linear)", 2D) = "gray" {}
-        _Detail ("Detail: small tile m, large tile m, fade from m, fade to m", Vector) = (6, 47, 30, 120)
+        [NoScaleOffset] _NearMap ("Fine colour map of the lap (alpha = baked sun shadow)", 2D) = "white" {}
+        _NearRect ("Fine map: world x0, z0, 1 / width, 1 / depth (0 = none)", Vector) = (0, 0, 0, 0)
+        _BakedShadow ("Baked sun shadow: fade in from m, to m, strength, -", Vector) = (30, 42, 0.85, 0)
+        _Detail ("Detail: small tile m, large tile m, fade from m, fade to m", Vector) = (6, 47, 70, 250)
+        _Bare ("Paved and bare ground (neither lawn, sand nor rock): grain, patches, normal, -", Vector) = (0.20, 0.12, 0.12, 0)
+        _Mid ("Mid detail: tile m, strength, in from m, in to m", Vector) = (21, 0.75, 12, 70)
         _Grass ("Lawn: blades, patches, patch tint, normal", Vector) = (0.42, 0.34, 1, 0.6)
         _Sand ("Sand: ripples, grain, patches, normal", Vector) = (0.22, 0.26, 0.15, 1.0)
         _WetColor ("Wet sand (multiplies the painted wet band)", Color) = (0.95, 0.94, 0.92, 1)
@@ -48,8 +64,8 @@ Shader "CarcavelosCircuit/Ground"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         CBUFFER_START(UnityPerMaterial)
             half4 _BaseColor, _WetColor, _GrassGlow, _Micro;
-            float4 _Detail, _StrataTile;
-            half4 _Grass, _Sand, _WetSheen, _Rock, _RockFace, _RockWet, _RockWetTint;
+            float4 _Detail, _StrataTile, _NearRect, _BakedShadow, _Mid;
+            half4 _Grass, _Sand, _WetSheen, _Rock, _RockFace, _RockWet, _RockWetTint, _Bare;
         CBUFFER_END
         ENDHLSL
 
@@ -69,6 +85,7 @@ Shader "CarcavelosCircuit/Ground"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
+            TEXTURE2D(_NearMap); SAMPLER(sampler_NearMap);
             TEXTURE2D(_GroundMask); SAMPLER(sampler_GroundMask);
             TEXTURE2D(_DetailMap); SAMPLER(sampler_DetailMap);
             TEXTURE2D(_DetailNormal); SAMPLER(sampler_DetailNormal);
@@ -106,7 +123,13 @@ Shader "CarcavelosCircuit/Ground"
             half4 Frag(Varyings i) : SV_Target
             {
                 float3 pw = i.positionWS;
-                half3 macro = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv).rgb * _BaseColor.rgb;
+                half4 ground = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv);
+                // V16h: the fine map where it exists (10 m soft border), colour and baked shadow alike
+                float2 nearUV = (pw.xz - _NearRect.xy) * _NearRect.zw;
+                float2 nearEdge = min(nearUV, 1.0 - nearUV) / max(_NearRect.zw * 10.0, 1e-6);
+                half nearShare = saturate(min(nearEdge.x, nearEdge.y)) * step(1e-6, _NearRect.z);
+                ground = lerp(ground, SAMPLE_TEXTURE2D(_NearMap, sampler_NearMap, nearUV), nearShare);
+                half3 macro = ground.rgb * _BaseColor.rgb;
                 half4 mask = SAMPLE_TEXTURE2D(_GroundMask, sampler_GroundMask, i.uv);
                 half rock = 1.0 - mask.a;
                 float2 smallUV = pw.xz / _Detail.x;
@@ -114,7 +137,16 @@ Shader "CarcavelosCircuit/Ground"
                 half patch = SAMPLE_TEXTURE2D(_DetailMap, sampler_DetailMap, pw.zx / _Detail.y + 0.37).g - 0.5;
                 half4 bump = SAMPLE_TEXTURE2D(_DetailNormal, sampler_DetailNormal, smallUV) * 2.0 - 1.0;
                 half strata = SAMPLE_TEXTURE2D(_DetailMap, sampler_DetailMap, pw.xz / _StrataTile.xy + 0.61).b;
-                half fade = 1.0 - smoothstep(_Detail.z, _Detail.w, distance(pw, _WorldSpaceCameraPos));
+                half camDist = distance(pw, _WorldSpaceCameraPos);
+                half fade = 1.0 - smoothstep(_Detail.z, _Detail.w, camDist);
+                // V16h: mid-scale read (turned, so its grid never lines up with the small one): takes over part of the
+                // fine detail with distance, so no 6 m pattern shows and far lawns and sand keep texture
+                float2 midUV = float2(pw.x * 0.7986 - pw.z * 0.6018, pw.x * 0.6018 + pw.z * 0.7986) / _Mid.x + 0.23;
+                half midShare = smoothstep(_Mid.z, _Mid.w, camDist) * (1.0 - smoothstep(_Detail.w, _Detail.w * 1.6, camDist));
+                half4 mid = SAMPLE_TEXTURE2D(_DetailMap, sampler_DetailMap, midUV);
+                fine = lerp(half4(0.5, 0.5, 0.5, 0.5), fine, fade * (1.0 - 0.45 * midShare)) + (mid - 0.5) * (midShare * _Mid.y);
+                bump *= fade;
+                fade = 1.0;                              // the distance is in "fine" and "bump" now
 
                 // lawn: blade strokes up close, soft lighter (yellower) and darker (cooler) patches at any distance
                 half3 lawn = macro * (1.0 + (fine.r - 0.5) * _Grass.x * fade + patch * _Grass.y);
@@ -137,8 +169,12 @@ Shader "CarcavelosCircuit/Ground"
                 stone *= lerp(_RockFace.x, _RockFace.y, face) * (1.0 - 0.35 * layerLine);
                 stone *= lerp(half3(1, 1, 1), _RockWetTint.rgb, 1.0 - smoothstep(_RockWet.x, _RockWet.y, pw.y));
 
-                half3 albedo = lerp(lerp(lerp(macro, lawn, mask.r), sand, mask.g), stone, rock);
-                half2 tilt = (bump.rg * (mask.r * _Grass.w + rock * _Rock.w) + bump.ba * (mask.g * _Sand.w * (1.0 - 0.6 * wet))) * fade;
+                // V16h: paved and bare ground (what is neither lawn, sand nor rock) is no longer flat colour: grain and
+                // soft patches from the same detail reads, and a little of the sand's normal
+                half bareShare = saturate(1.0 - mask.r - mask.g - rock);
+                half3 bare = macro * (1.0 + (fine.a - 0.5) * _Bare.x + patch * _Bare.y);
+                half3 albedo = lerp(lerp(lerp(bare, lawn, mask.r), sand, mask.g), stone, rock);
+                half2 tilt = (bump.rg * (mask.r * _Grass.w + rock * _Rock.w) + bump.ba * (mask.g * _Sand.w * (1.0 - 0.6 * wet) + bareShare * _Bare.z)) * fade;
                 half3 N = normalize(normalize(i.normalWS) + half3(tilt.x, 0.0, tilt.y));
 
                 #if defined(_MAIN_LIGHT_SHADOWS_SCREEN)
@@ -147,6 +183,9 @@ Shader "CarcavelosCircuit/Ground"
                 float4 shadowCoord = TransformWorldToShadowCoord(pw);
                 #endif
                 Light sun = GetMainLight(shadowCoord, pw, half4(1, 1, 1, 1));
+                // V16h: baked sun shadow beyond the realtime range; min() = never darker than one shadow
+                half bakedLit = lerp(1.0, lerp(1.0 - _BakedShadow.z, 1.0, ground.a), smoothstep(_BakedShadow.x, _BakedShadow.y, camDist));
+                sun.shadowAttenuation = min(sun.shadowAttenuation, bakedLit);
                 half3 direct = sun.color * (sun.shadowAttenuation * saturate(dot(N, sun.direction)));
                 half3 sky = SampleSH(N);
                 #if defined(_SCREEN_SPACE_OCCLUSION)

@@ -541,6 +541,157 @@ def build_far_town(col, count=900, seed=11):
     E.new_object("Backdrop_FarTown", mesh, col)
 
 
+# ---------- V16h: the far backdrop (north, west, east): houses on the skirt, the railway, hills on the horizon ----------
+HORIZON_SEED = 1616
+HOUSE_BAND = 470.0            # m beyond the world's north and east edges that get houses (the far town starts there)
+HOUSE_STEP = 34.0             # m between plots
+RAIL_Y = E.Y1 + SKIRT + 28.0  # the Cascais line runs east-west about 0.9 km north of the beach (general geography)
+HILLS = ((2250.0, 55.0, 40.0, "far_hill_near", "#93A78C"), (2750.0, 120.0, 80.0, "far_hill", "#A3B4B5"))   # radius, height, +-
+
+
+def build_horizon(heights, col):
+    """Low-poly Carcavelos beyond the map edge, so the world does not just end: generic two-storey houses with tiled
+    gable roofs on the land skirt north and east of the world (seeded rows, clear of the real OSM blocks that
+    build_outer_buildings draws), the railway on its low embankment with catenary masts and one plain train north of
+    them, and two ridges of hazy hills round the north half of the horizon (higher to the north-west, towards
+    Sintra). Nothing south of the coast line (the fort and the sea are builder E's), nothing inside the world.
+    Walls use the far_* materials (white, cream, ochre: env_materials gives them the shared house-front texture by
+    world position), roofs far_roof. About 2,900 triangles, 3 new flat materials (rail, two hill tones)."""
+    import random
+    rng = random.Random(HORIZON_SEED)
+    elements, nodes, _ways = load_osm()
+    taken = []                                              # real buildings outside the world: keep the houses off them
+    for e in elements:
+        if e["type"] == "way" and "building" in e.get("tags", {}):
+            ring = way_points(e, nodes)
+            if ring:
+                cx, cy = sum(p[0] for p in ring) / len(ring), sum(p[1] for p in ring) / len(ring)
+                if not (E.X0 <= cx <= E.X1 and E.Y0 <= cy <= E.Y1):
+                    taken.append((cx, cy, max(math.hypot(x - cx, y - cy) for x, y in ring) + 9.0))
+    roads = [p for p in E.DATA["paths"] if p["width"] >= 5.0]
+
+    def skirt_z(x, y):
+        """Height of the land skirt (build_skirt): from the world's edge down to DISTANT_LAND_Z over SKIRT metres."""
+        if x < E.X0:
+            return far_west_ground(x, y)                     # the strip west of the world has its own ground
+        ex, ey = min(max(x, E.X0), E.X1), min(max(y, E.Y0), E.Y1)
+        t = min(max(max(x - E.X1, y - E.Y1) / SKIRT, 0.0), 1.0)
+        return edge_height(heights, ex, ey) * (1.0 - t) + DISTANT_LAND_Z * t
+
+    def road_ahead(x, y):
+        """True where a wide road of the world would run on beyond the edge (its last segment, extended)."""
+        for p in roads:
+            for (ax, ay), (bx, by) in ((p["points"][1], p["points"][0]), (p["points"][-2], p["points"][-1])):
+                if E.X0 + 15 < bx < E.X1 - 15 and E.Y0 + 15 < by < E.Y1 - 15:
+                    continue                                 # this end is not at the world's edge
+                d = math.hypot(bx - ax, by - ay) or 1.0
+                ux, uy = (bx - ax) / d, (by - ay) / d
+                along = (x - bx) * ux + (y - by) * uy
+                if 0.0 < along < 600.0 and abs((x - bx) * uy - (y - by) * ux) < p["width"] / 2 + 12.0:
+                    return True
+        return False
+
+    bm = bmesh.new()
+    houses = 0
+    nx, ny = int((E.X1 - E.X0 + HOUSE_BAND) / HOUSE_STEP), int((E.Y1 + HOUSE_BAND - COAST_Y) / HOUSE_STEP)
+    for j in range(ny + 1):
+        for i in range(-13, nx + 1):                         # 13 plots west of the world too (inland of the coast road)
+            r = random.Random(f"{HORIZON_SEED}|house|{i}|{j}")
+            x = E.X0 + (i + 0.5 + r.uniform(-0.22, 0.22)) * HOUSE_STEP
+            y = COAST_Y + 60.0 + (j + 0.5 + r.uniform(-0.22, 0.22)) * HOUSE_STEP
+            if E.X0 - 26.0 < x < E.X1 + 26.0 and y < E.Y1 + 26.0:
+                continue                                     # the world itself (and a strip at its edge)
+            if x <= E.X0 - 26.0 and (y < 150.0 or coast.signed_distance(x, y) < 170.0):
+                continue                                     # west of the world: only inland of the beach and its road
+            if y > E.Y1 + HOUSE_BAND or x > E.X1 + HOUSE_BAND or r.random() < 0.30:
+                continue
+            if any(math.hypot(x - cx, y - cy) < rad + 9.0 for cx, cy, rad in taken) or road_ahead(x, y):
+                continue
+            if x > E.X1 and coast.signed_distance(x, y) < 90.0:
+                continue
+            w, d = r.uniform(9.0, 15.0), r.uniform(7.5, 10.0)
+            wall, ridge = r.choice((6.2, 6.4, 9.4)), r.uniform(1.8, 2.6)
+            turn = math.radians(r.choice((0.0, 90.0)) + r.uniform(-7.0, 7.0))
+            ca, sa = math.cos(turn), math.sin(turn)
+            base = skirt_z(x, y) - 1.6
+
+            def at(u, v, z):
+                return bm.verts.new((x + ca * u - sa * v, y + sa * u + ca * v, z))
+            mat = r.choice((0, 0, 1, 2))
+            lo = [at(-w / 2, -d / 2, base), at(w / 2, -d / 2, base), at(w / 2, d / 2, base), at(-w / 2, d / 2, base)]
+            top = base + 1.6 + wall
+            hi = [at(-w / 2, -d / 2, top), at(w / 2, -d / 2, top), at(w / 2, d / 2, top), at(-w / 2, d / 2, top)]
+            for k in range(4):
+                bm.faces.new((lo[k], lo[(k + 1) % 4], hi[(k + 1) % 4], hi[k])).material_index = mat
+            ra, rb = at(-w / 2, 0.0, top + ridge), at(w / 2, 0.0, top + ridge)
+            bm.faces.new((hi[3], hi[0], ra)).material_index = mat          # gables
+            bm.faces.new((hi[1], hi[2], rb)).material_index = mat
+            bm.faces.new((hi[0], hi[1], rb, ra)).material_index = 3        # roof
+            bm.faces.new((hi[2], hi[3], ra, rb)).material_index = 3
+            houses += 1
+
+    # the railway: a low embankment, a mast every 45 m (two crossed sheets), one plain four-car train
+    z = DISTANT_LAND_Z
+    xa, xb = -1900.0, 2100.0
+    for x0, x1 in ((xa + k * 500.0, xa + (k + 1) * 500.0) for k in range(int((xb - xa) / 500.0))):
+        ring = [(-7.0, z - 0.5), (-4.0, z + 1.4), (4.0, z + 1.4), (7.0, z - 0.5)]
+        a = [bm.verts.new((x0, RAIL_Y + dy, dz)) for dy, dz in ring]
+        b = [bm.verts.new((x1, RAIL_Y + dy, dz)) for dy, dz in ring]
+        for k in range(3):
+            bm.faces.new((a[k], b[k], b[k + 1], a[k + 1])).material_index = 4
+    masts = 0
+    x = xa
+    while x < xb:
+        for dx, dy in ((0.25, 0.0), (0.0, 0.25)):
+            bm.faces.new([bm.verts.new((x - dx, RAIL_Y - 4.2 - dy, z + 1.4)), bm.verts.new((x + dx, RAIL_Y - 4.2 + dy, z + 1.4)),
+                          bm.verts.new((x + dx, RAIL_Y - 4.2 + dy, z + 8.6)), bm.verts.new((x - dx, RAIL_Y - 4.2 - dy, z + 8.6))]).material_index = 4
+        bm.faces.new([bm.verts.new((x, RAIL_Y - 4.2, z + 8.3)), bm.verts.new((x, RAIL_Y + 1.0, z + 8.3)),
+                      bm.verts.new((x, RAIL_Y + 1.0, z + 8.6)), bm.verts.new((x, RAIL_Y - 4.2, z + 8.6))]).material_index = 4
+        masts += 1
+        x += 45.0
+    for car in range(4):                                     # a train standing east of the campus's meridian
+        cx = 120.0 + car * 20.5
+        lo = [bm.verts.new((cx + u, RAIL_Y + v, z + 1.9)) for u, v in ((-9.8, -1.45), (9.8, -1.45), (9.8, 1.45), (-9.8, 1.45))]
+        hi = [bm.verts.new((v.co.x, v.co.y, z + 5.4)) for v in lo]
+        for k in range(4):
+            bm.faces.new((lo[k], lo[(k + 1) % 4], hi[(k + 1) % 4], hi[k])).material_index = 5
+        bm.faces.new(hi).material_index = 4
+
+    # hills: two ridges round the north half of the horizon; each a strip from the plain up to a wavy crest
+    cx, cy = (E.X0 + E.X1) / 2, (E.Y0 + E.Y1) / 2
+    for index, (radius, height, swing, _name, _hex) in enumerate(HILLS):
+        hr = random.Random(f"{HORIZON_SEED}|hills|{index}")
+        phase = [hr.uniform(0, 6.28) for _ in range(4)]
+        steps = 64
+        prev = None
+        for k in range(steps + 1):
+            ang = math.radians(-18.0 + 216.0 * k / steps)
+            wave = (math.sin(ang * 3.0 + phase[0]) + 0.6 * math.sin(ang * 7.0 + phase[1]) + 0.35 * math.sin(ang * 13.0 + phase[2])) / 1.95
+            sintra = math.exp(-((math.degrees(ang) - 150.0) / 28.0) ** 2)            # the Serra rises in the north-west
+            ends = min(1.0, k / 6.0, (steps - k) / 6.0)                               # the ridge sinks at both ends
+            top = DISTANT_LAND_Z + (height + swing * wave + (0.9 * height) * sintra * (index == 1)) * ends
+            rr = radius * (1.0 + 0.04 * math.sin(ang * 5.0 + phase[3]))
+            foot = bm.verts.new((cx + (rr - 160.0) * math.cos(ang), cy + (rr - 160.0) * math.sin(ang), DISTANT_LAND_Z - 1.0))
+            crest = bm.verts.new((cx + rr * math.cos(ang), cy + rr * math.sin(ang), max(top, DISTANT_LAND_Z + 1.0)))
+            if prev:
+                bm.faces.new((prev[0], foot, crest, prev[1])).material_index = 6 + index
+            prev = (foot, crest)
+    for face in bm.faces:
+        face.normal_update()
+    bmesh.ops.recalc_face_normals(bm, faces=[f for f in bm.faces if f.material_index < 6])
+    tris = sum(len(f.verts) - 2 for f in bm.faces)
+    mesh = bpy.data.meshes.new("Backdrop_Horizon")
+    bm.to_mesh(mesh)
+    bm.free()
+    for m in (E.material("far_white", "#ECE7DD", 0.9), E.material("far_cream", "#E6D9BC", 0.9),
+              E.material("far_ochre", "#DCC08E", 0.9), E.material("far_roof", "#B9705A", 0.9),
+              E.material("far_rail", "#6F6A63", 0.9), E.material("far_train", "#D9D6CF", 0.7),
+              E.material(HILLS[0][3], HILLS[0][4], 0.95), E.material(HILLS[1][3], HILLS[1][4], 0.95)):
+        mesh.materials.append(m)
+    E.new_object("Backdrop_Horizon", mesh, col)
+    print(f"  backdrop horizon (V16h): {houses} houses, railway with {masts} masts and a train, {len(HILLS)} hill ridges; {tris} triangles")
+
+
 ROCK_BURY = 0.3          # m: a rock piece's foot lies this far under the sand
 ROCK_UV_INSET = 0.9      # m: every rock vertex reads the colour map at least this far inside its piece
 
@@ -679,5 +830,6 @@ def build(heights):
     build_rocks(col)
     build_outer_buildings(heights, col)
     build_far_town(col)
+    build_horizon(heights, col)            # V16h: houses, railway and hills beyond the map edge (north, west, east)
     build_fort(col)
     write_shore_map()                      # last: it looks at the finished ground and backdrop from above
