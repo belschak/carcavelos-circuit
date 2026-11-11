@@ -14,8 +14,8 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("Reads the race state and the track's checkpoints")]
         private RaceManager raceManager;
 
-        [SerializeField, Tooltip("Gets the camera back after the fly-in. Replaced by Role 1's camera later")]
-        private PlaceholderChaseCamera chaseCamera;
+        [SerializeField, Tooltip("Gets the camera back after the fly-in (Role 1's Cinemachine camera via ChaseCameraRig)")]
+        private ChaseCameraRig chaseCamera;
 
         [SerializeField, Tooltip("How fast the camera circles over the map, in degrees per second")]
         private float orbitDegreesPerSecond = 6f;

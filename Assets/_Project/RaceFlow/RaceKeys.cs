@@ -36,8 +36,8 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // False for modifier keys (Shift, Ctrl, Alt, Windows/Cmd), function keys (F1 to F24), system keys
-        // (Escape, Tab, Caps Lock, Print Screen ...) and the menu keys O, C, M (they open settings, credits or
-        // mute, and must not also start the race or end a pause). Public so an Edit Mode test can check the list.
+        // (Escape, Tab, Caps Lock, Print Screen ...) and the menu keys O, C, M, P (they open settings, credits,
+        // mute or pause, and must not also start the race). Public so an Edit Mode test can check the list.
         public static bool CountsAsStartKey(Key key)
         {
             if ((key >= Key.F1 && key <= Key.F12) || (key >= Key.F13 && key <= Key.F24))
@@ -66,6 +66,7 @@ namespace CarcavelosCircuit.RaceFlow
                 case Key.O: // settings
                 case Key.C: // credits
                 case Key.M: // mute
+                case Key.P: // pause (RaceManager reads it on its own, see PausePressed)
                     return false;
                 default:
                     return true;
@@ -85,7 +86,14 @@ namespace CarcavelosCircuit.RaceFlow
             Keyboard keyboard = Keyboard.current;
             return keyboard != null && keyboard.rKey.wasPressedThisFrame;
         }
-    
+
+        // E = use the item in the HUD slot (task R7). The phone's touch "use item" button sends the same E key.
+        public static bool UseItemPressed()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null && keyboard.eKey.wasPressedThisFrame;
+        }
+
         // ---- Menu keys (task P7). Never Escape: in a browser it leaves fullscreen. ----
 
         // O = open or close the settings (start and results screen).
@@ -100,6 +108,13 @@ namespace CarcavelosCircuit.RaceFlow
         {
             Keyboard keyboard = Keyboard.current;
             return keyboard != null && keyboard.cKey.wasPressedThisFrame;
+        }
+
+        // P = pause or continue, during the countdown and the race (audit 9). Never Escape: it leaves fullscreen.
+        public static bool PausePressed()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null && keyboard.pKey.wasPressedThisFrame;
         }
 
         // M = sound on/off, at any time (also during the race and the pause).
