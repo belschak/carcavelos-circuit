@@ -716,6 +716,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             SerializedObject bso = new SerializedObject(bootstrap);
             bso.FindProperty("settings").objectReferenceValue = settings;
             bso.FindProperty("kartPrefab").objectReferenceValue = kartPrefab;
+            bso.FindProperty("kartModel").objectReferenceValue = FindKartVisualPrefab(); // Q14 bridge, null until Role 3's model is merged
             // Spawned as children of the kart: our engine sounds, and Role 3's effects once they exist (Q10).
             SerializedProperty attachments = bso.FindProperty("kartAttachments");
             GameObject kartEffectsPrefab = FindKartEffectsPrefab();
