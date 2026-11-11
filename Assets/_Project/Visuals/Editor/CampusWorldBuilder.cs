@@ -9,14 +9,20 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 
 namespace CarcavelosCircuit.Visuals.Editor
 {
-    // Builds Luc's Carcavelos campus world into Track_CampusWorld.unity (Role 3, task V4).
+    // Builds Luc's Carcavelos campus world (Role 3, tasks V4 and V8).
     // Input: Assets/_Project/Visuals/CampusWorld/{Models,Textures,Data}, exported by the world generator
-    // (world-gen/export_unity_bundle.py, outside this repo). Output, all made through the Unity API:
-    // URP Lit materials, one prefab per tree/prop kind, and the scene with world, track surface, 904 trees and
-    // props, a sun, and the race placeholders (checkpoints, spawn) that RaceFlow already understands.
+    // (tools/world_gen/export_unity_bundle.py). Output, all made through the Unity API:
+    // - URP Lit materials, the painted sky and the look profile, and one prefab per tree/prop kind;
+    // - CampusWorld.prefab: everything you see and drive on (world with colliders, track surface, about 1,070 trees,
+    //   props and furniture, the golden-hour sun, the look volume, the sky light). Role 2 puts this one prefab into
+    //   Track_Campus; a new export updates it there by itself;
+    // - Track_CampusWorld.unity: Role 3's preview = the prefab plus the race placeholders (checkpoints, spawn) that
+    //   RaceFlow already understands, and a preview camera. The real checkpoints are Role 2's (from Data/track.json).
     // Axes: x = east, y = up, z = north, 1 unit = 1 m. Run it again after every new export.
     public static class CampusWorldBuilder
     {
@@ -26,7 +32,14 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string DataDir = Root + "/Data";
         private const string MatDir = Root + "/Materials";
         private const string PrefabDir = Root + "/Prefabs";
+        private const string SettingsDir = Root + "/Settings";
+        private const string SkyTexture = TexDir + "/sky_panorama.png";       // world-gen/make_sky.py
+        private const string LookProfile = SettingsDir + "/CampusWorld_Look.asset";
+        // Golden hour (design pass 2026-11-09): low warm sun from the west-south-west. Must match make_sky.py.
+        private const float SunAzimuth = 245f, SunElevation = 19f;
         private const string ScenePath = "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity";
+        private const string WorldPrefabPath = Root + "/CampusWorld.prefab";
+        private const string WorldRootName = "CampusWorld";                  // root of the prefab and of its instance
         private static readonly string[] Models = { "CampusWorld", "TrackSurface", "RouteGuide", "Dressing_Prototypes" };
 
         [Serializable] private class Emission { public float[] colour; public float strength; }
@@ -35,6 +48,26 @@ namespace CarcavelosCircuit.Visuals.Editor
             public string name; public float[] colour; public float smoothness; public float metallic; public float alpha;
             public string albedo; public string metallic_smoothness; public string normal; public float normal_strength;
             public Emission emission;
+            public float alpha_clip;      // > 0: leaf cutout, pixels with albedo alpha below this are not drawn
+            public bool double_sided;     // draw both faces (single-sheet leaves)
+            public Water water;           // the moving sea (Sea.shader); without it or its shader: plain URP Lit
+            public Wind wind;             // swaying trees (Foliage.shader); without it or its shader: plain URP Lit
+            public Ground ground;         // detailed lawn and sand (Ground.shader); without it or its shader: plain URP Lit
+        }
+        [Serializable] private class Ground { public string shader; public string mask; public string detail; public string detail_normal; }
+        [Serializable] private class Wind
+        {
+            public string shader; public float bend; public float flutter;
+            public bool upright;          // grass cards: both faces lit like the lawn they stand on
+            public float shrink_from, shrink_to;   // grass cards sink into the ground between these distances (m); 0 = never
+        }
+        [Serializable] private class Tuft { public float x, z, yaw, s; public int r = 255, g = 255, b = 255, big; }
+        [Serializable] private class TuftData { public Tuft[] tufts; }
+        [Serializable] private class Water
+        {
+            public string shader; public string normal; public string shore_map;
+            public float[] shore_rect;    // world x0, z0, x1, z1 covered by the shore map
+            public float shore_range; public float coast;
         }
         [Serializable] private class MatList { public MatInfo[] materials; }
         [Serializable] private class Item { public string name; public string proto; public float x, y, z, yaw, roll, scale; }
@@ -94,17 +127,44 @@ namespace CarcavelosCircuit.Visuals.Editor
                     continue;
                 }
                 string file = Path.GetFileName(path);
+                if (path == SkyTexture)
+                {
+                    continue;                                                   // a cubemap, see below
+                }
                 bool normal = file.EndsWith("_normal.png", StringComparison.Ordinal);
                 bool mask = file.EndsWith("_metallic_smoothness.png", StringComparison.Ordinal);
                 bool big = file.StartsWith("ground_colour", StringComparison.Ordinal) || file.StartsWith("mural", StringComparison.Ordinal);
+                bool cutout = file.EndsWith("_cutout_albedo.png", StringComparison.Ordinal);   // alpha = leaf outline
+                bool data = file.EndsWith("_data.png", StringComparison.Ordinal);              // numbers, not colour
                 ti.textureType = normal ? TextureImporterType.NormalMap : TextureImporterType.Default;
-                ti.sRGBTexture = !(normal || mask);
-                ti.alphaSource = mask ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
+                ti.sRGBTexture = !(normal || mask || data);
+                ti.alphaSource = mask || cutout || data ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
+                ti.alphaIsTransparency = cutout;                                 // no dark fringe around the leaflets
+                ti.mipMapsPreserveCoverage = cutout;                             // thin leaflets do not vanish far away
+                ti.alphaTestReferenceValue = 0.5f;
                 ti.maxTextureSize = big ? 2048 : 1024;
-                ti.wrapMode = file.StartsWith("ground_colour", StringComparison.Ordinal) ? TextureWrapMode.Clamp : TextureWrapMode.Repeat;
+                bool tiles = !data || file.Contains("_detail_");                               // data maps cover the world once; detail repeats
+                ti.wrapMode = file.StartsWith("ground_colour", StringComparison.Ordinal) || cutout || !tiles ? TextureWrapMode.Clamp : TextureWrapMode.Repeat;
                 ti.mipmapEnabled = true;
-                ti.anisoLevel = 4;
+                ti.anisoLevel = file.Contains("_detail_") ? 8 : 4;               // ground detail is seen at very flat angles
                 ti.SaveAndReimport();
+            }
+            // The painted sky (2:1 lat-long picture) becomes a cubemap: the skybox and the reflections on glass
+            // and gloss use it, so no lighting bake is needed.
+            if (AssetImporter.GetAtPath(SkyTexture) is TextureImporter sky)
+            {
+                sky.textureType = TextureImporterType.Default;
+                sky.textureShape = TextureImporterShape.TextureCube;
+                var cube = new TextureImporterSettings();
+                sky.ReadTextureSettings(cube);
+                cube.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
+                cube.cubemapConvolution = TextureImporterCubemapConvolution.Specular;   // blurred mips: glossy reflections
+                sky.SetTextureSettings(cube);
+                sky.sRGBTexture = true;
+                sky.mipmapEnabled = true;
+                sky.wrapMode = TextureWrapMode.Clamp;
+                sky.maxTextureSize = 1024;                                      // per cube face
+                sky.SaveAndReimport();
             }
             foreach (string name in Models)
             {
@@ -140,14 +200,37 @@ namespace CarcavelosCircuit.Visuals.Editor
             {
                 string path = MatDir + "/" + m.name + ".mat";
                 Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+                bool wantsWater = m.water != null && !string.IsNullOrEmpty(m.water.shader);
+                Shader water = wantsWater ? Shader.Find(m.water.shader) : null;
+                if (wantsWater && water == null)
+                {
+                    Debug.LogWarning("CampusWorldBuilder: shader " + m.water.shader + " not found, " + m.name + " stays flat URP Lit.");
+                }
+                bool wantsWind = m.wind != null && !string.IsNullOrEmpty(m.wind.shader);
+                Shader foliage = wantsWind ? Shader.Find(m.wind.shader) : null;
+                if (wantsWind && foliage == null)
+                {
+                    Debug.LogWarning("CampusWorldBuilder: shader " + m.wind.shader + " not found, " + m.name + " stays URP Lit without wind.");
+                }
+                bool wantsGround = m.ground != null && !string.IsNullOrEmpty(m.ground.shader);
+                Shader ground = wantsGround ? Shader.Find(m.ground.shader) : null;
+                if (wantsGround && ground == null)
+                {
+                    Debug.LogWarning("CampusWorldBuilder: shader " + m.ground.shader + " not found, " + m.name + " stays URP Lit without detail.");
+                }
+                Shader shader = water != null ? water : foliage != null ? foliage : ground != null ? ground : lit;
                 if (mat == null)
                 {
-                    mat = new Material(lit);
+                    mat = new Material(shader);
                     AssetDatabase.CreateAsset(mat, path);
                 }
                 else
                 {
-                    mat.shader = lit;
+                    mat.shader = shader;
+                }
+                if (shader != lit)
+                {
+                    ResetToShaderDefaults(mat);          // our own shaders: the .shader file is where the look is tuned
                 }
                 Texture2D albedo = Tex(m.albedo), normal = Tex(m.normal), mask = Tex(m.metallic_smoothness);
                 // with a texture the tint stays white: the texture carries the colour (its average = the palette)
@@ -170,12 +253,88 @@ namespace CarcavelosCircuit.Visuals.Editor
                     SetColor(mat, new Color(m.emission.colour[0] * k, m.emission.colour[1] * k, m.emission.colour[2] * k, 1f), "_EmissionColor");
                     mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
                 }
+                // Leaf cutouts: URP Lit alpha clipping (opaque queue order, no blending, shadows follow the outline),
+                // optionally both faces. Other materials are left as they are, unless they were a cutout before.
+                bool clip = m.alpha_clip > 0f;
+                if (clip || (mat.HasProperty("_AlphaClip") && mat.GetFloat("_AlphaClip") > 0.5f))
+                {
+                    SetFloat(mat, clip ? 1f : 0f, "_AlphaClip");
+                    SetFloat(mat, clip ? m.alpha_clip : 0.5f, "_Cutoff");
+                    Keyword(mat, "_ALPHATEST_ON", clip);
+                    mat.SetOverrideTag("RenderType", clip ? "TransparentCutout" : "Opaque");
+                    mat.renderQueue = clip ? (int)UnityEngine.Rendering.RenderQueue.AlphaTest : -1;
+                }
+                if (m.double_sided || (mat.HasProperty("_Cull") && mat.GetFloat("_Cull") < 1.5f))
+                {
+                    SetFloat(mat, m.double_sided ? 0f : 2f, "_Cull");           // 0 = both faces, 2 = back faces culled
+                    mat.doubleSidedGI = m.double_sided;
+                }
+                if (foliage != null && mat.HasProperty("_Wind"))
+                {
+                    // Foliage.shader: metres of bend (tree top) and flutter (leaf tips); the direction stays the shader's.
+                    Vector4 wind = mat.GetVector("_Wind");
+                    mat.SetVector("_Wind", new Vector4(wind.x, wind.y, m.wind.bend, m.wind.flutter));
+                    if (m.wind.upright)
+                    {
+                        SetFloat(mat, 0f, "_FlipBack");
+                        SetFloat(mat, 1f, "_BackShade");
+                    }
+                    if (m.wind.shrink_to > m.wind.shrink_from && mat.HasProperty("_Shrink"))
+                    {
+                        mat.SetVector("_Shrink", new Vector4(m.wind.shrink_from, m.wind.shrink_to, 1f / (m.wind.shrink_to - m.wind.shrink_from), 0f));
+                    }
+                }
+                if (ground != null)
+                {
+                    // Ground.shader: lawn / sand mask (same UVs as the colour map) and the tiling detail + its normal.
+                    SetTexture(mat, Tex(m.ground.mask), "_GroundMask");
+                    SetTexture(mat, Tex(m.ground.detail), "_DetailMap");
+                    SetTexture(mat, Tex(m.ground.detail_normal), "_DetailNormal");
+                }
+                if (water != null)
+                {
+                    // Sea.shader: wave normal map, shore-distance map and the world rectangle that map covers.
+                    SetTexture(mat, Tex(m.water.normal), "_WaveNormal");
+                    SetTexture(mat, Tex(m.water.shore_map), "_ShoreMap");
+                    float[] r = m.water.shore_rect;
+                    if (r != null && r.Length >= 4)
+                    {
+                        mat.SetVector("_ShoreRect", new Vector4(r[0], r[1], 1f / (r[2] - r[0]), 1f / (r[3] - r[1])));
+                    }
+                    SetFloat(mat, m.water.shore_range, "_ShoreRange");
+                    SetFloat(mat, m.water.coast, "_CoastZ");
+                }
                 mat.enableInstancing = true;
                 EditorUtility.SetDirty(mat);
                 result[m.name] = mat;
             }
             AssetDatabase.SaveAssets();
             return result;
+        }
+
+        // A saved material keeps its old numbers when a shader's defaults change. For our own shaders (sea, foliage,
+        // ground) every number, vector and colour goes back to the shader's default first; the values from
+        // materials.json are set afterwards.
+        private static void ResetToShaderDefaults(Material mat)
+        {
+            Shader s = mat.shader;
+            for (int i = 0; i < s.GetPropertyCount(); i++)
+            {
+                int id = s.GetPropertyNameId(i);
+                switch (s.GetPropertyType(i))
+                {
+                    case UnityEngine.Rendering.ShaderPropertyType.Float:
+                    case UnityEngine.Rendering.ShaderPropertyType.Range:
+                        mat.SetFloat(id, s.GetPropertyDefaultFloatValue(i));
+                        break;
+                    case UnityEngine.Rendering.ShaderPropertyType.Vector:
+                        mat.SetVector(id, s.GetPropertyDefaultVectorValue(i));
+                        break;
+                    case UnityEngine.Rendering.ShaderPropertyType.Color:
+                        mat.SetColor(id, s.GetPropertyDefaultVectorValue(i));
+                        break;
+                }
+            }
         }
 
         private static void RemapModelMaterials(Dictionary<string, Material> materials)
@@ -253,13 +412,14 @@ namespace CarcavelosCircuit.Visuals.Editor
             box.size = b.size;
         }
 
-        // ---------- scene ----------
+        // ---------- world prefab + preview scene ----------
         private static void BuildScene(Dictionary<string, GameObject> prefabs)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            var root = new GameObject("CampusWorld (Role 3)");
+            var root = new GameObject(WorldRootName);
 
             GameObject world = Instance("CampusWorld", root.transform);
+            world.name = "World";                                     // buildings, terrain, beach, tunnel (CampusWorld.fbx)
             foreach (MeshFilter mf in world.GetComponentsInChildren<MeshFilter>(true))
             {
                 string n = mf.gameObject.name;
@@ -272,7 +432,9 @@ namespace CarcavelosCircuit.Visuals.Editor
             GameObject track = Instance("TrackSurface", root.transform);
             foreach (MeshFilter mf in track.GetComponentsInChildren<MeshFilter>(true))
             {
-                if (!mf.gameObject.name.StartsWith("Track_EdgeLines", StringComparison.Ordinal))  // paint, not a bump
+                // Edge lines and kerbs are paint, not bumps: a collider on the kerbs' ramp faces launched karts.
+                if (!mf.gameObject.name.StartsWith("Track_EdgeLines", StringComparison.Ordinal)
+                    && !mf.gameObject.name.StartsWith("Track_Kerbs", StringComparison.Ordinal))
                 {
                     mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
                 }
@@ -306,11 +468,62 @@ namespace CarcavelosCircuit.Visuals.Editor
                 MarkStatic(go);
             }
 
-            TrackData data = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json"));
-            AddRaceParts(root, data);
+            // Noah's Nova hall (task V12, help PR #45): replaces the old building block, white fence (Q19) with it.
+            // Before the tunnel guards and the grass tufts, so both see the world as it is raced (no tufts in the hall).
+            string hall = NovaHallInsert.Apply(root);
+            if (hall != null)
+            {
+                Debug.Log("CampusWorldBuilder: " + hall);
+            }
+            AddTunnelGuards(root, JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json")));
+            AddGrassTufts(root);
             AddSunAndSky(root);
-            AddPreviewCamera(root, data);
+            // One prefab for everything you see and drive on. Saving over the old file keeps its GUID, so the
+            // instance in Role 2's Track_Campus stays linked and shows the new world after every rebuild.
+            PrefabUtility.SaveAsPrefabAssetAndConnect(root, WorldPrefabPath, InteractionMode.AutomatedAction);
+
+            // Preview only (never in the prefab): placeholders so the scene races on its own, and a camera.
+            TrackData data = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json"));
+            var preview = new GameObject("Preview (Role 3)");
+            AddRaceParts(preview, data);
+            AddPreviewCamera(preview, data);
             EditorSceneManager.SaveScene(scene, ScenePath);
+        }
+
+        // The tunnel walls lean outwards at 45 degrees. A kart that touches such a wall is thrown up it like a ramp.
+        // So along the tunnel an invisible upright wall (colliders only, nothing to see) stands at each wall foot,
+        // 0.6 m outside the road edge: a kart now slides along it instead of climbing the mural.
+        private static void AddTunnelGuards(GameObject root, TrackData data)
+        {
+            // The walls reach 1 m below the road as well, so on the sloping tunnel floor no wall ends above the ground
+            // (a kart could wedge under such an end).
+            const float outside = 0.6f, thickness = 0.3f, height = 3f, below = 1f;
+            var guards = new GameObject("TunnelGuards");
+            guards.transform.SetParent(root.transform, false);
+            int n = data.points.Length;
+            for (int i = 0; i < n; i++)
+            {
+                TrackPoint a = data.points[i], b = data.points[(i + 1) % n];
+                if (!a.tunnel || !b.tunnel)
+                {
+                    continue;
+                }
+                Vector3 from = Pos(a), to = Pos(b);
+                Vector3 along = to - from;
+                Vector3 flat = new Vector3(along.x, 0f, along.z).normalized;
+                Vector3 right = Vector3.Cross(Vector3.up, flat);
+                float half = Mathf.Max(a.width, b.width) * 0.5f + outside + thickness * 0.5f;
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    var wall = new GameObject("Guard");
+                    wall.transform.SetParent(guards.transform, false);
+                    wall.transform.SetPositionAndRotation((from + to) * 0.5f + right * (side * half) + Vector3.up * (height * 0.5f - below),
+                        Quaternion.LookRotation(along.normalized));
+                    BoxCollider box = wall.AddComponent<BoxCollider>();
+                    box.size = new Vector3(thickness, height, along.magnitude + 0.3f);
+                    MarkStatic(wall);
+                }
+            }
         }
 
         private static void AddRaceParts(GameObject root, TrackData data)
@@ -357,27 +570,233 @@ namespace CarcavelosCircuit.Visuals.Editor
             tso.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        // docs/art-style.md: bright late-morning sun from one side, soft shadows, light-blue sky, no fog.
-        // The race makes this scene the active one, so these settings apply in the race.
+        // 3D grass tufts (Data/grass_tufts.json from make_grass_tufts.py; nothing happens without that file or the
+        // W_grass_tuft material). Each tuft is put on the ground with a ray; a tuft whose ray does not land on a plain
+        // ground mesh (road, deck, roof, prop) is left out. A tuft = 3 small crosses of 2 upright cards (12 triangles),
+        // or 4 crosses of 3 cards (24 triangles) for the "big" ones in the fringe at the track edge, with the grass
+        // cutout, shifted 35 % towards the lawn colour under it (vertex colour; alpha = card height for the
+        // shader's sink-away). All tufts of a 16 m cell are merged into one mesh, and a LODGroup hides the cell
+        // beyond about 65 m (at LOD bias 1), so only the cells near the camera cost anything. No shadows cast.
+        private const float TuftCell = 16f, TuftCullDistance = 65f;
+        private static readonly Color TuftLawn = new Color(143f / 255f, 179f / 255f, 122f / 255f).linear;   // the lawn the cutout was painted for
+        private static readonly List<Vector3> tuftFeet = new List<Vector3>();
+        private static int tuftsPlaced, tuftsLeftOut, tuftTriangles, tuftChunks;
+
+        private static void AddGrassTufts(GameObject root)
+        {
+            tuftsPlaced = tuftsLeftOut = tuftTriangles = tuftChunks = 0;
+            tuftFeet.Clear();
+            string file = DataDir + "/grass_tufts.json", meshPath = ModelsDir + "/GrassTufts.asset";
+            Material mat = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "/W_grass_tuft.mat");
+            AssetDatabase.DeleteAsset(meshPath);
+            if (!File.Exists(file) || mat == null)
+            {
+                return;
+            }
+            TuftData data = JsonUtility.FromJson<TuftData>(File.ReadAllText(file));
+            Physics.SyncTransforms();
+            var cells = new Dictionary<Vector2Int, List<Vector4>>();        // x, y, z, index
+            for (int i = 0; i < data.tufts.Length; i++)
+            {
+                Tuft t = data.tufts[i];
+                bool onGround = Physics.Raycast(new Vector3(t.x, 300f, t.z), Vector3.down, out RaycastHit hit, 600f, ~0, QueryTriggerInteraction.Ignore) &&
+                                IsPlainGround(hit);
+                if (!onGround)
+                {
+                    tuftsLeftOut++;
+                    continue;
+                }
+                var key = new Vector2Int(Mathf.FloorToInt(t.x / TuftCell), Mathf.FloorToInt(t.z / TuftCell));
+                if (!cells.TryGetValue(key, out List<Vector4> list))
+                {
+                    cells[key] = list = new List<Vector4>();
+                }
+                list.Add(new Vector4(t.x, hit.point.y, t.z, i));
+                tuftFeet.Add(hit.point);
+                tuftsPlaced++;
+            }
+            var tuftRoot = new GameObject("GrassTufts");
+            tuftRoot.transform.SetParent(root.transform, false);
+            foreach (KeyValuePair<Vector2Int, List<Vector4>> cell in cells)
+            {
+                var origin = new Vector3((cell.Key.x + 0.5f) * TuftCell, 0f, (cell.Key.y + 0.5f) * TuftCell);
+                var verts = new List<Vector3>(); var normals = new List<Vector3>();
+                var uv = new List<Vector2>(); var sway = new List<Vector2>(); var tris = new List<int>();
+                var colours = new List<Color>();
+                foreach (Vector4 p in cell.Value)
+                {
+                    Tuft t = data.tufts[(int)p.w];
+                    var rng = new System.Random(7919 * (int)p.w + 17);
+                    float R() => (float)rng.NextDouble();
+                    Color here = new Color(t.r / 255f, t.g / 255f, t.b / 255f).linear;       // lawn colour under the tuft
+                    var lawn = new Color(Mathf.Lerp(1f, Mathf.Clamp(here.r / TuftLawn.r, 0.6f, 1.5f), 0.35f),
+                                         Mathf.Lerp(1f, Mathf.Clamp(here.g / TuftLawn.g, 0.6f, 1.5f), 0.35f),
+                                         Mathf.Lerp(1f, Mathf.Clamp(here.b / TuftLawn.b, 0.6f, 1.5f), 0.35f));
+                    int crosses = t.big > 0 ? 4 : 3, cards = t.big > 0 ? 3 : 2;
+                    for (int cross = 0; cross < crosses; cross++)
+                    {
+                        float away = cross == 0 ? 0f : (0.1f + 0.14f * R()) * t.s, around = (t.yaw + cross * 120f + 60f * R()) * Mathf.Deg2Rad;
+                        Vector3 foot = new Vector3(p.x, p.y, p.z) - origin + new Vector3(Mathf.Cos(around), 0f, Mathf.Sin(around)) * away;
+                        float height = (0.15f + 0.12f * R()) * t.s, half = (0.15f + 0.07f * R()) * t.s, turn = R() * Mathf.PI;
+                        float half_u = R() < 0.5f ? 0f : 0.5f;                          // which of the two tufts in the texture
+                        for (int card = 0; card < cards; card++)
+                        {
+                            float a = turn + card * Mathf.PI / cards;
+                            var side = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * half;
+                            var lean = new Vector3(-Mathf.Sin(a), 0f, Mathf.Cos(a)) * (0.06f * (R() - 0.5f));
+                            int n = verts.Count;
+                            verts.Add(foot - side + Vector3.down * 0.04f); verts.Add(foot + side + Vector3.down * 0.04f);
+                            verts.Add(foot + side + lean + Vector3.up * height); verts.Add(foot - side + lean + Vector3.up * height);
+                            uv.Add(new Vector2(half_u, 0f)); uv.Add(new Vector2(half_u + 0.5f, 0f));
+                            uv.Add(new Vector2(half_u + 0.5f, 1f)); uv.Add(new Vector2(half_u, 1f));
+                            sway.Add(Vector2.zero); sway.Add(Vector2.zero); sway.Add(new Vector2(0f, 1f)); sway.Add(new Vector2(0f, 1f));
+                            for (int k = 0; k < 4; k++) normals.Add(Vector3.up);        // lit like the lawn under it
+                            for (int k = 0; k < 4; k++) colours.Add(new Color(lawn.r, lawn.g, lawn.b, height + 0.04f));
+                            tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2 });
+                        }
+                    }
+                }
+                var mesh = new Mesh { name = "GrassTufts_" + cell.Key.x + "_" + cell.Key.y };
+                mesh.SetVertices(verts); mesh.SetNormals(normals); mesh.SetUVs(0, uv); mesh.SetUVs(1, sway);
+                mesh.SetColors(colours);
+                mesh.SetTriangles(tris, 0);
+                mesh.RecalculateBounds();
+                if (tuftChunks == 0)
+                {
+                    AssetDatabase.CreateAsset(mesh, meshPath);
+                }
+                else
+                {
+                    AssetDatabase.AddObjectToAsset(mesh, meshPath);
+                }
+                var go = new GameObject(mesh.name);
+                go.transform.SetParent(tuftRoot.transform, false);
+                go.transform.position = origin;
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                MeshRenderer r = go.AddComponent<MeshRenderer>();
+                r.sharedMaterial = mat;
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                LODGroup lod = go.AddComponent<LODGroup>();
+                lod.SetLODs(new[] { new LOD(0.5f, new Renderer[] { r }) });
+                lod.RecalculateBounds();
+                // relative screen height of the cell at the cull distance, for a 60 degree camera
+                float shown = Mathf.Clamp(lod.size / (2f * TuftCullDistance * Mathf.Tan(30f * Mathf.Deg2Rad)), 0.01f, 0.9f);
+                lod.SetLODs(new[] { new LOD(shown, new Renderer[] { r }) });
+                tuftChunks++;
+                tuftTriangles += tris.Count / 3;
+            }
+            AssetDatabase.SaveAssets();
+        }
+
+        // Terrain, track corridor and shoulders: the triangle the ray hit is drawn with the ground material
+        // (the corridor mesh also carries cut walls and other parts, so the whole mesh is not enough to go by).
+        private static bool IsPlainGround(RaycastHit hit)
+        {
+            var mc = hit.collider as MeshCollider;
+            MeshRenderer r = mc != null ? mc.GetComponent<MeshRenderer>() : null;
+            if (r == null || mc.sharedMesh == null || hit.triangleIndex < 0)
+            {
+                return false;
+            }
+            Mesh mesh = mc.sharedMesh;
+            Material[] mats = r.sharedMaterials;
+            for (int sub = 0; sub < mesh.subMeshCount && sub < mats.Length; sub++)
+            {
+                UnityEngine.Rendering.SubMeshDescriptor d = mesh.GetSubMesh(sub);
+                if (hit.triangleIndex * 3 >= d.indexStart && hit.triangleIndex * 3 < d.indexStart + d.indexCount)
+                {
+                    return mats[sub] != null && mats[sub].name == "W_ground_map";
+                }
+            }
+            return false;
+        }
+
+        // Golden hour (design reference, 2026-11-09): a low warm sun from the west-south-west, long soft shadows,
+        // cool blue fill, a painted sky with cumulus clouds (also the reflection source), and a gentle warm grade.
+        // No fog, no bake. Sun and look volume are part of the prefab. Sky light, sky and reflections are scene
+        // settings, so CampusWorldLighting (on the prefab root) writes them into whichever scene holds the prefab while
+        // that scene is the active one (the race makes the track scene active).
         private static void AddSunAndSky(GameObject root)
         {
             var sunObject = new GameObject("Sun");
             sunObject.transform.SetParent(root.transform, false);
             Light sun = sunObject.AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.intensity = 1.3f;
-            sun.color = new Color(1f, 0.96f, 0.9f);
+            sun.intensity = 1.25f;
+            sun.color = new Color(1f, 0.878f, 0.71f);                                // #FFE0B5
             sun.shadows = LightShadows.Soft;
-            float az = 135f * Mathf.Deg2Rad, el = 40f * Mathf.Deg2Rad;              // from the south-east, 40 degrees up
+            sun.shadowStrength = 0.85f;                                              // shade stays readable
+            float az = SunAzimuth * Mathf.Deg2Rad, el = SunElevation * Mathf.Deg2Rad;
             var towardsSun = new Vector3(Mathf.Sin(az) * Mathf.Cos(el), Mathf.Sin(el), Mathf.Cos(az) * Mathf.Cos(el));
             sunObject.transform.rotation = Quaternion.LookRotation(-towardsSun);
-            RenderSettings.sun = sun;
-            RenderSettings.ambientMode = AmbientMode.Trilight;                         // no baking needed
-            RenderSettings.ambientSkyColor = new Color(0.62f, 0.72f, 0.86f);
-            RenderSettings.ambientEquatorColor = new Color(0.62f, 0.62f, 0.6f);
-            RenderSettings.ambientGroundColor = new Color(0.38f, 0.36f, 0.32f);
-            RenderSettings.skybox = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Skybox.mat");
-            RenderSettings.fog = false;
+
+            Material skybox;
+            Cubemap cube = AssetDatabase.LoadAssetAtPath<Cubemap>(SkyTexture);
+            if (cube != null)
+            {
+                EnsureFolder(MatDir);
+                string path = MatDir + "/Sky_Painted.mat";
+                skybox = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (skybox == null)
+                {
+                    skybox = new Material(Shader.Find("Skybox/Cubemap"));
+                    AssetDatabase.CreateAsset(skybox, path);
+                }
+                skybox.SetTexture("_Tex", cube);
+                skybox.SetFloat("_Exposure", 1f);
+                skybox.SetFloat("_Rotation", 0f);
+                EditorUtility.SetDirty(skybox);
+            }
+            else
+            {
+                Debug.LogWarning("CampusWorldBuilder: no " + SkyTexture + ", using Unity's default sky.");
+                skybox = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Skybox.mat");
+            }
+            CampusWorldLighting lighting = root.AddComponent<CampusWorldLighting>();
+            var so = new SerializedObject(lighting);
+            so.FindProperty("sun").objectReferenceValue = sun;
+            so.FindProperty("skyColour").colorValue = new Color(0.70f, 0.76f, 0.87f);       // #B3C2DE cool fill
+            so.FindProperty("horizonColour").colorValue = new Color(0.66f, 0.66f, 0.66f);
+            so.FindProperty("groundColour").colorValue = new Color(0.62f, 0.55f, 0.46f);    // warm bounce from the paving
+            so.FindProperty("skybox").objectReferenceValue = skybox;
+            so.FindProperty("reflection").objectReferenceValue = cube;                     // glass and gloss reflect the sky
+            so.ApplyModifiedPropertiesWithoutUndo();
+            lighting.ApplyIfActiveScene();                         // the preview scene is active here: save it with the look
+            var look = new GameObject("Look (global volume)");
+            look.transform.SetParent(root.transform, false);
+            Volume volume = look.AddComponent<Volume>();
+            volume.isGlobal = true;
+            volume.priority = 1f;
+            volume.sharedProfile = BuildLookProfile();
+        }
+
+        // Tonemapping + a gentle grade, made by code so every laptop gets the same look. Bloom stays in Role 4's
+        // RaceCameraVolume (Main.unity); the overrides do not overlap.
+        private static VolumeProfile BuildLookProfile()
+        {
+            EnsureFolder(SettingsDir);
+            if (AssetDatabase.LoadAssetAtPath<VolumeProfile>(LookProfile) != null)
+            {
+                AssetDatabase.DeleteAsset(LookProfile);
+            }
+            var profile = ScriptableObject.CreateInstance<VolumeProfile>();
+            AssetDatabase.CreateAsset(profile, LookProfile);
+            Tonemapping tone = profile.Add<Tonemapping>(true);
+            tone.mode.Override(TonemappingMode.Neutral);
+            ColorAdjustments grade = profile.Add<ColorAdjustments>(true);
+            grade.postExposure.Override(0.1f);
+            grade.contrast.Override(8f);
+            grade.saturation.Override(12f);
+            WhiteBalance warm = profile.Add<WhiteBalance>(true);
+            warm.temperature.Override(4f);
+            foreach (VolumeComponent c in profile.components)
+            {
+                c.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
+                AssetDatabase.AddObjectToAsset(c, profile);
+            }
+            EditorUtility.SetDirty(profile);
+            AssetDatabase.SaveAssets();
+            return profile;
         }
 
         // For looking at the scene alone; RaceBootstrap switches track-scene cameras off in the race.
@@ -402,12 +821,34 @@ namespace CarcavelosCircuit.Visuals.Editor
             var report = new StringBuilder("CampusWorld self-test\n");
             int failures = 0;
             Dressing dressing = JsonUtility.FromJson<Dressing>(File.ReadAllText(DataDir + "/dressing.json"));
-            GameObject dressingRoot = GameObject.Find("CampusWorld (Role 3)/Dressing");
+            GameObject dressingRoot = GameObject.Find(WorldRootName + "/Dressing");
             int placed = dressingRoot != null ? dressingRoot.GetComponentsInChildren<MeshRenderer>(true).Length : 0;
             report.AppendLine("dressing: " + placed + " of " + dressing.items.Length + " placed");
             if (placed != dressing.items.Length)
             {
                 failures++;
+            }
+            failures += PrefabTest(report);
+            if (tuftsPlaced + tuftsLeftOut > 0)
+            {
+                // every tuft was put down by a ray that landed on a plain ground mesh; check that again from the meshes
+                int offGround = 0, checkedTufts = 0;
+                Physics.SyncTransforms();
+                foreach (Vector3 foot in tuftFeet)                       // where every tuft was put down
+                {
+                    checkedTufts++;
+                    if (!Physics.Raycast(new Vector3(foot.x, 300f, foot.z), Vector3.down, out RaycastHit hit, 600f, ~0, QueryTriggerInteraction.Ignore) || !IsPlainGround(hit))
+                    {
+                        offGround++;
+                    }
+                }
+                report.AppendLine("grass tufts: " + tuftsPlaced + " placed in " + tuftChunks + " cells, " + tuftTriangles +
+                                  " triangles, " + tuftsLeftOut + " left out (ray not on plain ground); " + offGround + " of " +
+                                  checkedTufts + " checked stand off the ground mesh");
+                if (offGround > 0)
+                {
+                    failures++;
+                }
             }
 
             int bad = 0;
@@ -416,7 +857,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 foreach (Material m in r.sharedMaterials)
                 {
                     if (m == null || m.shader == null || m.shader.name.StartsWith("Hidden/InternalError", StringComparison.Ordinal) ||
-                        !AssetDatabase.GetAssetPath(m).StartsWith(MatDir, StringComparison.Ordinal))
+                        !KnownMaterial(AssetDatabase.GetAssetPath(m)))
                     {
                         if (bad < 10)
                         {
@@ -462,15 +903,34 @@ namespace CarcavelosCircuit.Visuals.Editor
 
             TrackData data = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json"));
             Physics.SyncTransforms();
-            int miss = 0, tested = 0;
-            for (int i = 0; i < data.points.Length; i += 3)
+            // The road the kart drives: track.json, lined up with the Nova hall doors where the hall is in (V12).
+            var centre = new Vector3[data.points.Length];
+            var width = new float[data.points.Length];
+            for (int i = 0; i < centre.Length; i++)
             {
-                if (Mathf.Abs(i - data.jump_index) < 3)
+                centre[i] = Pos(data.points[i]);
+                width[i] = data.points[i].width;
+            }
+            var original = (Vector3[])centre.Clone();
+            if (NovaHallInsert.HasHall())
+            {
+                CarcavelosCircuit.Track.Editor.HallDoorApproach.Apply(centre, width, null);
+            }
+            int miss = 0, tested = 0, inHall = 0;
+            for (int i = 0; i < data.points.Length; i++)
+            {
+                // Every third point, plus every point moved to a hall door (the new door roads).
+                if ((i % 3 != 0 && centre[i] == original[i]) || Mathf.Abs(i - data.jump_index) < 3)
                 {
                     continue;
                 }
+                // Inside the hall track.json follows Noah's lanes (tools/world_gen/hall_route.py), on the hall floor.
+                if (NovaHallInsert.HasHall() && NovaHallInsert.InsideHall(centre[i]))
+                {
+                    inHall++;
+                }
                 tested++;
-                Vector3 p = Pos(data.points[i]);
+                Vector3 p = centre[i];
                 if (!Physics.Raycast(p + Vector3.up * 1.5f, Vector3.down, out RaycastHit hit, 4f) || Mathf.Abs(hit.point.y - p.y) > 0.2f)
                 {
                     if (miss < 8)
@@ -480,14 +940,72 @@ namespace CarcavelosCircuit.Visuals.Editor
                     miss++;
                 }
             }
-            report.AppendLine("road collider under the route: " + (tested - miss) + " of " + tested + " points");
+            report.AppendLine("road collider under the route: " + (tested - miss) + " of " + tested + " points" +
+                              (inHall > 0 ? " (" + inHall + " of them in the Nova hall)" : ""));
             if (miss > 0)
             {
                 failures++;
             }
+            failures += LightingTest(report);
             report.AppendLine(failures == 0 ? "RESULT: PASS" : "RESULT: FAIL (" + failures + ")");
             Debug.Log(report.ToString());
             return failures;
+        }
+
+        // CampusWorld.prefab is what Role 2 uses. The scene root must be a clean instance of it (no overrides), and the
+        // prefab must hold the world with its colliders and light but nothing race-specific (no placeholders, no
+        // camera), so Role 2's scene never ends up with two sets of checkpoints.
+        private static int PrefabTest(StringBuilder report)
+        {
+            GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(WorldPrefabPath);
+            GameObject instance = GameObject.Find(WorldRootName);
+            bool linked = instance != null && PrefabUtility.IsOutermostPrefabInstanceRoot(instance) &&
+                          PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(instance) == WorldPrefabPath;
+            bool clean = linked && !PrefabUtility.HasPrefabInstanceAnyOverrides(instance, false);
+            int raceParts = asset == null ? -1 : asset.GetComponentsInChildren<PlaceholderTrack>(true).Length +
+                asset.GetComponentsInChildren<PlaceholderCheckpoint>(true).Length + asset.GetComponentsInChildren<Camera>(true).Length;
+            CampusWorldLighting lighting = asset != null ? asset.GetComponent<CampusWorldLighting>() : null;
+            bool lit = lighting != null && new SerializedObject(lighting).FindProperty("sun").objectReferenceValue != null;
+            int volumes = asset != null ? asset.GetComponentsInChildren<Volume>(true)
+                .Count(v => v.isGlobal && v.sharedProfile != null) : 0;              // the look comes along
+            int colliders = asset != null ? asset.GetComponentsInChildren<MeshCollider>(true).Length : 0;
+            report.AppendLine("prefab: " + (asset != null ? "saved" : "MISSING") + ", scene instance linked " + linked +
+                              ", without overrides " + clean + ", race parts or cameras inside " + raceParts +
+                              ", light with sun " + lit + ", look volumes " + volumes +
+                              ", mesh colliders " + colliders);
+            return asset != null && clean && raceParts == 0 && lit && volumes == 1 && colliders > 0 ? 0 : 1;
+        }
+
+        // Role 2's case: a scene holding only the prefab gets the campus sky light once it is the active scene, and
+        // while another scene is active (Main.unity while the race loads the track) that scene's light is left alone.
+        private static int LightingTest(StringBuilder report)
+        {
+            Scene preview = SceneManager.GetActiveScene();
+            GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(WorldPrefabPath);
+            Scene holder = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+
+            SceneManager.SetActiveScene(preview);
+            RenderSettings.ambientMode = AmbientMode.Flat;                 // stands in for another scene's own setting
+            var first = (GameObject)PrefabUtility.InstantiatePrefab(asset, holder);
+            bool leftAlone = RenderSettings.ambientMode == AmbientMode.Flat;
+            RenderSettings.ambientMode = AmbientMode.Trilight;            // the preview's own value again
+            UnityEngine.Object.DestroyImmediate(first);
+
+            SceneManager.SetActiveScene(holder);
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.fog = true;
+            var second = (GameObject)PrefabUtility.InstantiatePrefab(asset, holder);
+            bool painted = AssetDatabase.LoadAssetAtPath<Cubemap>(SkyTexture) != null;
+            bool applied = RenderSettings.ambientMode == AmbientMode.Trilight && !RenderSettings.fog &&
+                           RenderSettings.sun != null && RenderSettings.sun.transform.IsChildOf(second.transform) &&
+                           (!painted || (RenderSettings.skybox != null && RenderSettings.skybox.name == "Sky_Painted" &&
+                                         RenderSettings.defaultReflectionMode == DefaultReflectionMode.Custom &&
+                                         RenderSettings.customReflectionTexture != null));
+
+            SceneManager.SetActiveScene(preview);
+            EditorSceneManager.CloseScene(holder, true);
+            report.AppendLine("light in a scene with only the prefab: applied " + applied + ", other active scene left alone " + leftAlone);
+            return applied && leftAlone ? 0 : 1;
         }
 
         // Kart's-eye views at a few places of the lap, for comparing with the Blender renders.
@@ -500,9 +1018,15 @@ namespace CarcavelosCircuit.Visuals.Editor
             cam.fieldOfView = 60f;
             cam.nearClipPlane = 0.3f;
             cam.farClipPlane = 3000f;
-            var rt = new RenderTexture(1280, 720, 24);
+            cam.allowHDR = true;
+            cam.GetUniversalAdditionalCameraData().renderPostProcessing = true;    // the grade, as in the race
+            var rt = new RenderTexture(1280, 720, 24) { antiAliasing = 4 };
             cam.targetTexture = rt;
-            foreach (float s in new[] { 30f, 120f, 240f, 400f, 490f, 560f, 700f, 980f, 1048f, 1150f })
+            string extra = Argument("-campusWorldShotS");                          // e.g. "60,575" (metres)
+            float[] stations = string.IsNullOrEmpty(extra)
+                ? new[] { 16f, 60f, 100f, 150f, 200f, 330f, 470f, 575f, 610f, 700f, 860f, 965f, 1060f, 1100f, 1150f, 1260f }
+                : extra.Split(',').Select(x => float.Parse(x, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+            foreach (float s in stations)
             {
                 int i = Mathf.RoundToInt(s / 2f) % data.points.Length;
                 int back = (i - 3 + data.points.Length) % data.points.Length;
@@ -547,6 +1071,15 @@ namespace CarcavelosCircuit.Visuals.Editor
         {
             var go = (GameObject)PrefabUtility.InstantiatePrefab(Model(model), parent);
             return go;
+        }
+
+        // Materials the self-test accepts: Luc's material folder, the ones inside Noah's hall model (#45) and
+        // Role 2's track materials (the white fence).
+        private static bool KnownMaterial(string path)
+        {
+            return path.StartsWith(MatDir, StringComparison.Ordinal) ||
+                   path == Root + "/Models/NovaHallWorld.fbx" ||
+                   path.StartsWith("Assets/_Project/Track/Materials/", StringComparison.Ordinal);
         }
 
         private static void MarkStatic(GameObject go)

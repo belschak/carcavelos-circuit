@@ -15,7 +15,7 @@ TEXTURED = {
     "W_T_asphalt": ("asphalt", 0.85),
     "W_T_concrete_sand": ("concrete_sand", 0.8),
     "W_T_concrete_polished": ("concrete_polished", 0.3),
-    "W_T_concrete_light": ("concrete_polished", 0.8),
+    "W_T_concrete_light": ("concrete_polished", 0.8),     # outdoor deck: matte (MATTE), else the low sun glares
     "W_T_tunnel_floor": ("concrete_polished", 0.6),
     "W_T_calcada": ("calcada", 0.8),
     "W_T_terracotta": ("terracotta_steps", 0.8),
@@ -28,6 +28,9 @@ TEXTURED = {
     "W_ground_map": ("ground_colour", 0.95),
     "W_T_sand": ("sand", 0.95),
 }
+
+
+MATTE = {"W_T_concrete_light"}   # use the albedo only, constant roughness (no polished-floor roughness map)
 
 
 def texture_path(base, kind):
@@ -53,7 +56,7 @@ def upgrade(mat, base, roughness):
     bsdf = nodes.get("Principled BSDF")
     tex = image_node(nodes, albedo)
     links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
-    rough = texture_path(base, "rough")
+    rough = None if mat.name in MATTE else texture_path(base, "rough")
     if rough:
         r = image_node(nodes, rough, colour=False)
         links.new(r.outputs["Color"], bsdf.inputs["Roughness"])
@@ -69,8 +72,19 @@ def upgrade(mat, base, roughness):
     return True
 
 
+GROUND_SHADER = "CarcavelosCircuit/Ground"     # Assets/_Project/Visuals/Shaders/Ground.shader (URP Lit if missing)
+GROUND_TEXTURES = {"ground_mask": "ground_mask_data.png",               # make_groundmap.py
+                   "ground_detail": "ground_detail_data.png",           # make_textures.py ground_detail
+                   "ground_detail_normal": "ground_detail_normal_data.png"}
+
+
 def upgrade_all():
     done = []
+    ground = bpy.data.materials.get("W_ground_map")
+    if ground:                             # export_unity_bundle.py -> materials.json "ground" -> Ground.shader
+        ground["ground_shader"] = GROUND_SHADER
+        for key, name in GROUND_TEXTURES.items():
+            ground[key] = name
     for mat in bpy.data.materials:
         if mat.name in TEXTURED and mat.node_tree:
             base, roughness = TEXTURED[mat.name]
