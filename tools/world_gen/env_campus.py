@@ -64,14 +64,16 @@ def slot_materials():
 
 
 def railing_material(variant=None):
-    """Bar railing as one alpha-clipped sheet per 3 m (textures/railing_cutout_albedo.png, make_textures.py railing):
-    custom properties alpha_clip / double_sided go through materials.json like the leaf cutouts.
+    """Bar railing as one alpha-clipped sheet per 2 m (textures/railing_cutout_albedo.png, make_textures.py railing):
+    custom properties alpha_clip / double_sided go through materials.json like the leaf cutouts. V16f: light
+    galvanised steel #9a978c (the texture carries the colour; Unity leaves the tint white), nearly non-metallic so
+    that it reads silver-grey and not black without reflections.
     variant "tan" (V16c): the bronze-tan flat-bar railing of the CTT terrace, one sheet per 2 m (posts every 2 m;
     textures/railing_tan_cutout_albedo.png, make_west_textures.py); the standard sheet if that file is missing."""
-    name, colour, file = "B_railing", "#C9CCD0", "railing_cutout_albedo.png"
+    name, colour, file = "B_railing", "#9A978C", "railing_cutout_albedo.png"
     if variant == "tan" and os.path.exists(os.path.join(E.TEXTURES, "railing_tan_cutout_albedo.png")):
         name, colour, file = "B_railing_tan", "#A09075", "railing_tan_cutout_albedo.png"
-    mat = E.material(name, colour, roughness=0.45, metallic=0.5)
+    mat = E.material(name, colour, roughness=0.55, metallic=0.15)
     mat["alpha_clip"], mat["double_sided"] = 0.5, 1
     mat.use_backface_culling = False
     path = os.path.join(E.TEXTURES, file)
@@ -261,8 +263,8 @@ class Mesh:
         for p0, p1 in pieces:
             self.face([(*p0, lo), (*p1, lo), (*p1, hi), (*p0, hi)], mat, tile=tile)
 
-    def railing(self, line, h=1.1, module=3.0):
-        """Bar railing along a 3D polyline (alpha-clipped sheets, one texture module per about 3 m)."""
+    def railing(self, line, h=1.1, module=2.0):
+        """Bar railing along a 3D polyline (alpha-clipped sheets, one texture module = posts every about 2 m)."""
         for a, b in zip(line, line[1:]):
             length = math.dist(a, b)
             if length < 0.4:

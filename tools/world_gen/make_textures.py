@@ -1206,29 +1206,39 @@ BUILDERS.update({"timber_deck": make_timber_deck, "granite_kerb": make_granite_k
 
 
 # ----------------------------------------------------------------------------------------------
-# V10c2. Bar railing as a cutout: one 3 m module of the campus railings (flat top rail, bottom rail, vertical flat
-# bars about 12 cm apart, a post at each end), 512 x 256 RGBA, alpha = steel / air. env_campus.py puts one module on
-# a single sheet per about 3 m of railing (roof terraces, decks, balconies), instead of 3D bars.
+# V10c2 / V16f. Bar railing as a cutout: one 2 m module of the campus railings as the photosphere survey V15 shows
+# them (section 1, point 1): 1.1 m high, flat top rail, bottom rail, close VERTICAL flat bars 11 cm apart, a post at
+# each end (so every 2 m), light galvanised / satin steel (#9a978c, reads silver-grey); a second file in bronze-tan
+# (#a09075) for the CTT terrace. 512 x 256 RGBA, alpha = steel / air. One module per sheet of about 2 m
+# (env_campus.Detail.railing, env_props.railing); a bar stands exactly at u = 0.5, so solid parts of a mesh (posts,
+# rails) can share the material with every corner at UV (0.5, 0.5).
 # ----------------------------------------------------------------------------------------------
+RAILING_M = 2.0                                          # metres of railing on one texture module
+RAILING_BAR = 2.0 / 18                                   # bar spacing: 11.1 cm
+RAILING_TONES = {"railing_cutout_albedo.png": ("#9A978C", "#84827A", "#A8A59A"),        # bars, shade, top rail
+                 "railing_tan_cutout_albedo.png": ("#A09075", "#8A7C64", "#AD9D82")}
+
+
 def make_railing(W=512, H=256, seed=1616):
     k = 4
-    steel, shade = np.array(rgb("#D4D7DA")) * 255, np.array(rgb("#9FA4AA")) * 255
-    img = Image.new("RGBA", (W * k, H * k), tuple(int(v) for v in steel) + (0,))
-    draw = ImageDraw.Draw(img)
-    px_m = W * k / 3.0                                   # pixels per metre (module 3 m wide, 1.1 m tall)
-    py_m = H * k / 1.1
+    for fname, tones in RAILING_TONES.items():
+        steel, shade, top = (np.array(rgb(c)) * 255 for c in tones)
+        img = Image.new("RGBA", (W * k, H * k), tuple(int(v) for v in steel) + (0,))
+        draw = ImageDraw.Draw(img)
+        px_m = W * k / RAILING_M                         # pixels per metre (module 2 m wide, 1.1 m tall)
+        py_m = H * k / 1.1
 
-    def bar(x0, x1, y0, y1, col):                        # metres, y up from the foot
-        draw.rectangle([x0 * px_m, H * k - y1 * py_m, x1 * px_m - 1, H * k - y0 * py_m - 1],
-                       fill=tuple(int(v) for v in col) + (255,))
-    for i in range(1, 25):                               # 24 bars, 12 cm apart
-        x = i * 0.12
-        bar(x - 0.011, x + 0.011, 0.10, 1.03, lerp(steel, shade, 0.35))
-    bar(0.0, 3.0, 0.07, 0.115, shade)                    # bottom rail
-    bar(0.0, 3.0, 1.03, 1.10, steel)                     # flat top rail
-    bar(0.0, 0.03, 0.0, 1.10, steel)                     # posts (half a post at each end: neighbours complete it)
-    bar(2.97, 3.0, 0.0, 1.10, steel)
-    img.resize((W, H), Image.LANCZOS).save(os.path.join(TEX_DIR, "railing_cutout_albedo.png"))
+        def bar(x0, x1, y0, y1, col):                    # metres, y up from the foot
+            draw.rectangle([x0 * px_m, H * k - y1 * py_m, x1 * px_m - 1, H * k - y0 * py_m - 1],
+                           fill=tuple(int(v) for v in col) + (255,))
+        for i in range(1, 18):                           # 17 bars between the posts, bar 9 at u = 0.5
+            x = i * RAILING_BAR
+            bar(x - 0.011, x + 0.011, 0.10, 1.04, steel if i % 2 else lerp(steel, shade, 0.3))
+        bar(0.0, RAILING_M, 0.07, 0.115, shade)          # bottom rail
+        bar(0.0, RAILING_M, 1.04, 1.10, top)             # flat top rail
+        bar(0.0, 0.03, 0.0, 1.10, steel)                 # posts (half a post at each end: neighbours complete it)
+        bar(RAILING_M - 0.03, RAILING_M, 0.0, 1.10, steel)
+        img.resize((W, H), Image.LANCZOS).save(os.path.join(TEX_DIR, fname))
 
 
 BUILDERS["railing"] = make_railing
