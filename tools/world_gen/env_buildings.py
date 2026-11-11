@@ -464,7 +464,7 @@ def build():
     for index, b in enumerate(E.DATA["buildings"]):
         if b["id"] in REDUNDANT:
             continue
-        if b["id"] == env_library.OSM_ID:              # V10i: the library as in the photos (plaza_plan.py)
+        if b["id"] in env_library.OWNED:               # V10i: the library as in the photos (plaza_plan.py); V16: the pergola
             volume, details = env_library.build(b, index)
         else:
             volume, details = build_one(b, index)

@@ -157,10 +157,28 @@ LIB_GROUND = [LIB_SOUTH_WING[0], LIB_SOUTH_WING[1], LIB_SOUTH_WING[2], LIB_NORTH
 
 # south loggia (porch): front line = the south wing's south edge, 4.5 m deep, two full-height square columns and a
 # one-storey corner pier; first-floor balcony behind the front 2 m; glazing at the back; solid east wall
-LOGGIA_DEPTH = 4.5
-LOGGIA_COLUMNS = [(106.6, 34.6), (112.1, 36.6)]
-LOGGIA_PIER = (103.7, 38.2)
+LOGGIA_DEPTH = 6.0                  # V16: the open south end bay is about 6 m deep (photospheres E25_h315, E30_h045)
+LOGGIA_COLUMNS = [(105.27, 34.58), (112.1, 36.6)]   # V16: the first one stands in the open south-west corner (V10i: (106.6, 34.6))
+LOGGIA_PIER = (103.7, 38.2)         # (V10i's one-storey corner pier; V16: the west wall ends in a full-height pier instead)
 COLUMN = 0.9
+# V16 (survey V15, 2.10): the north block is one two-storey curtain wall in a thin white frame, and the block and the
+# bridge are about as high as the wing (8.6 m over the plaza; V10i: 7.4)
+LIB_NORTH_TOP = FLOOR1 + 8.6
+CURTAIN_BAYS = 12
+CURTAIN_FRAME = 0.45
+LIB_WEST_BAY = 4.3                  # west colonnade: 6 glazed bays of 4.35 m + the open loggia bay (V10i: 5 of 5.3 m)
+# the open cafe pergola against the main building (OSM w1414332250, building=roof): only its east part is the pergola
+# (16 x 9 m; the OSM outline's west part was a glass pavilion at the door of the old building: open plaza now)
+PERGOLA_ID = "w1414332250"
+PERGOLA_FRONT = ((79.3, 101.44), (92.8, 106.7))   # south edge, west to east: the OSM roof edge (77.9, 100.9)-(92.8, 106.7)
+                                                  # less its west 1.5 m, so the corner column stands 6.8 m from the race
+                                                  # line (survey: (78.5, 104) to (95, 108), +-3 m)
+PERGOLA_DEPTH = 9.0
+PERGOLA_CLEAR = 3.6                 # m under the slab
+PERGOLA_SLAB = 0.3
+PERGOLA_COLS = 5                    # round steel columns along the front (about 4 m apart)
+PERGOLA_ROWS = 3
+PERGOLA_COLUMN = 0.2
 
 # ---------------------------------------------------------------------------------------------------------------
 # Skylights: flush frosted glass, drivable (survey 4.2). S3 and S4 lie inside the fence.
@@ -171,6 +189,11 @@ SKYLIGHTS = {
     "S3": [(75.1, 55.5), (81.1, 55.5), (81.1, 61.0), (75.1, 61.0)],
     "S5": [(62.4, 98.4), (68.1, 98.4), (68.1, 106.7), (62.4, 106.7)],
 }
+# V16 (survey V15: panes about 1.35 x 1.5-2.7 m, grey glazing bars, a bright steel edge): panes along the ring's
+# first and second edge. The outlines stay (the deck's mesh and collider do not change); only the UVs follow the panes.
+# The steel edge is the half glazing bar that lies on the outline (a separate strip of paint over the glass would
+# cross the race line 4 cm above the driving surface, which qa_geometry counts as "covered").
+SKYLIGHT_PANES = {"S2": (6, 4), "S1": (6, 5), "S3": (4, 3), "S5": (4, 6)}
 
 # ---------------------------------------------------------------------------------------------------------------
 # Sunken courtyard (Floor 0) beside the Gallery, its fence, the stair down
@@ -378,7 +401,11 @@ UNDERPASS_COURT = ((79.2, 82.9), (74.5, 85.54))      # its mouth in the courtyar
 UNDERPASS = [slot_point(0, 0), slot_point(SLOT_LANDING, 0), UNDERPASS_COURT[1], UNDERPASS_COURT[0]]
 UNDERPASS_CEILING = FLOOR1 - 0.35
 FENCE_H = 1.1
-KERB_H = 0.25
+RAIL_COLOUR = "#9A978C"              # V16 (survey V15, section 4 item 1): light galvanised / satin steel (V10i: #4A4E53)
+KERB_H = 0.12                        # V16 (survey V15, E1 2.4): a pale kerb 0.35 m wide and 0.12 m high (V10i: 0.26 x 0.25)
+KERB_IN = 0.13                       # ... its face on the road's side stays where V10i's kerb had it,
+KERB_OUT = 0.22                      # ... the rest of its width lies on the void's side
+POST_STEP = 2.0                      # flat-bar posts
 
 # ---------------------------------------------------------------------------------------------------------------
 # The deck (Floor 1 paving, one surface from facade to facade) and the low paving beside the stairs
@@ -433,6 +460,32 @@ UNDER_TOP = FLOOR1 - 0.45            # the end walls stop inside the Gallery dec
 FENCE_GALLERY = [[_CS, _S4W]]
 LOWS = [LOW_WEST, LOW_EAST] + UNDERS
 # planted barrier across the gap between the library and Horizon Hall (Luc: the way to the gym is off the map)
+# V16 (survey V15): the plaza is paved in bays of about 5 m on the building grid (bearing 340 / 70)
+PAVE_BAY = 5.0
+PAVE_TURN = math.radians(20.0)
+PAVE_ORIGIN = (96.0, 30.0)           # a joint crossing (chosen so that no joint runs along a skylight's edge)
+# what follows the line in front of the hall's atrium door since hall_join.py (track.json, points 549 to 564): the
+# plaza's own dressing keeps clear of this line as well as of route.json
+HALL_JOIN = [(76.46, 95.16), (75.11, 96.53), (73.63, 97.74), (72.03, 98.8), (70.36, 99.74), (68.66, 100.64),
+             (67.0, 101.6), (65.47, 102.75), (64.14, 104.13), (63.08, 105.73), (62.27, 107.47), (61.54, 109.33),
+             (60.45, 110.99), (58.81, 112.11), (56.99, 112.93), (55.17, 113.76)]
+SOLID_CLEAR = 6.6                    # m: nothing solid of the dressing closer than this to either line
+# east strip (survey V15, E1 2.11): staked saplings and slender black lamp columns in one line
+EAST_ROW = ((112.0, 108.0), (140.0, 48.0))
+EAST_ROW_REACH = 9.5                 # olives of the lawn's two rows within this of the line become young staked trees
+EAST_LAMPS = 5
+LAMP_H = 5.5
+# furniture that is really there (survey V15, E1 2.5 and E2 2.5 / 2.6), as far as Luc's shortcut leaves room:
+# dark conical pots (0.9 m across, 0.75 m high) in a group of three at the stair top, east of the east railing; two
+# of the four potted young olives of the real row at (65..70, 93..97), which is the top of the shortcut's climb in
+# the game: they stand in the pocket beside the climb's east railing instead. (pot, olive in it?)
+POT_R, POT_H = 0.45, 0.75
+POTS = [((107.6, 14.6), False), ((108.5, 15.5), False), ((107.3, 16.2), False),
+        ((74.45, 86.1), True), ((73.5, 87.72), True)]
+# long low dark benches (2.5 x 0.5 x 0.42 m): the real ones stand along the library's west face near the loggia, where
+# the race line passes 4.7 to 6.5 m from that wall: they stand in the loggia (u east along its front, v into it, turn)
+BENCHES = [(4.0, 4.9, 0.0), (8.0, 4.9, 0.0), (12.0, 4.9, 0.0), (2.6, 3.3, 90.0)]
+BENCH = (2.5, 0.5, 0.42)
 GAP_BARRIER = ((121.6, 38.9), (126.2, 29.6))
 BARRIER_HALF = 0.9
 BARRIER_H = 0.75
