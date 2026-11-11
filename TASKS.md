@@ -64,7 +64,7 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 | D8 | `IKartDrivable` on `KartController`: when `InputSource` is set the kart reads `InputSource.ReadInput().Clamped()` instead of the keyboard; `InputEnabled` still wins. Luc's bots need it | Thu 12 | todo |
 | D9 | Name tags above every kart (reads `IRacer.DisplayName` + `MapColor` from `RacerRegistry`), always facing the camera, hidden for the player's own kart, fade with distance | Fri 13 | todo |
 | D10 | Flying animation in the air: the kart body tilts with the jump (nose up on take-off, down before landing), small wobble, lands upright (`IsGrounded` unchanged) | Fri 13 | in review (Alessandro, 2026-11-11, PR #78) |
-| D11 | Trick after a jump: a key in the air spins/flips the model only; a clean landing gives a small boost (same boost path as drift), a trick still running at landing gives nothing. Edit Mode tests for the rule | Fri 13 | todo |
+| D11 | Trick after a jump: a key in the air spins/flips the model only; a clean landing gives a small boost (same boost path as drift), a trick still running at landing gives nothing. Edit Mode tests for the rule | Fri 13 | claimed (Alessandro, 2026-11-11) |
 | Q15 | Review + merge help PR #61 (`KartController` implements `IKartBoost`, so the item boxes give speed) | Wed 11 | in review (#61) |
 
 ### Role 2: Noah
