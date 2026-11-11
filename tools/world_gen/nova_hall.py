@@ -61,6 +61,9 @@ DOORS_UO = {
     "D5_out_north_east": ((23.4, 68.3), 7.5),   # route out on the east facade
 }
 D2_O = (8.5, 17.5)           # opening in the artwork wall (o from .. to): the track into the long room
+# No black glass posts here (u from .. to, o from .. to): the niche in front of door D4, whose glass side walls run
+# right along the fence, so the posts stood on the road side of it (Noah, 2026-11-11).
+NO_MULLION_ZONES = [(66.5, 72.0, 33.2, 41.8)]
 
 
 def footprint():
@@ -100,8 +103,10 @@ ROADS = [
 ]
 RAIL_OFFSET = 0.35           # guard rail distance outside the road edge (m)
 RAIL_STOP = 0.15             # rails stop this far inside a facade; at a door they then end exactly at the frame
+RAIL_WALL_GAP = 0.6          # rails never run closer than this to the glass facade (the posts went through it)
 RAIL_FLARE = 8.0             # within this many metres of a door the rails swing out (or in) to the door frame
 FRAME_REACH = 4.5            # a rail ending this close to a door frame is joined to it (with a curve beyond 2.5 m)
+FRAME_GAP = 0.35             # ... and that curve keeps this far into the opening, clear of the glass beside the door
 
 
 def rounded_line(points, radii, step=0.5):
@@ -163,6 +168,20 @@ board = guarded(K.board, 1.0)
 big_plant = guarded(K.big_plant, 0.9)
 info_stand = guarded(K.info_stand, 0.6)
 grand_piano = guarded(K.grand_piano, 1.4)
+
+
+def nearest_wall(x, y):
+    """Distance from (x, y) to the nearest outer wall line, and the nearest point on it."""
+    poly = footprint()
+    best = None
+    for a, b in zip(poly, poly[1:] + poly[:1]):
+        L2 = (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2 or 1.0
+        t = max(0.0, min(1.0, ((x - a[0]) * (b[0] - a[0]) + (y - a[1]) * (b[1] - a[1])) / L2))
+        qx, qy = a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
+        dist = math.hypot(qx - x, qy - y)
+        if best is None or dist < best[0]:
+            best = (dist, qx, qy)
+    return best
 
 
 def inside_footprint(x, y, margin):
@@ -240,6 +259,12 @@ def guard_rails(m, f, door_map):
                         off += (half - off) * x * x * (3 - 2 * x)
                 pu, po = u - do / d * off * side, o + du / d * off * side
                 x, y, _ = f.at(pu, po)
+                if E.inside_polygon(x, y, footprint()):
+                    gap, qx, qy = nearest_wall(x, y)
+                    if gap < RAIL_WALL_GAP:                              # too close to the glass: move it into the hall
+                        k = RAIL_WALL_GAP / max(gap, 0.001)
+                        x, y = qx + (x - qx) * k, qy + (y - qy) * k
+                        pu, po = f.uo(x, y)
                 pts.append((pu, po) if inside_footprint(x, y, RAIL_STOP) else None)
             runs, cur = [], []
             for p in pts:
@@ -275,8 +300,9 @@ def guard_rails(m, f, door_map):
                         bridge = []
                         for k in range(8, -1, -1):                       # from the run end (k=8 excluded) to the frame
                             t = k / 8
-                            bridge.append(((1 - t) ** 2 * e[0] + 2 * (1 - t) * t * ctrl[0] + t * t * run[end][0],
-                                           (1 - t) ** 2 * e[1] + 2 * (1 - t) * t * ctrl[1] + t * t * run[end][1]))
+                            gap = FRAME_GAP * (1 - t * t)                 # off the niche's glass wall, into the opening
+                            bridge.append(((1 - t) ** 2 * e[0] + 2 * (1 - t) * t * ctrl[0] + t * t * run[end][0] + ax / al * gap,
+                                           (1 - t) ** 2 * e[1] + 2 * (1 - t) * t * ctrl[1] + t * t * run[end][1] + ay / al * gap))
                         bridge = bridge[1:]
                     if end == 0:
                         for p in bridge:
@@ -325,6 +351,15 @@ def edge_key(a, b):
     return (round(a[0], 3), round(a[1], 3), round(b[0], 3), round(b[1], 3))
 
 
+def in_no_mullion_zone(p):
+    """True for a black glass post inside one of NO_MULLION_ZONES (hall coordinates u0, u1, o0, o1)."""
+    u, o = building_frame().uo(p[0], p[1])
+    for u0, u1, o0, o1 in NO_MULLION_ZONES:
+        if u0 <= u <= u1 and o0 <= o <= o1:
+            return True
+    return False
+
+
 def facade(m, a, b, inside, H, openings, style):
     """One straight piece of outer wall from a to b. inside = unit normal pointing into the building.
     style 'glass': glazed ground floor, white band, glazed upper floor, white fascia; 'solid': white wall.
@@ -357,7 +392,10 @@ def facade(m, a, b, inside, H, openings, style):
         band(s0, s1, 0.0, top, "glass" if glazed_ground else "wall")
         if glazed_ground:
             for k in range(int((s1 - s0) / 1.6) + 1):                # mullions
-                m.box(P(s0 + k * 1.6, top / 2, False), 0.05, 0.06, top / 2, "steel_dark", heading)
+                p = P(s0 + k * 1.6, top / 2, False)
+                if in_no_mullion_zone(p):
+                    continue                                         # stood on the road side of the fence (Noah)
+                m.box(p, 0.05, 0.06, top / 2, "steel_dark", heading)
     for c0, c1 in cuts:
         band(c0, c1, DOOR_H + 0.4, top, "glass" if glazed_ground else "wall")
         door(m, P((c0 + c1) / 2, 0.0), (tx, ty), (nx, ny), c1 - c0)
@@ -585,6 +623,25 @@ def atrium_furniture(m, f):
             K.block(m, f, 12.0 + k * 2.4, 14.0 + k * 2.4, 62.0, 63.0, 0.0, 0.75, "board")        # dark blue sofas
     big_plant(m, f, 14.0, 58.0, 3)
     big_plant(m, f, 60.0, 40.0, 4)
+    entrance_seating(m, f)
+
+
+# Tables and chairs like in the long room, in two free spots of the atrium (Noah, 2026-11-11): the open floor between
+# the welcome desk and the blue boards (north of the main-entrance road), and the strip between the road and the west
+# glass south of the main entrance. round_table / long_table are guarded, so nothing lands on the track.
+ENTRANCE_ROUND_TABLES = [(10.5, 9.0), (10.5, 13.5), (14.5, 11.0), (14.5, 15.5), (18.5, 8.5), (18.5, 13.0), (18.5, 17.5)]
+WEST_GLASS_ROUND_TABLES = [(33.5, 5.0), (43.5, 5.0), (48.5, 5.0),    # (48.5: under the west balcony, Noah)
+                           (58.0, 5.0), (62.5, 5.0)]                 # (behind the cabinet, before the artwork wall)
+WEST_GLASS_LONG_TABLES = [(38.5, 4.6), (53.0, 4.6)]                   # (53.0: by the red fire hose cabinet)
+
+
+def entrance_seating(m, f):
+    for u, o in ENTRANCE_ROUND_TABLES:
+        round_table(m, f, u, o, 4)
+    for u, o in WEST_GLASS_ROUND_TABLES:
+        round_table(m, f, u, o, 4)
+    for u, o in WEST_GLASS_LONG_TABLES:
+        long_table(m, f, u, o, seats=3)
 
 
 # ---------- long room ----------
