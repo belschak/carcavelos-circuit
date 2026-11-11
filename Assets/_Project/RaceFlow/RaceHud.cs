@@ -694,7 +694,7 @@ namespace CarcavelosCircuit.RaceFlow
 
             if (shownLoading.Changed(raceManager.IsSetUp ? 0 : 1))
             {
-                pressAnyKey.text = raceManager.IsSetUp ? "CLICK OR PRESS ANY KEY" : "LOADING TRACK...";
+                pressAnyKey.text = raceManager.IsSetUp ? "PRESS ANY KEY OR TAP TO START" : "LOADING TRACK...";
                 pressAnyKey.EnableInClassList("pill--loading", !raceManager.IsSetUp);
             }
         }

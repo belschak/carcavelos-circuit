@@ -629,6 +629,15 @@ kbd.cc-wide { padding: 0 11px; font-size: 12px; letter-spacing: 0.08em; }
   font-size: 15px;
 }
 
+/* Start screen, results and menus (the game has not sent "racing"): no driving buttons, so they never cover the
+   title, the leaderboard or the name field (task R10/R11). The fullscreen button in the tools row stays. */
+html:not(.cc-racing) .cc-touch-steer,
+html:not(.cc-racing) .cc-touch-pedals,
+html:not(.cc-racing) .cc-touch-tools .cc-touch-pill {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* Recover, Retry (and fullscreen): small, top left, away from the thumbs. */
 .cc-touch-tools {
   position: fixed;
