@@ -54,6 +54,35 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.IsFalse(pause.TryResume(true));
         }
 
+        // Audit 9: the P key pauses exactly like a lost focus, and P again continues.
+        [TestCase(RaceState.Countdown)]
+        [TestCase(RaceState.Racing)]
+        public void PauseKey_WhileTheRaceRuns_Pauses(RaceState state)
+        {
+            RacePause pause = new RacePause();
+            Assert.IsTrue(pause.OnPauseKey(state));
+            Assert.IsTrue(pause.IsPaused);
+        }
+
+        [TestCase(RaceState.Ready)]
+        [TestCase(RaceState.Results)]
+        public void PauseKey_OnTheStartOrResultsScreen_DoesNothing(RaceState state)
+        {
+            RacePause pause = new RacePause();
+            Assert.IsFalse(pause.OnPauseKey(state));
+            Assert.IsFalse(pause.IsPaused);
+        }
+
+        [Test]
+        public void PauseKey_AfterAFocusLoss_DoesNotStartASecondPause()
+        {
+            RacePause pause = new RacePause();
+            pause.OnFocusLost(RaceState.Racing);
+            Assert.IsFalse(pause.OnPauseKey(RaceState.Racing), "already paused: RaceManager treats P as 'continue' instead");
+            Assert.IsTrue(pause.TryResume(true), "P while paused is passed to TryResume and continues");
+            Assert.IsFalse(pause.IsPaused);
+        }
+
         [Test]
         public void Clear_EndsThePause()
         {

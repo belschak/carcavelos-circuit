@@ -99,8 +99,10 @@
           <li><kbd class="cc-wide">Space</kbd><span class="cc-key-text">Drift, let go = boost</span></li>
           <li><kbd>R</kbd><span class="cc-key-text">Recover</span></li>
           <li><kbd class="cc-wide">Enter</kbd><span class="cc-key-text">Retry</span></li>
+          <li><kbd>P</kbd><span class="cc-key-text">Pause</span></li>
           <li><kbd>M</kbd><span class="cc-key-text">Sound</span></li>
           <li><kbd>O</kbd><span class="cc-key-text">Settings</span></li>
+          <li><kbd>C</kbd><span class="cc-key-text">Credits</span></li>
         </ul>
         <!-- Same legend for phones and tablets (shown instead of the keys in touch mode). -->
         <ul class="cc-controls cc-controls-touch" aria-label="Touch controls" hidden>
@@ -167,6 +169,25 @@
 
       // ?test=mobile, ?test=nowebgl or ?test=error shows that card in a real build (for the team's browser check).
       var testCard = new URLSearchParams(window.location.search).get("test");
+
+      // ---------- The key that closes "Click to play" stays out of the game (audit 21) ----------
+      // Without this, that same key would also leave the game's start screen, so the map fly-over and the title
+      // were skipped. This listener is added here, BEFORE Unity starts, on window in the capture phase: the browser
+      // runs it before any key listener Unity adds later, and stopImmediatePropagation keeps the key from them.
+      var closePlayScreen = null; // onReady puts the function here while "Click to play" waits, null otherwise
+      window.addEventListener("keydown", function (event) {
+        if (closePlayScreen === null || isPageKey(event.key) || loader.classList.contains("cc-failed")) {
+          return; // not waiting, a key that only moves around the page, or an error card: the key works as usual
+        }
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        closePlayScreen();
+      }, true);
+
+      // Keys that keyboard users need to move around the page; they never close "Click to play".
+      function isPageKey(key) {
+        return key === "Tab" || key === "Shift" || key === "Control" || key === "Alt" || key === "Meta";
+      }
 
       // True on phones and tablets: shows the touch buttons and touch texts instead of the keyboard ones.
       var touchMode = false;
@@ -301,7 +322,8 @@
       // ---------- After loading: "Click to play" ----------
       // The click lands on this screen, not on the game, so it cannot press a button on the game's start screen by accident.
       // It gives the page keyboard focus (needed inside the itch.io frame) and switches the sound on.
-      // A key press works too: the game gets that key as well (any key starts the race on its start screen).
+      // A key press works too, but it ONLY closes this screen (see closePlayScreen above): the game then shows its own
+      // start screen and the next key starts the race.
       function onReady(unityInstance) {
         clearInterval(tipTimer);
         onProgress(1);
@@ -312,14 +334,12 @@
           document.querySelector(".cc-play-hint").textContent = "sound on";
         }
         var started = false;
-        function startGame(event) {
+        function startGame() {
           if (started || loader.classList.contains("cc-failed")) {
             return;
           }
-          if (event.type === "keydown" && (event.key === "Tab" || event.key === "Shift" || event.key === "Control" || event.key === "Alt" || event.key === "Meta")) {
-            return; // keyboard users can still move around the page without starting
-          }
           started = true;
+          closePlayScreen = null; // from now on every key goes to the game
           unlockSound();
           window.focus();
           canvas.focus();
@@ -333,7 +353,7 @@
         // "click", not "pointerdown": the browser moves keyboard focus on mouse down, so only after it can the canvas keep it.
         // The play button is inside the loader, so its clicks (also Enter or Space on it) arrive here too.
         loader.addEventListener("click", startGame);
-        window.addEventListener("keydown", startGame);
+        closePlayScreen = startGame; // the capture listener at the top calls it for the first key
       }
 
       // ---------- Fullscreen button (top centre, hides while you drive) ----------
