@@ -88,7 +88,8 @@ namespace CarcavelosCircuit.RaceFlow
             painter.Stroke();
         }
 
-        // A short chequered bar across the road at the start/finish line: 2 rows of 4 little squares, black and white.
+        // The start/finish line: a chequered bar across the road, 2 rows of 5 squares, wider than the road so it sticks
+        // out on both sides, on a dark plate so the white squares still read on the white road.
         private void DrawStartBar(Painter2D painter)
         {
             Vector2 along = points[1] - points[0];
@@ -98,24 +99,34 @@ namespace CarcavelosCircuit.RaceFlow
             }
             along.Normalize();
             Vector2 across = new Vector2(-along.y, along.x);
-            const float square = 3f;
-            Vector2 corner = points[0] - across * (2f * square) - along * square;
+            const float square = 3.6f;
+            const int columns = 5;
+            const float plate = 1.6f; // dark rim round the squares
+            Vector2 corner = points[0] - across * (columns * 0.5f * square) - along * square;
+
+            painter.fillColor = new Color(0f, 0f, 0f, 0.85f);
+            FillBox(painter, corner - across * plate - along * plate, across * (columns * square + 2f * plate), along * (2f * square + 2f * plate));
             for (int row = 0; row < 2; row++)
             {
-                for (int column = 0; column < 4; column++)
+                for (int column = 0; column < columns; column++)
                 {
                     bool white = (row + column) % 2 == 0;
                     painter.fillColor = white ? Color.white : HudColors.Black;
-                    Vector2 a = corner + across * (column * square) + along * (row * square);
-                    painter.BeginPath();
-                    painter.MoveTo(a);
-                    painter.LineTo(a + across * square);
-                    painter.LineTo(a + across * square + along * square);
-                    painter.LineTo(a + along * square);
-                    painter.ClosePath();
-                    painter.Fill();
+                    FillBox(painter, corner + across * (column * square) + along * (row * square), across * square, along * square);
                 }
             }
+        }
+
+        // A filled box from one corner along two edges (the edges may be turned, so no Rect).
+        private static void FillBox(Painter2D painter, Vector2 corner, Vector2 edgeA, Vector2 edgeB)
+        {
+            painter.BeginPath();
+            painter.MoveTo(corner);
+            painter.LineTo(corner + edgeA);
+            painter.LineTo(corner + edgeA + edgeB);
+            painter.LineTo(corner + edgeB);
+            painter.ClosePath();
+            painter.Fill();
         }
     }
 }

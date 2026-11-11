@@ -25,7 +25,11 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("DEV ONLY: kart the test bots drive (RaceFlow's PlaceholderKart prefab, it implements IKartDrivable)")]
         private GameObject testBotKart;
 
-        private static readonly Color[] TestBotColours = { HudColors.Blue, HudColors.Coral, HudColors.Sand, HudColors.White, HudColors.BlueDeep };
+        // Five colours that stay apart on the dark map tile and on the white road (dev bots only; Role 3 picks the real ones).
+        private static readonly Color[] TestBotColours =
+        {
+            HudColors.Blue, HudColors.Coral, HudColors.Sand, new Color(0.35f, 0.76f, 0.49f, 1f), new Color(0.65f, 0.55f, 0.98f, 1f)
+        };
 
         private readonly RaceStandings standings = new RaceStandings();
         private RacerGrid grid;

@@ -34,8 +34,9 @@ namespace CarcavelosCircuit.RaceFlow
         private static readonly Color MedalGold = new Color(0.949f, 0.702f, 0.239f, 1f);   // --medal-gold #F2B33D
         private static readonly Color MedalSilver = new Color(0.773f, 0.800f, 0.839f, 1f); // --medal-silver #C5CCD6
         private static readonly Color MedalBronze = new Color(0.788f, 0.541f, 0.333f, 1f); // --medal-bronze #C98A55
-        private static readonly Color Panel = new Color(29f / 255f, 29f / 255f, 31f / 255f, 0.82f); // --cc-panel
-        private static readonly Color MapPanel = new Color(29f / 255f, 29f / 255f, 31f / 255f, 0.80f);
+        // --cc-panel's colour, a little denser (0.82 there): the coloured place number must keep its contrast over bright sand, sky or a kerb
+        private static readonly Color Panel = new Color(29f / 255f, 29f / 255f, 31f / 255f, 0.90f);
+        private static readonly Color MapPanel = new Color(29f / 255f, 29f / 255f, 31f / 255f, 0.92f); // denser still: a map over building windows or palms must read at a glance
         private static readonly Color Lip = new Color(0f, 0f, 0f, 0.45f);                   // --cc-lip
 
         [SerializeField]
@@ -224,7 +225,7 @@ namespace CarcavelosCircuit.RaceFlow
                 if (racer.IsPlayer)
                 {
                     playerSeen = true;
-                    PlaceCentred(playerMarker, point, 26f);
+                    PlaceCentred(playerMarker, point, 32f);
                     PlaceCentred(playerHalo, point, 22f);
                     playerMarker.style.rotate = new Rotate(Angle.Degrees(fit.ToMapAngle(racerRoot.forward)));
                     UpdateTrail(racer, point);
@@ -463,8 +464,8 @@ namespace CarcavelosCircuit.RaceFlow
             playerMarker.style.position = Position.Absolute;
             playerMarker.style.left = 0f;
             playerMarker.style.top = 0f;
-            playerMarker.style.width = 26f;
-            playerMarker.style.height = 26f;
+            playerMarker.style.width = 32f;
+            playerMarker.style.height = 32f;
             playerMarker.style.alignItems = Align.Center;
             playerMarker.style.justifyContent = Justify.Center;
             playerMarker.style.opacity = 0f;
@@ -481,9 +482,9 @@ namespace CarcavelosCircuit.RaceFlow
 
             TriangleMark arrow = new TriangleMark(Color.white, new Color(0f, 0f, 0f, 0.7f), 1.2f);
             arrow.style.position = Position.Absolute;
-            arrow.style.width = 10f;
-            arrow.style.height = 8f;
-            arrow.style.left = 8f;
+            arrow.style.width = 12f;
+            arrow.style.height = 10f;
+            arrow.style.left = 10f;
             arrow.style.top = 0f;
             playerMarker.Add(arrow);
         }
@@ -522,6 +523,7 @@ namespace CarcavelosCircuit.RaceFlow
             VisualElement side = new VisualElement();
             side.pickingMode = PickingMode.Ignore;
             side.style.marginLeft = 8f;
+            side.style.translate = new Translate(0f, 1.75f); // "TH" lines up with the top of the big number, "/ 6" with its baseline
             side.style.justifyContent = Justify.Center;
             positionBox.Add(side);
 
@@ -543,7 +545,7 @@ namespace CarcavelosCircuit.RaceFlow
             suffixRow.Add(chevron);
 
             positionTotal = MakeLabel("/ 1", 24f, HudColors.WithAlpha(HudColors.White, 0.7f));
-            positionTotal.style.marginTop = -2f;
+            positionTotal.style.marginTop = 7f; // its baseline sits on the big number's baseline
             positionTotal.style.letterSpacing = 1f;
             side.Add(positionTotal);
         }
