@@ -4,11 +4,15 @@ using UnityEngine.InputSystem;
 
 namespace CarcavelosCircuit.Driving
 {
-    // The kart (task D1). One invisible ball (Rigidbody + SphereCollider) carries all the physics.
+    // The kart (tasks D1 and D3). One invisible ball (Rigidbody + SphereCollider) carries all the physics.
     // We never let it roll over: only its heading (yaw) can change, so the kart cannot flip.
     // Each physics step we split the ball's velocity into "forward" and "sideways", change the forward part
     // with the pedals, and remove most of the sideways part (that is the grip).
-    // Drift, boost and the ramp jump come in later tasks (D3, D4); their IKartState values are fixed placeholders for now.
+    // Drift (hold Space while steering): less grip, so the kart slides; the longer it lasts the more it charges.
+    // Letting go of a charged drift gives a short boost. The charge rules live in DriftCharge (unit tested).
+    // Ramp jump (D4): when the ground ends the kart is airborne. Gravity and its speed carry it through the air,
+    // steering is weaker, and after the top of the jump it falls faster. It always lands upright, because only its
+    // heading can change. The model (Visual) tilts to the slope and levels out in the air, only for looks.
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(SphereCollider))]
     public class KartController : MonoBehaviour, IKartState
@@ -19,10 +23,16 @@ namespace CarcavelosCircuit.Driving
         [SerializeField, Tooltip("ONLY for Driving_TestBed: read the keys even when RaceFlow has not switched input on. Must be OFF in the Kart prefab")]
         private bool driveWithoutRaceFlow;
 
+        [SerializeField, Tooltip("The Visual child of the Kart. It tilts to the slope (looks only). Empty = no tilting")]
+        private Transform visual;
+
         private Rigidbody body;
         private SphereCollider ball;
+        private DriftCharge drift;
         private float throttleInput;   // +1 gas, -1 brake/reverse
         private float steerInput;      // +1 right, -1 left
+        private bool driftHeld;        // drift key (Space) is down
+        private float boostSecondsLeft;
         private bool grounded;
         private Vector3 groundNormal = Vector3.up;
 
@@ -37,17 +47,23 @@ namespace CarcavelosCircuit.Driving
             get { return tuning == null ? 0f : tuning.MaxSpeed; }
         }
 
-        // Drift and boost arrive in D3.
-        public bool IsDrifting { get { return false; } }
-        public float DriftCharge01 { get { return 0f; } }
-        public int DriftStage { get { return 0; } }
-        public bool IsBoosting { get { return false; } }
+        public bool IsDrifting { get { return drift != null && drift.IsActive; } }
+        public float DriftCharge01 { get { return drift == null ? 0f : drift.Charge01; } }
+        public int DriftStage { get { return drift == null ? 0 : drift.Stage; } }
+        public bool IsBoosting { get { return boostSecondsLeft > 0f; } }
 
         // Simple "is the ground under the ball" check. The ramp jump (D4) builds on it.
         public bool IsGrounded { get { return grounded; } }
 
+        // What the player steers right now (-1 left .. +1 right), so the model's steering wheel can follow it.
+        // It is the key input itself, so it is 0 whenever input is off (countdown, results).
+        public float Steer { get { return steerInput; } }
+
         // RaceFlow writes this every frame. The kart never switches it on by itself.
         public bool InputEnabled { get; set; }
+
+        // True when the keys may be read (the test-bed switch counts as "on").
+        private bool InputActive { get { return InputEnabled || driveWithoutRaceFlow; } }
 
         private void Awake()
         {
@@ -65,6 +81,20 @@ namespace CarcavelosCircuit.Driving
             slippery.dynamicFriction = 0f;
             slippery.frictionCombine = PhysicsMaterialCombine.Minimum;
             ball.sharedMaterial = slippery;
+
+            if (tuning != null)
+            {
+                drift = new DriftCharge(tuning.Stage1Seconds, tuning.Stage2Seconds,
+                    tuning.Stage1BoostSeconds, tuning.Stage2BoostSeconds);
+            }
+        }
+
+        private void Start()
+        {
+            if (tuning == null)
+            {
+                Debug.LogWarning("KartController has no KartTuning assigned, the kart cannot drive.", this);
+            }
         }
 
         // Keys are read every frame; physics runs in FixedUpdate.
@@ -72,9 +102,10 @@ namespace CarcavelosCircuit.Driving
         {
             throttleInput = 0f;
             steerInput = 0f;
+            driftHeld = false;
 
             Keyboard keyboard = Keyboard.current;
-            if (keyboard == null || !(InputEnabled || driveWithoutRaceFlow))
+            if (keyboard == null || !InputActive)
             {
                 return;
             }
@@ -82,6 +113,7 @@ namespace CarcavelosCircuit.Driving
             if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) throttleInput -= 1f;
             if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) steerInput += 1f;
             if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) steerInput -= 1f;
+            driftHeld = keyboard.spaceKey.isPressed;
         }
 
         private void FixedUpdate()
@@ -93,12 +125,18 @@ namespace CarcavelosCircuit.Driving
 
             float dt = Time.fixedDeltaTime;
             CheckGround();
+            if (boostSecondsLeft > 0f)
+            {
+                boostSecondsLeft -= dt;
+            }
+            UpdateDrift(dt);
+            body.angularVelocity = Vector3.zero; // a wall hit must not spin the kart, only steering turns it
+
             if (!grounded)
             {
-                return; // in the air gravity does the work (steering in the air comes with D4)
+                FlyThroughAir(dt);
+                return;
             }
-
-            body.angularVelocity = Vector3.zero; // a wall hit must not spin the kart, only steering turns it
 
             Vector3 velocity = body.linearVelocity;
 
@@ -112,16 +150,50 @@ namespace CarcavelosCircuit.Driving
             forwardSpeed = ApplyPedals(forwardSpeed, dt);
 
             // Grip: remove part of the sideways speed every step, so the kart goes where it points.
-            sidewaysSpeed *= Mathf.Clamp01(1f - tuning.SideGrip * dt);
+            // While drifting the grip is low, so the kart slides through the corner.
+            float speedBeforeGrip = Mathf.Sqrt(forwardSpeed * forwardSpeed + sidewaysSpeed * sidewaysSpeed);
+            float grip = IsDrifting ? tuning.SideGrip * tuning.DriftGripMultiplier : tuning.SideGrip;
+            sidewaysSpeed *= Mathf.Clamp01(1f - grip * dt);
+
+            // In a drift the slide turns into forward speed instead of disappearing (only a little drag),
+            // so a long drift does not stop the kart.
+            if (IsDrifting)
+            {
+                float speedAfterGrip = Mathf.Sqrt(forwardSpeed * forwardSpeed + sidewaysSpeed * sidewaysSpeed);
+                if (speedAfterGrip > 0.1f)
+                {
+                    float keep = speedBeforeGrip * (1f - tuning.DriftSpeedLoss * dt) / speedAfterGrip;
+                    forwardSpeed *= keep;
+                    sidewaysSpeed *= keep;
+                }
+            }
 
             body.linearVelocity = forward * forwardSpeed + right * sidewaysSpeed + groundNormal * upSpeed;
 
-            Steer(forwardSpeed, dt);
+            TurnKart(forwardSpeed, dt, 1f);
+        }
+
+        // In the air the pedals and the grip do nothing: the speed from the ramp carries the kart.
+        // Falling (after the top of the jump) gets extra gravity so the kart lands sooner and feels less floaty.
+        private void FlyThroughAir(float dt)
+        {
+            Vector3 velocity = body.linearVelocity;
+            if (velocity.y < 0f)
+            {
+                body.AddForce(Physics.gravity * (tuning.FallGravityMultiplier - 1f), ForceMode.Acceleration);
+            }
+            TurnKart(Vector3.Dot(velocity, transform.forward), dt, tuning.AirSteerFraction);
         }
 
         // Gas, brake/reverse, or roll out slowly when no key is pressed. Returns the new forward speed.
+        // While boosting the kart accelerates by itself towards the higher boost top speed.
         private float ApplyPedals(float forwardSpeed, float dt)
         {
+            if (IsBoosting)
+            {
+                float boostTop = tuning.MaxSpeed * tuning.BoostSpeedMultiplier;
+                return Mathf.MoveTowards(forwardSpeed, boostTop, tuning.BoostAcceleration * dt);
+            }
             if (throttleInput > 0f)
             {
                 // Pressing gas while rolling backwards is braking, so use the strong brake first.
@@ -136,12 +208,76 @@ namespace CarcavelosCircuit.Driving
             return Mathf.MoveTowards(forwardSpeed, 0f, tuning.CoastDeceleration * dt);
         }
 
-        // Turn the heading. Steering needs speed, and in reverse it turns the other way, like a real car.
-        private void Steer(float forwardSpeed, float dt)
+        // Start, charge, release or cancel the drift. Called every physics step.
+        private void UpdateDrift(float dt)
         {
+            // Speed over the ground: in a drift the kart points into the corner, so its forward speed
+            // drops even though it is still fast. That is why we measure the real movement here.
+            Vector3 velocity = body.linearVelocity;
+            float groundSpeed = new Vector3(velocity.x, 0f, velocity.z).magnitude;
+
+            if (!drift.IsActive)
+            {
+                bool fastEnough = groundSpeed > tuning.MaxSpeed * tuning.DriftStartSpeedFraction;
+                if (driftHeld && Mathf.Abs(steerInput) > tuning.DriftMinSteer && fastEnough && grounded)
+                {
+                    drift.Begin(steerInput > 0f ? 1 : -1);
+                }
+                return;
+            }
+
+            // Too slow, in the air, or input switched off (finish line, results, pause): drift ends, no boost.
+            bool tooSlow = groundSpeed < tuning.MaxSpeed * tuning.DriftMinSpeedFraction;
+            if (!grounded || tooSlow || !InputActive)
+            {
+                drift.Cancel();
+                return;
+            }
+
+            if (driftHeld)
+            {
+                // Steering into the corner charges faster than steering against it.
+                float intoTurn = steerInput * drift.Direction; // +1 into the corner, -1 against it
+                float chargeRate = Mathf.Lerp(tuning.ChargeRateAgainstTurn, tuning.ChargeRateIntoTurn, (intoTurn + 1f) / 2f);
+                drift.Tick(dt, chargeRate);
+                return;
+            }
+
+            // Key released: a charged drift gives a boost, an early release gives nothing.
+            float earned = drift.Release();
+            if (earned > boostSecondsLeft)
+            {
+                boostSecondsLeft = earned;
+            }
+        }
+
+        // Turn the heading. Steering needs speed, and in reverse it turns the other way, like a real car.
+        // In a drift the kart keeps turning into the corner; steering only makes the arc tighter or wider.
+        // strength 1 = normal steering, less in the air.
+        private void TurnKart(float forwardSpeed, float dt, float strength)
+        {
+            float steerAmount = steerInput;
+            if (IsDrifting)
+            {
+                float intoTurn = steerInput * drift.Direction;
+                steerAmount = drift.Direction * Mathf.Lerp(tuning.DriftMinTurn, tuning.DriftMaxTurn, (intoTurn + 1f) / 2f);
+            }
+
             float speedFactor = Mathf.Clamp01(Mathf.Abs(forwardSpeed) / tuning.FullSteerSpeed) * Mathf.Sign(forwardSpeed);
-            float turnDegrees = steerInput * tuning.TurnDegreesPerSecond * speedFactor * dt;
+            float turnDegrees = steerAmount * tuning.TurnDegreesPerSecond * strength * speedFactor * dt;
             body.MoveRotation(Quaternion.Euler(0f, turnDegrees, 0f) * body.rotation);
+        }
+
+        // Looks only: the model leans to the slope under the kart and levels out again in the air.
+        // The physics body never tilts, so this cannot affect driving or flipping.
+        private void LateUpdate()
+        {
+            if (visual == null || tuning == null)
+            {
+                return;
+            }
+            Quaternion level = Quaternion.FromToRotation(Vector3.up, groundNormal) * transform.rotation;
+            visual.rotation = Quaternion.Slerp(visual.rotation, level, tuning.VisualTiltSpeed * Time.deltaTime);
         }
 
         // One ray from the centre of the ball straight down. Checkpoint triggers are ignored.
@@ -154,15 +290,16 @@ namespace CarcavelosCircuit.Driving
             groundNormal = grounded ? hit.normal : Vector3.up;
         }
 
-        private void Start()
+        // Hitting a wall (a surface that is steep, not a road or a ramp) cancels the drift, no boost.
+        private void OnCollisionEnter(Collision collision)
         {
-            if (tuning == null)
+            if (IsDrifting && collision.GetContact(0).normal.y < 0.5f)
             {
-                Debug.LogWarning("KartController has no KartTuning assigned, the kart cannot drive.", this);
+                drift.Cancel();
             }
         }
 
-        // Teleport + stop everything (used by Retry and Recovery). Drift and boost are cleared here once D3 exists.
+        // Teleport + stop everything (used by Retry and Recovery): no velocity, no drift, no boost.
         public void ResetTo(Vector3 position, Quaternion rotation)
         {
             transform.SetPositionAndRotation(position, rotation);
@@ -172,6 +309,12 @@ namespace CarcavelosCircuit.Driving
             body.angularVelocity = Vector3.zero;
             throttleInput = 0f;
             steerInput = 0f;
+            driftHeld = false;
+            boostSecondsLeft = 0f;
+            if (drift != null)
+            {
+                drift.Cancel();
+            }
         }
     }
 }

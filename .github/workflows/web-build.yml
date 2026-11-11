@@ -21,7 +21,7 @@ on:
 
 concurrency:
   group: web-build
-  cancel-in-progress: true # a newer merge replaces a build that is still running
+  cancel-in-progress: false # a Unity build takes 20+ min; let it finish, the newest merge waits and builds next
 
 permissions:
   contents: read
