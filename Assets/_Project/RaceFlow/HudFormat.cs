@@ -7,8 +7,8 @@ namespace CarcavelosCircuit.RaceFlow
     // Plain C# with one reused char buffer, so each call creates exactly one string (the one the label needs).
     public static class HudFormat
     {
-        // The one place to tune digit width. Change it together with the font (spec: 0.55em for Barlow Condensed).
-        public const string DigitWidth = "0.6em";
+        // The one place to tune digit width. Change it together with the font (0.55em for Barlow Condensed, task R15).
+        public const string DigitWidth = "0.55em";
 
         private const string Open = "<mspace=" + DigitWidth + ">";
         private const string Close = "</mspace>";

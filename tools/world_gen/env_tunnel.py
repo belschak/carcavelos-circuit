@@ -14,6 +14,7 @@ import env_common as E
 import env_terrain
 
 FLOOR_HALF = E.ROUTE_WIDTH / 2 + 0.6     # road + narrow footway each side
+FOOTWAY_INNER = 0.065                    # footway height at the road edge: flush with the road (6 cm lift)
 CEILING = 3.9                            # clear height
 SLAB = 0.7
 CEIL_HALF = FLOOR_HALF + CEILING         # 45 degree walls
@@ -57,13 +58,14 @@ def build_shell(pts, col):
                 coords = ((0, ua * 6), (0, ub * 6), (CEIL_HALF, ub * 6), (CEIL_HALF, ua * 6))
             for loop, c in zip(face.loops, coords):
                 loop[uv].uv = c
-    # footways (raised strips between road edge and wall foot)
+    # footways (strips between road edge and wall foot). They start flush with the road and rise gently to the
+    # wall foot: the old 12 cm step at the road edge threw karts that drove close to the wall.
     for (pa, ra), (pb, rb) in zip(rings, rings[1:]):
         for side in (1, -1):
             _, na = frame(pts, pts.index(pa))
             _, nb = frame(pts, pts.index(pb))
-            vs = [bm.verts.new(at(pa, na, side * (E.ROUTE_WIDTH / 2), 0.12)), bm.verts.new(at(pa, na, side * FLOOR_HALF, 0.12)),
-                  bm.verts.new(at(pb, nb, side * FLOOR_HALF, 0.12)), bm.verts.new(at(pb, nb, side * (E.ROUTE_WIDTH / 2), 0.12))]
+            vs = [bm.verts.new(at(pa, na, side * (E.ROUTE_WIDTH / 2), FOOTWAY_INNER)), bm.verts.new(at(pa, na, side * FLOOR_HALF, 0.12)),
+                  bm.verts.new(at(pb, nb, side * FLOOR_HALF, 0.12)), bm.verts.new(at(pb, nb, side * (E.ROUTE_WIDTH / 2), FOOTWAY_INNER))]
             face = bm.faces.new(vs if side == -1 else vs[::-1])
             face.material_index = 1
     # vertex order above already makes walls and ceiling face into the tunnel (checked by hand)
