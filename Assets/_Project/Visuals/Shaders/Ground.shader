@@ -17,6 +17,7 @@
 //    reaches 50 m (and fades out from 40 m); the baked shadow fades in from _BakedShadow.x to .y metres from the
 //    camera and is combined with the realtime one by min(): where both say "shadow" the ground is as dark as one
 //    shadow, never darker (no double shadow), and beyond the realtime range the baked one carries on alone;
+//  - paved and bare ground (neither lawn, sand nor rock in the mask) gets grain and soft patches too (_Bare);
 //  - the fine detail (blades, grain, detail normal) now reaches _Detail.w = 250 m, and a mid-scale read of the same
 //    detail texture (_Mid.x metres per tile, turned 37 degrees) takes over between, so the 6 m tile never shows as
 //    a pattern and big lawns keep texture far out.
@@ -38,6 +39,7 @@ Shader "CarcavelosCircuit/Ground"
         _NearRect ("Fine map: world x0, z0, 1 / width, 1 / depth (0 = none)", Vector) = (0, 0, 0, 0)
         _BakedShadow ("Baked sun shadow: fade in from m, to m, strength, -", Vector) = (30, 42, 0.85, 0)
         _Detail ("Detail: small tile m, large tile m, fade from m, fade to m", Vector) = (6, 47, 70, 250)
+        _Bare ("Paved and bare ground (neither lawn, sand nor rock): grain, patches, normal, -", Vector) = (0.20, 0.12, 0.12, 0)
         _Mid ("Mid detail: tile m, strength, in from m, in to m", Vector) = (21, 0.75, 12, 70)
         _Grass ("Lawn: blades, patches, patch tint, normal", Vector) = (0.42, 0.34, 1, 0.6)
         _Sand ("Sand: ripples, grain, patches, normal", Vector) = (0.22, 0.26, 0.15, 1.0)
@@ -58,7 +60,7 @@ Shader "CarcavelosCircuit/Ground"
         CBUFFER_START(UnityPerMaterial)
             half4 _BaseColor, _WetColor;
             float4 _Detail, _StrataTile, _NearRect, _BakedShadow, _Mid;
-            half4 _Grass, _Sand, _WetSheen, _Rock, _RockFace, _RockWet, _RockWetTint;
+            half4 _Grass, _Sand, _WetSheen, _Rock, _RockFace, _RockWet, _RockWetTint, _Bare;
         CBUFFER_END
         ENDHLSL
 
@@ -162,8 +164,12 @@ Shader "CarcavelosCircuit/Ground"
                 stone *= lerp(_RockFace.x, _RockFace.y, face) * (1.0 - 0.35 * layerLine);
                 stone *= lerp(half3(1, 1, 1), _RockWetTint.rgb, 1.0 - smoothstep(_RockWet.x, _RockWet.y, pw.y));
 
-                half3 albedo = lerp(lerp(lerp(macro, lawn, mask.r), sand, mask.g), stone, rock);
-                half2 tilt = (bump.rg * (mask.r * _Grass.w + rock * _Rock.w) + bump.ba * (mask.g * _Sand.w * (1.0 - 0.6 * wet))) * fade;
+                // V16h: paved and bare ground (what is neither lawn, sand nor rock) is no longer flat colour: grain and
+                // soft patches from the same detail reads, and a little of the sand's normal
+                half bareShare = saturate(1.0 - mask.r - mask.g - rock);
+                half3 bare = macro * (1.0 + (fine.a - 0.5) * _Bare.x + patch * _Bare.y);
+                half3 albedo = lerp(lerp(lerp(bare, lawn, mask.r), sand, mask.g), stone, rock);
+                half2 tilt = (bump.rg * (mask.r * _Grass.w + rock * _Rock.w) + bump.ba * (mask.g * _Sand.w * (1.0 - 0.6 * wet) + bareShare * _Bare.z)) * fade;
                 half3 N = normalize(normalize(i.normalWS) + half3(tilt.x, 0.0, tilt.y));
 
                 #if defined(_MAIN_LIGHT_SHADOWS_SCREEN)

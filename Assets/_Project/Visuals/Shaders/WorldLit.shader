@@ -171,8 +171,10 @@ Shader "CarcavelosCircuit/WorldLit"
                 #endif
 
                 // vertex ambient occlusion: fully on the sky light, partly on the sun
-                half vertexAO = lerp(1.0, i.fogAndOcclusion.y, _Occlusion.x);
-                half sunAO = lerp(1.0, i.fogAndOcclusion.y, _Occlusion.y);
+                // (glossy surfaces take less of it: glass set back in a reveal stays light and mirrors the sky)
+                half matt = 1.0 - 0.75 * smoothness;
+                half vertexAO = lerp(1.0, i.fogAndOcclusion.y, _Occlusion.x * matt);
+                half sunAO = lerp(1.0, i.fogAndOcclusion.y, _Occlusion.y * matt);
                 AmbientOcclusionFactor ao = CreateAmbientOcclusionFactor(inputData, surface);
 
                 Light sun = GetMainLight(inputData.shadowCoord, pw, half4(1, 1, 1, 1));
