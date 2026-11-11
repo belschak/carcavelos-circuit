@@ -133,6 +133,9 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Grass: {r: 0.42, g: 0.34, b: 1, a: 0.6}
     - _Rock: {r: 0.4, g: 0.3, b: 0.35, a: 0.9}
+    - _RockFace: {r: 1.1, g: 0.45, b: 3.2, a: 0.3}
+    - _RockWet: {r: 0.35, g: 1.3, b: 0, a: 0}
+    - _RockWetTint: {r: 0.45, g: 0.46, b: 0.4, a: 0}
     - _Sand: {r: 0.22, g: 0.26, b: 0.15, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _StrataTile: {r: 15, g: 5, b: 0, a: 0}
