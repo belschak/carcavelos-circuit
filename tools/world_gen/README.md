@@ -11,6 +11,7 @@ BL=/Applications/Blender.app/Contents/MacOS/Blender
 $PY world_data.py          # OSM + elevation -> world_data.json, buildings.csv (keeps your edits)
 $PY route_from_sketch.py   # sketch + route_profile.json -> route.json (driving heights, zones, surfaces)
 $PY make_textures.py       # procedural textures -> textures/*.png (no photos, original mural)
+$PY make_sky.py            # painted golden-hour sky -> textures/sky_panorama.png (Unity skybox + reflections)
 $PY make_groundmap.py      # ground colour map from the OSM shapes -> textures/ground_colour.png
 $BL -b -P build_world.py   # -> out/CampusWorld.blend, CampusWorld.fbx, TrackSurface.fbx, RouteGuide.fbx, previews
 $BL -b -P render_beauty.py # -> out/beauty_*.png (EEVEE, sky, sun, kart-eye shots, hero kart)
@@ -42,10 +43,13 @@ Closed loop, 1,184 m, point 0 = south portal of the beach tunnel, point order = 
 | `env_trackside.py` | readability, exported with the track: painted edge lines 0.25 m inside each road edge (white on asphalt/tunnel floor/terracotta, graphite on the light concretes and calçada; none in the tunnel, across the jump or beside a kerb) and white chevron boards with Boost Orange arrows on the outside of the 4 sharpest outdoor corners (s 136, 256, 832, 1122). About 2,200 triangles |
 | `env_tunnel.py` | beach tunnel: trapezoid section, ceiling lights, white headwalls, our own mural |
 | `env_buildings.py` | campus facades (white walls, glass ground floor, ribbon windows, parapets), atrium glass roof with steel ribs, wedge-shaped Grand Auditorium, Horizon Hall cantilever; Portuguese colours and hip roofs around campus. OSM `building=roof` becomes an open canopy (0.3 m slab on slim pillars, none on the road); on a `drive_on_roof` building the parapet opens where the route crosses it. Drive-through passages keep a floor at driving height |
-| `env_interior.py` | the atrium hall along the passage: columns, glass walls, ceiling lights |
+| `env_interior.py` | the drive-through halls: columns, glass walls, ceiling lights. In the main building (`WIDE_HALLS`) the passage opens into bays up to 11 m from the centreline (2.5 m inside the outer facade, 45 degree ends); `passages()` is shared by the cut, the interior and the furniture |
+| `env_vegetation.py` | plant prototypes and placement. Since 2026-11-09 the stone pines and olives are "puffy": smooth crown lobes with custom normals (design reference), 424 / 316 triangles |
+| `env_props.py` | street props and furniture: lamps, benches, railings, bins, bollards, parasols, lounge chairs; since 2026-11-09 cafe groups (round tables, chairs, cream parasols) on the plazas and the promenade, violet flower troughs along the straights, round planters, and the atrium bays (cafe and study tables, one grand piano) |
 | `env_backdrop.py` | sea to the horizon, land beyond the edge, the 92 real buildings around, a far town, Forte de São Julião da Barra with its lighthouse |
 | `env_materials.py` | puts `textures/*.png` on the materials |
-| `env_render.py` | beauty renders (physical sky, low afternoon sun from the south-west as on the walk at 16:00) |
+| `env_render.py` | beauty renders (physical sky, golden-hour sun from the west-south-west, as in Unity) |
+| `make_sky.py` | painted sky panorama (2048 x 1024, Unity lat-long mapping, sun at azimuth 245 / 19 degrees like the Unity sun) |
 
 Unity import check (6000.3.28f1, 2026-11-08): world 92 meshes / about 101,000 triangles / 3.5 MB FBX, track 1,438 triangles, guide 1,186. Since 2026-11-09 the track has 4,154 triangles in Blender (edge lines and corner signs; not re-imported in Unity yet). Textures ≤ 1024 px except the mural and the ground map (2048).
 
@@ -55,7 +59,7 @@ Unity import check (6000.3.28f1, 2026-11-08): world 92 meshes / about 101,000 tr
 - Building heights: estimates from the photos (±2 m) where `source = photo-estimate`, otherwise 3 storeys.
 - The tunnel mural is an original design; the real murals, the surfer statue and the NOVA letters are other people's work or branding and are not copied.
 - No flicker by design: no two surfaces closer than ~4 cm outside the halls (OSM paths only in the ground colour map, 5 m ground sunk under the corridor with an edge skirt, beach 0.3-1.5 m above the water plane). Check with the layer test in NEXT.md history.
-- Unity: export_unity_bundle.py + CampusWorldBuilder.cs (self-test: 904 trees and props placed, bounds equal to Blender to the millimetre, road collider under every checked route point). Not done yet: water shader, LODs, Role 2's TrackInfo instead of the race placeholders.
+- Unity: export_unity_bundle.py + CampusWorldBuilder.cs (self-test 2026-11-09: 1,074 trees, props and furniture placed, bounds equal to Blender to the millimetre, road collider under every checked route point). Not done yet: water shader, LODs, Role 2's TrackInfo instead of the race placeholders.
 
 ## Checks
 
