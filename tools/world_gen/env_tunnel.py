@@ -21,6 +21,16 @@ CEIL_HALF = FLOOR_HALF + CEILING         # 45 degree walls
 MURAL_TILE_M = 12.0                      # one mural texture repeat along the wall
 HEADWALL_HALF = 14.0
 
+# V16e (survey V15, 3.3 / Appendix C 2.7 and 3.6): the tunnel floor is pale beige in-situ concrete, the ceiling flat
+# board-marked concrete, the ramp's walls and the north portal the same sand beige (#c8b890). Colour only: the
+# materials keep their names, they get these textures (make_coast_textures.py) through env_materials.TEXTURED.
+import env_materials                                                            # noqa: E402
+env_materials.TEXTURED["W_T_tunnel_floor"] = ("concrete_sand", 0.8)
+env_materials.TEXTURED["W_tunnel_concrete"] = ("coast_boardmarked", 0.9)
+env_materials.TEXTURED["W_T_cut_wall"] = ("coast_render_beige", 0.9)
+env_materials.MATTE.add("W_T_tunnel_floor")
+LIGHT_STEP, LIGHT_LEN = 3.0, 1.2          # linear battens along both wall tops, 3 m apart (W28_h135)
+
 
 def tunnel_points():
     return [p for p in E.route_points() if p["tunnel"]]
@@ -78,26 +88,40 @@ def build_shell(pts, col):
 
 
 def build_lights(pts, col):
+    """V16e: linear white battens (1.2 m) fixed to the top of both walls just under the ceiling, 3 m apart."""
     bm = bmesh.new()
-    for i in range(2, len(pts) - 2, 4):
-        p = pts[i]
+    count = 0
+    s0, s1 = pts[1]["s"], pts[-2]["s"]
+    k = 0
+    while s0 + k * LIGHT_STEP <= s1:
+        s = s0 + k * LIGHT_STEP
+        i = max(j for j in range(len(pts) - 1) if pts[j]["s"] <= s)
+        a, b = pts[i], pts[i + 1]
+        f = (s - a["s"]) / max(b["s"] - a["s"], 1e-6)
+        x, y, z = a["x"] + (b["x"] - a["x"]) * f, a["y"] + (b["y"] - a["y"]) * f, a["track_z"] + (b["track_z"] - a["track_z"]) * f
         t, nrm = frame(pts, i)
-        corners = [(p["x"] + t[0] * a + nrm[0] * s, p["y"] + t[1] * a + nrm[1] * s, p["track_z"] + CEILING - 0.04)
-                   for a, s in ((-1.0, -0.15), (1.0, -0.15), (1.0, 0.15), (-1.0, 0.15))]
-        bm.faces.new([bm.verts.new(c) for c in corners])
-    bm.normal_update()
-    for f in bm.faces:
-        if f.normal.z > 0:
-            f.normal_flip()
+        for side in (1, -1):
+            # on the sloping wall, 0.12 to 0.30 m under the ceiling, 3 cm in front of it
+            lo, hi = CEILING - 0.30, CEILING - 0.12
+            corners = [(x + t[0] * al + nrm[0] * side * (FLOOR_HALF + h - 0.04), y + t[1] * al + nrm[1] * side * (FLOOR_HALF + h - 0.04),
+                        z + h - 0.02) for al, h in ((-LIGHT_LEN / 2, lo), (LIGHT_LEN / 2, lo), (LIGHT_LEN / 2, hi), (-LIGHT_LEN / 2, hi))]
+            face = bm.faces.new([bm.verts.new(c) for c in corners])
+            face.normal_update()
+            if face.normal.x * nrm[0] * side + face.normal.y * nrm[1] * side > 0:      # look into the tunnel
+                face.normal_flip()
+            count += 1
+        k += 1
     mesh = bpy.data.meshes.new("Tunnel_Lights")
     bm.to_mesh(mesh)
     bm.free()
     mesh.materials.append(E.material("tunnel_light", "#FFF4D6", roughness=0.5, emission="#FFF4D6"))
+    print(f"  tunnel: {count} wall-top light battens, {LIGHT_STEP} m apart")
     return E.new_object("Tunnel_Lights", mesh, col)
 
 
-def build_portal(p, inward, cover, name, col):
-    """Headwall with the trapezoid opening, plus a cap over the terrain hole behind it."""
+def build_portal(p, inward, cover, name, col, beige=False):
+    """Headwall with the trapezoid opening, plus a cap over the terrain hole behind it. V16e: `beige` = the north
+    portal, sand-beige render like the ramp's walls (survey 3.6); the south one stays white concrete."""
     dx, dy = inward
     nrm = (-dy, dx)
     top = cover + 1.0
@@ -133,14 +157,25 @@ def build_portal(p, inward, cover, name, col):
     mesh = bpy.data.meshes.new(name)
     bm.to_mesh(mesh)
     bm.free()
-    mesh.materials.append(E.material("portal_concrete", "#ECEAE4", roughness=0.85))
+    uv = mesh.uv_layers.new(name="UVMap")              # the ramp walls' mapping (2 m tiles), for the beige render
+    for loop in mesh.loops:
+        co = mesh.vertices[loop.vertex_index].co
+        uv.data[loop.index].uv = ((co.x * nrm[0] + co.y * nrm[1]) / 2.0, co.z / 2.0)
+    mesh.materials.append(portal_material(beige))
     mesh.materials.append(E.material("lawn"))
     return E.new_object(name, mesh, col)
 
 
+def portal_material(beige):
+    if beige:
+        return E.material("T_cut_wall", CUT_WALL_COLOUR, roughness=0.9)
+    return E.material("portal_concrete", "#ECEAE4", roughness=0.85)
+
+
 BEAM_HALF = HEADWALL_HALF - 0.4              # V10c: broad flat lintel over each portal (S06, S07)
 BEAM_Z0, BEAM_Z1, BEAM_OUT = CEILING, CEILING + 1.4, 0.9
-CUT_WALL_COLOUR = "#DAC399"              # V10c: smooth warm-ochre render on the sunken ramps (S01, S02, S08)
+BEAM_OUT, BEAM_CHAMFER = 1.5, 0.8        # V16e: a deep fascia whose underside slopes up outwards (B01_h000, B02 zoom)
+CUT_WALL_COLOUR = "#C8B890"              # V16e: sand beige (survey 3.6; was V10c's warm ochre #DAC399)
 
 
 def box_faces(bm, corners_lo, corners_hi):
@@ -153,8 +188,9 @@ def box_faces(bm, corners_lo, corners_hi):
         bm.faces.new((lo[k], lo[(k + 1) % 4], hi[(k + 1) % 4], hi[k]))
 
 
-def build_portal_beam(p, inward, name, col):
-    """Flat concrete lintel beam in front of the headwall opening (above the clear height: drive corridor untouched)."""
+def build_portal_beam(p, inward, name, col, beige=False):
+    """Deep fascia in front of the headwall opening: a slab whose underside is chamfered, rising outwards from the
+    clear height (so nothing is lower than the opening: the drive corridor and the chase camera stay as they were)."""
     dx, dy = inward
     nrm = (-dy, dx)
     z0 = p["track_z"]
@@ -162,13 +198,55 @@ def build_portal_beam(p, inward, name, col):
     def pt(side, z, along):
         return (p["x"] + nrm[0] * side + dx * along, p["y"] + nrm[1] * side + dy * along, z0 + z)
     bm = bmesh.new()
-    rect = lambda z: [pt(-BEAM_HALF, z, 0.0), pt(-BEAM_HALF, z, -BEAM_OUT), pt(BEAM_HALF, z, -BEAM_OUT), pt(BEAM_HALF, z, 0.0)]
-    box_faces(bm, rect(BEAM_Z0), rect(BEAM_Z1))
+    profile = [(0.0, BEAM_Z0), (-BEAM_OUT, BEAM_Z0 + BEAM_CHAMFER), (-BEAM_OUT, BEAM_Z1), (0.0, BEAM_Z1)]   # (along, z)
+    left = [bm.verts.new(pt(-BEAM_HALF, z, al)) for al, z in profile]
+    right = [bm.verts.new(pt(BEAM_HALF, z, al)) for al, z in profile]
+    bm.faces.new(left)
+    bm.faces.new(right[::-1])
+    for k in range(4):
+        bm.faces.new((left[k], left[(k + 1) % 4], right[(k + 1) % 4], right[k]))
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     mesh = bpy.data.meshes.new(name)
     bm.to_mesh(mesh)
     bm.free()
-    mesh.materials.append(E.material("portal_concrete", "#ECEAE4", roughness=0.85))
+    uv = mesh.uv_layers.new(name="UVMap")
+    for loop in mesh.loops:
+        co = mesh.vertices[loop.vertex_index].co
+        uv.data[loop.index].uv = ((co.x * nrm[0] + co.y * nrm[1]) / 2.0, co.z / 2.0)
+    mesh.materials.append(portal_material(beige))
+    return E.new_object(name, mesh, col)
+
+
+WING = dict(inner=6.75, reach=12.0, out=9.6)   # V16e: the south portal's east wing wall (B01_h045, h090, h135)
+
+
+def build_wing_facet(p, inward, cover, name, col):
+    """One folded white wing wall on the east side of the south portal (right of the driving direction): two
+    triangular facets from the deck's corner down to the ground WING['reach'] metres in front of the mouth. It stands
+    on the cutting's bank, WING['inner'] m and more from the centreline (the opening and the bank are untouched)."""
+    dx, dy = inward
+    nrm = (-dy, dx)
+    z0 = p["track_z"]
+
+    def pt(side, z, along):
+        return (p["x"] + nrm[0] * side + dx * along, p["y"] + nrm[1] * side + dy * along, z)
+    foot_near = pt(-WING["inner"], z0 + 1.2, -0.05)
+    fx, fy, _z = pt(-WING["out"], 0.0, -WING["reach"])
+    foot_far = (fx, fy, E.ground_z(fx, fy) - 0.3)
+    top = pt(-(CEIL_HALF + 0.15), z0 + BEAM_Z1, -0.05)
+    back = pt(-HEADWALL_HALF, z0 + BEAM_Z1, -0.05)
+    hx, hy, _z = pt(-HEADWALL_HALF, 0.0, -0.05)
+    back_foot = (hx, hy, E.ground_z(hx, hy) - 0.3)
+    bm = bmesh.new()
+    for tri in ((foot_near, foot_far, top), (top, foot_far, back), (back, foot_far, back_foot)):
+        f = bm.faces.new([bm.verts.new(c) for c in tri])
+        f.normal_update()
+        if f.normal.z < 0:
+            f.normal_flip()
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(portal_material(False))
     return E.new_object(name, mesh, col)
 
 
@@ -214,8 +292,11 @@ def build():
     build_lights(pts, col)
     cover = env_terrain.PROFILE.get("tunnel_cover_m", 4.8)
     for (p, inward), name in zip(env_terrain.portals(), ("Tunnel_PortalSouth", "Tunnel_PortalNorth")):
-        build_portal(p, inward, cover, name, col)
-        build_portal_beam(p, inward, name.replace("Portal", "PortalBeam"), col)
+        north = name.endswith("North")
+        build_portal(p, inward, cover, name, col, beige=north)
+        build_portal_beam(p, inward, name.replace("Portal", "PortalBeam"), col, beige=north)
+        if not north:
+            build_wing_facet(p, inward, cover, "Tunnel_PortalWingSouth", col)
         if any(c["from_index"] <= p["i"] <= c["to_index"] for c in (E.ROUTE or {}).get("wall_cuts", [])):
             build_portal_jambs(p, inward, name.replace("Portal", "PortalJambs") + "_NoCollide", col)
     wall = E.material("T_cut_wall", CUT_WALL_COLOUR, roughness=0.9)        # V10c: ochre render (texture in env_materials)
