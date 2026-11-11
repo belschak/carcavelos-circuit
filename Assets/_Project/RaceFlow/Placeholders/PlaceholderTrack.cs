@@ -1,38 +1,16 @@
+using CarcavelosCircuit.Track;
 using UnityEngine;
 
 namespace CarcavelosCircuit.RaceFlow
 {
-    // STAND-IN for Noah's TrackInfo (Role 2, task T4) until it is merged.
-    // Same public members as the TrackInfo contract: Checkpoints, SpawnPoint, GetRespawnPoint.
-    public class PlaceholderTrack : MonoBehaviour
+    // OLD NAME for Role 2's TrackInfo (T4), kept only for the switch-over week.
+    // Since the swap (Q5) RaceFlow reads TrackInfo only. Two track builders still add this name:
+    // Visuals/Editor/CampusWorldBuilder.cs (Luc) and Track/Editor/NovaCampusBuilder.cs (help scene #31).
+    // Because this class is an empty subclass, Unity loads the saved fields of those scenes (checkpoints,
+    // spawnPoint) straight into TrackInfo's fields with the same names, so their scenes race as they are.
+    // Delete this file once both builders say AddComponent<TrackInfo>() (docs/explain/role4-walkthrough.md, section 5).
+    [AddComponentMenu("")] // hidden from Add Component: new tracks use TrackInfo
+    public class PlaceholderTrack : TrackInfo
     {
-        [SerializeField, Tooltip("All checkpoints, index 0 = start/finish line")]
-        private PlaceholderCheckpoint[] checkpoints;
-
-        [SerializeField, Tooltip("Start grid: where the kart stands before GO")]
-        private Transform spawnPoint;
-
-        public PlaceholderCheckpoint[] Checkpoints
-        {
-            get { return checkpoints; }
-        }
-
-        public Transform SpawnPoint
-        {
-            get { return spawnPoint; }
-        }
-
-        // Safe pose after the given checkpoint. Falls back to the start grid if something is missing.
-        public Transform GetRespawnPoint(int lastCheckpointIndex)
-        {
-            for (int i = 0; i < checkpoints.Length; i++)
-            {
-                if (checkpoints[i] != null && checkpoints[i].Index == lastCheckpointIndex && checkpoints[i].RespawnPoint != null)
-                {
-                    return checkpoints[i].RespawnPoint;
-                }
-            }
-            return spawnPoint;
-        }
     }
 }

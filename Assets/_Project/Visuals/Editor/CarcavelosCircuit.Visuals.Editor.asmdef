@@ -6,7 +6,8 @@
         "CarcavelosCircuit.RaceFlow",
         "CarcavelosCircuit.Visuals",
         "Unity.RenderPipelines.Core.Runtime",
-        "Unity.RenderPipelines.Universal.Runtime"
+        "Unity.RenderPipelines.Universal.Runtime",
+        "CarcavelosCircuit.Track.Editor"
     ],
     "includePlatforms": [
         "Editor"

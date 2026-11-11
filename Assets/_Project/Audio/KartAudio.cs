@@ -9,6 +9,9 @@ namespace CarcavelosCircuit.Audio
     // Engine and drift recordings are Luc's (Role 3), the rules for pitch and volume follow his handoff.
     // P4 polish: equal-power crossfade, a pretend 4-gear gearbox (revs climb and drop, short cut + pop on every
     // upshift), a throttle guess (lower and quieter when slowing down) and a tiny random pitch wobble.
+    // Audit 11: a thud on a wall bump, a whoosh on take-off, and the boost whoosh again for a chained boost.
+    // All three are guessed from IKartState alone by small plain C# classes (WallBumpDetector, TakeOffDetector,
+    // BoostCue), so they are unit tested and need nothing new from Role 1.
     public class KartAudio : MonoBehaviour
     {
         [Header("Looping sounds (one AudioSource each)")]
@@ -55,6 +58,12 @@ namespace CarcavelosCircuit.Audio
         [SerializeField, Tooltip("Short exhaust pop on every pretend upshift (sfx_shift_pop)")]
         private AudioClip shiftClip;
 
+        [SerializeField, Tooltip("Thud when the kart hits a wall (sfx_wall_bump)")]
+        private AudioClip bumpClip;
+
+        [SerializeField, Tooltip("Airy whoosh when the kart takes off from a ramp or an edge (sfx_takeoff_whoosh)")]
+        private AudioClip takeOffClip;
+
         [Header("Mix")]
         [SerializeField, Tooltip("How fast the revs may rise and fall, in 'full range' per second")]
         private float revRisePerSecond = 2.5f;
@@ -96,6 +105,22 @@ namespace CarcavelosCircuit.Audio
         [SerializeField, Tooltip("A jump further than this in one frame is a teleport (R, fall recover, retry), not driving")]
         private float teleportDistance = 10f;
 
+        [Header("Wall bump and take-off (audit 11)")]
+        [SerializeField, Tooltip("Speed lost in one frame (m/s) before it counts as a wall bump")]
+        private float bumpMinSpeedDrop = 4f;
+
+        [SerializeField, Tooltip("Speed lost in one frame at which the thud is at full volume (m/s)")]
+        private float bumpFullSpeedDrop = 15f;
+
+        [SerializeField, Tooltip("The drop per second must be above this (m/s2). The kart brakes at 30 at most, so a brake is never a bump")]
+        private float bumpMinDeceleration = 60f;
+
+        [SerializeField, Tooltip("Seconds after a thud before the next one can play (grinding along a wall = one thud)")]
+        private float bumpCooldownSeconds = 0.4f;
+
+        [SerializeField, Tooltip("Air time before the take-off whoosh plays (a small bump in the road is shorter)")]
+        private float takeOffAirSeconds = 0.15f;
+
         private IKartState kart;
         private float revs;       // smoothed 0..1 revs inside the current gear: drives the PITCH
         private float speedRevs;  // smoothed 0..1 speed: drives the MIX of the two loops and the volume
@@ -105,8 +130,10 @@ namespace CarcavelosCircuit.Audio
         private float engineLevel = 1f;  // set by RaceMusic: quieter engine on the results screen
         private float effectsLevel = 1f; // same for drift, wind, boost, landing
         private bool wasDrifting;
-        private bool wasBoosting;
         private bool wasGrounded = true;
+        private WallBumpDetector bumpDetector;
+        private TakeOffDetector takeOffDetector;
+        private readonly BoostCue boostCue = new BoostCue();
         private int lastDriftStage;
         private float airSeconds;
         private Vector3 lastPosition;
@@ -129,6 +156,9 @@ namespace CarcavelosCircuit.Audio
             StartSilent(windSource);
             lastPosition = transform.position;
             gearbox = new VirtualGearbox(gears);
+            bumpDetector = new WallBumpDetector(bumpMinSpeedDrop, bumpMinDeceleration, bumpCooldownSeconds);
+            takeOffDetector = new TakeOffDetector(takeOffAirSeconds);
+            takeOffDetector.Reset(); // the kart may settle onto the grid first: no whoosh for that
         }
 
         // Called by RaceMusic (RaceFlow) when the race phase changes, e.g. quieter engine on the results screen.
@@ -153,13 +183,29 @@ namespace CarcavelosCircuit.Audio
                 airSeconds = 0f;
                 wasGrounded = true;
                 throttle.Reset(); // the speed jump of a teleport is not the driver accelerating
+                bumpDetector.Reset(); // nor is the speed going to 0 a wall bump
+                takeOffDetector.Reset(); // nor is dropping onto the respawn point a jump
+                boostCue.Reset();
             }
             lastPosition = position;
 
             UpdateEngine(speed01, dt);
             UpdateDrift(dt);
             UpdateWind(speed01);
-            UpdateBoostAndLanding(dt);
+            bool bumped = UpdateWallBump(dt);
+            UpdateBoostAndLanding(dt, bumped);
+        }
+
+        // Thud on a wall bump, louder for a harder hit (WallBumpDetector).
+        private bool UpdateWallBump(float dt)
+        {
+            if (!bumpDetector.Update(kart.Speed, kart.IsGrounded, kart.InputEnabled, dt))
+            {
+                return false;
+            }
+            float loudness = WallBumpDetector.VolumeFor(bumpDetector.LastDrop, bumpMinSpeedDrop, bumpFullSpeedDrop);
+            PlayOneShot(effectSource, bumpClip, 0.9f * loudness);
+            return true;
         }
 
         // Two loops crossfaded by speed, pitched by pretend gear revs. Idle while the player cannot drive.
@@ -265,14 +311,19 @@ namespace CarcavelosCircuit.Audio
             windSource.pitch = 0.8f + 0.4f * speed01;
         }
 
-        private void UpdateBoostAndLanding(float dt)
+        private void UpdateBoostAndLanding(float dt, bool bumpedThisFrame)
         {
-            // Boost: whoosh on the frame the boost starts.
-            if (kart.IsBoosting && !wasBoosting)
+            // Boost: whoosh on the frame the boost starts, and again for a chained boost (BoostCue).
+            if (boostCue.Update(kart.IsBoosting, kart.IsDrifting, kart.DriftStage, kart.IsGrounded, kart.InputEnabled, bumpedThisFrame))
             {
                 PlayOneShot(effectSource, boostClip, 0.9f);
             }
-            wasBoosting = kart.IsBoosting;
+
+            // Take-off: whoosh once the kart has been in the air long enough to be a real jump.
+            if (takeOffDetector.Update(kart.IsGrounded, kart.InputEnabled, dt))
+            {
+                PlayOneShot(effectSource, takeOffClip, 0.7f);
+            }
 
             // Landing after a jump.
             if (!kart.IsGrounded)
