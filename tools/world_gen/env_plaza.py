@@ -7,8 +7,8 @@ Driving surfaces (collection Track_Surface, exported with the track, colliders i
                                      cut into the same mesh (no second surface anywhere)
   Track_PlazaLow                     Floor-0 paving: the courtyard floor, the voids beside the stairs, the landing
                                      of the stair slot and the underpass
-  Track_PlazaStairs_NoCollide        what you see of the stairs: steps on the east half, seating tiers on the west
-                                     half, and the steps in the slot. No collider (CampusWorldBuilder: "NoCollide")
+  Track_PlazaStairs_NoCollide        what you see of the stairs: low pale-terracotta steps over the full width (V16),
+                                     the steps in the slot and on the climb. No collider (CampusWorldBuilder: "NoCollide")
   Track_PlazaDrive_ColliderOnly      what the kart drives on, ONE welded mesh: the deck, the stairs' smooth profile
                                      3.5 cm above the step noses with a rounded ripple of plaza_plan.JUDDER_M per
                                      step, and a strip at each end that passes through the road's surface (see
@@ -17,9 +17,10 @@ Driving surfaces (collection Track_Surface, exported with the track, colliders i
   Track_PlazaSlotDrive_ColliderOnly  the smooth slope over the steps in the stair slot
 World (collection World_Plaza, CampusWorld.fbx):
   World_PlazaWalls                   retaining walls round the courtyard and under the deck's south edge, the stairs'
-                                     cheeks, the slot's walls, the underpass, the deck's edge to the lawn, planters,
-                                     the planted barrier across the gap to Horizon Hall
-  World_PlazaFences                  kerb, posts and rails (to look at)
+                                     cheeks, the slot's walls, the underpass, the deck's edge to the lawn, the funnel's
+                                     hedge boxes, the planted barrier across the gap to Horizon Hall; V16: conical pots,
+                                     the loggia's benches, the east strip's lamp columns
+  World_PlazaFences                  pale kerb, flat-bar posts, top rail and the bar sheets (V16: satin steel)
   World_PlazaGuard_ColliderOnly      an upright strip behind every fence: no kart gets over or through a railing
 """
 import math
@@ -32,9 +33,11 @@ from mathutils.geometry import delaunay_2d_cdt, tessellate_polygon
 import env_common as E
 import plaza_plan as P
 
-TILE_OCHRE = 3.0            # m per texture tile (slabs 3 x 3 m)
-TILE_GLASS = 2.5            # two 1.25 x 2.5 m panels
+TILE_OCHRE = P.PAVE_BAY      # m per texture tile (V16: one saw-cut bay of 5 m; V10i: slabs 3 x 3 m)
+TILE_GLASS = 2.5            # (V10i; V16 lays the glass pane by pane, glass_uv)
+TILE_STEP = 1.5             # m across the steps per tile of the terracotta texture (one tread deep)
 STEP_UNDER = 0.035          # m: the step noses lie this far under the driving surface
+RAIL_COLOUR = P.RAIL_COLOUR
 GUARD_H = 1.5
 
 
@@ -53,17 +56,20 @@ def _textured(name, colour, base, roughness):
 def mat(key):
     import env_track
     if key == "ochre":
-        return _textured("T_plaza_ochre", "#E3BE86", "plaza_ochre", 0.85)
+        return _textured("T_plaza_ochre", "#C9B388", "plaza_ochre", 0.85)      # V16 (survey V15); V10i: #E3BE86
     if key == "glass":
         return _textured("T_skylight", "#9DBAC0", "skylight_glass", 0.35)
     if key == "terracotta":             # own material (the track's W_T_terracotta carries a roughness map)
-        return _textured("plaza_terracotta", "#C8664A", "terracotta_steps", 0.85)
+        return _textured("plaza_terracotta", "#B08A72", "plaza_terracotta", 0.85)   # V16: pale salmon; V10i: #C8664A
     if key == "floor":
         return env_track.surface_material("concrete_polished")
     if key == "white":
         return E.material("B_wall_white", "#EAEAEC", 0.85)
     if key == "steel":
-        return E.material("plaza_rail", "#4A4E53", roughness=0.45, metallic=0.6)
+        return E.material("plaza_rail", RAIL_COLOUR, roughness=0.55, metallic=0.15)   # V16: satin, light (V10i: #4A4E53)
+    if key == "bars":                   # V16: the campus' bar railing as an alpha-clipped sheet (shared material)
+        import env_campus
+        return env_campus.railing_material()
     if key == "dark":
         return E.material("plaza_dark", "#3B3E42", 0.7)
     if key == "hedge":
@@ -87,6 +93,8 @@ class Mesh:
         for k, loop in enumerate(f.loops):
             if uvs:
                 loop[self.uv].uv = uvs[k]
+            elif key == "ochre":                                # V16: saw-cut bays on the building grid
+                loop[self.uv].uv = pave_uv(loop.vert.co.x, loop.vert.co.y)
             else:
                 co = loop.vert.co
                 loop[self.uv].uv = (co.x / tile, co.y / tile)
@@ -129,6 +137,29 @@ class Mesh:
             obj.hide_render = True
             obj["collider_only"] = 1
         return obj
+
+
+_PC, _PS = math.cos(P.PAVE_TURN), math.sin(P.PAVE_TURN)
+
+
+def pave_uv(x, y):
+    """Paving UVs: one tile = one bay of P.PAVE_BAY, the grid turned onto the building axes (bearing 340 / 70)."""
+    dx, dy = x - P.PAVE_ORIGIN[0], y - P.PAVE_ORIGIN[1]
+    return ((dx * _PC + dy * _PS) / P.PAVE_BAY, (-dx * _PS + dy * _PC) / P.PAVE_BAY)
+
+
+def glass_uv(name):
+    """UVs of a skylight: its own frame, one texture tile per pane (P.SKYLIGHT_PANES), so the glazing bars lie on
+    the field's own edges whatever its shape (two of the four are parallelograms)."""
+    p0, p1, _p2, p3 = P.SKYLIGHTS[name]
+    e1, e2 = (p1[0] - p0[0], p1[1] - p0[1]), (p3[0] - p0[0], p3[1] - p0[1])
+    det = e1[0] * e2[1] - e1[1] * e2[0]
+    n1, n2 = P.SKYLIGHT_PANES[name]
+
+    def uv(x, y):
+        dx, dy = x - p0[0], y - p0[1]
+        return ((dx * e2[1] - dy * e2[0]) / det * n1, (e1[0] * dy - e1[1] * dx) / det * n2)
+    return uv
 
 
 def strip(a, b, half):
@@ -268,15 +299,17 @@ def build_deck(col):
             continue
         if P.inside(cx, cy, P.KICK_ON_DECK):                    # V14b: the kicker stands here (own surface, welded on)
             continue
-        key = "ochre"
-        if any(P.inside(cx, cy, r) for r in P.SKYLIGHTS.values()):
-            key = "glass"
-        elif P.inside(cx, cy, P.LIB_GROUND):
+        key, sky = "ochre", None
+        for name, r in P.SKYLIGHTS.items():
+            if P.inside(cx, cy, r):
+                key, sky = "glass", name
+        if sky is None and P.inside(cx, cy, P.LIB_GROUND):
             key = "floor"
         pts = [(v.x, v.y, P.deck_z(v.x, v.y)) for v in tri]
         if (pts[1][0] - pts[0][0]) * (pts[2][1] - pts[0][1]) - (pts[1][1] - pts[0][1]) * (pts[2][0] - pts[0][0]) < 0:
             pts.reverse()
-        m.face(pts, key, tile={"ochre": TILE_OCHRE, "glass": TILE_GLASS, "floor": 2.0}[key])
+        uvs = [glass_uv(sky)(x, y) for x, y, _z in pts] if sky else None       # V16: pane by pane
+        m.face(pts, key, uvs, tile={"ochre": TILE_OCHRE, "glass": TILE_GLASS, "floor": 2.0}[key])
         tris.append(pts)
         count[key] += 1
     m.finish(col)
@@ -524,21 +557,27 @@ def build_steps(m, point, zfn, s0, s1, treads, u0, u1, z_before, z_after, key, t
     d = (s1 - s0) / treads
     prev = z_before
     k = 0
+    terra = key == "terracotta"            # V16: the terracotta texture is one tread deep (a dark line at each nosing)
+    ua, ub = u0 / (TILE_STEP if terra else tile), u1 / (TILE_STEP if terra else tile)
+
+    def riser(s, lo, hi):
+        uv = [(ua, 0.42), (ub, 0.42), (ub, 0.58), (ua, 0.58)] if terra else \
+             [(ua, lo / tile), (ub, lo / tile), (ub, hi / tile), (ua, hi / tile)]
+        m.face([(*point(s, u0), lo), (*point(s, u1), lo), (*point(s, u1), hi), (*point(s, u0), hi)], key, uv)
     while k < treads:
         a, b = s0 + k * d, s0 + min(k + tier, treads) * d
         z = zfn(a) - STEP_UNDER
         if z > prev + 0.005:                                 # riser
-            m.face([(*point(a, u0), prev), (*point(a, u1), prev), (*point(a, u1), z), (*point(a, u0), z)], key,
-                   [(u0 / tile, prev / tile), (u1 / tile, prev / tile), (u1 / tile, z / tile), (u0 / tile, z / tile)])
+            riser(a, prev, z)
         else:
             z = prev
-        m.face([(*point(a, u0), z), (*point(a, u1), z), (*point(b, u1), z), (*point(b, u0), z)], key,
-               [(u0 / tile, a / tile), (u1 / tile, a / tile), (u1 / tile, b / tile), (u0 / tile, b / tile)])
+        uv = [(ua, 0.0), (ub, 0.0), (ub, 1.0), (ua, 1.0)] if terra else \
+             [(ua, a / tile), (ub, a / tile), (ub, b / tile), (ua, b / tile)]
+        m.face([(*point(a, u0), z), (*point(a, u1), z), (*point(b, u1), z), (*point(b, u0), z)], key, uv)
         prev = z
         k += tier
     if z_after > prev + 0.005:                               # last riser, up to the deck
-        m.face([(*point(s1, u0), prev), (*point(s1, u1), prev), (*point(s1, u1), z_after), (*point(s1, u0), z_after)], key,
-               [(u0 / tile, prev / tile), (u1 / tile, prev / tile), (u1 / tile, z_after / tile), (u0 / tile, z_after / tile)])
+        riser(s1, prev, z_after)
 
 
 def tread_z(zfn, s0, s1, treads, s, tier=1):
@@ -555,16 +594,10 @@ def build_stairs(col):
     zmain = lambda s: P.stair_profile(s) + P.LIFT                      # noqa: E731
     zslot = lambda s: P.slot_profile(s) + P.LIFT                       # noqa: E731
     vis = Mesh("Track_PlazaStairs_NoCollide", ["terracotta", "ochre"])
-    # main stairs: steps on the east half, seating tiers (two steps each) on the west half
-    build_steps(vis, P.stair_point, zmain, 0.0, length, treads, 0.0, half, P.LOW_Z, zmain(length), "terracotta")
-    build_steps(vis, P.stair_point, zmain, 0.0, length, treads, -half, 0.0, P.LOW_Z, zmain(length), "terracotta", tier=2)
-    d = length / treads
-    for k in range(1, treads, 2):                             # the face between a tier and the higher step beside it
-        a, b = k * d, (k + 1) * d
-        lo, hi = tread_z(zmain, 0, length, treads, a + 0.01, 2), tread_z(zmain, 0, length, treads, a + 0.01, 1)
-        if hi > lo + 0.005:
-            vis.face([(*P.stair_point(a, 0.0), lo), (*P.stair_point(a, 0.0), hi), (*P.stair_point(b, 0.0), hi), (*P.stair_point(b, 0.0), lo)],
-                     "terracotta", [(a, lo), (a, hi), (b, hi), (b, lo)])
+    # main stairs. V16 (survey V15, section 4 item 2): low steps over the full width, 21 risers of about 0.16 m
+    # (V10i: steps on the east half, seating tiers of two steps each on the west half). The steps keep their place under
+    # the driving surface: tread k lies STEP_UNDER below the profile at its own riser, as before.
+    build_steps(vis, P.stair_point, zmain, 0.0, length, treads, -half, half, P.LOW_Z, zmain(length), "terracotta")
     # the stair in the slot
     build_steps(vis, P.slot_point, zslot, P.SLOT_LANDING, P.SLOT_LEN, P.SLOT_RISERS - 1, 0.0, P.SLOT_W, P.LOW_Z, zslot(P.SLOT_LEN),
                 "ochre", tile=TILE_OCHRE)
@@ -619,7 +652,7 @@ def build_walls(col):
     treads = P.STAIR_RISERS - 1
     zmain = lambda s: P.stair_profile(s) + P.LIFT                       # noqa: E731
     d = P.STAIR_LEN / treads
-    for u, tier, out in ((P.STAIR_HALF, 1, P.STAIR_RIGHT), (-P.STAIR_HALF, 2, (-P.STAIR_RIGHT[0], -P.STAIR_RIGHT[1]))):
+    for u, tier, out in ((P.STAIR_HALF, 1, P.STAIR_RIGHT), (-P.STAIR_HALF, 1, (-P.STAIR_RIGHT[0], -P.STAIR_RIGHT[1]))):   # V16: steps on both halves
         for k in range(0, treads, tier):
             a, b = k * d, min(k + tier, treads) * d
             z = max(tread_z(zmain, 0, P.STAIR_LEN, treads, a + 0.01, tier), P.LOW_Z)
@@ -675,26 +708,61 @@ def build_walls(col):
     ring = strip(*P.GAP_BARRIER, P.BARRIER_HALF)
     m.prism(ring, P.DECK_Z - 0.05, P.DECK_Z + P.BARRIER_H, "white")
     m.prism(strip(*P.GAP_BARRIER, P.BARRIER_HALF - 0.15), P.DECK_Z + P.BARRIER_H - 0.05, P.DECK_Z + P.BARRIER_H + 0.55, "hedge")
-    # long planters with a clipped hedge and the dark faceted lounge blocks
-    for a, b in PLANTERS:
-        m.prism(strip(a, b, 0.55), P.DECK_Z - 0.05, P.DECK_Z + 0.5, "white")
-        m.prism(strip(a, b, 0.42), P.DECK_Z + 0.45, P.DECK_Z + 0.95, "hedge")
+    # V16 (survey V15: no hedges, planters or loungers on the plaza): V10i's two hedge planters and three lounge blocks
+    # are gone; the hedge boxes of the shortcut's funnel stay exactly (they guide the yellow route).
     for a, b in zip(P.FUNNEL, P.FUNNEL[1:]):                   # V14b: hedge boxes that lead the climb's exit to checkpoint 10
         m.prism(strip(a, b, 0.5), P.DECK_Z - 0.05, P.DECK_Z + 0.5, "white")
         m.prism(strip(a, b, 0.37), P.DECK_Z + 0.45, P.DECK_Z + 0.95, "hedge")
-    for (x, y), turn in LOUNGERS:
-        c, s = math.cos(turn), math.sin(turn)
-        base = [(-1.0, -0.45), (1.0, -0.45), (1.0, 0.45), (-1.0, 0.45)]
-        ring = [(x + px * c - py * s, y + px * s + py * c) for px, py in base]
-        back = lambda qx, qy: P.DECK_Z + 0.42 + 0.38 * max(0.0, ((qx - x) * c + (qy - y) * s) / 1.0)   # noqa: E731
-        m.prism(ring, P.DECK_Z - 0.05, back, "dark")
+    build_furniture(m)
     m.finish(col)
 
 
-# planters (hedge boxes) on the plaza side of the fence where the road is far enough away, and round the stair slot
-PLANTERS = [((72.7, 88.0), (71.65, 92.7)),             # along the fence in the pocket north of the courtyard's corner
-            ((92.3, 96.0), (87.0, 102.0))]            # east side of the stair slot
-LOUNGERS = [((104.3, 22.3), 0.35), ((106.6, 26.6), 0.35), ((109.8, 30.2), 0.35)]    # survey: three south of the library
+def _round(m, x, y, r0, r1, z0, z1, key, sides=8, top=True):
+    """Upright frustum (radius r0 at z0, r1 at z1), looking outwards."""
+    for k in range(sides):
+        a0, a1 = 2 * math.pi * k / sides, 2 * math.pi * (k + 1) / sides
+        m.face([(x + math.cos(a0) * r0, y + math.sin(a0) * r0, z0), (x + math.cos(a1) * r0, y + math.sin(a1) * r0, z0),
+                (x + math.cos(a1) * r1, y + math.sin(a1) * r1, z1), (x + math.cos(a0) * r1, y + math.sin(a0) * r1, z1)], key)
+    if top:
+        m.face([(x + math.cos(2 * math.pi * k / sides) * r1, y + math.sin(2 * math.pi * k / sides) * r1, z1) for k in range(sides)], key)
+
+
+def loggia_point(u, v):
+    """u metres east along the library's south front from its south-west corner, v metres into the loggia."""
+    sw, se = P.LIB_SOUTH_WING[0], P.LIB_SOUTH_WING[1]
+    tx, ty, _d = P._unit(*sw, *se)
+    return (sw[0] + tx * u - ty * v, sw[1] + ty * u + tx * v), (tx, ty)
+
+
+def east_lamps():
+    """Positions of the slender lamp columns in the east strip's tree line, between the trees."""
+    (ax, ay), (bx, by) = P.EAST_ROW
+    return [(ax + (bx - ax) * (k + 0.5) / P.EAST_LAMPS, ay + (by - ay) * (k + 0.5) / P.EAST_LAMPS) for k in range(P.EAST_LAMPS)]
+
+
+def build_furniture(m):
+    """V16, what the survey shows on the plaza: dark conical pots, long low dark benches in the library's loggia,
+    slender black lamp columns in the east strip's tree line. Solid (World_PlazaWalls has a collider), so each is
+    checked against the race line (keep_clear stops the build under P.SOLID_CLEAR)."""
+    for (x, y), _olive in P.POTS:
+        keep_clear("pots", x, y, P.POT_R)
+        z = P.surface_z(x, y)
+        _round(m, x, y, P.POT_R * 0.62, P.POT_R, z - 0.02, z + P.POT_H, "dark", top=False)
+        _round(m, x, y, P.POT_R - 0.05, P.POT_R - 0.05, z + P.POT_H - 0.07, z + P.POT_H - 0.07, "dark")    # the soil
+    length, depth, height = P.BENCH
+    for u, v, turn in P.BENCHES:
+        (x, y), (tx, ty) = loggia_point(u, v)
+        if turn:
+            tx, ty = -ty, tx
+        keep_clear("benches", x, y, length / 2)
+        ring = [(x + tx * sx * length / 2 - ty * sy * depth / 2, y + ty * sx * length / 2 + tx * sy * depth / 2)
+                for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+        m.prism(ring, P.DECK_Z - 0.02, P.DECK_Z + height, "dark")
+    for x, y in east_lamps():                                    # square, 0.12 m, no arm, a short light head
+        keep_clear("lamp columns", x, y)
+        z = E.ground_z(x, y)
+        for half, z0, z1 in ((0.06, z - 0.3, z + P.LAMP_H), (0.09, z + P.LAMP_H - 0.45, z + P.LAMP_H + 0.02)):
+            m.prism([(x - half, y - half), (x + half, y - half), (x + half, y + half), (x - half, y + half)], z0, z1, "dark")
 
 
 def fence_lines():
@@ -723,30 +791,103 @@ def _bar(m, a, b, half_w, z0a, z0b, h, key):
     m.face([lo[2], lo[3], hi[3], hi[2]], key)
 
 
+def clear_m(x, y):
+    """Distance to the race line: route.json, and the line into the hall's atrium door (hall_join.py)."""
+    return min(E.distance_to_route(x, y), P.line_distance(x, y, P.HALL_JOIN))
+
+
+_CLEAR = {}
+
+
+def keep_clear(what, x, y, reach=0.0):
+    """Stops the build when a solid piece of the plaza's dressing stands closer than P.SOLID_CLEAR to the line."""
+    d = clear_m(x, y) - reach
+    if d < P.SOLID_CLEAR:
+        raise RuntimeError(f"plaza: {what} at ({x:.1f}, {y:.1f}) is {d:.2f} m from the race line (needs {P.SOLID_CLEAR})")
+    _CLEAR[what] = min(d, _CLEAR.get(what, 1e9))
+    return d
+
+
+def _void_side(a, b):
+    """+1 if the lower ground lies to the left of a -> b, else -1: the kerb's width goes to that side, its face on
+    the road's side stays where V10i's kerb had it."""
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    d = math.hypot(dx, dy) or 1.0
+    nx, ny = -dy / d, dx / d
+    mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
+
+    def level(sign):
+        z = P.surface_z(mx + nx * 0.6 * sign, my + ny * 0.6 * sign)
+        return P.DECK_Z if z is None else z
+    left, right = level(1), level(-1)
+    if abs(left - right) > 0.02:
+        return 1 if left < right else -1
+    return 1 if E.distance_to_route(mx + nx, my + ny) > E.distance_to_route(mx - nx, my - ny) else -1
+
+
+def _kerb(m, a, b, side, drop):
+    """The pale kerb under a railing: P.KERB_IN towards the road, P.KERB_OUT towards the void, P.KERB_H high; `drop`
+    = how far it reaches down (on the stairs it goes down into the steps: the sloping white upstand)."""
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    d = math.hypot(dx, dy) or 1.0
+    nx, ny = -dy / d * side, dx / d * side                     # towards the void
+    lo = [(p[0] + nx * o, p[1] + ny * o, p[2] - drop) for p, o in ((a, -P.KERB_IN), (b, -P.KERB_IN), (b, P.KERB_OUT), (a, P.KERB_OUT))]
+    hi = [(x, y, z + drop + P.KERB_H) for x, y, z in lo]
+    m.face(hi, "white")
+    m.face([lo[0], lo[1], hi[1], hi[0]], "white")
+    m.face([lo[2], lo[3], hi[3], hi[2]], "white")
+    if drop > 0.1:                                             # its underside shows from the voids beside the stairs
+        m.face(lo[::-1], "white")
+    return lo, hi
+
+
 def build_fences(col):
-    m = Mesh("World_PlazaFences", ["white", "steel"])
+    """V16 (survey V15, section 1 point 1 and E1 2.4): light satin steel, 1.1 m, close vertical bars, flat-bar posts
+    every 2 m, on a pale kerb 0.35 m wide and 0.12 m high. The bars are the campus' railing sheet (env_campus.
+    railing_material, one quad per bay, 12.5 cm bar spacing), top rail and posts are geometry. V10i had dark tube
+    rails with two horizontal bars on a 0.25 m kerb. The guard collider is built exactly as before."""
+    m = Mesh("World_PlazaFences", ["white", "steel", "bars"])
     g = Mesh("World_PlazaGuard_ColliderOnly", ["white"])
     total = 0.0
-    for line in fence_lines():
-        for a, b in zip(line, line[1:]):
+    lines = fence_lines()
+    for n_line, line in enumerate(lines):
+        on_stairs = n_line >= len(lines) - 2                    # the two railings beside the terracotta stairs
+        for n_seg, (a, b) in enumerate(zip(line, line[1:])):
             length = math.hypot(b[0] - a[0], b[1] - a[1])
             total += length
-            _bar(m, a, b, 0.13, a[2] - 0.02, b[2] - 0.02, P.KERB_H, "white")                 # concrete kerb
-            _bar(m, a, b, 0.03, a[2] + P.FENCE_H - 0.05, b[2] + P.FENCE_H - 0.05, 0.05, "steel")   # top rail
-            for h in (0.48, 0.78):
-                _bar(m, a, b, 0.012, a[2] + h, b[2] + h, 0.03, "steel")
-            posts = max(1, int(round(length / 1.5)))
-            for k in range(posts + 1):
-                t = k / posts
+            side = _void_side(a, b)
+            lo, hi = _kerb(m, a, b, side, 0.3 if on_stairs else 0.02)
+            for end, quad in ((n_seg == 0, (lo[3], lo[0], hi[0], hi[3])), (n_seg == len(line) - 2, (lo[1], lo[2], hi[2], hi[1]))):
+                if end:                                         # close the kerb's two ends
+                    m.face(list(quad), "white")
+            top = P.FENCE_H - 0.04
+            _bar(m, a, b, 0.025, a[2] + top, b[2] + top, 0.04, "steel")                     # flat top rail
+            bays = max(1, int(round(length / P.POST_STEP)))
+            ex, ey = (b[0] - a[0]) / (length or 1.0), (b[1] - a[1]) / (length or 1.0)
+            for k in range(bays + 1):
+                t = k / bays
                 x, y, z = a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t
-                ring = [(x - 0.03, y - 0.03), (x + 0.03, y - 0.03), (x + 0.03, y + 0.03), (x - 0.03, y + 0.03)]
-                for p, q in zip(ring, ring[1:] + ring[:1]):
-                    m.face([(p[0], p[1], z + P.KERB_H - 0.02), (q[0], q[1], z + P.KERB_H - 0.02),
-                            (q[0], q[1], z + P.FENCE_H - 0.05), (p[0], p[1], z + P.FENCE_H - 0.05)], "steel")
+                if k or n_seg == 0:                             # flat-bar post, 5 cm along the railing, 1.6 cm thick
+                    ring = [(x - ex * 0.025 + ey * 0.008, y - ey * 0.025 - ex * 0.008), (x + ex * 0.025 + ey * 0.008, y + ey * 0.025 - ex * 0.008),
+                            (x + ex * 0.025 - ey * 0.008, y + ey * 0.025 + ex * 0.008), (x - ex * 0.025 - ey * 0.008, y - ey * 0.025 + ex * 0.008)]
+                    for p, q in zip(ring, ring[1:] + ring[:1]):
+                        m.face([(p[0], p[1], z + P.KERB_H - 0.01), (q[0], q[1], z + P.KERB_H - 0.01),
+                                (q[0], q[1], z + top), (p[0], p[1], z + top)], "steel")
+                if k < bays:                                    # the bars: one sheet per bay, bars 12.5 cm apart
+                    t1 = (k + 1) / bays
+                    p = (x, y, z)
+                    q = (a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1, a[2] + (b[2] - a[2]) * t1)
+                    u0, u1 = BAR_U0, BAR_U0 + math.hypot(q[0] - p[0], q[1] - p[1]) / BAR_MODULE
+                    m.face([(p[0], p[1], p[2] + P.KERB_H), (q[0], q[1], q[2] + P.KERB_H), (q[0], q[1], q[2] + P.FENCE_H), (p[0], p[1], p[2] + P.FENCE_H)],
+                           "bars", [(u0, 0.0), (u1, 0.0), (u1, 1.0), (u0, 1.0)])
             g.face([(a[0], a[1], a[2] - 0.3), (b[0], b[1], b[2] - 0.3), (b[0], b[1], b[2] + GUARD_H), (a[0], a[1], a[2] + GUARD_H)], "white")
     m.finish(col)
     g.finish(col, hide=True)
     return total
+
+
+BAR_MODULE = 3.0            # m of railing per tile of textures/railing_cutout_albedo.png (24 bars)
+BAR_U0 = 0.03               # the sheet starts just after the texture's own end post (the posts are geometry here)
 
 
 def build():
@@ -762,20 +903,36 @@ def build():
     metres = build_fences(world)
     print(f"  plaza: deck {sum(count.values())} triangles ({count['glass']} glass in 5 skylights), stairs "
           f"{P.STAIR_LEN:.1f} m, slope {P.STAIR_SLOPE * 100:.1f} %, ripple {P.JUDDER_M * 100:.1f} cm; {metres:.0f} m of railing")
+    if _CLEAR:
+        print("  plaza: nearest solid dressing to the race line: " + ", ".join(f"{k} {v:.1f} m" for k, v in sorted(_CLEAR.items())))
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Dressing: nothing generic on the plaza; a row of olives east of the library, olives in the courtyard whose crowns
-# show over the fence, round planters by the Gallery, cafe tables north of the library
+# Dressing: nothing generic on the plaza. V16: young staked trees in the lawn's rows east of the library, one olive in
+# the courtyard whose crown shows over the fence, two potted young olives, cafe tables under the pergola
 # ---------------------------------------------------------------------------------------------------------------
-TREES_COURT = [(78.4, 79.6)]          # V14b: by the east wall, clear of the shortcut's landing and lane
-POTS = [(89.2, 23.6), (86.4, 30.8), (80.2, 44.2), (77.6, 51.6), (111.5, 26.2), (99.0, 86.5), (104.0, 87.2)]
-CAFE = [(97.5, 93.0), (102.5, 96.0), (107.0, 92.0), (99.5, 100.5)]
+TREES_COURT = [(78.4, 79.6)]          # V14b: by the east wall, clear of the shortcut's landing and lane (V16: this is
+                                      # the old tub olive of the survey, (75, 80), on the courtyard's floor)
+CAFE = [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2), (3, 2)]     # V16: cafe groups under the pergola (bay column, row)
+
+
+def pergola_point(u, v):
+    (ax, ay), (bx, by) = P.PERGOLA_FRONT
+    tx, ty, _d = P._unit(ax, ay, bx, by)
+    return (ax + tx * u - ty * v, ay + ty * u + tx * v)
+
+
+def _hash01(x, y, salt=0):
+    v = math.sin(x * 12.9898 + y * 78.233 + salt * 37.719) * 43758.5453
+    return v - math.floor(v)
 
 
 def dress(veg, props):
     """Drops the generated plants and props that stand on the plaza, the courtyard or the stairs; adds ours.
-    Rewrites the two placement files (like env_street_objects.dress)."""
+    Rewrites the two placement files (like env_street_objects.dress).
+    V16 (survey V15): the plaza is nearly empty. No tree row on the deck, no round planters; the olives of the lawn's
+    two rows along the plaza's east edge become young staked trees where they stand (nothing moves); young olives in
+    the conical pots of the pocket; the cafe groups stand under the pergola."""
     import json
     import os
     import random
@@ -789,23 +946,32 @@ def dress(veg, props):
                        "rot_z": round(rng.uniform(0, 2 * math.pi), 4), "scale": round(scale, 3)})
 
     def prop(proto, x, y, rot=None):
-        if E.distance_to_route(x, y) < E.KEEP_CLEAR + 0.3:
+        if clear_m(x, y) < P.SOLID_CLEAR + 0.4:
             return
         ours.append({"proto": proto, "x": round(x, 3), "y": round(y, 3), "z": round(P.DECK_Z, 3),
                      "rot_z": round(rng.uniform(-math.pi, math.pi) if rot is None else rot, 4), "scale": 1.0})
-    (ax, ay), (bx, by) = P.TREE_ROW
-    n = 11
-    for k in range(n):                                          # the tree row east of the library, 2.5 m inside the edge
-        t = (k + 0.5) / n
-        x, y = ax + (bx - ax) * t + 1.2, ay + (by - ay) * t + 0.4
-        if P.on_deck(x, y) and E.distance_to_route(x, y) > 9.0:
-            plant("Veg_Olive" if k % 2 else "Veg_Olive_B", x, y, P.DECK_Z, rng.uniform(0.82, 0.95))
+    swapped = 0
+    lamps = east_lamps()
+    for k, p in enumerate(kept_v):                              # the east strip: staked saplings instead of old olives
+        if p["proto"] in ("Veg_Olive", "Veg_Olive_B") and P.seg_distance(p["x"], p["y"], *P.EAST_ROW) < P.EAST_ROW_REACH:
+            if any(math.hypot(p["x"] - lx, p["y"] - ly) < 1.2 for lx, ly in lamps):
+                kept_v[k] = None                                # (a lamp column stands here)
+                continue
+            kept_v[k] = dict(p, proto="Veg_PlazaTree" if _hash01(p["x"], p["y"]) < 0.5 else "Veg_PlazaTree_B",
+                             scale=round(0.78 + 0.2 * _hash01(p["x"], p["y"], 1), 3))
+            swapped += 1
+    kept_v = [p for p in kept_v if p is not None]
     for x, y in TREES_COURT:
         if P.in_court(x, y) and not P.on_climb(x, y, 0.2):
             plant("Veg_Olive", x, y, P.LOW_Z, rng.uniform(0.95, 1.05))
-    for x, y in POTS:
-        prop("Prop_PlanterRound", x, y)
-    for gx, gy in CAFE:
+    for (x, y), olive in P.POTS:                                # thin young olives (2.3 m with the pot) in the pocket's pots
+        if olive:
+            plant("Veg_Olive_B", x, y, P.surface_z(x, y) + P.POT_H - 0.1, 0.36)
+    span = P._unit(*P.PERGOLA_FRONT[0], *P.PERGOLA_FRONT[1])[2]
+    for cu, cv in CAFE:
+        gx, gy = pergola_point(span * (cu + 0.5) / (P.PERGOLA_COLS - 1), P.PERGOLA_DEPTH * (cv - 0.5) / (P.PERGOLA_ROWS - 1) * 0.9)
+        if not P.on_deck(gx, gy):
+            continue
         prop("Prop_BistroTable", gx, gy)
         a0 = rng.uniform(0, 2 * math.pi)
         for q in range(3):
@@ -813,7 +979,7 @@ def dress(veg, props):
             px, py = gx + math.cos(a) * 0.64, gy + math.sin(a) * 0.64
             prop("Prop_BistroChair", px, py, math.atan2(gx - px, -(gy - py)))
     print(f"  plaza: dressing: {len(veg) - len(kept_v)} plants and {len(props) - len(kept_p)} props removed from the plaza, "
-          f"{len(plants)} trees and {len(ours)} props of its own")
+          f"{len(plants)} trees and {len(ours)} props of its own, {swapped} olives of the east rows are young staked trees now")
     veg2, props2 = kept_v + plants, kept_p + ours
     for fname, items in (("placements_vegetation.json", veg2), ("placements_props.json", props2)):
         path = os.path.join(E.OUT, fname)
