@@ -61,6 +61,9 @@ DOORS_UO = {
     "D5_out_north_east": ((23.4, 68.3), 7.5),   # route out on the east facade
 }
 D2_O = (8.5, 17.5)           # opening in the artwork wall (o from .. to): the track into the long room
+# No black glass posts here (u from .. to, o from .. to): the niche in front of door D4, whose glass side walls run
+# right along the fence, so the posts stood on the road side of it (Noah, 2026-11-11).
+NO_MULLION_ZONES = [(66.5, 72.0, 33.2, 41.8)]
 
 
 def footprint():
@@ -348,6 +351,15 @@ def edge_key(a, b):
     return (round(a[0], 3), round(a[1], 3), round(b[0], 3), round(b[1], 3))
 
 
+def in_no_mullion_zone(p):
+    """True for a black glass post inside one of NO_MULLION_ZONES (hall coordinates u0, u1, o0, o1)."""
+    u, o = building_frame().uo(p[0], p[1])
+    for u0, u1, o0, o1 in NO_MULLION_ZONES:
+        if u0 <= u <= u1 and o0 <= o <= o1:
+            return True
+    return False
+
+
 def facade(m, a, b, inside, H, openings, style):
     """One straight piece of outer wall from a to b. inside = unit normal pointing into the building.
     style 'glass': glazed ground floor, white band, glazed upper floor, white fascia; 'solid': white wall.
@@ -380,7 +392,10 @@ def facade(m, a, b, inside, H, openings, style):
         band(s0, s1, 0.0, top, "glass" if glazed_ground else "wall")
         if glazed_ground:
             for k in range(int((s1 - s0) / 1.6) + 1):                # mullions
-                m.box(P(s0 + k * 1.6, top / 2, False), 0.05, 0.06, top / 2, "steel_dark", heading)
+                p = P(s0 + k * 1.6, top / 2, False)
+                if in_no_mullion_zone(p):
+                    continue                                         # stood on the road side of the fence (Noah)
+                m.box(p, 0.05, 0.06, top / 2, "steel_dark", heading)
     for c0, c1 in cuts:
         band(c0, c1, DOOR_H + 0.4, top, "glass" if glazed_ground else "wall")
         door(m, P((c0 + c1) / 2, 0.0), (tx, ty), (nx, ny), c1 - c0)
@@ -608,6 +623,25 @@ def atrium_furniture(m, f):
             K.block(m, f, 12.0 + k * 2.4, 14.0 + k * 2.4, 62.0, 63.0, 0.0, 0.75, "board")        # dark blue sofas
     big_plant(m, f, 14.0, 58.0, 3)
     big_plant(m, f, 60.0, 40.0, 4)
+    entrance_seating(m, f)
+
+
+# Tables and chairs like in the long room, in two free spots of the atrium (Noah, 2026-11-11): the open floor between
+# the welcome desk and the blue boards (north of the main-entrance road), and the strip between the road and the west
+# glass south of the main entrance. round_table / long_table are guarded, so nothing lands on the track.
+ENTRANCE_ROUND_TABLES = [(10.5, 9.0), (10.5, 13.5), (14.5, 11.0), (14.5, 15.5), (18.5, 8.5), (18.5, 13.0), (18.5, 17.5)]
+WEST_GLASS_ROUND_TABLES = [(33.5, 5.0), (43.5, 5.0), (48.5, 5.0),    # (48.5: under the west balcony, Noah)
+                           (58.0, 5.0), (62.5, 5.0)]                 # (behind the cabinet, before the artwork wall)
+WEST_GLASS_LONG_TABLES = [(38.5, 4.6), (53.0, 4.6)]                   # (53.0: by the red fire hose cabinet)
+
+
+def entrance_seating(m, f):
+    for u, o in ENTRANCE_ROUND_TABLES:
+        round_table(m, f, u, o, 4)
+    for u, o in WEST_GLASS_ROUND_TABLES:
+        round_table(m, f, u, o, 4)
+    for u, o in WEST_GLASS_LONG_TABLES:
+        long_table(m, f, u, o, seats=3)
 
 
 # ---------- long room ----------
