@@ -131,5 +131,30 @@
     "slope_deg": 35,
     "why": "concrete wedge at the west end of the roof terrace (video IMG_7723 0-12 s): smooth slab down to the lawn, no step"
   },
-  "surface_overrides": true
+  "surface_overrides": true,
+  "section_overrides": [
+    {
+      "name": "tunnel exit straight (V10g, proposal for Noah)",
+      "why": "The line swung east after the north portal and came back (a right-left). The real walkway (orthophoto, team photos S01, S02, S08) leaves the portal and runs straight up to the plaza in front of the terracotta steps. Only the points strictly between from_at and to_at are replaced; delete this block to get the old line back. to_at is the first terracotta point (foot of the stairs): the stairs and the line over them are untouched.",
+      "from_at": [
+        70.59,
+        -64.84
+      ],
+      "to_at": [
+        111.07,
+        -10.54
+      ],
+      "heading_deg": 50.5,
+      "radius_m": 17.0,
+      "ease_passes": 60,
+      "plateau_z": 11.2,
+      "ramp_m": 54.0,
+      "ease_in_m": 6.0,
+      "ease_out_m": 14.0,
+      "surface": "concrete_sand",
+      "ramp_zone": "ramp",
+      "plateau_zone": "lower plaza",
+      "wall_cut": true
+    }
+  ]
 }

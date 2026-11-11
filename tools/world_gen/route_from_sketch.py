@@ -307,6 +307,7 @@ def road_widths(route, beach_tunnel, tunnel_len):
 
 _WAYPOINTS = {"points": None}      # set by waypoint_route(); used for the passage rule in wall_blockers()
 KICKER = {}                        # wedge kicker facts from apply_profile(), written into route.json
+WALL_CUTS = []                     # index ranges with flat 45 degree cut walls, from apply_section_overrides()
 
 
 def catmull_closed(pts, samples=16):
@@ -597,6 +598,193 @@ def apply_profile(points, buildings):
     return (edge if edge is not None else 0), notes
 
 
+def _old_frac(points, f, key):
+    """Value of a number field at a fractional index of the route (linear between two points)."""
+    i = int(math.floor(f))
+    t = f - i
+    return points[i][key] * (1 - t) + points[i + 1][key] * t
+
+
+def _fillet_line(pa, da, pb, db, radius, ease_passes, dense=0.25):
+    """Straight from pa along da, one arc of `radius`, straight into pb along db; the corners of the curvature
+    are eased by `ease_passes` 3-point averages on a `dense` m polyline (ends fixed). Returns the polyline."""
+    den = da[0] * db[1] - da[1] * db[0]
+    t = ((pb[0] - pa[0]) * db[1] - (pb[1] - pa[1]) * db[0]) / den          # pa + t da = pb + u db (the vertex)
+    u = ((pb[0] - pa[0]) * da[1] - (pb[1] - pa[1]) * da[0]) / den
+    turn = math.atan2(den, da[0] * db[0] + da[1] * db[1])                    # + = left
+    tangent = radius * math.tan(abs(turn) / 2)
+    if not (t > tangent and -u > tangent):
+        raise ValueError(f"section override: radius {radius:.1f} m does not fit (legs {t:.1f} / {-u:.1f} m, tangent {tangent:.1f} m)")
+    side = 1.0 if turn > 0 else -1.0
+    start = (pa[0] + da[0] * (t - tangent), pa[1] + da[1] * (t - tangent))
+    centre = (start[0] - da[1] * side * radius, start[1] + da[0] * side * radius)
+    a0 = math.atan2(start[1] - centre[1], start[0] - centre[0])
+    line = [pa]
+    k = 1
+    while k * dense < t - tangent:
+        line.append((pa[0] + da[0] * k * dense, pa[1] + da[1] * k * dense))
+        k += 1
+    steps = max(2, int(radius * abs(turn) / dense))
+    for k in range(steps + 1):
+        a = a0 + turn * k / steps
+        line.append((centre[0] + radius * math.cos(a), centre[1] + radius * math.sin(a)))
+    end = line[-1]
+    rest = math.dist(end, pb)
+    k = 1
+    while k * dense < rest - 1e-6:
+        line.append((end[0] + db[0] * k * dense, end[1] + db[1] * k * dense))
+        k += 1
+    line.append(pb)
+    for _ in range(ease_passes):
+        line = [line[0]] + [((line[i - 1][0] + line[i][0] + line[i + 1][0]) / 3,
+                             (line[i - 1][1] + line[i][1] + line[i + 1][1]) / 3) for i in range(1, len(line) - 1)] + [line[-1]]
+    return line
+
+
+def _resample_open(line, count):
+    """`count` points at equal distances along the polyline, strictly between its two ends."""
+    cum = [0.0]
+    for a, b in zip(line, line[1:]):
+        cum.append(cum[-1] + math.dist(a, b))
+    out, k = [], 0
+    for j in range(1, count + 1):
+        d = cum[-1] * j / (count + 1)
+        while cum[k + 1] < d:
+            k += 1
+        t = (d - cum[k]) / ((cum[k + 1] - cum[k]) or 1e-9)
+        out.append((line[k][0] + (line[k + 1][0] - line[k][0]) * t, line[k][1] + (line[k + 1][1] - line[k][1]) * t))
+    return out, cum[-1]
+
+
+def apply_section_overrides(points, buildings, beach_tunnel, tunnel_len):
+    """Replaces a stretch of the finished route by a hand-set line (route_profile.json "section_overrides").
+
+    Why here and not in the waypoints: the spline, the smoothing and the 2 m resampling run round the whole lap,
+    so a moved waypoint shifts every later point by a fraction of a metre. This step runs after everything else
+    and touches only the points strictly between `from_at` and `to_at`; every other point keeps its x, y, heights,
+    width, zone and surface to the last digit and is only renumbered (i, s).
+
+    Line: straight on from `from_at` along `heading_deg` (0 = north, 90 = east), one arc of about `radius_m`,
+    straight into `to_at` along the old line. The radius is tuned (within +/- 4 m, and so that the arc ends before
+    `to_at`) until the new stretch is a whole
+    number of 2 m steps long, so the spacing stays 2.0 m.
+    Heights: from the height at `from_at` a ramp up to `plateau_z`, reached `ramp_m` after `from_at` (slope eased in
+    over `ease_in_m`, out over `ease_out_m`); then level; the last metres before `to_at` copy the old height
+    profile (same distance before `to_at`), so the join has no step and no kink.
+    `wall_cut`: the ramp points (and `from_at`, the portal) are listed in route.json "wall_cuts"; env_corridor then
+    builds flat 45 degree walls from the road edge up to the ground there, and env_props puts the railings on top.
+    Returns report lines."""
+    notes = []
+    for spec in PROFILE.get("section_overrides", []):
+        n = len(points)
+        near = lambda at: min(range(n), key=lambda i: (points[i]["x"] - at[0]) ** 2 + (points[i]["y"] - at[1]) ** 2)
+        a, b = near(spec["from_at"]), near(spec["to_at"])
+        if not a < b:
+            raise ValueError("section override: from_at must come before to_at and must not span point 0")
+        pa, pb = (points[a]["x"], points[a]["y"]), (points[b]["x"], points[b]["y"])
+        h = math.radians(spec["heading_deg"])
+        da = (math.sin(h), math.cos(h))
+        db = (points[b + 1]["x"] - pb[0], points[b + 1]["y"] - pb[1])
+        dl = math.hypot(*db)
+        db = (db[0] / dl, db[1] / dl)
+        ease = spec.get("ease_passes", 60)
+
+        def length_for(radius):
+            line = _fillet_line(pa, da, pb, db, radius, ease)
+            return sum(math.dist(p, q) for p, q in zip(line, line[1:])), line
+        r0 = spec["radius_m"]
+        den = da[0] * db[1] - da[1] * db[0]
+        legs = (((pb[0] - pa[0]) * db[1] - (pb[1] - pa[1]) * db[0]) / den, -((pb[0] - pa[0]) * da[1] - (pb[1] - pa[1]) * da[0]) / den)
+        half = abs(math.atan2(den, da[0] * db[0] + da[1] * db[1])) / 2
+        lo, hi = r0 - 4.0, min(r0 + 4.0, (min(legs) - 0.3) / math.tan(half))     # hi: the arc must end before to_at
+        # a larger radius cuts the corner: shorter line. Whole number of 2 m steps within reach, nearest to radius_m
+        fits = [m * SPACING for m in range(int(length_for(hi)[0] / SPACING) + 1, int(length_for(lo)[0] / SPACING) + 1)]
+        if not fits:
+            raise ValueError("section override: no radius near radius_m gives a whole number of 2 m steps")
+        target = min(fits, key=lambda L: abs(L - length_for(r0)[0]))
+        for _ in range(50):
+            mid = (lo + hi) / 2
+            if length_for(mid)[0] > target:
+                lo = mid
+            else:
+                hi = mid
+        radius = (lo + hi) / 2
+        length, line = length_for(radius)
+        count = int(round(target / SPACING)) - 1
+        xy, _ = _resample_open(line, count)
+        step = length / (count + 1)
+
+        # heights -----------------------------------------------------------------------------------------
+        za, top, ramp = points[a]["track_z"], spec["plateau_z"], spec["ramp_m"]
+        e1, e2 = spec.get("ease_in_m", 6.0), spec.get("ease_out_m", 14.0)
+        g0 = (points[a]["track_z"] - points[a - 1]["track_z"]) / SPACING + spec.get("slope_in_add", 0.0)
+        g = (top - za - g0 * e1 / 2) / (ramp - e1 / 2 - e2 / 2)             # slope of the even part of the ramp
+
+        def ramp_z(d):
+            if d <= e1:
+                return za + g0 * d + (g - g0) * d * d / (2 * e1)
+            if d <= ramp - e2:
+                return za + (g0 + g) / 2 * e1 + g * (d - e1)
+            if d <= ramp:
+                r = ramp - d
+                return top - g * r * r / (2 * e2)
+            return top
+        flat = b
+        while flat > a and abs(points[flat]["track_z"] - top) > 0.005:
+            flat -= 1                                                      # last old point that is level at plateau_z
+        tail = (b - flat) * SPACING
+        if flat <= a or length - tail < ramp:
+            raise ValueError("section override: no room for the ramp before the old height profile takes over")
+        new = []
+        for j, (x, y) in enumerate(xy):
+            d = (j + 1) * step
+            back = length - d
+            if back < tail:
+                f = b - back / SPACING
+                z = _old_frac(points, f, "track_z")
+                like = points[int(round(f))]
+                zone, surface = like["zone"], like["surface"]
+            else:
+                z = ramp_z(d)
+                zone, surface = (spec.get("ramp_zone", "ramp") if d < ramp - e2 / 2 else spec.get("plateau_zone", "lower plaza")), spec["surface"]
+            inside = [bd["name"] or bd["id"] for bd, path in buildings if path.contains_point((x, y))]
+            _, d_beach, along = closest_on_polyline((x, y), beach_tunnel)
+            if inside or (d_beach < 2.5 and 0.5 < along < tunnel_len - 0.5):
+                raise ValueError(f"section override: new point ({x:.1f}, {y:.1f}) lies in {inside or 'the tunnel'}")
+            new.append({"i": 0, "x": round(x, 2), "y": round(y, 2), "ground_z": round(ground_z(x, y), 2), "s": 0.0,
+                        "width": MAX_WIDTH, "building": "", "tunnel": False, "main_road": False,
+                        "track_z": round(z, 2), "zone": zone, "level": "", "surface": surface})
+        old_count = b - a - 1
+        points[a + 1:b] = new
+        if spec.get("wall_cut"):                        # env_corridor: flat 45 degree walls beside the ramp points
+            last = max((a + 1 + j for j, q in enumerate(new) if q["zone"] == spec.get("ramp_zone", "ramp")), default=a)
+            WALL_CUTS.append({"from_index": a, "to_index": last, "why": spec["name"]})
+        for i, p in enumerate(points):
+            p["i"], p["s"] = i, round(i * SPACING, 1)
+
+        # checks: room to the walls, slope, curvature ------------------------------------------------------------
+        route = [(p["x"], p["y"]) for p in points]
+        polys, _, passable = wall_blockers(route, beach_tunnel, tunnel_len)
+        frames = left_normals(route)
+        room = min(min(wall_distances(route, i, polys, passable, frames[i])[:2]) for i in range(a + 1, a + 1 + count))
+        if room < MAX_WIDTH / 2 + WALL_GAP:
+            raise ValueError(f"section override: only {room:.1f} m to a wall, the 8 m road does not fit")
+        slope = max(abs(points[i + 1]["track_z"] - points[i]["track_z"]) / math.dist(route[i], route[i + 1])
+                    for i in range(a, a + count + 1))
+
+        def bend(i):
+            h1 = math.atan2(route[i][1] - route[i - 1][1], route[i][0] - route[i - 1][0])
+            h2 = math.atan2(route[i + 1][1] - route[i][1], route[i + 1][0] - route[i][0])
+            return abs((h2 - h1 + math.pi) % (2 * math.pi) - math.pi) / SPACING
+        curve = max(bend(i) for i in range(a, a + count + 2))
+        notes.append(f"section override '{spec['name']}': {old_count} points ({(old_count + 1) * SPACING:.0f} m) between "
+                     f"({pa[0]}, {pa[1]}) and ({pb[0]}, {pb[1]}) replaced by {count} points ({length:.2f} m, "
+                     f"step {step:.3f} m, arc radius {radius:.2f} m); lap {(old_count - count) * SPACING:.0f} m shorter")
+        notes.append(f"  steepest slope {slope * 100:.1f} %, tightest bend 1/{1 / curve:.0f} m, nearest wall {room:.1f} m "
+                     f"from the centreline, even ramp slope {g * 100:.1f} %")
+    return notes
+
+
 def main():
     beach_tunnel = next(p["points"] for p in DATA["paths"] if p["tunnel"] and p["name"] == "Sagres Beach Way")
     tunnel_len = sum(math.dist(a, b) for a, b in zip(beach_tunnel, beach_tunnel[1:]))
@@ -650,7 +838,7 @@ def main():
     # ---------- driving height (track_z), zones and surfaces ----------
     jump_sketch_i = jump_i
     jump_i, notes = apply_profile(points, buildings)
-    notes = clear_notes + notes
+    notes = clear_notes + notes + apply_section_overrides(points, buildings, beach_tunnel, tunnel_len)
     for line in notes:
         print(line)
     landing = points[(jump_i + 1) % len(points)]
@@ -665,6 +853,7 @@ def main():
                                        "note": "Luc's green mark; moved to the terrace edge (decided 2026-11-08)"}},
               "heights": "ground_z = terrain from the elevation data; track_z = driving height (route_profile.json); zone and surface per point",
               "axes": "x = east, y = north (Unity: x = east, z = north), metres from the world origin",
+              "wall_cuts": WALL_CUTS,
               "points": points}
     json.dump(result, open(os.path.join(HERE, "route.json"), "w"), indent=1)
 
