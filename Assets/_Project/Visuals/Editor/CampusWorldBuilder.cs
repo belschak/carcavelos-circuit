@@ -10,15 +10,19 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 
 namespace CarcavelosCircuit.Visuals.Editor
 {
-    // Builds Luc's Carcavelos campus world into Track_CampusWorld.unity (Role 3, task V4).
+    // Builds Luc's Carcavelos campus world (Role 3, tasks V4 and V8).
     // Input: Assets/_Project/Visuals/CampusWorld/{Models,Textures,Data}, exported by the world generator
-    // (world-gen/export_unity_bundle.py, outside this repo). Output, all made through the Unity API:
-    // URP Lit materials, one prefab per tree/prop kind, and the scene with world, track surface, about 1,070 trees,
-    // props and furniture, the golden-hour sun, the painted sky, the look volume, and the race placeholders
-    // (checkpoints, spawn) that RaceFlow already understands.
+    // (tools/world_gen/export_unity_bundle.py). Output, all made through the Unity API:
+    // - URP Lit materials, the painted sky and the look profile, and one prefab per tree/prop kind;
+    // - CampusWorld.prefab: everything you see and drive on (world with colliders, track surface, about 1,070 trees,
+    //   props and furniture, the golden-hour sun, the look volume, the sky light). Role 2 puts this one prefab into
+    //   Track_Campus; a new export updates it there by itself;
+    // - Track_CampusWorld.unity: Role 3's preview = the prefab plus the race placeholders (checkpoints, spawn) that
+    //   RaceFlow already understands, and a preview camera. The real checkpoints are Role 2's (from Data/track.json).
     // Axes: x = east, y = up, z = north, 1 unit = 1 m. Run it again after every new export.
     public static class CampusWorldBuilder
     {
@@ -34,6 +38,8 @@ namespace CarcavelosCircuit.Visuals.Editor
         // Golden hour (design pass 2026-11-09): low warm sun from the west-south-west. Must match make_sky.py.
         private const float SunAzimuth = 245f, SunElevation = 19f;
         private const string ScenePath = "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity";
+        private const string WorldPrefabPath = Root + "/CampusWorld.prefab";
+        private const string WorldRootName = "CampusWorld";                  // root of the prefab and of its instance
         private static readonly string[] Models = { "CampusWorld", "TrackSurface", "RouteGuide", "Dressing_Prototypes" };
 
         [Serializable] private class Emission { public float[] colour; public float strength; }
@@ -281,13 +287,14 @@ namespace CarcavelosCircuit.Visuals.Editor
             box.size = b.size;
         }
 
-        // ---------- scene ----------
+        // ---------- world prefab + preview scene ----------
         private static void BuildScene(Dictionary<string, GameObject> prefabs)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            var root = new GameObject("CampusWorld (Role 3)");
+            var root = new GameObject(WorldRootName);
 
             GameObject world = Instance("CampusWorld", root.transform);
+            world.name = "World";                                     // buildings, terrain, beach, tunnel (CampusWorld.fbx)
             foreach (MeshFilter mf in world.GetComponentsInChildren<MeshFilter>(true))
             {
                 string n = mf.gameObject.name;
@@ -334,10 +341,16 @@ namespace CarcavelosCircuit.Visuals.Editor
                 MarkStatic(go);
             }
 
-            TrackData data = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json"));
-            AddRaceParts(root, data);
             AddSunAndSky(root);
-            AddPreviewCamera(root, data);
+            // One prefab for everything you see and drive on. Saving over the old file keeps its GUID, so the
+            // instance in Role 2's Track_Campus stays linked and shows the new world after every rebuild.
+            PrefabUtility.SaveAsPrefabAssetAndConnect(root, WorldPrefabPath, InteractionMode.AutomatedAction);
+
+            // Preview only (never in the prefab): placeholders so the scene races on its own, and a camera.
+            TrackData data = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json"));
+            var preview = new GameObject("Preview (Role 3)");
+            AddRaceParts(preview, data);
+            AddPreviewCamera(preview, data);
             EditorSceneManager.SaveScene(scene, ScenePath);
         }
 
@@ -387,7 +400,9 @@ namespace CarcavelosCircuit.Visuals.Editor
 
         // Golden hour (design reference, 2026-11-09): a low warm sun from the west-south-west, long soft shadows,
         // cool blue fill, a painted sky with cumulus clouds (also the reflection source), and a gentle warm grade.
-        // No fog, no bake. The race makes this scene the active one, so these settings apply in the race.
+        // No fog, no bake. Sun and look volume are part of the prefab. Sky light, sky and reflections are scene
+        // settings, so CampusWorldLighting (on the prefab root) writes them into whichever scene holds the prefab while
+        // that scene is the active one (the race makes the track scene active).
         private static void AddSunAndSky(GameObject root)
         {
             var sunObject = new GameObject("Sun");
@@ -401,37 +416,39 @@ namespace CarcavelosCircuit.Visuals.Editor
             float az = SunAzimuth * Mathf.Deg2Rad, el = SunElevation * Mathf.Deg2Rad;
             var towardsSun = new Vector3(Mathf.Sin(az) * Mathf.Cos(el), Mathf.Sin(el), Mathf.Cos(az) * Mathf.Cos(el));
             sunObject.transform.rotation = Quaternion.LookRotation(-towardsSun);
-            RenderSettings.sun = sun;
-            RenderSettings.ambientMode = AmbientMode.Trilight;                         // no baking needed
-            RenderSettings.ambientSkyColor = new Color(0.70f, 0.76f, 0.87f);           // #B3C2DE cool fill
-            RenderSettings.ambientEquatorColor = new Color(0.66f, 0.66f, 0.66f);
-            RenderSettings.ambientGroundColor = new Color(0.62f, 0.55f, 0.46f);        // warm bounce from the paving
-            RenderSettings.fog = false;
+
+            Material skybox;
             Cubemap cube = AssetDatabase.LoadAssetAtPath<Cubemap>(SkyTexture);
             if (cube != null)
             {
                 EnsureFolder(MatDir);
                 string path = MatDir + "/Sky_Painted.mat";
-                Material sky = AssetDatabase.LoadAssetAtPath<Material>(path);
-                if (sky == null)
+                skybox = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (skybox == null)
                 {
-                    sky = new Material(Shader.Find("Skybox/Cubemap"));
-                    AssetDatabase.CreateAsset(sky, path);
+                    skybox = new Material(Shader.Find("Skybox/Cubemap"));
+                    AssetDatabase.CreateAsset(skybox, path);
                 }
-                sky.SetTexture("_Tex", cube);
-                sky.SetFloat("_Exposure", 1f);
-                sky.SetFloat("_Rotation", 0f);
-                EditorUtility.SetDirty(sky);
-                RenderSettings.skybox = sky;
-                RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
-                RenderSettings.customReflectionTexture = cube;
-                RenderSettings.reflectionIntensity = 1f;
+                skybox.SetTexture("_Tex", cube);
+                skybox.SetFloat("_Exposure", 1f);
+                skybox.SetFloat("_Rotation", 0f);
+                EditorUtility.SetDirty(skybox);
             }
             else
             {
                 Debug.LogWarning("CampusWorldBuilder: no " + SkyTexture + ", using Unity's default sky.");
-                RenderSettings.skybox = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Skybox.mat");
+                skybox = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Skybox.mat");
             }
+            CampusWorldLighting lighting = root.AddComponent<CampusWorldLighting>();
+            var so = new SerializedObject(lighting);
+            so.FindProperty("sun").objectReferenceValue = sun;
+            so.FindProperty("skyColour").colorValue = new Color(0.70f, 0.76f, 0.87f);       // #B3C2DE cool fill
+            so.FindProperty("horizonColour").colorValue = new Color(0.66f, 0.66f, 0.66f);
+            so.FindProperty("groundColour").colorValue = new Color(0.62f, 0.55f, 0.46f);    // warm bounce from the paving
+            so.FindProperty("skybox").objectReferenceValue = skybox;
+            so.FindProperty("reflection").objectReferenceValue = cube;                     // glass and gloss reflect the sky
+            so.ApplyModifiedPropertiesWithoutUndo();
+            lighting.ApplyIfActiveScene();                         // the preview scene is active here: save it with the look
             var look = new GameObject("Look (global volume)");
             look.transform.SetParent(root.transform, false);
             Volume volume = look.AddComponent<Volume>();
@@ -491,13 +508,14 @@ namespace CarcavelosCircuit.Visuals.Editor
             var report = new StringBuilder("CampusWorld self-test\n");
             int failures = 0;
             Dressing dressing = JsonUtility.FromJson<Dressing>(File.ReadAllText(DataDir + "/dressing.json"));
-            GameObject dressingRoot = GameObject.Find("CampusWorld (Role 3)/Dressing");
+            GameObject dressingRoot = GameObject.Find(WorldRootName + "/Dressing");
             int placed = dressingRoot != null ? dressingRoot.GetComponentsInChildren<MeshRenderer>(true).Length : 0;
             report.AppendLine("dressing: " + placed + " of " + dressing.items.Length + " placed");
             if (placed != dressing.items.Length)
             {
                 failures++;
             }
+            failures += PrefabTest(report);
 
             int bad = 0;
             foreach (Renderer r in UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -574,9 +592,66 @@ namespace CarcavelosCircuit.Visuals.Editor
             {
                 failures++;
             }
+            failures += LightingTest(report);
             report.AppendLine(failures == 0 ? "RESULT: PASS" : "RESULT: FAIL (" + failures + ")");
             Debug.Log(report.ToString());
             return failures;
+        }
+
+        // CampusWorld.prefab is what Role 2 uses. The scene root must be a clean instance of it (no overrides), and the
+        // prefab must hold the world with its colliders and light but nothing race-specific (no placeholders, no
+        // camera), so Role 2's scene never ends up with two sets of checkpoints.
+        private static int PrefabTest(StringBuilder report)
+        {
+            GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(WorldPrefabPath);
+            GameObject instance = GameObject.Find(WorldRootName);
+            bool linked = instance != null && PrefabUtility.IsOutermostPrefabInstanceRoot(instance) &&
+                          PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(instance) == WorldPrefabPath;
+            bool clean = linked && !PrefabUtility.HasPrefabInstanceAnyOverrides(instance, false);
+            int raceParts = asset == null ? -1 : asset.GetComponentsInChildren<PlaceholderTrack>(true).Length +
+                asset.GetComponentsInChildren<PlaceholderCheckpoint>(true).Length + asset.GetComponentsInChildren<Camera>(true).Length;
+            CampusWorldLighting lighting = asset != null ? asset.GetComponent<CampusWorldLighting>() : null;
+            bool lit = lighting != null && new SerializedObject(lighting).FindProperty("sun").objectReferenceValue != null;
+            int volumes = asset != null ? asset.GetComponentsInChildren<Volume>(true)
+                .Count(v => v.isGlobal && v.sharedProfile != null) : 0;              // the look comes along
+            int colliders = asset != null ? asset.GetComponentsInChildren<MeshCollider>(true).Length : 0;
+            report.AppendLine("prefab: " + (asset != null ? "saved" : "MISSING") + ", scene instance linked " + linked +
+                              ", without overrides " + clean + ", race parts or cameras inside " + raceParts +
+                              ", light with sun " + lit + ", look volumes " + volumes +
+                              ", mesh colliders " + colliders);
+            return asset != null && clean && raceParts == 0 && lit && volumes == 1 && colliders > 0 ? 0 : 1;
+        }
+
+        // Role 2's case: a scene holding only the prefab gets the campus sky light once it is the active scene, and
+        // while another scene is active (Main.unity while the race loads the track) that scene's light is left alone.
+        private static int LightingTest(StringBuilder report)
+        {
+            Scene preview = SceneManager.GetActiveScene();
+            GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(WorldPrefabPath);
+            Scene holder = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+
+            SceneManager.SetActiveScene(preview);
+            RenderSettings.ambientMode = AmbientMode.Flat;                 // stands in for another scene's own setting
+            var first = (GameObject)PrefabUtility.InstantiatePrefab(asset, holder);
+            bool leftAlone = RenderSettings.ambientMode == AmbientMode.Flat;
+            RenderSettings.ambientMode = AmbientMode.Trilight;            // the preview's own value again
+            UnityEngine.Object.DestroyImmediate(first);
+
+            SceneManager.SetActiveScene(holder);
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.fog = true;
+            var second = (GameObject)PrefabUtility.InstantiatePrefab(asset, holder);
+            bool painted = AssetDatabase.LoadAssetAtPath<Cubemap>(SkyTexture) != null;
+            bool applied = RenderSettings.ambientMode == AmbientMode.Trilight && !RenderSettings.fog &&
+                           RenderSettings.sun != null && RenderSettings.sun.transform.IsChildOf(second.transform) &&
+                           (!painted || (RenderSettings.skybox != null && RenderSettings.skybox.name == "Sky_Painted" &&
+                                         RenderSettings.defaultReflectionMode == DefaultReflectionMode.Custom &&
+                                         RenderSettings.customReflectionTexture != null));
+
+            SceneManager.SetActiveScene(preview);
+            EditorSceneManager.CloseScene(holder, true);
+            report.AppendLine("light in a scene with only the prefab: applied " + applied + ", other active scene left alone " + leftAlone);
+            return applied && leftAlone ? 0 : 1;
         }
 
         // Kart's-eye views at a few places of the lap, for comparing with the Blender renders.
