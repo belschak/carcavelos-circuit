@@ -77,13 +77,27 @@ def _target(x, y, coarse):
     return env_terrain.coast_height(x, y, coarse)
 
 
+_drawn = {}
+
+
+def _stays(i, j):
+    """True if the 5 m cell (i, j) is drawn as it is: not replaced by the lattice and not left out under the corridor
+    (V16e: a lattice edge next to a cell that is not drawn has nothing to match; held to the 5 m grid it stood up
+    as a fin through the corridor's sand)."""
+    if (i, j) in _state["cells"]:
+        return False
+    if (i, j) not in _drawn:
+        _drawn[(i, j)] = not env_corridor.covers_cell(E.X0 + (i + 0.5) * E.STEP, E.Y0 + (j + 0.5) * E.STEP)
+    return _drawn[(i, j)]
+
+
 def _edge_distance(x, y):
     """Metres from (x, y) to the nearest 5 m cell around it that is not replaced (at most BLEND)."""
     i, j = _cell(x, y)
     best = BLEND
     for di in (-1, 0, 1):
         for dj in (-1, 0, 1):
-            if (i + di, j + dj) in _state["cells"]:
+            if not _stays(i + di, j + dj):
                 continue
             x0, y0 = E.X0 + (i + di) * E.STEP, E.Y0 + (j + dj) * E.STEP
             dx = max(x0 - x, 0.0, x - (x0 + E.STEP))
@@ -105,7 +119,7 @@ def _on_edge(a, b):
         return False
     i, j = a // SUB, b // SUB
     cells = {(i - (a % SUB == 0 and di), j - (b % SUB == 0 and dj)) for di in (0, 1) for dj in (0, 1)}
-    return not all(c in _state["cells"] for c in cells)
+    return any(_stays(*c) for c in cells)
 
 
 def _lattice(a, b):
@@ -114,7 +128,7 @@ def _lattice(a, b):
     if key not in _state["z"]:
         x, y = E.X0 + a * FINE, E.Y0 + b * FINE
         if _on_edge(a, b):
-            _state["z"][key] = (x, y, E.coarse_ground_z(x, y))
+            _state["z"][key] = (x, y, E.coarse_ground_z(x, y) - _edge_sink(a, b))
         else:
             px, py = x, y
             f = _kerb_frame(x, y) if key in _state["snap"] else None
@@ -122,8 +136,77 @@ def _lattice(a, b):
                 sd, _k, (mx, my) = f
                 to = FACE_LAND if sd < 0.05 else FACE_SAND
                 px, py = x + mx * (to - sd), y + my * (to - sd)
-            _state["z"][key] = (px, py, _surface(px, py, blend_at=(x, y)))
+            _state["z"][key] = (px, py, _surface(px, py, blend_at=(x, y)) - _sink(x, y))
     return _state["z"][key]
+
+
+def _sink(x, y):
+    """V16e: under the corridor the lattice sinks like the 5 m ground (build_world.build_ground)."""
+    return env_corridor.SINK_UNDER_CORRIDOR * env_corridor.smoothstep((env_corridor.inside_depth(x, y) - 0.5) / 2.0)
+
+
+def _edge_sink(a, b):
+    """Sink of a lattice point on the edge of the replaced area: the 5 m ground's own, linear between its nodes."""
+    i, j = a // SUB, b // SUB
+    node = lambda u, v: _sink(E.X0 + u * E.STEP, E.Y0 + v * E.STEP)                     # noqa: E731
+    if a % SUB == 0 and b % SUB == 0:
+        return node(i, j)
+    if a % SUB == 0:
+        t = (b % SUB) / SUB
+        return node(i, j) * (1 - t) + node(i, j + 1) * t
+    t = (a % SUB) / SUB
+    return node(i, j) * (1 - t) + node(i + 1, j) * t
+
+
+HOLD_FROM, HOLD_GAP, HOLD_MIN = 9.0, 1.5, 7.5
+
+
+def hold_back(pts, width):
+    """V16e (env_corridor.widths hook): where a corridor row would cross the cove kerb more than HOLD_FROM metres from
+    the centreline, the row ends HOLD_GAP before the kerb, and its neighbours widen again by RAMP_TAPER per row (the
+    same rule as V15b's hold-back at the car-park ramp). Out there the rows fan out and meet the kerb at a slant, so
+    the drop zig-zagged between rows: sand ramps against the sea wall, 2-3 m high since the cove is a walled basin.
+    The 1 m lattice of this module takes those cells over. Rows that cross the kerb close to the road (the north
+    apex, where env_corridor.snap_to_kerb follows it cleanly) keep the kerb."""
+    n = len(pts)
+    cap = {}
+    for p in pts:
+        if math.hypot(p["x"] - coast.COVE_CENTRE[0], p["y"] - coast.COVE_CENTRE[1]) > 90.0:
+            continue
+        for side in (1, -1):
+            k = env_corridor.kerb_crossing(p, side)
+            if k is not None and k > HOLD_FROM:
+                cap[(p["i"], side)] = max(HOLD_MIN, k - HOLD_GAP)
+    span = int(env_corridor.CORRIDOR / env_corridor.RAMP_TAPER) + 3
+    held = {}
+    for (i, side), o in cap.items():
+        for d in range(-span, span + 1):
+            j = (i + d) % n
+            w = min(o + env_corridor.RAMP_TAPER * max(0, abs(d) - 1), width[j][side])
+            if w < held.get((j, side), width[j][side]):
+                held[(j, side)] = w
+    for (j, side), w in held.items():
+        width[j][side] = w
+        env_corridor.HELD_BACK[(j, side)] = min(w, env_corridor.HELD_BACK.get((j, side), w))
+    if held:
+        print(f"  cove bank: {len(cap)} corridor rows end before the cove kerb, {len(held)} rows held back in all")
+    return width
+
+
+def land_beside_cove(x, y, z):
+    """V16e (env_corridor.profile_height hook): the 5 m terrain height the corridor blends into, on the promenade next
+    to the cove's sea wall. The 5 m grid cannot hold a wall: between a node on the promenade and one on the sand it
+    slopes, so the promenade sagged towards the kerb (by up to the wall's height, 2-3 m). On the land side, within
+    5 m of the kerb line, the height is the terrain as it was before the cove was cut (env_terrain._SHAPED), fading
+    back to the grid by 8 m."""
+    if not env_corridor._near_cove(x, y):
+        return z
+    dk, _k, sand = coast.kerb_side(x, y)
+    if sand or dk > 8.0 or coast.in_cove(x, y) or coast.in_beach(x, y):
+        return z
+    shaped = env_terrain._bilinear(env_terrain._SHAPED.get("h") or E.DATA["grid"]["heights"], x, y)
+    t = env_corridor.smoothstep((dk - 5.0) / 3.0)
+    return shaped * (1 - t) + z * t
 
 
 def bank_z(x, y):
@@ -147,8 +230,9 @@ def plan():
             cx, cy = x0 + E.STEP / 2, y0 + E.STEP / 2
             if coast.kerb_point(cx, cy)[0] > REACH or env_terrain.in_portal_hole(cx, cy):
                 continue
-            if env_corridor.covers_cell(cx, cy) or _near_corridor(x0, y0):
-                continue
+            if env_corridor.covers_cell(cx, cy):         # V16e: cells the corridor only touches are replaced too (the
+                continue                                 # lattice sinks under it like the 5 m ground does): with a sea
+                                                         # wall of 2-3 m such a cell was a sand ramp against the wall
             cand.add((i, j))
     _state["cells"] = cand
     changing = set()
@@ -173,8 +257,8 @@ def plan():
     _state["snap"] = snap
     prev = E._surface["fn"] or E.coarse_ground_z
 
-    def surface(x, y):
-        return bank_z(x, y) if _cell(x, y) in _state["cells"] else prev(x, y)
+    def surface(x, y):                                   # V16e: where the corridor has faces, its own surface holds
+        return bank_z(x, y) if _cell(x, y) in _state["cells"] and not env_corridor.has_face(x, y) else prev(x, y)
     E.set_surface(surface)
     print(f"  cove bank: {len(_state['cells'])} cells of the 5 m grid replaced by a {FINE} m lattice along the cove kerb "
           f"({len(changing)} change)")

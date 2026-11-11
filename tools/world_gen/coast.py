@@ -28,7 +28,13 @@ FAR_X, FAR_Y = FAR_WEST[-1]                             # the straight far line 
 FAR_SLOPE = C["far_line_slope"]                         # metres north per metre west
 
 SEA_FLOOR = -2.0
-KERB_DROP = 0.9          # the cove's sand lies this far below the promenade kerb (K03-K05, V10b's cove stair)
+KERB_DROP = 0.9          # the least the cove's sand lies below the promenade kerb (K03-K05, V10b's cove stair)
+# V16e (survey V15, 2.6): the cove is a sand basin inside a sea wall, about 1.5 m high at the north apex and 2.5-3 m
+# on the sides. The wall's top is the promenade as built (the kerb line, nothing beside the road moves); its foot is
+# the sand, which lies COVE_FOOT[0] + COVE_FOOT[1] * (open beach height at that distance from the water) above the
+# sea, so the wall is as high as the promenade allows: never under KERB_DROP, never over COVE_WALL_MAX.
+COVE_FOOT = (0.30, 0.52)
+COVE_WALL_MAX = 3.0
 KERB_HALF = 0.2          # half the width of V10b's kerb blocks (env_beachfront.KERB_W)
 KERB_ROAD_GAP = 0.45     # V10b keeps the kerb's inner face this far outside the road edge (KERB_ROAD_GAP)
 COVE_CENTRE = (-66.0, -186.0)   # the sand side of the cove kerb faces this point
@@ -86,6 +92,11 @@ def _kerb_line():
 
 
 COVE_KERB = _kerb_line()
+# V16e: the cove's outline follows the kerb as built (the smoothed, pushed-out line), not the straight chords between
+# the traced points. Between two traced points the built kerb bulges up to 0.5 m towards the land; sand in that
+# sliver was "not in the cove", kept the 5 m terrain's slope and stood as a mound against the sea wall.
+if COVE[:len(COVE_KERB_RAW)] == COVE_KERB_RAW:
+    COVE = COVE_KERB + COVE[len(COVE_KERB_RAW):]
 
 
 def far_line_y(x):
@@ -212,10 +223,19 @@ def in_cove(x, y):
 
 
 _KERB_KNOTS = COVE_KERB[::4]                            # kerb samples about 4 m apart for the cove's rim height
+_FOOT = {}
+
+
+def cove_drop(kx, ky, rim):
+    """Height of the cove's sea wall at a kerb point whose top (the promenade) lies at `rim`."""
+    key = (round(kx, 2), round(ky, 2))
+    if key not in _FOOT:
+        _FOOT[key] = COVE_FOOT[0] + COVE_FOOT[1] * beach_z(max(signed_distance(kx, ky), 0.0))
+    return min(max(rim - _FOOT[key], KERB_DROP), COVE_WALL_MAX)
 
 
 def cove_z(x, y, kerb_height):
-    """Sand in the cove: KERB_DROP below the promenade at the kerb, sloping down to the water. kerb_height(px, py)
+    """Sand in the cove: cove_drop() below the promenade at the kerb, sloping down to the water. kerb_height(px, py)
     gives the promenade height at a kerb point; the rim height is the nearest kerb point's next to the kerb and,
     15 m out, a smooth inverse-distance blend along the whole kerb (the promenade ramps down at the arc's west end),
     so the bowl has no creases. Never below the open beach profile near the water."""
@@ -225,9 +245,11 @@ def cove_z(x, y, kerb_height):
     for kx, ky in _KERB_KNOTS:
         w = 1.0 / ((kx - x) ** 2 + (ky - y) ** 2 + 16.0)
         wsum += w
-        zsum += w * kerb_height(kx, ky)
-    t = min(dk / 15.0, 1.0)                              # right at the kerb: exactly KERB_DROP under it
-    top = kerb_height(px, py) * (1 - t * t * (3 - 2 * t)) + zsum / wsum * t * t * (3 - 2 * t) - KERB_DROP
+        rim = kerb_height(kx, ky)
+        zsum += w * (rim - cove_drop(kx, ky, rim))
+    t = min(dk / 15.0, 1.0)                              # right at the kerb: exactly the wall's height under it
+    rim = kerb_height(px, py)
+    top = (rim - cove_drop(px, py, rim)) * (1 - t * t * (3 - 2 * t)) + zsum / wsum * t * t * (3 - 2 * t)
     z = top * max(s, 0.0) / (max(s, 0.0) + dk + 1e-6)
     if s < 6.0:
         return max(z, beach_z(s))
@@ -350,12 +372,15 @@ def rock_pieces():
         proj = [(x - cx) * ax + (y - cy) * ay for x, y in ring]
         t0, t1 = min(proj), max(proj)
         n = max(1, min(4, int(round((t1 - t0) / 13.0 + rng.uniform(-0.3, 0.3)))))
+        if rock.get("pieces"):                          # V16e: a ridge or a reef finger in a set number of pieces
+            n = rock["pieces"]
         cuts = []
         for k in range(1, n):
             t = t0 + (t1 - t0) * (k + rng.uniform(-0.15, 0.15)) / n
             turn = rng.uniform(-0.5, 0.5)
             nx, ny = math.cos(ang + turn), math.sin(ang + turn)
-            cuts.append((nx, ny, (cx + ax * t) * nx + (cy + ay * t) * ny, rng.uniform(0.6, 2.8)))
+            cuts.append((nx, ny, (cx + ax * t) * nx + (cy + ay * t) * ny,
+                         rng.uniform(0.6, 2.8) * rock.get("gap", 1.0)))     # V16e: "gap" narrows the sand between
         for k in range(n):
             poly = ring
             if k > 0:
@@ -378,7 +403,7 @@ def rock_pieces():
             half = max(abs((x - pcx) * pax + (y - pcy) * pay) for x, y in out)
             _PIECES.append({"shelf": rock["name"], "ring": out, "centre": (pcx, pcy),
                             "height": rock["height"] * rng.uniform(0.75, 1.15), "axis": (pax, pay), "half": half,
-                            "tilt": rng.uniform(-0.3, 0.3)})
+                            "tilt": rng.uniform(-0.3, 0.3) * rock.get("tilt", 1.0), "tiers": rock.get("tiers")})
     return _PIECES
 
 
