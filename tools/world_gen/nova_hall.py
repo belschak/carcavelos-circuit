@@ -780,14 +780,17 @@ def long_room_structure(m, f):
     K.wall_o(m, f, 21.95, LONG_END_U - 12.0, LONG_END_U - 0.3, 6.6, 7.8, "glass", facing=-1)
 
 
+PIANO_U = 93.0               # the piano by the west glass, where the middle long table of the first three stood (Noah, T10)
+
+
 def long_room_furniture(m, f):
     for u in K.Frame().samples(84.0, LONG_END_U - 4.0, 4.6):
-        if abs(u - TERRACE_DOOR_U) > 3.5:                                # keep the terrace door free
+        if abs(u - TERRACE_DOOR_U) > 3.5 and abs(u - PIANO_U) > 2.0:     # keep the terrace door and the piano spot free
             long_table(m, f, u, 5.4, seats=3)
     for k, u in enumerate(K.Frame().samples(84.0, LONG_END_U - 4.0, 4.0)):   # round tables in two staggered rows
         round_table(m, f, u, 12.5 if k % 2 == 0 else 14.0, 4)
         round_table(m, f, u + 2.0, 19.5 if k % 2 == 0 else 21.0, 4 if k % 3 else 3)
-    grand_piano(m, f, 86.0, 5.4, 90)
+    grand_piano(m, f, PIANO_U, 5.4, 90)                                 # was at u 86, squeezed between two tables
     grand_piano(m, f, 113.0, 8.6, 90)
     for k, u in enumerate(K.Frame().samples(82.0, LONG_END_U - 3.0, 16.0)):  # fig trees in pots along the glass
         if abs(u - TERRACE_DOOR_U) > 4.5:
