@@ -484,9 +484,9 @@ def west_stair(m, Q):
     m.railing([P3(at, (lo_ + ni) / 2, F1), P3(a_end, (lo_ + ni) / 2, z_foot)], h=0.95)   # middle handrail
     m.railing([P3(a0, li + 0.15, F1), P3(at, li + 0.15, F1)], h=1.1)                    # landing, towards the jump
     m.railing([(*K.lerp2(land[land.index(Q(at, n * no))], court_w, 0.04), F1), (*court_w, F1)], h=1.1)   # north edge
-    # door and vent on the south cheek's outer face (3 cm proud)
+    # door and vent on the south cheek's outer face
     d, v = P.DOOR, P.VENT
-    lf = li - 0.03
+    lf = li - 0.05                                                   # 5 cm proud of the cheek (no flicker)
     g = max(E.ground_z(*Q(d["a0"], n * li)), E.ground_z(*Q(d["a1"], n * li)))
     if line(d["a1"]) + par - g < d["h"] + 0.4:
         raise RuntimeError("V16c: the door does not fit under the stair cheek")
@@ -494,11 +494,11 @@ def west_stair(m, Q):
     face([P3(d["a0"], lf, g + 0.03), P3(d["a1"], lf, g + 0.03), P3(d["a1"], lf, g + d["h"]), P3(d["a0"], lf, g + d["h"])],
          K.UMBER)
     mid = (d["a0"] + d["a1"]) / 2
-    face([P3(mid - 0.02, lf - 0.01, g + 0.03), P3(mid + 0.02, lf - 0.01, g + 0.03), P3(mid + 0.02, lf - 0.01, g + d["h"]),
-          P3(mid - 0.02, lf - 0.01, g + d["h"])], K.SLAT)
+    face([P3(mid - 0.02, lf - 0.05, g + 0.03), P3(mid + 0.02, lf - 0.05, g + 0.03), P3(mid + 0.02, lf - 0.05, g + d["h"]),
+          P3(mid - 0.02, lf - 0.05, g + d["h"])], K.SLAT)             # the gap between the two leaves
     face([P3(v["a0"], lf, g + v["z"]), P3(v["a1"], lf, g + v["z"]), P3(v["a1"], lf, g + v["z"] + 0.4),
           P3(v["a0"], lf, g + v["z"] + 0.4)], K.SLAT)
-    ring = [Q(a0, n * (li - 0.04)), Q(a_end, n * (li - 0.04)), Q(a_end, n * no), Q(a0, n * no)]
+    ring = [Q(a0, n * (li - 0.1)), Q(a_end, n * (li - 0.1)), Q(a_end, n * no), Q(a0, n * no)]
     clear("terrace stair", K.densify(ring, 1.0, closed=True) + land)
     K.keep_out(K.ccw(ring), 1.0)
     K.keep_out(land, 0.5)
