@@ -17,13 +17,14 @@ Objects (collection World_North, exported with CampusWorld.fbx):
                              from the centreline; the kerb and the shoulder between 3.5 and 4.95 m stay free), no
                              collider. The road itself is untouched.
   North_Structures           solid things: the 3-riser stair on the forecourt's east edge, the waste station (8
-                             stainless cylinders on a low platform), the pylon at the avenue (a blank dark slab with a
+                             stainless cylinders on a low platform), the pylon at the avenue (a slim dark post with a
                              blank board, 5 m), four plain flag poles, the seat ring of the east park
   North_Park_NoCollide       the east park's timber-sleeper path and the red-brown disc inside the seat ring (flush)
 Dressing (dress(), after env_entrance.dress, as an explicit edit of the lists): the cafe tables, chairs, parasols and
 planters on the forecourt go (survey: there are none; cars park there); parked cars in a row parallel to the
-colonnade where they keep 9 m from the centreline; steel posts along the bus lay-by; whatever stood on the new
-avenue paving, under the new solids or on the edge bands goes. Everything else stays as frozen.
+colonnade where they keep 9 m from the centreline; steel posts along the bus lay-by; bike racks on the plank band
+along B; saplings on Milestone's lawn; whatever stood on the new avenue paving, under the new solids or on the edge
+bands goes. Everything else stays as frozen.
 The avenue's own paving (asphalt, bus lay-by, calcada strip) is street_plan.avenue_entrance().
 Nothing solid is closer than CLEAR (6.6 m) to the race centreline: the build stops otherwise.
 """
@@ -69,6 +70,9 @@ CAFE = ("Prop_BistroTable", "Prop_BistroChair", "Prop_Parasol", "Prop_TroughBloo
 POST_STEP, POST_OFF = 2.75, 0.6            # steel posts on the calcada, 0.6 m east of the bus lay-by
 PYLON = (-86.0, 102.9)                     # survey: about (-86, 102), on the calcada
 FLAGPOLES = [(-84.5, 99.5), (-82.0, 99.1), (-79.5, 98.7), (-77.0, 98.3)]      # behind it on the lawn, 8 m, no flags
+# start plaza and Milestone's lawn (N10, N06, N14): bike racks on the planks along B, a few saplings on the lawn
+BIKE_RACK_T, BIKE_RACK_S = (36.0, 42.0, 48.0, 54.0, 60.0), 4.6      # in entrance_plan's band frame (m along B, across)
+SAPLINGS = [(-88.0, 152.5), (-78.0, 156.5), (-68.0, 152.0), (-58.5, 157.0), (-51.0, 159.0)]
 # east park (low priority, 60-80 m from the race line)
 PARK_PATH = [(117.0, 131.0), (153.0, 145.1)]     # timber sleepers 2.0 x 0.25 m laid across, every 0.75 m
 SEAT_RING_C, SEAT_RING_R = (157.7, 147.0), 5.0   # cream concrete ring bench, outer diameter 10 m, four gaps
@@ -192,11 +196,12 @@ def build_structures(col):
             x, y = WASTE_C[0] + WASTE_U[0] * a + v[0] * b, WASTE_C[1] + WASTE_U[1] * a + v[1] * b
             g.cyl(0.35, 0.35, top, top + 1.1, 8, "steel_grey", x=x, y=y)
     _clear("waste station", wr)
-    # --- pylon at the avenue: a blank dark slab with a blank board at its top (shape only), facing the avenue ---
+    # --- pylon at the avenue (ST02 h090-h180): a slim dark post with a blank dark board of 2 x 2.5 m at its top
+    # (shape only: no screen content), facing the avenue ---
     px, py = PYLON
     pz = ST.ground(px, py)
-    g.obox(PYLON, (0.0, 1.0), 0.45, 0.14, pz - 0.2, pz + 5.0, "palette", colour="black")
-    g.obox(PYLON, (0.0, 1.0), 1.0, 0.17, pz + 2.5, pz + 5.0, "palette", skip=(), colour="roof_dark")
+    g.obox(PYLON, (0.0, 1.0), 0.13, 0.13, pz - 0.2, pz + 2.5, "palette", colour="black")
+    g.obox(PYLON, (0.0, 1.0), 1.0, 0.16, pz + 2.5, pz + 5.0, "palette", skip=(), colour="roof_dark")
     _clear("pylon at the avenue", [PYLON])
     # --- flag poles on the lawn behind it: plain, no flags ---
     for x, y in FLAGPOLES:
@@ -254,7 +259,13 @@ def _posts():
     a, b = S.offset(S.av_entrance_line(y0 + 1.0, y1 - 1.0), S.AV_SLIP[0] - POST_OFF)
     length = math.hypot(b[0] - a[0], b[1] - a[1])
     n = int(length // POST_STEP)
-    return [(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n) for k in range(n + 1)]
+    row = [(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n) for k in range(n + 1)]
+    # a second, short row across the plaza's south-west corner (ST02 h090), 0.7 m inside the ring's edge
+    (x0, y0), (x1, y1) = P.RING[0], P.RING[1]
+    for k in range(5):
+        x = x0 + 1.0 + k * POST_STEP
+        row.append((x, y0 + (y1 - y0) * (x - x0) / (x1 - x0) + 0.7))
+    return row
 
 
 def dress(veg, props, protos):
@@ -299,7 +310,30 @@ def dress(veg, props, protos):
             _clear("steel posts along the bus lay-by", [(x, y)])
             added.append({"proto": "Prop_BollardSlim", "x": round(x, 3), "y": round(y, 3), "z": round(SO.surface(x, y), 3),
                           "rot_z": 0.0, "scale": 1.05})
+    n_posts = len(added) - n_cars
+    # bike racks on the planks along B (three steel hoops each; the real ones are timber post-and-rail racks)
+    stands = [(p["x"], p["y"]) for p in veg2 + props2 if -100.0 < p["x"] < 20.0 and 95.0 < p["y"] < 150.0]
+    if "Prop_BikeRack" in protos:
+        for t in BIKE_RACK_T:
+            for dt in (0.0, 0.9, -0.9, 1.8, -1.8):
+                x, y = P.band_pt(t + dt, BIKE_RACK_S)
+                if S.route_distance(x, y) >= CLEAR + 1.2 and all(math.hypot(sx - x, sy - y) >= 1.9 for sx, sy in stands):
+                    _REPORT.append(("bike racks on the plank band", S.route_distance(x, y) - 1.0))
+                    added.append({"proto": "Prop_BikeRack", "x": round(x, 3), "y": round(y, 3), "z": round(ST.ground(x, y) + 0.07, 3),
+                                  "rot_z": round(math.atan2(P.BAND_U[1], P.BAND_U[0]), 4), "scale": 1.0})
+                    stands.append((x, y))
+                    break
+    n_racks = len(added) - n_cars - n_posts
     props2 += added
+    n_saplings = 0
+    if "Veg_PlazaTree" in protos:                         # Milestone's west lawn: a few staked saplings (N06, N14):
+        for k, (x, y) in enumerate(SAPLINGS):             # the plaza's young tree at 0.56-0.68 (3.1-3.8 m tall)
+            if S.route_distance(x, y) < E.KEEP_CLEAR + 1.5:
+                continue
+            _REPORT.append(("saplings on Milestone's lawn", S.route_distance(x, y) - 0.8))
+            veg2.append({"proto": "Veg_PlazaTree_B" if k % 2 else "Veg_PlazaTree", "x": x, "y": y,
+                         "z": round(ST.ground(x, y), 3), "rot_z": round(1.3 * k, 4), "scale": round(0.56 + 0.06 * (k % 3), 3)})
+            n_saplings += 1
     for fname, items in (("placements_vegetation.json", veg2), ("placements_props.json", props2)):
         path = os.path.join(E.OUT, fname)
         if not os.path.exists(path):
@@ -311,7 +345,9 @@ def dress(veg, props, protos):
             counts[it["proto"]] = counts.get(it["proto"], 0) + 1
         data["counts"] = counts
         json.dump(data, open(path, "w"), indent=1)
-    print(f"  north dressing: {n_cars} parked cars on the forecourt, {len(added) - n_cars} steel posts along the bus lay-by")
+    print(f"  north dressing: {n_cars} parked cars on the forecourt, {n_posts} steel posts along the bus lay-by "
+          f"and across the plaza's south-west corner, {n_racks} bike racks on the plank band, {n_saplings} saplings on "
+          f"Milestone's lawn")
     for why, names in sorted(removed.items()):
         print(f"  north dressing: removed ({why}): {', '.join(sorted(names))}")
     low = {}

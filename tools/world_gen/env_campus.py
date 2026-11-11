@@ -783,7 +783,7 @@ def build_SC(b):
     box = ccw([at(w0, -0.2), at(w1, -0.2), at(w1, proud), at(w0, proud)])
     det.prism(box, z0, z1, UMBER, UMBER, UMBER)
     p, q = facing(at(w0, proud), at(w1, proud), at(w0, proud + 5.0))
-    det.glass(p, q, z0 + bar, z1 - bar, off=0.03, inset=bar, mat=DARK)
+    det.glass(p, q, z0 + bar, z1 - bar, off=0.05, inset=bar, mat=DARK)
     note_clear("Student Central pavilion", ring + [at(w0, proud), at(w1, proud)])
     return vol.finish("B_" + b["id"]), det.finish("BD_" + b["id"])
 
