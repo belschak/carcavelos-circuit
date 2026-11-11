@@ -80,8 +80,8 @@ namespace CarcavelosCircuit.Ambience
         private Color foam = new Color(0.97f, 0.99f, 1f, 1f);
 
         [Header("Surfers")]
-        [SerializeField, Tooltip("How many surfers (2 to 4)")]
-        private int surferCount = 4;
+        [SerializeField, Tooltip("How many surfers (2 to 4). 3 = one per Rocketbox rider model")]
+        private int surferCount = 3;
 
         [SerializeField, Tooltip("Size of the surfers and boards (1 = real size). A bit bigger reads better from the racing line, 80 m away")]
         private float surferScale = 1.3f;
@@ -128,8 +128,8 @@ namespace CarcavelosCircuit.Ambience
         [SerializeField, Tooltip("Hair colours")]
         private Color[] hairColours = { new Color(0.16f, 0.11f, 0.08f), new Color(0.62f, 0.48f, 0.28f), new Color(0.08f, 0.07f, 0.06f), new Color(0.35f, 0.22f, 0.12f) };
 
-        [SerializeField, Tooltip("Optional: a rigged human model that rides instead of the surfer built in code. It needs a SurferModelPuppet (ISurferVisual) on it. Empty = built in code (SurferBody). Only licence-clean models (e.g. CC0), credited in THIRD_PARTY.md")]
-        private GameObject surferModel;
+        [SerializeField, Tooltip("Optional: rigged human models that ride instead of the surfers built in code (surfer i gets model i, taking turns). Each needs a SurferModelPuppet (ISurferVisual). Empty = built in code (SurferBody). Only licence-clean models, credited in THIRD_PARTY.md (today: Microsoft Rocketbox, MIT, made by RocketboxSurferBuilder)")]
+        private GameObject[] surferModels = new GameObject[0];
 
         public string[] SeaNames { get { return seaNames; } }
         public string[] AnchorNames { get { return anchorNames; } }
@@ -148,7 +148,7 @@ namespace CarcavelosCircuit.Ambience
         public Color[] AccentColours { get { return accentColours; } }
         public Color[] SkinColours { get { return skinColours; } }
         public Color[] HairColours { get { return hairColours; } }
-        public GameObject SurferModel { get { return surferModel; } }
+        public GameObject[] SurferModels { get { return surferModels; } }
 
         // The wave numbers as one plain object, so the wave rules can be tested without an asset.
         public WaveTuning MakeWaveTuning()

@@ -10,8 +10,9 @@ namespace CarcavelosCircuit.Ambience
     // style (full, short arms, short legs) and the hair change per surfer (SurferLook).
     // All surfers go into ONE mesh with vertex colours = one draw call.
     // Rider space: origin = middle of the board's deck, +z = nose, +x = right, +y = up, metres.
-    // Swap seam: a later imported rigged model can replace the rider (SurferModelPuppet, AmbienceSettings > Surfer
-    // Model); then Write is called with drawRider = false and only the board is built here.
+    // Swap seam: imported rigged models can replace the rider (SurferModelPuppet, AmbienceSettings > Surfer Models,
+    // today Microsoft Rocketbox avatars); then Write is called with drawRider = false and only the board is built
+    // here. The models still follow PoseJoints, so both bodies always do the same thing.
     public static class SurferBody
     {
         // Joint numbers. LookAt is not a body joint but the point the surfer looks at.
@@ -118,7 +119,8 @@ namespace CarcavelosCircuit.Ambience
             return BoardSpace(brain);
         }
 
-        // ... while the board flips up and over. Lying or sitting, the board sinks a little into the water.
+        // ... while the board flips up and over. Lying or sitting, board and rider float a little higher, so the board
+        // still shows over the small chop.
         public static Matrix4x4 BoardSpace(SurferBrain brain)
         {
             if (brain == null)
@@ -132,7 +134,7 @@ namespace CarcavelosCircuit.Ambience
             }
             if (brain.State == SurferState.Paddling || brain.State == SurferState.Catching || brain.State == SurferState.Waiting)
             {
-                return Matrix4x4.Translate(new Vector3(0f, -0.05f, 0f));
+                return Matrix4x4.Translate(new Vector3(0f, 0.04f, 0f));
             }
             return Matrix4x4.identity;
         }

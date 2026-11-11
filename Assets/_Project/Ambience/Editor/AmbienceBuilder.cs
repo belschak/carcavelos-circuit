@@ -19,6 +19,7 @@ namespace CarcavelosCircuit.Ambience.Editor
         // Adds the Ambience root object (SeasideAmbience with its settings and materials) to the active scene.
         public static GameObject AddToScene()
         {
+            RocketboxSurferBuilder.EnsureBuilt();          // the Rocketbox surfer prefabs, put into the settings
             AmbienceSettings settings = CreateSettings();
             Material waves = CreateWaveMaterial();
             Material foam = CreateFoamMaterial();

@@ -364,6 +364,8 @@
                         <ui:Label text="Unity 6.3 LTS  ·  Universal Render Pipeline  ·  Cinemachine  ·  UI Toolkit  ·  Input System  ·  Blender" class="credit-text f-ui" />
                         <ui:Label text="SOUND" class="credits-head credits-head--next f-ui" />
                         <ui:Label text="Sound effects: elevenlabs.io (kart engine and drift by Luc Tippmann, boost by David Belschak). Music and all other sounds: our own synthesised work." class="credit-text f-ui" />
+                        <ui:Label text="CHARACTERS" class="credits-head credits-head--next f-ui" />
+                        <ui:Label text="Surfers: Microsoft Rocketbox Avatar Library (MIT, © 2020 Microsoft)." class="credit-text f-ui" />
                         <ui:Label text="MAP DATA" class="credits-head credits-head--next f-ui" />
                         <ui:Label text="Route traced over OpenStreetMap. Map data © OpenStreetMap contributors (ODbL)." class="credit-text f-ui" />
                         <ui:Label text="Original game, not affiliated with Nova SBE." class="credits-foot f-ui" />

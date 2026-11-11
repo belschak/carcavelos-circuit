@@ -71,7 +71,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.Less(rider.y, 0f, "the rider drops into the water");
             Assert.Greater(board.y, 0f, "the board flips up");
             var paddling = new SurferBrain(new SurferTuning(), 0f, 1);
-            Assert.Less(SurferBody.BoardSpace(paddling).MultiplyPoint3x4(Vector3.zero).y, 0f, "lying on it, the board sinks a little");
+            Assert.Greater(SurferBody.BoardSpace(paddling).MultiplyPoint3x4(Vector3.zero).y, 0f, "lying on it, the board floats a little higher");
         }
 
         [Test]
@@ -86,8 +86,9 @@ namespace CarcavelosCircuit.Tests.EditMode
                 puppet.Show(Riding(), rider, joints);
                 Assert.IsTrue(go.activeSelf);
                 Assert.Less(Vector3.Distance(new Vector3(10f, 2f, 5f), go.transform.position), 0.001f);
-                Assert.Less(Quaternion.Angle(Quaternion.Euler(0f, 130f, 0f), go.transform.rotation), 0.1f, "turned 90 degrees: stands sideways");
-                Assert.AreEqual(1.2f, go.transform.localScale.x, 0.001f);
+                Assert.Less(Quaternion.Angle(Quaternion.Euler(0f, 40f, 0f), go.transform.rotation), 0.1f, "turned like the board");
+                Assert.AreEqual(1.2f, go.transform.localScale.x, 0.001f, "no bones: no leg scaling, only the board's size");
+                Assert.IsFalse(puppet.CanPose, "no bones set: moved, not posed");
 
                 puppet.Show(Gone(), rider, joints);
                 Assert.IsFalse(go.activeSelf, "gone after a fall");
@@ -104,6 +105,83 @@ namespace CarcavelosCircuit.Tests.EditMode
             }
         }
 
+        // A tiny stand-in skeleton with the 18 bones a SurferModelPuppet needs, standing straight (legs 1 m long).
+        private static SurferModelPuppet FakeRiggedModel(out GameObject root)
+        {
+            root = new GameObject("model");
+            Transform pelvis = Bone("pelvis", root.transform, new Vector3(0f, 1f, 0f));
+            Transform spine = Bone("spine", pelvis, new Vector3(0f, 1.05f, 0f));
+            Transform neck = Bone("neck", spine, new Vector3(0f, 1.5f, 0f));
+            Transform head = Bone("head", neck, new Vector3(0f, 1.6f, 0f));
+            Transform[] arm = new Transform[6];
+            arm[0] = Bone("upperArmL", spine, new Vector3(-0.2f, 1.45f, 0f));
+            arm[1] = Bone("forearmL", arm[0], new Vector3(-0.5f, 1.45f, 0f));
+            arm[2] = Bone("handL", arm[1], new Vector3(-0.75f, 1.45f, 0f));
+            arm[3] = Bone("upperArmR", spine, new Vector3(0.2f, 1.45f, 0f));
+            arm[4] = Bone("forearmR", arm[3], new Vector3(0.5f, 1.45f, 0f));
+            arm[5] = Bone("handR", arm[4], new Vector3(0.75f, 1.45f, 0f));
+            Transform[] leg = new Transform[8];
+            leg[0] = Bone("thighL", pelvis, new Vector3(-0.1f, 1f, 0f));
+            leg[1] = Bone("calfL", leg[0], new Vector3(-0.1f, 0.5f, 0f));
+            leg[2] = Bone("footL", leg[1], new Vector3(-0.1f, 0f, 0f));
+            leg[3] = Bone("toeL", leg[2], new Vector3(-0.1f, 0f, 0.15f));
+            leg[4] = Bone("thighR", pelvis, new Vector3(0.1f, 1f, 0f));
+            leg[5] = Bone("calfR", leg[4], new Vector3(0.1f, 0.5f, 0f));
+            leg[6] = Bone("footR", leg[5], new Vector3(0.1f, 0f, 0f));
+            leg[7] = Bone("toeR", leg[6], new Vector3(0.1f, 0f, 0.15f));
+            SurferModelPuppet puppet = root.AddComponent<SurferModelPuppet>();
+            var so = new UnityEditor.SerializedObject(puppet);
+            Transform[] bones = { pelvis, spine, neck, head, arm[0], arm[1], arm[2], arm[3], arm[4], arm[5], leg[0], leg[1], leg[2], leg[3], leg[4], leg[5], leg[6], leg[7] };
+            string[] fields = { "pelvis", "spine", "neck", "head", "upperArmL", "forearmL", "handL", "upperArmR", "forearmR", "handR",
+                                "thighL", "calfL", "footL", "toeL", "thighR", "calfR", "footR", "toeR" };
+            for (int i = 0; i < fields.Length; i++)
+            {
+                so.FindProperty(fields[i]).objectReferenceValue = bones[i];
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return puppet;
+        }
+
+        private static Transform Bone(string name, Transform parent, Vector3 position)
+        {
+            var bone = new GameObject(name).transform;
+            bone.SetParent(parent, false);
+            bone.position = position;
+            return bone;
+        }
+
+        [Test]
+        public void Puppet_BendsTheModelIntoTheSurfStance()
+        {
+            GameObject root;
+            SurferModelPuppet puppet = FakeRiggedModel(out root);
+            try
+            {
+                Assert.IsTrue(puppet.CanPose);
+                var joints = new Vector3[SurferBody.JointCount];
+                SurferBrain brain = Riding();
+                SurferBody.PoseJoints(SurferState.Riding, 5f, 0f, 0.45f, 0.5f, joints);   // standing, leaning into a turn
+                Matrix4x4 rider = Matrix4x4.TRS(new Vector3(4f, 0f, 2f), Quaternion.Euler(0f, 90f, 0f), Vector3.one);
+                puppet.Show(brain, rider, joints);
+                Transform pelvis = root.transform.Find("pelvis");
+                Assert.Less(Vector3.Distance(rider.MultiplyPoint3x4(joints[SurferBody.Pelvis]), pelvis.position), 0.001f, "hips where the pose wants them");
+                Assert.AreEqual(SurferModelPuppet.CodeLegLength, root.transform.localScale.x, 0.001f, "legs scaled to the code-built ones (1 m -> 0.86 m)");
+                Transform thigh = pelvis.Find("thighL"), calf = thigh.Find("calfL"), foot = calf.Find("footL");
+                Vector3 wantThigh = rider.MultiplyVector(joints[SurferBody.KneeL] - joints[SurferBody.HipL]).normalized;
+                Vector3 wantShin = rider.MultiplyVector(joints[SurferBody.FootL] - joints[SurferBody.KneeL]).normalized;
+                Assert.Greater(Vector3.Dot((calf.position - thigh.position).normalized, wantThigh), 0.999f, "thigh points at the knee");
+                Assert.Greater(Vector3.Dot((foot.position - calf.position).normalized, wantShin), 0.999f, "shin points at the foot");
+                Vector3 kneeBefore = calf.position;
+                puppet.Show(brain, rider, joints);
+                Assert.Less(Vector3.Distance(kneeBefore, calf.position), 0.0001f, "same pose twice = same result (starts from the rest pose every frame)");
+                Assert.DoesNotThrow(() => puppet.Show(brain, rider, new Vector3[3]), "too few joints: only moved");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         [Test]
         public void Riders_OneCopyPerSurfer_OnlyForAModelWithAPuppet()
         {
@@ -113,12 +191,15 @@ namespace CarcavelosCircuit.Tests.EditMode
             rigged.AddComponent<SurferModelPuppet>();
             try
             {
-                Assert.IsNull(SurferRiders.Spawn(null, parent.transform, 3), "no model: built in code");
-                Assert.IsNull(SurferRiders.Spawn(rigged, parent.transform, 0), "no surfers: nothing");
-                Assert.IsNull(SurferRiders.Spawn(plain, parent.transform, 3), "a model without a puppet is not used");
-                Assert.AreEqual(0, parent.transform.childCount, "and nothing was copied for it");
+                Assert.IsNull(SurferRiders.Spawn(null, parent.transform, 3), "no models: built in code");
+                Assert.IsNull(SurferRiders.Spawn(new GameObject[0], parent.transform, 3), "empty list: built in code");
+                Assert.IsNull(SurferRiders.Spawn(new[] { rigged }, parent.transform, 0), "no surfers: nothing");
+                Assert.IsNull(SurferRiders.Spawn(new[] { plain }, parent.transform, 3), "a model without a puppet is not used");
+                Assert.IsNull(SurferRiders.Spawn(new[] { rigged, null }, parent.transform, 3), "one missing model: all built in code, never a mix");
+                Assert.IsNull(SurferRiders.Spawn(new[] { rigged, plain }, parent.transform, 3));
+                Assert.AreEqual(0, parent.transform.childCount, "and nothing was copied for them");
 
-                ISurferVisual[] riders = SurferRiders.Spawn(rigged, parent.transform, 3);
+                ISurferVisual[] riders = SurferRiders.Spawn(new[] { rigged }, parent.transform, 3);
                 Assert.AreEqual(3, riders.Length);
                 Assert.AreEqual(3, parent.transform.childCount);
                 for (int i = 0; i < riders.Length; i++)

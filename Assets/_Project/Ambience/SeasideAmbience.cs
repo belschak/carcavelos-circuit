@@ -263,7 +263,7 @@ namespace CarcavelosCircuit.Ambience
                 looks[i] = MakeLook(i, linear);
                 sprays[i] = new SprayTrail();
             }
-            riders = SurferRiders.Spawn(settings.SurferModel, transform, count);
+            riders = SurferRiders.Spawn(settings.SurferModels, transform, count);
             surferVertices = new Vector3[count * SurferBody.VertsPerSurfer];
             surferNormals = new Vector3[surferVertices.Length];
             surferColours = new Color32[surferVertices.Length];
