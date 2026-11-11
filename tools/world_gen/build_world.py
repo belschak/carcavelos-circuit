@@ -38,6 +38,7 @@ import env_plaza                # noqa: E402  V10i: upper plaza, stairs, sunken 
 import dressing_freeze         # noqa: E402  V10i: dressing stays put outside changed route sections
 import env_vegetation           # noqa: E402
 import env_props                # noqa: E402
+import env_entrance             # noqa: E402  V15a: entrance plaza (calcada, drain channels, car-park ramp, young trees)
 
 DATA = E.DATA
 
@@ -119,6 +120,8 @@ def build_ground(heights):
                     or env_streets.covers_cell(cx, cy) or env_campus.covers_cell(cx, cy):
                 continue                       # the tunnel portal / the cut walls close this gap; V10d: the cove bank;
                                                # V10f: the restaurant terrace
+            if env_entrance.covers_cell(cx, cy):   # V15a: the car-park ramp's apron replaces this cell
+                continue
             faces.append((a, a + 1, a + 1 + COLS, a + COLS))
             corner = [GRID["classes"][j][i], GRID["classes"][j][i + 1], GRID["classes"][j + 1][i], GRID["classes"][j + 1][i + 1]]
             mats.append(classes.index(max(set(corner), key=corner.count)))   # majority class of the 4 corners
@@ -296,6 +299,8 @@ def build_dressing():
     veg, props = dressing_freeze.apply(veg, props)         # V10i: outside the changed route sections: as approved
     veg, props = env_campus.dress(veg, props)              # V10c2: nothing in the pools, on the berms or the lower plaza
     veg, props = env_plaza.dress(veg, props)               # V10i: the upper plaza's own trees and furniture
+    veg, props = env_entrance.dress(veg, props, protos)    # V15a: entrance plaza: young staked trees, seat blocks, lamps
+    veg, props = env_street_objects.dress_promenade(veg, props)   # V15c: promenade bollards, flood masts, machines
     env_vegetation.instance_for_preview(veg, protos)
     env_props.instance_for_preview(props, protos)
     print(f"  dressing: {len(protos)} prototypes, {len(veg)} plants, {len(props)} props")
@@ -581,15 +586,18 @@ def main():
     env_covebank.plan()                    # V10d: 0.5 m lattice where the cove kerb crosses the 5 m grid
     env_streets.plan_terrace()             # V10f: 1 m lattice along the retaining wall of the restaurant terrace
     env_campus.plan_ground()               # V10c2: sunken courtyards and D's pool (trays in the 5 m grid)
+    env_entrance.plan_ground()             # V15a: the car-park ramp at the entrance plaza (cells -> apron + ramp floor)
     build_ground(heights)
     env_corridor.build_mesh()
     env_covebank.build_mesh()
     env_streets.build_terrace_mesh()
     env_campus.build_ground_mesh()
+    env_entrance.build_ground_mesh()       # V15a
     env_streets.build()                    # V10f: paving, markings, kerbs, walls (before the dressing stands on it)
     build_paths()
     env_buildings.build()
     env_plaza.build()                      # V10i: deck with skylights, stairs, courtyard, fences
+    env_entrance.build()                   # V15a: entrance plaza paving with drain channels, car-park ramp
     build_dressing()
     build_route_guide()
     env_track.build()

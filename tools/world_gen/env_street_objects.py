@@ -461,6 +461,58 @@ def fan_palm(name, col, seed, height, trunk, fronds, frond_len, variant=""):
     return mb.build(name, [V.ramp_material(key), V.cutout_material("palm_frond" + variant, tex)], col, sway=True)
 
 
+# ---- V15c: promenade prototypes (photospheres S_p01..S_p05) ----
+def bollard_stone(name, col):
+    """Pale square limestone post of the beach promenade: 0.25 x 0.25 m, 0.85 m above the ground."""
+    g = Proto()
+    h, top = S.PROM_BOLLARD["size"] / 2, S.PROM_BOLLARD["height"]
+    g.box(-h, h, -h, h, -0.15, top, "bollard_pale")
+    return g.build(name, col)
+
+
+def flood_mast(name, col, height=None):
+    """White flood-light mast of the promenade: small plinth, slim tapered shaft, a head frame with four floodlights
+    (two each side of the mast's local x axis, which is turned along the promenade)."""
+    height = height or S.PROM_MAST["height"]
+    g = Proto()
+    g.box(-0.3, 0.3, -0.3, 0.3, -0.2, 0.3, "render_white")
+    g.cyl(0.15, 0.075, 0.3, height, 6, "mast")
+    g.beam((-0.8, 0, height - 0.12), (0.8, 0, height - 0.12), 0.09, 0.09, "palette", "mast")
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            c = (sx * 0.52, sy * 0.32)
+            g.obox(c, (1.0, 0.0), 0.27, 0.22, height - 0.58, height - 0.2, "palette", ("bottom",), "steel_grey")
+            g.obox(c, (1.0, 0.0), 0.23, 0.18, height - 0.59, height - 0.58, "palette", ("top", "+u", "-u", "+v", "-v"), "light")
+    return g.build(name, col)
+
+
+def fitness(name, col, kind):
+    """Outdoor fitness machine, a generic shape of steel tubes (no real product): 'bars', 'twist' or 'wheel'."""
+    g = Proto()
+    tube, steel, dark = 0.07, "steel_grey", "black"
+    if kind == "bars":                                   # two portal frames with a high and a low bar
+        for x in (-0.75, 0.75):
+            g.cyl(0.045, 0.045, -0.1, 2.0, 5, steel, x=x)
+        g.beam((-0.75, 0, 1.95), (0.75, 0, 1.95), tube, tube, "palette", steel)
+        g.beam((-0.75, 0, 1.15), (0.75, 0, 1.15), tube, tube, "palette", dark)
+    elif kind == "twist":                                # a centre post with a handle ring and two turning plates
+        g.cyl(0.055, 0.055, -0.1, 1.3, 5, steel)
+        g.beam((-0.55, 0, 1.25), (0.55, 0, 1.25), tube, tube, "palette", steel)
+        g.beam((0, -0.3, 1.05), (0, 0.3, 1.05), tube, tube, "palette", dark)
+        for x in (-0.55, 0.55):
+            g.cyl(0.05, 0.05, -0.1, 0.12, 5, steel, x=x, cap=False)
+            g.cyl(0.24, 0.24, 0.12, 0.17, 8, dark, x=x)
+    else:                                                # a post with a hand wheel on each side and a seat
+        g.cyl(0.06, 0.06, -0.1, 1.75, 5, steel)
+        for y, f in ((0.09, 1), (-0.09, -1)):
+            g.disc_y(0.0, y, 1.35, 0.3, 8, dark, f)
+            g.disc_y(0.0, y + 0.01 * f, 1.35, 0.08, 6, steel, f)
+        g.beam((0, 0, 0.5), (0.6, 0, 0.5), tube, tube, "palette", steel)
+        g.cyl(0.04, 0.04, -0.1, 0.5, 5, steel, x=0.6, cap=False)
+        g.box(0.42, 0.78, -0.17, 0.17, 0.5, 0.55, dark)
+    return g.build(name, col)
+
+
 CAR_KINDS = (("Prop_CarA", "car_silver", "hatch"), ("Prop_CarB", "car_grey", "sedan"), ("Prop_CarC", "car_white", "suv"),
              ("Prop_CarD", "car_navy", "hatch"), ("Prop_CarE", "car_red", "sedan"), ("Prop_CarF", "car_black", "suv"),
              ("Prop_CarG", "car_sand", "hatch"), ("Prop_CarH", "car_white", "sedan"))
@@ -496,6 +548,11 @@ def build_prototypes():
         "Prop_PayMachine": pay_machine("Prop_PayMachine", pc),
         "Prop_CabinetGrey": cabinet("Prop_CabinetGrey", pc, "bin_grey", (1.2, 0.45, 1.1)),
         "Prop_CabinetTerracotta": cabinet("Prop_CabinetTerracotta", pc, "terracotta", (2.3, 1.0, 1.7)),
+        "Prop_BollardStone": bollard_stone("Prop_BollardStone", pc),          # V15c: promenade
+        "Prop_FloodMast": flood_mast("Prop_FloodMast", pc),
+        "Prop_FitnessBars": fitness("Prop_FitnessBars", pc, "bars"),
+        "Prop_FitnessTwist": fitness("Prop_FitnessTwist", pc, "twist"),
+        "Prop_FitnessWheel": fitness("Prop_FitnessWheel", pc, "wheel"),
         "Veg_Sapling": sapling("Veg_Sapling", vc),
         "Veg_FanPalm": fan_palm("Veg_FanPalm", vc, 31, 10.5, 0.19, 13, 1.9),
         "Veg_FanPalm_B": fan_palm("Veg_FanPalm_B", vc, 47, 11.5, 0.2, 12, 1.8, "_b"),
@@ -998,6 +1055,189 @@ def dress(veg, props):
     return veg2, props2
 
 
+# =====================================================================================================
+# V15c: the beach promenade (street_plan section G): seat-walls and beach steps (static), bollards, flood masts,
+# fitness machines and the old olive (instanced, added to the dressing after dressing_freeze: see dress_promenade)
+# =====================================================================================================
+PROM_REPORT = []            # (what, minimum distance to the centreline): printed by dress_promenade
+
+
+def _strip_wall(g, line, width, z0, z1, colour):
+    """A wall with mitred joints along a polyline (smooth in plan, top follows z1): sides, top, end caps."""
+    lo, hi = S.offset(line, -width / 2), S.offset(line, width / 2)
+    for k in range(len(line) - 1):
+        a0, a1, b0, b1 = lo[k], lo[k + 1], hi[k], hi[k + 1]
+        za, zb, fa, fb = z1(*line[k]), z1(*line[k + 1]), z0(*line[k]), z0(*line[k + 1])
+        u = S.unit(line[k + 1][0] - line[k][0], line[k + 1][1] - line[k][1])
+        g.face([(*a0, fa), (*a1, fb), (*a1, zb), (*a0, za)], "palette", (u[1], -u[0], 0.0), colour)
+        g.face([(*b0, fa), (*b1, fb), (*b1, zb), (*b0, za)], "palette", (-u[1], u[0], 0.0), colour)
+        g.face([(*a0, za), (*a1, zb), (*b1, zb), (*b0, za)], "palette", (0, 0, 1), colour)
+    for k, j in ((0, 1), (len(line) - 1, len(line) - 2)):
+        out = (line[k][0] - line[j][0], line[k][1] - line[j][1], 0.0)
+        g.face([(*lo[k], z0(*line[k])), (*hi[k], z0(*line[k])), (*hi[k], z1(*line[k])), (*lo[k], z1(*line[k]))],
+               "palette", out, colour)
+
+
+def seat_wall_lines():
+    w = S.PROM_SEAT
+    return [S.route_line(a, b, w["offset"], 0.8) for a, b in w["runs"]]
+
+
+def build_promenade(col):
+    """Street_Promenade: the curved white seat-walls on the land side and the white steps down to the cove sand."""
+    g = Solid()
+    w = S.PROM_SEAT
+    for line in seat_wall_lines():
+        _strip_wall(g, line, w["width"], lambda x, y: ST.ground(x, y) - 0.15, lambda x, y: ST.ground(x, y) + w["height"],
+                    "render_white")
+        near = min(S.route_distance(*p) for p in S.offset(line, -w["width"] / 2))
+        PROM_REPORT.append((f"seat-wall {S.line_length(line):.1f} m", near))
+    # beach steps on the sea side: top level with the road, down to the sand; risers white, treads concrete
+    st = S.PROM_STEPS
+    t0, t1 = st["run"]
+    stations = [t0 + (t1 - t0) * k / 4 for k in range(5)]
+    top = min(S.ROUTE[int(t)]["track_z"] for t in stations) + 0.02
+
+    def sand(t, d):
+        return ST.ground(*S.route_side(t, -d))
+    n = 1
+    while n < 12 and any(top - n * st["rise"] > sand(t, st["start"] + 0.35 + n * st["tread"]) + 0.05 for t in stations):
+        n += 1
+    edges = [st["start"], st["start"] + 0.35] + [st["start"] + 0.35 + k * st["tread"] for k in range(1, n + 1)]
+    floor = min(sand(t, edges[-1] + 0.3) for t in stations) - 0.4
+    pt3 = lambda t, d, z: (*S.route_side(t, -d), z)                                   # noqa: E731
+    for ta, tb in zip(stations, stations[1:]):
+        (_p, u) = S.route_at((ta + tb) / 2)
+        sea = (u[1], -u[0], 0.0)
+        for k in range(n + 1):
+            z = top - k * st["rise"]
+            d0, d1 = edges[k], edges[k + 1]
+            g.face([pt3(ta, d0, z), pt3(tb, d0, z), pt3(tb, d1, z), pt3(ta, d1, z)], "palette", (0, 0, 1), "concrete")
+            zn = z - st["rise"] if k < n else floor
+            g.face([pt3(ta, d1, z), pt3(tb, d1, z), pt3(tb, d1, zn), pt3(ta, d1, zn)], "palette", sea, "render_white")
+    for t, sign in ((stations[0], -1.0), (stations[-1], 1.0)):                        # the two cheeks
+        (_p, u) = S.route_at(t)
+        for k in range(n + 1):
+            z = top - k * st["rise"]
+            g.face([pt3(t, edges[k], z), pt3(t, edges[k + 1], z), pt3(t, edges[k + 1], floor), pt3(t, edges[k], floor)],
+                   "palette", (sign * u[0], sign * u[1], 0.0), "render_white")
+    PROM_REPORT.append((f"beach steps ({n} risers, top {top:.2f} m, at or below road level)", st["start"]))
+    E.new_object("Street_Promenade", g.mesh("Street_Promenade"), col)
+    print(f"  promenade (V15c): seat-walls {', '.join(f'{S.line_length(l):.1f} m' for l in seat_wall_lines())}; "
+          f"beach steps {n} risers; {sum(len(f[0]) - 2 for f in g.faces)} triangles")
+
+
+def promenade_placements(veg, props):
+    """(plants, props, removed): the promenade's instanced dressing and the older props it replaces."""
+    i0, i1 = S.PROM
+    walls = seat_wall_lines()
+    masts = [(t, S.route_side(t, S.PROM_MAST["offset"])) for t in S.PROM_MAST["at"]]
+    solids = []                                           # (x, y, radius): our own things that need room
+    for line in walls:
+        solids += [(x, y, 1.1) for x, y in line]
+    solids += [(x, y, 1.6) for _t, (x, y) in masts]
+    machines = []
+    for f in S.PROM_FITNESS:
+        u = S.bearing(f["bearing"])
+        for k, proto in enumerate(f["protos"]):
+            x, y = S.pt(f["at"], u, (k - (len(f["protos"]) - 1) / 2) * 2.3)
+            machines.append((proto, x, y, f["bearing"]))
+            solids.append((x, y, 1.6))
+    st = S.PROM_STEPS
+    solids += [(*S.route_side(t, -(st["start"] + 1.0)), 2.0) for t in (st["run"][0], sum(st["run"]) / 2, st["run"][1])]
+
+    def near_route(p):
+        k = min(range(i0 - 4, i1 + 3), key=lambda i: (S.ROUTE[i]["x"] - p["x"]) ** 2 + (S.ROUTE[i]["y"] - p["y"]) ** 2)
+        return i0 - 3 <= k <= i1 + 1 and S.route_distance(p["x"], p["y"]) < 16.0
+    removed = [p for p in props if (p["proto"] == "Prop_LampRoad" and near_route(p))
+               or (not p["proto"].startswith("Prop_Railing")
+                   and any(math.hypot(p["x"] - x, p["y"] - y) < r for x, y, r in solids))]
+    gone = {id(p) for p in removed}
+    others = [p for p in props if id(p) not in gone] + list(veg)
+    new_p, new_v, skipped = [], [], {}
+
+    def add(lst, proto, x, y, rot=0.0, scale=1.0, clear=S.PROP_CLEAR):
+        d = S.route_distance(x, y)
+        if d < clear:
+            skipped[proto] = skipped.get(proto, 0) + 1
+            return False
+        lst.append(_entry(proto, x, y, rot, scale))
+        return True
+
+    # bollards: along the land side (and the sea-side lawn at the start), one every 2.75 m; gaps at the path mouths
+    # (street_plan), at seat-walls, masts and older props
+    b = S.PROM_BOLLARD
+    gaps = {}
+    for side, (ta, tb) in ((1, b["land"]), (-1, b["sea"])):
+        last, t = None, ta
+        while t <= tb:
+            x, y = S.route_side(t, side * b["offset"])
+            _p, u = S.route_at(t)
+            t += 0.05
+            if last is not None and math.hypot(x - last[0], y - last[1]) < b["step"]:
+                continue
+            why = None
+            if side > 0 and any(g0 <= t <= g1 for g0, g1 in b["gaps"]):
+                why = "path"
+            elif any(math.hypot(x - sx, y - sy) < r + 0.3 for sx, sy, r in solids):
+                why = "seat-wall, mast or machine"
+            elif E.in_building(x, y, 0.6):
+                why = "building"
+            elif any(math.hypot(x - q["x"], y - q["y"]) < (1.3 if q["proto"].startswith("Veg_") else 0.9) for q in others):
+                why = "older prop or plant"
+            else:
+                top = S.layer_at(x, y)
+                if top is not None and top["mat"] in ("asphalt", "bays"):
+                    why = "car park"
+            if why:
+                gaps[why] = gaps.get(why, 0) + 1
+                last = (x, y)
+                continue
+            if add(new_p, "Prop_BollardStone", x, y, heading_rot(u)):
+                last = (x, y)
+    for t, (x, y) in masts:
+        add(new_p, "Prop_FloodMast", x, y, heading_rot(S.route_at(t)[1]))
+    for proto, x, y, brg in machines:
+        add(new_p, proto, x, y, 90.0 - brg)
+    o = S.OLD_OLIVE
+    add(new_v, "Veg_Olive", o["at"][0], o["at"][1], 205.0, o["scale"], clear=S.PROP_CLEAR + 2.5 * o["scale"])
+    print(f"  promenade (V15c): bollard gaps {gaps}" + (f"; left out, too close to the road: {skipped}" if skipped else ""))
+    return new_v, new_p, removed
+
+
+def dress_promenade(veg, props):
+    """V15c, called after dressing_freeze.apply: an explicit edit of the dressing lists. Removes the dark road lamps
+    along the promenade (the real ones are white flood masts) and the few older props that stand where a seat-wall,
+    mast, machine or the beach steps now are; adds the limestone bollards, flood masts, fitness machines and the old
+    olive on the lawn path. Everything else stays exactly as it was. Rewrites the dressing files."""
+    plants, ours, removed = promenade_placements(veg, props)
+    gone = {id(p) for p in removed}
+    veg2, props2 = list(veg) + plants, [p for p in props if id(p) not in gone] + ours
+    for fname, items in (("placements_vegetation.json", veg2), ("placements_props.json", props2)):
+        path = os.path.join(E.OUT, fname)
+        data = json.load(open(path))
+        data["placements"] = items
+        counts = {}
+        for it in items:
+            counts[it["proto"]] = counts.get(it["proto"], 0) + 1
+        data["counts"] = counts
+        json.dump(data, open(path, "w"), indent=1)
+    added = {}
+    for it in plants + ours:
+        d = S.route_distance(it["x"], it["y"])
+        n, lo = added.get(it["proto"], (0, 1e9))
+        added[it["proto"]] = (n + 1, min(lo, d))
+    print("  promenade (V15c): removed " + (", ".join(sorted(f"{p['proto']}@{p['x']:.0f},{p['y']:.0f}" for p in removed)) or "nothing"))
+    print("  promenade (V15c): clearance to the race centreline (minimum per kind, limit "
+          f"{S.PROP_CLEAR} m for everything that stands up):")
+    for proto, (n, lo) in sorted(added.items()):
+        print(f"    {proto:<22s} {n:3d} placed   min {lo:5.2f} m")
+    for what, lo in PROM_REPORT:
+        print(f"    {what:<34s} min {lo:5.2f} m")
+    return veg2, props2
+
+
 def build(col):
     build_kerbs(col)
     build_structures(col)
+    build_promenade(col)            # V15c

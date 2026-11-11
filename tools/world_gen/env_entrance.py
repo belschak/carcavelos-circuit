@@ -1,0 +1,656 @@
+"""Entrance plaza = the start plaza (V15a, 2026-11-11), built from entrance_plan.py (survey V15a: DGT orthophoto,
+2026 satellite tile, Street View Jul 2020).
+
+Objects (collection World_Entrance, exported with CampusWorld.fbx):
+  Entrance_Paving   calcada of small pale cubes on the whole plaza, draped over the built terrain exactly like
+                    env_streets' paving (its Soup tools: 7 cm over the ground, down to 4 mm at the foot of the road's
+                    shoulder; nothing within 4.95 m of the centreline: the race road keeps its own surface), with the
+                    thin dark-red drain channels cut into the same mesh (no second layer, nothing coplanar)
+  Entrance_Ramp     the underground car-park ramp at the avenue: sett floor going down east to a black portal, pale
+                    concrete side walls that grow out of the plaza, a low parapet with a steel handrail, the lintel
+                    with a dark band (no text), the portal void as a black box
+  World_GroundEntrance (collection World_Ground)   the 5 m terrain cells the ramp touches, rebuilt as an apron that
+                    meets the ramp's outline (like env_campus' trays); E.ground_z returns the ramp floor inside it
+Dressing (dress(), after dressing_freeze.apply and the other dress() hooks, as an explicit edit of the lists):
+  every olive inside the plaza ring (+3 m) becomes the young staked tree Veg_PlazaTree / _B (env_vegetation), the
+  generic campus lamps inside the ring become Prop_LampPlaza; added: the white seat blocks Prop_SeatBlockPlaza, six
+  slim lamps in the tree rows, one parking sign at the ramp mouth. Everything else stays as frozen.
+Nothing that stands up is closer than ROUTE_CLEAR (6.5 m) to the race centreline; report() prints the minimum per kind.
+"""
+import json
+import math
+import os
+
+import bpy
+from mathutils import Vector
+from mathutils.geometry import delaunay_2d_cdt
+
+import entrance_plan as P
+import env_common as E
+
+COLLECTION = "World_Entrance"
+ROUTE_CLEAR = 6.5            # m from the race centreline: nothing of ours stands closer (road half-width 4 m)
+SINK_UNDER_CORRIDOR = 0.35   # as build_world.build_ground
+ALONG, ACROSS = 12, 6        # stations of the ramp: along each wall, across the floor
+_CLEAR = {}                  # kind -> (least distance to the centreline, where)
+
+
+def route_distance(x, y):
+    import street_plan
+    return street_plan.route_distance(x, y)
+
+
+def _note(kind, x, y, reach=0.0):
+    d = route_distance(x, y) - reach
+    if kind not in _CLEAR or d < _CLEAR[kind][0]:
+        _CLEAR[kind] = (d, (round(x, 1), round(y, 1)))
+    return d
+
+
+# =====================================================================================================
+# Small mesh builder: flat-shaded faces, one material per name, UVs optional
+# =====================================================================================================
+class Faces:
+    def __init__(self):
+        self.v, self.f, self.m, self.uv, self.mats = [], [], [], [], []
+
+    def face(self, pts, mat, towards=None, uvs=None):
+        """Face from 3D points; turned so that its normal points along `towards` (a direction) if given."""
+        pts = [tuple(p) for p in pts]
+        if towards is not None:
+            n = Vector((0, 0, 0))
+            for a, b in zip(pts, pts[1:] + pts[:1]):
+                n += Vector(a).cross(Vector(b))
+            if n.dot(Vector(towards)) < 0:
+                pts = pts[::-1]
+                uvs = uvs[::-1] if uvs else None
+        if mat not in self.mats:
+            self.mats.append(mat)
+        base = len(self.v)
+        self.v += pts
+        self.f.append(list(range(base, base + len(pts))))
+        self.m.append(self.mats.index(mat))
+        self.uv.append(uvs or [(0.0, 0.0)] * len(pts))
+
+    def box(self, c, u, hu, hv, z0, z1, mat, top=True, bottom=False):
+        """Box centred at c (2D), half-size hu along the unit vector u and hv across it."""
+        v = (-u[1], u[0])
+        ring = [(c[0] + u[0] * a + v[0] * b, c[1] + u[1] * a + v[1] * b) for a, b in ((-hu, -hv), (hu, -hv), (hu, hv), (-hu, hv))]
+        for a, b in zip(ring, ring[1:] + ring[:1]):
+            out = (b[1] - a[1], a[0] - b[0], 0.0)
+            self.face([(*a, z0), (*b, z0), (*b, z1), (*a, z1)], mat, out)
+        if top:
+            self.face([(*p, z1) for p in ring], mat, (0, 0, 1))
+        if bottom:
+            self.face([(*p, z0) for p in ring], mat, (0, 0, -1))
+
+    def beam(self, a, b, half, mat):
+        """Square bar between two 3D points (four long faces, open ends)."""
+        a, b = Vector(a), Vector(b)
+        d = (b - a).normalized()
+        side = d.cross(Vector((0, 0, 1)))
+        side = side.normalized() if side.length > 1e-6 else Vector((1, 0, 0))
+        up = side.cross(d).normalized()
+        for s, t in ((side, up), (up, -side), (-side, -up), (-up, side)):
+            self.face([a + (s - t) * half, b + (s - t) * half, b + (s + t) * half, a + (s + t) * half], mat, s)
+
+    def build(self, name, col, materials):
+        mesh = bpy.data.meshes.new(name)
+        mesh.from_pydata(self.v, [], self.f)
+        for key in self.mats:
+            mesh.materials.append(materials[key])
+        mesh.polygons.foreach_set("material_index", self.m)
+        layer = mesh.uv_layers.new(name="UVMap")
+        for poly, uvs in zip(mesh.polygons, self.uv):
+            for li, t in zip(poly.loop_indices, uvs):
+                layer.data[li].uv = t
+        mesh.validate()
+        mesh.update()
+        return E.new_object(name, mesh, col)
+
+
+def materials():
+    import env_streets
+    return {
+        "calcada": env_streets._textured("entrance_calcada", P.CALCADA, "entrance_calcada", 0.9),
+        "drain": env_streets._textured("entrance_drain", P.DRAIN, "entrance_drain", 0.75),
+        "concrete": E.material("entrance_concrete", P.CONCRETE, 0.9),
+        "void": E.material("entrance_void", "#050505", 1.0),
+        "steel": E.material("entrance_steel", "#9EA1A4", roughness=0.4, metallic=0.7),
+        "seat": E.material("entrance_seat", P.SEAT_WHITE, 0.8),
+        "dark": E.material("entrance_dark", P.LAMP_DARK, roughness=0.5, metallic=0.3),
+        "light": E.material("entrance_lamp_light", "#F4EFD8", roughness=0.4, emission="#FFE9B0"),
+        "ground": E.material("ground_map", "#A6AA82", roughness=0.95),
+    }
+
+
+def calcada_uv(x, y):
+    ux, uy = P.ROW_DIR
+    return ((x * ux + y * uy) / P.CALCADA_TILE, (-x * uy + y * ux) / P.CALCADA_TILE)
+
+
+# =====================================================================================================
+# The ramp: terrain cut (plan_ground, build_ground_mesh) and its walls (build_ramp)
+# =====================================================================================================
+_G = {"cells": set(), "tris": [], "grid": {}, "ramp": None}
+
+
+def _lerp(a, b, t):
+    return tuple(a[i] + (b[i] - a[i]) * t for i in range(len(a)))
+
+
+def _cell(x, y):
+    return int(math.floor((x - E.X0) / E.STEP)), int(math.floor((y - E.Y0) / E.STEP))
+
+
+def covers_cell(cx, cy):
+    """True if the 5 m terrain face centred at (cx, cy) is replaced by the ramp's apron (build_world.build_ground)."""
+    return _cell(cx, cy) in _G["cells"]
+
+
+def _ramp():
+    """The ramp's stations and heights (once): the floor is a ruled surface from the natural ground along the mouth
+    down to one level at the portal."""
+    if _G["ramp"] is None:
+        sw, se, ne, nw = P.ramp_inner()
+        zg = E.coarse_ground_z
+        mouth = [_lerp(sw, nw, k / ACROSS) for k in range(ACROSS + 1)]
+        portal = [_lerp(se, ne, k / ACROSS) for k in range(ACROSS + 1)]
+        z_mouth = [zg(*p) for p in mouth]
+        beside = [zg(*p) for p in (se, ne, _lerp(se, ne, 0.5))]
+        z_portal = sum(beside) / 3 - P.RAMP_DROP
+        ax = P.ramp_axis()
+        mid_m, mid_p = _lerp(sw, nw, 0.5), _lerp(se, ne, 0.5)
+        _G["ramp"] = dict(sw=sw, se=se, ne=ne, nw=nw, mouth=mouth, portal=portal, z_mouth=z_mouth, z_portal=z_portal,
+                          ax=ax, mid_m=mid_m, length=math.dist(mid_m, mid_p), inner=P.ramp_inner(), outer=P.ramp_outer())
+    return _G["ramp"]
+
+
+def _floor_z(t, s):
+    """Floor height at t (0 mouth .. 1 portal) and s (0 south edge .. 1 north edge)."""
+    r = _ramp()
+    f = min(max(s, 0.0), 1.0) * ACROSS
+    k = min(int(f), ACROSS - 1)
+    zm = r["z_mouth"][k] + (r["z_mouth"][k + 1] - r["z_mouth"][k]) * (f - k)
+    return zm + (r["z_portal"] - zm) * min(max(t, 0.0), 1.0)
+
+
+def _floor_at(x, y):
+    r = _ramp()
+    t = ((x - r["mid_m"][0]) * r["ax"][0] + (y - r["mid_m"][1]) * r["ax"][1]) / r["length"]
+    ds = P.seg_distance(x, y, *r["sw"], *r["se"])
+    dn = P.seg_distance(x, y, *r["nw"], *r["ne"])
+    return _floor_z(t, ds / max(ds + dn, 1e-6))
+
+
+def _outline():
+    """The outline the apron meets, counter-clockwise: south wall outside, portal wall outside, north wall outside,
+    then back along the open mouth through the floor's own mouth points (shared vertices: no crack at the mouth)."""
+    r = _ramp()
+    o_sw, o_se, o_ne, o_nw = r["outer"]
+    ring = [_lerp(o_sw, o_se, k / ALONG) for k in range(ALONG)]
+    ring += [_lerp(o_se, o_ne, k / 4) for k in range(4)]
+    ring += [_lerp(o_ne, o_nw, k / ALONG) for k in range(ALONG)]
+    ring += [o_nw] + r["mouth"][::-1]
+    return ring
+
+
+def _touches_cell(ring, x0, y0, step, pad):
+    ax, ay, bx, by = x0 - pad, y0 - pad, x0 + step + pad, y0 + step + pad
+    sq = [(ax, ay), (bx, ay), (bx, by), (ax, by)]
+    if any(P.inside(x, y, ring) for x, y in sq) or any(ax <= x <= bx and ay <= y <= by for x, y in ring):
+        return True
+
+    def side(u, v, w):
+        return (v[0] - u[0]) * (w[1] - u[1]) - (v[1] - u[1]) * (w[0] - u[0])
+    for p, q in zip(ring, ring[1:] + ring[:1]):
+        for a, b in zip(sq, sq[1:] + sq[:1]):
+            if (side(a, b, p) > 0) != (side(a, b, q) > 0) and (side(p, q, a) > 0) != (side(p, q, b) > 0):
+                return True
+    return False
+
+
+def _node_z(x, y):
+    """Height of a 5 m terrain node exactly as build_world.build_ground builds it."""
+    import env_corridor
+    sink = SINK_UNDER_CORRIDOR * env_corridor.smoothstep((env_corridor.inside_depth(x, y) - 0.5) / 2.0)
+    return E.coarse_ground_z(x, y) - sink
+
+
+def plan_ground():
+    """Chooses the 5 m cells the ramp replaces and makes E.ground_z return the ramp floor (call after
+    env_campus.plan_ground). A ramp that touches the track corridor stops the build."""
+    import env_corridor
+    import env_terrain
+    ring = _outline()
+    xs, ys = [p[0] for p in ring], [p[1] for p in ring]
+    cells = set()
+    for i in range(int((min(xs) - E.X0) // E.STEP) - 1, int((max(xs) - E.X0) // E.STEP) + 2):
+        for j in range(int((min(ys) - E.Y0) // E.STEP) - 1, int((max(ys) - E.Y0) // E.STEP) + 2):
+            x0, y0 = E.X0 + i * E.STEP, E.Y0 + j * E.STEP
+            if not _touches_cell(ring, x0, y0, E.STEP, 0.15):
+                continue
+            cx, cy = x0 + E.STEP / 2, y0 + E.STEP / 2
+            if env_corridor.covers_cell(cx, cy) or env_terrain.in_portal_hole(cx, cy):
+                raise RuntimeError(f"entrance: the car-park ramp touches the track corridor at cell {i},{j} ({x0}, {y0})")
+            cells.add((i, j))
+    # The corridor's outermost band (22-26 m from the centreline) lies over some of these cells; the cells stay 5 m
+    # ground under it as before (same node heights, sunk under the corridor). The ramp itself must stay outside it.
+    near = [p for p in ring if env_corridor.has_face(*p) or any(env_corridor.has_face(p[0] + dx, p[1] + dy)
+                                                                for dx, dy in ((0.8, 0), (-0.8, 0), (0, 0.8), (0, -0.8)))]
+    if near:
+        raise RuntimeError(f"entrance: the car-park ramp reaches into the track corridor at {near[0]}")
+    rim = sum(1 for i, j in cells if any(env_corridor.has_face(E.X0 + (i + a / 4) * E.STEP, E.Y0 + (j + c / 4) * E.STEP)
+                                         for a in range(5) for c in range(5)))
+    _G["cells"] = cells
+    _G["tris"] = _apron_triangles(ring)
+    grid = {}
+    for tri in _G["tris"]:
+        xs, ys = [p[0] for p in tri], [p[1] for p in tri]
+        for i in range(_cell(min(xs), 0)[0], _cell(max(xs), 0)[0] + 1):
+            for j in range(_cell(0, min(ys))[1], _cell(0, max(ys))[1] + 1):
+                grid.setdefault((i, j), []).append(tri)
+    _G["grid"] = grid
+    prev = E._surface["fn"] or E.coarse_ground_z
+    inner = _ramp()["inner"]
+
+    def surface(x, y):
+        key = _cell(x, y)
+        if key not in _G["cells"] or env_corridor.has_face(x, y):
+            return prev(x, y)
+        if P.inside(x, y, inner):
+            return _floor_at(x, y)
+        for a, b, c in _G["grid"].get(key, ()):
+            den = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1])
+            if abs(den) < 1e-9:
+                continue
+            w0 = ((b[1] - c[1]) * (x - c[0]) + (c[0] - b[0]) * (y - c[1])) / den
+            w1 = ((c[1] - a[1]) * (x - c[0]) + (a[0] - c[0]) * (y - c[1])) / den
+            if w0 >= -1e-6 and w1 >= -1e-6 and w0 + w1 <= 1 + 1e-6:
+                return w0 * a[2] + w1 * b[2] + (1 - w0 - w1) * c[2]
+        return prev(x, y)
+    E.set_surface(surface)
+    r = _ramp()
+    print(f"  entrance: car-park ramp replaces {len(cells)} cells of the 5 m grid ({len(_G['tris'])} apron triangles; "
+          f"{rim} cells lie partly under the corridor's outer band, which stays as it is); "
+          f"floor {sum(r['z_mouth']) / len(r['z_mouth']):.2f} m at the mouth -> {r['z_portal']:.2f} m at the portal, "
+          f"{100 * (sum(r['z_mouth']) / len(r['z_mouth']) - r['z_portal']) / r['length']:.1f} % over {r['length']:.1f} m")
+
+
+def _apron_triangles(ring):
+    cells = _G["cells"]
+    node = lambda i, j: (E.X0 + i * E.STEP, E.Y0 + j * E.STEP)                  # noqa: E731
+    key = lambda p: (round(p[0], 3), round(p[1], 3))                            # noqa: E731
+    pts, index, heights, edges = [], {}, {}, set()
+
+    def add(p, z):
+        k = key(p)
+        if k not in index:
+            index[k] = len(pts)
+            pts.append(p)
+            heights[k] = z
+        return index[k]
+    for i, j in cells:
+        ids = [add(node(a, c), _node_z(*node(a, c))) for a, c in ((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1))]
+        for k, (di, dj) in enumerate(((0, -1), (1, 0), (0, 1), (-1, 0))):       # edge to a cell that stays: fixed
+            if (i + di, j + dj) not in cells:
+                edges.add(tuple(sorted((ids[k], ids[(k + 1) % 4]))))
+    ids = [add(p, E.coarse_ground_z(*p)) for p in ring]
+    for a, c in zip(ids, ids[1:] + ids[:1]):
+        if a != c:
+            edges.add(tuple(sorted((a, c))))
+    verts, _e, faces, *_ = delaunay_2d_cdt([Vector(p) for p in pts], list(edges), [], 0, 1e-4)
+    out = []
+    for tri in faces:
+        if len(tri) != 3:
+            continue
+        a, b, c = (tuple(verts[i]) for i in tri)
+        cx, cy = (a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3
+        if _cell(cx, cy) not in cells or P.inside(cx, cy, ring):
+            continue
+        out.append(tuple((p[0], p[1], heights.get(key(p), E.coarse_ground_z(p[0], p[1]))) for p in (a, b, c)))
+    return out
+
+
+def build_ground_mesh():
+    """The apron around the ramp (ground-map material, collection World_Ground: env_streets' ground rays see it)."""
+    if not _G["tris"]:
+        return
+    m = Faces()
+    w, h = E.X1 - E.X0, E.Y1 - E.Y0
+    for tri in _G["tris"]:
+        m.face(list(tri), "ground", (0, 0, 1), [((p[0] - E.X0) / w, (p[1] - E.Y0) / h) for p in tri])
+    # the up-turn of face() reverses uvs with the points, so they stay matched
+    obj = m.build("World_GroundEntrance", E.collection("World_Ground"), materials())
+    print(f"  entrance ground: {len(obj.data.polygons)} triangles")
+
+
+def build_ramp(col):
+    r = _ramp()
+    m = Faces()
+    sw, se, ne, nw, ax = r["sw"], r["se"], r["ne"], r["nw"], r["ax"]
+    o_sw, o_se, o_ne, o_nw = r["outer"]
+    zg = E.coarse_ground_z
+    zp = r["z_portal"]
+    # --- floor: setts like the plaza ---
+    for j in range(ALONG):
+        t0, t1 = j / ALONG, (j + 1) / ALONG
+        for k in range(ACROSS):
+            s0, s1 = k / ACROSS, (k + 1) / ACROSS
+            quad = []
+            for t, s in ((t0, s0), (t1, s0), (t1, s1), (t0, s1)):
+                x, y = _lerp(_lerp(sw, nw, s), _lerp(se, ne, s), t)
+                quad.append((x, y, _floor_z(t, s)))
+            m.face(quad, "calcada", (0, 0, 1), [calcada_uv(p[0], p[1]) for p in quad])
+    # --- portal wall top (one level) ---
+    top_p = max(zg(*p) for p in (se, ne, o_se, o_ne, _lerp(se, ne, 0.5))) + P.RAMP_PARAPET
+    # --- side walls: inner face from the floor, top, outer face of the parapet ---
+    rails = []
+    for inner_a, inner_b, outer_a, outer_b, s in ((sw, se, o_sw, o_se, 0.0), (nw, ne, o_nw, o_ne, 1.0)):
+        length = math.dist(inner_a, inner_b)
+        nrm = (outer_a[0] - inner_a[0], outer_a[1] - inner_a[1])
+        d = math.hypot(*nrm)
+        nrm = (nrm[0] / d, nrm[1] / d, 0.0)
+        st = []
+        for j in range(ALONG + 1):
+            t = j / ALONG
+            i_p, o_p = _lerp(inner_a, inner_b, t), _lerp(outer_a, outer_b, t)
+            g = max(zg(*i_p), zg(*o_p))
+            top = g + P.RAMP_PARAPET * min(1.0, t * length / 3.0)
+            if j == ALONG:
+                top = top_p
+            st.append((i_p, o_p, _floor_z(t, s), top, zg(*o_p)))
+        for (i0, o0, f0, t0, g0), (i1, o1, f1, t1, g1) in zip(st, st[1:]):
+            m.face([(*i0, f0), (*i1, f1), (*i1, t1), (*i0, t0)], "concrete", (-nrm[0], -nrm[1], 0.0))
+            m.face([(*i0, t0), (*i1, t1), (*o1, t1), (*o0, t0)], "concrete", (0, 0, 1))
+            m.face([(*o0, g0 - 0.2), (*o1, g1 - 0.2), (*o1, t1), (*o0, t0)], "concrete", nrm)
+        rails.append([(_lerp(i_p, o_p, 0.5), top) for i_p, o_p, _f, top, _g in st[1:]])
+    # --- portal: lintel over the black opening, wall top, east face, the void as a closed black box ---
+    m.face([(*se, zp + P.PORTAL_H), (*ne, zp + P.PORTAL_H), (*ne, top_p), (*se, top_p)], "concrete", (-ax[0], -ax[1], 0.0))
+    m.face([(*se, top_p), (*ne, top_p), (*o_ne, top_p), (*o_se, top_p)], "concrete", (0, 0, 1))
+    m.face([(*o_se, min(zg(*o_se), zg(*o_ne)) - 0.2), (*o_ne, min(zg(*o_se), zg(*o_ne)) - 0.2), (*o_ne, top_p), (*o_se, top_p)],
+           "concrete", (ax[0], ax[1], 0.0))
+    deep = 1.4
+    b_se, b_ne = (se[0] + ax[0] * deep, se[1] + ax[1] * deep), (ne[0] + ax[0] * deep, ne[1] + ax[1] * deep)
+    zc = zp + P.PORTAL_H
+    m.face([(*b_se, zp), (*b_ne, zp), (*b_ne, zc), (*b_se, zc)], "void", (-ax[0], -ax[1], 0.0))
+    m.face([(*se, zc), (*ne, zc), (*b_ne, zc), (*b_se, zc)], "void", (0, 0, -1))
+    m.face([(*se, zp), (*ne, zp), (*b_ne, zp), (*b_se, zp)], "void", (0, 0, 1))
+    across = (ne[0] - se[0], ne[1] - se[1], 0.0)
+    m.face([(*se, zp), (*b_se, zp), (*b_se, zc), (*se, zc)], "void", across)
+    m.face([(*ne, zp), (*b_ne, zp), (*b_ne, zc), (*ne, zc)], "void", (-across[0], -across[1], 0.0))
+    # dark band on the lintel (a sign without text), 3 cm proud of the wall
+    a, b = _lerp(se, ne, 0.22), _lerp(se, ne, 0.78)
+    a, b = (a[0] - ax[0] * 0.03, a[1] - ax[1] * 0.03), (b[0] - ax[0] * 0.03, b[1] - ax[1] * 0.03)
+    m.face([(*a, zc + 0.14), (*b, zc + 0.14), (*b, zc + 0.5), (*a, zc + 0.5)], "dark", (-ax[0], -ax[1], 0.0))
+    # --- handrails on the walls: posts and two rails ---
+    rails.append([(_lerp(se, o_se, 0.5), top_p), (_lerp(_lerp(se, ne, 0.5), _lerp(o_se, o_ne, 0.5), 0.5), top_p),
+                  (_lerp(ne, o_ne, 0.5), top_p)])
+    for line in rails:
+        for (p, z), (q, zq) in zip(line, line[1:]):
+            m.beam((*p, z + P.RAMP_RAIL), (*q, zq + P.RAMP_RAIL), 0.025, "steel")
+            m.beam((*p, z + P.RAMP_RAIL * 0.5), (*q, zq + P.RAMP_RAIL * 0.5), 0.018, "steel")
+        for p, z in line:
+            m.box(p, (ax[0], ax[1]), 0.022, 0.022, z, z + P.RAMP_RAIL, "steel", top=False)
+    obj = m.build("Entrance_Ramp", col, materials())
+    for p in r["outer"] + [_lerp(o_sw, o_se, 0.5), _lerp(o_nw, o_ne, 0.5)]:
+        _note("ramp walls and railing", *p)
+    print(f"  entrance: ramp {sum(len(p.vertices) - 2 for p in obj.data.polygons)} triangles, portal "
+          f"{math.dist(se, ne):.1f} x {P.PORTAL_H:.2f} m, wall top {top_p:.2f} m, floor at the portal {zp:.2f} m")
+
+
+# =====================================================================================================
+# Paving: calcada with the drain channels, draped like env_streets' paving
+# =====================================================================================================
+def _channel_quads():
+    """Each drain channel cut to the plaza ring: [(start, direction, length)]."""
+    out = []
+    for (px, py), (dx, dy) in P.channel_lines():
+        run, step = None, 0.25
+        t = -160.0
+        while t <= 160.0:
+            x, y = px + dx * t, py + dy * t
+            ok = P.inside(x, y, P.RING) and P.ring_distance(x, y, P.RING) > 0.2
+            if ok and run is None:
+                run = t
+            if not ok and run is not None:
+                if t - step - run > 1.0:
+                    out.append(((px + dx * run, py + dy * run), (dx, dy), t - step - run))
+                run = None
+            t += step
+    return out
+
+
+def _cutters():
+    """Rings the paving leaves free: the ramp, the entrance pool and its rim, buildings, the street section's own
+    paving, env_campus' keep-out rings (berms, pools)."""
+    import campus_plan as C
+    import env_campus
+    import street_plan as S
+    xs, ys = [p[0] for p in P.RING], [p[1] for p in P.RING]
+    box = (min(xs) - 1, min(ys) - 1, max(xs) + 1, max(ys) + 1)
+
+    def near(ring):
+        return not (max(p[0] for p in ring) < box[0] or min(p[0] for p in ring) > box[2]
+                    or max(p[1] for p in ring) < box[1] or min(p[1] for p in ring) > box[3])
+    rings = [("ramp", P.ramp_outer(0.03)), ("pool", env_campus.grow(env_campus.ccw(list(C.A_POOL)), 0.3)),
+             ("main building", list(C.MAIN_BODY))]
+    for b in E.DATA["buildings"]:
+        if b["id"] != C.MAIN_ID and near(b["points"]):
+            rings.append(("building " + b["id"], [tuple(p) for p in b["points"]]))
+    for lay in S.LAYERS:
+        if near(lay["ring"]):
+            rings.append(("street " + lay["name"], list(lay["ring"])))
+    for ring in env_campus.KEEP_OUT:
+        if near(ring):
+            rings.append(("campus keep-out", list(ring)))
+    return [(n, r) for n, r in rings if len(r) >= 3]
+
+
+def build_paving(col):
+    import env_streets as ST
+    import street_plan as S
+    t = P.CALCADA_TILE
+    layers = [{"name": "plaza", "ring": list(P.RING), "mat": "calcada", "uv": ((0.0, 0.0), P.ROW_DIR, t, t)}]
+    w = P.CHANNEL_W
+    for k, (a, d, length) in enumerate(_channel_quads()):
+        n = (-d[1], d[0])
+        o = (a[0] - n[0] * w / 2, a[1] - n[1] * w / 2)
+        e = (o[0] + d[0] * length, o[1] + d[1] * length)
+        layers.append({"name": f"drain channel {k}", "mat": "drain", "uv": (o, d, 0.5, w),
+                       "ring": [o, e, (e[0] + n[0] * w, e[1] + n[1] * w), (o[0] + n[0] * w, o[1] + n[1] * w)]})
+    n_drains = len(layers) - 1
+    cutters = _cutters()
+    layers += [{"name": name, "ring": ring, "mat": None, "uv": None} for name, ring in cutters]
+    soup = ST.overlay(layers)
+    soup.tris = [tr for tr in soup.tris if layers[tr[3]]["mat"] is not None]
+    counts = [len(soup.tris)]
+    soup.refine_near_route(3.0)
+    soup.clip_route()
+    counts.append(len(soup.tris))
+
+    def zf(x, y):
+        return ST._paving_z(S.route_distance(x, y), x, y)
+    soup.limit_edges(5.0)
+    soup.follow_ground(zf, up=0.012, down=0.05)
+    counts.append(len(soup.tris))
+    worst, where, low = 1.0, None, 0                # proof: how close does the paving come to the ground anywhere?
+    for a, b, c, tag in soup.tris:
+        pa, pb, pc = soup.xy[a], soup.xy[b], soup.xy[c]
+        za, zb, zc = (zf(*soup.xy[v]) for v in (a, b, c))
+        for wa, wb, wc in ((1 / 3, 1 / 3, 1 / 3), (0.6, 0.2, 0.2), (0.2, 0.6, 0.2), (0.2, 0.2, 0.6), (0.5, 0.5, 0.0),
+                           (0.0, 0.5, 0.5), (0.5, 0.0, 0.5)):
+            x, y = wa * pa[0] + wb * pb[0] + wc * pc[0], wa * pa[1] + wb * pb[1] + wc * pc[1]
+            gap = wa * za + wb * zb + wc * zc - ST.ground(x, y)
+            low += gap < -0.02
+            if gap < worst:
+                worst, where = gap, (round(x, 1), round(y, 1), layers[tag]["name"])
+    m = Faces()
+    z = {}
+    area = 0.0
+    for a, b, c, tag in soup.tris:
+        lay = layers[tag]
+        pts = []
+        for v in (a, b, c):
+            if v not in z:
+                z[v] = zf(*soup.xy[v])
+            pts.append((soup.xy[v][0], soup.xy[v][1], z[v]))
+        area += abs((pts[1][0] - pts[0][0]) * (pts[2][1] - pts[0][1]) - (pts[2][0] - pts[0][0]) * (pts[1][1] - pts[0][1])) / 2
+        m.face(pts, lay["mat"], (0, 0, 1), [ST._layer_uv(lay, p) for p in pts])
+    # shared vertices (one smooth draped sheet, a third of the vertex count)
+    obj = m.build("Entrance_Paving", col, materials())
+    _weld(obj.data)
+    d_min = min(soup.dist(v) for tr in soup.tris for v in tr[:3])
+    print(f"  entrance: paving {len(obj.data.polygons)} triangles, {area:.0f} m2, {n_drains} drain channel pieces, "
+          f"{len(cutters)} cut-outs; overlay / clip at the road / follow the ground: {counts}; nearest point "
+          f"{d_min:.2f} m from the centreline")
+    print(f"  entrance: least clearance of the paving over the ground (7 samples per triangle): {worst * 100:.1f} cm at "
+          f"{where}; {low} samples more than 2 cm under the ground")
+
+
+def _weld(mesh):
+    import bmesh
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=0.0005)
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.update()
+
+
+def build():
+    """Paving and ramp (call after the buildings: env_campus' keep-out rings are known then)."""
+    col = E.collection(COLLECTION)
+    build_paving(col)
+    build_ramp(col)
+
+
+# =====================================================================================================
+# Prototypes and dressing
+# =====================================================================================================
+def seat_block(name, col):
+    """White concrete seat block, 2.5 x 0.8 x 0.45 m, long side along x, top edges bevelled 4 cm."""
+    length, width, height = P.SEAT_SIZE
+    hx, hy, bev = length / 2, width / 2, 0.04
+    m = Faces()
+    low = [(-hx, -hy), (hx, -hy), (hx, hy), (-hx, hy)]
+    top = [(-hx + bev, -hy + bev), (hx - bev, -hy + bev), (hx - bev, hy - bev), (-hx + bev, hy - bev)]
+    for k in range(4):
+        a, b, c, d = low[k], low[(k + 1) % 4], top[(k + 1) % 4], top[k]
+        out = (b[1] - a[1], a[0] - b[0], 0.0)
+        m.face([(*a, -0.12), (*b, -0.12), (*b, height - bev), (*a, height - bev)], "seat", out)
+        m.face([(*a, height - bev), (*b, height - bev), (*c, height), (*d, height)], "seat", (out[0], out[1], 1.0))
+    m.face([(*p, height) for p in top], "seat", (0, 0, 1))
+    return m.build(name, col, materials())
+
+
+def lamp(name, col):
+    """Slim plaza lamp: thin dark-grey pole of 7 m with a small flat head on a short arm."""
+    m = Faces()
+    h, r, n = P.LAMP_H, 0.055, 6
+    ring = [(r * math.cos(2 * math.pi * k / n), r * math.sin(2 * math.pi * k / n)) for k in range(n)]
+    for a, b in zip(ring, ring[1:] + ring[:1]):
+        m.face([(*a, -0.2), (*b, -0.2), (b[0] * 0.75, b[1] * 0.75, h), (a[0] * 0.75, a[1] * 0.75, h)], "dark",
+               (a[0] + b[0], a[1] + b[1], 0.0))
+    m.face([(p[0] * 0.75, p[1] * 0.75, h) for p in ring], "dark", (0, 0, 1))
+    m.box((0.0, 0.0), (1.0, 0.0), 0.11, 0.11, -0.2, 0.05, "dark")                       # base plate
+    m.box((0.28, 0.0), (1.0, 0.0), 0.34, 0.085, h - 0.16, h - 0.06, "dark", bottom=False)    # head
+    m.face([(0.02, -0.07, h - 0.165), (0.6, -0.07, h - 0.165), (0.6, 0.07, h - 0.165), (0.02, 0.07, h - 0.165)], "light",
+           (0, 0, -1))
+    return m.build(name, col, materials())
+
+
+def build_prototypes():
+    pc = E.collection("Proto_Props")
+    protos = {"Prop_SeatBlockPlaza": seat_block("Prop_SeatBlockPlaza", pc), "Prop_LampPlaza": lamp("Prop_LampPlaza", pc)}
+    print("  entrance: prototypes " + ", ".join(f"{n} {sum(len(p.vertices) - 2 for p in o.data.polygons)}"
+                                                for n, o in protos.items()))
+    return protos
+
+
+def _hash01(x, y, salt=0):
+    v = math.sin(x * 12.9898 + y * 78.233 + salt * 37.719) * 43758.5453
+    return v - math.floor(v)
+
+
+def dress(veg, props, protos):
+    """Edits the dressing lists after dressing_freeze.apply (everything outside the plaza stays as it is) and rewrites
+    the two placement files. protos: build_world's prototype table, our prototypes are added to it."""
+    protos.update(build_prototypes())
+    inner = _ramp()["outer"]
+    veg2, trees, swapped = [], [], 0
+    for p in veg:
+        x, y = p["x"], p["y"]
+        if P.inside(x, y, inner):
+            continue                                            # nothing grows in the ramp
+        if p["proto"] in ("Veg_Olive", "Veg_Olive_B") and P.near_ring(x, y, P.RING, P.TREE_PAD):
+            p = dict(p, proto="Veg_PlazaTree" if _hash01(x, y) < 0.5 else "Veg_PlazaTree_B",
+                     scale=round(0.86 + 0.3 * _hash01(x, y, 1), 3))
+            swapped += 1
+            trees.append((x, y))
+            _note("young trees (trunk and stakes)", x, y, 0.5 * p["scale"])
+        veg2.append(p)
+    props2, lamps = [], 0
+    for p in props:
+        if P.inside(p["x"], p["y"], inner):
+            continue
+        if p["proto"] == "Prop_LampCampus" and P.inside(p["x"], p["y"], P.RING):
+            # the frozen campus lamp stands 6.5 m from the centreline: the slim one 0.3 m further out, head away
+            q = E.nearest_route_point(p["x"], p["y"])
+            d = math.hypot(p["x"] - q["x"], p["y"] - q["y"]) or 1.0
+            ux, uy = (p["x"] - q["x"]) / d, (p["y"] - q["y"]) / d
+            p = dict(p, proto="Prop_LampPlaza", x=round(p["x"] + ux * 0.3, 3), y=round(p["y"] + uy * 0.3, 3),
+                     rot_z=round(math.atan2(uy, ux), 4))
+            lamps += 1
+            _note("slim lamps (pole)", p["x"], p["y"], 0.07)
+        props2.append(p)
+    added = []
+    for x, y in P.LAMPS:
+        for _ in range(8):
+            if all(math.hypot(tx - x, ty - y) >= 1.3 for tx, ty in trees):
+                break
+            x, y = x + 0.35, y + 0.14
+        if route_distance(x, y) < ROUTE_CLEAR + 0.7 or not P.inside(x, y, P.RING):
+            continue
+        _note("slim lamps (pole)", x, y, 0.07)
+        added.append({"proto": "Prop_LampPlaza", "x": round(x, 3), "y": round(y, 3), "z": round(E.ground_z(x, y) + 0.05, 3),
+                      "rot_z": round(math.radians(110.0), 4), "scale": 1.0})
+    n_lamps = len(added)
+    blocks = P.seat_blocks(route_distance, trees + [(a["x"], a["y"]) for a in added])
+    half = math.hypot(P.SEAT_SIZE[0], P.SEAT_SIZE[1]) / 2
+    for x, y, bearing, _moved in blocks:
+        _note("seat blocks (nearest corner)", x, y, half)
+        added.append({"proto": "Prop_SeatBlockPlaza", "x": x, "y": y, "z": round(E.ground_z(x, y) + 0.06, 3),
+                      "rot_z": round(math.radians(90.0 - bearing), 4), "scale": 1.0})
+    sx, sy = P.RAMP_SW[0] - 1.2, P.RAMP_SW[1] - 1.6                 # a parking sign (no text) at the ramp mouth
+    if "Prop_SignParking" in protos:
+        _note("parking sign", sx, sy, 0.4)
+        added.append({"proto": "Prop_SignParking", "x": round(sx, 3), "y": round(sy, 3), "z": round(E.ground_z(sx, sy) + 0.05, 3),
+                      "rot_z": round(math.radians(90.0 - 256.0), 4), "scale": 1.0})
+    props2 += added
+    moved = sum(1 for b in blocks if b[3] > 0)
+    print(f"  entrance dressing: {swapped} olives became young staked trees, {lamps} campus lamps became slim lamps; "
+          f"added {n_lamps} slim lamps, {len(blocks)} seat blocks ({moved} of them moved off the race line), "
+          f"{len(added) - n_lamps - len(blocks)} sign")
+    for fname, items in (("placements_vegetation.json", veg2), ("placements_props.json", props2)):
+        path = os.path.join(E.OUT, fname)
+        if not os.path.exists(path):
+            continue
+        data = json.load(open(path))
+        data["placements"] = items
+        counts = {}
+        for it in items:
+            counts[it["proto"]] = counts.get(it["proto"], 0) + 1
+        data["counts"] = counts
+        json.dump(data, open(path, "w"), indent=1)
+    report()
+    return veg2, props2
+
+
+def report():
+    """Clearance printout: least distance of every new solid kind to the race centreline."""
+    for kind, (d, where) in sorted(_CLEAR.items()):
+        flag = "" if d >= ROUTE_CLEAR else "   <-- TOO CLOSE"
+        print(f"  entrance clearance: {kind}: {d:.2f} m at {where}{flag}")
+    if any(d < ROUTE_CLEAR for d, _w in _CLEAR.values()):
+        raise RuntimeError("entrance: something stands closer than 6.5 m to the race centreline")

@@ -43,7 +43,8 @@ PLACEMENTS_FILE = os.path.join(E.OUT, "placements_vegetation.json")
 SEED = 20261108
 
 # Hard triangle limits per plant type (both colour variants of a type share the limit).
-TRI_BUDGET = {"Veg_UmbrellaPine": 1700, "Veg_Palm": 700, "Veg_Olive": 1150, "Veg_Shrub": 120, "Veg_Grass": 80}
+TRI_BUDGET = {"Veg_UmbrellaPine": 1700, "Veg_Palm": 700, "Veg_Olive": 1150, "Veg_Shrub": 120, "Veg_Grass": 80,
+              "Veg_PlazaTree": 520}          # V15a: the young staked tree of the entrance plaza
 
 # Per plant type: crown radius at scale 1 (m, widest reach of the foliage from the trunk axis, measured on the
 # prototypes and checked by test_env_assets.py; used for the keep-clear rules),
@@ -54,6 +55,8 @@ KIND = {
     "olive": dict(protos=("Veg_Olive", "Veg_Olive_B"), crown=2.75, space=2.1, scale=(0.85, 1.15)),
     "shrub": dict(protos=("Veg_Shrub", "Veg_Shrub_B"), crown=1.1, space=0.62, scale=(0.85, 1.25)),
     "grass": dict(protos=("Veg_Grass",), crown=1.2, space=0.55, scale=(0.8, 1.2)),
+    # V15a: young staked tree of the entrance plaza (placed only by env_entrance.dress, never by place())
+    "plaza": dict(protos=("Veg_PlazaTree", "Veg_PlazaTree_B"), crown=1.25, space=1.0, scale=(0.85, 1.15)),
 }
 TREE_KINDS = ("pine", "palm", "olive")
 MAX_TREES = 900
@@ -320,13 +323,16 @@ RAMPS = {
     "palm_b": (((0.0, "#31502D"), (0.35, "#557538"), (0.7, "#789F47"), (1.0, "#BCD470")), "#9C8468"),
     "olive": (((0.0, "#465C4A"), (0.35, "#687F5C"), (0.7, "#96A77C"), (1.0, "#CCD3A6")), "#7D7366"),
     "olive_b": (((0.0, "#42594A"), (0.35, "#638255"), (0.7, "#92AA74"), (1.0, "#C8D69E")), "#8A7D6B"),
+    # V15a: young plaza tree, a lighter and fresher green; the "bark" column is pale timber (stakes light, trunk dark)
+    "plaza": (((0.0, "#4C7340"), (0.35, "#6F9C52"), (0.7, "#9CC468"), (1.0, "#D6E690")), "#A9814F"),
 }
 RAMP_SIZE = (32, 64)
 U_LEAF, U_BARK = 0.25, 0.75                # the ramp texture has two columns: foliage (left) and bark (right)
 
 
 FOLIAGE_SHADER = "CarcavelosCircuit/Foliage"     # Assets/_Project/Visuals/Shaders/Foliage.shader (URP Lit if missing)
-WIND = {"palm": (0.22, 0.28), "pine": (0.05, 0.04), "olive": (0.03, 0.035)}   # metres: bend at the top, flutter at the tips
+WIND = {"palm": (0.22, 0.28), "pine": (0.05, 0.04), "olive": (0.03, 0.035),
+        "plaza": (0.05, 0.04)}                                      # V15a: thin young tree   # metres: bend at the top, flutter at the tips
 
 
 def set_wind(mat, kind):
@@ -679,6 +685,60 @@ def olive(name, seed, mat, col):
     return mb.build(name, [mat], col, sway=True)
 
 
+def plaza_tree(name, seed, mat, col):
+    """Young staked tree of the entrance plaza (V15a, survey: Street View Jul 2020 and Luc's photos; still small in
+    the 2026 satellite). Soft look like the other trees: a thin, nearly straight trunk of 3 m, three short twigs and a
+    small light crown of four smooth clumps, about 5 m tall and 2.2 m across at scale 1; three square timber stakes of
+    1.7 m around it, each tied to the trunk by a dark band. One ramp-shaded material ("plaza": fresh green; the bark
+    column is pale timber, so the stakes read light and the trunk dark). About 450 triangles."""
+    rng = random.Random(seed)
+    mb = MeshBuilder()
+    turn = rng.uniform(0, 2 * math.pi)
+    sway = Vector((math.cos(turn), math.sin(turn), 0)) * rng.uniform(0.05, 0.11)
+    zs = [-0.35, 0.6, 1.7, 2.6, 3.25]
+    path = [Vector((0, 0, z)) + sway * math.sin(max(z, 0) * 1.1) for z in zs]
+    soft_tube(mb, path, [0.085, 0.075, 0.062, 0.05, 0.036], 6, 0, shade=[0.3, 0.3, 0.26, 0.22, 0.18],
+              tip=path[-1] + Vector((0, 0, 0.5)))
+    top = path[-1]
+    centre = top + Vector((0, 0, 0.75))
+    lobes = [dict(c=top + Vector((rng.uniform(-0.1, 0.1), rng.uniform(-0.1, 0.1), 1.0)), r=(0.78, 0.72, 0.82), yaw=turn,
+                  freq=2, floor=-0.75, phase=rng.uniform(0, 6))]
+    for k in range(3):                                    # three twigs, each ending in a small clump
+        az = turn + 2 * math.pi * k / 3 + rng.uniform(-0.4, 0.4)
+        d, h = rng.uniform(0.5, 0.72), rng.uniform(0.15, 0.7)
+        start = path[3].lerp(top, rng.uniform(0.2, 0.9))
+        end = top + Vector((math.cos(az) * d, math.sin(az) * d, h))
+        soft_tube(mb, [start, start.lerp(end, 0.55) + Vector((0, 0, 0.06)), end], [0.03, 0.024, 0.016], 4, 0,
+                  tip=end + (end - start).normalized() * 0.2, shade=[0.22, 0.2, 0.18])
+        lobes.append(dict(c=end + Vector((math.cos(az) * 0.12, math.sin(az) * 0.12, 0.2)),
+                          r=(rng.uniform(0.5, 0.62), rng.uniform(0.46, 0.56), rng.uniform(0.42, 0.52)), yaw=az,
+                          freq=2, floor=-0.75, phase=rng.uniform(0, 6)))
+    soft_crown(mb, lobes, 0, centre, (top.z - 0.2, top.z + 1.9), blend=0.3, base=0.4, crease=0.18, reach=1.4)
+
+    def post(x, y, half, z0, z1, shade):                  # square timber post: flat faces, bark column of the ramp
+        uv = (U_BARK, _shade(shade))
+        lo = [mb.v((x + sx * half, y + sy * half, z0), None, uv) for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+        hi = [mb.v((x + sx * half, y + sy * half, z1), None, uv) for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+        for j in range(4):
+            mb.f((lo[j], lo[(j + 1) % 4], hi[(j + 1) % 4], hi[j]), 0)
+        mb.f(hi, 0)
+
+    for k in range(3):                                    # the three stakes and their ties
+        az = turn + 0.6 + 2 * math.pi * k / 3
+        sx, sy = math.cos(az) * 0.42, math.sin(az) * 0.42
+        post(sx, sy, 0.04, -0.3, 1.7, 0.86 - 0.05 * k)
+        tz = 1.52
+        t0 = Vector((sx, sy, tz))
+        t1 = Vector((0, 0, tz)) + sway * math.sin(tz * 1.1)
+        side = Vector((-math.sin(az), math.cos(az), 0)) * 0.012
+        uv = (U_BARK, _shade(0.06))
+        quad = [mb.v(t0 - side - Vector((0, 0, 0.035)), None, uv), mb.v(t1 - side - Vector((0, 0, 0.035)), None, uv),
+                mb.v(t1 + side + Vector((0, 0, 0.035)), None, uv), mb.v(t0 + side + Vector((0, 0, 0.035)), None, uv)]
+        mb.f(quad, 0, keep=True)
+        mb.f(quad[::-1], 0, keep=True)                    # a band seen from both sides
+    return mb.build(name, [mat], col, sway=True)
+
+
 def shrub(name, seed, leaf, dark, col, size=(0.72, 0.66, 0.62), lobe=(0.46, 0.42, 0.4)):
     """Pittosporum-like round shrub: one big lumpy clump and a smaller one leaning on it, flattened where it
     meets the ground (bottom 6 cm below z = 0). The faces that look down get the darker green, a cheap
@@ -764,6 +824,8 @@ def build_prototypes():
                            cutout_material("palm_frond_b", "palm_frond_b_cutout_albedo.png"), col, n_fronds=21),
         "Veg_Olive": olive("Veg_Olive", 3, ramp_material("olive"), col),
         "Veg_Olive_B": olive("Veg_Olive_B", 19, ramp_material("olive_b"), col),
+        "Veg_PlazaTree": plaza_tree("Veg_PlazaTree", 29, ramp_material("plaza"), col),        # V15a
+        "Veg_PlazaTree_B": plaza_tree("Veg_PlazaTree_B", 53, ramp_material("plaza"), col),
         "Veg_Shrub": shrub("Veg_Shrub", 7, m("leaf", roughness=0.85), m("leaf_dark", roughness=0.9), col),
         "Veg_Shrub_B": shrub("Veg_Shrub_B", 41, m("shrub_leaf_b", "#4F7F45", roughness=0.85),
                              m("shrub_leaf_dark_b", "#365C34", roughness=0.9), col,

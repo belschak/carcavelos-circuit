@@ -62,12 +62,20 @@ GALLERY_SHALLOW = 28.2        # same, where the drive-through hall behind reache
 GALLERY_BREAK = (104.0, 106.0)   # v of the white cross pier between the two
 ENTRANCE_V = (173.0, 198.0)   # v range of the glazed west entrance front (set back 2 m under the roof edge)
 ENTRANCE_U = 2.9
+# V15b (survey V15a, N_p04/N_p03): the colonnade of the north exit, a ground-floor recess in the atrium's east face
+# under one white storey: u = its back wall (6 m behind the facade line u = 69.3), v = from Student Central's
+# north face to the blank white panel at the north end; clear height 4.0 m
+COLONNADE_U = 63.3
+COLONNADE_V = (174.5, 205.0)
+COLONNADE_CLEAR = 4.0
 # roof outline (= OSM, straightened) and the body below the soffit (east glass wall and west entrance front set back)
 MAIN_ROOF_UV = [(0, 0), (30, 0), (30, 142), (34.5, 142), (34.0, 139.4), (41.1, 138.4), (41.8, 142), (69.3, 142),
                 (69.3, 210), (0.9, 210), (0.9, 142.2), (0.1, 113.6), (0, 97.1)]
 MAIN_BODY_UV = [(0, 0), (30, 0), (30, 2), (GALLERY_DEEP, 2), (GALLERY_DEEP, GALLERY_BREAK[0]), (30, GALLERY_BREAK[0]),
                 (30, GALLERY_BREAK[1]), (GALLERY_SHALLOW, GALLERY_BREAK[1]), (GALLERY_SHALLOW, 140), (30, 140),
-                (30, 142), (34.5, 142), (34.0, 139.4), (41.1, 138.4), (41.8, 142), (69.3, 142), (69.3, 210),
+                (30, 142), (34.5, 142), (34.0, 139.4), (41.1, 138.4), (41.8, 142), (69.3, 142),
+                (69.3, COLONNADE_V[0]), (COLONNADE_U, COLONNADE_V[0]), (COLONNADE_U, COLONNADE_V[1]),
+                (69.3, COLONNADE_V[1]), (69.3, 210),            # V15b: the north exit colonnade is open below
                 (0.9, 210), (0.9, ENTRANCE_V[1]), (ENTRANCE_U, ENTRANCE_V[1]), (ENTRANCE_U, ENTRANCE_V[0]),
                 (0.9, ENTRANCE_V[0]), (0.9, 142.2), (0.1, 113.6), (0, 97.1)]
 MAIN_ROOF = [MAIN(u, v) for u, v in MAIN_ROOF_UV]
@@ -191,3 +199,46 @@ paint("lower plaza", [(96.0, -29.3), (106.6, -25.4), (104.5, -18.0), (110.5, -8.
 paint("arcade under the Gallery deck", [MAIN(23.4, 1.0), MAIN(30.6, 1.0), MAIN(30.6, 34.0), MAIN(23.4, 34.0)], OCHRE)
 paint("undercroft of Horizon Hall", [(113.6, 0.9), (123.1, 4.1), (125.4, -2.0), (128.7, -10.6), (151.6, 2.6),
                                      (147.4, 5.8), (131.3, -3.5), (126.1, 10.1), (112.4, 6.2)], OCHRE)
+
+
+# ----------------------------------------------------------------------------------------------------------------
+# V15b (2026-11-11, photosphere survey V15a): west entrance lettering and space frame, Milestone J, the north loop.
+# ----------------------------------------------------------------------------------------------------------------
+J_ID = "w622493089"                     # Milestone residence: 3 storeys on a plinth, loggia checkerboard to the south
+J_PLINTH, J_STOREY, J_STOREYS, J_PARAPET = 0.6, 3.3, 3, 0.45
+J_LOGGIA_DEPTH = 1.3                    # m, the dark back wall of the loggias behind the white frame (survey 1.2-1.5)
+J_UNIT = 3.2                            # m, width of one loggia / panel
+HOUSING_IDS = ("w179614712", "w179614681")      # the two apartment blocks north-west of the drop-off plaza (N_p01)
+HOUSING_STOREYS, HOUSING_STOREY = 5, 3.0
+# Student Central: dark angular pavilion (N_p03_h190); own outline inside the OSM footprint, its north-west part
+# pulled back from the race line, roof corners at different heights (m above Floor 1)
+SC_RING = [(86.5, 133.8), (100.5, 135.9), (98.8, 146.9), (93.0, 150.5), (91.5, 157.0), (84.5, 153.5), (80.68, 148.5)]
+SC_TOPS = [5.4, 6.0, 7.6, 8.3, 5.9, 8.0, 6.8]
+# drop-off plaza: a flush ring of dark setts in pale granite setts. Real: 9-10 m across, centre (80, 177); the race
+# line passes 1 m from the centre, so the ring is drawn 12 m across and only its arcs outside the road shoulder exist
+DROPOFF_C, DROPOFF_R, DROPOFF_BAND = (80.3, 177.0), 6.0, 0.45
+# bin enclosure: real about (60..70, 190..196), 3.5 m from route point 600; here against the housing block's south
+# wall (centre, length along that wall, depth, height)
+BIN_C, BIN_LEN, BIN_DEPTH, BIN_H = (56.5, 198.75), 9.0, 1.4, 2.3
+BIN_DIR = (0.9893, -0.1457)             # along the south face of w179614712
+SETTS = (204, 196, 172)                 # pale granite setts of the forecourt (survey #c5bda4, a step paler)
+BUFF = (196, 178, 140)                  # buff concrete floor of the colonnade (survey #877549 in deep shade)
+paint("drop-off plaza", [(78.1, 155.0), (80.0, 150.0), (93.0, 150.0), (97.5, 160.0), (98.5, 178.0), (96.0, 196.0),
+                         (86.0, 200.0), (72.0, 199.6), (65.6, 198.6), (43.2, 201.9), (36.0, 196.0), (27.0, 186.0),
+                         (30.0, 171.0), (66.4, 184.8)], SETTS)
+paint("colonnade floor", [MAIN(COLONNADE_U - 0.3, COLONNADE_V[0] - 0.3), MAIN(69.6, COLONNADE_V[0] - 0.3),
+                          MAIN(69.6, COLONNADE_V[1] + 0.3), MAIN(COLONNADE_U - 0.3, COLONNADE_V[1] + 0.3)], BUFF)
+
+
+def nova_letters():
+    """The four letters on the end wall as flat polygons (nova_letters.json: glyph outlines of the HUD's display
+    font, Unbounded Black, SIL OFL 1.1, flattened once with Blender; em = 1). Not traced from the real sign."""
+    import json
+    import os
+    return json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "nova_letters.json")))["letters"]
+
+
+LETTER_H = 1.6                          # m, cap height on the wall
+LETTER_GAP = 0.22                       # m between letters
+LETTER_OUT = 0.10                       # m, raised from the wall
+LETTER_V, LETTER_Z = 203.7, 20.9        # centre of the word along the wall (v) and the letters' base line (m)
