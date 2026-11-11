@@ -1,8 +1,15 @@
 """Paints the ground colour map (one texture over the whole world) from the OSM shapes and the traced coast.
 
 Run with the media-tools Python after world_data.py:  ~/Documents/nova/.media-tools/bin/python make_groundmap.py
-Output: textures/ground_colour.png (2048 px wide, about 0.34 m per pixel), textures/ground_mask_data.png (for
+Output: textures/ground_colour.png (2048 px wide, about 0.34 m per pixel), textures/ground_colour_near.png (V16h: the lap
+and its surroundings again at about 0.2 m per pixel, rectangle in ground_tiles.py), textures/ground_mask_data.png (for
 Ground.shader), out/groundmap_preview.png.
+V16h: everything is painted once at the near tile's resolution; the world map is that picture scaled down and the near
+tile a cut-out of it, so both agree exactly. Lawns get worn edges along paths, dry patches and a few bare spots (survey
+V15: "patchy, bare earth patches"; kept mild, Luc: lawns stay green). If make_shadowmap.py has run (out/ground_shade_*.npy),
+both maps carry the baked sun shadow in their ALPHA channel (255 = lit; Ground.shader fades it in beyond the realtime
+shadow range) and the sky's ambient occlusion is multiplied into the colour; without it alpha is 255 and the old soft
+contact shadow round buildings is used.
 Smooth borders (drawn at 3x and scaled down), subtle variation, soft contact shadows around buildings, footpaths.
 The coast comes from coast_trace.json (coast.py), traced from the orthophoto: the sea is everything seaward of the
 traced waterline (dark wet sand under the water, only a sliver of it ever shows), the beach zone is pale dry sand with
@@ -17,14 +24,20 @@ from PIL import Image, ImageDraw, ImageFilter
 
 import campus_plan
 import coast
+import ground_tiles
 import street_plan
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = json.load(open(os.path.join(HERE, "world_data.json")))
 X0, Y0, X1, Y1 = DATA["bounds"]
-W = 2048
+OUT_W = ground_tiles.WORLD_W                    # ground_colour.png
+OUT_H = int(round(OUT_W * (Y1 - Y0) / (X1 - X0)))
+NEAR = ground_tiles.near_rect()                 # V16h: the fine tile (map metres x0, y0, x1, y1)
+NEAR_W, NEAR_H = ground_tiles.near_size()
+W = int(round((X1 - X0) / ((NEAR[2] - NEAR[0]) / NEAR_W)))   # painting resolution = the near tile's (about 0.2 m)
 H = int(round(W * (Y1 - Y0) / (X1 - X0)))
-SS = 3                                          # supersampling for smooth edges
+K = W / OUT_W                                   # painting pixels per pixel of the world map (the old painting size)
+SS = 2                                          # supersampling for smooth edges
 MPP = (X1 - X0) / W                             # metres per pixel
 
 COLOURS = {
@@ -89,7 +102,18 @@ def to_px(x, y, scale=1):
     return ((x - X0) / (X1 - X0) * W * scale, (Y1 - y) / (Y1 - Y0) * H * scale)
 
 
+def up(a, h=None, w=None):
+    """A float picture scaled smoothly to the painting size."""
+    h, w = h or H, w or W
+    return np.array(Image.fromarray(a.astype(np.float32), "F").resize((w, h), Image.BICUBIC), np.float32)
+
+
 def fbm(h, w, seed, octaves=5):
+    """Smooth noise at the painting size with the look it had at the world map's size (V16h: made there, scaled up)."""
+    return up(fbm0(int(round(h / K)), int(round(w / K)), seed, octaves), h, w)
+
+
+def fbm0(h, w, seed, octaves=5):
     """Periodic-free smooth noise (sum of blurred random layers), values about 0..1."""
     rng = np.random.default_rng(seed)
     out = np.zeros((h, w), np.float32)
@@ -146,14 +170,15 @@ def paint_coast(arr, path_alpha):
     sea, beach, cove, rock, metres = coast_masks()
     hh, ww = arr.shape[:2]
     grain = fbm(hh, ww, 21, octaves=4) - 0.5
-    swell = np.asarray(Image.fromarray((fbm(hh // 8, ww // 8, 25, 3) * 255).astype(np.uint8))   # slow wobble (20-80 m)
+    h0, w0 = int(round(hh / K)), int(round(ww / K))                     # V16h: noise as at the world map's size
+    swell = np.asarray(Image.fromarray((fbm0(h0 // 8, w0 // 8, 25, 3) * 255).astype(np.uint8))   # slow wobble (20-80 m)
                        .resize((ww, hh), Image.BICUBIC), np.float32) / 255.0 - 0.5          # for the wet edge, tide lines
-    streak = np.asarray(Image.fromarray((fbm(hh // 4, ww // 4, 22, 3) * 255).astype(np.uint8))
+    streak = np.asarray(Image.fromarray((fbm0(h0 // 4, w0 // 4, 22, 3) * 255).astype(np.uint8))
                         .resize((ww, hh * 3), Image.BICUBIC).resize((ww, hh), Image.BILINEAR), np.float32) / 255.0 - 0.5
     # sand: wet band at the water, dry above it (a little paler far up the beach), the cove a shade darker
     dry = SAND_DRY * (1.0 + 0.035 * smoothstep(30.0, 110.0, metres))[..., None]
     from scipy.ndimage import gaussian_filter
-    cove = gaussian_filter(cove, 8.0)                                   # the cove's sand fades into the beach's
+    cove = gaussian_filter(cove, 8.0 * K)                                   # the cove's sand fades into the beach's
     dry = dry + (SAND_COVE - SAND_DRY) * cove[..., None]
     wet = smoothstep(WET_BAND, 1.5, metres + swell * 8.0 + grain * 1.5)
     sand = dry + (SAND_WET - dry) * wet[..., None]
@@ -172,7 +197,7 @@ def paint_coast(arr, path_alpha):
     rock_col = ROCK * (1.0 + 0.25 * grain + 0.12 * (fbm(hh, ww, 24, 2) - 0.5))[..., None]
     rock_col = rock_col + (ROCK_DARK - rock_col) * np.clip(0.55 * strata + 0.6 * cracks, 0.0, 0.8)[..., None]
     rock_col = rock_col + (ROCK_WET - rock_col) * smoothstep(7.0, 1.0, metres)[..., None]
-    beach = np.clip(gaussian_filter(beach, 2.5) * 1.15, 0.0, 1.0) * (1.0 - sea)   # soft sand-to-grass edge (~1 m)
+    beach = np.clip(gaussian_filter(beach, 2.5 * K) * 1.15, 0.0, 1.0) * (1.0 - sea)   # soft sand-to-grass edge (~1 m)
     keep = 1.0 - path_alpha
     out = arr + (SEABED - arr) * sea[..., None]
     out = out + (sand - out) * (beach * keep)[..., None]
@@ -184,8 +209,10 @@ MASK_W = 1024
 WET_RANGE = 20.0                                                         # metres of beach coded in the blue channel
 
 
-def write_mask():
-    """textures/ground_mask_data.png (1024 px wide, same UVs as ground_colour.png; linear numbers, not colour) for
+def write_mask(bare=None):
+    """V16h: bare = bare_spots() at the painting size: no lawn there (no blades, no tufts). Returns the lawn share
+    at the painting size.
+    textures/ground_mask_data.png (1024 px wide, same UVs as ground_colour.png; linear numbers, not colour) for
     the ground shader: R = lawn (grass, wood, pitch), G = sand (OSM sand and the beach zone), both without the paths
     that cross them (open ground counts as a bit of both, paved areas as neither),
     B = how far up the beach a point is, 0 at the traced waterline .. 1 at WET_RANGE metres or more (wet band, dry
@@ -223,10 +250,13 @@ def write_mask():
     mask[..., 1] = mask[..., 1] * (1.0 - cover)
     path = path * (1.0 - cover)
     lawn = mask[..., 0] * (1.0 - beach) * (1.0 - path) * land
+    if bare is not None:
+        lawn = lawn * (1.0 - 0.85 * up(bare, mh, MASK_W))
     sand = np.clip(mask[..., 1] * land + beach, 0.0, 1.0) * (1.0 - rock) * (1.0 - path)
     out = np.dstack([lawn, sand, np.clip(metres / WET_RANGE, 0.0, 1.0), 1.0 - rock])
     Image.fromarray(np.round(out * 255.0).astype(np.uint8), "RGBA").save(os.path.join(HERE, "textures", "ground_mask_data.png"))
     print(f"ground_mask_data.png {MASK_W}x{mh} px (RGBA: lawn, sand, beach height, 1 - rock)")
+    return up(lawn)
 
 
 def main():
@@ -270,26 +300,95 @@ def main():
     arr = arr + (np.array(entrance_plan.CALCADA_RGB, np.float32) - arr) * ent
     streets = np.asarray(street_layers(SS).resize((W, H), Image.LANCZOS), np.float32)      # V10f: over everything
     arr = arr + (streets[..., :3] - arr) * (streets[..., 3:4] / 255.0)
-    write_mask()
+    bare = bare_spots()
+    lawn = write_mask(bare)
 
-    # soft contact shadow around buildings (baked ambient occlusion on the ground)
-    shadow = Image.new("L", (W, H), 0)
-    sd = ImageDraw.Draw(shadow)
-    for b in DATA["buildings"]:
-        sd.polygon([to_px(x, y) for x, y in b["points"]], fill=255)
-    shadow = shadow.filter(ImageFilter.GaussianBlur(6))
-    occl = np.asarray(shadow, np.float32)[..., None] / 255.0
-    arr *= 1.0 - 0.25 * occl
+    shade = load_shade()
+    if shade is None:
+        # soft contact shadow around buildings (stand-in for the baked ambient occlusion)
+        shadow = Image.new("L", (W, H), 0)
+        sd = ImageDraw.Draw(shadow)
+        for b in DATA["buildings"]:
+            sd.polygon([to_px(x, y) for x, y in b["points"]], fill=255)
+        shadow = shadow.filter(ImageFilter.GaussianBlur(6 * K))
+        occl = np.asarray(shadow, np.float32)[..., None] / 255.0
+        arr *= 1.0 - 0.25 * occl
+    else:
+        arr *= (1.0 - AO_STRENGTH * (1.0 - shade["sky"]))[..., None]      # V16h: the sky each point really sees
+
+    arr = lawn_wear(arr, lawn, bare)
 
     # subtle large and small variation so big lawns don't look flat
     var = fbm(H, W, 7) - 0.5
     arr *= (1.0 + 0.16 * var)[..., None]
+    fine = fbm0(H, W, 34, 2) - 0.5                      # V16h: mottling of 1.5 to 3 m, only the fine painting shows it
+    speck = np.random.default_rng(35).normal(0.0, 1.0, (H, W)).astype(np.float32)
+    arr *= (1.0 + 0.06 * fine + 0.012 * speck)[..., None]
     arr = np.clip(arr, 0, 255).astype(np.uint8)
 
     os.makedirs(os.path.join(HERE, "out"), exist_ok=True)
-    Image.fromarray(arr).save(os.path.join(HERE, "textures", "ground_colour.png"))
-    Image.fromarray(arr).resize((1024, int(1024 * H / W))).save(os.path.join(HERE, "out", "groundmap_preview.png"))
-    print(f"ground_colour.png {W}x{H} px, {MPP:.2f} m per pixel")
+    full = Image.fromarray(arr)
+    world = full.resize((OUT_W, OUT_H), Image.LANCZOS)
+    near = full.resize((NEAR_W, NEAR_H), Image.LANCZOS, box=near_box())
+    lit_world = Image.fromarray(shade["world_sun"] if shade else np.full((OUT_H, OUT_W), 255, np.uint8))
+    lit_near = Image.fromarray(shade["near_sun"] if shade else np.full((NEAR_H, NEAR_W), 255, np.uint8))
+    world.putalpha(lit_world)
+    near.putalpha(lit_near)
+    world.save(os.path.join(HERE, "textures", "ground_colour.png"))
+    near.save(os.path.join(HERE, "textures", "ground_colour_near.png"))
+    world.convert("RGB").resize((1024, int(1024 * H / W))).save(os.path.join(HERE, "out", "groundmap_preview.png"))
+    print(f"ground_colour.png {OUT_W}x{OUT_H} px, {(X1 - X0) / OUT_W:.2f} m per pixel; ground_colour_near.png {NEAR_W}x{NEAR_H} px, "
+          f"{(NEAR[2] - NEAR[0]) / NEAR_W:.2f} m per pixel, x {NEAR[0]:.0f}..{NEAR[2]:.0f}, y {NEAR[1]:.0f}..{NEAR[3]:.0f}; "
+          + ("alpha = baked sun shadow, sky occlusion in the colour" if shade else "no baked shade (run make_shadowmap.py, then this again)"))
+
+
+AO_STRENGTH = 0.55            # how much of the missing sky darkens the ground colour
+WEAR_SOIL = np.array((150, 137, 104), np.float32)       # trodden lawn edge, bare spots (survey Wb: bare earth patches)
+WEAR_DRY = np.array((172, 174, 116), np.float32)        # dry, yellow-green lawn (survey Wa / Wb: patchy, dry areas)
+
+
+def near_box():
+    """The near tile's rectangle in painting pixels (left, top, right, bottom)."""
+    return ((NEAR[0] - X0) / MPP, (Y1 - NEAR[3]) / MPP, (NEAR[2] - X0) / MPP, (Y1 - NEAR[1]) / MPP)
+
+
+def bare_spots():
+    """0..1 at the painting size: the few bare spots of the lawns (noise only; the lawn mask is applied by the users)."""
+    return smoothstep(0.66, 0.72, fbm0(H, W, 33, 3)) * smoothstep(0.48, 0.60, fbm(H, W, 31, 4))
+
+
+def lawn_wear(arr, lawn, bare):
+    """V16h: lawns as the survey shows them, kept mild: a trodden, earthy strip along their edges (paths, paving,
+    walls) that wobbles and breaks up, soft dry patches, and a few bare spots. lawn: the mask's lawn share at the
+    painting size; bare: bare_spots()."""
+    from scipy.ndimage import distance_transform_edt
+    inside = lawn > 0.6
+    edge = distance_transform_edt(inside) * MPP                     # metres into the lawn from its edge
+    n_wide, n_mid = fbm(H, W, 36, 4), fbm0(H, W, 32, 4)
+    worn = smoothstep(1.5, 0.15, edge + (n_mid - 0.5) * 2.2) * smoothstep(0.35, 0.6, n_wide) * 0.45
+    dry = smoothstep(0.54, 0.68, 0.55 * n_mid + 0.45 * n_wide) * 0.30
+    out = arr + (WEAR_DRY - arr) * (dry * lawn)[..., None]
+    out = out + (WEAR_SOIL - out) * (np.maximum(worn, 0.6 * bare) * lawn)[..., None]
+    return out
+
+
+def load_shade():
+    """make_shadowmap.py's result, or None: sun share for both maps (uint8) and the sky share at the painting size."""
+    files = [os.path.join(HERE, "out", f"ground_shade_{tag}.npy") for tag in ("world", "near")]
+    info = os.path.join(HERE, "out", "ground_shade.json")
+    if not all(os.path.exists(f) for f in files + [info]):
+        return None
+    world, near = np.load(files[0]), np.load(files[1])
+    rect = json.load(open(info))["near"]["rect"]
+    if world.shape[:2] != (OUT_H, OUT_W) or near.shape[:2] != (NEAR_H, NEAR_W) or any(abs(a - b) > 1e-6 for a, b in zip(rect, NEAR)):
+        print("ground shade: out/ground_shade_*.npy do not fit this map (run make_shadowmap.py again): ignored")
+        return None
+    from scipy.ndimage import gaussian_filter
+    sky = up(gaussian_filter(world[..., 1].astype(np.float32), 0.8) / 255.0)
+    l, t, r, b = (int(round(v)) for v in near_box())
+    fine = up(gaussian_filter(near[..., 1].astype(np.float32), 1.0) / 255.0, b - t, r - l)
+    sky[t:b, l:r] = fine[:sky[t:b, l:r].shape[0], :sky[t:b, l:r].shape[1]]
+    return {"world_sun": world[..., 0], "near_sun": near[..., 0], "sky": np.clip(sky, 0.0, 1.0)}
 
 
 if __name__ == "__main__":
