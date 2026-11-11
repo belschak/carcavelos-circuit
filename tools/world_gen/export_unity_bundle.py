@@ -15,6 +15,7 @@ Rotations: Blender rot_z (counter-clockwise from above) -> Unity yaw = -rot_z; B
 Unity roll about z = -rot_y, applied before the yaw. The self-test in Unity compares bounds to prove it.
 """
 import json
+import pin_checkpoints
 import math
 import os
 import shutil
@@ -176,7 +177,10 @@ def unity_track():
         start = min(cands, key=lambda i: heading_change(pts, i, 15))
     step = n / CHECKPOINTS
     cps = []
-    for c in range(CHECKPOINTS):
+    anchors = pin_checkpoints.load_anchors()
+    if anchors is not None:                                   # Noah's places, fixed (checkpoint_anchors.json)
+        cps, _ = pin_checkpoints.pin([{"x": p["x"], "z": p["y"]} for p in pts], anchors, start)
+    for c in range(0 if anchors is None else CHECKPOINTS, CHECKPOINTS):
         i = int(round(start + c * step)) % n
         while (i - jump) % n < 10 or (jump - i) % n < 3 or pts[i]["building"] and c > 0 and False:
             i = (i + 1) % n                                    # never in the air after the terrace edge
