@@ -127,6 +127,42 @@
    "smoothness": 0.1
   },
   {
+   "name": "W_B_roof_brown",
+   "colour": [
+    0.3621,
+    0.3176,
+    0.2883
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_B_roof_planted",
+   "colour": [
+    0.4335,
+    0.4867,
+    0.3324
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.05
+  },
+  {
    "name": "W_B_wall_0",
    "colour": [
     0.9353,
@@ -307,14 +343,14 @@
    "smoothness": 0.15
   },
   {
-   "name": "W_B_solar",
+   "name": "W_B_glass_dark",
    "colour": [
-    0.1596,
-    0.2124,
-    0.2919
+    0.1526,
+    0.1771,
+    0.1982
    ],
-   "metallic": 0.0,
-   "albedo": "solar_panel_albedo.png",
+   "metallic": 0.4,
+   "albedo": null,
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
@@ -322,7 +358,61 @@
    "alpha_clip": 0.0,
    "double_sided": false,
    "metallic_smoothness": null,
-   "smoothness": 0.25
+   "smoothness": 0.9
+  },
+  {
+   "name": "W_B_wall_cream",
+   "colour": [
+    0.883,
+    0.8509,
+    0.7871
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
+   "name": "W_B_deck_paving",
+   "colour": [
+    0.8469,
+    0.7832,
+    0.653
+   ],
+   "metallic": 0.0,
+   "albedo": "concrete_sand_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_T_concrete_light",
+   "colour": [
+    0.7832,
+    0.7673,
+    0.7317
+   ],
+   "metallic": 0.0,
+   "albedo": "concrete_polished_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.2
   },
   {
    "name": "W_B_interior_wall",
@@ -511,6 +601,24 @@
    "smoothness": 0.88
   },
   {
+   "name": "W_B_railing",
+   "colour": [
+    0.7832,
+    0.7951,
+    0.811
+   ],
+   "metallic": 0.5,
+   "albedo": "railing_cutout_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.5,
+   "double_sided": true,
+   "metallic_smoothness": null,
+   "smoothness": 0.55
+  },
+  {
    "name": "W_timber_deck",
    "colour": [
     0.6296,
@@ -527,6 +635,24 @@
    "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.15
+  },
+  {
+   "name": "W_B_solar",
+   "colour": [
+    0.1596,
+    0.2124,
+    0.2919
+   ],
+   "metallic": 0.0,
+   "albedo": "solar_panel_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.25
   },
   {
    "name": "W_B_interior_column",
@@ -1533,24 +1659,6 @@
    "smoothness": 0.3
   },
   {
-   "name": "W_T_concrete_light",
-   "colour": [
-    0.7832,
-    0.7673,
-    0.7317
-   ],
-   "metallic": 0.0,
-   "albedo": "concrete_polished_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.2
-  },
-  {
    "name": "W_T_kerb",
    "colour": [
     1.0,
@@ -2062,6 +2170,42 @@
     "bend": 0.05,
     "flutter": 0.04
    },
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_B_pool_water",
+   "colour": [
+    0.4943,
+    0.5829,
+    0.5365
+   ],
+   "metallic": 0.25,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.95
+  },
+  {
+   "name": "W_B_brick_buff",
+   "colour": [
+    0.7159,
+    0.6062,
+    0.4752
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
