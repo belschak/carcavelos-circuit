@@ -28,6 +28,9 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField]
         private RaceManager raceManager;
 
+        [SerializeField, Tooltip("The ghost replay (Ghost object). The ghost chip shows whose lap it is and its time (audit 13)")]
+        private GhostPlayer ghostPlayer;
+
         [SerializeField, Range(0f, 1f), Tooltip("Drift charge where stage 1 starts (tick mark on the drift bar). Placeholder kart: 0.8 s of 1.6 s")]
         private float stage1At = 0.5f;
 
@@ -91,6 +94,9 @@ namespace CarcavelosCircuit.RaceFlow
         private VisualElement medalTarget;     // next-medal chip under the time panel (task P5)
         private Label medalTargetName;
         private Label medalTargetTime;
+        private VisualElement ghostChip;       // "GHOST: DEAN 1:02.4" under the medal chip (audit 13)
+        private Label ghostChipName;
+        private Label ghostChipTime;
         private Label hintIcon;
         private VisualElement resultsMedalBadge;
         private Label resultsMedalName;
@@ -115,6 +121,13 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly StuckDetector stuckDetector = new StuckDetector();
         private HudMenus menus; // settings, credits, mute, pause overlay, reduced motion (task P7, UI/HudMenus.cs)
 
+        // Menu sounds (audit 10): HudMenus says what happened, RaceSounds listens here and plays the clip.
+        // RaceHud passes the event on because HudMenus is made new in every OnEnable, while this component stays.
+        public event System.Action<MenuSound> MenuSoundRequested;
+
+        // The WRONG WAY chip just appeared (audit 19). Fired once per show, so RaceSounds plays one warning, not one per frame.
+        public event System.Action WrongWayShown;
+
         // What each label shows right now, so we only rebuild its text when this number changes.
         private readonly ShownNumber shownState = new ShownNumber();        // RaceState as int
         private readonly ShownNumber shownTimer = new ShownNumber();        // lap time in ms (fraction label)
@@ -132,6 +145,7 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly ShownNumber shownFinal = new ShownNumber();        // results time in ms (count-up)
         private readonly ShownNumber shownTarget = new ShownNumber();       // next medal (Medal as int), -1 = no chip
         private readonly ShownNumber shownHintKind = new ShownNumber();     // HintKind as int
+        private readonly ShownNumber shownGhost = new ShownNumber();        // ghost lap in ms x 2 (+1 = Dean's), -1 = none
 
         private float resultsStartTime;
         private bool tickerDone;
@@ -140,6 +154,7 @@ namespace CarcavelosCircuit.RaceFlow
         private float nextShineTime;
         private int countdownGeneration; // makes late scheduled GO-exit calls harmless after a quick retry
         private bool hintWasShown;
+        private bool wrongWayWasShown; // last frame's WRONG WAY chip, to fire WrongWayShown only when it appears
         private int lastStage;      // drift stage last frame, to spot a stage-up
         private bool lastBoosting;  // boost last frame, to spot the boost start
         private int targetMilliseconds = -1; // lap time the next medal needs, -1 = none
@@ -162,6 +177,7 @@ namespace CarcavelosCircuit.RaceFlow
             HudFx.IgnoreClicksDeep(root);
             retryButton.focusable = false; // after a mouse click it must not keep focus, or Space/Enter would press it again
             menus = new HudMenus(root, raceManager); // after IgnoreClicksDeep: it switches on the clicks of its own buttons
+            menus.SoundRequested += OnMenuSound;
 
             // Narrow windows (4:3, 16:10): the HUD scales by height, so the panel gets less width than the 1280 reference.
             // Then the centred hint chip would cover the lap time and the key bar the drift panel: "hud--narrow" moves them.
@@ -189,6 +205,7 @@ namespace CarcavelosCircuit.RaceFlow
             raceManager.LapFinished -= OnLapFinished;
             raceManager.Restarted -= OnRestarted;
             raceManager.Recovered -= OnRecovered;
+            menus.SoundRequested -= OnMenuSound;
             HudTextures.Destroy(startGradient);
             HudTextures.Destroy(resultsGradient);
             HudTextures.Destroy(glowLeftTexture);
@@ -253,6 +270,9 @@ namespace CarcavelosCircuit.RaceFlow
             medalTarget = root.Q<VisualElement>("medal-target");
             medalTargetName = root.Q<Label>("medal-target-name");
             medalTargetTime = root.Q<Label>("medal-target-time");
+            ghostChip = root.Q<VisualElement>("ghost-chip");
+            ghostChipName = root.Q<Label>("ghost-chip-name");
+            ghostChipTime = root.Q<Label>("ghost-chip-time");
             hintIcon = root.Q<Label>("hint-icon");
             resultsMedalBadge = root.Q<VisualElement>("res-medal-badge");
             resultsMedalName = root.Q<Label>("res-medal-name");
@@ -268,34 +288,30 @@ namespace CarcavelosCircuit.RaceFlow
             root.Q<VisualElement>("drift-tick").style.left = Length.Percent(stage1At * 100f);
         }
 
-        // Shapes drawn in code (UI/SpeedArc.cs, CalcadaWave.cs, AzulejoPattern.cs) go into the empty "...-host" elements.
+        // Shapes drawn in code (UI/SpeedArc.cs, the confetti) go into the empty "...-host" elements. The start and results
+        // screens no longer get the full-screen azulejo lattice or the wave underline (task R15: one focal point, no noise).
         private void AddDrawnShapes(VisualElement root)
         {
             speedArc = new SpeedArc();
             root.Q<VisualElement>("speed-arc-host").Add(speedArc);
-            root.Q<VisualElement>("start-wave-host").Add(new CalcadaWave());
-            root.Q<VisualElement>("results-wave-host").Add(new CalcadaWave());
-            root.Q<VisualElement>("start-pattern-host").Add(new AzulejoPattern());
-            root.Q<VisualElement>("results-pattern-host").Add(new AzulejoPattern());
             confetti = new ConfettiBurst();
             resultsScreen.Add(confetti); // last child = drawn above the card, and it fades with the results screen
         }
 
         private void MakeTextures()
         {
-            // Start screen: deep Atlantic at the top, sea blue, a thin sunset line, dark at the bottom.
-            // The middle stays fairly see-through so the 3D scene shows behind the title.
-            startGradient = HudTextures.VerticalGradient(
-                HudColors.WithAlpha(HudColors.BlueDeep, 0.94f),
-                HudColors.WithAlpha(HudColors.BlueDeep, 0.80f),
-                HudColors.WithAlpha(HudColors.Blue, 0.55f),
-                HudColors.WithAlpha(HudColors.Orange, 0.42f),
-                HudColors.WithAlpha(HudColors.Black, 0.92f));
+            // Start screen (task R15): dark navy behind the logo on the left (the text must pop), fading to almost clear
+            // in the middle so the campus shows, a light veil again behind the leaderboard plate on the right.
+            startGradient = HudTextures.HorizontalGradient(
+                HudColors.WithAlpha(HudColors.Ink, 0.88f),
+                HudColors.WithAlpha(HudColors.BlueDeep, 0.66f),
+                HudColors.WithAlpha(HudColors.BlueDeep, 0.18f),
+                HudColors.WithAlpha(HudColors.Ink, 0.40f));
             Child(startScreen, "start-bg").style.backgroundImage = new StyleBackground(startGradient);
 
             resultsGradient = HudTextures.VerticalGradient(
-                HudColors.WithAlpha(HudColors.BlueDeep, 0.84f),
-                HudColors.WithAlpha(HudColors.Black, 0.92f));
+                HudColors.WithAlpha(HudColors.BlueDeep, 0.80f),
+                HudColors.WithAlpha(HudColors.Ink, 0.92f));
             Child(resultsScreen, "results-bg").style.backgroundImage = new StyleBackground(resultsGradient);
 
             glowLeftTexture = HudTextures.EdgeGlow(HudColors.Orange, 0.55f, true);
@@ -327,11 +343,17 @@ namespace CarcavelosCircuit.RaceFlow
             shownFinal.Forget();
             shownTarget.Forget();
             shownHintKind.Forget();
+            shownGhost.Forget();
         }
 
         private void OnRetryClicked()
         {
             raceManager.Retry();
+        }
+
+        private void OnMenuSound(MenuSound sound)
+        {
+            if (MenuSoundRequested != null) MenuSoundRequested(sound);
         }
 
         // ================= Events from the RaceManager =================
@@ -434,19 +456,8 @@ namespace CarcavelosCircuit.RaceFlow
                 int deltaMilliseconds = RaceTimer.ToMilliseconds(lapSeconds) - RaceTimer.ToMilliseconds(previousBest);
                 resultsDeltaValue.style.display = DisplayStyle.Flex;
                 resultsDeltaValue.text = HudFormat.Delta(deltaMilliseconds, true);
-                // The words follow the rounded number on screen, so "+0.000 s" never says "faster".
-                if (deltaMilliseconds < 0)
-                {
-                    resultsDeltaText.text = "FASTER THAN YOUR BEST";
-                }
-                else if (deltaMilliseconds == 0)
-                {
-                    resultsDeltaText.text = "SAME AS YOUR BEST";
-                }
-                else
-                {
-                    resultsDeltaText.text = "SLOWER THAN YOUR BEST";
-                }
+                // The words follow the rounded number on screen, so "+0.000 s" never says "new best".
+                resultsDeltaText.text = ResultsCopy.DeltaWords(deltaMilliseconds);
                 resultsDelta.EnableInClassList("res-delta--ahead", deltaMilliseconds < 0);
                 resultsBest.text = (isRecord ? "PREVIOUS BEST  " : "YOUR BEST  ") + HudFormat.Time(RaceTimer.ToMilliseconds(previousBest));
             }
@@ -475,34 +486,23 @@ namespace CarcavelosCircuit.RaceFlow
             Medal best = raceManager.BestMedal; // already includes this lap
             Medal next = MedalRules.NextTarget(medal);
             float nextSeconds = raceManager.MedalSeconds(next);
-            if (medal < best)
-            {
-                resultsMedalNext.text = "YOUR BEST MEDAL  " + MedalRules.Name(best);
-            }
-            else if (medal == Medal.DeansList)
-            {
-                resultsMedalNext.text = isNew ? "NEW MEDAL!  TOP TIER REACHED" : "TOP TIER: BEAT YOUR OWN TIME";
-            }
-            else if (nextSeconds > 0f)
-            {
-                string start = isNew ? "NEW MEDAL!  NEXT  " : "NEXT  ";
-                resultsMedalNext.text = start + MedalRules.Name(next) + "  " + HudFormat.Time(RaceTimer.ToMilliseconds(nextSeconds));
-            }
-            else
-            {
-                resultsMedalNext.text = ""; // medal times broken (RaceManager logs the error)
-            }
+            string nextTime = nextSeconds > 0f ? HudFormat.Time(RaceTimer.ToMilliseconds(nextSeconds)) : "";
+            resultsMedalNext.text = ResultsCopy.MedalLine(medal, bestBefore, best, next, nextTime);
+            resultsMedalNext.style.display = resultsMedalNext.text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
-        // Lap report: four numbers from RunStats. A zero drift or boost count is dimmed (the coach explains how).
+        // Lap report: four numbers from RunStats. Nothing measured shows a dim "-" (ResultsCopy), never a broken-looking "0".
         private void ShowLapReport(RunStats stats)
         {
-            statSpeedValue.text = HudFormat.Whole(Mathf.RoundToInt(stats.TopSpeed * 3.6f)); // m/s to km/h
-            statDriftsValue.text = HudFormat.Whole(stats.Drifts);
-            statBoostsValue.text = HudFormat.Whole(stats.Boosts);
-            statAirValue.text = HudFormat.OneDecimal(stats.AirSeconds) + " s";
-            statDrifts.EnableInClassList("stat--zero", stats.Drifts == 0);
-            statBoosts.EnableInClassList("stat--zero", stats.Boosts == 0);
+            int topSpeed = Mathf.RoundToInt(stats.TopSpeed * 3.6f); // m/s to km/h
+            statSpeedValue.text = ResultsCopy.Count(topSpeed);
+            statDriftsValue.text = ResultsCopy.Count(stats.Drifts);
+            statBoostsValue.text = ResultsCopy.Count(stats.Boosts);
+            statAirValue.text = ResultsCopy.AirTime(stats.AirSeconds);
+            statSpeedValue.parent.EnableInClassList("stat--zero", ResultsCopy.IsEmptyCount(topSpeed));
+            statDrifts.EnableInClassList("stat--zero", ResultsCopy.IsEmptyCount(stats.Drifts));
+            statBoosts.EnableInClassList("stat--zero", ResultsCopy.IsEmptyCount(stats.Boosts));
+            statAirValue.parent.EnableInClassList("stat--zero", ResultsCopy.IsEmptyAirTime(stats.AirSeconds));
         }
 
         // Exactly one medal colour class (medal--bronze ... medal--none) on the element.
@@ -551,6 +551,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             UpdateTimes();
             UpdateMedalTarget(state);
+            UpdateGhostChip(state);
             UpdateCheckpoints(state);
             UpdateSplit(state);
             UpdateCallouts(state);
@@ -655,7 +656,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             else
             {
-                float breathe = 1f + 0.035f * (0.5f + 0.5f * Mathf.Sin(Time.time * 3.2f));
+                float breathe = 1f + 0.04f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 6.98f)); // 1 to 1.04, once every 0.9 s
                 pressAnyKey.style.scale = new Scale(new Vector3(breathe, breathe, 1f));
             }
 
@@ -667,9 +668,15 @@ namespace CarcavelosCircuit.RaceFlow
 
             if (shownLoading.Changed(raceManager.IsSetUp ? 0 : 1))
             {
-                pressAnyKey.text = raceManager.IsSetUp ? "CLICK OR PRESS ANY KEY" : "LOADING TRACK...";
+                pressAnyKey.text = raceManager.IsSetUp ? StartPrompt(WebPage.UsesNamePrompt) : "LOADING TRACK...";
                 pressAnyKey.EnableInClassList("pill--loading", !raceManager.IsSetUp);
             }
+        }
+
+        // Few, big words (task R15): a phone has no keys, a computer has no touch screen (usually).
+        public static string StartPrompt(bool isPhone)
+        {
+            return isPhone ? "TAP TO START" : "PRESS ANY KEY";
         }
 
         private void UpdateTimes()
@@ -730,6 +737,26 @@ namespace CarcavelosCircuit.RaceFlow
                     HudFx.Punch(medalTarget, "medal-target--pop");
                 }
             }
+        }
+
+        // Ghost chip (audit 13): "GHOST: DEAN 1:02.4" or "GHOST: YOUR BEST 0:58.1" during the countdown and the race,
+        // hidden when there is no ghost. GhostPlayer loads the ghost itself; we only read which one it is.
+        // One number holds both facts (lap in ms x 2, +1 for Dean's), so the texts are written only when one changes.
+        private void UpdateGhostChip(RaceState state)
+        {
+            bool hasGhost = ghostPlayer != null && ghostPlayer.HasGhost;
+            int key = -1;
+            if (hasGhost)
+            {
+                key = RaceTimer.ToMilliseconds(ghostPlayer.GhostLapSeconds) * 2 + (ghostPlayer.IsShippedGhost ? 1 : 0);
+            }
+            if (shownGhost.Changed(key) && hasGhost)
+            {
+                ghostChipName.text = HudFormat.GhostName(ghostPlayer.IsShippedGhost);
+                ghostChipTime.text = HudFormat.TimeTenths(RaceTimer.ToMilliseconds(ghostPlayer.GhostLapSeconds));
+                ghostChip.EnableInClassList("ghost-chip--deans", ghostPlayer.IsShippedGhost);
+            }
+            HudFx.SetShown(ghostChip, hasGhost && (state == RaceState.Countdown || state == RaceState.Racing));
         }
 
         // Checkpoint pips: passed = white, next = pulsing outline, later = dim. The last pip is the finish line.
@@ -826,9 +853,15 @@ namespace CarcavelosCircuit.RaceFlow
                 isStuck = stuckDetector.Update(kart.Speed, Time.deltaTime);
             }
 
+            bool showWrongWay = isWrongWay && !showHint;
             HudFx.SetShown(hint, showHint);
-            HudFx.SetShown(wrongWay, isWrongWay && !showHint);
+            HudFx.SetShown(wrongWay, showWrongWay);
             HudFx.SetShown(stuck, isStuck && !showHint && !isWrongWay);
+            if (showWrongWay && !wrongWayWasShown && WrongWayShown != null)
+            {
+                WrongWayShown();
+            }
+            wrongWayWasShown = showWrongWay;
 
             if (showHint)
             {

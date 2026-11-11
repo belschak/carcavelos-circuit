@@ -7,8 +7,8 @@ namespace CarcavelosCircuit.RaceFlow
     // Plain C# with one reused char buffer, so each call creates exactly one string (the one the label needs).
     public static class HudFormat
     {
-        // The one place to tune digit width. Change it together with the font (spec: 0.55em for Barlow Condensed).
-        public const string DigitWidth = "0.6em";
+        // The one place to tune digit width. Change it together with the font (0.55em for Barlow Condensed, task R15).
+        public const string DigitWidth = "0.55em";
 
         private const string Open = "<mspace=" + DigitWidth + ">";
         private const string Close = "</mspace>";
@@ -63,6 +63,25 @@ namespace CarcavelosCircuit.RaceFlow
                 Buffer[n++] = 's';
             }
             return new string(Buffer, 0, n);
+        }
+
+        // 62456 ms -> "1:02.4" (ghost chip, audit 13): tenths are enough for "who am I racing", and they are cut,
+        // not rounded, like a stopwatch (0:58.19 shows 0:58.1, never a time the ghost did not reach).
+        public static string TimeTenths(int totalMilliseconds)
+        {
+            Split(totalMilliseconds, out int minutes, out int seconds, out int milliseconds);
+            int n = Digits(minutes, 1, 0);
+            Buffer[n++] = ':';
+            n = Digits(seconds, 2, n);
+            Buffer[n++] = '.';
+            n = Digits(milliseconds / 100, 1, n);
+            return new string(Buffer, 0, n);
+        }
+
+        // The ghost chip's words: the team's shipped Dean's ghost, or your own best lap.
+        public static string GhostName(bool isDeansGhost)
+        {
+            return isDeansGhost ? "GHOST: DEAN" : "GHOST: YOUR BEST";
         }
 
         // 87 -> "87" with fixed-width digits (speed).

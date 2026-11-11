@@ -42,12 +42,15 @@ PLAN = {
     "kart_drift_squeal": (None, True, False),
     "kart_drift_sparks": (-21.0, True, False),
     "amb_wind_loop": (-22.0, True, False),
+    "amb_seaside_loop": (-22.0, True, False),  # audit 12, RaceMusic plays it about 20 dB lower again
     "kart_drift_start": (-15.0, False, False),
     "kart_drift_stage_up": (-15.0, False, False),
     "el_boost_whoosh": (-15.0, False, False),
     "sfx_landing_thud": (-15.0, False, False),
     "sfx_respawn": (-15.0, False, False),
     "sfx_shift_pop": (-15.0, False, False),
+    "sfx_wall_bump": (-15.0, False, False),
+    "sfx_takeoff_whoosh": (-17.0, False, False),
     # stingers bus (played at volume 1.0, the level lives in the file)
     "sfx_countdown_beep": (-15.0, False, False),
     "sfx_go_beep": (-13.0, False, False),
@@ -55,11 +58,24 @@ PLAN = {
     "sfx_finish_jingle": (-12.0, False, False),
     "sfx_new_record": (-14.0, False, True),
     "sfx_hint_warning": (-15.0, False, False),
+    "el_item_box_break": (-16.0, False, True),  # item boxes (task R7), ElevenLabs Sound Effects
+    "sfx_item_roll_tick": (-22.0, False, False),  # own synth: needs the exact 25 ms length
+    "el_item_ready": (-16.0, False, True),
+    "el_item_bica": (-15.0, False, True),
+    "el_item_onda": (-14.0, False, True),
+    "el_item_seagull": (-16.0, False, True),     # Luc's four item designs (R7 redesign, 2026-11-10)
+    "el_item_ring": (-17.0, False, True),        # plays up to 3 times in a row, pitch rising
+    "el_item_deans_on": (-14.0, False, True),
+    "el_item_shield_block": (-15.0, False, True),
+    "el_item_shield_pop": (-17.0, False, True),
     # music
     "music_campus_loop": (-16.0, True, False),
     "music_results_loop": (-16.0, True, False),
     # interface
     "ui_click": (-20.0, False, False),
+    "ui_open": (-21.0, False, False),
+    "ui_close": (-21.0, False, False),
+    "ui_page": (-23.0, False, False),
 }
 
 
