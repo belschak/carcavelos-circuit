@@ -126,8 +126,11 @@ D_POOL_Z = 9.35               # water level (the lawn around it lies at 9.0-9.9 
 # courtyards at Floor 0 and, at the west end, the cheeks of the real stair (outside the jump corridor).
 # ----------------------------------------------------------------------------------------------------------------
 COURT_Z = F0
-COURT_N = [(-4.8, 65.3), (8.7, 65.3), (37.3, 69.7), (28.7, 93.3), (-4.8, 80.5)]
-COURT_S = [(0.5, 47.3), (7.3, 28.6), (47.2, 43.9), (43.5, 53.9)]
+# V10 integration: both west ends stop 5 m further east than in V10c2 (north wall x = -4.8 -> 0.3, south court's west
+# edge moved 5 m along the bar). V10i's landing road starts right under the terrace lip (route point 82), so the lawn
+# corridor (26 m to each side) now begins there and covers the 5 m cells west of x = 0 (north) and x = 5 (south).
+COURT_N = [(0.3, 65.3), (8.7, 65.3), (37.3, 69.7), (28.7, 93.3), (0.3, 82.45)]
+COURT_S = [(5.45, 48.06), (11.97, 30.39), (47.2, 43.9), (43.5, 53.9)]
 
 # ----------------------------------------------------------------------------------------------------------------
 # A  west entrance: the shallow pool in front of the white end wall
@@ -147,8 +150,10 @@ G_COLUMNS = [(133.0, 2.9), (138.5, 4.8)]                                        
 G_STEPS = [(137.4, -22.6), (149.6, -15.2), (149.6, -7.4), (142.4, -7.0)]        # terracotta seat steps south of G
 # lower plaza (EDP Plaza, 11.2 m) east of the race line: the terrain is levelled here so G stands on its columns
 LOWER_PLAZA = [(111.0, -30.0), (122.3, -22.3), (130.5, -20.5), (133.0, -27.5), (137.4, -22.6), (150.0, -14.0),
-               (150.0, -6.5), (146.0, 2.5), (130.0, -3.5), (130.0, 2.0), (124.0, 10.0), (115.5, 7.5), (114.1, 1.4),
+               (150.0, -6.5), (149.0, 9.0), (133.0, 0.5), (127.5, 12.0), (114.0, 11.5), (114.1, 1.4),
                (112.5, -6.0), (111.0, -12.0)]
+# (V10 integration: the outline reaches 4 to 6 m behind G's set-back Floor-0 front, so the 5 m nodes just behind the
+# glass are level too; before, the ground rose to them and stood as a mound in front of the glass)
 LOWER_PLAZA_Z = F0 - 0.05
 
 
@@ -181,3 +186,8 @@ paint("south courtyard", COURT_S, OCHRE)
 paint("lower plaza", [(96.0, -29.3), (106.6, -25.4), (104.5, -18.0), (110.5, -8.5), (114.1, 1.4), (123.1, 4.1),
                       (125.4, -2.0), (128.7, -10.6), (142.4, -7.0), (137.4, -22.6), (133.0, -27.5), (130.5, -20.5),
                       (122.3, -22.3), (122.6, -32.7), (114.0, -36.5), (104.0, -38.5)], OCHRE)
+# V10 integration: the ground under the Gallery's arcade (beside the lower plaza and the stairs' west void) and in
+# Horizon Hall's undercroft is paving too (it was lawn green behind the columns)
+paint("arcade under the Gallery deck", [MAIN(23.4, 1.0), MAIN(30.6, 1.0), MAIN(30.6, 34.0), MAIN(23.4, 34.0)], OCHRE)
+paint("undercroft of Horizon Hall", [(113.6, 0.9), (123.1, 4.1), (125.4, -2.0), (128.7, -10.6), (151.6, 2.6),
+                                     (147.4, 5.8), (131.3, -3.5), (126.1, 10.1), (112.4, 6.2)], OCHRE)

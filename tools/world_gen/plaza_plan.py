@@ -245,7 +245,29 @@ DECK_ISLANDS = [S4_PLATFORM]
 _low_w = _hit(STAIR_FOOT, STAIR_RIGHT, MAIN_EAST[0], MAIN_EAST[1])
 LOW_WEST = [FOOT_W, TOP_W, EDGE_W, MAIN_EAST[1]] + ([_low_w] if stair_frame(*_low_w)[1] < -STAIR_HALF - 0.3 else [])
 LOW_EAST = [FOOT_E, stair_point(0.0, 13.0), G_WEST[0], EDGE_E, TOP_E]
-LOWS = [LOW_WEST, LOW_EAST]
+# V10 integration: the Gallery's wall (V10c2, campus_plan) stands back under its roof edge, 6 m south of the white cross
+# pier and 1.8 m north of it, with the Floor-1 deck of the Gallery above. So the Floor-0 paving goes on under that
+# deck up to the wall: beside the courtyard (both voids; it also fills the sliver where the OSM outline bulged into
+# the court) and beside the stairs' west void. Each strip is closed across its ends (UNDER_ENDS, env_plaza).
+import campus_plan as _C                                            # noqa: E402  plain data, no Blender
+_GV = lambda p: _C.MAIN_UV(*p)[1]                                   # noqa: E731  position along the Gallery
+_UD, _US = _C.GALLERY_DEEP - 0.3, _C.GALLERY_SHALLOW - 0.3          # 0.3 m inside the two wall lines
+_VB0, _VB1 = _C.GALLERY_BREAK
+_S4W = (65.16, 81.2)
+_CS = (72.9, _S3N)
+UNDER_COURT_SOUTH = [_CS, MAIN_EAST[3], MAIN_EAST[4], MAIN_EAST[5], MAIN_EAST[6], _S4W, _C.MAIN(_US, _GV(_S4W)),
+                     _C.MAIN(_US, _VB1), _C.MAIN(30.0, _VB1), _C.MAIN(30.0, _VB0), _C.MAIN(_UD, _VB0),
+                     _C.MAIN(_UD, _GV(_CS))]
+UNDER_COURT_NORTH = [(62.85, 87.0), COURT_END, _C.MAIN(_US, _GV(COURT_END)), _C.MAIN(_US, _GV((62.85, 87.0)))]
+UNDER_STAIR_WEST = [LOW_WEST[-1], MAIN_EAST[1], EDGE_W, _C.MAIN(_UD, _GV(EDGE_W)), _C.MAIN(_UD, _GV(LOW_WEST[-1]))]
+UNDERS = [UNDER_COURT_SOUTH, UNDER_COURT_NORTH, UNDER_STAIR_WEST]
+UNDER_ENDS = [(_CS, UNDER_COURT_SOUTH[-1], UNDER_COURT_SOUTH), (_S4W, UNDER_COURT_SOUTH[6], UNDER_COURT_SOUTH),
+              ((62.85, 87.0), UNDER_COURT_NORTH[3], UNDER_COURT_NORTH), (COURT_END, UNDER_COURT_NORTH[2], UNDER_COURT_NORTH),
+              (EDGE_W, UNDER_STAIR_WEST[3], UNDER_STAIR_WEST)]
+UNDER_TOP = FLOOR1 - 0.45            # the end walls stop inside the Gallery deck's band (FLOOR1 - 0.5 .. + 0.1)
+# ... and the Gallery deck's edge over the courtyard gets the courtyard's fence (no kart drops in from that deck)
+FENCE_GALLERY = [[_CS, _S4W], [(62.85, 87.0), COURT_END]]
+LOWS = [LOW_WEST, LOW_EAST] + UNDERS
 # planted barrier across the gap between the library and Horizon Hall (Luc: the way to the gym is off the map)
 GAP_BARRIER = ((121.6, 38.9), (126.2, 29.6))
 BARRIER_HALF = 0.9

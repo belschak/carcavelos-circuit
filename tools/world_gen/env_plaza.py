@@ -464,6 +464,8 @@ def build_walls(col):
     # under the deck's south edge, both sides of the stairs
     for a, b, ring in ((P.EDGE_W, P.TOP_W, P.LOW_WEST), (P.TOP_E, P.EDGE_E, P.LOW_EAST)):
         m.wall(a, b, P.deck_z(*a), P.deck_z(*b), low, _inward(a, b, ring))
+    for a, b, ring in P.UNDER_ENDS:                           # V10 integration: ends of the paving under the Gallery deck
+        m.wall(a, b, P.UNDER_TOP, P.UNDER_TOP, low, _inward(a, b, ring))
     # the stairs' cheeks (terracotta, following the steps) and the solid under the west tiers' ends
     treads = P.STAIR_RISERS - 1
     zmain = lambda s: P.stair_profile(s) + P.LIFT                       # noqa: E731
@@ -531,6 +533,7 @@ def fence_lines():
              dz([P.S4_PLATFORM[0], P.S4_PLATFORM[1], P.S4_PLATFORM[2], P.S4_PLATFORM[3]]),
              dz([P.EDGE_W, P.TOP_W]), dz([P.TOP_E, P.EDGE_E]),
              dz([P.slot_point(P.SLOT_LEN, 0), P.slot_point(0, 0), P.slot_point(0, P.SLOT_W), P.slot_point(P.SLOT_LEN, P.SLOT_W)])]
+    lines += [dz(line) for line in P.FENCE_GALLERY]          # V10 integration: on the Gallery deck's edge over the court
     treads = P.STAIR_RISERS - 1
     for u in (-P.STAIR_HALF + 0.04, P.STAIR_HALF - 0.04):
         lines.append([(*P.stair_point(P.STAIR_LEN * k / treads, u), P.stair_profile(P.STAIR_LEN * k / treads) + P.LIFT)

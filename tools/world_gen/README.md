@@ -44,6 +44,15 @@ A second block in `route_profile.json "section_overrides"` (with `via` points, `
 The library's footprint is corrected to its ground floor in `footprint_overrides.json` (the bridge is not ground floor); `route_base_polygon` there keeps the OSM outline for the waypoint pipeline, so no point outside the section moves.
 `route_profile.json "kicker"` is now `type: ramp`: the last 6 m of the terrace deck rise 0.75 m to the edge (`z = rise * t ** 1.5`), then a free drop of 4.5 m (before: a 35 degree wedge led down from the edge). `env_track.build_ramp` builds it with Boost Orange stripes.
 
+### Where V10c2 (campus buildings) and V10i (plaza, stairs, jump) meet (V10 integration, 2026-11-11)
+
+Both were built apart and touch in five places; each is settled in the plan files, not in the geometry code:
+- **Courtyards beside the CTT terrace** (`campus_plan.COURT_N`, `COURT_S`): their west ends stop 5 m further east. V10i's landing road starts right under the terrace lip, so the lawn corridor begins there and covers the 5 m cells the trays used (`env_campus.plan_ground` stops the build when a tray touches the corridor).
+- **Stair flanks beside the jump** (`env_campus.terrace_stair`): they start at the deck's level, not at the kicker's lip.
+- **Gallery east side**: V10c2's glass wall stands back under the roof, V10i's plaza and courtyard end at the roof edge (OSM outline). `plaza_plan.UNDERS` carries the Floor-0 paving on under the Gallery deck to the wall (courtyard, stairs' west void), `UNDER_ENDS` closes the strips, `FENCE_GALLERY` puts the courtyard's fence and guard collider on the Gallery deck's edge; the Gallery deck (`env_campus.build_main`) reaches 0.4 m past the roof edge north of the stairs so no groove is left between the two decks.
+- **Horizon Hall's undercroft**: `campus_plan.LOWER_PLAZA` reaches behind the set-back Floor-0 front and is level right up to V10i's stairs (`env_campus.lower_nodes`).
+- **Ground paint**: the Gallery arcade and Horizon Hall's undercroft are paving (`campus_plan.GROUND_PAINT`).
+
 ## What is in the world (modules)
 
 | Module | What it builds |

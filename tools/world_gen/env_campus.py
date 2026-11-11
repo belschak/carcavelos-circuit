@@ -439,8 +439,13 @@ def build_main(b):
         det.glass(P(deep, v + 0.1), P(deep, v + 2.9), F1 + 0.9, F1 + 2.1, off=0.1, mat=(GLASS_ROOF, SOLAR)[k % 2])
     det.glass(P(deep, 2.3), P(deep, 52.0), F0 + 0.1, F1 - 0.6, mat=DARK)           # Main Deck arcade (Floor 0)
     det.glass(P(shallow, vb1 + 0.3), P(shallow, 139.7), F0 + 0.1, F1 - 0.6, mat=DARK)
-    for ring in (rect(P, deep - 0.2, 29.4, 2.0, vb0), rect(P, shallow - 0.2, 29.4, vb1, 140.0)):
-        det.prism(ring, F1 - 0.5, F1 + 0.1, WALL, SAND, WALL)                      # Floor-1 deck / plinth
+    # Floor-1 deck / plinth. V10 integration: north of the stairs' void it reaches 0.4 m past the roof edge, under
+    # which V10i's plaza deck ends (the OSM outline): the 0.6 m between the two was an open groove down to the terrain
+    import plaza_plan
+    vs = C.MAIN_UV(*plaza_plan.EDGE_W)[1]
+    for ring in (rect(P, deep - 0.2, 29.4, 2.0, vs), rect(P, deep - 0.2, 30.4, vs, vb0),
+                 rect(P, shallow - 0.2, 30.4, vb1, 140.0)):
+        det.prism(ring, F1 - 0.5, F1 + 0.1, WALL, SAND, WALL)
     run = []                                                  # railing where the deck stands above the ground
     for k in range(52):
         v = 2.2 + k * 2.0
@@ -802,6 +807,7 @@ def lower_nodes(heights):
     """env_terrain.apply: the 5 m nodes of the lower plaza east of the race line go to Floor 0 (they rose to
     13-14 m, so Horizon Hall stood half buried). Full effect from 14 m off the centreline, none within 7 m: the
     road bed and its shoulder keep the heights the route gives them."""
+    import plaza_plan
     n = 0
     for j in range(E.ROWS):
         for i in range(E.COLS):
@@ -811,6 +817,9 @@ def lower_nodes(heights):
             d = E.distance_to_route(x, y)
             t = min(max((d - 7.0) / 7.0, 0.0), 1.0)
             t = t * t * (3 - 2 * t)
+            if plaza_plan.owns_route_point(E.nearest_route_point(x, y)):
+                t = 1.0        # V10 integration: beside V10i's stairs there is no road bed to keep (the stairs stand in
+                               # a void at Floor 0), so the ground under Horizon Hall's podium is level up to them
             new = heights[j][i] * (1 - t) + C.LOWER_PLAZA_Z * t
             if abs(new - heights[j][i]) > 0.01:
                 heights[j][i] = new
@@ -1024,7 +1033,8 @@ def terrace_stair(m):
     d = dist((o["x"], o["y"]), (f["x"], f["y"]))
     dx, dy = (f["x"] - o["x"]) / d, (f["y"] - o["y"]) / d
     Q = C.frame((o["x"], o["y"]), (dx, dy))                 # Q(along the flight, to the left of it)
-    top, low = o["track_z"], f["track_z"]
+    # V10 integration: the flanks start at the deck's level; the jump point itself is the kicker's lip since V10i
+    top, low = min(pts[k]["track_z"] for k in range(j - 8, j + 1)), f["track_z"]
     going = 0.77
     z_at = lambda a: top - (top - low) * min(max((a - 0.3) / (STAIR_STEPS * going), 0.0), 1.0)   # noqa: E731
     end = 0.3 + STAIR_STEPS * going
