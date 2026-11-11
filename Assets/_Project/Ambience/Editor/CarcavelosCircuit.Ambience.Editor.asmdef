@@ -1,0 +1,14 @@
+{
+    "name": "CarcavelosCircuit.Ambience.Editor",
+    "rootNamespace": "CarcavelosCircuit.Ambience.Editor",
+    "references": ["CarcavelosCircuit.Ambience"],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

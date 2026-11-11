@@ -1,0 +1,14 @@
+{
+    "name": "CarcavelosCircuit.Ambience",
+    "rootNamespace": "CarcavelosCircuit.Ambience",
+    "references": ["CarcavelosCircuit.Shared"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
