@@ -63,13 +63,18 @@ def slot_materials():
             E.material("B_roof_tiles", "#C8664A", 0.85)]
 
 
-def railing_material():
+def railing_material(variant=None):
     """Bar railing as one alpha-clipped sheet per 3 m (textures/railing_cutout_albedo.png, make_textures.py railing):
-    custom properties alpha_clip / double_sided go through materials.json like the leaf cutouts."""
-    mat = E.material("B_railing", "#C9CCD0", roughness=0.45, metallic=0.5)
+    custom properties alpha_clip / double_sided go through materials.json like the leaf cutouts.
+    variant "tan" (V16c): the bronze-tan flat-bar railing of the CTT terrace, one sheet per 2 m (posts every 2 m;
+    textures/railing_tan_cutout_albedo.png, make_west_textures.py); the standard sheet if that file is missing."""
+    name, colour, file = "B_railing", "#C9CCD0", "railing_cutout_albedo.png"
+    if variant == "tan" and os.path.exists(os.path.join(E.TEXTURES, "railing_tan_cutout_albedo.png")):
+        name, colour, file = "B_railing_tan", "#A09075", "railing_tan_cutout_albedo.png"
+    mat = E.material(name, colour, roughness=0.45, metallic=0.5)
     mat["alpha_clip"], mat["double_sided"] = 0.5, 1
     mat.use_backface_culling = False
-    path = os.path.join(E.TEXTURES, "railing_cutout_albedo.png")
+    path = os.path.join(E.TEXTURES, file)
     nodes, links = mat.node_tree.nodes, mat.node_tree.links
     if os.path.exists(path) and not any(n.type == "TEX_IMAGE" for n in nodes):
         tex = nodes.new("ShaderNodeTexImage")
@@ -534,96 +539,15 @@ def build_main(b):
 # ----------------------------------------------------------------------------------------------------------------
 # B and D: the west wings
 # ----------------------------------------------------------------------------------------------------------------
-def wing(vol, det, P, body, storey, slab, s_lawn, bands, ribbon_faces, low_faces=()):
-    """A west wing in its frame P(s, t): Floor-1 body with ribbons, planted roof strips, set-back glazed roof storey
-    under a thin slab. bands: [(t0, t1, material)] across the roof; ribbon_faces: the t of the two long facades;
-    low_faces: t of a facade that also shows Floor 0 (dark glazing between white piers)."""
-    s0, s1, t0, t1 = body
-    ring = rect(P, s0, s1, t0, t1)
-    base = min(E.ground_z(x, y) for x, y in ring) - 1.0
-    top = C.WING_TOP
-    vol.prism(ring, base, top, WALL, None)
-    for ta, tb, mat in bands:
-        vol.up([(*P(s0, ta), top), (*P(s1, ta), top), (*P(s1, tb), top), (*P(s0, tb), top)], mat)
-    mid = (t0 + t1) / 2
-    for t in ribbon_faces:
-        out = P((s0 + s1) / 2, t + (t - mid))
-        a, e = facing(P(s0 + 0.4, t), P(s1 - 0.4, t), out)
-        det.glass(a, e, F1 + 0.4, F1 + 3.4, tile=5.0)
-        if t in low_faces:
-            det.glass(a, e, F0 + 0.3, F1 - 0.6, mat=DARK, bay=5.0, pier=0.5)
-    a0, a1, b0, b1 = storey
-    vol.prism(rect(P, a0, a1, b0, b1), top, C.WING_STOREY_TOP, GLASS, None, tile=5.0)
-    c0, c1, d0, d1 = slab
-    vol.prism(rect(P, c0, c1, d0, d1), C.WING_STOREY_TOP, C.WING_STOREY_TOP + 0.4, WALL, ROOF, WALL)
-    det.railing([(*P(s0 + 0.5, s_lawn), top), (*P(s1 - 0.5, s_lawn), top)])
-
-
+# V16c (photosphere survey V15, Appendices B and C): the two wings, their heads and the helper `wing` live in
+# env_campus_west.py now (brick screen and ribbon bars on B, framed glass box on B's head, D's glazed storeys,
+# projecting south storey, solid head with the frame box, prow and mouth).
 def build_B(b):
-    P = C.B
-    vol, det = Mesh(), Mesh()
-    s0, s1, t0, t1 = C.B_BODY_ST
-    wing(vol, det, P, C.B_BODY_ST, C.B_STOREY_ST, C.B_SLAB_ST, t0 + 0.15,
-         [(t0, t0 + 0.8, WALL), (t0 + 0.8, C.B_SLAB_ST[2], PLANT), (C.B_SLAB_ST[2], C.B_SLAB_ST[3], ROOF),
-          (C.B_SLAB_ST[3], t1 - 0.8, PLANT), (t1 - 0.8, t1, WALL)], (t0, t1))
-    # the head: blank white kite with the portal hood on its south-east corner, dark roofed link to the bar
-    base = min(E.ground_z(x, y) for x, y in C.B_HEAD) - 1.0
-    vol.prism(C.B_HEAD, base, C.HEAD_TOP, WALL, WALL)
-    vol.prism(C.B_LINK, base, C.WING_TOP + 0.5, WALL, DARKROOF)
-    hood = ccw(C.B_HOOD)
-    sill = F1 - 0.2
-    tops = [22.0 if p[1] < 62.0 else (21.6 if p[1] < 65.0 else C.HEAD_TOP + 0.05) for p in hood]
-    front = [k for k in range(len(hood)) if hood[k][1] < 62.0 and hood[(k + 1) % len(hood)][1] < 62.0]
-    vol.prism(hood, base, tops, WALL, WALL, skip=front)
-    a, e = facing(hood[front[0]], hood[(front[0] + 1) % len(hood)], (-55.0, 50.0))
-    nx, ny = right_normal(a, e)
-    ia, ie = (a[0] - nx * 2.5, a[1] - ny * 2.5), (e[0] - nx * 2.5, e[1] - ny * 2.5)       # recess 2.5 m deep
-    pa, pe = lerp2(a, e, 0.1), lerp2(a, e, 0.9)                                           # the frame's jambs
-    qa, qe = lerp2(ia, ie, 0.1), lerp2(ia, ie, 0.9)
-    head = sill + 6.0
-    vol.wall(a, pa, base, 22.0, WALL)
-    vol.wall(pe, e, base, 22.0, WALL)
-    vol.wall(pa, pe, head, 22.0, WALL)
-    vol.wall(pa, pe, base, sill, WALL)
-    vol.face([(*qa, sill), (*qe, sill), (*qe, head), (*qa, head)], DARK)                  # dark glazed entrance
-    vol.towards([(*pa, sill), (*qa, sill), (*qa, head), (*pa, head)], WALL, (*lerp2(pa, pe, 0.5), sill + 3))
-    vol.towards([(*pe, sill), (*qe, sill), (*qe, head), (*pe, head)], WALL, (*lerp2(pa, pe, 0.5), sill + 3))
-    vol.up([(*pa, sill), (*pe, sill), (*qe, sill), (*qa, sill)], CONC)
-    vol.down([(*pa, head), (*pe, head), (*qe, head), (*qa, head)], WALL)
-    for k in range(4):                                                                    # steps down to the lawn
-        d = 0.35 * (k + 1)
-        sa, se = (pa[0] + nx * d, pa[1] + ny * d), (pe[0] + nx * d, pe[1] + ny * d)
-        det.prism(ccw([pa, pe, se, sa]), base, sill - 0.17 * (k + 1), CONC, CONC)
-    return vol.finish("B_" + b["id"]), det.finish("BD_" + b["id"])
+    return W.build_B(b)
 
 
 def build_D(b):
-    P = C.D
-    vol, det = Mesh(), Mesh()
-    s0, s1, t0, t1 = C.D_BODY_ST
-    wing(vol, det, P, C.D_BODY_ST, C.D_STOREY_ST, C.D_SLAB_ST, t1 - 0.15,
-         [(t0, t0 + 0.8, WALL), (t0 + 0.8, C.D_SLAB_ST[2], PLANT), (C.D_SLAB_ST[2], C.D_SLAB_ST[3], ROOF),
-          (C.D_SLAB_ST[3], t1 - 0.8, PLANT), (t1 - 0.8, t1, WALL)], (t0, t1), low_faces=(t0,))
-    # low planted terrace over Floor 0 along the south side
-    p0, p1, q0, q1 = C.D_PODIUM_ST
-    ring = rect(P, p0, p1, q0, q1)
-    base = min(E.ground_z(x, y) for x, y in ring) - 1.0
-    vol.prism(ring, base, F1, WALL, PLANT)
-    a, e = facing(P(p0 + 0.4, q1), P(p1 - 0.4, q1), P((p0 + p1) / 2, q1 + 10))
-    det.glass(a, e, F0 + 0.5, F0 + 2.3, tile=5.0, bay=10.0, pier=1.2)
-    # the head: white prism cantilevering over a dark glazed base that stands in the pool
-    base = min(E.ground_z(x, y) for x, y in C.D_HEAD) - 1.0
-    under = F0 + 1.5
-    stepped_solid(vol, C.D_HEAD_BASE, C.D_HEAD, base, under, C.HEAD_TOP, WALL, WALL, WALL,
-                  under={C.D_HEAD[1]: under + 4.6, C.D_HEAD[2]: under + 4.6, C.D_HEAD[4]: under + 1.0})                    # the soffit rises to the tips (D01, C04)
-    hb = ccw(C.D_HEAD_BASE)
-    for a, e in zip(hb[1:6], hb[2:7]):                               # glazing on the faces towards the pool
-        det.glass(a, e, C.D_POOL_Z + 0.25, under - 0.15, mat=DARK)
-    vol.prism(C.D_LINK, C.WING_TOP, C.HEAD_TOP + 0.3, WALL, DARKROOF)
-    a, e = (-48.1, -10.1), (-33.3, -22.9)                            # two large framed panes on the south-west face
-    det.glass(lerp2(a, e, 0.16), lerp2(a, e, 0.46), F1 + 0.9, F1 + 3.9, off=0.05, mat=DARK)
-    det.glass(lerp2(a, e, 0.54), lerp2(a, e, 0.84), F1 + 0.9, F1 + 3.9, off=0.05, mat=DARK)
-    return vol.finish("B_" + b["id"]), det.finish("BD_" + b["id"])
+    return W.build_D(b)
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -689,6 +613,8 @@ def build_one(b, index):
           f"{sum(len(p.vertices) - 2 for p in details.polygons)} triangles")
     return volume, details
 
+
+import env_campus_west as W          # noqa: E402  V16c: CTT hall, terrace west end, B, D, pool, west lawns
 
 # ----------------------------------------------------------------------------------------------------------------
 # Grounds: trays (courtyards, D's pool), the levelled lower plaza, pools, walls, steps
@@ -878,12 +804,7 @@ def build_extras():
     """Everything of the campus that is not a building: pools, courtyard walls, the stair cheeks at the terrace's
     west end, G's seat steps, the berms at the heads. One object, collection World_Buildings_Campus."""
     m = Mesh()
-    # --- D's reflecting pool: white rim, still water ---
-    pool = ccw(C.D_POOL)
-    rim = C.D_POOL_Z + 0.1
-    _rim(m, pool, rim, 0.45, C.D_POOL_Z - 0.6)
-    m.face([(*p, C.D_POOL_Z) for p in grow(pool, -0.2)], WATER)
-    keep_out(pool, 1.0)
+    # (V16c: D's reflecting pool is built in env_campus_west.pool, called through terrace_stair below)
     # --- A's entrance pool: raised concrete rim, water flush with it ---
     apool = _clear_of_route(ccw(C.A_POOL), 6.0)
     if apool:
@@ -893,106 +814,42 @@ def build_extras():
         m.face([(*p, top - 0.04) for p in grow(apool, -0.2)], WATER)
         keep_out(apool, 1.0)
     # --- courtyards: perforated buff brick walls where no building closes them ---
+    # V16c (survey B 2.5, 2.7): along B a low white kerb with a flat planted strip (B's own base is the brick
+    # screen now), the south courtyard is open to the lawn at its west end (a low white kerb takes the step)
     n_ring = ccw(C.COURT_N)
-    for a, e, top in ((n_ring[4], n_ring[0], C.COURT_Z + 2.0), (n_ring[0], n_ring[1], C.COURT_Z + 1.1),
-                      (n_ring[3], n_ring[4], C.COURT_Z + 2.4)):
+    for a, e, top in ((n_ring[4], n_ring[0], C.COURT_Z + 2.0), (n_ring[0], n_ring[1], C.COURT_Z + 1.1)):
         _wall_strip(m, a, e, C.COURT_Z - 0.4, top, 0.35, BRICK)
+    _wall_strip(m, n_ring[3], n_ring[4], C.COURT_Z - 0.4, C.COURT_Z + 0.45, 0.35, WALL)
     s_ring = ccw(C.COURT_S)
-    _wall_strip(m, s_ring[0], s_ring[1], C.COURT_Z - 1.6, C.COURT_Z + 1.2, 0.35, BRICK)
-    # planted strip between the north courtyard's wall and B's facade
+    _wall_strip(m, s_ring[0], s_ring[1], C.COURT_Z - 1.6, C.COURT_Z + 0.25, 0.35, WALL)
+    # planted strip between the north courtyard's kerb and B's facade
     a, e = n_ring[3], n_ring[4]
     nx, ny = right_normal(a, e)                       # ring is ccw: right-hand side = outside = towards B
-    m.up([(*a, C.COURT_Z + 2.4), (*e, C.COURT_Z + 2.4), (e[0] + nx * 2.6, e[1] + ny * 2.6, F1 - 0.4),
-          (a[0] + nx * 2.6, a[1] + ny * 2.6, F1 - 0.4)], PLANT)
+    m.up([(*a, C.COURT_Z + 0.43), (*e, C.COURT_Z + 0.43), (e[0] + nx * 2.6, e[1] + ny * 2.6, C.COURT_Z + 0.43),
+          (a[0] + nx * 2.6, a[1] + ny * 2.6, C.COURT_Z + 0.43)], PLANT)
     terrace_stair(m)
     # --- V16b: east edge of the lower plaza (seat tiers, grey stair), its paving and fixed objects, E's rim path ---
     import env_campus_east
     env_campus_east.build_grounds()
-    # --- berms: the lawn rises against the blank heads of B and D's bar ---
-    berm(m, [C.B_HEAD[0], C.B_HEAD[1], (-58.5, 62.9)], (-75.0, 55.0), 3.4, width=8.0)
+    # --- berms: the lawn rises against B's head ---
+    # V16c (survey B 2.9, 2.11: the lawn is nearly level, the head stands 9-10 m over it): no bank on the head's
+    # south-west face (framed glass box) nor along B's terrace side (brick screen); the banks that stay fade out
+    # towards the head's west tip
+    tip, south = C.B_HEAD[0], C.B_HEAD[1]
+    berm(m, [south, (-58.5, 62.9)], (-65.0, 50.0), lambda p: 2.6 * min(1.0, dist(p, south) / 6.0), width=6.0)
     berm(m, [(-58.4, 60.2), (-51.6, 60.4)], (-55.0, 50.0), 2.6, width=6.0)          # in front of the portal hood
-    berm(m, [C.B_HEAD[9], C.B_HEAD[0]], (-80.0, 90.0), 3.4, width=7.0)
-    berm(m, [C.B(0.0, 2.0), C.B(51.0, 2.0)], C.B(25.0, -10.0), 2.4, width=5.5)
+    berm(m, [C.B_HEAD[9], tip], (-80.0, 90.0), lambda p: 3.4 * min(1.0, dist(p, tip) / 8.0), width=7.0)
     build_v14b_extras(m)                               # V15b: bin enclosure, drop-off ring, clearance report
     mesh = m.finish("World_CampusGrounds")
     E.new_object("World_CampusGrounds", mesh, E.collection("World_Buildings_Campus"))
     print(f"  campus grounds: {sum(len(p.vertices) - 2 for p in mesh.polygons)} triangles")
 
 
-STAIR_SIDE = 5.7          # m from the centreline: inner face of the cheek walls beside the jump (parapet gap: 5.5)
-STAIR_SPLAY = 0.07        # the cheeks open outwards by this much per metre of flight
-STAIR_STEPS = 22
-
-
 def terrace_stair(m):
-    """West end of the CTT roof terrace (survey C; C04, C05): the real wide stair down to the pad lies where the
-    game jumps off the deck, so only its flanks are built, outside the jump corridor: a narrow flight with white
-    concrete cheeks on the north side and the sloped concrete surface on the south side. Both start at the deck
-    edge beyond the parapet gap (5.5 m) and open outwards along the flight."""
-    pts = E.route_points()
-    j = E.ROUTE["jump"]["index"]
-    o, f = pts[j], pts[j + 3]
-    d = dist((o["x"], o["y"]), (f["x"], f["y"]))
-    dx, dy = (f["x"] - o["x"]) / d, (f["y"] - o["y"]) / d
-    Q = C.frame((o["x"], o["y"]), (dx, dy))                 # Q(along the flight, to the left of it)
-    # V10 integration: the flanks start at the deck's level; the jump point itself is the kicker's lip since V10i
-    top, low = min(pts[k]["track_z"] for k in range(j - 8, j + 1)), f["track_z"]
-    going = 0.77
-    z_at = lambda a: top - (top - low) * min(max((a - 0.3) / (STAIR_STEPS * going), 0.0), 1.0)   # noqa: E731
-    end = 0.3 + STAIR_STEPS * going
-
-    def cheek(l0, l1, a0, a1, sign, rail=True):
-        """Wall between lateral offsets l0 < l1 (on the side `sign`), top 0.25 m above the flight line."""
-        rows = []
-        for k in range(7):
-            a = a0 + (a1 - a0) * k / 6
-            s = STAIR_SPLAY * a
-            rows.append((Q(a, sign * (l0 + s)), Q(a, sign * (l1 + s)), z_at(a) + 0.25))
-        for (i0, o0, z0), (i1, o1, z1) in zip(rows, rows[1:]):
-            g = min(E.ground_z(*i0), E.ground_z(*i1), E.ground_z(*o0), E.ground_z(*o1)) - 0.4
-            m.up([(*i0, z0), (*i1, z1), (*o1, z1), (*o0, z0)], CONC)
-            for a_, b_ in ((i0, i1), (o1, o0)):
-                p, q = facing(a_, b_, lerp2(lerp2(a_, b_, 0.5), lerp2(lerp2(i0, i1, 0.5), lerp2(o0, o1, 0.5), 0.5), -5.0))
-                za, zb = (z0, z1) if p == a_ else (z1, z0)
-                m.face([(*p, g), (*q, g), (*q, zb), (*p, za)], WALL)
-        for (i0, o0, z0) in (rows[0], rows[-1]):
-            g = min(E.ground_z(*i0), E.ground_z(*o0)) - 0.4
-            m.towards([(*i0, g), (*o0, g), (*o0, z0), (*i0, z0)], WALL,
-                      (*Q(a0 - 5 if (i0, o0, z0) == rows[0] else a1 + 5, sign * (l0 + l1) / 2), z0))
-        if rail:
-            m.railing([(*lerp2(i, o_, 0.5), z) for i, o_, z in rows], h=0.9)
-
-    # north side: flight between two cheeks
-    n0, n1 = STAIR_SIDE + 0.3, STAIR_SIDE + 2.5
-    cheek(STAIR_SIDE, n0, -0.3, end, -1)
-    cheek(n1, n1 + 0.3, -0.3, end, -1)
-    for k in range(STAIR_STEPS):
-        a0, a1 = 0.3 + k * going, 0.3 + (k + 1) * going
-        z = top - (k + 1) * (top - low) / STAIR_STEPS
-        c = [Q(a0, -(n0 + STAIR_SPLAY * a0)), Q(a1, -(n0 + STAIR_SPLAY * a1)), Q(a1, -(n1 + STAIR_SPLAY * a1)),
-             Q(a0, -(n1 + STAIR_SPLAY * a0))]
-        m.up([(*p, z) for p in c], CONC)
-        m.towards([(*c[0], z), (*c[3], z), (*c[3], z + (top - low) / STAIR_STEPS), (*c[0], z + (top - low) / STAIR_STEPS)],
-                  CONC, (*Q(a0 + 5, -(n0 + n1) / 2), z + 2))
-    c = [Q(-0.6, -n0), Q(0.3, -n0), Q(0.3, -n1), Q(-0.6, -n1)]
-    m.up([(*p, top) for p in c], CONC)                                          # landing at deck level
-    # south side: sloped concrete surface with a cheek towards the jump and a railing on its outer edge
-    s0, s1 = STAIR_SIDE + 0.3, STAIR_SIDE + 3.2
-    cheek(STAIR_SIDE, s0, 1.2, end + 1.2, 1, rail=False)
-    rows = []
-    for k in range(7):
-        a = 1.2 + (end - 0.0) * k / 6
-        s = STAIR_SPLAY * a
-        rows.append((Q(a, s0 + s), Q(a, s1 + s), z_at(a - 0.9)))
-    for (i0, o0, z0), (i1, o1, z1) in zip(rows, rows[1:]):
-        g = min(E.ground_z(*o0), E.ground_z(*o1)) - 0.4
-        m.up([(*i0, z0), (*i1, z1), (*o1, z1), (*o0, z0)], CONC)
-        p, q = facing(o0, o1, lerp2(o0, i0, -5.0))
-        za, zb = (z0, z1) if p == o0 else (z1, z0)
-        m.face([(*p, g), (*q, g), (*q, zb), (*p, za)], WALL)
-    m.railing([(*lerp2(i, o_, 0.95), z) for i, o_, z in rows], h=1.0)
-    keep_out([Q(-1.0, STAIR_SIDE - 0.2), Q(end + 2.5, STAIR_SIDE - 0.2), Q(end + 2.5, s1 + 2.5), Q(-1.0, s1 + 1.0)])
-    keep_out([Q(-1.0, -STAIR_SIDE + 0.2), Q(-1.0, -n1 - 1.0), Q(end + 2.5, -n1 - 2.5), Q(end + 2.5, -STAIR_SIDE + 0.2)])
+    """West end of the CTT roof terrace and the rest of the west grounds. V16c: built in env_campus_west as an
+    object of its own (ramp block south of the jump corridor, open stair with the louvred door north of it, D's
+    pool and deck, the perimeter wall, stepping slabs); nothing of it stands closer than 6.6 m to the race line."""
+    W.build_grounds()
 
 
 def _wall_strip(m, a, e, z0, z1, thick, mat):
@@ -1020,12 +877,13 @@ def _clear_of_route(ring, clear):
     return out if len(out) >= 4 else None
 
 
-COURT_GROUPS = [(7.0, 72.0), (17.5, 78.5), (27.0, 83.5), (12.0, 39.5), (24.0, 44.0), (36.5, 48.0)]
+COURT_GROUPS = [(22.5, 80.0), (27.0, 85.5)]      # V16c: north courtyard only (orthophoto: pale furniture about there)
 
 
 def court_furniture(veg):
-    """A few parasol tables on the floors of the two sunken courtyards (existing prototypes, fixed spots; a spot
-    moves 1.5 m at a time until it stands 2 m clear of the trees)."""
+    """Two parasol tables on the floor of the north courtyard (existing prototypes, fixed spots; a spot moves
+    1.5 m at a time until it stands 2 m clear of the trees). V16c: the south courtyard is plain gravel, unfurnished
+    (survey Appendix B 2.7)."""
     out = []
     for k, (x, y) in enumerate(COURT_GROUPS):
         for _ in range(6):
@@ -1053,15 +911,15 @@ def dress(veg, props):
 
     def out(x, y):
         return any(b[0] <= x <= b[2] and b[1] <= y <= b[3] and C.inside(x, y, b[4]) for b in rings)
-    veg2, k = [], 0
+    veg2 = []
     for p in veg:
         if out(p["x"], p["y"]) or C.inside(p["x"], p["y"], C.LOWER_PLAZA):
             continue
-        if C.inside(p["x"], p["y"], C.COURT_N) or C.inside(p["x"], p["y"], C.COURT_S):
-            k += 1
-            if k % 2:                                      # every second generated tree in the courtyards goes
-                continue
+        if W.drops(p):                                     # V16c: courtyards (sapling rows instead), the berm
+            continue
         veg2.append(p)
+    veg2 = veg2 + W.plants(veg2)                           # V16c: sapling rows, the real trees of the west lawns
+    W.relevel(props)
     props2 = [p for p in props if not out(p["x"], p["y"])]
     gone = sorted(f"{p['proto']}@{p['x']:.0f},{p['y']:.0f}" for p in props if out(p["x"], p["y"]))
     print(f"  campus dressing: {len(veg) - len(veg2)} plants and {len(props) - len(props2)} props removed "

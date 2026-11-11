@@ -193,6 +193,8 @@ def apply():
     env_streets.lower_nodes(heights)
     import env_campus                     # V10c2: the lower plaza east of the race line is level (Floor 0)
     env_campus.lower_nodes(heights)
+    import env_campus_west                # V16c: the grass berm in front of hall E (campus_west_plan.BERM_*)
+    env_campus_west.raise_nodes(heights)
 
     E.set_heightfield(heights)
     print(f"  terrain: {changed} vertices reshaped along the route, tunnel covered by {cover} m")

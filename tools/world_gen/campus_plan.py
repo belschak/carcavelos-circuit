@@ -10,6 +10,8 @@ Gallery, CTT roof terrace), Floor 2 = 18.3 m, Floor 3 = 22.0 m.
 """
 import math
 
+import campus_west_plan as WEST      # V16c: plain data of the campus west package (pool, pad, paths, berm)
+
 F0, F1, F2, F3 = 11.2, 14.5, 18.3, 22.0
 
 
@@ -126,8 +128,9 @@ D_HEAD = [(-33.5, 12.0), (-42.3, 18.7), (-44.8, 15.9), (-37.5, 7.3), (-48.1, -10
 D_HEAD_BASE = [(-33.5, 12.0), (-38.0, 14.5), (-40.5, 11.7), (-35.5, 6.0), (-44.5, -9.2), (-33.4, -19.4), (-23.0, -13.5),
                (-18.8, -16.3)]
 D_LINK = [(-29.5, 3.0), (-23.5, 6.5), (-17.5, -4.0), (-23.5, -9.5)]             # dark brown roof field
-D_POOL = [(-54.0, 14.0), (-50.6, -21.5), (-35.4, -31.5), (-1.2, -15.0), (-15.3, 23.0)]   # reflecting pool (basin rim)
-D_POOL_Z = 9.35               # water level (the lawn around it lies at 9.0-9.9 m)
+D_POOL_V10 = [(-54.0, 14.0), (-50.6, -21.5), (-35.4, -31.5), (-1.2, -15.0), (-15.3, 23.0)]   # basin before V16c
+D_POOL = WEST.D_POOL          # V16c (survey Appendix C 2.2): five-sided basin with the arm along D's south facade
+D_POOL_Z = WEST.D_POOL_Z      # water level (the lawn around it lies at 9.0-9.9 m)
 
 # ----------------------------------------------------------------------------------------------------------------
 # C  CTT Student Hall (w496301638): the roof terrace is the race deck and stays as it is. Beside it the two sunken
@@ -184,13 +187,13 @@ def paint(name, ring, colour, lawn=0):
 BEIGE = (214, 205, 182)       # the stepped amphitheatre between D and E
 paint("entrance plaza", [(-90.0, 102.0), (-64.0, 98.0), (16.0, 128.5), (7.2, 148.6), (2.8, 159.8), (1.5, 163.5),
                          (-30.0, 159.0), (-38.0, 147.5), (-90.0, 147.5)], STONE)
-paint("pad at the terrace stair", [(-30.4, 59.0), (-8.4, 61.3), (-8.4, 51.8), (-30.0, 50.2)], CONCRETE)
+# (V16c: the pad at the terrace stair moved north of the landing road with the stair: WEST.add_paint below)
 paint("path along B", [B(-2.0, -6.2), B(50.0, -6.2), B(50.0, -3.6), B(-2.0, -3.6)], CALCADA)
 paint("amphitheatre", [(21.0, -4.5), (57.5, 9.5), (66.0, -9.5), (47.0, -20.0), (42.3, -20.7), (34.6, -22.7),
                        (28.0, -19.0)], BEIGE)
 paint("terrace of E", [(13.0, -47.0), (23.9, -39.1), (29.3, -46.2), (27.0, -52.0), (18.5, -55.4)], OCHRE)
-paint("north courtyard", COURT_N, OCHRE)
-paint("south courtyard", COURT_S, OCHRE)
+paint("north courtyard", COURT_N, WEST.GRAVEL)       # V16c: ochre stabilised gravel (survey #a2896b)
+paint("south courtyard", COURT_S, WEST.GRAVEL)
 # V10 integration: the ground under the Gallery's arcade (beside the lower plaza and the stairs' west void) and in
 # Horizon Hall's undercroft is paving too (it was lawn green behind the columns)
 paint("arcade under the Gallery deck", [MAIN(23.4, 1.0), MAIN(30.6, 1.0), MAIN(30.6, 34.0), MAIN(23.4, 34.0)], OCHRE)
@@ -240,3 +243,6 @@ LETTER_H = 1.6                          # m, cap height on the wall
 LETTER_GAP = 0.22                       # m between letters
 LETTER_OUT = 0.10                       # m, raised from the wall
 LETTER_V, LETTER_Z = 203.7, 20.9        # centre of the word along the wall (v) and the letters' base line (m)
+
+
+WEST.add_paint(paint, D_POOL_V10)       # V16c: lawn over the former basin, pale lawn path, pad, perimeter path
