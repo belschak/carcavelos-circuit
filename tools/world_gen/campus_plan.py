@@ -229,6 +229,13 @@ paint("drop-off plaza", [(78.1, 155.0), (80.0, 150.0), (93.0, 150.0), (97.5, 160
                          (30.0, 171.0), (66.4, 184.8)], SETTS)
 paint("colonnade floor", [MAIN(COLONNADE_U - 0.3, COLONNADE_V[0] - 0.3), MAIN(69.6, COLONNADE_V[0] - 0.3),
                           MAIN(69.6, COLONNADE_V[1] + 0.3), MAIN(COLONNADE_U - 0.3, COLONNADE_V[1] + 0.3)], BUFF)
+# V16 (env_north.py, env_entrance.py): ground under the new draped sheets, so that it is paving in the ground colour
+# map and no lawn in the mask (no grass tufts through the sheets): the forecourt's east side (waste station, edge
+# bands, the buff concrete north of Student Central) and the tan path to Milestone's entrance
+paint("drop-off plaza, east side", [(80.0, 147.5), (104.0, 147.5), (104.5, 163.5), (97.6, 180.0), (113.0, 186.4),
+                                    (111.0, 193.8), (96.0, 193.8), (98.5, 178.0), (97.5, 160.0), (93.0, 150.0)], SETTS)
+paint("path to Milestone", [(-38.7, 147.0), (-28.1, 147.0), (-28.1, 160.6), (-30.2, 167.1), (-31.2, 169.8),
+                            (-39.1, 168.8), (-39.5, 161.2)], (201, 191, 166))
 
 
 def nova_letters():

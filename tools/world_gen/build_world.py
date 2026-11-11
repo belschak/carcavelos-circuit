@@ -39,6 +39,7 @@ import dressing_freeze         # noqa: E402  V10i: dressing stays put outside ch
 import env_vegetation           # noqa: E402
 import env_props                # noqa: E402
 import env_entrance             # noqa: E402  V15a: entrance plaza (calcada, drain channels, car-park ramp, young trees)
+import env_north                # noqa: E402  V16: drop-off forecourt, avenue entrance side, east park
 
 DATA = E.DATA
 
@@ -300,6 +301,7 @@ def build_dressing():
     veg, props = env_campus.dress(veg, props)              # V10c2: nothing in the pools, on the berms or the lower plaza
     veg, props = env_plaza.dress(veg, props)               # V10i: the upper plaza's own trees and furniture
     veg, props = env_entrance.dress(veg, props, protos)    # V15a: entrance plaza: young staked trees, seat blocks, lamps
+    veg, props = env_north.dress(veg, props, protos)       # V16: forecourt cars instead of cafe tables, lay-by posts
     veg, props = env_street_objects.dress_promenade(veg, props)   # V15c: promenade bollards, flood masts, machines
     env_vegetation.instance_for_preview(veg, protos)
     env_props.instance_for_preview(props, protos)
@@ -598,6 +600,7 @@ def main():
     env_buildings.build()
     env_plaza.build()                      # V10i: deck with skylights, stairs, courtyard, fences
     env_entrance.build()                   # V15a: entrance plaza paving with drain channels, car-park ramp
+    env_north.build()                      # V16: forecourt setts and ring, edge bands, waste station, pylon, park
     build_dressing()
     build_route_guide()
     env_track.build()

@@ -686,34 +686,32 @@ def olive(name, seed, mat, col):
 
 
 def plaza_tree(name, seed, mat, col):
-    """Young staked tree of the entrance plaza (V15a, survey: Street View Jul 2020 and Luc's photos; still small in
-    the 2026 satellite). Soft look like the other trees: a thin, nearly straight trunk of 3 m, three short twigs and a
-    small light crown of four smooth clumps, about 5 m tall and 2.2 m across at scale 1; three square timber stakes of
-    1.7 m around it, each tied to the trunk by a dark band. One ramp-shaded material ("plaza": fresh green; the bark
-    column is pale timber, so the stakes read light and the trunk dark). About 450 triangles."""
+    """Young staked tree of the entrance plaza (V15a; V16: reshaped after the photospheres N10, N12, N13 of Jul 2020:
+    young broadleaf trees 5-6.5 m tall with a narrow upright crown of 2-2.5 m and a clear stem of 2.2 m; V15a's crown
+    was four clumps on twigs, 3 m wide, which read as a small umbrella tree). A thin, nearly straight trunk, an upright
+    ovoid crown (one tall clump, a smaller one on top, two low side clumps), 5.6 m tall and 1.9 m across at scale 1;
+    three square timber stakes of 1.8 m around it, each tied to the trunk by a dark band. One ramp-shaded material
+    ("plaza": fresh green; the bark column is pale timber, so the stakes read light and the trunk dark). About 420
+    triangles. Placed only by env_entrance.dress (its gravel pit is part of the plaza paving)."""
     rng = random.Random(seed)
     mb = MeshBuilder()
     turn = rng.uniform(0, 2 * math.pi)
-    sway = Vector((math.cos(turn), math.sin(turn), 0)) * rng.uniform(0.05, 0.11)
-    zs = [-0.35, 0.6, 1.7, 2.6, 3.25]
+    sway = Vector((math.cos(turn), math.sin(turn), 0)) * rng.uniform(0.04, 0.08)
+    zs = [-0.35, 0.7, 1.8, 2.7, 3.5]
     path = [Vector((0, 0, z)) + sway * math.sin(max(z, 0) * 1.1) for z in zs]
-    soft_tube(mb, path, [0.085, 0.075, 0.062, 0.05, 0.036], 6, 0, shade=[0.3, 0.3, 0.26, 0.22, 0.18],
-              tip=path[-1] + Vector((0, 0, 0.5)))
+    soft_tube(mb, path, [0.075, 0.066, 0.055, 0.044, 0.03], 6, 0, shade=[0.3, 0.3, 0.26, 0.22, 0.18],
+              tip=path[-1] + Vector((0, 0, 0.6)))
     top = path[-1]
-    centre = top + Vector((0, 0, 0.75))
-    lobes = [dict(c=top + Vector((rng.uniform(-0.1, 0.1), rng.uniform(-0.1, 0.1), 1.0)), r=(0.78, 0.72, 0.82), yaw=turn,
-                  freq=2, floor=-0.75, phase=rng.uniform(0, 6))]
-    for k in range(3):                                    # three twigs, each ending in a small clump
-        az = turn + 2 * math.pi * k / 3 + rng.uniform(-0.4, 0.4)
-        d, h = rng.uniform(0.5, 0.72), rng.uniform(0.15, 0.7)
-        start = path[3].lerp(top, rng.uniform(0.2, 0.9))
-        end = top + Vector((math.cos(az) * d, math.sin(az) * d, h))
-        soft_tube(mb, [start, start.lerp(end, 0.55) + Vector((0, 0, 0.06)), end], [0.03, 0.024, 0.016], 4, 0,
-                  tip=end + (end - start).normalized() * 0.2, shade=[0.22, 0.2, 0.18])
-        lobes.append(dict(c=end + Vector((math.cos(az) * 0.12, math.sin(az) * 0.12, 0.2)),
-                          r=(rng.uniform(0.5, 0.62), rng.uniform(0.46, 0.56), rng.uniform(0.42, 0.52)), yaw=az,
-                          freq=2, floor=-0.75, phase=rng.uniform(0, 6)))
-    soft_crown(mb, lobes, 0, centre, (top.z - 0.2, top.z + 1.9), blend=0.3, base=0.4, crease=0.18, reach=1.4)
+    centre = Vector((top.x, top.y, 3.9))
+    lobes = [dict(c=Vector((top.x, top.y, 3.8)), r=(0.8, 0.74, 1.45), yaw=turn, freq=2, floor=-0.8,
+                  phase=rng.uniform(0, 6)),
+             dict(c=Vector((top.x + rng.uniform(-0.1, 0.1), top.y + rng.uniform(-0.1, 0.1), 4.8)),
+                  r=(0.54, 0.5, 0.82), yaw=turn + 1.0, freq=2, floor=-0.8, phase=rng.uniform(0, 6))]
+    for k in range(2):                                    # two low side clumps: the crown is widest in its lower third
+        az = turn + math.pi * k + rng.uniform(-0.5, 0.5)
+        lobes.append(dict(c=Vector((top.x + math.cos(az) * 0.36, top.y + math.sin(az) * 0.36, 3.1 + 0.3 * k)),
+                          r=(0.56, 0.5, 0.6), yaw=az, freq=2, floor=-0.75, phase=rng.uniform(0, 6)))
+    soft_crown(mb, lobes, 0, centre, (2.2, 5.6), blend=0.3, base=0.4, crease=0.14, reach=1.6)
 
     def post(x, y, half, z0, z1, shade):                  # square timber post: flat faces, bark column of the ramp
         uv = (U_BARK, _shade(shade))
@@ -726,8 +724,8 @@ def plaza_tree(name, seed, mat, col):
     for k in range(3):                                    # the three stakes and their ties
         az = turn + 0.6 + 2 * math.pi * k / 3
         sx, sy = math.cos(az) * 0.42, math.sin(az) * 0.42
-        post(sx, sy, 0.04, -0.3, 1.7, 0.86 - 0.05 * k)
-        tz = 1.52
+        post(sx, sy, 0.04, -0.3, 1.8, 0.86 - 0.05 * k)
+        tz = 1.6
         t0 = Vector((sx, sy, tz))
         t1 = Vector((0, 0, tz)) + sway * math.sin(tz * 1.1)
         side = Vector((-math.sin(az), math.cos(az), 0)) * 0.012
