@@ -59,7 +59,7 @@ def slot_materials():
             railing_material(),
             # V15b: raised lettering, Student Central's cladding, slat panel, dark setts, roof tiles (existing name)
             E.material("B_letter_grey", "#8C8C8A", roughness=0.55, metallic=0.25),
-            E.material("B_wall_umber", "#4A372F", 0.9),
+            E.material("B_wall_umber", "#593126", 0.9),      # V16: SC's dark red-brown render (survey #402823 in the sun)
             E.material("B_slat_anthracite", "#3B3E41", 0.8),
             E.material("B_sett_dark", "#5F5C56", 0.9),
             E.material("B_roof_tiles", "#C8664A", 0.85)]
@@ -756,8 +756,11 @@ def build_G(b):
 
 
 def build_SC(b):
-    """V15b (N_p03_dropoff_h190): Student Central is a dark brown-grey blank angular pavilion, 6-8 m high, with one
-    projecting white-framed window on its north face (V10c2 built a white two-storey box after V10h)."""
+    """V15b (N_p03_dropoff_h190): Student Central is a dark blank angular pavilion, 6-8 m high, with one projecting
+    framed window on its north-east face (V10c2 built a white two-storey box after V10h).
+    V16 (photospheres N03_h180, N03_h225, N02_h135): the render is dark red-brown (#402823; B_wall_umber was a
+    brown-grey that read black), and the window is a box of the same render, about 4 m wide and 3.5 m high with a
+    thick frame, standing 1.1 m proud, dark glass set back in it (V15b: a white frame of 3.2 x 2.6 m)."""
     vol, det = Mesh(), Mesh()
     ring = ccw(C.SC_RING)
     tops = [F1 + h for h in C.SC_TOPS]
@@ -773,14 +776,15 @@ def build_SC(b):
     a, e = ring[4], ring[5]                              # the face towards the drop-off plaza
     length = dist(a, e)
     nx, ny = right_normal(a, e)
-    w0, w1 = lerp2(a, e, 0.5 - 1.6 / length), lerp2(a, e, 0.5 + 1.6 / length)
-    f0, f1 = (w0[0] + nx * 0.7, w0[1] + ny * 0.7), (w1[0] + nx * 0.7, w1[1] + ny * 0.7)
-    i0, i1 = (w0[0] - nx * 0.2, w0[1] - ny * 0.2), (w1[0] - nx * 0.2, w1[1] - ny * 0.2)
-    z0, z1 = F1 + 1.5, F1 + 4.1
-    det.prism(ccw([i0, i1, f1, f0]), z0, z1, WALL, WALL, WALL)
-    p, q = facing(f0, f1, (f0[0] + nx * 5, f0[1] + ny * 5))
-    det.glass(p, q, z0 + 0.28, z1 - 0.28, off=0.03, inset=0.28, mat=DARK)
-    note_clear("Student Central pavilion", ring + [f0, f1])
+    half, proud, bar = 2.0, 1.1, 0.32
+    w0, w1 = lerp2(a, e, 0.5 - half / length), lerp2(a, e, 0.5 + half / length)
+    at = lambda p, d: (p[0] + nx * d, p[1] + ny * d)     # noqa: E731
+    z0, z1 = F1 + 0.9, F1 + 4.4
+    box = ccw([at(w0, -0.2), at(w1, -0.2), at(w1, proud), at(w0, proud)])
+    det.prism(box, z0, z1, UMBER, UMBER, UMBER)
+    p, q = facing(at(w0, proud), at(w1, proud), at(w0, proud + 5.0))
+    det.glass(p, q, z0 + bar, z1 - bar, off=0.03, inset=bar, mat=DARK)
+    note_clear("Student Central pavilion", ring + [at(w0, proud), at(w1, proud)])
     return vol.finish("B_" + b["id"]), det.finish("BD_" + b["id"])
 
 
@@ -1429,11 +1433,16 @@ def north_colonnade(det, P, zs):
 # J  Milestone residence (luc_1, luc_2, luc_5, P_p01_h000, N_r1_h000)
 # ----------------------------------------------------------------------------------------------------------------
 def build_J(b):
-    """3 storeys on a low plinth, white flat-roofed bar. South faces (towards the plaza and the run-in): a white
-    frame of slabs and blades with a dark back wall J_LOGGIA_DEPTH behind it; the ground floor is open (dark
-    glazing), above it flush white panels and open loggias alternate like a checkerboard. Nothing stands outside
-    the OSM outline; where the outline itself is closer than ROUTE_CLEAR + 0.2 to the race line (the east end,
-    as before) the wall stays a plain flush wall. Entrance notch: glazed, no lettering."""
+    """3 storeys on a grey plinth, white flat-roofed bar. South faces (towards the plaza and the run-in): a white
+    grid of slabs and blades with a dark back wall J_LOGGIA_DEPTH behind it.
+    V16 (photospheres N06_h225_t75, N14_h350_t65, N12_h000; V15b had a regular checkerboard of white panels with one
+    small window and loggias behind bar railings on a white plinth): an irregular checker, cell by cell from a hash:
+    a projecting white box frame around the loggia (0.55 m out, 0.2 m members), a flush anthracite panel beside a
+    narrower loggia, a plain open loggia, now and then a flush white panel; every loggia has a glass balustrade. The
+    ground floor is dark glazing with anthracite panels between the white blades. The plinth is dark grey; the
+    entrance link (x -39..-31) is glazed blue over all three storeys; a grass bank rises to the plinth on the avenue
+    side. Where the outline itself is closer than ROUTE_CLEAR + 0.2 to the race line (the east end, as before) the
+    wall stays a plain flush wall; a projecting frame stands only where it keeps ROUTE_CLEAR + 0.4. No lettering."""
     vol, det = Mesh(), Mesh()
     ring = ccw([tuple(p) for p in b["points"]])
     n = len(ring)
@@ -1441,6 +1450,8 @@ def build_J(b):
     k4, k6, k10, k11 = near((-92.5, 163.9)), near((-39.0, 161.4)), near((-30.6, 166.7)), near((10.1, 173.3))
     k7, k9 = near((-38.7, 168.3)), near((-31.6, 169.3))
     depth = C.J_LOGGIA_DEPTH
+    plinth, storey, storeys, parapet = 0.9, 2.95, 3, 0.4          # V16: 10.2-10.8 m over the ground (survey 9.5-10.5)
+    proud, bar = 0.55, 0.2                                        # the projecting box frames
     t = 1.0
     while t > 0.3 and route_gap(*lerp2(ring[k10], ring[k11], t)) < ROUTE_CLEAR + 0.2:
         t -= 0.01
@@ -1467,26 +1478,35 @@ def build_J(b):
         else:
             body.append(ring[k])
     samples = [lerp2(a, e, j / 12) for a, e in faces for j in range(13)]
-    zp = max(E.ground_z(*p) for p in samples) + C.J_PLINTH                      # top of the plinth = ground floor
-    top = zp + C.J_STOREYS * C.J_STOREY
+    zp = max(E.ground_z(*p) for p in samples) + plinth                          # top of the plinth = ground floor
+    top = zp + storeys * storey
     base = min(E.ground_z(x, y) for x, y in ring) - 1.0
     vol.prism(body, base, top, WALL, None)
     vol.face([(*p, base) for p in ccw(body)][::-1], WALL)
-    vol.prism(ring, top, top + C.J_PARAPET, WALL, ROOF, WALL)                    # roof slab over the frame too
-    for (a, e), (ba, be), i in zip(faces, back, inward):
+    vol.prism(ring, top, top + parapet, WALL, ROOF, WALL)                        # roof slab over the frame too
+    cells = {"frame": 0, "panel": 0, "open": 0, "white": 0}
+    frame_pts = []
+    for fi, ((a, e), (ba, be), i) in enumerate(zip(faces, back, inward)):
         length = dist(a, e)
         units = max(2, int(round(length / C.J_UNIT)))
         w = length / units
         tx, ty = (e[0] - a[0]) / length, (e[1] - a[1]) / length
         at = lambda s, d: (a[0] + tx * s + i[0] * d, a[1] + ty * s + i[1] * d)   # noqa: E731
         out = at(length / 2, -30.0)
+
+        def quad(s0, s1, d, z0, z1, mat):
+            p, q = facing(at(s0, d), at(s1, d), out)
+            det.face([(*p, z0), (*q, z0), (*q, z1), (*p, z1)], mat)
+
+        def rnd(k, s, salt=0):
+            v = math.sin((k + 1) * 12.9898 + (s + 1) * 78.233 + fi * 37.719 + salt * 11.13) * 43758.5453
+            return v - math.floor(v)
         # dark back wall of the loggias, just in front of the body's wall
-        p, q = facing(at(0.0, depth - 0.04), at(length, depth - 0.04), out)
-        det.face([(*p, zp), (*q, zp), (*q, top), (*p, top)], DARK)
-        # plinth and the floor slabs
-        det.prism(ccw([a, e, be, ba]), base, zp, WALL, WALL)
-        for s in range(1, C.J_STOREYS):
-            z = zp + s * C.J_STOREY
+        quad(0.0, length, depth - 0.04, zp, top, DARK)
+        # dark grey plinth and the white floor slabs
+        det.prism(ccw([a, e, be, ba]), base, zp, SETT, SETT)
+        for s in range(1, storeys):
+            z = zp + s * storey
             det.prism(ccw([at(0.0, 0.0), at(length, 0.0), at(length, depth - 0.05), at(0.0, depth - 0.05)]),
                       z - 0.28, z, WALL, WALL, WALL)
         # blades between the units
@@ -1494,35 +1514,63 @@ def build_J(b):
             s = min(max(k * w, 0.12), length - 0.12)
             det.prism(ccw([at(s - 0.12, 0.0), at(s + 0.12, 0.0), at(s + 0.12, depth - 0.05), at(s - 0.12, depth - 0.05)]),
                       zp, top, WALL, None)
-        # checkerboard: flush white panels (with one small window) and open loggias with a railing
-        for s in range(1, C.J_STOREYS):
-            z = zp + s * C.J_STOREY
+        for k in range(units):                           # ground floor: an anthracite panel in two cells of five
+            if rnd(k, 0) < 0.4:
+                quad(k * w + 0.12, (k + 1) * w - 0.12, 0.3, zp, zp + storey - 0.28, SLAT)
+        for s in range(1, storeys):
+            z, zt = zp + s * storey, zp + (s + 1) * storey - (0.28 if s + 1 < storeys else 0.0)
             for k in range(units):
                 s0, s1 = k * w + 0.12, (k + 1) * w - 0.12
-                if (k + s) % 2:
-                    p, q = facing(at(s0, 0.0), at(s1, 0.0), out)
-                    det.face([(*p, z), (*q, z), (*q, z + C.J_STOREY), (*p, z + C.J_STOREY)], WALL)
+                r = rnd(k, s)
+                if r < 0.36 and min(route_gap(*at(s0 - 0.12, -proud)), route_gap(*at(s1 + 0.12, -proud))) < ROUTE_CLEAR + 0.4:
+                    r = 0.9                              # too close to the race line for a projecting frame: open loggia
+                if r < 0.36:                             # projecting white box frame with a glass balustrade in front
+                    o0, o1 = s0 - 0.12, s1 + 0.12
+                    zf = zt + 0.28 if s + 1 < storeys else top + parapet
+                    for u0, u1, z0, z1 in ((o0, o0 + bar, z - 0.28, zf), (o1 - bar, o1, z - 0.28, zf),
+                                           (o0 + bar, o1 - bar, z - 0.28, z - 0.28 + bar),
+                                           (o0 + bar, o1 - bar, zf - bar, zf)):
+                        det.prism(ccw([at(u0, -proud), at(u1, -proud), at(u1, 0.0), at(u0, 0.0)]), z0, z1, WALL, WALL, WALL)
+                    quad(o0 + bar, o1 - bar, -proud + 0.06, z - 0.28 + bar, z + 1.0, GLASS_ROOF)
+                    frame_pts += [at(o0, -proud), at(o1, -proud)]
+                    cells["frame"] += 1
+                elif r < 0.64:                           # flush anthracite panel beside a narrower loggia
+                    cut = s0 + (s1 - s0) * (0.5 + 0.12 * rnd(k, s, 1))
+                    if rnd(k, s, 2) < 0.5:
+                        quad(s0, cut, 0.03, z, zt, SLAT)
+                        quad(cut, s1, 0.06, z, z + 1.0, GLASS_ROOF)
+                    else:
+                        quad(s0 + s1 - cut, s1, 0.03, z, zt, SLAT)
+                        quad(s0, s0 + s1 - cut, 0.06, z, z + 1.0, GLASS_ROOF)
+                    cells["panel"] += 1
+                elif r < 0.72:                           # flush white panel with one window
+                    quad(s0, s1, 0.0, z, zt, WALL)
                     c = (s0 + s1) / 2
-                    p, q = facing(at(c - 0.55, -0.04), at(c + 0.55, -0.04), out)
-                    det.face([(*p, z + 1.0), (*q, z + 1.0), (*q, z + 2.5), (*p, z + 2.5)], DARK)
-                else:
-                    det.railing([(*at(s0, 0.06), z), (*at(s1, 0.06), z)], h=1.0, module=w)
-    # entrance notch: glazed ground floor and one glazed band above, no lettering
+                    quad(c - 0.55, c + 0.55, -0.04, z + 0.9, z + 2.3, DARK)
+                    cells["white"] += 1
+                else:                                    # open loggia with a glass balustrade
+                    quad(s0, s1, 0.06, z, z + 1.0, GLASS_ROOF)
+                    cells["open"] += 1
+    # entrance link: blue glazing over all three storeys between thin white slab edges, no lettering
     a, e = ring[k7], ring[k9]
-    det.glass(a, e, zp + 0.1, zp + 3.0, mat=DARK, inset=0.4)
-    det.glass(a, e, zp + C.J_STOREY + 1.0, zp + C.J_STOREY + 2.5, mat=DARK, inset=0.9)
+    for s in range(storeys):
+        z = zp + s * storey
+        det.glass(a, e, z + (0.1 if s == 0 else 0.0), z + storey - 0.22, tile=4.8, inset=0.25)
     # every other long face (north side, gables): plain windows in a regular rhythm
     for k in range(n):
         j = (k + 1) % n
         if k4 <= k < k6 or k == k10 or k7 <= k < k9 or dist(ring[k], ring[j]) < 6.0:
             continue
-        for s in range(C.J_STOREYS):
-            z = zp + s * C.J_STOREY
+        for s in range(storeys):
+            z = zp + s * storey
             det.glass(ring[k], ring[j], z + 0.95, z + 2.45, bay=C.J_UNIT, pier=C.J_UNIT - 1.3, inset=0.5, mat=DARK)
-    note_clear("Milestone J loggia frames", [p for f in faces for p in f])
-    print(f"  campus J: plinth top {zp:.2f} m, roof {top + C.J_PARAPET:.2f} m "
-          f"({top + C.J_PARAPET - (zp - C.J_PLINTH):.1f} m above the plaza side), frame ends {dist(east_end, ring[k11]):.1f} m "
-          f"before the east corner")
+    # the lawn rises to the plinth on the avenue side (ST01: the west end stands on a grass bank)
+    berm(vol, [(-97.4, 180.2), (-97.7, 169.5), (-97.8, 166.6)], (-112.0, 172.0), plinth, width=7.0)
+    note_clear("Milestone J loggia grid", [p for f in faces for p in f])
+    note_clear("Milestone J projecting frames", frame_pts)
+    print(f"  campus J: plinth top {zp:.2f} m, roof {top + parapet:.2f} m "
+          f"({top + parapet - (zp - plinth):.1f} m above the plaza side), grid ends {dist(east_end, ring[k11]):.1f} m "
+          f"before the east corner; cells: {cells}")
     return vol.finish("B_" + b["id"]), det.finish("BD_" + b["id"])
 
 
@@ -1577,8 +1625,7 @@ for _id in C.HOUSING_IDS:
 # drop-off plaza ring, bin enclosure (called at the end of build_extras)
 # ----------------------------------------------------------------------------------------------------------------
 def build_v14b_extras(m):
-    """m: the campus grounds mesh. Bin enclosure against the housing block's south wall; the flush ring of dark
-    setts as its own object without a collider (World_CampusPaving_NoCollide)."""
+    """m: the campus grounds mesh. Bin enclosure against the housing block's south wall."""
     c, d = C.BIN_C, C.BIN_DIR
     hl, hd, h = C.BIN_LEN / 2, C.BIN_DEPTH / 2, C.BIN_H
     v = (-d[1], d[0])
@@ -1595,23 +1642,7 @@ def build_v14b_extras(m):
         m.box(c, d, hl - 0.15, hd - 0.07, z, z + 0.13, SLAT, SLAT, SLAT)
     keep_out(ring, 0.6)
     note_clear("bin enclosure", ring)
-    # the ring of dark setts: only the arcs outside the road shoulder (flush paving may reach 4.95 m)
-    pm = Mesh()
-    (cx, cy), r, band = C.DROPOFF_C, C.DROPOFF_R, C.DROPOFF_BAND
-    steps, arcs, closest = 96, 0, 99.0
-    for k in range(steps):
-        a0, a1 = 2 * math.pi * k / steps, 2 * math.pi * (k + 1) / steps
-        quad = [(cx + rr * math.cos(a), cy + rr * math.sin(a)) for rr, a in
-                ((r - band / 2, a0), (r + band / 2, a0), (r + band / 2, a1), (r - band / 2, a1))]
-        gap = min(route_gap(*p) for p in quad)
-        if gap < 5.0:
-            continue
-        closest = min(closest, gap)
-        pm.up([(*p, E.ground_z(*p) + 0.05) for p in quad], SETT)
-        arcs += 1
-    if arcs:
-        mesh = pm.finish("World_CampusPaving_NoCollide")
-        E.new_object("World_CampusPaving_NoCollide", mesh, E.collection("World_Buildings_Campus"))
-    print(f"  campus drop-off ring: {arcs} of {steps} segments built (r {r} m, band {band} m, flush, "
-          f"nearest {closest:.2f} m from the centreline; the rest lies under the road and its shoulder)")
+    # V16: the flush ring of dark setts is now part of the forecourt's draped sett sheet (env_north.build_forecourt),
+    # at its surveyed place and size (centre (80.7, 177), 9.3 m across); V15b's own object
+    # World_CampusPaving_NoCollide (r 6 m at (80.3, 177), on the bare ground) is gone.
     clearance_report()
