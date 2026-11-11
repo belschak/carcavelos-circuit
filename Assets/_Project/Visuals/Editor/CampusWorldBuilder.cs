@@ -551,7 +551,13 @@ namespace CarcavelosCircuit.Visuals.Editor
             var race = new GameObject("Race");
             race.transform.SetParent(root.transform, false);
             TrackInfo track = race.AddComponent<TrackInfo>();          // Role 2's track parts (T4)
-            var roadPoints = new List<Vector3>(); for (int i = 0; i < data.points.Length; i++) { roadPoints.Add(Pos(data.points[i])); } race.AddComponent<TrackProgress>().SetRoadPoints(roadPoints); // Role 2's racing line (T8)
+            // Role 2's racing line (T8, request Q20): the road's centre points; start and direction come from checkpoint 0.
+            var roadPoints = new List<Vector3>();
+            for (int i = 0; i < data.points.Length; i++)
+            {
+                roadPoints.Add(Pos(data.points[i]));
+            }
+            race.AddComponent<TrackProgress>().SetRoadPoints(roadPoints);
             int count = data.checkpoints.Length;
             var checkpoints = new Checkpoint[count];
             for (int c = 0; c < count; c++)
