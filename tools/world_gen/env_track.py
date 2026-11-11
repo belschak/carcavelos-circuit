@@ -16,6 +16,8 @@ import env_common as E
 
 HALF = E.ROUTE_WIDTH / 2
 ROAD_LIFT = 0.06            # road surface above the terrain bed
+KERB_HEIGHT = 0.012         # painted kerb: flush with the road, it is paint and not a bump
+SHOULDER_M = 0.9            # width of the gentle shoulder that takes the road down to its bed (no step at the edge)
 VERGE = 2.5                 # metres beside the road
 TILE_M = {                  # real-world size of one texture tile (m), so UVs are in tiles
     "asphalt": 2.0, "concrete_sand": 2.0, "concrete_polished": 2.0, "concrete_light": 2.0, "tunnel_floor": 2.0,
@@ -98,14 +100,22 @@ def build_road(pts, fr, col):
         ub0, ub1 = (HALF - hb) / tile, (HALF + hb) / tile
         for loop, (u, v) in zip(face.loops, ((ua0, sa), (ua1, sa), (ub1, sb), (ub0, sb))):
             loop[uv].uv = (u, v)
-        if a["zone"] in INDOOR and b["zone"] in INDOOR:
-            # side skirts down to the floor: the raised road reads as a slab, not a floating sheet
-            def down(v, p):
-                return bm.verts.new((v.co.x, v.co.y, p["track_z"] - 0.01))
-            for top_a, top_b in ((quad[1], quad[2]), (quad[3], quad[0])):
-                pa, pb = (a, b) if top_a is quad[1] else (b, a)
-                skirt = bm.faces.new((top_b, top_a, down(top_a, pa), down(top_b, pb)))
-                skirt.material_index = surfaces.index(a["surface"])
+        if not ((a["tunnel"] and b["tunnel"]) or "kicker" in (a["zone"], b["zone"])):
+            # Shoulders: the road is 6 cm above its bed. A vertical edge there (or a free edge in mid air) threw
+            # karts that came back onto the road. A 0.9 m wide strip now slopes down to just below the bed
+            # (about 5 degrees), on both sides, indoors and outdoors.
+            def down(p, nrm, h, side):
+                o = h + SHOULDER_M
+                return bm.verts.new((p["x"] + side * nrm[0] * o, p["y"] + side * nrm[1] * o, p["track_z"] - 0.02))
+            # quad = [a left, a right, b right, b left] (left = +normal side)
+            for side, top_a, top_b in ((1, quad[0], quad[3]), (-1, quad[1], quad[2])):
+                low_a, low_b = down(a, na, ha, side), down(b, nb, hb, side)
+                ring = (top_a, top_b, low_b, low_a) if side == 1 else (top_b, top_a, low_a, low_b)
+                shoulder = bm.faces.new(ring)
+                shoulder.material_index = surfaces.index(a["surface"])
+                for loop, (u, v) in zip(shoulder.loops, ((0.0, sa), (0.0, sb), (SHOULDER_M / tile, sb), (SHOULDER_M / tile, sa))
+                                        if side == 1 else ((0.0, sb), (0.0, sa), (SHOULDER_M / tile, sa), (SHOULDER_M / tile, sb))):
+                    loop[uv].uv = (u, v)
     bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=0.01)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     mesh = bpy.data.meshes.new("Track_Road")
@@ -210,7 +220,8 @@ def add_kerb_run(bm, uv, pts, fr, run, side):
         z = road_z(p)
         ring = []
         h = E.half_width(p)
-        for offset, dz in ((h - 0.9, 0.005), (h - 0.6, 0.08), (h + 0.1, 0.08), (h + 0.3, -0.05)):
+        # Flush with the road (1.2 cm, only enough not to flicker): a raised kerb with a ramp face launched karts.
+        for offset, dz in ((h - 0.9, 0.005), (h - 0.6, KERB_HEIGHT), (h + 0.1, KERB_HEIGHT), (h + 0.3, -0.05)):
             ring.append(bm.verts.new((p["x"] + side * nrm[0] * offset, p["y"] + side * nrm[1] * offset, z + dz)))
         rings.append((ring, p["s"]))
     for (r0, s0), (r1, s1) in zip(rings, rings[1:]):

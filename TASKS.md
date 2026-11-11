@@ -43,6 +43,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | V6 | Complete race at the itch.io URL, logged in `docs/builds.md` | Thu 12 | todo |
 | V7 | README "How to build" reproducible by a second person | Fri 13 | todo |
 | V8 | `Visuals/CampusWorld/CampusWorld.prefab`: the whole campus world as one prefab (colliders, trees and props, sun and sky light) for Role 2's `Track_Campus`; `Track_CampusWorld` stays Role 3's preview with the race placeholders | Tue 10 | done (Luc, #37) |
+| V9 | Look pass for the campus world: soft trees with wind, moving sea, grass and sand detail, grass tufts (own shaders in `Visuals/Shaders/`, fallback to URP Lit) | – | in review (Luc, #64) |
 
 ## Role 4: Race flow, UI + sound (David)
 | ID | Task | Due | Status |

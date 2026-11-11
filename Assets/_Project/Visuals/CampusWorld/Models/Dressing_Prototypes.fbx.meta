@@ -167,6 +167,16 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_palm_frond
+    second: {fileID: 2100000, guid: 833a6637f1c314b45946725d49d347b8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_palm_frond_b
+    second: {fileID: 2100000, guid: f8a3a6ef17113418a896fc6fec0bd570, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_palm_leaf
     second: {fileID: 2100000, guid: a3a15a9603f5e4f92897cc6cc5cf5fbc, type: 2}
   - first:
@@ -279,6 +289,36 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_study_wood
     second: {fileID: 2100000, guid: 79ca30fa94abc4b648a9d195e3a1abb3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_tree_olive
+    second: {fileID: 2100000, guid: a3692f94811c442699e6f7adf0034c25, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_tree_olive_b
+    second: {fileID: 2100000, guid: 0a9fa0ba44e234ad49ff7a64540fd83f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_tree_palm
+    second: {fileID: 2100000, guid: e09e0bb7dc9454d2ab0d7b23497997fb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_tree_palm_b
+    second: {fileID: 2100000, guid: 9e26bfabadf0c42b1aaa2b718a99f9d1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_tree_pine
+    second: {fileID: 2100000, guid: 1fa7e9cac861a4f5b995f1a63c0802be, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_tree_pine_b
+    second: {fileID: 2100000, guid: 0065438baabc64a58b962680eb89a948, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
