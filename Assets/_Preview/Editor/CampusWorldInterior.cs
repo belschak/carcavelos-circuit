@@ -128,7 +128,8 @@ public static class CampusWorldInterior
         }
         routeAfter = (Vector3[])routeBefore.Clone();
         widthAfter = (float[])widthBefore.Clone();
-        int moved = HallDoorApproach.Apply(routeAfter, widthAfter, null);
+        var facade = new List<int>();
+        int moved = HallDoorApproach.Apply(routeAfter, widthAfter, null, facade);
 
         // Runs of moved points; each piece also takes the unmoved point where it joins Luc's road, and ends on the facade.
         roadMaterial = null;
@@ -142,8 +143,10 @@ public static class CampusWorldInterior
             int a = i;
             while (i + 1 < n && Moved(i + 1)) i++;
             int b = i;
-            int first = Inside(routeAfter[a - 1].x, routeAfter[a - 1].z) ? a : a - 1;
-            int last = Inside(routeAfter[b + 1].x, routeAfter[b + 1].z) ? b : b + 1;
+            // The piece ends exactly on the facade point (never inside the hall, where it would lie on the hall floor)
+            // and starts at the unmoved point where it joins Luc's road.
+            int first = facade.Contains(a) ? a : a - 1;
+            int last = facade.Contains(b) ? b : b + 1;
             doorPieces.Add(new[] { first, last });
             pieceMaterials.Add(new Dictionary<Material, int>());
             i++;
