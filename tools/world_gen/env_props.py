@@ -42,17 +42,20 @@ PLACEMENTS_FILE = os.path.join(E.OUT, "placements_props.json")
 SEED = 20261108
 
 TRI_BUDGET = {"Prop_LampCampus": 120, "Prop_LampRoad": 150, "Prop_Bench": 60, "Prop_LoungeChair": 150,
-              "Prop_Bollard": 40, "Prop_RailingSegment": 100, "Prop_Bin": 60, "Prop_Parasol": 100,
+              "Prop_Bollard": 40, "Prop_RailingSegment": 30, "Prop_Bin": 60, "Prop_Parasol": 100,
               # design pass 2026-11-09 (Deep-Research catalogue, Phase 1): cafe kit, planters, atrium
               "Prop_BistroTable": 112, "Prop_BistroChair": 120, "Prop_TroughBloom": 210, "Prop_PlanterRound": 180,
               "Prop_StudyTable": 96, "Prop_GrandPiano": 180,
               # beach pass V10b 2026-11-10: straw parasols, loungers, lifeguard post, stone heaps
-              "Prop_ParasolThatch": 80, "Prop_SunLounger": 64, "Prop_LifeguardTower": 260, "Prop_StonePile": 330}
+              "Prop_ParasolThatch": 80, "Prop_SunLounger": 64, "Prop_LifeguardTower": 260, "Prop_StonePile": 330,
+              # V16f dressing pass: potted olive, tapered planter, picnic table
+              "Prop_PotOlive": 230, "Prop_PlanterTapered": 90, "Prop_PicnicTable": 110}
 FOOTPRINT = {"Prop_LampCampus": 0.3, "Prop_LampRoad": 0.3, "Prop_Bench": 1.0, "Prop_LoungeChair": 0.6,
              "Prop_Bollard": 0.15, "Prop_RailingSegment": 0.0, "Prop_Bin": 0.3, "Prop_Parasol": 1.6,
              "Prop_BistroTable": 0.4, "Prop_BistroChair": 0.3, "Prop_TroughBloom": 0.85, "Prop_PlanterRound": 0.45,
              "Prop_StudyTable": 0.95, "Prop_GrandPiano": 1.2,
-             "Prop_ParasolThatch": 1.4, "Prop_SunLounger": 0.9, "Prop_LifeguardTower": 1.6, "Prop_StonePile": 2.0}
+             "Prop_ParasolThatch": 1.4, "Prop_SunLounger": 0.9, "Prop_LifeguardTower": 1.6, "Prop_StonePile": 2.0,
+             "Prop_PotOlive": 0.45, "Prop_PlanterTapered": 0.6, "Prop_PicnicTable": 1.2}
 
 # Placement rules (metres along the lap = route s, offsets from the centreline; + = left of the driving direction)
 NO_PROP_ZONES = {"tunnel", "atrium"}                  # indoors / underground: nothing stands there
@@ -180,14 +183,14 @@ def tube(mb, path, radii, sides, mat):
 # Prototypes
 # =====================================================================================================
 def lamp_campus(name, metal, base, light, col):
-    """Slim modern campus lamp, 5 m: square concrete foot, octagonal pole, flat rectangular head that reaches
-    1 m out along +x, glowing underside."""
+    """Campus lamp (V16f, survey V15 section 1 point 9 and 3.1 / 3.4 / 3.6): a slim dark square column, 5.5 m, with
+    the lantern in its top (a glowing band under a dark cap), no arm. Low concrete foot."""
     mb = MeshBuilder()
     METAL, BASE, LIGHT = 0, 1, 2
-    box(mb, -0.17, 0.17, -0.17, 0.17, -0.15, 0.32, BASE)
-    lathe(mb, [(0.085, 0.25), (0.075, 4.8)], 8, METAL, phase=math.pi / 8)
-    profile = [(-0.16, 4.76), (0.16, 4.76), (0.16, 4.86), (0.12, 4.93), (-0.12, 4.93), (-0.16, 4.86)]
-    extrude(mb, profile, "x", -0.22, 1.05, [LIGHT, METAL, METAL, METAL, METAL, METAL, METAL])
+    box(mb, -0.13, 0.13, -0.13, 0.13, -0.15, 0.12, BASE)
+    box(mb, -0.08, 0.08, -0.08, 0.08, 0.12, 4.8, METAL, skip=("bottom", "top"))
+    box(mb, -0.065, 0.065, -0.065, 0.065, 4.8, 5.38, LIGHT, skip=("bottom", "top"))
+    box(mb, -0.08, 0.08, -0.08, 0.08, 5.38, 5.5, METAL, skip=())
     return mb.build(name, [metal, base, light], col)
 
 
@@ -236,17 +239,60 @@ def bollard(name, steel, cap, col):
     return mb.build(name, [steel, cap], col)
 
 
-def railing(name, steel, col):
-    """Stainless railing segment, 2.0 m along +x from its origin: post at the start, top rail, bottom rail and
-    seven vertical bars. Segments placed end to end make a continuous railing (each post hides a joint)."""
+def railing(name, mat, col):
+    """Bar railing segment, 2.0 m along +x from its origin (V16f, photosphere survey V15 section 1 point 1: flat-bar
+    steel, 1.1 m, close vertical bars 11 cm apart, a post every 2 m, flat top rail, light galvanised). One
+    alpha-clipped sheet carries the bars and the bottom rail (make_textures.make_railing, one 2 m module); the post
+    at the start and the flat top rail are solid, on the same material (their corners sit at UV (0.5, 0.5) = on a
+    bar of the texture). Outer size as before (x -0.03..2.0, y +-0.032, z -0.12..1.1): Unity's box collider, taken
+    from the bounds, does not move. Segments placed end to end make a continuous railing."""
     mb = MeshBuilder()
     box(mb, -0.03, 0.03, -0.03, 0.03, -0.12, 1.1, 0)                       # post
-    box(mb, 0.0, RAILING_LENGTH, -0.032, 0.032, 1.02, 1.08, 0, skip=())    # top rail (handrail)
-    box(mb, 0.0, RAILING_LENGTH, -0.022, 0.022, 0.1, 0.145, 0, skip=())    # bottom rail
-    for k in range(1, 8):                                                   # bars between the rails
-        x = k * RAILING_LENGTH / 8
-        box(mb, x - 0.018, x + 0.018, -0.018, 0.018, 0.145, 1.02, 0, skip=("bottom", "top"))
-    return mb.build(name, [steel], col)
+    box(mb, 0.0, RAILING_LENGTH, -0.032, 0.032, 1.05, 1.1, 0, skip=())     # flat top rail
+    sheet = [mb.v((x, 0.0, z), uv=(u, v)) for x, z, u, v in ((0.0, 0.0, 0.0, 0.0), (RAILING_LENGTH, 0.0, 1.0, 0.0),
+                                                             (RAILING_LENGTH, 1.1, 1.0, 1.0), (0.0, 1.1, 0.0, 1.0))]
+    mb.f(sheet, 0, keep=True)                                               # bars: drawn from both sides
+    return mb.build(name, [mat], col)
+
+
+def pot_olive(name, pot, soil, trunk, crown, crown_top, col):
+    """Dark conical pot, 0.9 m high (0.5 m across at the foot, 0.84 m at the rim), with a thin young olive: a slim
+    stem and a small loose crown, about 2.7 m in all (V16f, survey V15 3.4 / 3.5: 'four thin olives in black conical
+    pots', 'dark conical pots 0.9 m in twos and threes')."""
+    rng = random.Random(name)
+    mb = MeshBuilder()
+    POT, SOIL, TRUNK, CROWN, TOP = 0, 1, 2, 3, 4
+    lathe(mb, [(0.25, -0.05), (0.42, 0.9), (0.37, 0.9), (0.37, 0.84), (0.0, 0.84)], 10, [POT, POT, POT, SOIL])
+    lathe(mb, [(0.035, 0.84), (0.028, 1.75), (0.0, 1.8)], 5, TRUNK)
+    for cx, cy, cz, r in ((0.05, 0.0, 2.12, 0.5), (-0.2, -0.12, 1.98, 0.4)):
+        puff_lobe(mb, (cx, cy, cz), (r, r * 0.94, r * 0.78), rng, lambda z: TOP if z > 0.25 else CROWN, (0.0, 0.0, 1.7),
+                  floor=-0.7, jitter=0.04)
+    return mb.build(name, [pot, soil, trunk, crown, crown_top], col)
+
+
+def planter_tapered(name, pot, soil, crown, col):
+    """Black round tapered planter, 0.7 m high (0.7 m across at the foot, 1.2 m at the rim), with a low green mound
+    (V16f, survey V15 3.6 / App. F 2.2: '2-3 black round tapered planters' at G's corner on the lower plaza)."""
+    rng = random.Random(name)
+    mb = MeshBuilder()
+    POT, SOIL, CROWN = 0, 1, 2
+    lathe(mb, [(0.35, -0.05), (0.6, 0.7), (0.54, 0.7), (0.54, 0.64), (0.0, 0.64)], 10, [POT, POT, POT, SOIL])
+    puff_lobe(mb, (0.0, 0.0, 0.8), (0.42, 0.42, 0.26), rng, lambda z: CROWN, (0.0, 0.0, 0.64), subdiv=1, floor=-0.6)
+    return mb.build(name, [pot, soil, crown], col)
+
+
+def picnic_table(name, wood, col):
+    """Timber picnic table with its two benches in one piece (1.8 m long along x, 1.5 m across, top at 0.75 m):
+    plank top, two seat boards, two A-shaped end frames (V16f, survey V15 3.6: 'timber picnic tables')."""
+    mb = MeshBuilder()
+    box(mb, -0.9, 0.9, -0.36, 0.36, 0.71, 0.75, 0, skip=())
+    for y in (-0.62, 0.62):
+        box(mb, -0.9, 0.9, y - 0.13, y + 0.13, 0.41, 0.45, 0, skip=())
+    for x in (-0.66, 0.66):
+        box(mb, x - 0.035, x + 0.035, -0.7, 0.7, 0.33, 0.41, 0, skip=())                 # bar under the seats
+        extrude(mb, [(-0.52, -0.02), (-0.42, -0.02), (-0.2, 0.71), (-0.3, 0.71)], "x", x - 0.03, x + 0.03, 0)
+        extrude(mb, [(0.42, -0.02), (0.52, -0.02), (0.3, 0.71), (0.2, 0.71)], "x", x - 0.03, x + 0.03, 0)
+    return mb.build(name, [wood], col)
 
 
 def litter_bin(name, body, lid, opening, col):
@@ -484,6 +530,32 @@ def stone_pile(name, light, mid, dark, col):
     return mb.build(name, [light, mid, dark], col)
 
 
+RAILING_STEEL = "#9A978C"        # V16f: light galvanised / satin steel of the campus railings (survey V15, fix 1)
+RAILING_RECOLOUR = {             # every railing material of the world: W_<name> -> (colour or None, roughness, metallic)
+    "plaza_rail": (RAILING_STEEL, 0.55, 0.15),       # env_plaza: fences round the courtyard, stair railings
+    "entrance_steel": (RAILING_STEEL, 0.55, 0.15),   # env_entrance: handrails on the car-park ramp's walls
+    "B_steel": (None, 0.5, 0.2),                     # env_beachfront: two-rail stair railings (colour #A7ABB2 stays)
+}
+
+
+def railing_materials():
+    """The world's railing look in one place (V16f). Returns the cutout material of the bar railings (the campus
+    decks' 'B_railing' sheet: env_campus.railing_material) and sets the other modules' railing materials to the same
+    light galvanised steel: they were dark (#4A4E53) or so metallic (0.6-0.85) that they read black in the game,
+    where nothing bright is reflected. Called when the prototypes are built, i.e. after env_plaza / env_entrance
+    made their materials; a module that asks for the material later gets this one (E.material returns by name)."""
+    import env_campus
+    for name, (colour, roughness, metallic) in RAILING_RECOLOUR.items():
+        mat = E.material(name, colour or RAILING_STEEL, roughness=roughness, metallic=metallic)
+        bsdf = mat.node_tree.nodes.get("Principled BSDF")
+        if colour:
+            mat.diffuse_color = E.hex_rgba(colour)
+            bsdf.inputs["Base Color"].default_value = E.hex_rgba(colour)
+        bsdf.inputs["Roughness"].default_value = roughness
+        bsdf.inputs["Metallic"].default_value = metallic
+    return env_campus.railing_material()
+
+
 def build_prototypes():
     """Creates every prop prototype in collection Proto_Props and returns {name: object}.
     Rebuilding replaces the old objects. Raises if a prototype breaks its triangle budget."""
@@ -506,7 +578,7 @@ def build_prototypes():
         "Prop_LoungeChair": lounge_chair("Prop_LoungeChair", m("chair_frame", "#7C8189", roughness=0.6),
                                          m("chair_cushion", "#B7BBC1", roughness=0.9), col),
         "Prop_Bollard": bollard("Prop_Bollard", steel, m("bollard_cap", "#2E3136", roughness=0.4, metallic=0.5), col),
-        "Prop_RailingSegment": railing("Prop_RailingSegment", steel, col),
+        "Prop_RailingSegment": railing("Prop_RailingSegment", railing_materials(), col),
         "Prop_Bin": litter_bin("Prop_Bin", m("bin_body", "#5D646B", roughness=0.6, metallic=0.3), steel,
                                m("gloss_black", roughness=0.5), col),
         "Prop_Parasol": parasol("Prop_Parasol", m("parasol_canvas", "#F2E3C8", roughness=0.9),
@@ -541,6 +613,16 @@ def build_prototypes():
                                                m("lifeguard_flag", "#E8C547", roughness=0.8), col),
         "Prop_StonePile": stone_pile("Prop_StonePile", m("concrete_light", roughness=0.9),
                                      m("fort_top", "#A99A7B", 0.95), m("fort_rock", "#8E7D59", 0.95), col),
+        # V16f dressing pass (survey V15): potted olives, black tapered planters, timber picnic tables
+        "Prop_PotOlive": pot_olive("Prop_PotOlive", m("lamp_foot", "#3A3D42", roughness=0.6, metallic=0.4),
+                                   m("soil", "#5E4A3A", roughness=1.0), m("bark_light", roughness=0.8),
+                                   m("olive_crown_b", "#5F7F4F", roughness=0.9),
+                                   m("olive_crown_top_b", "#9DB06E", roughness=0.9), col),
+        "Prop_PlanterTapered": planter_tapered("Prop_PlanterTapered",
+                                               m("lamp_foot", "#3A3D42", roughness=0.6, metallic=0.4),
+                                               m("soil", "#5E4A3A", roughness=1.0),
+                                               m("olive_crown_b", "#5F7F4F", roughness=0.9), col),
+        "Prop_PicnicTable": picnic_table("Prop_PicnicTable", m("bench_wood", "#A27E58", roughness=0.8), col),
     }
     for name, obj in protos.items():
         tris = triangles(obj)

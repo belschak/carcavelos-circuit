@@ -23,6 +23,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 FILE = os.path.join(HERE, "dressing_frozen.json")
 OUT = os.path.join(HERE, "out")
 GAP = 0.7                   # m: a fresh item this close to a frozen one is left out
+STAGE = {"plants": None, "props": None}     # V16f: the items that left apply() (keys), for dressing_reality.py
 
 
 def _seg(x, y, a, b):
@@ -74,6 +75,7 @@ def apply(veg, props):
     data = load()
     if data is None:
         print("  dressing: not frozen (no dressing_frozen.json, or DRESSING_FREEZE=0)")
+        _mark(veg, props)
         return veg, props
     out = []
     for name, fresh, fname in (("plants", veg, "placements_vegetation.json"), ("props", props, "placements_props.json")):
@@ -90,7 +92,15 @@ def apply(veg, props):
             doc["counts"] = counts
             json.dump(doc, open(path, "w"), indent=1)
         out.append(items)
+    _mark(out[0], out[1])
     return out[0], out[1]
+
+
+def _mark(veg, props):
+    """V16f: remembers which items came out of the generic placement / the frozen state. dressing_reality.py removes
+    only among these; what the area modules add in their later dress steps is theirs."""
+    STAGE["plants"] = {json.dumps(it, sort_keys=True) for it in veg}
+    STAGE["props"] = {json.dumps(it, sort_keys=True) for it in props}
 
 
 def check():
