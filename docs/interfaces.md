@@ -87,6 +87,58 @@ public void Reset();
 - HUD: countdown, lap timer, final time, boost cue, retry button.
 - Audio: engine pitch from `IKartState.Speed / MaxSpeed`, drift/boost SFX from the state flags, music. Sound only starts after the first click or key press (browser rule).
 
+## Round 2 (Role 4, 2026-11-11): racers, track progress, bot input
+Added for bots (V10), positions + minimap (R9), name tags (D9). All in `Assets/_Project/Shared/`, all new files, nothing above changes. Decision: `docs/decisions.md` 2026-11-11.
+
+```csharp
+public interface IRacer                     // the player's kart and every bot
+{
+    string DisplayName { get; }             // name tag, positions list
+    Transform Root { get; }                 // the kart root that moves
+    IKartState Kart { get; }                // read only
+    bool IsPlayer { get; }                  // true only for the human player
+    Color MapColor { get; }                 // minimap dot + name tag colour
+}
+
+public static class RacerRegistry           // everyone in the race, no scene references needed
+{
+    bool Register(IRacer racer);            // false for null or a racer already in the list
+    bool Unregister(IRacer racer);          // call in OnDisable/OnDestroy
+    IReadOnlyList<IRacer> All { get; }
+    int Count { get; }
+    IRacer FindPlayer();                    // null if no player yet
+    event Action Changed;                   // after every add/remove
+    void Clear();                           // tests; Unity also clears it before every Play Mode start
+}
+
+public interface ITrackProgress             // Role 2's TrackProgress on the TrackInfo root (T8)
+{
+    float LapLength { get; }                // metres along the racing line
+    float DistanceAlongLap(Vector3 worldPosition); // 0..LapLength, 0 = start/finish line, flat (x/z)
+    Vector3 PointAt(float distance);        // wraps: -10 = 10 m before the line, LapLength + 5 = 5 m after it
+    Vector3 DirectionAt(float distance);    // unit driving direction, y = 0
+    IReadOnlyList<Vector3> RacingLine { get; } // closed line in driving order, first point = start line
+}
+
+public class TrackPolyline : ITrackProgress // plain C# maths for any of the above, Edit Mode tested
+{
+    TrackPolyline(IList<Vector3> pointsInDrivingOrder); // closes the loop itself, skips duplicate points
+    bool IsValid { get; }                   // >= 3 points and a length; invalid = safe defaults, never throws
+    float Wrap(float distance);             // any distance (also NaN) into 0..LapLength
+}
+
+public struct KartInput { float Throttle; float Steer; bool Drift; KartInput Clamped(); static KartInput None; }
+public interface IKartInputSource { KartInput ReadInput(); }          // a bot's "keyboard"
+public interface IKartDrivable { IKartInputSource InputSource { get; set; } } // optional, on KartController (D8)
+```
+
+Who does what:
+- **Track (Role 2)**: `TrackProgress : MonoBehaviour, ITrackProgress` on the same object as `TrackInfo`. Anyone finds it with `trackInfo.GetComponent<ITrackProgress>()`. The easiest version builds a `TrackPolyline` from points along the middle of the road (more points in corners) and forwards the calls to it. Until it exists, RaceFlow builds a `TrackPolyline` from the checkpoint positions (rougher, but it works).
+- **Driving (Role 1)**: `KartController` implements `IKartDrivable`. `InputSource == null` = keyboard and phone buttons exactly as today. Set = read `InputSource.ReadInput().Clamped()` once per frame instead. `InputEnabled` still wins (off = no input from anyone). Same physics, same `KartTuning`, so a bot is never faster than a player by code.
+- **Bots (Role 3)**: a bot = a normal `Kart` prefab instance plus a bot script that implements `IKartInputSource` and `IRacer`, sets itself as the kart's `InputSource`, and registers in `OnEnable` / unregisters in `OnDisable`. Bots never touch `InputEnabled` or `ResetTo`: RaceFlow does that for every racer.
+- **RaceFlow (Role 4)**: owns the race for all registered racers: grid slots behind the `SpawnPoint` (2 m sideways, 3 m back per row), `InputEnabled` on at GO and off at the finish, Retry puts every racer back on its slot. The player's kart registers as `IRacer` with `IsPlayer = true`. Positions = laps done, then distance along the lap (further = ahead); the minimap draws `RacingLine` and a dot per racer.
+- **Visual rules for names**: made-up names and cartoon characters only (no real people's photos, no Nintendo or F1 names). Real professors' names only with their OK.
+
 ## Controls (proposal, confirm at kickoff)
 W/A/S/D and arrow keys to drive, Space = drift, R = recover, Enter = start / retry, E = use the item in the HUD slot (item boxes, 2026-11-10; the phone's touch item button sends E).
 Touch (phones, task P9): the Web template's buttons send exactly these keys (Drift = Space + W, "use item" reserved as E), and a tap on the game is a mouse click. A new key in the game needs a matching button in `Assets/WebGLTemplates/CarcavelosCircuit/index.html` (the `KEYS` table) to work on a phone.

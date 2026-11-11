@@ -2,9 +2,9 @@
 
 Single-player 3D kart time trial on Nova SBE's Carcavelos campus. Unity **6000.3.28f1** (6.3 LTS, never upgrade), C#, Blender models as FBX, Web build on itch.io. Student team project (Intro to Programming): the code must stay simple enough that every teammate can explain any file in the final walkthrough.
 
-Deadlines: every role's part merged **Fri 13 Nov 2026**, feature freeze 17 Nov, release candidate 20 Nov, **Moodle submission Mon 23 Nov 23:59**, presentations W11/W12 (24 Nov or 4 Dec).
+Deadlines (round 2, `TASKS.md`): every feature merged **Fri 13 Nov 2026**, map looks like the campus videos Tue 17, feature freeze **Sun 22** (fixes only), **Moodle submission Mon 23 Nov 23:59**, presentations W11/W12 (Tue 24 Nov or Fri 4 Dec). Round 2 tasks per person, with a prompt to paste into your AI: `docs/round2-briefs.md`.
 
-**Official course rules we are graded against: `docs/course-requirements.md` (read it once).** The three that affect every session: the repo becomes **public** (never commit secrets or personal data), **every member must commit their own code from their own GitHub account**, and the deployed code must be on `main`.
+**Official course rules we are graded against: `docs/course-requirements.md` (read it once).** The ones that affect every session: the repo becomes **public** (never commit secrets or personal data), **every member must commit their own code from their own GitHub account**, the deployed code must be on `main`, **Security is graded** (no credentials in the repo, validate every input, minimal pinned dependencies) and **all four of us get the same grade**, so any member must be able to explain any part.
 
 ## Git workflow: every session, every AI, step by step (non-negotiable)
 Four people and their AIs push into one repo every day. These steps keep everyone building on the newest version instead of overwriting each other. If a step fails or something looks unexpected: stop and tell your human, do not improvise with Git.
@@ -74,6 +74,7 @@ Read `docs/interfaces.md`. Kart exposes `IKartState`, the track exposes `TrackIn
 - Never use Nintendo / Mario Kart names, characters, logos, music or sounds. Original or CC0 only.
 - Never publish builds, change repo settings or visibility, or spend money.
 - Never commit secrets (API keys incl. ElevenLabs, tokens, `.env`, passwords) or personal data (emails, phone numbers, photos of people; student numbers only in the README team table). This repo will be public.
+- Online features (leaderboard): keys and URLs only come from CI secrets or the host's settings at build time, never from a file in the repo. Validate everything a player can type (length, allowed characters) and everything that comes back from the internet; the game must keep working when the service is down.
 - Never commit on behalf of another teammate. Each person commits their own work from their own GitHub account (graded: "every member must contribute code").
 
 ## C# style (beginner-readable on purpose)
@@ -92,4 +93,4 @@ Read `docs/interfaces.md`. Kart exposes `IKartState`, the track exposes `TrackIn
 - Never claim "tested" or "works" unless a human actually ran it. Say what still needs a playtest.
 
 ## When unsure
-Stop and ask your human. Don't guess ownership, don't "fix" another module, don't expand scope (out of scope: items, AI opponents, multiplayer, kart selection; touch controls are in scope since 2026-11-10, see `docs/decisions.md`).
+Stop and ask your human. Don't guess ownership, don't "fix" another module, don't expand scope (out of scope: multiplayer, kart selection; in scope since round 2: items, rule-based AI bots, touch controls, an online leaderboard, see `docs/decisions.md`).
