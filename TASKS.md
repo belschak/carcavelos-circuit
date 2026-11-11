@@ -81,6 +81,7 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 | ID | Task | Due | Status |
 |---|---|---|---|
 | V10 | **AI bots**: 5 rule-based bot drivers (your 3 NPC drivers, the Dean, one professor; made-up cartoon characters and names only), each a `Kart` driven by a bot `IKartInputSource` (follow `ITrackProgress.PointAt(distance + look-ahead)`, slow for corners, drift on long bends, light rubber band so the race stays close), registered as `IRacer`; you can ram them. Arcade style, no machine learning | Fri 13 (drive) / Tue 17 (polish) | claimed (Luc, 2026-11-10) |
+| V12 | **Nova hall in the campus world** (Noah's interior, help PR #45, plus his white fence #63 = request Q19): `CampusWorldBuilder` switches off the old Edificio Principal block, cuts ground and road out of its footprint, lays straight road pieces into the four hall doors (`HallDoorApproach`), puts `NovaHallWorld.fbx` in with colliders and the white fence at 0/0/0 (metal railings along the road and the hall's lilac rails off). Follow-up: `track.json` still has the old line inside the hall (up to 5 m off in the west part, 23 m in the east part); Noah's indoor lanes must go into the route data before T8/bots rely on it | Fri 13 | claimed (Luc, 2026-11-11) |
 | V6 | Complete race at the deployed URL, logged in `docs/builds.md` (with David) | Sun 22 | todo |
 
 ### Open pool (was on Luc's list, unassigned: claim one in the group chat before starting)
