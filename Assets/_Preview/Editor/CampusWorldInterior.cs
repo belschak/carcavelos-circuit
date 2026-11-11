@@ -179,8 +179,9 @@ public static class CampusWorldInterior
     private static bool NearSegment(Vector3 p, Vector3 a, Vector3 b, float reach)
     {
         Vector2 ab = new Vector2(b.x - a.x, b.z - a.z), ap = new Vector2(p.x - a.x, p.z - a.z);
-        float t = Mathf.Clamp01(Vector2.Dot(ap, ab) / Mathf.Max(0.0001f, ab.sqrMagnitude));
-        return (ap - ab * t).magnitude < reach;
+        float t = Vector2.Dot(ap, ab) / Mathf.Max(0.0001f, ab.sqrMagnitude);
+        if (t < -0.1f || t > 1.1f) return false;          // before or after this piece: Luc's road stays (no gap at the join)
+        return (ap - ab * Mathf.Clamp01(t)).magnitude < reach;
     }
 
     // Straight road piece along the lined-up route from point first to point last, 6 cm above the ground like Luc's.
