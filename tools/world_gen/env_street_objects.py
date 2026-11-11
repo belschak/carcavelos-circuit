@@ -658,42 +658,18 @@ def build_structures(col):
     # --- E: clipped hedge behind the hedge-side bays (open at the portal), the terrace's retaining wall ---
     up_h = S.left_of(S.HEDGE_U)                                   # from the terrace up to the forecourt (north-east)
     for t0, t1 in ((-0.8, S.PORTAL_T[0] - 0.15), (S.PORTAL_T[1] + 0.15, S.HEDGE_LEN + 1.3)):
-        line = [hp(t0, S.BAY[1] + S.HEDGE_DEPTH / 2 + 0.1), hp(t1, S.BAY[1] + S.HEDGE_DEPTH / 2 + 0.1)]
-        g.wall(line, S.HEDGE_DEPTH, lambda x, y: ST.ground(x, y) - 0.3, lambda x, y: ST.ground(x, y) + 1.2, "hedge", step=4.0)
+        line = [hp(t0, S.BAY[1] + S.HEDGE_DEPTH / 2 + 0.3), hp(t1, S.BAY[1] + S.HEDGE_DEPTH / 2 + 0.3)]
+        g.wall(line, S.HEDGE_DEPTH, lambda x, y: ST.ground(x, y) - 0.3, lambda x, y: ST.ground(x, y) + 1.25, "hedge", step=4.0)
+        kerb = [hp(t0, S.BAY[1] + 0.15), hp(t1, S.BAY[1] + 0.15)]          # V16g: concrete upstand in front of the hedge
+        g.wall(kerb, 0.3, lambda x, y: ST.ground(x, y) - 0.2, lambda x, y: ST.ground(x, y) + 0.25, "palette", colour="kerb",
+               step=4.0)
         wall = [hp(t0, S.WALL_S + 0.1), hp(t1, S.WALL_S + 0.1)]
         g.wall(wall, 0.3, lambda x, y: S.TERRACE_Z - 0.5,
                lambda x, y: ST.ground(x + up_h[0] * 0.9, y + up_h[1] * 0.9) + 0.25, "wall_white", step=4.0)
     # the low white wall right of the portal (blank: the real one carries the restaurant's name)
     g.wall([hp(11.0, 6.9), hp(17.0, 6.9)], 0.25, lambda x, y: ST.ground(x, y) - 0.3, lambda x, y: ST.ground(x, y) + 1.5,
            "wall_white", step=6.0)
-    # --- E: the Capricciosa entrance portal: white slatted box, flat roof, a stair down to the terrace inside ---
-    t0, t1 = S.PORTAL_T
-    s0, s1 = S.PORTAL_S
-    zp = surface(*hp((t0 + t1) / 2, s0 - 0.3))
-    for t in (t0 + 0.06, t1 - 0.06):
-        g.wall([hp(t, s0), hp(t, s1)], 0.12, lambda x, y: S.TERRACE_Z - 0.5, lambda x, y: zp + 3.0, "slats", step=9.0)
-    u = S.HEDGE_U
-    mid = hp((t0 + t1) / 2, (s0 + s1) / 2)
-    g.obox(mid, u, (t1 - t0) / 2 + 0.15, (s1 - s0) / 2 + 0.15, zp + 3.0, zp + 3.16, "roof", skip=())
-    g.obox(hp((t0 + t1) / 2, s0 + 0.06), u, (t1 - t0) / 2, 0.06, zp + 2.55, zp + 3.0, "slats")           # front lintel
-    g.obox(hp((t0 + t1) / 2, s1 - 0.06), u, (t1 - t0) / 2, 0.06, zp + 2.55, zp + 3.0, "slats")           # back lintel
-    st0, st1 = S.STAIR_S
-    drop = zp - S.TERRACE_Z
-    steps = max(2, int(round(drop / 0.165)))
-    run = (st1 - st0) / steps
-    for k in range(steps):
-        top = zp - drop * (k + 1) / steps
-        c = hp((t0 + t1) / 2, st0 + run * (k + 0.5))
-        g.obox(c, u, (t1 - t0) / 2 - 0.12, run / 2, S.TERRACE_Z - 0.4, top, "palette", colour="concrete")
-    c = hp((t0 + t1) / 2, st0 - 0.04)                                                   # warning nosing on the top step
-    g.obox(c, u, (t1 - t0) / 2 - 0.12, 0.05, zp + 0.005, zp + 0.012, "palette", ("bottom",), "yellow")
-    for t in S.STAIR_T:                                                                  # two steel handrails
-        a, b = hp(t, st0 - 0.3), hp(t, st1 + 0.3)
-        g.beam((*a, zp + 0.92), (*hp(t, st0), zp + 0.92), 0.05, 0.05, "palette", "steel_grey", ends=False)
-        g.beam((*hp(t, st0), zp + 0.92), (*hp(t, st1), S.TERRACE_Z + 0.92), 0.05, 0.05, "palette", "steel_grey", ends=False)
-        g.beam((*hp(t, st1), S.TERRACE_Z + 0.92), (*b, S.TERRACE_Z + 0.92), 0.05, 0.05, "palette", "steel_grey")
-        for s_, z_ in ((st0 - 0.3, zp), (st0 + (st1 - st0) / 2, (zp + S.TERRACE_Z) / 2), (st1 + 0.3, S.TERRACE_Z)):
-            g.post(*hp(t, s_), z_ - 0.2, z_ + 0.92, 0.05, "palette", "steel_grey")
+    # --- E: the Capricciosa entrance portal: V16g, env_capricciosa.portal (a funnel-shaped wedge, not a box) ---
     # --- E: retaining walls of the terrace on the Pastorinha side and along the service ramp ---
     lane = [(-321.0, 0.4), (-306.0, -8.0), (-297.0, -15.0), (-292.7, -17.5)]
     cu = S.unit(9.0, -7.0)                                         # along the lane edge in front of A Pastorinha
@@ -855,17 +831,11 @@ def placements():
         add(props, "Prop_TimberPost", x + (cx - x) * 0.55 / d, y + (cy - y) * 0.55 / d, z=surface(x, y) + 0.25)
     # signs: stop + direction disc and the advert totem on the lawn island's tip (the apex marker), the round pair
     # on the lawn beyond, parking and prohibition signs and a lamp on the sidewalk west of the mouth
-    add(props, "Prop_SignStop", -241.5, -27.3, facing_rot(S.bearing(232.0)))
-    add(props, "Prop_AdTotem", -238.6, -27.9, facing_rot(S.bearing(215.0)))
-    add(props, "Prop_SignRoundTriangle", -234.6, -28.6, facing_rot(S.bearing(110.0)))
+    # (V16g: the stop sign, advert totem and round sign stood on the old island tip, under the widened hairpin; the
+    # island inside the loop and the south verge are dressed by env_capricciosa)
     add(props, "Prop_SignParking", *S.med_pt(-259.0, S.S_WALK[0] + 0.3), facing_rot(S.bearing(110.0)))
     add(props, "Prop_SignRound", *S.med_pt(-263.0, S.S_WALK[0] + 0.3), facing_rot(S.bearing(110.0)))
     add(props, "Prop_LampSidewalk", *S.med_pt(-259.6, S.S_WALK[0] + 0.35), heading_rot(S.left_of(north)))
-    # on the apron: bins on their sett pad, bike racks
-    pu = S.unit(5.2, -3.9)
-    add(props, "Prop_BinsUnderground", -234.4, -31.3, heading_rot(pu))
-    add(props, "Prop_BikeRack", -238.0, -27.6, heading_rot(pu) + 90.0)
-    add(props, "Prop_BikeRack", -230.2, -34.6, heading_rot(pu) + 90.0)
     # pay machine and parking sign at the north-west end of the hedge bays, cabinets in the hedge, globe lamps
     add(props, "Prop_PayMachine", *hp(-1.3, 3.2), facing_rot(S.left_of(hu)))
     add(props, "Prop_SignParking", *hp(-1.3, 4.3), facing_rot(S.left_of(hu)))

@@ -521,6 +521,8 @@ SNAP = 0.5             # m: lattice points this close to the outline move onto i
 FACE = 0.12
 _T = {"cells": set(), "z": {}, "ramp_top": None}
 _T_SEGS = [(a, b) for ring in (S.TERRACE, S.SERVICE_RAMP) for a, b in zip(ring, ring[1:] + ring[:1])]
+import capricciosa_plan  # noqa: E402  V16g: the sand below the sea wall, the esplanade and the cliff foot join the lattice
+_T_SEGS += [(a, b) for ring in capricciosa_plan.TERRAIN_RINGS for a, b in zip(ring, ring[1:] + ring[:1])]
 
 
 def _outline_distance(x, y):
@@ -591,7 +593,7 @@ def plan_terrace():
         for i in range(E.COLS - 1):
             x0, y0 = E.X0 + i * E.STEP, E.Y0 + j * E.STEP
             cx, cy = x0 + E.STEP / 2, y0 + E.STEP / 2
-            if not (-345 < cx < -240 and -95 < cy < 10) or _outline_distance(cx, cy) > REACH:
+            if not (-345 < cx < -240 and -106 < cy < 10) or _outline_distance(cx, cy) > REACH:   # V16g: -95 -> -106
                 continue
             if env_corridor.covers_cell(cx, cy) or env_covebank._near_corridor(x0, y0) or env_covebank.covers_cell(cx, cy):
                 continue
@@ -641,10 +643,10 @@ def _lattice(a, b):
             if d < best:
                 best, foot = d, (fx, fy, -dy / math.sqrt(l2), dx / math.sqrt(l2))
         if foot:
-            low = S.terrace_target(x, y) is not None
+            low = S.terrace_zone(x, y)                 # V16g: zones, not just in / out (terrace | sand below its wall)
             for sign in (1.0, -1.0):
                 qx, qy = foot[0] + foot[2] * FACE * sign, foot[1] + foot[3] * FACE * sign
-                if (S.terrace_target(qx, qy) is not None) == low:
+                if S.terrace_zone(qx, qy) == low:
                     px, py = qx, qy
                     break
         out = (px, py, _terrace_z(px, py, blend_at=(x, y)))

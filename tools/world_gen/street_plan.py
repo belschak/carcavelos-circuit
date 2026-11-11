@@ -18,6 +18,7 @@ PAINT    road markings on top of the paving: colour (palette name), ring.
 import json
 import math
 import os
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROUTE = json.load(open(os.path.join(HERE, "route.json")))["points"]
@@ -476,19 +477,8 @@ def forecourt():
     throat = [med_pt(MOUTH_X[0], EB[0]), med_pt(MOUTH_X[1], EB[0]), (-243.2, -22.0), (-244.6, -25.0), (-247.6, -28.2),
               (-252.5, -28.4), (-257.5, -26.2), (-260.2, -22.4), (-260.0, -17.0)]
     layer("E throat setts", "setts", throat, frame_uv((-252.0, -20.0), bearing(205.0), 2.0, 2.0))
-    # calcada apron along the lawn island's south-west edge (bins, bike racks), flush with the concrete
-    apron = [(-246.4, -27.2), (-240.0, -31.0), (-232.0, -37.0), (-226.5, -41.8), (-229.5, -45.0), (-236.0, -40.2),
-             (-243.5, -34.5), (-249.0, -30.0)]
-    layer("E apron", "calcada", apron)
-
-    # the lawn island inside the hairpin is the west end of the belt (section D); its tip is paved
-    # (only north of the step that the terrain has inside the hairpin, where the road beds of its two legs meet)
-    layer("E island tip", "calcada", [(-243.5, -21.2), (-246.3, -22.4), (-247.6, -24.6), (-246.4, -27.2), (-242.6, -27.3),
-                                      (-239.6, -27.0), (-238.0, -25.6), (-239.4, -23.6)])
-    # grass island with the high mast (outside of the hairpin) and the calcada splitter in the mouth
-    # the bins' sett pad: the real one lies on the apron, under the race line (survey 4.4); ours on the lawn side
-    layer("E bin pad", "setts", [(-236.4, -28.6), (-231.2, -32.5), (-232.3, -34.0), (-237.5, -30.1)],
-          frame_uv((-236.4, -28.6), unit(5.2, -3.9), 2.0, 2.0))
+    # V16g: the old apron, the paved tip of the lawn island and the bins' pad lay where the widened hairpin (V14c)
+    # now runs; the island inside the loop is capricciosa_plan's (drawn last, see carpark())
     layer("E grass island", None, GRASS_ISLAND, ground="lawn")
     layer("E splitter", "calcada", SPLITTER)
     RAISED.append({"kind": "island", "ring": GRASS_ISLAND, "height": 0.35, "top": None, "side": "wall_white", "rim": 0.25})
@@ -500,20 +490,15 @@ def forecourt():
     # markings
     zebra = (-283.0, -17.0)                                    # zebra across the aisle at the top of the service ramp
     stripes(zebra, left_of(HEDGE_U), -3.0, 3.0, -2.75, 2.75, 0.5, 0.5)
-    # hatched pedestrian zone in front of the portal: the two bays there carry white diagonal stripes
-    for k in range(-4, 5):
-        a, b = PORTAL_T[0] + 2.5 + k * 1.1, PORTAL_T[0] + 2.5 + k * 1.1 + 0.4
-        band = [hedge_pt(a - 2.5, 0.0), hedge_pt(b - 2.5, 0.0), hedge_pt(b + 2.5, 5.0), hedge_pt(a + 2.5, 5.0)]
-        paint("white", [(x, y) for x, y in _clip_t(band, PORTAL_T[0], PORTAL_T[1])])
+    # hatched pedestrian zone in front of the portal: V16g, capricciosa_plan (stripes straight across)
     paint_ribbon("white", [hedge_pt(PORTAL_T[0], 5.0), hedge_pt(PORTAL_T[0], 0.0), hedge_pt(PORTAL_T[1], 0.0),
                            hedge_pt(PORTAL_T[1], 5.0)], -0.06, 0.06)
     # the sett zebra across the throat: pale bands 0.5 m wide and 3 m long, 0.5 m apart
     zu = unit(6.0, -3.2)
     for k in range(11):
         paint("sett_pale", rect((-258.8, -18.4), zu, k * 1.0, k * 1.0 + 0.5, -1.5, 1.5))
-    # yield bar of dashes at the road edge, yellow line bounding the apron
+    # yield bar of dashes at the road edge (V16g: the yellow line of the old apron is gone with it)
     dashes([med_pt(MOUTH_X[0] + 0.5, EB[0] - 0.25), med_pt(MOUTH_X[1] - 0.5, EB[0] - 0.25)], 0.0, 0.4, 0.5, 0.5)
-    paint_ribbon("yellow", [(-249.0, -30.0), (-243.5, -34.5), (-236.0, -40.2), (-229.5, -45.0)], -0.06, 0.06)
     # disabled bays: the four western brick bays get a blue square with a pale symbol block
     for k in range(4):
         c = brick_pt(k * BAY[0] + 1.25, 2.6)
@@ -527,7 +512,8 @@ RAMP_PAVING = [(-290.9, -18.2), (-286.9, -19.9), (-284.3, -26.6), (-285.6, -31.2
 # both restaurants are 0.15 m above it. The outline's land side is the retaining wall under the hedge.
 TERRACE_Z = 4.25
 RESTAURANT_FLOOR = 4.40
-RESTAURANT_STOREY = {"capricciosa": 3.0, "pastorinha": 2.9}     # V10b: 3.9 / 3.4 m (the roofs stood too high)
+RESTAURANT_STOREY = {"capricciosa": 2.75, "pastorinha": 2.65}   # V10b: 3.9 / 3.4 m, V10f: 3.0 / 2.9 m; V16g: the roof
+                                                               # edge 1.2-1.5 m above the forecourt at the portal
 STAIR_T = (19.35, 21.65)                       # the stair inside the portal, along the hedge row (2.3 m wide)
 STAIR_S = (6.2, WALL_S)                        # ... its top 6.2 m behind the bay front, its foot at the retaining wall
 PORTAL_S = (5.3, 9.3)                          # the portal box stands in the planted strip, behind the two hatched bays
@@ -546,7 +532,16 @@ def terrace_target(x, y):
         return ("ramp", min(max(t, 0.0), 1.0))
     if inside(x, y, TERRACE):
         return ("flat", TERRACE_Z)
-    return None
+    import capricciosa_plan                        # V16g: sand below the sea wall, esplanade and cliff foot
+    return capricciosa_plan.terrain_target(x, y)
+
+
+def terrace_zone(x, y):
+    """Which lowered area a point lies in (None outside): the lattice puts a wall face between two different ones."""
+    if inside(x, y, SERVICE_RAMP) or inside(x, y, TERRACE):
+        return "terrace"
+    import capricciosa_plan
+    return capricciosa_plan.terrain_zone(x, y)
 
 
 # =====================================================================================================
@@ -598,6 +593,8 @@ def carpark():
           ground="lawn")
     layer("F SW lawn", None, [kerb_pt(27.0, 17.7), kerb_pt(NE_KERB_LEN - 4.0, 17.7), kerb_pt(NE_KERB_LEN - 4.0, 30.0),
                               kerb_pt(27.0, 34.0)], ground="lawn")
+    import capricciosa_plan                        # V16g: hairpin island, portal hatch, esplanade, west car park
+    capricciosa_plan.extend(sys.modules[__name__])
 
 
 SW_ROW_T0, CENTRAL_T0 = -7.5, 0.0     # where the south-west bay row and its partner row begin (m along the kerb)
