@@ -4514,56 +4514,6 @@
 {
 "name": "Veg_FanPalm.0451",
 "proto": "Veg_FanPalm",
-"x": -265.95,
-"y": 5.388,
-"z": -41.116,
-"yaw": -325.325,
-"roll": -0.0,
-"scale": 0.963
-},
-{
-"name": "Veg_FanPalm_B.0452",
-"proto": "Veg_FanPalm_B",
-"x": -263.898,
-"y": 5.366,
-"z": -42.799,
-"yaw": -276.584,
-"roll": -0.0,
-"scale": 1.025
-},
-{
-"name": "Veg_FanPalm.0453",
-"proto": "Veg_FanPalm",
-"x": -259.689,
-"y": 5.222,
-"z": -47.182,
-"yaw": -326.54,
-"roll": -0.0,
-"scale": 0.979
-},
-{
-"name": "Veg_FanPalm_B.0454",
-"proto": "Veg_FanPalm_B",
-"x": -256.093,
-"y": 5.043,
-"z": -51.029,
-"yaw": -242.332,
-"roll": -0.0,
-"scale": 0.91
-},
-{
-"name": "Veg_FanPalm.0455",
-"proto": "Veg_FanPalm",
-"x": -251.898,
-"y": 4.793,
-"z": -55.527,
-"yaw": -77.401,
-"roll": -0.0,
-"scale": 0.916
-},
-{
-"name": "Veg_FanPalm.0456",
-"proto": "Veg_FanPalm",
 "x": -283.767,
 "y": 4.2,
 "z": -27.833,
@@ -4572,7 +4522,7 @@
 "scale": 0.457
 },
 {
-"name": "Veg_FanPalm.0457",
+"name": "Veg_FanPalm.0452",
 "proto": "Veg_FanPalm",
 "x": -279.624,
 "y": 4.2,
@@ -4582,7 +4532,7 @@
 "scale": 0.448
 },
 {
-"name": "Veg_FanPalm.0458",
+"name": "Veg_FanPalm.0453",
 "proto": "Veg_FanPalm",
 "x": -275.557,
 "y": 4.2,
@@ -4592,47 +4542,7 @@
 "scale": 0.498
 },
 {
-"name": "Veg_FanPalm.0459",
-"proto": "Veg_FanPalm",
-"x": -265.687,
-"y": 4.2,
-"z": -47.527,
-"yaw": -198.14,
-"roll": -0.0,
-"scale": 0.455
-},
-{
-"name": "Veg_FanPalm.0460",
-"proto": "Veg_FanPalm",
-"x": -261.159,
-"y": 4.2,
-"z": -52.122,
-"yaw": -110.271,
-"roll": -0.0,
-"scale": 0.474
-},
-{
-"name": "Veg_FanPalm.0461",
-"proto": "Veg_FanPalm",
-"x": -256.478,
-"y": 4.2,
-"z": -56.617,
-"yaw": -222.709,
-"roll": -0.0,
-"scale": 0.42
-},
-{
-"name": "Veg_Palm.0462",
-"proto": "Veg_Palm",
-"x": -247.512,
-"y": 4.673,
-"z": -59.313,
-"yaw": -39.998,
-"roll": -0.0,
-"scale": 0.62
-},
-{
-"name": "Veg_Shrub_B.0463",
+"name": "Veg_Shrub_B.0454",
 "proto": "Veg_Shrub_B",
 "x": -282.015,
 "y": 5.482,
@@ -4642,7 +4552,7 @@
 "scale": 0.906
 },
 {
-"name": "Veg_Shrub.0464",
+"name": "Veg_Shrub.0455",
 "proto": "Veg_Shrub",
 "x": -278.183,
 "y": 5.516,
@@ -4652,7 +4562,7 @@
 "scale": 0.892
 },
 {
-"name": "Veg_Shrub_B.0465",
+"name": "Veg_Shrub_B.0456",
 "proto": "Veg_Shrub_B",
 "x": -274.325,
 "y": 5.565,
@@ -4662,47 +4572,7 @@
 "scale": 0.999
 },
 {
-"name": "Veg_Shrub.0466",
-"proto": "Veg_Shrub",
-"x": -263.555,
-"y": 5.414,
-"z": -43.916,
-"yaw": -206.116,
-"roll": -0.0,
-"scale": 0.955
-},
-{
-"name": "Veg_Shrub_B.0467",
-"proto": "Veg_Shrub_B",
-"x": -259.104,
-"y": 5.255,
-"z": -48.406,
-"yaw": -224.21,
-"roll": -0.0,
-"scale": 1.091
-},
-{
-"name": "Veg_Shrub.0468",
-"proto": "Veg_Shrub",
-"x": -256.378,
-"y": 5.078,
-"z": -51.902,
-"yaw": -326.827,
-"roll": -0.0,
-"scale": 0.822
-},
-{
-"name": "Veg_Shrub_B.0469",
-"proto": "Veg_Shrub_B",
-"x": -252.541,
-"y": 4.895,
-"z": -55.421,
-"yaw": -106.742,
-"roll": -0.0,
-"scale": 0.843
-},
-{
-"name": "Veg_Palm_B.0470",
+"name": "Veg_Palm_B.0457",
 "proto": "Veg_Palm_B",
 "x": -279.247,
 "y": 6.852,
@@ -4712,7 +4582,7 @@
 "scale": 0.42
 },
 {
-"name": "Veg_Shrub.0471",
+"name": "Veg_Shrub.0458",
 "proto": "Veg_Shrub",
 "x": -294.846,
 "y": 6.506,
@@ -4722,7 +4592,7 @@
 "scale": 0.738
 },
 {
-"name": "Veg_Shrub_B.0472",
+"name": "Veg_Shrub_B.0459",
 "proto": "Veg_Shrub_B",
 "x": -291.047,
 "y": 6.589,
@@ -4732,7 +4602,7 @@
 "scale": 0.95
 },
 {
-"name": "Veg_Shrub.0473",
+"name": "Veg_Shrub.0460",
 "proto": "Veg_Shrub",
 "x": -286.566,
 "y": 6.701,
@@ -4742,7 +4612,7 @@
 "scale": 0.904
 },
 {
-"name": "Veg_Shrub_B.0474",
+"name": "Veg_Shrub_B.0461",
 "proto": "Veg_Shrub_B",
 "x": -281.684,
 "y": 6.825,
@@ -4752,7 +4622,7 @@
 "scale": 0.938
 },
 {
-"name": "Veg_Shrub.0475",
+"name": "Veg_Shrub.0462",
 "proto": "Veg_Shrub",
 "x": -278.801,
 "y": 6.954,
@@ -4762,7 +4632,7 @@
 "scale": 0.924
 },
 {
-"name": "Veg_Shrub_B.0476",
+"name": "Veg_Shrub_B.0463",
 "proto": "Veg_Shrub_B",
 "x": -273.023,
 "y": 7.09,
@@ -4772,7 +4642,7 @@
 "scale": 0.763
 },
 {
-"name": "Veg_Shrub.0477",
+"name": "Veg_Shrub.0464",
 "proto": "Veg_Shrub",
 "x": -268.395,
 "y": 7.254,
@@ -4782,37 +4652,7 @@
 "scale": 0.912
 },
 {
-"name": "Veg_SlimPalm.0478",
-"proto": "Veg_SlimPalm",
-"x": -220.465,
-"y": 5.555,
-"z": -45.058,
-"yaw": -196.805,
-"roll": -0.0,
-"scale": 0.949
-},
-{
-"name": "Veg_SlimPalm.0479",
-"proto": "Veg_SlimPalm",
-"x": -211.459,
-"y": 5.175,
-"z": -53.823,
-"yaw": -306.074,
-"roll": -0.0,
-"scale": 1.076
-},
-{
-"name": "Veg_SlimPalm.0480",
-"proto": "Veg_SlimPalm",
-"x": -201.648,
-"y": 4.815,
-"z": -61.569,
-"yaw": -236.001,
-"roll": -0.0,
-"scale": 1.029
-},
-{
-"name": "Veg_SlimPalm.0481",
+"name": "Veg_SlimPalm.0465",
 "proto": "Veg_SlimPalm",
 "x": -195.761,
 "y": 4.727,
@@ -4822,7 +4662,7 @@
 "scale": 1.093
 },
 {
-"name": "Veg_SlimPalm.0482",
+"name": "Veg_SlimPalm.0466",
 "proto": "Veg_SlimPalm",
 "x": -191.517,
 "y": 4.484,
@@ -4832,7 +4672,7 @@
 "scale": 0.997
 },
 {
-"name": "Veg_SlimPalm.0483",
+"name": "Veg_SlimPalm.0467",
 "proto": "Veg_SlimPalm",
 "x": -185.63,
 "y": 4.339,
@@ -4842,7 +4682,7 @@
 "scale": 0.964
 },
 {
-"name": "Veg_SlimPalm.0484",
+"name": "Veg_SlimPalm.0468",
 "proto": "Veg_SlimPalm",
 "x": -179.744,
 "y": 4.179,
@@ -4852,7 +4692,7 @@
 "scale": 1.022
 },
 {
-"name": "Veg_SlimPalm.0485",
+"name": "Veg_SlimPalm.0469",
 "proto": "Veg_SlimPalm",
 "x": -173.857,
 "y": 4.01,
@@ -4862,7 +4702,7 @@
 "scale": 1.099
 },
 {
-"name": "Veg_SlimPalm.0486",
+"name": "Veg_SlimPalm.0470",
 "proto": "Veg_SlimPalm",
 "x": -167.97,
 "y": 3.825,
@@ -4872,7 +4712,7 @@
 "scale": 0.966
 },
 {
-"name": "Veg_SlimPalm.0487",
+"name": "Veg_SlimPalm.0471",
 "proto": "Veg_SlimPalm",
 "x": -162.084,
 "y": 3.634,
@@ -4882,7 +4722,7 @@
 "scale": 1.1
 },
 {
-"name": "Veg_SlimPalm.0488",
+"name": "Veg_SlimPalm.0472",
 "proto": "Veg_SlimPalm",
 "x": -156.197,
 "y": 3.444,
@@ -4892,7 +4732,7 @@
 "scale": 1.065
 },
 {
-"name": "Veg_Sapling.0489",
+"name": "Veg_Sapling.0473",
 "proto": "Veg_Sapling",
 "x": -304.242,
 "y": 8.854,
@@ -4902,7 +4742,7 @@
 "scale": 1.157
 },
 {
-"name": "Veg_Sapling.0490",
+"name": "Veg_Sapling.0474",
 "proto": "Veg_Sapling",
 "x": -296.316,
 "y": 9.113,
@@ -4912,7 +4752,7 @@
 "scale": 0.838
 },
 {
-"name": "Veg_Sapling.0491",
+"name": "Veg_Sapling.0475",
 "proto": "Veg_Sapling",
 "x": -300.473,
 "y": 8.307,
@@ -4922,7 +4762,7 @@
 "scale": 0.973
 },
 {
-"name": "Veg_Sapling.0492",
+"name": "Veg_Sapling.0476",
 "proto": "Veg_Sapling",
 "x": -287.004,
 "y": 9.157,
@@ -4932,7 +4772,7 @@
 "scale": 1.146
 },
 {
-"name": "Veg_Sapling.0493",
+"name": "Veg_Sapling.0477",
 "proto": "Veg_Sapling",
 "x": -285.431,
 "y": 8.988,
@@ -4942,7 +4782,7 @@
 "scale": 1.072
 },
 {
-"name": "Veg_Sapling.0494",
+"name": "Veg_Sapling.0478",
 "proto": "Veg_Sapling",
 "x": -287.136,
 "y": 8.317,
@@ -4952,7 +4792,7 @@
 "scale": 1.121
 },
 {
-"name": "Veg_Sapling.0495",
+"name": "Veg_Sapling.0479",
 "proto": "Veg_Sapling",
 "x": -275.438,
 "y": 9.401,
@@ -4962,7 +4802,7 @@
 "scale": 0.831
 },
 {
-"name": "Veg_Sapling.0496",
+"name": "Veg_Sapling.0480",
 "proto": "Veg_Sapling",
 "x": -282.638,
 "y": 8.024,
@@ -4972,7 +4812,7 @@
 "scale": 1.033
 },
 {
-"name": "Veg_Sapling.0497",
+"name": "Veg_Sapling.0481",
 "proto": "Veg_Sapling",
 "x": -267.681,
 "y": 9.515,
@@ -4982,7 +4822,7 @@
 "scale": 0.927
 },
 {
-"name": "Veg_Sapling.0498",
+"name": "Veg_Sapling.0482",
 "proto": "Veg_Sapling",
 "x": -267.774,
 "y": 8.997,
@@ -4992,7 +4832,7 @@
 "scale": 1.208
 },
 {
-"name": "Veg_Sapling.0499",
+"name": "Veg_Sapling.0483",
 "proto": "Veg_Sapling",
 "x": -255.017,
 "y": 10.226,
@@ -5002,7 +4842,7 @@
 "scale": 0.827
 },
 {
-"name": "Veg_Sapling.0500",
+"name": "Veg_Sapling.0484",
 "proto": "Veg_Sapling",
 "x": -259.917,
 "y": 8.849,
@@ -5012,7 +4852,7 @@
 "scale": 1.091
 },
 {
-"name": "Veg_Sapling.0501",
+"name": "Veg_Sapling.0485",
 "proto": "Veg_Sapling",
 "x": -244.851,
 "y": 10.782,
@@ -5022,7 +4862,7 @@
 "scale": 0.968
 },
 {
-"name": "Veg_Sapling.0502",
+"name": "Veg_Sapling.0486",
 "proto": "Veg_Sapling",
 "x": -254.518,
 "y": 8.648,
@@ -5032,7 +4872,7 @@
 "scale": 0.813
 },
 {
-"name": "Veg_Sapling.0503",
+"name": "Veg_Sapling.0487",
 "proto": "Veg_Sapling",
 "x": -246.501,
 "y": 9.157,
@@ -5042,7 +4882,7 @@
 "scale": 0.816
 },
 {
-"name": "Veg_Sapling.0504",
+"name": "Veg_Sapling.0488",
 "proto": "Veg_Sapling",
 "x": -233.912,
 "y": 10.982,
@@ -5052,7 +4892,7 @@
 "scale": 0.901
 },
 {
-"name": "Veg_Sapling.0505",
+"name": "Veg_Sapling.0489",
 "proto": "Veg_Sapling",
 "x": -231.628,
 "y": 10.333,
@@ -5062,7 +4902,7 @@
 "scale": 0.852
 },
 {
-"name": "Veg_Sapling.0506",
+"name": "Veg_Sapling.0490",
 "proto": "Veg_Sapling",
 "x": -229.294,
 "y": 9.864,
@@ -5072,7 +4912,7 @@
 "scale": 1.099
 },
 {
-"name": "Veg_Sapling.0507",
+"name": "Veg_Sapling.0491",
 "proto": "Veg_Sapling",
 "x": -218.689,
 "y": 10.913,
@@ -5082,7 +4922,7 @@
 "scale": 0.962
 },
 {
-"name": "Veg_Sapling.0508",
+"name": "Veg_Sapling.0492",
 "proto": "Veg_Sapling",
 "x": -215.659,
 "y": 10.265,
@@ -5092,7 +4932,7 @@
 "scale": 1.042
 },
 {
-"name": "Veg_Sapling.0509",
+"name": "Veg_Sapling.0493",
 "proto": "Veg_Sapling",
 "x": -211.966,
 "y": 10.296,
@@ -5102,7 +4942,7 @@
 "scale": 0.851
 },
 {
-"name": "Veg_Sapling.0510",
+"name": "Veg_Sapling.0494",
 "proto": "Veg_Sapling",
 "x": -205.886,
 "y": 10.083,
@@ -5112,7 +4952,7 @@
 "scale": 0.827
 },
 {
-"name": "Veg_Sapling.0511",
+"name": "Veg_Sapling.0495",
 "proto": "Veg_Sapling",
 "x": -197.082,
 "y": 10.17,
@@ -5122,7 +4962,7 @@
 "scale": 0.86
 },
 {
-"name": "Veg_Sapling.0512",
+"name": "Veg_Sapling.0496",
 "proto": "Veg_Sapling",
 "x": -198.06,
 "y": 9.753,
@@ -5132,7 +4972,7 @@
 "scale": 1.009
 },
 {
-"name": "Veg_Sapling.0513",
+"name": "Veg_Sapling.0497",
 "proto": "Veg_Sapling",
 "x": -187.221,
 "y": 9.827,
@@ -5142,7 +4982,7 @@
 "scale": 0.941
 },
 {
-"name": "Veg_Sapling.0514",
+"name": "Veg_Sapling.0498",
 "proto": "Veg_Sapling",
 "x": -188.846,
 "y": 9.24,
@@ -5152,7 +4992,7 @@
 "scale": 1.017
 },
 {
-"name": "Veg_Sapling.0515",
+"name": "Veg_Sapling.0499",
 "proto": "Veg_Sapling",
 "x": -185.307,
 "y": 9.137,
@@ -5162,7 +5002,7 @@
 "scale": 0.946
 },
 {
-"name": "Veg_Sapling.0516",
+"name": "Veg_Sapling.0500",
 "proto": "Veg_Sapling",
 "x": -175.429,
 "y": 9.343,
@@ -5172,7 +5012,7 @@
 "scale": 0.952
 },
 {
-"name": "Veg_Sapling.0517",
+"name": "Veg_Sapling.0501",
 "proto": "Veg_Sapling",
 "x": -181.803,
 "y": 8.168,
@@ -5182,7 +5022,7 @@
 "scale": 1.109
 },
 {
-"name": "Veg_Sapling.0518",
+"name": "Veg_Sapling.0502",
 "proto": "Veg_Sapling",
 "x": -175.998,
 "y": 8.446,
@@ -5192,7 +5032,7 @@
 "scale": 1.199
 },
 {
-"name": "Veg_Sapling.0519",
+"name": "Veg_Sapling.0503",
 "proto": "Veg_Sapling",
 "x": -172.339,
 "y": 8.638,
@@ -5202,7 +5042,7 @@
 "scale": 1.057
 },
 {
-"name": "Veg_Sapling.0520",
+"name": "Veg_Sapling.0504",
 "proto": "Veg_Sapling",
 "x": -171.29,
 "y": 7.817,
@@ -5212,7 +5052,7 @@
 "scale": 0.851
 },
 {
-"name": "Veg_Sapling.0521",
+"name": "Veg_Sapling.0505",
 "proto": "Veg_Sapling",
 "x": -160.246,
 "y": 8.832,
@@ -5222,7 +5062,7 @@
 "scale": 1.122
 },
 {
-"name": "Veg_Sapling.0522",
+"name": "Veg_Sapling.0506",
 "proto": "Veg_Sapling",
 "x": -156.933,
 "y": 8.64,
@@ -5232,7 +5072,7 @@
 "scale": 0.97
 },
 {
-"name": "Veg_Sapling.0523",
+"name": "Veg_Sapling.0507",
 "proto": "Veg_Sapling",
 "x": -151.808,
 "y": 8.638,
@@ -5242,7 +5082,7 @@
 "scale": 1.062
 },
 {
-"name": "Veg_Sapling.0524",
+"name": "Veg_Sapling.0508",
 "proto": "Veg_Sapling",
 "x": -150.152,
 "y": 8.51,
@@ -5252,7 +5092,7 @@
 "scale": 1.206
 },
 {
-"name": "Veg_Sapling.0525",
+"name": "Veg_Sapling.0509",
 "proto": "Veg_Sapling",
 "x": -143.59,
 "y": 8.833,
@@ -5262,7 +5102,7 @@
 "scale": 1.107
 },
 {
-"name": "Veg_Sapling.0526",
+"name": "Veg_Sapling.0510",
 "proto": "Veg_Sapling",
 "x": -144.658,
 "y": 7.485,
@@ -5272,7 +5112,7 @@
 "scale": 1.052
 },
 {
-"name": "Veg_Shrub_B.0527",
+"name": "Veg_Shrub_B.0511",
 "proto": "Veg_Shrub_B",
 "x": -132.614,
 "y": 5.798,
@@ -5282,7 +5122,7 @@
 "scale": 2.517
 },
 {
-"name": "Veg_Shrub.0528",
+"name": "Veg_Shrub.0512",
 "proto": "Veg_Shrub",
 "x": -131.328,
 "y": 5.627,
@@ -5292,7 +5132,7 @@
 "scale": 2.528
 },
 {
-"name": "Veg_Shrub_B.0529",
+"name": "Veg_Shrub_B.0513",
 "proto": "Veg_Shrub_B",
 "x": -129.579,
 "y": 5.469,
@@ -5302,7 +5142,7 @@
 "scale": 2.227
 },
 {
-"name": "Veg_Shrub.0530",
+"name": "Veg_Shrub.0514",
 "proto": "Veg_Shrub",
 "x": -126.82,
 "y": 5.384,
@@ -5312,7 +5152,7 @@
 "scale": 2.259
 },
 {
-"name": "Veg_Shrub_B.0531",
+"name": "Veg_Shrub_B.0515",
 "proto": "Veg_Shrub_B",
 "x": -124.573,
 "y": 5.26,
@@ -5322,7 +5162,7 @@
 "scale": 2.597
 },
 {
-"name": "Veg_Shrub.0532",
+"name": "Veg_Shrub.0516",
 "proto": "Veg_Shrub",
 "x": -122.165,
 "y": 5.144,
@@ -5332,7 +5172,7 @@
 "scale": 2.428
 },
 {
-"name": "Veg_Shrub_B.0533",
+"name": "Veg_Shrub_B.0517",
 "proto": "Veg_Shrub_B",
 "x": -119.174,
 "y": 5.101,
@@ -5342,7 +5182,7 @@
 "scale": 2.236
 },
 {
-"name": "Veg_Shrub.0534",
+"name": "Veg_Shrub.0518",
 "proto": "Veg_Shrub",
 "x": -116.105,
 "y": 5.084,
@@ -5352,7 +5192,7 @@
 "scale": 2.485
 },
 {
-"name": "Veg_Shrub_B.0535",
+"name": "Veg_Shrub_B.0519",
 "proto": "Veg_Shrub_B",
 "x": -113.112,
 "y": 5.044,
@@ -5362,7 +5202,7 @@
 "scale": 2.545
 },
 {
-"name": "Veg_Shrub.0536",
+"name": "Veg_Shrub.0520",
 "proto": "Veg_Shrub",
 "x": -109.769,
 "y": 5.122,
@@ -5372,7 +5212,7 @@
 "scale": 2.497
 },
 {
-"name": "Veg_Shrub_B.0537",
+"name": "Veg_Shrub_B.0521",
 "proto": "Veg_Shrub_B",
 "x": -106.518,
 "y": 5.216,
@@ -5382,7 +5222,7 @@
 "scale": 2.29
 },
 {
-"name": "Veg_Shrub.0538",
+"name": "Veg_Shrub.0522",
 "proto": "Veg_Shrub",
 "x": -103.282,
 "y": 5.314,
@@ -5392,7 +5232,7 @@
 "scale": 2.064
 },
 {
-"name": "Veg_Shrub_B.0539",
+"name": "Veg_Shrub_B.0523",
 "proto": "Veg_Shrub_B",
 "x": -100.067,
 "y": 5.444,
@@ -5402,7 +5242,7 @@
 "scale": 2.061
 },
 {
-"name": "Veg_Shrub.0540",
+"name": "Veg_Shrub.0524",
 "proto": "Veg_Shrub",
 "x": -96.914,
 "y": 5.606,
@@ -5412,7 +5252,7 @@
 "scale": 2.304
 },
 {
-"name": "Veg_Shrub_B.0541",
+"name": "Veg_Shrub_B.0525",
 "proto": "Veg_Shrub_B",
 "x": -93.914,
 "y": 5.797,
@@ -5422,7 +5262,7 @@
 "scale": 2.098
 },
 {
-"name": "Veg_Shrub.0542",
+"name": "Veg_Shrub.0526",
 "proto": "Veg_Shrub",
 "x": -91.497,
 "y": 6.034,
@@ -5432,7 +5272,7 @@
 "scale": 2.033
 },
 {
-"name": "Veg_Shrub_B.0543",
+"name": "Veg_Shrub_B.0527",
 "proto": "Veg_Shrub_B",
 "x": -88.377,
 "y": 6.228,
@@ -5442,7 +5282,7 @@
 "scale": 2.412
 },
 {
-"name": "Veg_Grass.0544",
+"name": "Veg_Grass.0528",
 "proto": "Veg_Grass",
 "x": -112.482,
 "y": 8.618,
@@ -5452,7 +5292,7 @@
 "scale": 1.243
 },
 {
-"name": "Veg_Grass.0545",
+"name": "Veg_Grass.0529",
 "proto": "Veg_Grass",
 "x": -112.088,
 "y": 8.961,
@@ -5462,7 +5302,7 @@
 "scale": 1.339
 },
 {
-"name": "Veg_Grass.0546",
+"name": "Veg_Grass.0530",
 "proto": "Veg_Grass",
 "x": -112.379,
 "y": 9.156,
@@ -5472,7 +5312,7 @@
 "scale": 1.343
 },
 {
-"name": "Veg_Grass.0547",
+"name": "Veg_Grass.0531",
 "proto": "Veg_Grass",
 "x": -112.268,
 "y": 9.378,
@@ -5482,7 +5322,7 @@
 "scale": 1.246
 },
 {
-"name": "Veg_Grass.0548",
+"name": "Veg_Grass.0532",
 "proto": "Veg_Grass",
 "x": -112.483,
 "y": 9.577,
@@ -5492,7 +5332,7 @@
 "scale": 1.223
 },
 {
-"name": "Veg_Grass.0549",
+"name": "Veg_Grass.0533",
 "proto": "Veg_Grass",
 "x": -112.065,
 "y": 9.844,
@@ -5502,7 +5342,7 @@
 "scale": 1.365
 },
 {
-"name": "Veg_Grass.0550",
+"name": "Veg_Grass.0534",
 "proto": "Veg_Grass",
 "x": -112.317,
 "y": 10.082,
@@ -5512,7 +5352,7 @@
 "scale": 1.024
 },
 {
-"name": "Veg_Grass.0551",
+"name": "Veg_Grass.0535",
 "proto": "Veg_Grass",
 "x": -112.552,
 "y": 10.218,
@@ -5522,7 +5362,7 @@
 "scale": 1.172
 },
 {
-"name": "Veg_Grass.0552",
+"name": "Veg_Grass.0536",
 "proto": "Veg_Grass",
 "x": -112.081,
 "y": 10.458,
@@ -5532,7 +5372,7 @@
 "scale": 1.321
 },
 {
-"name": "Veg_Grass.0553",
+"name": "Veg_Grass.0537",
 "proto": "Veg_Grass",
 "x": -112.609,
 "y": 10.606,
@@ -5542,7 +5382,7 @@
 "scale": 1.024
 },
 {
-"name": "Veg_Grass.0554",
+"name": "Veg_Grass.0538",
 "proto": "Veg_Grass",
 "x": -113.49,
 "y": 10.827,
@@ -5552,7 +5392,7 @@
 "scale": 1.077
 },
 {
-"name": "Veg_Grass.0555",
+"name": "Veg_Grass.0539",
 "proto": "Veg_Grass",
 "x": -114.635,
 "y": 10.99,
@@ -5562,7 +5402,7 @@
 "scale": 1.186
 },
 {
-"name": "Veg_Grass.0556",
+"name": "Veg_Grass.0540",
 "proto": "Veg_Grass",
 "x": -115.265,
 "y": 11.214,
@@ -5572,7 +5412,7 @@
 "scale": 1.069
 },
 {
-"name": "Veg_Grass.0557",
+"name": "Veg_Grass.0541",
 "proto": "Veg_Grass",
 "x": -115.888,
 "y": 11.323,
@@ -5582,7 +5422,7 @@
 "scale": 1.028
 },
 {
-"name": "Veg_Grass.0558",
+"name": "Veg_Grass.0542",
 "proto": "Veg_Grass",
 "x": -116.234,
 "y": 11.519,
@@ -5592,7 +5432,7 @@
 "scale": 1.222
 },
 {
-"name": "Veg_Grass.0559",
+"name": "Veg_Grass.0543",
 "proto": "Veg_Grass",
 "x": -117.404,
 "y": 11.721,
@@ -5602,7 +5442,7 @@
 "scale": 1.345
 },
 {
-"name": "Veg_Shrub_B.0560",
+"name": "Veg_Shrub_B.0544",
 "proto": "Veg_Shrub_B",
 "x": -151.31,
 "y": 6.294,
@@ -5612,7 +5452,7 @@
 "scale": 2.171
 },
 {
-"name": "Veg_Shrub.0561",
+"name": "Veg_Shrub.0545",
 "proto": "Veg_Shrub",
 "x": -153.912,
 "y": 6.328,
@@ -5622,7 +5462,7 @@
 "scale": 1.818
 },
 {
-"name": "Veg_Shrub_B.0562",
+"name": "Veg_Shrub_B.0546",
 "proto": "Veg_Shrub_B",
 "x": -156.684,
 "y": 6.284,
@@ -5632,7 +5472,7 @@
 "scale": 1.952
 },
 {
-"name": "Veg_Shrub.0563",
+"name": "Veg_Shrub.0547",
 "proto": "Veg_Shrub",
 "x": -159.186,
 "y": 6.373,
@@ -5642,7 +5482,7 @@
 "scale": 2.154
 },
 {
-"name": "Veg_Shrub_B.0564",
+"name": "Veg_Shrub_B.0548",
 "proto": "Veg_Shrub_B",
 "x": -161.867,
 "y": 6.378,
@@ -5652,7 +5492,7 @@
 "scale": 1.98
 },
 {
-"name": "Veg_Shrub.0565",
+"name": "Veg_Shrub.0549",
 "proto": "Veg_Shrub",
 "x": -165.272,
 "y": 6.503,
@@ -5662,7 +5502,7 @@
 "scale": 2.004
 },
 {
-"name": "Veg_Shrub_B.0566",
+"name": "Veg_Shrub_B.0550",
 "proto": "Veg_Shrub_B",
 "x": -167.907,
 "y": 6.529,
@@ -5672,7 +5512,7 @@
 "scale": 1.978
 },
 {
-"name": "Veg_Shrub.0567",
+"name": "Veg_Shrub.0551",
 "proto": "Veg_Shrub",
 "x": -170.556,
 "y": 6.551,
@@ -5682,7 +5522,7 @@
 "scale": 2.087
 },
 {
-"name": "Veg_Shrub_B.0568",
+"name": "Veg_Shrub_B.0552",
 "proto": "Veg_Shrub_B",
 "x": -173.119,
 "y": 6.604,
@@ -5692,7 +5532,7 @@
 "scale": 1.961
 },
 {
-"name": "Veg_Shrub.0569",
+"name": "Veg_Shrub.0553",
 "proto": "Veg_Shrub",
 "x": -175.804,
 "y": 6.615,
@@ -5702,7 +5542,7 @@
 "scale": 2.185
 },
 {
-"name": "Veg_Shrub_B.0570",
+"name": "Veg_Shrub_B.0554",
 "proto": "Veg_Shrub_B",
 "x": -178.494,
 "y": 6.612,
@@ -5712,7 +5552,7 @@
 "scale": 1.793
 },
 {
-"name": "Veg_Shrub.0571",
+"name": "Veg_Shrub.0555",
 "proto": "Veg_Shrub",
 "x": -180.928,
 "y": 6.696,
@@ -5722,7 +5562,7 @@
 "scale": 1.828
 },
 {
-"name": "Veg_Olive_B.0572",
+"name": "Veg_Olive_B.0556",
 "proto": "Veg_Olive_B",
 "x": -192.682,
 "y": 6.329,
@@ -5732,7 +5572,7 @@
 "scale": 1.288
 },
 {
-"name": "Veg_Olive.0573",
+"name": "Veg_Olive.0557",
 "proto": "Veg_Olive",
 "x": -191.797,
 "y": 5.734,
@@ -5742,7 +5582,7 @@
 "scale": 1.287
 },
 {
-"name": "Veg_Olive_B.0574",
+"name": "Veg_Olive_B.0558",
 "proto": "Veg_Olive_B",
 "x": -184.766,
 "y": 6.246,
@@ -5752,7 +5592,7 @@
 "scale": 1.37
 },
 {
-"name": "Veg_Olive.0575",
+"name": "Veg_Olive.0559",
 "proto": "Veg_Olive",
 "x": -182.662,
 "y": 5.827,
@@ -5762,7 +5602,7 @@
 "scale": 1.354
 },
 {
-"name": "Veg_Olive_B.0576",
+"name": "Veg_Olive_B.0560",
 "proto": "Veg_Olive_B",
 "x": -180.467,
 "y": 5.486,
@@ -5772,7 +5612,7 @@
 "scale": 1.325
 },
 {
-"name": "Veg_Olive.0577",
+"name": "Veg_Olive.0561",
 "proto": "Veg_Olive",
 "x": -176.547,
 "y": 5.435,
@@ -5782,7 +5622,7 @@
 "scale": 1.504
 },
 {
-"name": "Veg_Olive_B.0578",
+"name": "Veg_Olive_B.0562",
 "proto": "Veg_Olive_B",
 "x": -170.277,
 "y": 5.603,
@@ -5792,7 +5632,7 @@
 "scale": 1.498
 },
 {
-"name": "Veg_Olive.0579",
+"name": "Veg_Olive.0563",
 "proto": "Veg_Olive",
 "x": -168.096,
 "y": 5.337,
@@ -5802,7 +5642,7 @@
 "scale": 1.292
 },
 {
-"name": "Veg_Olive_B.0580",
+"name": "Veg_Olive_B.0564",
 "proto": "Veg_Olive_B",
 "x": -166.631,
 "y": 4.942,
@@ -5812,27 +5652,7 @@
 "scale": 1.396
 },
 {
-"name": "Veg_Palm.0581",
-"proto": "Veg_Palm",
-"x": -213.834,
-"y": 6.951,
-"z": -41.501,
-"yaw": -328.425,
-"roll": -0.0,
-"scale": 0.823
-},
-{
-"name": "Veg_Palm_B.0582",
-"proto": "Veg_Palm_B",
-"x": -207.7,
-"y": 6.288,
-"z": -48.255,
-"yaw": -350.828,
-"roll": -0.0,
-"scale": 0.876
-},
-{
-"name": "Veg_Palm_B.0583",
+"name": "Veg_Palm_B.0565",
 "proto": "Veg_Palm_B",
 "x": -199.562,
 "y": 6.588,
@@ -5842,7 +5662,7 @@
 "scale": 0.875
 },
 {
-"name": "Veg_Shrub.0584",
+"name": "Veg_Shrub.0566",
 "proto": "Veg_Shrub",
 "x": -167.768,
 "y": 4.832,
@@ -5852,7 +5672,7 @@
 "scale": 2.264
 },
 {
-"name": "Veg_Shrub_B.0585",
+"name": "Veg_Shrub_B.0567",
 "proto": "Veg_Shrub_B",
 "x": -164.434,
 "y": 4.878,
@@ -5862,7 +5682,7 @@
 "scale": 2.176
 },
 {
-"name": "Veg_Shrub.0586",
+"name": "Veg_Shrub.0568",
 "proto": "Veg_Shrub",
 "x": -163.397,
 "y": 4.812,
@@ -5872,7 +5692,7 @@
 "scale": 2.085
 },
 {
-"name": "Veg_Shrub_B.0587",
+"name": "Veg_Shrub_B.0569",
 "proto": "Veg_Shrub_B",
 "x": -161.72,
 "y": 4.584,
@@ -5882,7 +5702,7 @@
 "scale": 2.084
 },
 {
-"name": "Veg_Shrub.0588",
+"name": "Veg_Shrub.0570",
 "proto": "Veg_Shrub",
 "x": -158.458,
 "y": 4.746,
@@ -5892,7 +5712,7 @@
 "scale": 2.102
 },
 {
-"name": "Veg_Shrub_B.0589",
+"name": "Veg_Shrub_B.0571",
 "proto": "Veg_Shrub_B",
 "x": -157.879,
 "y": 4.425,
@@ -5902,7 +5722,7 @@
 "scale": 2.504
 },
 {
-"name": "Veg_Shrub.0590",
+"name": "Veg_Shrub.0572",
 "proto": "Veg_Shrub",
 "x": -154.788,
 "y": 4.493,
@@ -5912,7 +5732,7 @@
 "scale": 2.578
 },
 {
-"name": "Veg_Shrub_B.0591",
+"name": "Veg_Shrub_B.0573",
 "proto": "Veg_Shrub_B",
 "x": -152.846,
 "y": 4.422,
@@ -5922,7 +5742,7 @@
 "scale": 1.908
 },
 {
-"name": "Veg_Shrub.0592",
+"name": "Veg_Shrub.0574",
 "proto": "Veg_Shrub",
 "x": -152.182,
 "y": 4.242,
@@ -5932,7 +5752,7 @@
 "scale": 2.012
 },
 {
-"name": "Veg_Shrub_B.0593",
+"name": "Veg_Shrub_B.0575",
 "proto": "Veg_Shrub_B",
 "x": -147.887,
 "y": 4.4,
@@ -5942,7 +5762,7 @@
 "scale": 2.246
 },
 {
-"name": "Veg_Shrub.0594",
+"name": "Veg_Shrub.0576",
 "proto": "Veg_Shrub",
 "x": -147.769,
 "y": 4.113,
@@ -5952,7 +5772,7 @@
 "scale": 1.82
 },
 {
-"name": "Veg_Olive_B.0595",
+"name": "Veg_Olive_B.0577",
 "proto": "Veg_Olive_B",
 "x": -4.293,
 "y": 10.809,
@@ -5962,7 +5782,7 @@
 "scale": 1.031
 },
 {
-"name": "Veg_Olive.0596",
+"name": "Veg_Olive.0578",
 "proto": "Veg_Olive",
 "x": 1.356,
 "y": 11.2,
@@ -5972,7 +5792,7 @@
 "scale": 0.88
 },
 {
-"name": "Veg_Olive.0597",
+"name": "Veg_Olive.0579",
 "proto": "Veg_Olive",
 "x": 101.226,
 "y": 13.906,
@@ -5982,7 +5802,7 @@
 "scale": 0.907
 },
 {
-"name": "Veg_Olive_B.0598",
+"name": "Veg_Olive_B.0580",
 "proto": "Veg_Olive_B",
 "x": 104.042,
 "y": 14.45,
@@ -5992,7 +5812,7 @@
 "scale": 1.0
 },
 {
-"name": "Veg_Olive.0599",
+"name": "Veg_Olive.0581",
 "proto": "Veg_Olive",
 "x": 106.866,
 "y": 14.341,
@@ -6002,7 +5822,7 @@
 "scale": 0.948
 },
 {
-"name": "Veg_Olive.0600",
+"name": "Veg_Olive.0582",
 "proto": "Veg_Olive",
 "x": 109.334,
 "y": 13.867,
@@ -6012,7 +5832,7 @@
 "scale": 1.121
 },
 {
-"name": "Veg_Olive.0601",
+"name": "Veg_Olive.0583",
 "proto": "Veg_Olive",
 "x": 109.691,
 "y": 14.448,
@@ -6022,7 +5842,7 @@
 "scale": 1.01
 },
 {
-"name": "Veg_Olive_B.0602",
+"name": "Veg_Olive_B.0584",
 "proto": "Veg_Olive_B",
 "x": 112.141,
 "y": 13.797,
@@ -6032,7 +5852,7 @@
 "scale": 0.881
 },
 {
-"name": "Veg_Olive.0603",
+"name": "Veg_Olive.0585",
 "proto": "Veg_Olive",
 "x": 112.515,
 "y": 14.256,
@@ -6042,7 +5862,7 @@
 "scale": 1.12
 },
 {
-"name": "Veg_Olive.0604",
+"name": "Veg_Olive.0586",
 "proto": "Veg_Olive",
 "x": 114.957,
 "y": 13.761,
@@ -6052,7 +5872,7 @@
 "scale": 0.859
 },
 {
-"name": "Veg_Olive_B.0605",
+"name": "Veg_Olive_B.0587",
 "proto": "Veg_Olive_B",
 "x": 115.339,
 "y": 14.44,
@@ -6062,7 +5882,7 @@
 "scale": 1.114
 },
 {
-"name": "Veg_Olive_B.0606",
+"name": "Veg_Olive_B.0588",
 "proto": "Veg_Olive_B",
 "x": 117.764,
 "y": 13.736,
@@ -6072,7 +5892,7 @@
 "scale": 0.992
 },
 {
-"name": "Veg_Olive_B.0607",
+"name": "Veg_Olive_B.0589",
 "proto": "Veg_Olive_B",
 "x": 118.155,
 "y": 14.317,
@@ -6082,7 +5902,7 @@
 "scale": 0.963
 },
 {
-"name": "Veg_Olive_B.0608",
+"name": "Veg_Olive_B.0590",
 "proto": "Veg_Olive_B",
 "x": 120.571,
 "y": 13.794,
@@ -6092,7 +5912,7 @@
 "scale": 0.938
 },
 {
-"name": "Veg_Olive.0609",
+"name": "Veg_Olive.0591",
 "proto": "Veg_Olive",
 "x": 120.979,
 "y": 14.423,
@@ -6102,7 +5922,7 @@
 "scale": 1.082
 },
 {
-"name": "Veg_Olive_B.0610",
+"name": "Veg_Olive_B.0592",
 "proto": "Veg_Olive_B",
 "x": 123.378,
 "y": 13.845,
@@ -6112,7 +5932,7 @@
 "scale": 0.86
 },
 {
-"name": "Veg_Olive_B.0611",
+"name": "Veg_Olive_B.0593",
 "proto": "Veg_Olive_B",
 "x": 123.804,
 "y": 14.385,
@@ -6122,7 +5942,7 @@
 "scale": 1.017
 },
 {
-"name": "Veg_Olive.0612",
+"name": "Veg_Olive.0594",
 "proto": "Veg_Olive",
 "x": 126.185,
 "y": 13.968,
@@ -6132,7 +5952,7 @@
 "scale": 1.021
 },
 {
-"name": "Veg_Olive.0613",
+"name": "Veg_Olive.0595",
 "proto": "Veg_Olive",
 "x": 126.628,
 "y": 14.345,
@@ -6142,7 +5962,7 @@
 "scale": 1.092
 },
 {
-"name": "Veg_Olive.0614",
+"name": "Veg_Olive.0596",
 "proto": "Veg_Olive",
 "x": 128.992,
 "y": 14.056,
@@ -6152,7 +5972,7 @@
 "scale": 0.883
 },
 {
-"name": "Veg_Olive.0615",
+"name": "Veg_Olive.0597",
 "proto": "Veg_Olive",
 "x": 129.453,
 "y": 14.439,
@@ -6162,7 +5982,7 @@
 "scale": 1.014
 },
 {
-"name": "Veg_Olive.0616",
+"name": "Veg_Olive.0598",
 "proto": "Veg_Olive",
 "x": 131.808,
 "y": 14.189,
@@ -6172,7 +5992,7 @@
 "scale": 1.016
 },
 {
-"name": "Veg_Olive_B.0617",
+"name": "Veg_Olive_B.0599",
 "proto": "Veg_Olive_B",
 "x": 132.268,
 "y": 14.406,
@@ -6182,7 +6002,7 @@
 "scale": 1.113
 },
 {
-"name": "Veg_Olive_B.0618",
+"name": "Veg_Olive_B.0600",
 "proto": "Veg_Olive_B",
 "x": 134.615,
 "y": 14.278,
@@ -6192,7 +6012,7 @@
 "scale": 1.062
 },
 {
-"name": "Veg_Olive.0619",
+"name": "Veg_Olive.0601",
 "proto": "Veg_Olive",
 "x": 135.093,
 "y": 14.478,
@@ -6202,7 +6022,7 @@
 "scale": 0.877
 },
 {
-"name": "Veg_Olive_B.0620",
+"name": "Veg_Olive_B.0602",
 "proto": "Veg_Olive_B",
 "x": 137.204,
 "y": 14.482,
@@ -6212,7 +6032,7 @@
 "scale": 1.123
 },
 {
-"name": "Veg_Palm_B.0621",
+"name": "Veg_Palm_B.0603",
 "proto": "Veg_Palm_B",
 "x": 124.752,
 "y": 10.779,
@@ -6222,7 +6042,7 @@
 "scale": 0.945
 },
 {
-"name": "Veg_Palm.0622",
+"name": "Veg_Palm.0604",
 "proto": "Veg_Palm",
 "x": 109.921,
 "y": 10.558,
@@ -6232,7 +6052,7 @@
 "scale": 0.982
 },
 {
-"name": "Veg_Palm.0623",
+"name": "Veg_Palm.0605",
 "proto": "Veg_Palm",
 "x": 97.112,
 "y": 10.422,
@@ -6242,7 +6062,7 @@
 "scale": 1.066
 },
 {
-"name": "Veg_Palm_B.0624",
+"name": "Veg_Palm_B.0606",
 "proto": "Veg_Palm_B",
 "x": 82.448,
 "y": 10.395,
@@ -6252,7 +6072,7 @@
 "scale": 0.908
 },
 {
-"name": "Veg_Palm_B.0625",
+"name": "Veg_Palm_B.0607",
 "proto": "Veg_Palm_B",
 "x": 67.217,
 "y": 10.507,
@@ -6262,157 +6082,347 @@
 "scale": 1.078
 },
 {
-"name": "Veg_Olive_B.0626",
-"proto": "Veg_Olive_B",
-"x": 150.253,
-"y": 13.037,
-"z": -28.759,
-"yaw": -356.523,
-"roll": -0.0,
-"scale": 0.943
-},
-{
-"name": "Veg_Olive.0627",
+"name": "Veg_Olive.0608",
 "proto": "Veg_Olive",
-"x": 129.35,
-"y": 13.281,
-"z": 90.256,
-"yaw": -2.16,
+"x": 149.641,
+"y": 13.364,
+"z": -21.966,
+"yaw": -87.892,
 "roll": -0.0,
-"scale": 1.064
+"scale": 1.121
 },
 {
-"name": "Veg_Shrub.0628",
+"name": "Veg_Shrub.0609",
 "proto": "Veg_Shrub",
-"x": 117.651,
-"y": 13.151,
-"z": 116.265,
-"yaw": -84.506,
+"x": 126.612,
+"y": 12.83,
+"z": 106.029,
+"yaw": -191.139,
 "roll": -0.0,
-"scale": 1.239
+"scale": 1.182
 },
 {
-"name": "Veg_Shrub_B.0629",
-"proto": "Veg_Shrub_B",
-"x": 119.915,
-"y": 12.796,
-"z": 117.748,
-"yaw": -51.578,
-"roll": -0.0,
-"scale": 1.061
-},
-{
-"name": "Veg_Shrub_B.0630",
-"proto": "Veg_Shrub_B",
-"x": 120.0,
-"y": 12.754,
-"z": 120.0,
-"yaw": -6.652,
-"roll": -0.0,
-"scale": 0.873
-},
-{
-"name": "Veg_Shrub.0631",
+"name": "Veg_Shrub.0610",
 "proto": "Veg_Shrub",
-"x": 119.769,
-"y": 12.804,
-"z": 121.232,
-"yaw": -120.052,
+"x": 112.923,
+"y": 13.539,
+"z": 122.939,
+"yaw": -170.489,
 "roll": -0.0,
-"scale": 1.14
+"scale": 0.892
 },
 {
-"name": "Veg_Shrub.0632",
-"proto": "Veg_Shrub",
-"x": 121.509,
-"y": 12.801,
-"z": 116.907,
-"yaw": -287.482,
-"roll": -0.0,
-"scale": 0.963
-},
-{
-"name": "Veg_Shrub_B.0633",
+"name": "Veg_Shrub_B.0611",
 "proto": "Veg_Shrub_B",
-"x": 105.529,
-"y": 11.008,
-"z": -65.185,
-"yaw": -166.765,
+"x": 115.607,
+"y": 13.18,
+"z": 121.845,
+"yaw": -126.675,
 "roll": -0.0,
-"scale": 0.853
+"scale": 0.91
 },
 {
-"name": "Veg_Shrub_B.0634",
+"name": "Veg_Shrub_B.0612",
 "proto": "Veg_Shrub_B",
-"x": 104.279,
-"y": 10.951,
-"z": -67.423,
-"yaw": -211.547,
-"roll": -0.0,
-"scale": 1.137
-},
-{
-"name": "Veg_Shrub_B.0635",
-"proto": "Veg_Shrub_B",
-"x": 104.025,
-"y": 11.021,
-"z": -65.294,
-"yaw": -17.762,
-"roll": -0.0,
-"scale": 1.115
-},
-{
-"name": "Veg_Shrub.0636",
-"proto": "Veg_Shrub",
-"x": 103.462,
-"y": 11.046,
-"z": -63.853,
-"yaw": -201.08,
-"roll": -0.0,
-"scale": 0.942
-},
-{
-"name": "Veg_Shrub_B.0637",
-"proto": "Veg_Shrub_B",
-"x": 121.099,
-"y": 10.722,
-"z": -87.895,
-"yaw": -28.665,
-"roll": -0.0,
-"scale": 1.224
-},
-{
-"name": "Veg_Shrub.0638",
-"proto": "Veg_Shrub",
-"x": 85.684,
-"y": 10.44,
-"z": -79.52,
-"yaw": -12.066,
+"x": 115.0,
+"y": 13.102,
+"z": 125.0,
+"yaw": -80.73,
 "roll": -0.0,
 "scale": 0.895
 },
 {
-"name": "Veg_Shrub.0639",
-"proto": "Veg_Shrub",
-"x": 84.661,
-"y": 10.438,
-"z": -80.526,
-"yaw": -83.732,
+"name": "Veg_Shrub_B.0613",
+"proto": "Veg_Shrub_B",
+"x": 113.955,
+"y": 13.261,
+"z": 125.692,
+"yaw": -143.669,
 "roll": -0.0,
-"scale": 1.075
+"scale": 1.112
 },
 {
-"name": "Veg_Shrub.0640",
-"proto": "Veg_Shrub",
-"x": 86.09,
-"y": 10.517,
-"z": -77.013,
-"yaw": -55.027,
+"name": "Veg_Shrub_B.0614",
+"proto": "Veg_Shrub_B",
+"x": 105.22,
+"y": 11.371,
+"z": -53.973,
+"yaw": -316.336,
 "roll": -0.0,
-"scale": 1.139
+"scale": 1.058
 },
 {
-"name": "Veg_Olive_B.0641",
+"name": "Veg_Shrub_B.0615",
+"proto": "Veg_Shrub_B",
+"x": 106.11,
+"y": 11.374,
+"z": -53.081,
+"yaw": -66.062,
+"roll": -0.0,
+"scale": 1.067
+},
+{
+"name": "Veg_Shrub.0616",
+"proto": "Veg_Shrub",
+"x": 106.854,
+"y": 11.331,
+"z": -55.35,
+"yaw": -251.471,
+"roll": -0.0,
+"scale": 1.08
+},
+{
+"name": "Veg_Shrub_B.0617",
+"proto": "Veg_Shrub_B",
+"x": 104.375,
+"y": 11.31,
+"z": -54.977,
+"yaw": -314.651,
+"roll": -0.0,
+"scale": 1.15
+},
+{
+"name": "Veg_Shrub_B.0618",
+"proto": "Veg_Shrub_B",
+"x": 102.463,
+"y": 11.277,
+"z": -54.876,
+"yaw": -302.894,
+"roll": -0.0,
+"scale": 0.996
+},
+{
+"name": "Veg_Shrub_B.0619",
+"proto": "Veg_Shrub_B",
+"x": 143.538,
+"y": 12.79,
+"z": -20.89,
+"yaw": -335.381,
+"roll": -0.0,
+"scale": 0.893
+},
+{
+"name": "Veg_Shrub_B.0620",
+"proto": "Veg_Shrub_B",
+"x": 145.613,
+"y": 13.212,
+"z": -19.55,
+"yaw": -120.207,
+"roll": -0.0,
+"scale": 1.228
+},
+{
+"name": "Veg_Shrub.0621",
+"proto": "Veg_Shrub",
+"x": 100.851,
+"y": 10.609,
+"z": -80.764,
+"yaw": -167.974,
+"roll": -0.0,
+"scale": 0.992
+},
+{
+"name": "Veg_Shrub.0622",
+"proto": "Veg_Shrub",
+"x": 99.665,
+"y": 10.627,
+"z": -79.472,
+"yaw": -27.639,
+"roll": -0.0,
+"scale": 0.884
+},
+{
+"name": "Veg_Shrub.0623",
+"proto": "Veg_Shrub",
+"x": 60.884,
+"y": 10.554,
+"z": -86.204,
+"yaw": -239.949,
+"roll": -0.0,
+"scale": 1.026
+},
+{
+"name": "Veg_FanPalm.0624",
+"proto": "Veg_FanPalm",
+"x": -265.95,
+"y": 5.434,
+"z": -41.116,
+"yaw": -325.325,
+"roll": -0.0,
+"scale": 0.963
+},
+{
+"name": "Veg_FanPalm_B.0625",
+"proto": "Veg_FanPalm_B",
+"x": -263.898,
+"y": 5.485,
+"z": -42.799,
+"yaw": -276.584,
+"roll": -0.0,
+"scale": 1.025
+},
+{
+"name": "Veg_FanPalm.0626",
+"proto": "Veg_FanPalm",
+"x": -259.689,
+"y": 5.475,
+"z": -47.182,
+"yaw": -326.54,
+"roll": -0.0,
+"scale": 0.979
+},
+{
+"name": "Veg_FanPalm_B.0627",
+"proto": "Veg_FanPalm_B",
+"x": -256.093,
+"y": 5.339,
+"z": -51.029,
+"yaw": -242.332,
+"roll": -0.0,
+"scale": 0.91
+},
+{
+"name": "Veg_FanPalm.0628",
+"proto": "Veg_FanPalm",
+"x": -251.898,
+"y": 5.014,
+"z": -55.527,
+"yaw": -77.401,
+"roll": -0.0,
+"scale": 0.916
+},
+{
+"name": "Veg_FanPalm.0629",
+"proto": "Veg_FanPalm",
+"x": -265.687,
+"y": 4.2,
+"z": -47.527,
+"yaw": -198.14,
+"roll": -0.0,
+"scale": 0.455
+},
+{
+"name": "Veg_FanPalm.0630",
+"proto": "Veg_FanPalm",
+"x": -261.159,
+"y": 4.2,
+"z": -52.122,
+"yaw": -110.271,
+"roll": -0.0,
+"scale": 0.474
+},
+{
+"name": "Veg_FanPalm.0631",
+"proto": "Veg_FanPalm",
+"x": -256.478,
+"y": 4.2,
+"z": -56.617,
+"yaw": -222.709,
+"roll": -0.0,
+"scale": 0.42
+},
+{
+"name": "Veg_Palm.0632",
+"proto": "Veg_Palm",
+"x": -247.512,
+"y": 4.741,
+"z": -59.313,
+"yaw": -39.998,
+"roll": -0.0,
+"scale": 0.62
+},
+{
+"name": "Veg_Shrub.0633",
+"proto": "Veg_Shrub",
+"x": -263.555,
+"y": 5.527,
+"z": -43.916,
+"yaw": -206.116,
+"roll": -0.0,
+"scale": 0.955
+},
+{
+"name": "Veg_Shrub_B.0634",
+"proto": "Veg_Shrub_B",
+"x": -259.104,
+"y": 5.492,
+"z": -48.406,
+"yaw": -224.21,
+"roll": -0.0,
+"scale": 1.091
+},
+{
+"name": "Veg_Shrub.0635",
+"proto": "Veg_Shrub",
+"x": -256.378,
+"y": 5.3,
+"z": -51.902,
+"yaw": -326.827,
+"roll": -0.0,
+"scale": 0.822
+},
+{
+"name": "Veg_Shrub_B.0636",
+"proto": "Veg_Shrub_B",
+"x": -252.541,
+"y": 5.087,
+"z": -55.421,
+"yaw": -106.742,
+"roll": -0.0,
+"scale": 0.843
+},
+{
+"name": "Veg_SlimPalm.0637",
+"proto": "Veg_SlimPalm",
+"x": -220.465,
+"y": 5.531,
+"z": -45.058,
+"yaw": -196.805,
+"roll": -0.0,
+"scale": 0.949
+},
+{
+"name": "Veg_SlimPalm.0638",
+"proto": "Veg_SlimPalm",
+"x": -211.459,
+"y": 5.175,
+"z": -53.823,
+"yaw": -306.074,
+"roll": -0.0,
+"scale": 1.076
+},
+{
+"name": "Veg_SlimPalm.0639",
+"proto": "Veg_SlimPalm",
+"x": -201.648,
+"y": 4.815,
+"z": -61.569,
+"yaw": -236.001,
+"roll": -0.0,
+"scale": 1.029
+},
+{
+"name": "Veg_Palm.0640",
+"proto": "Veg_Palm",
+"x": -213.834,
+"y": 6.952,
+"z": -41.501,
+"yaw": -328.425,
+"roll": -0.0,
+"scale": 0.823
+},
+{
+"name": "Veg_Palm_B.0641",
+"proto": "Veg_Palm_B",
+"x": -207.7,
+"y": 6.288,
+"z": -48.255,
+"yaw": -350.828,
+"roll": -0.0,
+"scale": 0.876
+},
+{
+"name": "Veg_Olive_B.0642",
 "proto": "Veg_Olive_B",
 "x": 132.882,
 "y": 14.56,
@@ -6422,7 +6432,7 @@
 "scale": 0.878
 },
 {
-"name": "Veg_Olive.0642",
+"name": "Veg_Olive.0643",
 "proto": "Veg_Olive",
 "x": 130.245,
 "y": 14.56,
@@ -6432,7 +6442,7 @@
 "scale": 0.865
 },
 {
-"name": "Veg_Olive_B.0643",
+"name": "Veg_Olive_B.0644",
 "proto": "Veg_Olive_B",
 "x": 127.609,
 "y": 14.56,
@@ -6442,7 +6452,7 @@
 "scale": 0.924
 },
 {
-"name": "Veg_Olive.0644",
+"name": "Veg_Olive.0645",
 "proto": "Veg_Olive",
 "x": 124.973,
 "y": 14.56,
@@ -6452,7 +6462,7 @@
 "scale": 0.834
 },
 {
-"name": "Veg_Olive_B.0645",
+"name": "Veg_Olive_B.0646",
 "proto": "Veg_Olive_B",
 "x": 122.336,
 "y": 14.56,
@@ -6462,7 +6472,7 @@
 "scale": 0.826
 },
 {
-"name": "Veg_Olive.0646",
+"name": "Veg_Olive.0647",
 "proto": "Veg_Olive",
 "x": 119.7,
 "y": 14.56,
@@ -6472,7 +6482,7 @@
 "scale": 0.838
 },
 {
-"name": "Veg_Olive_B.0647",
+"name": "Veg_Olive_B.0648",
 "proto": "Veg_Olive_B",
 "x": 117.064,
 "y": 14.56,
@@ -6482,7 +6492,7 @@
 "scale": 0.835
 },
 {
-"name": "Veg_Olive.0648",
+"name": "Veg_Olive.0649",
 "proto": "Veg_Olive",
 "x": 114.427,
 "y": 14.56,
@@ -6492,7 +6502,7 @@
 "scale": 0.892
 },
 {
-"name": "Veg_Olive_B.0649",
+"name": "Veg_Olive_B.0650",
 "proto": "Veg_Olive_B",
 "x": 111.791,
 "y": 14.56,
@@ -6502,7 +6512,7 @@
 "scale": 0.846
 },
 {
-"name": "Veg_Olive.0650",
+"name": "Veg_Olive.0651",
 "proto": "Veg_Olive",
 "x": 109.155,
 "y": 14.56,
@@ -6512,7 +6522,7 @@
 "scale": 0.881
 },
 {
-"name": "Veg_Olive_B.0651",
+"name": "Veg_Olive_B.0652",
 "proto": "Veg_Olive_B",
 "x": 106.518,
 "y": 14.56,
@@ -6522,7 +6532,7 @@
 "scale": 0.861
 },
 {
-"name": "Veg_Olive.0652",
+"name": "Veg_Olive.0653",
 "proto": "Veg_Olive",
 "x": 78.4,
 "y": 11.26,
@@ -8522,127 +8532,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0199",
-"proto": "Prop_CarC",
-"x": -269.672,
-"y": 5.959,
-"z": -30.238,
-"yaw": 137.498,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarA.0200",
-"proto": "Prop_CarA",
-"x": -267.951,
-"y": 5.95,
-"z": -32.074,
-"yaw": 134.846,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarA.0201",
-"proto": "Prop_CarA",
-"x": -262.663,
-"y": 5.991,
-"z": -37.218,
-"yaw": -46.398,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarD.0202",
-"proto": "Prop_CarD",
-"x": -260.981,
-"y": 5.944,
-"z": -39.193,
-"yaw": 136.668,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarD.0203",
-"proto": "Prop_CarD",
-"x": -259.188,
-"y": 5.95,
-"z": -40.872,
-"yaw": -44.954,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarD.0204",
-"proto": "Prop_CarD",
-"x": -257.325,
-"y": 5.939,
-"z": -42.668,
-"yaw": -44.06,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarE.0205",
-"proto": "Prop_CarE",
-"x": -255.626,
-"y": 5.855,
-"z": -44.464,
-"yaw": 134.508,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarB.0206",
-"proto": "Prop_CarB",
-"x": -253.859,
-"y": 5.807,
-"z": -46.186,
-"yaw": -43.808,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarE.0207",
-"proto": "Prop_CarE",
-"x": -252.168,
-"y": 5.696,
-"z": -48.116,
-"yaw": 138.22,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarB.0208",
-"proto": "Prop_CarB",
-"x": -250.279,
-"y": 5.572,
-"z": -49.794,
-"yaw": 136.026,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarE.0209",
-"proto": "Prop_CarE",
-"x": -248.902,
-"y": 5.418,
-"z": -51.794,
-"yaw": 134.061,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarG.0210",
-"proto": "Prop_CarG",
-"x": -247.192,
-"y": 5.318,
-"z": -53.503,
-"yaw": 134.181,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarD.0211",
+"name": "Prop_CarD.0199",
 "proto": "Prop_CarD",
 "x": -299.17,
 "y": 5.827,
@@ -8652,7 +8542,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0212",
+"name": "Prop_CarD.0200",
 "proto": "Prop_CarD",
 "x": -294.679,
 "y": 5.912,
@@ -8662,7 +8552,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0213",
+"name": "Prop_CarE.0201",
 "proto": "Prop_CarE",
 "x": -290.228,
 "y": 6.036,
@@ -8672,7 +8562,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0214",
+"name": "Prop_CarG.0202",
 "proto": "Prop_CarG",
 "x": -288.002,
 "y": 6.093,
@@ -8682,7 +8572,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0215",
+"name": "Prop_CarA.0203",
 "proto": "Prop_CarA",
 "x": -285.855,
 "y": 6.145,
@@ -8692,7 +8582,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0216",
+"name": "Prop_CarH.0204",
 "proto": "Prop_CarH",
 "x": -283.749,
 "y": 6.207,
@@ -8702,7 +8592,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0217",
+"name": "Prop_CarF.0205",
 "proto": "Prop_CarF",
 "x": -281.438,
 "y": 6.292,
@@ -8712,7 +8602,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0218",
+"name": "Prop_CarH.0206",
 "proto": "Prop_CarH",
 "x": -279.226,
 "y": 6.353,
@@ -8722,7 +8612,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0219",
+"name": "Prop_CarA.0207",
 "proto": "Prop_CarA",
 "x": -276.996,
 "y": 6.432,
@@ -8732,7 +8622,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0220",
+"name": "Prop_CarE.0208",
 "proto": "Prop_CarE",
 "x": -274.919,
 "y": 6.488,
@@ -8742,7 +8632,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0221",
+"name": "Prop_CarF.0209",
 "proto": "Prop_CarF",
 "x": -272.648,
 "y": 6.515,
@@ -8752,7 +8642,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0222",
+"name": "Prop_CarH.0210",
 "proto": "Prop_CarH",
 "x": -270.464,
 "y": 6.654,
@@ -8762,157 +8652,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMast.0223",
-"proto": "Prop_LampMast",
-"x": -265.4,
-"y": 6.698,
-"z": -17.4,
-"yaw": -0.0,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BoardDirection.0224",
-"proto": "Prop_BoardDirection",
-"x": -262.6,
-"y": 6.979,
-"z": -14.4,
-"yaw": 30.0,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_TimberPost.0225",
-"proto": "Prop_TimberPost",
-"x": -260.856,
-"y": 7.418,
-"z": -14.381,
-"yaw": -0.0,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_TimberPost.0226",
-"proto": "Prop_TimberPost",
-"x": -260.481,
-"y": 7.376,
-"z": -15.601,
-"yaw": -0.0,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_TimberPost.0227",
-"proto": "Prop_TimberPost",
-"x": -260.305,
-"y": 7.311,
-"z": -16.803,
-"yaw": -0.0,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_TimberPost.0228",
-"proto": "Prop_TimberPost",
-"x": -260.929,
-"y": 7.237,
-"z": -17.925,
-"yaw": -0.0,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_TimberPost.0229",
-"proto": "Prop_TimberPost",
-"x": -261.499,
-"y": 7.164,
-"z": -19.091,
-"yaw": -0.0,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_TimberPost.0230",
-"proto": "Prop_TimberPost",
-"x": -262.682,
-"y": 7.001,
-"z": -19.569,
-"yaw": -0.0,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_TimberPost.0231",
-"proto": "Prop_TimberPost",
-"x": -263.888,
-"y": 6.879,
-"z": -20.06,
-"yaw": -0.0,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_TimberPost.0232",
-"proto": "Prop_TimberPost",
-"x": -265.007,
-"y": 6.896,
-"z": -19.741,
-"yaw": -0.0,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_TimberPost.0233",
-"proto": "Prop_TimberPost",
-"x": -266.057,
-"y": 6.873,
-"z": -18.985,
-"yaw": -0.0,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_SignStop.0234",
-"proto": "Prop_SignStop",
-"x": -241.5,
-"y": 7.131,
-"z": -27.3,
-"yaw": 232.002,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_AdTotem.0235",
-"proto": "Prop_AdTotem",
-"x": -238.6,
-"y": 7.312,
-"z": -27.9,
-"yaw": 215.002,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_SignRoundTriangle.0236",
-"proto": "Prop_SignRoundTriangle",
-"x": -234.6,
-"y": 7.432,
-"z": -28.6,
-"yaw": 110.002,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_SignParking.0237",
-"proto": "Prop_SignParking",
-"x": -262.914,
-"y": 7.167,
-"z": -11.601,
-"yaw": 110.002,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_SignRound.0238",
+"name": "Prop_SignRound.0211",
 "proto": "Prop_SignRound",
 "x": -267.025,
 "y": 7.069,
@@ -8922,47 +8662,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampSidewalk.0239",
-"proto": "Prop_LampSidewalk",
-"x": -263.6,
-"y": 7.155,
-"z": -11.155,
-"yaw": -60.0,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BinsUnderground.0240",
-"proto": "Prop_BinsUnderground",
-"x": -234.4,
-"y": 7.031,
-"z": -31.3,
-"yaw": 36.87,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BikeRack.0241",
-"proto": "Prop_BikeRack",
-"x": -238.0,
-"y": 7.381,
-"z": -27.6,
-"yaw": -53.13,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BikeRack.0242",
-"proto": "Prop_BikeRack",
-"x": -230.2,
-"y": 6.593,
-"z": -34.6,
-"yaw": -53.13,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_PayMachine.0243",
+"name": "Prop_PayMachine.0212",
 "proto": "Prop_PayMachine",
 "x": -280.601,
 "y": 5.833,
@@ -8972,7 +8672,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignParking.0244",
+"name": "Prop_SignParking.0213",
 "proto": "Prop_SignParking",
 "x": -281.39,
 "y": 5.759,
@@ -8982,7 +8682,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CabinetGrey.0245",
+"name": "Prop_CabinetGrey.0214",
 "proto": "Prop_CabinetGrey",
 "x": -276.229,
 "y": 5.659,
@@ -8992,7 +8692,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CabinetGrey.0246",
+"name": "Prop_CabinetGrey.0215",
 "proto": "Prop_CabinetGrey",
 "x": -275.184,
 "y": 5.662,
@@ -9002,7 +8702,7 @@
 "scale": 0.85
 },
 {
-"name": "Prop_LampGlobe.0247",
+"name": "Prop_LampGlobe.0216",
 "proto": "Prop_LampGlobe",
 "x": -287.4,
 "y": 5.628,
@@ -9012,7 +8712,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampGlobe.0248",
+"name": "Prop_LampGlobe.0217",
 "proto": "Prop_LampGlobe",
 "x": -297.0,
 "y": 5.368,
@@ -9022,7 +8722,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignParking.0249",
+"name": "Prop_SignParking.0218",
 "proto": "Prop_SignParking",
 "x": -296.935,
 "y": 6.03,
@@ -9032,7 +8732,7 @@
 "scale": 0.88
 },
 {
-"name": "Prop_SignParking.0250",
+"name": "Prop_SignParking.0219",
 "proto": "Prop_SignParking",
 "x": -292.524,
 "y": 6.112,
@@ -9042,7 +8742,7 @@
 "scale": 0.88
 },
 {
-"name": "Prop_LampMast.0251",
+"name": "Prop_LampMast.0220",
 "proto": "Prop_LampMast",
 "x": -335.0,
 "y": 4.161,
@@ -9052,7 +8752,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignCrossing.0252",
+"name": "Prop_SignCrossing.0221",
 "proto": "Prop_SignCrossing",
 "x": -299.328,
 "y": 7.42,
@@ -9062,7 +8762,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignCrossing.0253",
+"name": "Prop_SignCrossing.0222",
 "proto": "Prop_SignCrossing",
 "x": -306.522,
 "y": 6.351,
@@ -9072,7 +8772,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0254",
+"name": "Prop_CarA.0223",
 "proto": "Prop_CarA",
 "x": -175.491,
 "y": 4.127,
@@ -9082,7 +8782,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0255",
+"name": "Prop_CarG.0224",
 "proto": "Prop_CarG",
 "x": -169.545,
 "y": 3.94,
@@ -9092,7 +8792,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0256",
+"name": "Prop_CarG.0225",
 "proto": "Prop_CarG",
 "x": -159.725,
 "y": 3.611,
@@ -9102,7 +8802,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0257",
+"name": "Prop_CarE.0226",
 "proto": "Prop_CarE",
 "x": -157.94,
 "y": 3.521,
@@ -9112,127 +8812,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0258",
-"proto": "Prop_CarB",
-"x": -240.083,
-"y": 5.829,
-"z": -51.753,
-"yaw": -53.864,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarF.0259",
-"proto": "Prop_CarF",
-"x": -238.115,
-"y": 5.738,
-"z": -53.352,
-"yaw": 128.629,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarC.0260",
-"proto": "Prop_CarC",
-"x": -236.414,
-"y": 5.632,
-"z": -55.133,
-"yaw": -51.177,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarH.0261",
-"proto": "Prop_CarH",
-"x": -234.316,
-"y": 5.557,
-"z": -56.457,
-"yaw": 125.913,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarA.0262",
-"proto": "Prop_CarA",
-"x": -237.354,
-"y": 4.974,
-"z": -60.588,
-"yaw": -53.354,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarG.0263",
-"proto": "Prop_CarG",
-"x": -235.456,
-"y": 4.947,
-"z": -61.836,
-"yaw": -49.309,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarD.0264",
-"proto": "Prop_CarD",
-"x": -233.459,
-"y": 4.88,
-"z": -63.439,
-"yaw": -50.884,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarF.0265",
-"proto": "Prop_CarF",
-"x": -231.472,
-"y": 4.816,
-"z": -65.015,
-"yaw": -50.896,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarC.0266",
-"proto": "Prop_CarC",
-"x": -229.557,
-"y": 4.734,
-"z": -66.724,
-"yaw": -52.426,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarG.0267",
-"proto": "Prop_CarG",
-"x": -225.55,
-"y": 4.704,
-"z": -69.531,
-"yaw": -49.343,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarH.0268",
-"proto": "Prop_CarH",
-"x": -223.848,
-"y": 4.617,
-"z": -71.418,
-"yaw": -53.016,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarA.0269",
-"proto": "Prop_CarA",
-"x": -221.754,
-"y": 4.606,
-"z": -72.949,
-"yaw": -229.527,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarF.0270",
+"name": "Prop_CarF.0227",
 "proto": "Prop_CarF",
 "x": -240.413,
 "y": 3.901,
@@ -9242,7 +8822,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0271",
+"name": "Prop_CarC.0228",
 "proto": "Prop_CarC",
 "x": -237.769,
 "y": 3.895,
@@ -9252,7 +8832,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0272",
+"name": "Prop_CarD.0229",
 "proto": "Prop_CarD",
 "x": -235.378,
 "y": 3.884,
@@ -9262,7 +8842,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0273",
+"name": "Prop_CarB.0230",
 "proto": "Prop_CarB",
 "x": -233.02,
 "y": 3.865,
@@ -9272,7 +8852,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0274",
+"name": "Prop_CarH.0231",
 "proto": "Prop_CarH",
 "x": -225.694,
 "y": 3.87,
@@ -9282,7 +8862,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0275",
+"name": "Prop_CarA.0232",
 "proto": "Prop_CarA",
 "x": -223.203,
 "y": 3.901,
@@ -9292,7 +8872,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0276",
+"name": "Prop_CarA.0233",
 "proto": "Prop_CarA",
 "x": -220.794,
 "y": 3.958,
@@ -9302,7 +8882,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0277",
+"name": "Prop_CarA.0234",
 "proto": "Prop_CarA",
 "x": -218.382,
 "y": 3.953,
@@ -9312,7 +8892,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0278",
+"name": "Prop_CarC.0235",
 "proto": "Prop_CarC",
 "x": -213.393,
 "y": 4.298,
@@ -9322,7 +8902,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0279",
+"name": "Prop_CarG.0236",
 "proto": "Prop_CarG",
 "x": -211.075,
 "y": 4.393,
@@ -9332,7 +8912,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0280",
+"name": "Prop_CarF.0237",
 "proto": "Prop_CarF",
 "x": -208.687,
 "y": 4.491,
@@ -9342,7 +8922,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0281",
+"name": "Prop_CarH.0238",
 "proto": "Prop_CarH",
 "x": -206.315,
 "y": 4.542,
@@ -9352,157 +8932,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0282",
-"proto": "Prop_BollardSquare",
-"x": -221.295,
-"y": 5.509,
-"z": -47.078,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0283",
-"proto": "Prop_BollardSquare",
-"x": -219.804,
-"y": 5.453,
-"z": -48.255,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0284",
-"proto": "Prop_BollardSquare",
-"x": -218.312,
-"y": 5.396,
-"z": -49.432,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0285",
-"proto": "Prop_BollardSquare",
-"x": -216.821,
-"y": 5.34,
-"z": -50.61,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0286",
-"proto": "Prop_BollardSquare",
-"x": -215.33,
-"y": 5.301,
-"z": -51.787,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0287",
-"proto": "Prop_BollardSquare",
-"x": -213.838,
-"y": 5.252,
-"z": -52.964,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0288",
-"proto": "Prop_BollardSquare",
-"x": -212.347,
-"y": 5.226,
-"z": -54.142,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0289",
-"proto": "Prop_BollardSquare",
-"x": -210.856,
-"y": 5.177,
-"z": -55.319,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0290",
-"proto": "Prop_BollardSquare",
-"x": -209.365,
-"y": 5.169,
-"z": -56.496,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0291",
-"proto": "Prop_BollardSquare",
-"x": -207.873,
-"y": 5.145,
-"z": -57.673,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0292",
-"proto": "Prop_BollardSquare",
-"x": -206.382,
-"y": 4.942,
-"z": -58.851,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0293",
-"proto": "Prop_BollardSquare",
-"x": -204.891,
-"y": 4.91,
-"z": -60.028,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0294",
-"proto": "Prop_BollardSquare",
-"x": -203.4,
-"y": 4.888,
-"z": -61.205,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0295",
-"proto": "Prop_BollardSquare",
-"x": -201.908,
-"y": 4.868,
-"z": -62.383,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0296",
-"proto": "Prop_BollardSquare",
-"x": -200.417,
-"y": 4.834,
-"z": -63.56,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0297",
+"name": "Prop_BollardSquare.0239",
 "proto": "Prop_BollardSquare",
 "x": -198.926,
 "y": 4.807,
@@ -9512,7 +8942,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0298",
+"name": "Prop_BollardSquare.0240",
 "proto": "Prop_BollardSquare",
 "x": -197.434,
 "y": 4.788,
@@ -9522,7 +8952,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0299",
+"name": "Prop_BollardSquare.0241",
 "proto": "Prop_BollardSquare",
 "x": -195.943,
 "y": 4.766,
@@ -9532,7 +8962,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0300",
+"name": "Prop_BollardSquare.0242",
 "proto": "Prop_BollardSquare",
 "x": -194.452,
 "y": 4.743,
@@ -9542,7 +8972,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0301",
+"name": "Prop_BollardSquare.0243",
 "proto": "Prop_BollardSquare",
 "x": -192.961,
 "y": 4.721,
@@ -9552,7 +8982,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0302",
+"name": "Prop_BollardSquare.0244",
 "proto": "Prop_BollardSquare",
 "x": -191.469,
 "y": 4.696,
@@ -9562,7 +8992,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0303",
+"name": "Prop_BollardSquare.0245",
 "proto": "Prop_BollardSquare",
 "x": -189.978,
 "y": 4.676,
@@ -9572,7 +9002,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0304",
+"name": "Prop_BollardSquare.0246",
 "proto": "Prop_BollardSquare",
 "x": -188.487,
 "y": 4.656,
@@ -9582,7 +9012,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0305",
+"name": "Prop_BollardSquare.0247",
 "proto": "Prop_BollardSquare",
 "x": -186.995,
 "y": 4.633,
@@ -9592,7 +9022,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0306",
+"name": "Prop_BollardSquare.0248",
 "proto": "Prop_BollardSquare",
 "x": -185.504,
 "y": 4.596,
@@ -9602,7 +9032,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0307",
+"name": "Prop_BollardSquare.0249",
 "proto": "Prop_BollardSquare",
 "x": -184.013,
 "y": 4.575,
@@ -9612,7 +9042,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0308",
+"name": "Prop_BollardSquare.0250",
 "proto": "Prop_BollardSquare",
 "x": -182.522,
 "y": 4.554,
@@ -9622,7 +9052,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0309",
+"name": "Prop_BollardSquare.0251",
 "proto": "Prop_BollardSquare",
 "x": -181.03,
 "y": 4.518,
@@ -9632,7 +9062,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0310",
+"name": "Prop_BollardSquare.0252",
 "proto": "Prop_BollardSquare",
 "x": -179.539,
 "y": 4.481,
@@ -9642,7 +9072,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0311",
+"name": "Prop_BollardSquare.0253",
 "proto": "Prop_BollardSquare",
 "x": -178.048,
 "y": 4.458,
@@ -9652,7 +9082,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0312",
+"name": "Prop_BollardSquare.0254",
 "proto": "Prop_BollardSquare",
 "x": -176.557,
 "y": 4.435,
@@ -9662,7 +9092,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0313",
+"name": "Prop_BollardSquare.0255",
 "proto": "Prop_BollardSquare",
 "x": -175.065,
 "y": 4.397,
@@ -9672,7 +9102,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0314",
+"name": "Prop_BollardSquare.0256",
 "proto": "Prop_BollardSquare",
 "x": -173.574,
 "y": 4.361,
@@ -9682,7 +9112,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0315",
+"name": "Prop_BollardSquare.0257",
 "proto": "Prop_BollardSquare",
 "x": -172.083,
 "y": 4.327,
@@ -9692,7 +9122,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0316",
+"name": "Prop_BollardSquare.0258",
 "proto": "Prop_BollardSquare",
 "x": -170.591,
 "y": 4.286,
@@ -9702,7 +9132,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0317",
+"name": "Prop_BollardSquare.0259",
 "proto": "Prop_BollardSquare",
 "x": -169.1,
 "y": 4.233,
@@ -9712,7 +9142,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0318",
+"name": "Prop_BollardSquare.0260",
 "proto": "Prop_BollardSquare",
 "x": -167.609,
 "y": 4.189,
@@ -9722,7 +9152,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0319",
+"name": "Prop_BollardSquare.0261",
 "proto": "Prop_BollardSquare",
 "x": -166.118,
 "y": 4.148,
@@ -9732,7 +9162,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0320",
+"name": "Prop_BollardSquare.0262",
 "proto": "Prop_BollardSquare",
 "x": -164.626,
 "y": 4.094,
@@ -9742,7 +9172,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0321",
+"name": "Prop_BollardSquare.0263",
 "proto": "Prop_BollardSquare",
 "x": -163.135,
 "y": 4.035,
@@ -9752,7 +9182,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0322",
+"name": "Prop_BollardSquare.0264",
 "proto": "Prop_BollardSquare",
 "x": -161.644,
 "y": 3.99,
@@ -9762,7 +9192,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0323",
+"name": "Prop_BollardSquare.0265",
 "proto": "Prop_BollardSquare",
 "x": -160.152,
 "y": 3.95,
@@ -9772,7 +9202,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0324",
+"name": "Prop_BollardSquare.0266",
 "proto": "Prop_BollardSquare",
 "x": -158.661,
 "y": 3.895,
@@ -9782,7 +9212,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0325",
+"name": "Prop_BollardSquare.0267",
 "proto": "Prop_BollardSquare",
 "x": -157.17,
 "y": 3.84,
@@ -9792,7 +9222,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0326",
+"name": "Prop_BollardSquare.0268",
 "proto": "Prop_BollardSquare",
 "x": -155.679,
 "y": 3.796,
@@ -9802,7 +9232,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0327",
+"name": "Prop_BollardSquare.0269",
 "proto": "Prop_BollardSquare",
 "x": -154.187,
 "y": 3.748,
@@ -9812,7 +9242,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0328",
+"name": "Prop_BollardSquare.0270",
 "proto": "Prop_BollardSquare",
 "x": -152.696,
 "y": 3.698,
@@ -9822,7 +9252,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0329",
+"name": "Prop_BollardSquare.0271",
 "proto": "Prop_BollardSquare",
 "x": -151.205,
 "y": 3.647,
@@ -9832,7 +9262,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0330",
+"name": "Prop_BollardSquare.0272",
 "proto": "Prop_BollardSquare",
 "x": -149.714,
 "y": 3.599,
@@ -9842,7 +9272,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0331",
+"name": "Prop_BollardSquare.0273",
 "proto": "Prop_BollardSquare",
 "x": -148.222,
 "y": 3.557,
@@ -9852,27 +9282,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0332",
-"proto": "Prop_BollardSquare",
-"x": -215.177,
-"y": 4.725,
-"z": -75.478,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0333",
-"proto": "Prop_BollardSquare",
-"x": -213.686,
-"y": 4.697,
-"z": -76.655,
-"yaw": 38.291,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BollardSquare.0334",
+"name": "Prop_BollardSquare.0274",
 "proto": "Prop_BollardSquare",
 "x": -212.194,
 "y": 4.67,
@@ -9882,7 +9292,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0335",
+"name": "Prop_BollardSquare.0275",
 "proto": "Prop_BollardSquare",
 "x": -210.703,
 "y": 4.654,
@@ -9892,7 +9302,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0336",
+"name": "Prop_BollardSquare.0276",
 "proto": "Prop_BollardSquare",
 "x": -209.212,
 "y": 4.63,
@@ -9902,7 +9312,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0337",
+"name": "Prop_BollardSquare.0277",
 "proto": "Prop_BollardSquare",
 "x": -207.72,
 "y": 4.6,
@@ -9912,7 +9322,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0338",
+"name": "Prop_BollardSquare.0278",
 "proto": "Prop_BollardSquare",
 "x": -206.229,
 "y": 4.574,
@@ -9922,7 +9332,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0339",
+"name": "Prop_BollardSquare.0279",
 "proto": "Prop_BollardSquare",
 "x": -204.738,
 "y": 4.552,
@@ -9932,7 +9342,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0340",
+"name": "Prop_BollardSquare.0280",
 "proto": "Prop_BollardSquare",
 "x": -203.247,
 "y": 4.519,
@@ -9942,7 +9352,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0341",
+"name": "Prop_BollardSquare.0281",
 "proto": "Prop_BollardSquare",
 "x": -201.755,
 "y": 4.479,
@@ -9952,7 +9362,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0342",
+"name": "Prop_BollardSquare.0282",
 "proto": "Prop_BollardSquare",
 "x": -200.264,
 "y": 4.448,
@@ -9962,7 +9372,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0343",
+"name": "Prop_BollardSquare.0283",
 "proto": "Prop_BollardSquare",
 "x": -198.773,
 "y": 4.403,
@@ -9972,7 +9382,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0344",
+"name": "Prop_BollardSquare.0284",
 "proto": "Prop_BollardSquare",
 "x": -197.282,
 "y": 4.358,
@@ -9982,7 +9392,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0345",
+"name": "Prop_BollardSquare.0285",
 "proto": "Prop_BollardSquare",
 "x": -195.79,
 "y": 4.313,
@@ -9992,7 +9402,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0346",
+"name": "Prop_BollardSquare.0286",
 "proto": "Prop_BollardSquare",
 "x": -194.299,
 "y": 4.26,
@@ -10002,7 +9412,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0347",
+"name": "Prop_BollardSquare.0287",
 "proto": "Prop_BollardSquare",
 "x": -192.808,
 "y": 4.205,
@@ -10012,7 +9422,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardSquare.0348",
+"name": "Prop_BollardSquare.0288",
 "proto": "Prop_BollardSquare",
 "x": -191.316,
 "y": 4.151,
@@ -10022,7 +9432,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMast.0349",
+"name": "Prop_LampMast.0289",
 "proto": "Prop_LampMast",
 "x": -243.0,
 "y": 3.823,
@@ -10032,7 +9442,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMast.0350",
+"name": "Prop_LampMast.0290",
 "proto": "Prop_LampMast",
 "x": -176.6,
 "y": 4.143,
@@ -10042,7 +9452,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMast.0351",
+"name": "Prop_LampMast.0291",
 "proto": "Prop_LampMast",
 "x": -121.0,
 "y": 3.339,
@@ -10052,7 +9462,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignParking.0352",
+"name": "Prop_SignParking.0292",
 "proto": "Prop_SignParking",
 "x": -149.6,
 "y": 3.201,
@@ -10062,7 +9472,7 @@
 "scale": 0.9
 },
 {
-"name": "Prop_SignParking.0353",
+"name": "Prop_SignParking.0293",
 "proto": "Prop_SignParking",
 "x": -146.0,
 "y": 3.311,
@@ -10072,7 +9482,7 @@
 "scale": 0.9
 },
 {
-"name": "Prop_PayMachine.0354",
+"name": "Prop_PayMachine.0294",
 "proto": "Prop_PayMachine",
 "x": -157.0,
 "y": 3.483,
@@ -10082,7 +9492,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignParking.0355",
+"name": "Prop_SignParking.0295",
 "proto": "Prop_SignParking",
 "x": -156.2,
 "y": 3.459,
@@ -10092,7 +9502,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CabinetGrey.0356",
+"name": "Prop_CabinetGrey.0296",
 "proto": "Prop_CabinetGrey",
 "x": -176.0,
 "y": 3.485,
@@ -10102,7 +9512,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BillboardSmall.0357",
+"name": "Prop_BillboardSmall.0297",
 "proto": "Prop_BillboardSmall",
 "x": -112.0,
 "y": 5.089,
@@ -10112,7 +9522,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0358",
+"name": "Prop_LampMarginal.0298",
 "proto": "Prop_LampMarginal",
 "x": -145.565,
 "y": 7.317,
@@ -10122,7 +9532,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0359",
+"name": "Prop_LampMarginal.0299",
 "proto": "Prop_LampMarginal",
 "x": -145.565,
 "y": 7.317,
@@ -10132,7 +9542,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0360",
+"name": "Prop_LampMarginal.0300",
 "proto": "Prop_LampMarginal",
 "x": -170.676,
 "y": 7.815,
@@ -10142,7 +9552,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0361",
+"name": "Prop_LampMarginal.0301",
 "proto": "Prop_LampMarginal",
 "x": -199.648,
 "y": 7.733,
@@ -10152,17 +9562,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0362",
-"proto": "Prop_LampMarginal",
-"x": -233.231,
-"y": 7.869,
-"z": -9.146,
-"yaw": 120.659,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_LampMarginal.0363",
+"name": "Prop_LampMarginal.0302",
 "proto": "Prop_LampMarginal",
 "x": -265.828,
 "y": 8.071,
@@ -10172,7 +9572,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0364",
+"name": "Prop_LampMarginal.0303",
 "proto": "Prop_LampMarginal",
 "x": -297.84,
 "y": 7.519,
@@ -10182,7 +9582,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0365",
+"name": "Prop_LampMarginal.0304",
 "proto": "Prop_LampMarginal",
 "x": -329.86,
 "y": 7.481,
@@ -10192,7 +9592,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_ChevronBoard.0366",
+"name": "Prop_ChevronBoard.0305",
 "proto": "Prop_ChevronBoard",
 "x": -107.649,
 "y": 7.796,
@@ -10202,7 +9602,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_ChevronBoard.0367",
+"name": "Prop_ChevronBoard.0306",
 "proto": "Prop_ChevronBoard",
 "x": -117.739,
 "y": 7.452,
@@ -10212,7 +9612,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_ChevronBoard.0368",
+"name": "Prop_ChevronBoard.0307",
 "proto": "Prop_ChevronBoard",
 "x": -95.023,
 "y": 7.068,
@@ -10222,7 +9622,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_ChevronBoard.0369",
+"name": "Prop_ChevronBoard.0308",
 "proto": "Prop_ChevronBoard",
 "x": -118.652,
 "y": 6.593,
@@ -10232,7 +9632,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0370",
+"name": "Prop_LampMarginal.0309",
 "proto": "Prop_LampMarginal",
 "x": -118.5,
 "y": 7.532,
@@ -10242,7 +9642,7 @@
 "scale": 0.88
 },
 {
-"name": "Prop_LampMarginal.0371",
+"name": "Prop_LampMarginal.0310",
 "proto": "Prop_LampMarginal",
 "x": -92.0,
 "y": 8.329,
@@ -10252,7 +9652,7 @@
 "scale": 0.88
 },
 {
-"name": "Prop_LampMarginal.0372",
+"name": "Prop_LampMarginal.0311",
 "proto": "Prop_LampMarginal",
 "x": -84.0,
 "y": 7.797,
@@ -10262,7 +9662,7 @@
 "scale": 0.88
 },
 {
-"name": "Prop_LampMarginal.0373",
+"name": "Prop_LampMarginal.0312",
 "proto": "Prop_LampMarginal",
 "x": -97.0,
 "y": 5.926,
@@ -10272,7 +9672,7 @@
 "scale": 0.88
 },
 {
-"name": "Prop_LampMarginal.0374",
+"name": "Prop_LampMarginal.0313",
 "proto": "Prop_LampMarginal",
 "x": -115.0,
 "y": 5.376,
@@ -10282,7 +9682,7 @@
 "scale": 0.88
 },
 {
-"name": "Prop_LampMarginal.0375",
+"name": "Prop_LampMarginal.0314",
 "proto": "Prop_LampMarginal",
 "x": -131.0,
 "y": 6.441,
@@ -10292,7 +9692,7 @@
 "scale": 0.88
 },
 {
-"name": "Prop_SignRoundTriangle.0376",
+"name": "Prop_SignRoundTriangle.0315",
 "proto": "Prop_SignRoundTriangle",
 "x": -129.6,
 "y": 7.267,
@@ -10302,7 +9702,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignRound.0377",
+"name": "Prop_SignRound.0316",
 "proto": "Prop_SignRound",
 "x": -84.6,
 "y": 7.22,
@@ -10312,7 +9712,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignCrossing.0378",
+"name": "Prop_SignCrossing.0317",
 "proto": "Prop_SignCrossing",
 "x": -137.6,
 "y": 6.462,
@@ -10322,7 +9722,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AdTotem.0379",
+"name": "Prop_AdTotem.0318",
 "proto": "Prop_AdTotem",
 "x": -110.0,
 "y": 5.064,
@@ -10332,7 +9732,7 @@
 "scale": 1.9
 },
 {
-"name": "Prop_CabinetGrey.0380",
+"name": "Prop_CabinetGrey.0319",
 "proto": "Prop_CabinetGrey",
 "x": -103.0,
 "y": 5.46,
@@ -10342,7 +9742,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CabinetGrey.0381",
+"name": "Prop_CabinetGrey.0320",
 "proto": "Prop_CabinetGrey",
 "x": -101.6,
 "y": 5.488,
@@ -10352,7 +9752,7 @@
 "scale": 0.75
 },
 {
-"name": "Prop_Billboard.0382",
+"name": "Prop_Billboard.0321",
 "proto": "Prop_Billboard",
 "x": -120.6,
 "y": 7.549,
@@ -10362,7 +9762,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampSidewalk.0383",
+"name": "Prop_LampSidewalk.0322",
 "proto": "Prop_LampSidewalk",
 "x": -87.749,
 "y": 11.537,
@@ -10372,7 +9772,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampSidewalk.0384",
+"name": "Prop_LampSidewalk.0323",
 "proto": "Prop_LampSidewalk",
 "x": -85.55,
 "y": 10.389,
@@ -10382,7 +9782,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampSidewalk.0385",
+"name": "Prop_LampSidewalk.0324",
 "proto": "Prop_LampSidewalk",
 "x": -85.55,
 "y": 9.532,
@@ -10392,7 +9792,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampSidewalk.0386",
+"name": "Prop_LampSidewalk.0325",
 "proto": "Prop_LampSidewalk",
 "x": -85.55,
 "y": 8.646,
@@ -10402,7 +9802,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampAvenue.0387",
+"name": "Prop_LampAvenue.0326",
 "proto": "Prop_LampAvenue",
 "x": -106.947,
 "y": 11.736,
@@ -10412,7 +9812,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampAvenue.0388",
+"name": "Prop_LampAvenue.0327",
 "proto": "Prop_LampAvenue",
 "x": -103.856,
 "y": 10.908,
@@ -10422,7 +9822,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampAvenue.0389",
+"name": "Prop_LampAvenue.0328",
 "proto": "Prop_LampAvenue",
 "x": -102.95,
 "y": 10.045,
@@ -10432,7 +9832,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampAvenue.0390",
+"name": "Prop_LampAvenue.0329",
 "proto": "Prop_LampAvenue",
 "x": -102.95,
 "y": 9.069,
@@ -10442,7 +9842,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0391",
+"name": "Prop_BollardBanded.0330",
 "proto": "Prop_BollardBanded",
 "x": -89.0,
 "y": 10.197,
@@ -10452,7 +9852,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0392",
+"name": "Prop_BollardBanded.0331",
 "proto": "Prop_BollardBanded",
 "x": -89.0,
 "y": 10.113,
@@ -10462,7 +9862,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0393",
+"name": "Prop_BollardBanded.0332",
 "proto": "Prop_BollardBanded",
 "x": -89.0,
 "y": 10.035,
@@ -10472,7 +9872,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0394",
+"name": "Prop_BollardBanded.0333",
 "proto": "Prop_BollardBanded",
 "x": -89.0,
 "y": 9.957,
@@ -10482,7 +9882,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0395",
+"name": "Prop_BollardBanded.0334",
 "proto": "Prop_BollardBanded",
 "x": -89.0,
 "y": 9.879,
@@ -10492,7 +9892,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0396",
+"name": "Prop_BollardBanded.0335",
 "proto": "Prop_BollardBanded",
 "x": -89.0,
 "y": 9.807,
@@ -10502,7 +9902,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0397",
+"name": "Prop_BollardBanded.0336",
 "proto": "Prop_BollardBanded",
 "x": -89.0,
 "y": 9.726,
@@ -10512,7 +9912,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0398",
+"name": "Prop_BollardBanded.0337",
 "proto": "Prop_BollardBanded",
 "x": -89.0,
 "y": 9.653,
@@ -10522,7 +9922,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0399",
+"name": "Prop_BollardBanded.0338",
 "proto": "Prop_BollardBanded",
 "x": -86.0,
 "y": 10.199,
@@ -10532,7 +9932,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0400",
+"name": "Prop_BollardBanded.0339",
 "proto": "Prop_BollardBanded",
 "x": -86.0,
 "y": 10.117,
@@ -10542,7 +9942,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0401",
+"name": "Prop_BollardBanded.0340",
 "proto": "Prop_BollardBanded",
 "x": -86.0,
 "y": 10.038,
@@ -10552,7 +9952,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0402",
+"name": "Prop_BollardBanded.0341",
 "proto": "Prop_BollardBanded",
 "x": -86.0,
 "y": 9.961,
@@ -10562,7 +9962,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0403",
+"name": "Prop_BollardBanded.0342",
 "proto": "Prop_BollardBanded",
 "x": -86.0,
 "y": 9.888,
@@ -10572,7 +9972,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0404",
+"name": "Prop_BollardBanded.0343",
 "proto": "Prop_BollardBanded",
 "x": -86.0,
 "y": 9.813,
@@ -10582,7 +9982,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0405",
+"name": "Prop_BollardBanded.0344",
 "proto": "Prop_BollardBanded",
 "x": -86.0,
 "y": 9.736,
@@ -10592,7 +9992,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardBanded.0406",
+"name": "Prop_BollardBanded.0345",
 "proto": "Prop_BollardBanded",
 "x": -86.0,
 "y": 9.66,
@@ -10602,7 +10002,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignRound.0407",
+"name": "Prop_SignRound.0346",
 "proto": "Prop_SignRound",
 "x": -85.3,
 "y": 10.777,
@@ -10612,7 +10012,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BoardDirectionTall.0408",
+"name": "Prop_BoardDirectionTall.0347",
 "proto": "Prop_BoardDirectionTall",
 "x": -105.4,
 "y": 8.59,
@@ -10622,7 +10022,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignCrossing.0409",
+"name": "Prop_SignCrossing.0348",
 "proto": "Prop_SignCrossing",
 "x": -85.2,
 "y": 8.861,
@@ -10632,7 +10032,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0410",
+"name": "Prop_CarC.0349",
 "proto": "Prop_CarC",
 "x": -131.216,
 "y": 8.853,
@@ -10642,7 +10042,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0411",
+"name": "Prop_CarD.0350",
 "proto": "Prop_CarD",
 "x": -130.863,
 "y": 8.769,
@@ -10652,7 +10052,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0412",
+"name": "Prop_CarA.0351",
 "proto": "Prop_CarA",
 "x": -130.931,
 "y": 8.679,
@@ -10662,7 +10062,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0413",
+"name": "Prop_CarB.0352",
 "proto": "Prop_CarB",
 "x": -130.88,
 "y": 8.588,
@@ -10672,7 +10072,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0414",
+"name": "Prop_CarC.0353",
 "proto": "Prop_CarC",
 "x": -131.056,
 "y": 8.49,
@@ -10682,7 +10082,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0415",
+"name": "Prop_CarC.0354",
 "proto": "Prop_CarC",
 "x": -130.872,
 "y": 8.35,
@@ -10692,7 +10092,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0416",
+"name": "Prop_CarB.0355",
 "proto": "Prop_CarB",
 "x": -130.931,
 "y": 8.313,
@@ -10702,7 +10102,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0417",
+"name": "Prop_CarC.0356",
 "proto": "Prop_CarC",
 "x": -131.207,
 "y": 8.204,
@@ -10712,7 +10112,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0418",
+"name": "Prop_CarH.0357",
 "proto": "Prop_CarH",
 "x": -131.158,
 "y": 8.095,
@@ -10722,7 +10122,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampCampus.0419",
+"name": "Prop_LampCampus.0358",
 "proto": "Prop_LampCampus",
 "x": -31.15,
 "y": 10.669,
@@ -10732,7 +10132,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampCampus.0420",
+"name": "Prop_LampCampus.0359",
 "proto": "Prop_LampCampus",
 "x": 103.142,
 "y": 10.984,
@@ -10742,7 +10142,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0421",
+"name": "Prop_RailingSegment.0360",
 "proto": "Prop_RailingSegment",
 "x": 22.452,
 "y": 14.5,
@@ -10752,7 +10152,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0422",
+"name": "Prop_RailingSegment.0361",
 "proto": "Prop_RailingSegment",
 "x": 20.433,
 "y": 14.5,
@@ -10762,7 +10162,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0423",
+"name": "Prop_RailingSegment.0362",
 "proto": "Prop_RailingSegment",
 "x": 18.437,
 "y": 14.5,
@@ -10772,7 +10172,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0424",
+"name": "Prop_RailingSegment.0363",
 "proto": "Prop_RailingSegment",
 "x": 16.387,
 "y": 14.5,
@@ -10782,7 +10182,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0425",
+"name": "Prop_RailingSegment.0364",
 "proto": "Prop_RailingSegment",
 "x": 14.336,
 "y": 14.5,
@@ -10792,7 +10192,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0426",
+"name": "Prop_RailingSegment.0365",
 "proto": "Prop_RailingSegment",
 "x": 12.32,
 "y": 14.5,
@@ -10802,7 +10202,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0427",
+"name": "Prop_RailingSegment.0366",
 "proto": "Prop_RailingSegment",
 "x": 10.329,
 "y": 14.5,
@@ -10812,7 +10212,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0428",
+"name": "Prop_RailingSegment.0367",
 "proto": "Prop_RailingSegment",
 "x": 21.591,
 "y": 14.5,
@@ -10822,7 +10222,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0429",
+"name": "Prop_RailingSegment.0368",
 "proto": "Prop_RailingSegment",
 "x": 19.528,
 "y": 14.5,
@@ -10832,7 +10232,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0430",
+"name": "Prop_RailingSegment.0369",
 "proto": "Prop_RailingSegment",
 "x": 17.518,
 "y": 14.5,
@@ -10842,7 +10242,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0431",
+"name": "Prop_RailingSegment.0370",
 "proto": "Prop_RailingSegment",
 "x": 15.51,
 "y": 14.5,
@@ -10852,7 +10252,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0432",
+"name": "Prop_RailingSegment.0371",
 "proto": "Prop_RailingSegment",
 "x": 13.48,
 "y": 14.5,
@@ -10862,7 +10262,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0433",
+"name": "Prop_RailingSegment.0372",
 "proto": "Prop_RailingSegment",
 "x": 11.433,
 "y": 14.5,
@@ -10872,7 +10272,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0434",
+"name": "Prop_RailingSegment.0373",
 "proto": "Prop_RailingSegment",
 "x": 9.368,
 "y": 14.5,
@@ -10882,7 +10282,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0435",
+"name": "Prop_RailingSegment.0374",
 "proto": "Prop_RailingSegment",
 "x": 66.034,
 "y": 10.717,
@@ -10892,7 +10292,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0436",
+"name": "Prop_RailingSegment.0375",
 "proto": "Prop_RailingSegment",
 "x": 67.72,
 "y": 10.778,
@@ -10902,7 +10302,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0437",
+"name": "Prop_RailingSegment.0376",
 "proto": "Prop_RailingSegment",
 "x": 69.458,
 "y": 10.837,
@@ -10912,7 +10312,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0438",
+"name": "Prop_RailingSegment.0377",
 "proto": "Prop_RailingSegment",
 "x": 71.149,
 "y": 10.894,
@@ -10922,7 +10322,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0439",
+"name": "Prop_RailingSegment.0378",
 "proto": "Prop_RailingSegment",
 "x": 72.831,
 "y": 10.95,
@@ -10932,7 +10332,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0440",
+"name": "Prop_RailingSegment.0379",
 "proto": "Prop_RailingSegment",
 "x": 74.554,
 "y": 11.007,
@@ -10942,7 +10342,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0441",
+"name": "Prop_RailingSegment.0380",
 "proto": "Prop_RailingSegment",
 "x": 76.233,
 "y": 11.063,
@@ -10952,7 +10352,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0442",
+"name": "Prop_RailingSegment.0381",
 "proto": "Prop_RailingSegment",
 "x": 77.931,
 "y": 11.12,
@@ -10962,7 +10362,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0443",
+"name": "Prop_RailingSegment.0382",
 "proto": "Prop_RailingSegment",
 "x": 79.662,
 "y": 11.179,
@@ -10972,7 +10372,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0444",
+"name": "Prop_RailingSegment.0383",
 "proto": "Prop_RailingSegment",
 "x": 81.337,
 "y": 11.237,
@@ -10982,7 +10382,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0445",
+"name": "Prop_RailingSegment.0384",
 "proto": "Prop_RailingSegment",
 "x": 83.001,
 "y": 11.296,
@@ -10992,7 +10392,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0446",
+"name": "Prop_RailingSegment.0385",
 "proto": "Prop_RailingSegment",
 "x": 84.665,
 "y": 11.356,
@@ -11002,7 +10402,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0447",
+"name": "Prop_RailingSegment.0386",
 "proto": "Prop_RailingSegment",
 "x": 86.35,
 "y": 11.418,
@@ -11012,7 +10412,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0448",
+"name": "Prop_RailingSegment.0387",
 "proto": "Prop_RailingSegment",
 "x": 88.041,
 "y": 11.481,
@@ -11022,7 +10422,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0449",
+"name": "Prop_RailingSegment.0388",
 "proto": "Prop_RailingSegment",
 "x": 89.766,
 "y": 11.547,
@@ -11032,7 +10432,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0450",
+"name": "Prop_RailingSegment.0389",
 "proto": "Prop_RailingSegment",
 "x": 91.427,
 "y": 11.613,
@@ -11042,7 +10442,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0451",
+"name": "Prop_RailingSegment.0390",
 "proto": "Prop_RailingSegment",
 "x": 93.078,
 "y": 11.68,
@@ -11052,7 +10452,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0452",
+"name": "Prop_RailingSegment.0391",
 "proto": "Prop_RailingSegment",
 "x": 94.747,
 "y": 11.748,
@@ -11062,7 +10462,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0453",
+"name": "Prop_RailingSegment.0392",
 "proto": "Prop_RailingSegment",
 "x": 96.414,
 "y": 11.816,
@@ -11072,7 +10472,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0454",
+"name": "Prop_RailingSegment.0393",
 "proto": "Prop_RailingSegment",
 "x": 98.074,
 "y": 11.885,
@@ -11082,7 +10482,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0455",
+"name": "Prop_RailingSegment.0394",
 "proto": "Prop_RailingSegment",
 "x": 99.718,
 "y": 11.957,
@@ -11092,7 +10492,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0456",
+"name": "Prop_RailingSegment.0395",
 "proto": "Prop_RailingSegment",
 "x": 78.163,
 "y": 10.592,
@@ -11102,7 +10502,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0457",
+"name": "Prop_RailingSegment.0396",
 "proto": "Prop_RailingSegment",
 "x": 79.631,
 "y": 10.653,
@@ -11112,7 +10512,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0458",
+"name": "Prop_RailingSegment.0397",
 "proto": "Prop_RailingSegment",
 "x": 81.087,
 "y": 10.71,
@@ -11122,7 +10522,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0459",
+"name": "Prop_RailingSegment.0398",
 "proto": "Prop_RailingSegment",
 "x": 82.516,
 "y": 10.769,
@@ -11132,7 +10532,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0460",
+"name": "Prop_RailingSegment.0399",
 "proto": "Prop_RailingSegment",
 "x": 83.97,
 "y": 10.825,
@@ -11142,7 +10542,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0461",
+"name": "Prop_RailingSegment.0400",
 "proto": "Prop_RailingSegment",
 "x": 85.403,
 "y": 10.881,
@@ -11152,7 +10552,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0462",
+"name": "Prop_RailingSegment.0401",
 "proto": "Prop_RailingSegment",
 "x": 86.779,
 "y": 10.936,
@@ -11162,7 +10562,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0463",
+"name": "Prop_RailingSegment.0402",
 "proto": "Prop_RailingSegment",
 "x": 88.258,
 "y": 10.994,
@@ -11172,7 +10572,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0464",
+"name": "Prop_RailingSegment.0403",
 "proto": "Prop_RailingSegment",
 "x": 89.686,
 "y": 11.051,
@@ -11182,7 +10582,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0465",
+"name": "Prop_RailingSegment.0404",
 "proto": "Prop_RailingSegment",
 "x": 91.156,
 "y": 11.109,
@@ -11192,7 +10592,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0466",
+"name": "Prop_RailingSegment.0405",
 "proto": "Prop_RailingSegment",
 "x": 92.594,
 "y": 11.167,
@@ -11202,7 +10602,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0467",
+"name": "Prop_RailingSegment.0406",
 "proto": "Prop_RailingSegment",
 "x": 94.049,
 "y": 11.226,
@@ -11212,7 +10612,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0468",
+"name": "Prop_RailingSegment.0407",
 "proto": "Prop_RailingSegment",
 "x": 95.507,
 "y": 11.287,
@@ -11222,7 +10622,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0469",
+"name": "Prop_RailingSegment.0408",
 "proto": "Prop_RailingSegment",
 "x": 96.929,
 "y": 11.347,
@@ -11232,7 +10632,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0470",
+"name": "Prop_RailingSegment.0409",
 "proto": "Prop_RailingSegment",
 "x": 98.349,
 "y": 11.408,
@@ -11242,7 +10642,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0471",
+"name": "Prop_RailingSegment.0410",
 "proto": "Prop_RailingSegment",
 "x": 99.765,
 "y": 11.471,
@@ -11252,7 +10652,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0472",
+"name": "Prop_RailingSegment.0411",
 "proto": "Prop_RailingSegment",
 "x": 101.186,
 "y": 11.535,
@@ -11262,7 +10662,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0473",
+"name": "Prop_RailingSegment.0412",
 "proto": "Prop_RailingSegment",
 "x": 102.597,
 "y": 11.599,
@@ -11272,7 +10672,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0474",
+"name": "Prop_RailingSegment.0413",
 "proto": "Prop_RailingSegment",
 "x": 104.01,
 "y": 11.665,
@@ -11282,7 +10682,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0475",
+"name": "Prop_RailingSegment.0414",
 "proto": "Prop_RailingSegment",
 "x": 105.433,
 "y": 11.732,
@@ -11292,7 +10692,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0476",
+"name": "Prop_RailingSegment.0415",
 "proto": "Prop_RailingSegment",
 "x": 106.885,
 "y": 11.799,
@@ -11302,7 +10702,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Bollard.0477",
+"name": "Prop_Bollard.0416",
 "proto": "Prop_Bollard",
 "x": 104.166,
 "y": 11.082,
@@ -11312,7 +10712,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Bollard.0478",
+"name": "Prop_Bollard.0417",
 "proto": "Prop_Bollard",
 "x": 113.834,
 "y": 11.082,
@@ -11322,7 +10722,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LoungeChair.0479",
+"name": "Prop_LoungeChair.0418",
 "proto": "Prop_LoungeChair",
 "x": 21.313,
 "y": 14.5,
@@ -11332,7 +10732,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LoungeChair.0480",
+"name": "Prop_LoungeChair.0419",
 "proto": "Prop_LoungeChair",
 "x": 13.574,
 "y": 14.5,
@@ -11342,7 +10742,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LoungeChair.0481",
+"name": "Prop_LoungeChair.0420",
 "proto": "Prop_LoungeChair",
 "x": 6.234,
 "y": 14.5,
@@ -11352,107 +10752,107 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0482",
+"name": "Prop_BistroTable.0421",
 "proto": "Prop_BistroTable",
 "x": 122.819,
 "y": 11.161,
 "z": -15.017,
-"yaw": 28.745,
+"yaw": -40.457,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol.0483",
+"name": "Prop_Parasol.0422",
 "proto": "Prop_Parasol",
 "x": 122.819,
 "y": 11.161,
 "z": -15.017,
-"yaw": 49.71,
+"yaw": 168.845,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0484",
+"name": "Prop_BistroChair.0423",
 "proto": "Prop_BistroChair",
-"x": 122.25,
-"y": 11.154,
-"z": -14.724,
-"yaw": -58.304,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BistroChair.0485",
-"proto": "Prop_BistroChair",
-"x": 122.858,
-"y": 11.18,
-"z": -15.656,
-"yaw": -176.024,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BistroChair.0486",
-"proto": "Prop_BistroChair",
-"x": 123.379,
+"x": 123.409,
 "y": 11.172,
-"z": -14.708,
-"yaw": 54.099,
+"z": -14.769,
+"yaw": 80.988,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0487",
+"name": "Prop_BistroChair.0424",
+"proto": "Prop_BistroChair",
+"x": 122.295,
+"y": 11.155,
+"z": -14.65,
+"yaw": -41.511,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BistroChair.0425",
+"proto": "Prop_BistroChair",
+"x": 122.821,
+"y": 11.179,
+"z": -15.657,
+"yaw": 170.621,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BistroTable.0426",
 "proto": "Prop_BistroTable",
 "x": 122.824,
 "y": 11.171,
 "z": -12.652,
-"yaw": -177.01,
+"yaw": 39.437,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol.0488",
+"name": "Prop_Parasol.0427",
 "proto": "Prop_Parasol",
 "x": 122.824,
 "y": 11.171,
 "z": -12.652,
-"yaw": -79.796,
+"yaw": 82.168,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0489",
+"name": "Prop_BistroChair.0428",
 "proto": "Prop_BistroChair",
-"x": 122.583,
-"y": 11.138,
-"z": -12.059,
-"yaw": -9.081,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_BistroChair.0490",
-"proto": "Prop_BistroChair",
-"x": 122.384,
+"x": 122.228,
 "y": 11.161,
-"z": -13.117,
-"yaw": -130.119,
+"z": -12.417,
+"yaw": -56.912,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0491",
+"name": "Prop_BistroChair.0429",
 "proto": "Prop_BistroChair",
-"x": 123.45,
-"y": 11.184,
-"z": -12.784,
-"yaw": 108.954,
+"x": 122.836,
+"y": 11.168,
+"z": -13.292,
+"yaw": 169.137,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_TroughBloom.0492",
+"name": "Prop_BistroChair.0430",
+"proto": "Prop_BistroChair",
+"x": 123.412,
+"y": 11.185,
+"z": -12.402,
+"yaw": 58.539,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_TroughBloom.0431",
 "proto": "Prop_TroughBloom",
 "x": 120.656,
 "y": 11.145,
@@ -11462,107 +10862,107 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0493",
+"name": "Prop_PlanterRound.0432",
 "proto": "Prop_PlanterRound",
 "x": 122.079,
 "y": 11.138,
 "z": -11.03,
-"yaw": 110.73,
+"yaw": -5.174,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0494",
+"name": "Prop_BistroTable.0433",
 "proto": "Prop_BistroTable",
 "x": 40.558,
 "y": 14.5,
 "z": 123.381,
-"yaw": -105.705,
+"yaw": 149.508,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0495",
+"name": "Prop_BistroChair.0434",
 "proto": "Prop_BistroChair",
-"x": 41.026,
+"x": 40.94,
 "y": 14.5,
-"z": 123.817,
-"yaw": 53.652,
+"z": 122.867,
+"yaw": 133.127,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0496",
+"name": "Prop_BistroChair.0435",
 "proto": "Prop_BistroChair",
-"x": 39.975,
+"x": 40.791,
 "y": 14.5,
-"z": 123.646,
-"yaw": -77.859,
+"z": 123.977,
+"yaw": 10.164,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0497",
+"name": "Prop_BistroChair.0436",
 "proto": "Prop_BistroChair",
-"x": 40.663,
+"x": 39.921,
 "y": 14.5,
-"z": 122.75,
-"yaw": 176.878,
+"z": 123.316,
+"yaw": -89.41,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0498",
+"name": "Prop_BistroTable.0437",
 "proto": "Prop_BistroTable",
 "x": 42.32,
 "y": 14.5,
 "z": 121.804,
-"yaw": -77.269,
+"yaw": -24.838,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0499",
+"name": "Prop_BistroChair.0438",
 "proto": "Prop_BistroChair",
-"x": 41.721,
+"x": 42.12,
 "y": 14.5,
-"z": 122.03,
-"yaw": -70.124,
+"z": 121.195,
+"yaw": -175.732,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0500",
+"name": "Prop_BistroChair.0439",
 "proto": "Prop_BistroChair",
-"x": 42.407,
+"x": 42.95,
 "y": 14.5,
-"z": 121.17,
-"yaw": 168.1,
+"z": 121.913,
+"yaw": 79.807,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0501",
+"name": "Prop_BistroChair.0440",
 "proto": "Prop_BistroChair",
-"x": 42.811,
+"x": 41.889,
 "y": 14.5,
-"z": 122.214,
-"yaw": 63.822,
+"z": 122.277,
+"yaw": -39.878,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0502",
+"name": "Prop_PlanterRound.0441",
 "proto": "Prop_PlanterRound",
 "x": 43.029,
 "y": 14.5,
 "z": 120.166,
-"yaw": 85.961,
+"yaw": -81.761,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_TroughBloom.0503",
+"name": "Prop_TroughBloom.0442",
 "proto": "Prop_TroughBloom",
 "x": 39.795,
 "y": 14.5,
@@ -11572,187 +10972,187 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0504",
+"name": "Prop_BistroTable.0443",
 "proto": "Prop_BistroTable",
 "x": 47.42,
 "y": 14.5,
 "z": 112.617,
-"yaw": -70.457,
+"yaw": -108.352,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0505",
+"name": "Prop_BistroChair.0444",
 "proto": "Prop_BistroChair",
-"x": 48.059,
+"x": 48.042,
 "y": 14.5,
-"z": 112.654,
-"yaw": 90.722,
+"z": 112.765,
+"yaw": 88.9,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0506",
+"name": "Prop_BistroChair.0445",
 "proto": "Prop_BistroChair",
-"x": 47.108,
+"x": 46.941,
 "y": 14.5,
-"z": 113.176,
-"yaw": -26.728,
+"z": 113.042,
+"yaw": -37.918,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0507",
+"name": "Prop_BistroChair.0446",
 "proto": "Prop_BistroChair",
-"x": 47.13,
+"x": 47.24,
 "y": 14.5,
-"z": 112.046,
-"yaw": -148.889,
+"z": 112.003,
+"yaw": -169.859,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0508",
+"name": "Prop_BistroTable.0447",
 "proto": "Prop_BistroTable",
 "x": 49.02,
 "y": 14.5,
 "z": 110.876,
-"yaw": -102.061,
+"yaw": -106.513,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0509",
+"name": "Prop_BistroChair.0448",
 "proto": "Prop_BistroChair",
-"x": 49.208,
+"x": 49.389,
 "y": 14.5,
-"z": 110.264,
-"yaw": 169.406,
+"z": 111.398,
+"yaw": 48.719,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0510",
+"name": "Prop_BistroChair.0449",
 "proto": "Prop_BistroChair",
-"x": 49.381,
+"x": 48.382,
 "y": 14.5,
-"z": 111.404,
-"yaw": 31.043,
+"z": 110.932,
+"yaw": -82.684,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0511",
+"name": "Prop_BistroChair.0450",
 "proto": "Prop_BistroChair",
-"x": 48.402,
+"x": 49.245,
 "y": 14.5,
-"z": 111.044,
-"yaw": -61.009,
+"z": 110.277,
+"yaw": 162.136,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0512",
+"name": "Prop_PlanterRound.0451",
 "proto": "Prop_PlanterRound",
 "x": 49.565,
 "y": 14.5,
 "z": 109.177,
-"yaw": 49.624,
+"yaw": -148.66,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0513",
+"name": "Prop_BistroTable.0452",
 "proto": "Prop_BistroTable",
 "x": 38.553,
 "y": 14.5,
 "z": 95.145,
-"yaw": 35.099,
+"yaw": -99.867,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0514",
+"name": "Prop_BistroChair.0453",
 "proto": "Prop_BistroChair",
-"x": 37.962,
+"x": 39.17,
 "y": 14.5,
-"z": 94.9,
-"yaw": -106.387,
+"z": 95.316,
+"yaw": 80.999,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0515",
+"name": "Prop_BistroChair.0454",
 "proto": "Prop_BistroChair",
-"x": 39.036,
+"x": 38.085,
 "y": 14.5,
-"z": 94.725,
-"yaw": 143.005,
+"z": 95.582,
+"yaw": -39.929,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0516",
+"name": "Prop_BistroChair.0455",
 "proto": "Prop_BistroChair",
-"x": 38.641,
+"x": 38.344,
 "y": 14.5,
-"z": 95.779,
-"yaw": 13.453,
+"z": 94.54,
+"yaw": -169.349,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0517",
+"name": "Prop_BistroTable.0456",
 "proto": "Prop_BistroTable",
 "x": 38.887,
 "y": 14.5,
 "z": 92.804,
-"yaw": 143.686,
+"yaw": 137.418,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0518",
+"name": "Prop_BistroChair.0457",
 "proto": "Prop_BistroChair",
-"x": 38.26,
+"x": 38.25,
 "y": 14.5,
-"z": 92.931,
-"yaw": -84.792,
+"z": 92.75,
+"yaw": -83.004,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0519",
+"name": "Prop_BistroChair.0458",
 "proto": "Prop_BistroChair",
-"x": 39.064,
+"x": 39.35,
 "y": 14.5,
-"z": 92.189,
-"yaw": 168.289,
+"z": 92.362,
+"yaw": 138.856,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0520",
+"name": "Prop_BistroChair.0459",
 "proto": "Prop_BistroChair",
-"x": 39.329,
+"x": 39.157,
 "y": 14.5,
-"z": 93.268,
-"yaw": 54.838,
+"z": 93.384,
+"yaw": 18.827,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0521",
+"name": "Prop_PlanterRound.0460",
 "proto": "Prop_PlanterRound",
 "x": 39.856,
 "y": 14.5,
 "z": 91.305,
-"yaw": -27.874,
+"yaw": 19.492,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_TroughBloom.0522",
+"name": "Prop_TroughBloom.0461",
 "proto": "Prop_TroughBloom",
 "x": 40.58,
 "y": 14.5,
@@ -11762,7 +11162,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_StudyTable.0523",
+"name": "Prop_StudyTable.0462",
 "proto": "Prop_StudyTable",
 "x": 52.443,
 "y": 14.5,
@@ -11772,7 +11172,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_StudyTable.0524",
+"name": "Prop_StudyTable.0463",
 "proto": "Prop_StudyTable",
 "x": 53.178,
 "y": 14.5,
@@ -11782,177 +11182,177 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0525",
+"name": "Prop_BistroChair.0464",
 "proto": "Prop_BistroChair",
 "x": 52.91,
 "y": 14.5,
 "z": 101.141,
-"yaw": 58.871,
+"yaw": 70.073,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0526",
+"name": "Prop_BistroChair.0465",
 "proto": "Prop_BistroChair",
 "x": 51.645,
 "y": 14.5,
 "z": 100.641,
-"yaw": -108.048,
+"yaw": -112.231,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0527",
+"name": "Prop_BistroChair.0466",
 "proto": "Prop_BistroChair",
 "x": 53.24,
 "y": 14.5,
 "z": 100.304,
-"yaw": 78.002,
+"yaw": 71.941,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0528",
+"name": "Prop_BistroChair.0467",
 "proto": "Prop_BistroChair",
 "x": 51.976,
 "y": 14.5,
 "z": 99.804,
-"yaw": -109.229,
+"yaw": -114.775,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0529",
+"name": "Prop_BistroChair.0468",
 "proto": "Prop_BistroChair",
 "x": 53.645,
 "y": 14.5,
 "z": 99.281,
-"yaw": 74.175,
+"yaw": 69.225,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0530",
+"name": "Prop_BistroChair.0469",
 "proto": "Prop_BistroChair",
 "x": 52.38,
 "y": 14.5,
 "z": 98.781,
-"yaw": -109.257,
+"yaw": -100.571,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0531",
+"name": "Prop_BistroChair.0470",
 "proto": "Prop_BistroChair",
 "x": 53.975,
 "y": 14.5,
 "z": 98.444,
-"yaw": 66.245,
+"yaw": 73.912,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0532",
+"name": "Prop_BistroChair.0471",
 "proto": "Prop_BistroChair",
 "x": 52.711,
 "y": 14.5,
 "z": 97.944,
-"yaw": -111.217,
+"yaw": -101.247,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0533",
+"name": "Prop_BistroTable.0472",
 "proto": "Prop_BistroTable",
 "x": 41.707,
 "y": 14.5,
 "z": 85.182,
-"yaw": -66.205,
+"yaw": 9.757,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0534",
+"name": "Prop_BistroChair.0473",
 "proto": "Prop_BistroChair",
-"x": 41.098,
+"x": 42.169,
 "y": 14.5,
-"z": 85.379,
-"yaw": -84.03,
+"z": 85.625,
+"yaw": 47.378,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0535",
+"name": "Prop_BistroChair.0474",
 "proto": "Prop_BistroChair",
-"x": 41.799,
+"x": 41.112,
 "y": 14.5,
-"z": 84.549,
-"yaw": 175.377,
+"z": 85.418,
+"yaw": -76.135,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0536",
+"name": "Prop_BistroChair.0475",
 "proto": "Prop_BistroChair",
-"x": 42.225,
+"x": 41.843,
 "y": 14.5,
-"z": 85.558,
-"yaw": 41.035,
+"z": 84.557,
+"yaw": 162.113,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0537",
+"name": "Prop_BistroTable.0476",
 "proto": "Prop_BistroTable",
 "x": 41.58,
 "y": 14.5,
 "z": 82.821,
-"yaw": 104.026,
+"yaw": 178.832,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0538",
+"name": "Prop_BistroChair.0477",
 "proto": "Prop_BistroChair",
-"x": 42.175,
+"x": 41.105,
 "y": 14.5,
-"z": 82.585,
-"yaw": 120.768,
+"z": 82.392,
+"yaw": -128.658,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0539",
+"name": "Prop_BistroChair.0478",
 "proto": "Prop_BistroChair",
-"x": 41.484,
+"x": 42.192,
 "y": 14.5,
-"z": 83.453,
-"yaw": -20.478,
+"z": 82.633,
+"yaw": 103.723,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0540",
+"name": "Prop_BistroChair.0479",
 "proto": "Prop_BistroChair",
-"x": 41.077,
+"x": 41.448,
 "y": 14.5,
-"z": 82.426,
-"yaw": -113.956,
+"z": 83.447,
+"yaw": -20.013,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0541",
+"name": "Prop_PlanterRound.0480",
 "proto": "Prop_PlanterRound",
 "x": 42.24,
 "y": 14.5,
 "z": 81.162,
-"yaw": -142.942,
+"yaw": -111.297,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_TroughBloom.0542",
+"name": "Prop_TroughBloom.0481",
 "proto": "Prop_TroughBloom",
 "x": 43.611,
 "y": 14.5,
@@ -11962,7 +11362,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_StudyTable.0543",
+"name": "Prop_StudyTable.0482",
 "proto": "Prop_StudyTable",
 "x": 56.611,
 "y": 14.5,
@@ -11972,7 +11372,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_StudyTable.0544",
+"name": "Prop_StudyTable.0483",
 "proto": "Prop_StudyTable",
 "x": 56.972,
 "y": 14.5,
@@ -11982,177 +11382,177 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0545",
+"name": "Prop_BistroChair.0484",
 "proto": "Prop_BistroChair",
 "x": 57.199,
 "y": 14.5,
 "z": 88.325,
-"yaw": 77.315,
+"yaw": 85.142,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0546",
+"name": "Prop_BistroChair.0485",
 "proto": "Prop_BistroChair",
 "x": 55.861,
 "y": 14.5,
 "z": 88.08,
-"yaw": -100.164,
+"yaw": -95.134,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0547",
+"name": "Prop_BistroChair.0486",
 "proto": "Prop_BistroChair",
 "x": 57.361,
 "y": 14.5,
 "z": 87.44,
-"yaw": 70.497,
+"yaw": 73.889,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0548",
+"name": "Prop_BistroChair.0487",
 "proto": "Prop_BistroChair",
 "x": 56.023,
 "y": 14.5,
 "z": 87.195,
-"yaw": -94.492,
+"yaw": -103.069,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0549",
+"name": "Prop_BistroChair.0488",
 "proto": "Prop_BistroChair",
 "x": 57.559,
 "y": 14.5,
 "z": 86.358,
-"yaw": 79.641,
+"yaw": 88.27,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0550",
+"name": "Prop_BistroChair.0489",
 "proto": "Prop_BistroChair",
 "x": 56.222,
 "y": 14.5,
 "z": 86.113,
-"yaw": -98.549,
+"yaw": -89.341,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0551",
+"name": "Prop_BistroChair.0490",
 "proto": "Prop_BistroChair",
 "x": 57.721,
 "y": 14.5,
 "z": 85.473,
-"yaw": 89.29,
+"yaw": 82.775,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0552",
+"name": "Prop_BistroChair.0491",
 "proto": "Prop_BistroChair",
 "x": 56.384,
 "y": 14.5,
 "z": 85.228,
-"yaw": -107.057,
+"yaw": -109.87,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0553",
+"name": "Prop_BistroTable.0492",
 "proto": "Prop_BistroTable",
 "x": 57.856,
 "y": 14.5,
 "z": 72.953,
-"yaw": 78.656,
+"yaw": -148.614,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0554",
+"name": "Prop_BistroChair.0493",
 "proto": "Prop_BistroChair",
-"x": 57.328,
+"x": 57.219,
 "y": 14.5,
-"z": 73.316,
-"yaw": -57.754,
+"z": 73.013,
+"yaw": -90.149,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0555",
+"name": "Prop_BistroChair.0494",
 "proto": "Prop_BistroChair",
-"x": 57.771,
+"x": 58.199,
 "y": 14.5,
-"z": 72.319,
-"yaw": -174.38,
+"z": 72.413,
+"yaw": 145.766,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0556",
+"name": "Prop_BistroChair.0495",
 "proto": "Prop_BistroChair",
-"x": 58.436,
+"x": 58.292,
 "y": 14.5,
-"z": 73.225,
-"yaw": 63.163,
+"z": 73.422,
+"yaw": 45.756,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0557",
+"name": "Prop_BistroTable.0496",
 "proto": "Prop_BistroTable",
 "x": 57.891,
 "y": 14.5,
 "z": 70.589,
-"yaw": -144.746,
+"yaw": -22.804,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0558",
+"name": "Prop_BistroChair.0497",
 "proto": "Prop_BistroChair",
-"x": 57.44,
+"x": 57.259,
 "y": 14.5,
-"z": 70.135,
-"yaw": -124.962,
+"z": 70.688,
+"yaw": -74.697,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0559",
+"name": "Prop_BistroChair.0498",
 "proto": "Prop_BistroChair",
-"x": 58.527,
+"x": 58.084,
 "y": 14.5,
-"z": 70.523,
-"yaw": 94.057,
+"z": 69.979,
+"yaw": 163.551,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0560",
+"name": "Prop_BistroChair.0499",
 "proto": "Prop_BistroChair",
-"x": 57.707,
+"x": 58.29,
 "y": 14.5,
-"z": 71.202,
-"yaw": -20.111,
+"z": 71.089,
+"yaw": 50.036,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0561",
+"name": "Prop_PlanterRound.0500",
 "proto": "Prop_PlanterRound",
 "x": 57.167,
 "y": 14.5,
 "z": 68.957,
-"yaw": -162.17,
+"yaw": 6.119,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_TroughBloom.0562",
+"name": "Prop_TroughBloom.0501",
 "proto": "Prop_TroughBloom",
 "x": 55.922,
 "y": 14.5,
@@ -12162,127 +11562,117 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0563",
+"name": "Prop_BistroChair.0502",
 "proto": "Prop_BistroChair",
 "x": 43.215,
 "y": 14.5,
 "z": 76.535,
-"yaw": 112.277,
+"yaw": 97.598,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0564",
+"name": "Prop_BistroChair.0503",
 "proto": "Prop_BistroChair",
 "x": 43.019,
 "y": 14.5,
 "z": 75.657,
-"yaw": 95.799,
+"yaw": 106.1,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0565",
+"name": "Prop_BistroTable.0504",
 "proto": "Prop_BistroTable",
 "x": 60.654,
 "y": 14.5,
 "z": 129.878,
-"yaw": 138.054,
+"yaw": 55.164,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0566",
+"name": "Prop_BistroChair.0505",
 "proto": "Prop_BistroChair",
-"x": 61.061,
+"x": 61.219,
 "y": 14.5,
-"z": 129.384,
-"yaw": 143.492,
+"z": 130.178,
+"yaw": 69.162,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0567",
+"name": "Prop_BistroChair.0506",
 "proto": "Prop_BistroChair",
-"x": 60.742,
+"x": 60.111,
 "y": 14.5,
-"z": 130.512,
-"yaw": 1.226,
+"z": 130.217,
+"yaw": -60.768,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0568",
+"name": "Prop_BistroChair.0507",
 "proto": "Prop_BistroChair",
-"x": 60.02,
+"x": 60.649,
 "y": 14.5,
-"z": 129.791,
-"yaw": -98.108,
+"z": 129.238,
+"yaw": 175.228,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0569",
+"name": "Prop_BistroTable.0508",
 "proto": "Prop_BistroTable",
 "x": 60.575,
 "y": 14.5,
 "z": 132.241,
-"yaw": -153.461,
+"yaw": 16.679,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0570",
+"name": "Prop_BistroChair.0509",
 "proto": "Prop_BistroChair",
-"x": 60.776,
+"x": 59.971,
 "y": 14.5,
-"z": 132.849,
-"yaw": 9.328,
+"z": 132.454,
+"yaw": -62.16,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0571",
+"name": "Prop_BistroChair.0510",
 "proto": "Prop_BistroChair",
-"x": 59.973,
+"x": 60.589,
 "y": 14.5,
-"z": 132.024,
-"yaw": -96.773,
+"z": 131.602,
+"yaw": -168.919,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0572",
+"name": "Prop_BistroChair.0511",
 "proto": "Prop_BistroChair",
-"x": 61.065,
+"x": 61.056,
 "y": 14.5,
-"z": 131.829,
-"yaw": 126.91,
+"z": 132.663,
+"yaw": 57.049,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0573",
+"name": "Prop_PlanterRound.0512",
 "proto": "Prop_PlanterRound",
 "x": 61.268,
 "y": 14.5,
 "z": 133.886,
-"yaw": 168.513,
+"yaw": -159.007,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_TroughBloom.0574",
-"proto": "Prop_TroughBloom",
-"x": 62.574,
-"y": 14.5,
-"z": 130.66,
-"yaw": -78.467,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_StudyTable.0575",
+"name": "Prop_StudyTable.0513",
 "proto": "Prop_StudyTable",
 "x": 75.994,
 "y": 14.5,
@@ -12292,7 +11682,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_StudyTable.0576",
+"name": "Prop_StudyTable.0514",
 "proto": "Prop_StudyTable",
 "x": 76.393,
 "y": 14.5,
@@ -12302,167 +11692,167 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0577",
+"name": "Prop_BistroChair.0515",
 "proto": "Prop_BistroChair",
 "x": 76.57,
 "y": 14.5,
 "z": 126.324,
-"yaw": 99.781,
+"yaw": 102.307,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0578",
+"name": "Prop_BistroChair.0516",
 "proto": "Prop_BistroChair",
 "x": 75.237,
 "y": 14.5,
 "z": 126.596,
-"yaw": -87.347,
+"yaw": -71.11,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0579",
+"name": "Prop_BistroChair.0517",
 "proto": "Prop_BistroChair",
 "x": 76.75,
 "y": 14.5,
 "z": 127.205,
-"yaw": 99.878,
+"yaw": 102.015,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0580",
+"name": "Prop_BistroChair.0518",
 "proto": "Prop_BistroChair",
 "x": 75.417,
 "y": 14.5,
 "z": 127.477,
-"yaw": -74.101,
+"yaw": -87.932,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0581",
+"name": "Prop_BistroChair.0519",
 "proto": "Prop_BistroChair",
 "x": 76.97,
 "y": 14.5,
 "z": 128.283,
-"yaw": 112.151,
+"yaw": 102.737,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0582",
+"name": "Prop_BistroChair.0520",
 "proto": "Prop_BistroChair",
 "x": 75.637,
 "y": 14.5,
 "z": 128.555,
-"yaw": -67.036,
+"yaw": -67.145,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0583",
+"name": "Prop_BistroChair.0521",
 "proto": "Prop_BistroChair",
 "x": 77.15,
 "y": 14.5,
 "z": 129.165,
-"yaw": 99.809,
+"yaw": 92.435,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0584",
+"name": "Prop_BistroChair.0522",
 "proto": "Prop_BistroChair",
 "x": 75.817,
 "y": 14.5,
 "z": 129.437,
-"yaw": -69.093,
+"yaw": -80.764,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0585",
+"name": "Prop_BistroTable.0523",
 "proto": "Prop_BistroTable",
 "x": 63.3,
 "y": 14.5,
 "z": 141.804,
-"yaw": 28.665,
+"yaw": 3.375,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0586",
+"name": "Prop_BistroChair.0524",
 "proto": "Prop_BistroChair",
-"x": 63.87,
+"x": 63.782,
 "y": 14.5,
-"z": 141.512,
-"yaw": 130.944,
+"z": 141.383,
+"yaw": 131.127,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0587",
+"name": "Prop_BistroChair.0525",
 "proto": "Prop_BistroChair",
-"x": 63.299,
+"x": 63.39,
 "y": 14.5,
-"z": 142.444,
-"yaw": -13.144,
+"z": 142.438,
+"yaw": 20.145,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0588",
+"name": "Prop_BistroChair.0526",
 "proto": "Prop_BistroChair",
-"x": 62.77,
+"x": 62.737,
 "y": 14.5,
-"z": 141.445,
-"yaw": -112.111,
+"z": 141.5,
+"yaw": -112.071,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0589",
+"name": "Prop_BistroTable.0527",
 "proto": "Prop_BistroTable",
 "x": 63.288,
 "y": 14.5,
 "z": 144.169,
-"yaw": -112.609,
+"yaw": 37.643,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0590",
+"name": "Prop_BistroChair.0528",
 "proto": "Prop_BistroChair",
-"x": 62.747,
+"x": 63.051,
 "y": 14.5,
-"z": 143.827,
-"yaw": -128.216,
+"z": 143.574,
+"yaw": -158.182,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0591",
+"name": "Prop_BistroChair.0529",
 "proto": "Prop_BistroChair",
-"x": 63.812,
+"x": 63.922,
 "y": 14.5,
-"z": 143.8,
-"yaw": 130.302,
+"z": 144.26,
+"yaw": 77.218,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0592",
+"name": "Prop_BistroChair.0530",
 "proto": "Prop_BistroChair",
-"x": 63.24,
+"x": 62.895,
 "y": 14.5,
-"z": 144.807,
-"yaw": -2.091,
+"z": 144.674,
+"yaw": -49.452,
 "roll": -0.0,
 "scale": 1.0
 },
 {
-"name": "Prop_TroughBloom.0593",
+"name": "Prop_TroughBloom.0531",
 "proto": "Prop_TroughBloom",
 "x": 65.242,
 "y": 14.5,
@@ -12472,7 +11862,577 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol.0594",
+"name": "Prop_CarC.0532",
+"proto": "Prop_CarC",
+"x": -269.672,
+"y": 5.969,
+"z": -30.238,
+"yaw": 137.498,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarA.0533",
+"proto": "Prop_CarA",
+"x": -267.951,
+"y": 5.992,
+"z": -32.074,
+"yaw": 134.846,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarA.0534",
+"proto": "Prop_CarA",
+"x": -262.663,
+"y": 6.147,
+"z": -37.218,
+"yaw": -46.398,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarD.0535",
+"proto": "Prop_CarD",
+"x": -260.981,
+"y": 6.163,
+"z": -39.193,
+"yaw": 136.668,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarD.0536",
+"proto": "Prop_CarD",
+"x": -259.188,
+"y": 6.164,
+"z": -40.872,
+"yaw": -44.954,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarD.0537",
+"proto": "Prop_CarD",
+"x": -257.325,
+"y": 6.129,
+"z": -42.668,
+"yaw": -44.06,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarE.0538",
+"proto": "Prop_CarE",
+"x": -248.902,
+"y": 5.796,
+"z": -51.794,
+"yaw": 134.061,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarG.0539",
+"proto": "Prop_CarG",
+"x": -247.192,
+"y": 5.701,
+"z": -53.503,
+"yaw": 134.181,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_LampMast.0540",
+"proto": "Prop_LampMast",
+"x": -265.4,
+"y": 6.698,
+"z": -17.4,
+"yaw": -0.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BoardDirection.0541",
+"proto": "Prop_BoardDirection",
+"x": -262.6,
+"y": 6.973,
+"z": -14.4,
+"yaw": 30.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_TimberPost.0542",
+"proto": "Prop_TimberPost",
+"x": -260.856,
+"y": 7.401,
+"z": -14.381,
+"yaw": -0.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_TimberPost.0543",
+"proto": "Prop_TimberPost",
+"x": -260.481,
+"y": 7.344,
+"z": -15.601,
+"yaw": -0.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_TimberPost.0544",
+"proto": "Prop_TimberPost",
+"x": -260.305,
+"y": 7.289,
+"z": -16.803,
+"yaw": -0.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_TimberPost.0545",
+"proto": "Prop_TimberPost",
+"x": -260.929,
+"y": 7.209,
+"z": -17.925,
+"yaw": -0.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_TimberPost.0546",
+"proto": "Prop_TimberPost",
+"x": -261.499,
+"y": 7.127,
+"z": -19.091,
+"yaw": -0.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_TimberPost.0547",
+"proto": "Prop_TimberPost",
+"x": -262.682,
+"y": 6.976,
+"z": -19.569,
+"yaw": -0.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_TimberPost.0548",
+"proto": "Prop_TimberPost",
+"x": -263.888,
+"y": 6.888,
+"z": -20.06,
+"yaw": -0.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_TimberPost.0549",
+"proto": "Prop_TimberPost",
+"x": -265.007,
+"y": 6.901,
+"z": -19.741,
+"yaw": -0.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_TimberPost.0550",
+"proto": "Prop_TimberPost",
+"x": -266.057,
+"y": 6.876,
+"z": -18.985,
+"yaw": -0.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_SignStop.0551",
+"proto": "Prop_SignStop",
+"x": -241.5,
+"y": 7.224,
+"z": -27.3,
+"yaw": 232.002,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_AdTotem.0552",
+"proto": "Prop_AdTotem",
+"x": -238.6,
+"y": 7.4,
+"z": -27.9,
+"yaw": 215.002,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_SignRoundTriangle.0553",
+"proto": "Prop_SignRoundTriangle",
+"x": -234.6,
+"y": 7.586,
+"z": -28.6,
+"yaw": 110.002,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_SignParking.0554",
+"proto": "Prop_SignParking",
+"x": -262.914,
+"y": 7.164,
+"z": -11.601,
+"yaw": 110.002,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_LampSidewalk.0555",
+"proto": "Prop_LampSidewalk",
+"x": -263.6,
+"y": 7.152,
+"z": -11.155,
+"yaw": -60.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BinsUnderground.0556",
+"proto": "Prop_BinsUnderground",
+"x": -234.4,
+"y": 7.361,
+"z": -31.3,
+"yaw": 36.87,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BikeRack.0557",
+"proto": "Prop_BikeRack",
+"x": -238.0,
+"y": 7.455,
+"z": -27.6,
+"yaw": -53.13,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BikeRack.0558",
+"proto": "Prop_BikeRack",
+"x": -230.2,
+"y": 6.687,
+"z": -34.6,
+"yaw": -53.13,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarA.0559",
+"proto": "Prop_CarA",
+"x": -237.354,
+"y": 5.024,
+"z": -60.588,
+"yaw": -53.354,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarG.0560",
+"proto": "Prop_CarG",
+"x": -235.456,
+"y": 4.975,
+"z": -61.836,
+"yaw": -49.309,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarD.0561",
+"proto": "Prop_CarD",
+"x": -233.459,
+"y": 4.859,
+"z": -63.439,
+"yaw": -50.884,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarF.0562",
+"proto": "Prop_CarF",
+"x": -231.472,
+"y": 4.801,
+"z": -65.015,
+"yaw": -50.896,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarC.0563",
+"proto": "Prop_CarC",
+"x": -229.557,
+"y": 4.717,
+"z": -66.724,
+"yaw": -52.426,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarG.0564",
+"proto": "Prop_CarG",
+"x": -225.55,
+"y": 4.704,
+"z": -69.531,
+"yaw": -49.343,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarH.0565",
+"proto": "Prop_CarH",
+"x": -223.848,
+"y": 4.617,
+"z": -71.418,
+"yaw": -53.016,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_CarA.0566",
+"proto": "Prop_CarA",
+"x": -221.754,
+"y": 4.606,
+"z": -72.949,
+"yaw": -229.527,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0567",
+"proto": "Prop_BollardSquare",
+"x": -227.26,
+"y": 5.744,
+"z": -42.368,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0568",
+"proto": "Prop_BollardSquare",
+"x": -225.769,
+"y": 5.628,
+"z": -43.546,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0569",
+"proto": "Prop_BollardSquare",
+"x": -224.277,
+"y": 5.575,
+"z": -44.723,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0570",
+"proto": "Prop_BollardSquare",
+"x": -222.786,
+"y": 5.538,
+"z": -45.9,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0571",
+"proto": "Prop_BollardSquare",
+"x": -221.295,
+"y": 5.496,
+"z": -47.078,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0572",
+"proto": "Prop_BollardSquare",
+"x": -219.804,
+"y": 5.453,
+"z": -48.255,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0573",
+"proto": "Prop_BollardSquare",
+"x": -218.312,
+"y": 5.402,
+"z": -49.432,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0574",
+"proto": "Prop_BollardSquare",
+"x": -216.821,
+"y": 5.345,
+"z": -50.61,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0575",
+"proto": "Prop_BollardSquare",
+"x": -215.33,
+"y": 5.303,
+"z": -51.787,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0576",
+"proto": "Prop_BollardSquare",
+"x": -213.838,
+"y": 5.252,
+"z": -52.964,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0577",
+"proto": "Prop_BollardSquare",
+"x": -212.347,
+"y": 5.226,
+"z": -54.142,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0578",
+"proto": "Prop_BollardSquare",
+"x": -210.856,
+"y": 5.177,
+"z": -55.319,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0579",
+"proto": "Prop_BollardSquare",
+"x": -209.365,
+"y": 5.169,
+"z": -56.496,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0580",
+"proto": "Prop_BollardSquare",
+"x": -207.873,
+"y": 5.145,
+"z": -57.673,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0581",
+"proto": "Prop_BollardSquare",
+"x": -206.382,
+"y": 4.942,
+"z": -58.851,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0582",
+"proto": "Prop_BollardSquare",
+"x": -204.891,
+"y": 4.91,
+"z": -60.028,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0583",
+"proto": "Prop_BollardSquare",
+"x": -203.4,
+"y": 4.888,
+"z": -61.205,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0584",
+"proto": "Prop_BollardSquare",
+"x": -201.908,
+"y": 4.868,
+"z": -62.383,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0585",
+"proto": "Prop_BollardSquare",
+"x": -200.417,
+"y": 4.834,
+"z": -63.56,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0586",
+"proto": "Prop_BollardSquare",
+"x": -215.177,
+"y": 4.725,
+"z": -75.478,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_BollardSquare.0587",
+"proto": "Prop_BollardSquare",
+"x": -213.686,
+"y": 4.697,
+"z": -76.655,
+"yaw": 38.291,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_LampMarginal.0588",
+"proto": "Prop_LampMarginal",
+"x": -233.231,
+"y": 7.869,
+"z": -9.146,
+"yaw": 120.659,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_Parasol.0589",
 "proto": "Prop_Parasol",
 "x": 7.0,
 "y": 11.2,
@@ -12482,7 +12442,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0595",
+"name": "Prop_BistroTable.0590",
 "proto": "Prop_BistroTable",
 "x": 7.9,
 "y": 11.2,
@@ -12492,7 +12452,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0596",
+"name": "Prop_BistroChair.0591",
 "proto": "Prop_BistroChair",
 "x": 8.305,
 "y": 11.2,
@@ -12502,7 +12462,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0597",
+"name": "Prop_BistroChair.0592",
 "proto": "Prop_BistroChair",
 "x": 7.151,
 "y": 11.2,
@@ -12512,7 +12472,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0598",
+"name": "Prop_BistroChair.0593",
 "proto": "Prop_BistroChair",
 "x": 8.251,
 "y": 11.2,
@@ -12522,7 +12482,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol.0599",
+"name": "Prop_Parasol.0594",
 "proto": "Prop_Parasol",
 "x": 17.5,
 "y": 11.2,
@@ -12532,7 +12492,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0600",
+"name": "Prop_BistroTable.0595",
 "proto": "Prop_BistroTable",
 "x": 18.29,
 "y": 11.2,
@@ -12542,7 +12502,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0601",
+"name": "Prop_BistroChair.0596",
 "proto": "Prop_BistroChair",
 "x": 18.343,
 "y": 11.2,
@@ -12552,7 +12512,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0602",
+"name": "Prop_BistroChair.0597",
 "proto": "Prop_BistroChair",
 "x": 17.617,
 "y": 11.2,
@@ -12562,7 +12522,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0603",
+"name": "Prop_BistroChair.0598",
 "proto": "Prop_BistroChair",
 "x": 18.916,
 "y": 11.2,
@@ -12572,7 +12532,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol.0604",
+"name": "Prop_Parasol.0599",
 "proto": "Prop_Parasol",
 "x": 27.0,
 "y": 11.2,
@@ -12582,7 +12542,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0605",
+"name": "Prop_BistroTable.0600",
 "proto": "Prop_BistroTable",
 "x": 27.486,
 "y": 11.2,
@@ -12592,7 +12552,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0606",
+"name": "Prop_BistroChair.0601",
 "proto": "Prop_BistroChair",
 "x": 27.174,
 "y": 11.2,
@@ -12602,7 +12562,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0607",
+"name": "Prop_BistroChair.0602",
 "proto": "Prop_BistroChair",
 "x": 27.055,
 "y": 11.2,
@@ -12612,7 +12572,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0608",
+"name": "Prop_BistroChair.0603",
 "proto": "Prop_BistroChair",
 "x": 28.234,
 "y": 11.2,
@@ -12622,7 +12582,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol.0609",
+"name": "Prop_Parasol.0604",
 "proto": "Prop_Parasol",
 "x": 12.0,
 "y": 11.2,
@@ -12632,7 +12592,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0610",
+"name": "Prop_BistroTable.0605",
 "proto": "Prop_BistroTable",
 "x": 12.064,
 "y": 11.2,
@@ -12642,7 +12602,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0611",
+"name": "Prop_BistroChair.0606",
 "proto": "Prop_BistroChair",
 "x": 11.463,
 "y": 11.2,
@@ -12652,7 +12612,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0612",
+"name": "Prop_BistroChair.0607",
 "proto": "Prop_BistroChair",
 "x": 11.98,
 "y": 11.2,
@@ -12662,7 +12622,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0613",
+"name": "Prop_BistroChair.0608",
 "proto": "Prop_BistroChair",
 "x": 12.749,
 "y": 11.2,
@@ -12672,7 +12632,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol.0614",
+"name": "Prop_Parasol.0609",
 "proto": "Prop_Parasol",
 "x": 27.0,
 "y": 11.2,
@@ -12682,7 +12642,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0615",
+"name": "Prop_BistroTable.0610",
 "proto": "Prop_BistroTable",
 "x": 26.625,
 "y": 11.2,
@@ -12692,7 +12652,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0616",
+"name": "Prop_BistroChair.0611",
 "proto": "Prop_BistroChair",
 "x": 25.883,
 "y": 11.2,
@@ -12702,7 +12662,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0617",
+"name": "Prop_BistroChair.0612",
 "proto": "Prop_BistroChair",
 "x": 26.909,
 "y": 11.2,
@@ -12712,7 +12672,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0618",
+"name": "Prop_BistroChair.0613",
 "proto": "Prop_BistroChair",
 "x": 27.082,
 "y": 11.2,
@@ -12722,7 +12682,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol.0619",
+"name": "Prop_Parasol.0614",
 "proto": "Prop_Parasol",
 "x": 38.0,
 "y": 11.2,
@@ -12732,7 +12692,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0620",
+"name": "Prop_BistroTable.0615",
 "proto": "Prop_BistroTable",
 "x": 37.279,
 "y": 11.2,
@@ -12742,7 +12702,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0621",
+"name": "Prop_BistroChair.0616",
 "proto": "Prop_BistroChair",
 "x": 36.577,
 "y": 11.2,
@@ -12752,7 +12712,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0622",
+"name": "Prop_BistroChair.0617",
 "proto": "Prop_BistroChair",
 "x": 37.861,
 "y": 11.2,
@@ -12762,7 +12722,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0623",
+"name": "Prop_BistroChair.0618",
 "proto": "Prop_BistroChair",
 "x": 37.394,
 "y": 11.2,
@@ -12772,7 +12732,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0624",
+"name": "Prop_PlanterRound.0619",
 "proto": "Prop_PlanterRound",
 "x": 89.2,
 "y": 14.56,
@@ -12782,7 +12742,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0625",
+"name": "Prop_PlanterRound.0620",
 "proto": "Prop_PlanterRound",
 "x": 86.4,
 "y": 14.56,
@@ -12792,7 +12752,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0626",
+"name": "Prop_PlanterRound.0621",
 "proto": "Prop_PlanterRound",
 "x": 80.2,
 "y": 14.56,
@@ -12802,7 +12762,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0627",
+"name": "Prop_PlanterRound.0622",
 "proto": "Prop_PlanterRound",
 "x": 77.6,
 "y": 14.56,
@@ -12812,7 +12772,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0628",
+"name": "Prop_PlanterRound.0623",
 "proto": "Prop_PlanterRound",
 "x": 111.5,
 "y": 14.56,
@@ -12822,7 +12782,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0629",
+"name": "Prop_PlanterRound.0624",
 "proto": "Prop_PlanterRound",
 "x": 99.0,
 "y": 14.56,
@@ -12832,7 +12792,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterRound.0630",
+"name": "Prop_PlanterRound.0625",
 "proto": "Prop_PlanterRound",
 "x": 104.0,
 "y": 14.56,
@@ -12842,7 +12802,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0631",
+"name": "Prop_BistroTable.0626",
 "proto": "Prop_BistroTable",
 "x": 97.5,
 "y": 14.56,
@@ -12852,7 +12812,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0632",
+"name": "Prop_BistroChair.0627",
 "proto": "Prop_BistroChair",
 "x": 97.688,
 "y": 14.56,
@@ -12862,7 +12822,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0633",
+"name": "Prop_BistroChair.0628",
 "proto": "Prop_BistroChair",
 "x": 96.876,
 "y": 14.56,
@@ -12872,7 +12832,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0634",
+"name": "Prop_BistroChair.0629",
 "proto": "Prop_BistroChair",
 "x": 97.936,
 "y": 14.56,
@@ -12882,7 +12842,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0635",
+"name": "Prop_BistroTable.0630",
 "proto": "Prop_BistroTable",
 "x": 102.5,
 "y": 14.56,
@@ -12892,7 +12852,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0636",
+"name": "Prop_BistroChair.0631",
 "proto": "Prop_BistroChair",
 "x": 102.109,
 "y": 14.56,
@@ -12902,7 +12862,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0637",
+"name": "Prop_BistroChair.0632",
 "proto": "Prop_BistroChair",
 "x": 102.257,
 "y": 14.56,
@@ -12912,7 +12872,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0638",
+"name": "Prop_BistroChair.0633",
 "proto": "Prop_BistroChair",
 "x": 103.134,
 "y": 14.56,
@@ -12922,7 +12882,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0639",
+"name": "Prop_BistroTable.0634",
 "proto": "Prop_BistroTable",
 "x": 107.0,
 "y": 14.56,
@@ -12932,7 +12892,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0640",
+"name": "Prop_BistroChair.0635",
 "proto": "Prop_BistroChair",
 "x": 107.167,
 "y": 14.56,
@@ -12942,7 +12902,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0641",
+"name": "Prop_BistroChair.0636",
 "proto": "Prop_BistroChair",
 "x": 107.452,
 "y": 14.56,
@@ -12952,7 +12912,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0642",
+"name": "Prop_BistroChair.0637",
 "proto": "Prop_BistroChair",
 "x": 106.382,
 "y": 14.56,
@@ -12962,7 +12922,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0643",
+"name": "Prop_BistroTable.0638",
 "proto": "Prop_BistroTable",
 "x": 99.5,
 "y": 14.56,
@@ -12972,7 +12932,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0644",
+"name": "Prop_BistroChair.0639",
 "proto": "Prop_BistroChair",
 "x": 99.289,
 "y": 14.56,
@@ -12982,7 +12942,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0645",
+"name": "Prop_BistroChair.0640",
 "proto": "Prop_BistroChair",
 "x": 100.129,
 "y": 14.56,
@@ -12992,7 +12952,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0646",
+"name": "Prop_BistroChair.0641",
 "proto": "Prop_BistroChair",
 "x": 99.082,
 "y": 14.56,

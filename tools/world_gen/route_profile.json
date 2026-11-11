@@ -136,6 +136,25 @@
   "surface_overrides": true,
   "section_overrides": [
     {
+      "name": "Capricciosa hairpin wide enough to drift (V14c, proposal for Noah)",
+      "why": "Luc's test drive, 2026-11-11: the hairpin into the restaurants' car park cannot be taken in a drift, it is too tight (6.7 m at the apex; at 18 m/s and 110 degrees per second the kart needs 9.4 m without a drift). The turn now opens into the forecourt's free concrete: curvature rises evenly to a 12.5 m radius (the middle of the kart's drift steering range at 18 m/s), holds, and a gentle counter-curve brings the line back onto the car-park aisle. Only the points strictly after from_at and before the point where the old aisle line is rejoined are replaced; delete this block to get the old line back. It stands first in the list because it changes the number of points before the two later sections.",
+      "type": "curve",
+      "turn": "left",
+      "from_at": [
+        -238.19,
+        -19.06
+      ],
+      "straight_at": [
+        -222.2,
+        -55.2
+      ],
+      "radius_m": 12.5,
+      "ease_in_m": 9.0,
+      "ease_between_m": 14.0,
+      "counter_radius_m": 25.0,
+      "ease_out_m": 9.0
+    },
+    {
       "name": "tunnel exit straight (V10g, proposal for Noah)",
       "why": "The line swung east after the north portal and came back (a right-left). The real walkway (orthophoto, team photos S01, S02, S08) leaves the portal and runs straight up to the plaza in front of the terracotta steps. Only the points strictly between from_at and to_at are replaced; delete this block to get the old line back. to_at is the first terracotta point (foot of the stairs): the stairs and the line over them are untouched.",
       "from_at": [

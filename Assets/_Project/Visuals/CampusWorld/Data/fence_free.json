@@ -1,6 +1,6 @@
 {
  "note": "Pieces of the white fence that the campus world leaves out (tools/world_gen/fence_free.py). A piece = fence between route points k and k + 1, from <= k < to; side +1 right, -1 left, 0 both.",
- "points": 685,
+ "points": 688,
  "free": [
   {
    "from": 79,
@@ -9,26 +9,26 @@
    "why": "terrace jump: the kicker ramp (the deck beside it stays 0.65 m lower), the drop behind the lip, the first landing metres"
   },
   {
-   "from": 488,
-   "to": 500,
+   "from": 491,
+   "to": 503,
    "side": 0,
    "why": "terracotta stairs: own railings and guard colliders"
   },
   {
-   "from": 499,
-   "to": 556,
+   "from": 502,
+   "to": 559,
    "side": -1,
    "why": "upper plaza, left side: courtyard fence, the shortcut's kicker and its exit at the atrium door"
   },
   {
-   "from": 452,
-   "to": 476,
+   "from": 455,
+   "to": 479,
    "side": 0,
    "why": "straight tunnel ramp: 45 degree walls at the road edge, railings on top (agreed with Noah)"
   },
   {
-   "from": 330,
-   "to": 371,
+   "from": 333,
+   "to": 374,
    "side": 1,
    "why": "promenade, sea side: kerb, stairs and the open beach (agreed with Noah)"
   },

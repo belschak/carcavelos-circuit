@@ -677,6 +677,96 @@ def _resample_open(line, count):
     return out, cum[-1]
 
 
+def apply_curve_override(points, spec):
+    """V14c: one wide turn with a smooth curvature profile, for a hairpin that was too tight to drift.
+
+    From the route point at `from_at` (its position, direction and curvature are kept) the curvature rises evenly over
+    `ease_in_m` to 1 / `radius_m`, holds, falls evenly over `ease_between_m` through zero to a counter-curve of
+    `counter_radius_m`, holds, and returns to zero over `ease_out_m`. The two hold lengths are solved so that the line
+    ends ON the old line's straight after the turn (`straight_at`: any point on that straight) with its direction; the
+    first old point after that end is where the old line goes on. In between the points are 2 m apart as everywhere
+    (the count is round(length / 2)), heights follow the ground under the new line and meet the old heights at both
+    ends, width, zone and surface are taken from the old point at the same share of the way.
+    Every point outside keeps its values and is only renumbered. Returns report lines."""
+    n = len(points)
+    near = lambda at: min(range(n), key=lambda i: (points[i]["x"] - at[0]) ** 2 + (points[i]["y"] - at[1]) ** 2)
+    xy = lambda i: (points[i]["x"], points[i]["y"])
+    a, st = near(spec["from_at"]), near(spec["straight_at"])
+    if not 2 <= a < st < n - 6:
+        raise ValueError("curve override: from_at must come before straight_at and not near point 0")
+    h0 = math.atan2(xy(a + 1)[1] - xy(a - 1)[1], xy(a + 1)[0] - xy(a - 1)[0])
+    h1 = math.atan2(xy(a)[1] - xy(a - 2)[1], xy(a)[0] - xy(a - 2)[0])
+    h2 = math.atan2(xy(a + 2)[1] - xy(a)[1], xy(a + 2)[0] - xy(a)[0])
+    k0 = ((h2 - h1 + math.pi) % (2 * math.pi) - math.pi) / math.dist(xy(a - 2), xy(a))      # the old line's curvature at from_at
+    kmax, kr = 1.0 / spec["radius_m"], 1.0 / spec["counter_radius_m"]
+    sign = 1.0 if spec.get("turn", "left") == "left" else -1.0
+    l_in, l_mid, l_out = spec["ease_in_m"], spec["ease_between_m"], spec["ease_out_m"]
+    d = (xy(st + 3)[0] - xy(st - 3)[0], xy(st + 3)[1] - xy(st - 3)[1])                      # the straight after the turn
+    dl = math.hypot(*d)
+    d = (d[0] / dl, d[1] / dl)
+    ha = math.atan2(d[1], d[0])
+
+    def run(hold, counter, ds=0.05):
+        x, y, h = xy(a)[0], xy(a)[1], h0
+        line = [(x, y)]
+        for length, ka, kb in ((l_in, k0, sign * kmax), (hold, sign * kmax, sign * kmax), (l_mid, sign * kmax, -sign * kr),
+                               (counter, -sign * kr, -sign * kr), (l_out, -sign * kr, 0.0)):
+            steps = max(1, int(round(length / ds)))
+            for i in range(steps):
+                h += (ka + (kb - ka) * (i + 0.5) / steps) * length / steps
+                x += math.cos(h) * length / steps
+                y += math.sin(h) * length / steps
+                line.append((x, y))
+        off_h = (h - ha + math.pi) % (2 * math.pi) - math.pi
+        off_l = (x - xy(st)[0]) * (-d[1]) + (y - xy(st)[1]) * d[0]
+        return line, off_h, off_l
+    hold, counter = spec.get("hold_start_m", 20.0), spec.get("counter_start_m", 4.0)
+    for _ in range(80):                                                 # Newton steps on the two hold lengths
+        line, eh, el = run(hold, counter)
+        if abs(eh) < 1e-5 and abs(el) < 1e-4:
+            break
+        e = 0.05
+        _l, ah, al = run(hold + e, counter)
+        _l, bh, bl = run(hold, counter + e)
+        j = [[(ah - eh) / e, (bh - eh) / e], [(al - el) / e, (bl - el) / e]]
+        det = j[0][0] * j[1][1] - j[0][1] * j[1][0]
+        hold += max(-3.0, min(3.0, (-eh * j[1][1] + el * j[0][1]) / det))
+        counter += max(-3.0, min(3.0, (eh * j[1][0] - el * j[0][0]) / det))
+        if hold < 0 or counter < 0:
+            raise ValueError("curve override: no line with these radii and easings ends on the old straight")
+    else:
+        raise ValueError("curve override: the hold lengths did not settle")
+    end = line[-1]
+    b = next(i for i in range(a + 1, n) if (xy(i)[0] - end[0]) * d[0] + (xy(i)[1] - end[1]) * d[1] > 0.5
+             and abs((xy(i)[0] - end[0]) * (-d[1]) + (xy(i)[1] - end[1]) * d[0]) < 0.05)      # first old point after the end, on the straight
+    line = line + [xy(b)]
+    length = sum(math.dist(p, q) for p, q in zip(line, line[1:]))
+    count = int(round(length / SPACING)) - 1
+    new_xy, _ = _resample_open(line, count)
+    step = length / (count + 1)
+    old = points[a:b + 1]
+    za, zb = points[a]["track_z"], points[b]["track_z"]
+    # heights: the ground under the new line (5-point mean), meeting the old heights at both ends over 4 points
+    # (an even ramp between the two ends stood up to 0.4 m over the forecourt, which falls away to the south-west)
+    gz = [ground_z(x, y) for x, y in new_xy]
+    sm = [sum(gz[max(0, k - 2):k + 3]) / len(gz[max(0, k - 2):k + 3]) for k in range(count)]
+    new = []
+    for k, (x, y) in enumerate(new_xy):
+        t = (k + 1) / (count + 1)
+        w = min(1.0, (k + 1) / 4.0, (count - k) / 4.0)
+        z = (za + (zb - za) * t) * (1 - w) + sm[k] * w
+        src = old[min(len(old) - 1, int(round(t * (len(old) - 1))))]
+        new.append(dict(src, x=round(x, 2), y=round(y, 2), ground_z=round(gz[k], 2), track_z=round(z, 2), building="", tunnel=False))
+    old_count = b - a - 1
+    points[a + 1:b] = new
+    for i, p in enumerate(points):
+        p["i"], p["s"] = i, round(i * SPACING, 1)
+    return [f"curve override '{spec['name']}': {old_count} points between ({xy(a)[0]}, {xy(a)[1]}) and ({points[a + 1 + count]['x']}, "
+            f"{points[a + 1 + count]['y']}) replaced by {count} points ({length:.2f} m, step {step:.3f} m); radius {spec['radius_m']} m held "
+            f"for {hold:.1f} m, counter-curve {spec['counter_radius_m']} m for {counter:.1f} m; lap {(count - old_count) * SPACING:+.0f} m; "
+            f"steepest slope {max(abs(p['track_z'] - q['track_z']) / step for p, q in zip(points[a:a + count + 1], points[a + 1:a + count + 2])) * 100:.1f} %"]
+
+
 def apply_section_overrides(points, buildings, beach_tunnel, tunnel_len):
     """Replaces a stretch of the finished route by a hand-set line (route_profile.json "section_overrides").
 
@@ -699,6 +789,9 @@ def apply_section_overrides(points, buildings, beach_tunnel, tunnel_len):
     for spec in PROFILE.get("section_overrides", []):
         if "via" in spec:
             notes += apply_via_override(points, buildings, beach_tunnel, tunnel_len, spec)
+            continue
+        if spec.get("type") == "curve":                         # V14c: a wide turn with a smooth curvature profile
+            notes += apply_curve_override(points, spec)
             continue
         n = len(points)
         near = lambda at: min(range(n), key=lambda i: (points[i]["x"] - at[0]) ** 2 + (points[i]["y"] - at[1]) ** 2)
