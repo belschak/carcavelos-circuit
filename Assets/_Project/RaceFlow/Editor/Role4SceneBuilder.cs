@@ -146,6 +146,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                     return new[] { typeof(Transform), typeof(AudioSource), typeof(RaceMusic) };
                 case "Ghost":
                     return new[] { typeof(Transform), typeof(GhostRecorder), typeof(GhostPlayer) };
+                case Role4RacersBuilder.RootName: // tasks R8 + R9
+                    return Role4RacersBuilder.Components();
                 case "Items":
                     return new[] { typeof(Transform), typeof(ItemSystem), typeof(AudioSource), typeof(UIDocument), typeof(ItemSlotHud) };
                 case "Ambience":
@@ -783,6 +785,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             hudToGhost.ApplyModifiedPropertiesWithoutUndo();
 
             BuildItems(manager, panel);
+            Role4RacersBuilder.Build(manager, settings, panel); // every racer on the grid, positions + minimap (R8, R9)
             CarcavelosCircuit.Ambience.Editor.AmbienceBuilder.AddToScene(); // waves + surfers on the beach (R12)
 
             EditorSceneManager.SaveScene(scene, MainScenePath);
