@@ -355,6 +355,85 @@ namespace CarcavelosCircuit.Visuals.Editor
             }
             tso.FindProperty("spawnPoint").objectReferenceValue = spawn.transform;
             tso.ApplyModifiedPropertiesWithoutUndo();
+
+            AddCheckpointGates(race, data);
+        }
+
+        // Checkpoint gates (task V13): a waving "NOVA KART" feather banner on each side of the road at every
+        // checkpoint, so the player sees where to drive through. Each pole foot sits on the ground found by a ray;
+        // a pole that would stand inside a wall (tunnel, ramp walls) moves in towards the road until it is free.
+        private static void AddCheckpointGates(GameObject race, TrackData data)
+        {
+            Material pole = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "/W_gloss_black.mat");
+            Material cloth = CheckpointBannerMaterial();
+            var group = new GameObject("CheckpointGates");
+            group.transform.SetParent(race.transform, false);
+            Physics.SyncTransforms();
+            int moved = 0;
+            for (int c = 0; c < data.checkpoints.Length; c++)
+            {
+                int i = data.checkpoints[c];
+                TrackPoint p = data.points[i];
+                var gate = new GameObject("Gate " + c + (c == 0 ? " (start-finish)" : ""));
+                gate.transform.SetParent(group.transform, false);
+                gate.transform.SetPositionAndRotation(Pos(p), Quaternion.LookRotation(Forward(data, i)));
+                float offset = CheckpointGatePlan.PostOffset(p.width);
+                Vector3 left = GateFoot(gate.transform, -1f, offset, p.width, ref moved);
+                Vector3 right = GateFoot(gate.transform, 1f, offset, p.width, ref moved);
+                gate.AddComponent<CheckpointGate>().Configure(left, right, pole, cloth);
+            }
+            Debug.Log("CampusWorldBuilder: " + data.checkpoints.Length + " checkpoint gates (" + moved + " poles moved in from a wall).");
+        }
+
+        // Local foot position of one pole: as far out as planned, or nearer the road if a wall is there, on the ground.
+        private static Vector3 GateFoot(Transform gate, float side, float offset, float roadWidth, ref int moved)
+        {
+            const float step = 0.25f;
+            float minimum = roadWidth * 0.5f - 0.2f;                 // never further in than the road edge
+            float d = offset;
+            while (d > minimum && Physics.CheckCapsule(gate.TransformPoint(new Vector3(side * d, 0.6f, 0f)),
+                       gate.TransformPoint(new Vector3(side * d, 2.6f, 0f)), 0.2f, ~(1 << 2), QueryTriggerInteraction.Ignore))
+            {
+                d -= step;
+            }
+            if (d < offset)
+            {
+                moved++;
+            }
+            Vector3 top = gate.TransformPoint(new Vector3(side * d, 2f, 0f));
+            float y = 0f;
+            if (Physics.Raycast(top, Vector3.down, out RaycastHit hit, 6f, ~(1 << 2), QueryTriggerInteraction.Ignore))
+            {
+                y = gate.InverseTransformPoint(hit.point).y;
+            }
+            return new Vector3(side * d, y, 0f);
+        }
+
+        // URP Lit with the banner picture (tools/textures/make_checkpoint_banner.py), clamped so no edge bleeds over.
+        private static Material CheckpointBannerMaterial()
+        {
+            const string folder = "Assets/_Project/Visuals/CheckpointGates";
+            const string picture = folder + "/CheckpointBanner.png";
+            const string path = folder + "/CheckpointBanner.mat";
+            var importer = (TextureImporter)AssetImporter.GetAtPath(picture);
+            if (importer != null && (importer.wrapMode != TextureWrapMode.Clamp || importer.maxTextureSize != 1024))
+            {
+                importer.wrapMode = TextureWrapMode.Clamp;
+                importer.maxTextureSize = 1024;
+                importer.SaveAndReimport();
+            }
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                Shader lit = Shader.Find("Universal Render Pipeline/Lit");
+                material = new Material(lit != null ? lit : Shader.Find("Standard"));
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(picture));
+            material.SetColor("_BaseColor", Color.white);
+            material.SetFloat("_Smoothness", 0.15f);
+            EditorUtility.SetDirty(material);
+            return material;
         }
 
         // docs/art-style.md: bright late-morning sun from one side, soft shadows, light-blue sky, no fog.
