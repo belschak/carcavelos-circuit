@@ -154,14 +154,14 @@ G_CREAM = [(113.6, 3.2), (126.2, 8.1), (119.6, 24.9), (107.0, 20.0)]            
 G_ROOF = [(132.3, 1.3), (150.0, 8.2), (140.1, 33.4), (122.4, 26.4)]             # the flying roof slab (roof square)
 G_BLOCK = [(135.8, 10.2), (147.4, 14.8), (140.1, 33.4), (128.5, 28.8)]           # glazed block, set back under it
 G_BALCONY = [(134.3, 5.2), (149.5, 11.1), (141.3, 34.4), (126.1, 28.5)]          # Floor-2 balcony band around it
-G_COLUMNS = [(133.0, 2.9), (138.5, 4.8)]                                         # the two tall columns
-G_STEPS = [(137.4, -22.6), (149.6, -15.2), (149.6, -7.4), (142.4, -7.0)]        # terracotta seat steps south of G
+# (V16b: the one tall column, the roof's real outline, the seat tiers and the stair east of the plaza: campus_east_plan.py)
 # lower plaza (EDP Plaza, 11.2 m) east of the race line: the terrain is levelled here so G stands on its columns
-LOWER_PLAZA = [(111.0, -30.0), (122.3, -22.3), (130.5, -20.5), (133.0, -27.5), (137.4, -22.6), (150.0, -14.0),
+LOWER_PLAZA = [(111.0, -30.0), (122.3, -22.3), (130.5, -20.5), (133.0, -27.5), (141.5, -27.0), (141.5, -21.5), (150.0, -14.0),
                (150.0, -6.5), (149.0, 9.0), (133.0, 0.5), (127.5, 12.0), (114.0, 11.5), (114.1, 1.4),
                (112.5, -6.0), (111.0, -12.0)]
 # (V10 integration: the outline reaches 4 to 6 m behind G's set-back Floor-0 front, so the 5 m nodes just behind the
 # glass are level too; before, the ground rose to them and stood as a mound in front of the glass)
+# (V16b: the node (140, -25) is level too: the plaza runs into the angle between the seat tiers and F's white wing)
 LOWER_PLAZA_Z = F0 - 0.05
 
 
@@ -191,14 +191,12 @@ paint("amphitheatre", [(21.0, -4.5), (57.5, 9.5), (66.0, -9.5), (47.0, -20.0), (
 paint("terrace of E", [(13.0, -47.0), (23.9, -39.1), (29.3, -46.2), (27.0, -52.0), (18.5, -55.4)], OCHRE)
 paint("north courtyard", COURT_N, OCHRE)
 paint("south courtyard", COURT_S, OCHRE)
-paint("lower plaza", [(96.0, -29.3), (106.6, -25.4), (104.5, -18.0), (110.5, -8.5), (114.1, 1.4), (123.1, 4.1),
-                      (125.4, -2.0), (128.7, -10.6), (142.4, -7.0), (137.4, -22.6), (133.0, -27.5), (130.5, -20.5),
-                      (122.3, -22.3), (122.6, -32.7), (114.0, -36.5), (104.0, -38.5)], OCHRE)
 # V10 integration: the ground under the Gallery's arcade (beside the lower plaza and the stairs' west void) and in
 # Horizon Hall's undercroft is paving too (it was lawn green behind the columns)
 paint("arcade under the Gallery deck", [MAIN(23.4, 1.0), MAIN(30.6, 1.0), MAIN(30.6, 34.0), MAIN(23.4, 34.0)], OCHRE)
 paint("undercroft of Horizon Hall", [(113.6, 0.9), (123.1, 4.1), (125.4, -2.0), (128.7, -10.6), (151.6, 2.6),
                                      (147.4, 5.8), (131.3, -3.5), (126.1, 10.1), (112.4, 6.2)], OCHRE)
+import campus_east_plan  # noqa: E402,F401  V16b: lower plaza (beige-grey), rim path, lawn above the seat tiers
 
 
 # ----------------------------------------------------------------------------------------------------------------

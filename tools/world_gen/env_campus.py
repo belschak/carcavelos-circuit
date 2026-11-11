@@ -9,10 +9,8 @@ Plan data and sources: campus_plan.py (survey V10h: DGT orthophoto, Google tiles
                   floor are cut exactly as before (build_world.carve_drive_throughs): the body keeps a closed volume.
   B, D            Floor-1 ribbon storey with white slab bands, planted roof strips, set-back glazed roof storey under
                   a thin slab, blank angular white heads (B: portal hood; D: cantilever over a dark base, in a pool)
-  E               white podium with two upper boxes under dark roofs
-  F               faceted white monolith: ridge, crease, undercut north-west corner with a dark entrance, grass bank
-  G               Floor-1 podium on round columns over a dark undercroft, cream box over a glazed front, glazed
-                  block with a balcony, flying roof slab on two tall columns, seat steps to the south
+  E, F, G         V16b: env_campus_east.py (E white volumes with the framed window box; F with its prow over the
+                  lower plaza; G with the flying roof on one slender column; seat tiers and stair east of the plaza)
   SC              two-storey white box
 Grounds: the two sunken courtyards beside the CTT terrace and D's reflecting pool are 'trays' (the 5 m terrain cells
 they touch are replaced by an apron mesh that meets the tray outline; E.ground_z returns the tray floor), the lower
@@ -629,130 +627,22 @@ def build_D(b):
 
 
 # ----------------------------------------------------------------------------------------------------------------
-# E  Executive Hall
+# E  Executive Hall, F  Grand Auditorium, G  Horizon Hall: V16b builds them in env_campus_east.py
+# (plan data: campus_east_plan.py)
 # ----------------------------------------------------------------------------------------------------------------
-E_RING = [(45.1, -25.4), (42.3, -20.7), (34.6, -22.7), (34.5, -27.9), (22.6, -38.5), (27.7, -45.7), (32.8, -44.0),
-          (29.3, -54.8), (37.9, -60.0), (39.9, -61.1), (47.4, -54.5), (53.9, -57.9), (60.8, -52.2), (59.4, -49.9),
-          (78.7, -36.0), (67.6, -8.4), (46.8, -20.3), (48.6, -23.3)]          # OSM without the sliver along the ramp
-E_UPPER = [[(36.8, -27.8), (36.1, -42.7), (42.0, -50.9), (54.7, -47.9), (58.4, -39.7), (51.0, -28.5), (42.8, -20.9)],
-           [(51.0, -27.8), (59.2, -38.9), (75.4, -28.6), (68.1, -17.3)]]
-
-
 def build_E(b):
-    vol, det = Mesh(), Mesh()
-    ring = ccw(E_RING)
-    base = min(E.ground_z(x, y) for x, y in ring) - 1.0
-    vol.prism(ring, base, F1, WALL, ROOF)
-    for a, e in zip(ring, ring[1:] + ring[:1]):
-        if dist(a, e) > 6.0:
-            det.glass(a, e, F0 + 0.7, F0 + 2.5, inset=0.6)
-    for upper in E_UPPER:
-        upper = ccw(upper)
-        vol.prism(upper, F1, F2 + 0.3, WALL, DARKROOF)
-        vol.prism(grow(upper, 0.25), F2 + 0.3, F2 + 0.55, WALL, None)            # white parapet rim
-        for a, e in zip(upper, upper[1:] + upper[:1]):
-            if dist(a, e) > 5.0:
-                det.glass(a, e, F1 + 0.9, F1 + 2.9, inset=0.6)
-    return vol.finish("B_" + b["id"]), det.finish("BD_" + b["id"])
+    import env_campus_east
+    return env_campus_east.build_E(b)
 
 
-# ----------------------------------------------------------------------------------------------------------------
-# F  Grand Auditorium: faceted white monolith
-# ----------------------------------------------------------------------------------------------------------------
 def build_F(b):
-    vol, det = Mesh(), Mesh()
-    A, B_, Cw = (122.3, -22.0, 26.0), (130.5, -20.2, 25.0), (122.6, -32.7, 22.8)
-    Dw, Ew, Fw = (118.7, -50.2, 19.5), (109.0, -66.2, 16.5), (114.2, -70.7, 16.5)
-    F2w, Gw, Gs = (113.0, -75.8, 16.0), (112.6, -77.5, 15.5), (143.3, -84.8, 15.5)
-    Je, He, H2 = (147.3, -70.3, 16.5), (156.3, -37.2, 17.5), (153.6, -36.2, 17.8)
-    Ie, Sw, Se = (131.8, -28.0, 23.0), (120.8, -70.3, 19.0), (139.6, -71.8, 19.0)
-    outline = [A, Cw, Dw, Ew, Fw, F2w, Gw, Gs, Je, He, H2, Ie, B_]            # ccw
-    base = min(E.ground_z(p[0], p[1]) for p in outline) - 1.0
-    lift = F0 + 6.0                                                           # lower edge of the wall at the corner
-    for a, e in zip(outline, outline[1:] + outline[:1]):
-        undercut = (a, e) in ((A, Cw), (B_, A))              # the wall's lower edge rises to the corner here
-        za = lift if undercut and a in (A, B_) else base
-        ze = lift if undercut and e in (A, B_) else base
-        vol.face([(a[0], a[1], za), (e[0], e[1], ze), e, a], WALL)
-    for tri in ((A, Sw, Se), (A, Se, B_),                                      # the long central facet (ridge)
-                (A, Cw, Sw), (Cw, Dw, Sw), (Dw, Ew, Sw), (Ew, Fw, Sw),         # west facet
-                (B_, Se, Ie), (Ie, Se, H2), (H2, Se, He), (He, Se, Je),        # east facet
-                (Sw, Fw, F2w), (Sw, F2w, Gw), (Sw, Gw, Gs), (Sw, Gs, Se), (Se, Gs, Je)):   # south facet
-        vol.up(list(tri), WALL)
-    # undercut north-west corner: dark glazed entrance 2.5 m behind the wall line, white soffit over it
-    Ai, Bi = (124.1, -24.4), (131.0, -22.9)
-    mid = (126.0, -21.0, F0 + 2.0)
-    vol.towards([(*Ai, base), (Cw[0], Cw[1], base), (*Ai, lift)], DARK, (118.0, -27.0, F0 + 2))
-    vol.towards([(*Ai, base), (*Bi, base), (*Bi, lift), (*Ai, lift)], DARK, mid)
-    vol.towards([(*Bi, base), (B_[0], B_[1], base), (B_[0], B_[1], lift), (*Bi, lift)], WALL, mid)
-    vol.down([(A[0], A[1], lift), (*Ai, lift), (Cw[0], Cw[1], base)], WALL)
-    vol.down([(A[0], A[1], lift), (B_[0], B_[1], lift), (*Bi, lift), (*Ai, lift)], WALL)
-    for k in range(5):                                                         # skylights on the south facet
-        c = lerp2((123.5, -73.6), (137.5, -75.0), k / 4)
-        det.box(c, (0.995, -0.1), 1.1, 0.6, 17.6, 18.55, WALL, GLASS_ROOF)
-    berm(det, [Cw[:2], Dw[:2], Ew[:2]], (100.0, -45.0), 2.6, width=7.0)        # grass bank against the west wall
-    return vol.finish("B_" + b["id"]), det.finish("BD_" + b["id"])
-
-
-# ----------------------------------------------------------------------------------------------------------------
-# G  Horizon Hall / Westmont Hospitality Hall (the gym is its Floor 0)
-# ----------------------------------------------------------------------------------------------------------------
-G_UNDER = [(112.7, 5.8), (125.8, 9.6), (131.0, -4.1), (147.2, 5.3), (151.2, 2.35)]    # set-back Floor-0 front
-G_GYM = [(151.2, 2.35), (167.6, 11.8), (150.6, 41.0), (145.9, 38.2), (127.8, 27.6), (139.6, 32.6), (149.2, 8.8)]
+    import env_campus_east
+    return env_campus_east.build_F(b)
 
 
 def build_G(b):
-    vol, det = Mesh(), Mesh()
-    ring = ccw(b["points"])
-    k1 = min(range(len(ring)), key=lambda k: dist(ring[k], (114.1, 1.4)))
-    k5 = min(range(len(ring)), key=lambda k: dist(ring[k], (167.6, 11.8)))
-    lower, k = [], (k5 % len(ring))
-    while k != k1:                                   # from the east corner round the north and west sides
-        lower.append(ring[k])
-        k = (k + 1) % len(ring)
-    lower += G_UNDER                                 # then the set-back front instead of the south-west corners
-    ground = C.LOWER_PLAZA_Z
-    base = min([E.ground_z(x, y) for x, y in ring] + [ground]) - 1.0
-    stepped_solid(vol, lower, ring, base, F1 - 0.5, F1, WALL, SAND, WALL)
-    for a, e in zip(G_UNDER, G_UNDER[1:]):
-        det.glass(a, e, F0 + 0.15, F1 - 0.6, mat=DARK)
-    front = [ring[k1], ring[(k1 + 1) % len(ring)], ring[(k1 + 2) % len(ring)], ring[(k1 + 3) % len(ring)],
-             lerp2(ring[(k1 + 3) % len(ring)], ring[k5], 24.0 / dist(ring[(k1 + 3) % len(ring)], ring[k5]))]
-    cen = centroid(ring)
-    for a, e in zip(front, front[1:]):                                          # round columns under the deck edge
-        n = max(1, int(round(dist(a, e) / 6.0)))
-        for j in range(n + (1 if e is front[-1] else 0)):
-            p = lerp2(a, e, j / n)
-            d = dist(p, cen)
-            c = (p[0] + (cen[0] - p[0]) / d * 0.7, p[1] + (cen[1] - p[1]) / d * 0.7)
-            if E.distance_to_route(*c) > ROUTE_CLEAR + 1.0:
-                det.column(c, 0.25, min(E.ground_z(*c), ground) - 0.3, F1 - 0.5)
-    det.railing([(*p, F1) for p in front])
-    # cream box over a glazed Floor-1 front
-    cream = ccw(C.G_CREAM)
-    vol.prism(grow(cream, -0.4), F1, F1 + 3.3, GLASS, None)
-    vol.prism(cream, F1 + 3.3, F1 + 9.1, CREAM, ROOF, CREAM)
-    # glazed block with a balcony band, flying roof on two tall columns
-    block = ccw(C.G_BLOCK)
-    vol.prism(block, F1, F2 - 0.3, GLASS, None)
-    balcony = ccw(C.G_BALCONY)
-    vol.prism(balcony, F2 - 0.3, F2 + 0.2, WALL, SAND, WALL)
-    vol.prism(block, F2 + 0.2, 25.4, GLASS, None)
-    inner = grow(balcony, -0.15)
-    det.railing([(*inner[3], F2 + 0.2), (*inner[0], F2 + 0.2), (*inner[1], F2 + 0.2)])
-    slab = grow(ccw(C.G_ROOF), 0.5)
-    vol.prism(slab, 25.4, 26.0, WALL, ROOF, WALL)
-    inner = grow(slab, -0.3)
-    det.railing([(*inner[3], 26.0), (*inner[0], 26.0), (*inner[1], 26.0)])
-    for c in C.G_COLUMNS:
-        det.column(c, 0.3, F1, 25.4)
-    # the gym's roof east of the block
-    gym = ccw(G_GYM)
-    vol.prism(gym, F1 - 0.5, F2, WALL, ROOF)
-    for a, e in zip(gym, gym[1:] + gym[:1]):
-        if dist(a, e) > 8.0 and not C.inside(*lerp2(a, e, 0.5), grow(ccw(C.G_ROOF), 0.5)):
-            det.glass(a, e, F1 + 0.9, F1 + 2.5, inset=0.6)
-    return vol.finish("B_" + b["id"]), det.finish("BD_" + b["id"])
+    import env_campus_east
+    return env_campus_east.build_G(b)
 
 
 def build_SC(b):
@@ -1015,15 +905,9 @@ def build_extras():
     m.up([(*a, C.COURT_Z + 2.4), (*e, C.COURT_Z + 2.4), (e[0] + nx * 2.6, e[1] + ny * 2.6, F1 - 0.4),
           (a[0] + nx * 2.6, a[1] + ny * 2.6, F1 - 0.4)], PLANT)
     terrace_stair(m)
-    # --- G's terracotta seat steps (south of G, rising east from the lower plaza) ---
-    s0, s1, s2, s3 = C.G_STEPS                         # s0-s3 = foot line (west), s1-s2 = top line (east)
-    tiers = 8
-    for k in range(tiers):
-        fa, fb = lerp2(s0, s1, k / tiers), lerp2(s3, s2, k / tiers)
-        ring = ccw([fa, s1, s2, fb])
-        m.prism(ring, C.LOWER_PLAZA_Z - 0.6, C.LOWER_PLAZA_Z + (k + 1) * (F1 - 0.3 - C.LOWER_PLAZA_Z) / tiers,
-                TERRA, TERRA)
-    keep_out(C.G_STEPS, 1.0)
+    # --- V16b: east edge of the lower plaza (seat tiers, grey stair), its paving and fixed objects, E's rim path ---
+    import env_campus_east
+    env_campus_east.build_grounds()
     # --- berms: the lawn rises against the blank heads of B and D's bar ---
     berm(m, [C.B_HEAD[0], C.B_HEAD[1], (-58.5, 62.9)], (-75.0, 55.0), 3.4, width=8.0)
     berm(m, [(-58.4, 60.2), (-51.6, 60.4)], (-55.0, 50.0), 2.6, width=6.0)          # in front of the portal hood
