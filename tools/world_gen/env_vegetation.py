@@ -9,8 +9,12 @@ Run inside Blender 5.2 (headless works), for example from another script:
     placements = V.place()                      # list of dicts, also written to out/placements_vegetation.json
     V.instance_for_preview(placements, protos)  # linked duplicates in World_Vegetation, only for renders
 
-Prototypes: one mesh object each, origin at the base centre, z up, metres, flat shaded, triangulated, 2-3 flat
-colours (trunk + foliage + highlight). Trunks reach 0.4 m below z = 0, so a plant on a slope never floats.
+Prototypes: one mesh object each, origin at the base centre, z up, metres, triangulated. Shrubs, grass and olives
+are flat shaded with 2 flat colours (trunk + foliage + highlight). Soft-look test (2026-11-10): the
+umbrella pine, the palm and the olive are smooth shaded all over (custom normals) and use ONE material per tree
+with a small colour ramp texture (textures/veg_ramp_*_albedo.png, written here; foliage and bark column): every
+vertex picks its shade through its UV (dark underneath and in the creases between clumps, light on top; trunks
+light at the base, dark under the crown), see ramp_material() and soft_crown(). Trunks reach 0.4 m below z = 0, so a plant on a slope never floats.
 Variety per instance comes from rotation, scale and the "_B" colour/shape variant of each plant.
 
 Placement entries (the game instances from out/placements_vegetation.json, key "placements"):
@@ -38,7 +42,7 @@ PLACEMENTS_FILE = os.path.join(E.OUT, "placements_vegetation.json")
 SEED = 20261108
 
 # Hard triangle limits per plant type (both colour variants of a type share the limit).
-TRI_BUDGET = {"Veg_UmbrellaPine": 440, "Veg_Palm": 500, "Veg_Olive": 330, "Veg_Shrub": 120, "Veg_Grass": 80}
+TRI_BUDGET = {"Veg_UmbrellaPine": 1700, "Veg_Palm": 700, "Veg_Olive": 1150, "Veg_Shrub": 120, "Veg_Grass": 80}
 
 # Per plant type: crown radius at scale 1 (m, widest reach of the foliage from the trunk axis, measured on the
 # prototypes and checked by test_env_assets.py; used for the keep-clear rules),
@@ -82,20 +86,34 @@ class MeshBuilder:
     def __init__(self):
         self.verts, self.faces, self.mats = [], [], []
         self.normals = {}                  # vertex index -> custom normal (smooth "puffy" foliage), see v()
+        self.uvs = {}                      # vertex index -> (u, v) for ramp-textured foliage
+        self.twins = {}                    # vertex index -> twin indices: other normal + UV at the same point
+        self.kept = set()                  # faces whose winding must not be recalculated, see f()
+        self.flutter = {}                  # vertex index -> flutter weight 0..1 (leaf tips), see sway_layer()
 
-    def v(self, co, normal=None):
+    def twin(self, i, normal, uv):
+        """A second normal + UV for vertex i (e.g. the dark underside of a leaf edge). Each face corner at i uses
+        the variant whose normal agrees best with the face, so the mesh stays one closed body."""
+        self.twins.setdefault(i, []).append(self.v(self.verts[i], normal, uv))
+
+    def v(self, co, normal=None, uv=None):
         """New vertex. With `normal` it belongs to a smooth surface: every face whose corners all carry a normal
         is shaded smooth with these normals (spherical crown normals); all other faces stay flat."""
         self.verts.append(Vector((co[0], co[1], co[2])))
         if normal is not None:
             self.normals[len(self.verts) - 1] = Vector(normal).normalized()
+        if uv is not None:
+            self.uvs[len(self.verts) - 1] = (uv[0], uv[1])
         return len(self.verts) - 1
 
-    def f(self, idx, mat):
+    def f(self, idx, mat, keep=False):
+        """New face. keep: an open sheet drawn from both sides (palm frond); its winding stays as given."""
+        if keep:
+            self.kept.add(len(self.faces))
         self.faces.append(tuple(idx))
         self.mats.append(mat)
 
-    def build(self, name, materials, col):
+    def build(self, name, materials, col, sway=False):
         mesh = bpy.data.meshes.new(name)
         mesh.from_pydata([tuple(v) for v in self.verts], [], self.faces)
         for m in materials:
@@ -103,12 +121,15 @@ class MeshBuilder:
         mesh.polygons.foreach_set("material_index", self.mats)
         bm = bmesh.new()
         bm.from_mesh(mesh)
-        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])          # every island points outwards
+        bm.faces.index_update()
+        bmesh.ops.recalc_face_normals(bm, faces=[f for f in bm.faces if f.index not in self.kept])   # islands point outwards
         bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method="BEAUTY", ngon_method="BEAUTY")
+        bm.verts.index_update()
+        keep = [v.index for v in bm.verts if v.link_faces]             # twins have no faces of their own
         loose = [v for v in bm.verts if not v.link_faces]
         if loose:
             bmesh.ops.delete(bm, geom=loose, context="VERTS")
-        origin = [v.index for v in bm.verts]                           # new vertex order -> builder index
+        origin = keep                                                  # new vertex order -> builder index
         bm.to_mesh(mesh)
         bm.free()
         smooth_vert = [origin[k] in self.normals for k in range(len(origin))]
@@ -116,14 +137,36 @@ class MeshBuilder:
             poly.use_smooth = bool(self.normals) and all(smooth_vert[k] for k in poly.vertices)   # ... or puffy
         mesh.validate()
         if self.normals:
-            loops = []
+            loops, corner = [], {}
             for poly in mesh.polygons:
                 for li in poly.loop_indices:
-                    vi = mesh.loops[li].vertex_index
-                    loops.append(tuple(self.normals[origin[vi]]) if poly.use_smooth else tuple(poly.normal))
+                    vi = origin[mesh.loops[li].vertex_index]
+                    if vi in self.twins:
+                        vi = max([vi] + self.twins[vi], key=lambda k: self.normals[k].dot(poly.normal))
+                    corner[li] = vi
+                    loops.append(tuple(self.normals[vi]) if poly.use_smooth else tuple(poly.normal))
             mesh.normals_split_custom_set(loops)
+        if self.uvs:
+            layer = mesh.uv_layers.new(name="UVMap")
+            for loop in mesh.loops:
+                vi = corner.get(loop.index, origin[loop.vertex_index]) if self.normals else origin[loop.vertex_index]
+                layer.data[loop.index].uv = self.uvs.get(vi, (0.5, 0.5))
+        if sway:
+            self.sway_layer(mesh, origin, corner if self.normals else {})
         mesh.update()
         return E.new_object(name, mesh, col)
+
+    def sway_layer(self, mesh, origin, corner):
+        """Second UV layer "Sway" for the wind (Foliage.shader): u = bend weight, 0 at the ground and 1 at the top of
+        the plant (height ^ 1.5, so the trunk base stands still); v = flutter weight from self.flutter (0 at the base
+        of a frond, 1 at its tip). Baked into the mesh because Unity merges the static trees into world-space batches,
+        where a shader no longer knows a tree's own height or origin."""
+        top = max(v.co.z for v in mesh.vertices)
+        layer = mesh.uv_layers.new(name="Sway")
+        for loop in mesh.loops:
+            z = mesh.vertices[loop.vertex_index].co.z
+            vi = corner.get(loop.index, origin[loop.vertex_index])
+            layer.data[loop.index].uv = (min(max(z / top, 0.0), 1.0) ** 1.5, self.flutter.get(vi, 0.0))
 
 
 def frames(path):
@@ -259,88 +302,301 @@ def puff_lobe(mb, centre, radii, rng, mat_for, crown_centre, yaw=0.0, jitter=0.0
         mb.f([idx[i] for i in f], mat_for(zc))
 
 
-def umbrella_pine(name, seed, crown, top, bark, col):
-    """Stone pine, puffy (design reference 2026-11-09): slim trunk with a slight lean and S-bend, two short
-    limbs, and a wide flat umbrella of four smooth lobes (a big centre lobe and three rim lobes). About 9 m tall,
-    9 m across. Replaces the faceted 12 m pad pine: softer silhouette, 424 instead of ~600 triangles."""
+# ---- soft look (test 2026-11-10): smooth clumps, round trunks, one ramp-shaded material per tree --------------------
+# Per tree variant: foliage ramp from deep shade (0) to sunlit (1) as (position, hex), and the bark colour.
+RAMPS = {
+    "pine": (((0.0, "#30533F"), (0.35, "#4B794D"), (0.7, "#76A35C"), (1.0, "#B4CB7C")), "#7A5238"),
+    "pine_b": (((0.0, "#2C4D3B"), (0.35, "#447048"), (0.7, "#6A9854"), (1.0, "#A6C172")), "#6B4F3A"),
+    "palm": (((0.0, "#2C4A2A"), (0.35, "#4A6E33"), (0.7, "#6B9A42"), (1.0, "#B2CF68")), "#9A8262"),
+    "palm_b": (((0.0, "#31502D"), (0.35, "#557538"), (0.7, "#789F47"), (1.0, "#BCD470")), "#9C8468"),
+    "olive": (((0.0, "#465C4A"), (0.35, "#687F5C"), (0.7, "#96A77C"), (1.0, "#CCD3A6")), "#7D7366"),
+    "olive_b": (((0.0, "#42594A"), (0.35, "#638255"), (0.7, "#92AA74"), (1.0, "#C8D69E")), "#8A7D6B"),
+}
+RAMP_SIZE = (32, 64)
+U_LEAF, U_BARK = 0.25, 0.75                # the ramp texture has two columns: foliage (left) and bark (right)
+
+
+FOLIAGE_SHADER = "CarcavelosCircuit/Foliage"     # Assets/_Project/Visuals/Shaders/Foliage.shader (URP Lit if missing)
+WIND = {"palm": (0.22, 0.28), "pine": (0.05, 0.04), "olive": (0.03, 0.035)}   # metres: bend at the top, flutter at the tips
+
+
+def set_wind(mat, kind):
+    """Marks a tree material for the wind shader: export_unity_bundle.py writes it as the "wind" block of
+    materials.json. All materials of one tree get the same numbers, or trunk and leaves would drift apart."""
+    mat["wind_shader"], (mat["wind_bend"], mat["wind_flutter"]) = FOLIAGE_SHADER, WIND[kind]
+
+
+def _rgb(hexc):
+    return [int(hexc[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+
+
+def _ramp_colour(stops, t):
+    for (t0, c0), (t1, c1) in zip(stops, stops[1:]):
+        if t0 <= t <= t1:
+            k = (t - t0) / (t1 - t0)
+            return [a + (b - a) * k for a, b in zip(_rgb(c0), _rgb(c1))]
+    return _rgb(stops[-1][1])
+
+
+def ramp_material(key):
+    """The one material 'W_tree_<key>' of a soft tree. Its base colour is a small ramp texture (32 x 64 px), saved
+    as textures/veg_ramp_<key>_albedo.png so export_unity_bundle.py ships it like any other albedo: the left half
+    is the foliage ramp, the right half the bark ramp (bark colour: 50 % darker at v = 0, lighter at v = 1). Every
+    vertex picks column and shade through its UV: a gradient without vertex colours (URP Lit ignores those), and
+    the whole tree is one draw call."""
+    leaf, bark_hex = RAMPS[key]
+    bark = _rgb(bark_hex)
+    bark_stops = ((0.0, [c * 0.5 for c in bark]), (0.55, bark), (1.0, [c + (1.0 - c) * 0.28 for c in bark]))
+    mat = E.material("tree_" + key, leaf[1][1], roughness=0.9)
+    set_wind(mat, key.removesuffix("_b"))
+    w, h = RAMP_SIZE
+    pixels = []
+    for y in range(h):
+        t = y / (h - 1)
+        a = _ramp_colour(leaf, t)
+        for (t0, c0), (t1, c1) in zip(bark_stops, bark_stops[1:]):
+            if t0 <= t <= t1:
+                b = [p + (q - p) * (t - t0) / (t1 - t0) for p, q in zip(c0, c1)]
+        for x in range(w):
+            pixels += [*(a if x < w // 2 else b), 1.0]
+    os.makedirs(E.TEXTURES, exist_ok=True)
+    img = bpy.data.images.new(f"veg_ramp_{key}", w, h, alpha=False)        # byte image: values are sRGB as written
+    img.pixels = pixels
+    img.filepath_raw, img.file_format = os.path.join(E.TEXTURES, f"veg_ramp_{key}_albedo.png"), "PNG"
+    img.save()
+    nodes, links = mat.node_tree.nodes, mat.node_tree.links
+    if not any(n.type == "TEX_IMAGE" for n in nodes):
+        tex = nodes.new("ShaderNodeTexImage")
+        tex.image = img
+        tex.extension = "EXTEND"
+        links.new(tex.outputs["Color"], nodes.get("Principled BSDF").inputs["Base Color"])
+    return mat
+
+
+def _shade(s):
+    return min(max(s, 0.04), 0.96)
+
+
+_GEO = {}
+
+
+def geo(freq):
+    """Unit geodesic sphere (vertices, faces): an icosahedron with every edge cut into `freq` parts, 20 x freq^2
+    triangles (2 -> 80, 3 -> 180, 4 -> 320). Finer steps than the power-of-two icosphere, so a clump can be round
+    enough for its size without wasting triangles."""
+    if freq not in _GEO:
+        base_v, base_f = ico(1)
+        verts, index, faces = [], {}, []
+
+        def vid(p):
+            p = p.normalized()
+            key = (round(p.x, 5), round(p.y, 5), round(p.z, 5))
+            if key not in index:
+                index[key] = len(verts)
+                verts.append(tuple(p))
+            return index[key]
+
+        for fa, fb, fc in base_f:
+            a, b, c = Vector(base_v[fa]), Vector(base_v[fb]), Vector(base_v[fc])
+            grid = {(i, j): vid((a * (freq - i - j) + b * i + c * j) / freq)
+                    for i in range(freq + 1) for j in range(freq + 1 - i)}
+            for i in range(freq):
+                for j in range(freq - i):
+                    faces.append((grid[i, j], grid[i + 1, j], grid[i, j + 1]))
+                    if i + j < freq - 1:
+                        faces.append((grid[i + 1, j], grid[i + 1, j + 1], grid[i, j + 1]))
+        _GEO[freq] = (verts, faces)
+    return _GEO[freq]
+
+
+def soft_crown(mb, lobes, mat, crown_centre, z_range, blend=0.35, base=0.34, under=0.15, crease=0.16, reach=4.5):
+    """Fluffy crown made of smooth clumps. lobes: dicts with c (centre), r (rx, ry, rz), yaw, freq (see geo()),
+    floor (unit height below which the underside is squashed to a soft, nearly flat belly) and phase (slow wobble
+    so no clump is a perfect ellipsoid). Smooth shading with custom normals = the clump's own normal mixed with the
+    direction from the crown centre (`blend`), so light wraps around the whole crown, not around every clump.
+    Shade per vertex (UV v into the foliage ramp of ramp_material): `base`, plus height in the crown and facing
+    up = lighter; facing down = darker (`under`); close to or inside a neighbouring clump = darker (`crease`: the
+    gaps between clumps read as soft shadow)."""
+    cc = Vector(crown_centre)
+    z_lo, z_hi = z_range
+
+    def local(lobe, p):
+        d = p - lobe["c"]
+        cy, sy = math.cos(lobe["yaw"]), math.sin(lobe["yaw"])
+        rx, ry, rz = lobe["r"]
+        return math.sqrt(((d.x * cy + d.y * sy) / rx) ** 2 + ((-d.x * sy + d.y * cy) / ry) ** 2 + (d.z / rz) ** 2)
+
+    for lobe in lobes:
+        verts, faces = geo(lobe["freq"])
+        rx, ry, rz = lobe["r"]
+        cy, sy = math.cos(lobe["yaw"]), math.sin(lobe["yaw"])
+        floor, ph = lobe.get("floor", -0.45), lobe.get("phase", 0.0)
+        idx = []
+        for x, y, z in verts:
+            k = 1.0 + 0.05 * math.sin(3.1 * x + ph) * math.sin(2.7 * y + 1.7 * ph) + 0.035 * math.sin(4.3 * z + 2.3 * ph)
+            belly = min(max((floor - z) / 0.35, 0.0), 1.0)                 # 0 above the belly line, 1 well below it
+            zz = z if z >= floor else floor + (z - floor) * 0.35
+            lx, ly, lz = x * rx * k, y * ry * k, zz * rz * k
+            p = Vector((lobe["c"][0] + lx * cy - ly * sy, lobe["c"][1] + lx * sy + ly * cy, lobe["c"][2] + lz))
+            n = Vector((x / rx, y / ry, z / rz)).normalized()
+            n = (n * (1.0 - belly) + Vector((n.x * 0.4, n.y * 0.4, -1.0)).normalized() * belly).normalized()
+            n = Vector((n.x * cy - n.y * sy, n.x * sy + n.y * cy, n.z))
+            out = (p - cc).normalized() if (p - cc).length > 1e-6 else n
+            n = (n * (1.0 - blend) + out * blend).normalized()
+            h = min(max((p.z - z_lo) / (z_hi - z_lo), 0.0), 1.0)
+            shade = base + 0.36 * h + 0.3 * max(n.z, 0.0) - under * max(-n.z, 0.0)
+            for other in lobes:
+                if other is not lobe:
+                    shade -= crease * min(max((1.3 - local(other, p)) / 0.3, 0.0), 1.0)
+            idx.append(mb.v(p, n, (U_LEAF, _shade(shade))))
+            mb.flutter[idx[-1]] = min((p - cc).length / reach, 1.0)       # wind: the outer leaves move most
+        for f in faces:
+            mb.f([idx[i] for i in f], mat)
+
+
+def soft_tube(mb, path, radii, sides, mat, tip=None, shade=None, knots=None):
+    """Round trunk or branch: a tube along `path`, shaded smooth with normals pointing straight out from the
+    centre line, closed with a point at `tip`. The start stays open (buried in the ground or inside the trunk).
+    shade: bark ramp value per ring (light at the base, dark under the crown). knots(k, angle): radius factor per
+    vertex for a gnarled trunk (smooth in the angle, so it stays soft)."""
+    pts, fr = frames(path)
+    rings = []
+    for k, (p, (_t, n, b), r) in enumerate(zip(pts, fr, radii)):
+        ring = []
+        for j in range(sides):
+            a = 2 * math.pi * j / sides
+            d = n * math.cos(a) + b * math.sin(a)
+            uv = (U_BARK, _shade(shade[k])) if shade else None
+            ring.append(mb.v(p + d * (r * (knots(k, a) if knots else 1.0)), d, uv))
+        rings.append(ring)
+    for r0, r1 in zip(rings, rings[1:]):
+        for j in range(sides):
+            mb.f((r0[j], r0[(j + 1) % sides], r1[(j + 1) % sides], r1[j]), mat)
+    if tip is not None:
+        c = mb.v(tip, Vector(tip) - pts[-1], (U_BARK, _shade(shade[-1])) if shade else None)
+        for j in range(sides):
+            mb.f((rings[-1][j], rings[-1][(j + 1) % sides], c), mat)
+    return rings
+
+
+def umbrella_pine(name, seed, mat, col):
+    """Stone pine, soft look (test 2026-11-10, animated-film reference): a round, tapering trunk with a lean and an
+    S-bend, three round limbs, and a wide, fairly flat umbrella of ten smooth clumps: one big centre clump, five
+    along the rim and four low ones on top. One ramp-shaded material (soft_crown). About 8.8 m tall, 9.5 m across."""
     rng = random.Random(seed)
     mb = MeshBuilder()
-    BARK, CROWN, TOP = 0, 1, 2
     lean = rng.uniform(0.35, 0.55)
-    bend = rng.uniform(0.1, 0.2) * rng.choice((-1, 1))
+    bend = rng.uniform(0.14, 0.24) * rng.choice((-1, 1))
 
     def trunk_at(z):
         t = max(z, 0.0) / 6.0
         return Vector((lean * t ** 1.4, bend * math.sin(t * math.pi), z))
 
-    zs = [-0.4, 0.5, 2.6, 4.6, 6.0]
-    radii = [0.42, 0.34, 0.29, 0.24, 0.18]
-    wob = [[1.0 + rng.uniform(-0.06, 0.06) for _ in range(6)] for _ in zs]
-    tube(mb, [trunk_at(z) for z in zs], radii, 6, BARK, wobble=wob, tip=trunk_at(6.7))
+    zs = [-0.4, 0.15, 0.8, 1.9, 3.1, 4.3, 5.3, 6.1]
+    radii = [0.52, 0.4, 0.33, 0.3, 0.275, 0.25, 0.22, 0.17]
+    soft_tube(mb, [trunk_at(z) for z in zs], radii, 9, 0, tip=trunk_at(6.8),
+              shade=[0.85, 0.85, 0.8, 0.72, 0.62, 0.5, 0.36, 0.26])
     fork = trunk_at(5.0)
-    centre = Vector((fork.x + 0.1, fork.y, 7.4))
-
-    def mat_for(z):                                   # rim lobes: light only on the flat upper cap
-        return TOP if z > 0.45 else CROWN
+    centre = Vector((fork.x + 0.1, fork.y, 7.3))
 
     turn = rng.uniform(0, 2 * math.pi)
+    lobes = [dict(c=centre + Vector((0, 0, 0.4)), r=(2.75, 2.6, 1.15), yaw=turn, freq=3, floor=-0.4, phase=rng.uniform(0, 6))]
     rims = []
-    for k in range(3):
-        az = turn + 2 * math.pi * k / 3 + rng.uniform(-0.25, 0.25)
-        dist = rng.uniform(2.15, 2.45)
-        rims.append((Vector((centre.x + math.cos(az) * dist, centre.y + math.sin(az) * dist,
-                             centre.z - 0.15 + rng.uniform(-0.15, 0.15))), az))
-    for c, az in rims[:2]:                                # two limbs from the trunk up into rim lobes
-        start = Vector((fork.x, fork.y, fork.z - 0.3))
-        end = Vector((c.x - math.cos(az) * 0.6, c.y - math.sin(az) * 0.6, c.z - 0.2))
-        mid = start.lerp(end, 0.5) + Vector((0, 0, 0.35))
-        tube(mb, [start, mid, end], [0.16, 0.12, 0.08], 5, BARK, tip=end + (end - mid).normalized() * 0.4)
-    puff_lobe(mb, centre + Vector((0, 0, 0.35)), (2.7, 2.5, 1.25), rng, lambda z: TOP if z > -0.1 else CROWN,
-              centre, yaw=turn)
-    for c, az in rims:
-        puff_lobe(mb, c, (rng.uniform(2.05, 2.3), rng.uniform(1.9, 2.1), rng.uniform(1.0, 1.1)), rng, mat_for, centre,
-                  yaw=az)
-    return mb.build(name, [bark, crown, top], col)
+    for k in range(5):
+        az = turn + 2 * math.pi * k / 5 + rng.uniform(-0.16, 0.16)
+        dist = rng.uniform(2.45, 2.7)
+        c = Vector((centre.x + math.cos(az) * dist, centre.y + math.sin(az) * dist, centre.z - 0.05 + rng.uniform(-0.15, 0.15)))
+        rims.append((c, az))
+        lobes.append(dict(c=c, r=(rng.uniform(1.6, 1.75), rng.uniform(1.8, 2.0), rng.uniform(0.85, 0.98)), yaw=az, freq=3,
+                          floor=-0.35, phase=rng.uniform(0, 6)))
+    for k in range(4):
+        az = turn + 0.6 + 2 * math.pi * k / 4 + rng.uniform(-0.3, 0.3)
+        dist = rng.uniform(1.3, 1.7)
+        lobes.append(dict(c=Vector((centre.x + math.cos(az) * dist, centre.y + math.sin(az) * dist,
+                                    centre.z + 0.82 + rng.uniform(-0.08, 0.1))),
+                          r=(rng.uniform(1.3, 1.5), rng.uniform(1.15, 1.3), rng.uniform(0.6, 0.7)), yaw=az, freq=2,
+                          floor=-0.6, phase=rng.uniform(0, 6)))
+    for c, az in rims[::2]:                                # three limbs from the trunk up into rim clumps
+        start = Vector((fork.x, fork.y, fork.z - 0.4))
+        end = Vector((c.x - math.cos(az) * 0.5, c.y - math.sin(az) * 0.5, c.z - 0.25))
+        m1 = start.lerp(end, 0.35) + Vector((0, 0, 0.3))
+        m2 = start.lerp(end, 0.7) + Vector((0, 0, 0.3))
+        soft_tube(mb, [start, m1, m2, end], [0.17, 0.14, 0.11, 0.08], 6, 0, tip=end + (end - m2).normalized() * 0.4,
+                  shade=[0.42, 0.34, 0.26, 0.2])
+    soft_crown(mb, lobes, 0, centre + Vector((0, 0, -0.9)), (centre.z - 1.0, centre.z + 1.6), blend=0.45)
+    return mb.build(name, [mat], col, sway=True)
 
 
-def palm(name, seed, frond, under, trunk_mat, col, n_fronds=16):
-    """Canary Island date palm: thick straight trunk whose rings are turned half a facet against each other
-    and alternate slightly in width (diamond leaf-scar look), a round knob of old frond bases, and wide arched
-    fronds in three tiers. Each frond is a closed sliver (flat top, keel underneath), so it reads from below
-    and from above. About 9.5 m."""
+FROND_TEX_WIDTH = 1.6       # metres across the cutout texture (make_textures.FROND_M); its length is the frond
+
+
+def cutout_material(name, texture):
+    """Leaf material 'W_<name>' whose outline is cut by the alpha of textures/<texture> (make_textures.py): the
+    custom properties alpha_clip (cutoff) and double_sided go through export_unity_bundle.py into materials.json,
+    where CampusWorldBuilder turns them into URP Lit alpha clipping with both faces drawn."""
+    mat = E.material(name, "#6B9A42", roughness=0.85)
+    mat["alpha_clip"], mat["double_sided"] = 0.5, 1
+    set_wind(mat, "palm")
+    mat.use_backface_culling = False
+    path = os.path.join(E.TEXTURES, texture)
+    nodes, links = mat.node_tree.nodes, mat.node_tree.links
+    if os.path.exists(path) and not any(n.type == "TEX_IMAGE" for n in nodes):
+        tex = nodes.new("ShaderNodeTexImage")
+        tex.image = bpy.data.images.load(path, check_existing=True)
+        tex.extension = "EXTEND"
+        bsdf = nodes.get("Principled BSDF")
+        links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+        links.new(tex.outputs["Alpha"], bsdf.inputs["Alpha"])
+    return mat
+
+
+def palm(name, seed, mat, frond_mat, col, n_fronds=20):
+    """Canary Island date palm, soft look (test 2026-11-10): a round, gently curved trunk that swells into a smooth
+    knob of old frond bases (ramp material, darker towards the crown), and feathered fronds in three tiers: young
+    ones pointing up, a full middle tier, and old ones arching outwards. Each frond is one smooth, slightly folded
+    and twisted blade (add_frond); its feathered outline is the alpha of the cutout texture. About 9.5 m."""
     rng = random.Random(seed)
     mb = MeshBuilder()
-    TRUNK, FROND, UNDER = 0, 1, 2
-    sway = Vector((rng.uniform(0.15, 0.3), rng.uniform(-0.1, 0.1), 0))
-    zs = [-0.4, 1.0, 2.3, 3.6, 4.9, 6.0, 6.75, 7.35, 7.9]
-    radii = [0.62, 0.5, 0.49, 0.45, 0.47, 0.5, 0.66, 0.72, 0.55]     # the last three rings are the knob
+    sway = Vector((rng.uniform(0.2, 0.36), rng.uniform(-0.12, 0.12), 0))
+    zs = [-0.4, 0.2, 1.0, 2.3, 3.6, 4.9, 6.0, 6.75, 7.35, 7.9, 8.2]
+    radii = [0.66, 0.54, 0.48, 0.45, 0.43, 0.44, 0.5, 0.66, 0.74, 0.6, 0.34]     # the last four rings are the knob
     path = [Vector((0, 0, z)) + sway * (max(z, 0) / 8.0) ** 2 for z in zs]
-    phases = [(k % 2) * math.pi / 7 for k in range(len(zs))]
-    tube(mb, path, radii, 7, TRUNK, phases=phases, tip=path[-1] + Vector((0, 0, 0.32)))
+    soft_tube(mb, path, radii, 8, 0, tip=path[-1] + Vector((0, 0, 0.16)),
+              shade=[0.82, 0.82, 0.8, 0.76, 0.7, 0.62, 0.52, 0.42, 0.34, 0.28, 0.24])
 
-    top_n = 5 if n_fronds < 19 else 6
-    tiers = (  # (count, base height above the knob centre, base radius, start elevation, droop, length)
-        (top_n, 0.45, 0.3, 52, 84, 4.5),
-        (7, 0.1, 0.55, 24, 88, 5.1),
-        (n_fronds - top_n - 7, -0.25, 0.62, -4, 72, 4.7),
+    top_n = 5
+    low_n = (n_fronds - top_n) // 2
+    tiers = (  # (count, base height above the knob centre, base radius, start elevation, droop, length, width factor)
+        (top_n, 0.5, 0.25, 58, 62, 3.3, 0.8),                         # young fronds, pointing up
+        (n_fronds - top_n - low_n, 0.15, 0.5, 32, 80, 4.7, 1.0),
+        (low_n, -0.15, 0.6, 8, 62, 4.5, 1.0),                        # old fronds arch outwards, not down the trunk
     )
-    knob = path[-2]
-    for count, dz, r0, el0_deg, droop_deg, length in tiers:
+    knob = path[-3]
+    for count, dz, r0, el0_deg, droop_deg, length, wide in tiers:
         offset = rng.uniform(0, 2 * math.pi)
         for i in range(count):
             az = offset + 2 * math.pi * i / count + rng.uniform(-0.18, 0.18)
             el0 = math.radians(el0_deg + rng.uniform(-6, 6))
             droop = math.radians(droop_deg + rng.uniform(-10, 10))
             base = knob + Vector((math.cos(az) * r0, math.sin(az) * r0, dz))
-            add_frond(mb, base, az, el0, droop, length * rng.uniform(0.92, 1.08), FROND, UNDER, rng)
-    return mb.build(name, [trunk_mat, frond, under], col)
+            add_frond(mb, base, az, el0, droop, length * rng.uniform(0.92, 1.08), 1, rng, wide)
+    return mb.build(name, [mat, frond_mat], col, sway=True)
 
 
-def add_frond(mb, base, az, el0, droop, length, top_mat, keel_mat, rng):
-    """One arched palm frond (18 triangles): base point, three cross-sections (two top edges + keel), tip.
-    The spine starts at elevation el0 and bends down by `droop` over its length (closed-form arc)."""
+# (position along the spine, half width of the blade in metres): a loose hull around the leaflets of the texture
+FROND_SECTIONS = ((0.0, 0.34), (0.1, 0.62), (0.28, 0.78), (0.5, 0.8), (0.72, 0.7), (0.88, 0.5), (1.0, 0.22))
+
+
+def add_frond(mb, base, az, el0, droop, length, mat, rng, wide=1.0):
+    """One feathered palm frond: a single smooth blade of 24 triangles (seven cross-sections of left edge, midrib,
+    right edge), drawn from both sides. The leaflets are not geometry: the material's cutout texture (u across the
+    blade, v from base to tip) cuts the feathered outline. The blade has a soft V-fold along the midrib near the
+    base that opens towards the tip, a slight twist and a sideways curl; smooth normals (edges lean outwards)
+    keep it soft. The spine starts at elevation el0 and bends down by `droop` over its length (closed-form arc)."""
     horiz = Vector((math.cos(az), math.sin(az), 0))
     side = Vector((math.sin(az), -math.cos(az), 0))
+    curl = rng.uniform(-0.3, 0.3)
+    twist = rng.uniform(-0.35, 0.35)
 
     def spine(t):
         el = el0 - droop * t
@@ -350,65 +606,68 @@ def add_frond(mb, base, az, el0, droop, length, top_mat, keel_mat, rng):
             h = length * (math.sin(el0) - math.sin(el)) / droop
             z = length * (math.cos(el) - math.cos(el0)) / droop
         tangent = horiz * math.cos(el) + Vector((0, 0, math.sin(el)))
-        return base + horiz * h + Vector((0, 0, z)), tangent
+        return base + horiz * h + Vector((0, 0, z)) + side * (curl * t * t), tangent
 
-    b = mb.v(base)
-    sections = []
-    for t, width, keel in ((0.18, 0.66, 0.13), (0.5, 1.05, 0.18), (0.8, 0.72, 0.12)):
+    rows = []
+    for t, hw in FROND_SECTIONS:
         c, tangent = spine(t)
-        up = side.cross(tangent).normalized()
-        w = width * rng.uniform(0.92, 1.08) / 2
-        left = mb.v(c + side * w)
-        right = mb.v(c - side * w)
-        k = mb.v(c - up * keel)
-        sections.append((left, right, k))
-    tip = mb.v(spine(1.0)[0])
-    l1, r1, k1 = sections[0]
-    mb.f((b, l1, r1), top_mat)
-    mb.f((b, r1, k1), keel_mat)
-    mb.f((b, k1, l1), keel_mat)
-    for (la, ra, ka), (lb, rb, kb) in zip(sections, sections[1:]):
-        mb.f((la, lb, rb, ra), top_mat)
-        mb.f((ra, rb, kb, ka), keel_mat)
-        mb.f((ka, kb, lb, la), keel_mat)
-    l3, r3, k3 = sections[-1]
-    mb.f((l3, tip, r3), top_mat)
-    mb.f((r3, tip, k3), keel_mat)
-    mb.f((k3, tip, l3), keel_mat)
+        up0 = side.cross(tangent).normalized()
+        a = twist * t                                             # the blade turns about its midrib towards the tip
+        s = side * math.cos(a) + up0 * math.sin(a)
+        up = up0 * math.cos(a) - side * math.sin(a)
+        w = hw * wide
+        fold = 0.32 * (1.0 - t) - 0.12 * t                        # edges raised near the base, hanging at the tip
+        u = 0.5 * w / (FROND_TEX_WIDTH / 2 * wide)                # the narrow young fronds show the whole texture
+        v = 0.01 + 0.98 * t
+        left = mb.v(c + s * w + up * (fold * w), up - s * (fold * 0.9) + s * 0.25, (0.5 + u, v))
+        mid = mb.v(c, up, (0.5, v))
+        right = mb.v(c - s * w + up * (fold * w), up + s * (fold * 0.9) - s * 0.25, (0.5 - u, v))
+        mb.flutter[mid] = t * t                                   # wind: the base is held by the trunk, the tip is free
+        mb.flutter[left] = mb.flutter[right] = min(t * t + 0.12 * t, 1.0)
+        rows.append((left, mid, right))
+    for ra, rb in zip(rows, rows[1:]):                            # wound so the face normals point up (kept as is)
+        mb.f((ra[0], rb[0], rb[1], ra[1]), mat, keep=True)
+        mb.f((ra[1], rb[1], rb[2], ra[2]), mat, keep=True)
 
 
-def olive(name, seed, crown, top, bark, col):
-    """Olive tree, puffy (design reference 2026-11-09): short twisted trunk that splits into two leaning stems,
-    carrying a round crown of three smooth lobes (one high centre lobe, one lower lobe over each stem), wider
-    than tall. About 4.8 m tall, 4.8 m across; light tops give the silvery look."""
+def olive(name, seed, mat, col):
+    """Olive tree, soft look (test 2026-11-10): a short, gnarled trunk that leans and splits into three stems, and
+    an irregular crown of nine small smooth clumps (one on top, one over each stem, five smaller ones around at
+    different heights), wider than tall. One ramp-shaded material with a silvery green ramp. About 4.8 m tall,
+    5 m across."""
     rng = random.Random(seed)
     mb = MeshBuilder()
-    BARK, CROWN, TOP = 0, 1, 2
     turn = rng.uniform(0, 2 * math.pi)
-    lean = Vector((math.cos(turn), math.sin(turn), 0)) * 0.3
-    zs = [-0.45, 0.3, 0.9, 1.5]
-    path = [Vector((0, 0, z)) + lean * (max(z, 0) / 1.5) + Vector((0.08 * math.sin(z * 3.1), 0.06 * math.cos(z * 2.2), 0))
+    lean = Vector((math.cos(turn), math.sin(turn), 0)) * 0.28
+    zs = [-0.45, 0.1, 0.55, 1.0, 1.4]
+    path = [Vector((0, 0, z)) + lean * (max(z, 0) / 1.4) + Vector((0.09 * math.sin(z * 3.1 + turn), 0.07 * math.cos(z * 2.6 + turn), 0))
             for z in zs]
-    wob = [[1.0 + rng.uniform(-0.15, 0.15) for _ in range(6)] for _ in zs]
-    tube(mb, path, [0.38, 0.3, 0.27, 0.25], 6, BARK, wobble=wob, phases=[k * 0.5 for k in range(len(zs))])
+    ph = rng.uniform(0, 6)
+    soft_tube(mb, path, [0.47, 0.37, 0.31, 0.3, 0.27], 8, 0, shade=[0.82, 0.8, 0.72, 0.62, 0.5],
+              knots=lambda k, a: 1.0 + 0.14 * math.sin(3 * a + ph + 0.9 * k))
     fork = path[-1]
-    centre = fork + Vector((0, 0, 2.0))
-
-    ends = []
-    for side in (-1, 1):                               # two stems leaning apart, each ending inside a lobe
-        az = turn + math.pi / 2 + side * rng.uniform(1.2, 1.45)
-        end = fork + Vector((math.cos(az) * 0.85, math.sin(az) * 0.85, rng.uniform(1.15, 1.35)))
-        mid = fork.lerp(end, 0.5) + Vector((rng.uniform(-0.12, 0.12), rng.uniform(-0.12, 0.12), 0.05))
-        tube(mb, [fork - Vector((0, 0, 0.2)), mid, end], [0.22, 0.17, 0.13], 4, BARK,
-             tip=end + (end - mid).normalized() * 0.3)
-        ends.append((end, az))
-    # one colour per lobe (a light top lobe over two darker side lobes): a split inside a lobe shows as a zigzag
-    puff_lobe(mb, centre + Vector((0, 0, 0.3)), (1.55, 1.45, 1.1), rng, lambda z: TOP, centre, yaw=turn, floor=-0.7)
-    for end, az in ends:
-        c = Vector((end.x + math.cos(az) * 0.3, end.y + math.sin(az) * 0.3, end.z + 0.55))
-        puff_lobe(mb, c, (rng.uniform(1.15, 1.3), rng.uniform(1.05, 1.15), rng.uniform(0.9, 1.0)), rng,
-                  lambda z: CROWN, centre, yaw=az, floor=-0.7)
-    return mb.build(name, [bark, crown, top], col)
+    centre = fork + Vector((0, 0, 1.9))
+    lobes = [dict(c=fork + Vector((rng.uniform(-0.15, 0.15), rng.uniform(-0.15, 0.15), 2.35)), r=(1.15, 1.05, 0.9),
+                  yaw=turn, freq=3, floor=-0.7, phase=rng.uniform(0, 6))]
+    for k in range(3):                                    # three stems leaning apart, each ending inside a clump
+        az = turn + 2 * math.pi * k / 3 + rng.uniform(-0.35, 0.35)
+        d, h = rng.uniform(0.6, 0.85), rng.uniform(1.0, 1.45)
+        end = fork + Vector((math.cos(az) * d, math.sin(az) * d, h))
+        m1 = fork.lerp(end, 0.4) + Vector((rng.uniform(-0.1, 0.1), rng.uniform(-0.1, 0.1), 0.12))
+        m2 = fork.lerp(end, 0.75) + Vector((rng.uniform(-0.08, 0.08), rng.uniform(-0.08, 0.08), 0.08))
+        soft_tube(mb, [fork - Vector((0, 0, 0.25)), m1, m2, end], [0.2, 0.16, 0.13, 0.09], 6, 0,
+                  tip=end + (end - m2).normalized() * 0.3, shade=[0.5, 0.42, 0.34, 0.28])
+        lobes.append(dict(c=Vector((end.x + math.cos(az) * 0.25, end.y + math.sin(az) * 0.25, end.z + 0.45)),
+                          r=(rng.uniform(0.95, 1.1), rng.uniform(0.85, 1.0), rng.uniform(0.75, 0.88)), yaw=az,
+                          freq=3 if k == 0 else 2, floor=-0.7, phase=rng.uniform(0, 6)))
+    for k in range(5):                                    # smaller clumps around, at different heights
+        az = turn + 0.5 + 2 * math.pi * k / 5 + rng.uniform(-0.4, 0.4)
+        dist = rng.uniform(1.15, 1.55)
+        lobes.append(dict(c=Vector((fork.x + math.cos(az) * dist, fork.y + math.sin(az) * dist, fork.z + rng.uniform(1.1, 2.5))),
+                          r=(rng.uniform(0.62, 0.8), rng.uniform(0.58, 0.72), rng.uniform(0.5, 0.62)), yaw=az, freq=2,
+                          floor=-0.7, phase=rng.uniform(0, 6)))
+    soft_crown(mb, lobes, 0, centre, (fork.z + 0.7, fork.z + 3.3), blend=0.3, base=0.36, crease=0.22, reach=2.6)
+    return mb.build(name, [mat], col, sway=True)
 
 
 def shrub(name, seed, leaf, dark, col, size=(0.72, 0.66, 0.62), lobe=(0.46, 0.42, 0.4)):
@@ -488,23 +747,14 @@ def build_prototypes():
             bpy.data.meshes.remove(mesh)
     m = E.material
     protos = {
-        "Veg_UmbrellaPine": umbrella_pine("Veg_UmbrellaPine", 11, m("pine_crown", "#47744A", roughness=0.9),
-                                          m("pine_crown_top", "#80A361", roughness=0.9),
-                                          m("pine_bark", "#7A5238", roughness=0.95), col),
-        "Veg_UmbrellaPine_B": umbrella_pine("Veg_UmbrellaPine_B", 23, m("pine_crown_b", "#3F6A44", roughness=0.9),
-                                            m("pine_crown_top_b", "#739A58", roughness=0.9), m("bark", roughness=0.95),
-                                            col),
-        "Veg_Palm": palm("Veg_Palm", 5, m("palm_leaf", roughness=0.8), m("palm_leaf_dark", "#4A6E33", roughness=0.85),
-                         m("palm_trunk", "#9A8262", roughness=0.95), col, n_fronds=18),
-        "Veg_Palm_B": palm("Veg_Palm_B", 17, m("palm_leaf_b", "#6D9443", roughness=0.8),
-                           m("palm_leaf_dark_b", "#557538", roughness=0.85), m("bark_light", roughness=0.95), col,
-                           n_fronds=20),
-        "Veg_Olive": olive("Veg_Olive", 3, m("olive_crown", "#647D57", roughness=0.9),
-                           m("olive_crown_top", "#A0AB77", roughness=0.9), m("olive_bark", "#7D7366", roughness=0.95),
-                           col),
-        "Veg_Olive_B": olive("Veg_Olive_B", 19, m("olive_crown_b", "#5F7F4F", roughness=0.9),
-                             m("olive_crown_top_b", "#9DB06E", roughness=0.9), m("olive_bark_b", "#8A7D6B", roughness=0.95),
-                             col),
+        "Veg_UmbrellaPine": umbrella_pine("Veg_UmbrellaPine", 11, ramp_material("pine"), col),
+        "Veg_UmbrellaPine_B": umbrella_pine("Veg_UmbrellaPine_B", 23, ramp_material("pine_b"), col),
+        "Veg_Palm": palm("Veg_Palm", 5, ramp_material("palm"),
+                         cutout_material("palm_frond", "palm_frond_cutout_albedo.png"), col, n_fronds=19),
+        "Veg_Palm_B": palm("Veg_Palm_B", 17, ramp_material("palm_b"),
+                           cutout_material("palm_frond_b", "palm_frond_b_cutout_albedo.png"), col, n_fronds=21),
+        "Veg_Olive": olive("Veg_Olive", 3, ramp_material("olive"), col),
+        "Veg_Olive_B": olive("Veg_Olive_B", 19, ramp_material("olive_b"), col),
         "Veg_Shrub": shrub("Veg_Shrub", 7, m("leaf", roughness=0.85), m("leaf_dark", roughness=0.9), col),
         "Veg_Shrub_B": shrub("Veg_Shrub_B", 41, m("shrub_leaf_b", "#4F7F45", roughness=0.85),
                              m("shrub_leaf_dark_b", "#365C34", roughness=0.9), col,

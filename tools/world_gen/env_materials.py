@@ -72,8 +72,19 @@ def upgrade(mat, base, roughness):
     return True
 
 
+GROUND_SHADER = "CarcavelosCircuit/Ground"     # Assets/_Project/Visuals/Shaders/Ground.shader (URP Lit if missing)
+GROUND_TEXTURES = {"ground_mask": "ground_mask_data.png",               # make_groundmap.py
+                   "ground_detail": "ground_detail_data.png",           # make_textures.py ground_detail
+                   "ground_detail_normal": "ground_detail_normal_data.png"}
+
+
 def upgrade_all():
     done = []
+    ground = bpy.data.materials.get("W_ground_map")
+    if ground:                             # export_unity_bundle.py -> materials.json "ground" -> Ground.shader
+        ground["ground_shader"] = GROUND_SHADER
+        for key, name in GROUND_TEXTURES.items():
+            ground[key] = name
     for mat in bpy.data.materials:
         if mat.name in TEXTURED and mat.node_tree:
             base, roughness = TEXTURED[mat.name]

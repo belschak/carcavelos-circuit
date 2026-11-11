@@ -302,7 +302,20 @@
    "emission": null,
    "alpha": 1.0,
    "metallic_smoothness": null,
-   "smoothness": 0.88
+   "smoothness": 0.88,
+   "water": {
+    "shader": "CarcavelosCircuit/Sea",
+    "normal": "sea_waves_normal.png",
+    "shore_map": "sea_shore_data.png",
+    "shore_rect": [
+     -720.0,
+     -670.0,
+     580.0,
+     240.0
+    ],
+    "shore_range": 60.0,
+    "coast": -100.0
+   }
   },
   {
    "name": "W_B_interior_column",
@@ -1594,7 +1607,13 @@
    "emission": null,
    "alpha": 1.0,
    "metallic_smoothness": null,
-   "smoothness": 0.05
+   "smoothness": 0.05,
+   "ground": {
+    "shader": "CarcavelosCircuit/Ground",
+    "mask": "ground_mask_data.png",
+    "detail": "ground_detail_data.png",
+    "detail_normal": "ground_detail_normal_data.png"
+   }
   },
   {
    "name": "W_T_cut_wall",
@@ -1627,6 +1646,204 @@
    "alpha": 1.0,
    "metallic_smoothness": null,
    "smoothness": 0.1
+  },
+  {
+   "name": "W_tree_pine",
+   "colour": [
+    0.2941,
+    0.4745,
+    0.302
+   ],
+   "metallic": 0.0,
+   "albedo": "veg_ramp_pine_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.1,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.05,
+    "flutter": 0.04
+   }
+  },
+  {
+   "name": "W_tree_pine_b",
+   "colour": [
+    0.2667,
+    0.4392,
+    0.2824
+   ],
+   "metallic": 0.0,
+   "albedo": "veg_ramp_pine_b_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.1,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.05,
+    "flutter": 0.04
+   }
+  },
+  {
+   "name": "W_tree_palm",
+   "colour": [
+    0.2902,
+    0.4314,
+    0.2
+   ],
+   "metallic": 0.0,
+   "albedo": "veg_ramp_palm_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.1,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.22,
+    "flutter": 0.28
+   }
+  },
+  {
+   "name": "W_tree_palm_b",
+   "colour": [
+    0.3333,
+    0.4588,
+    0.2196
+   ],
+   "metallic": 0.0,
+   "albedo": "veg_ramp_palm_b_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.1,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.22,
+    "flutter": 0.28
+   }
+  },
+  {
+   "name": "W_tree_olive",
+   "colour": [
+    0.4078,
+    0.498,
+    0.3608
+   ],
+   "metallic": 0.0,
+   "albedo": "veg_ramp_olive_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.1,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.03,
+    "flutter": 0.035
+   }
+  },
+  {
+   "name": "W_tree_olive_b",
+   "colour": [
+    0.3882,
+    0.5098,
+    0.3333
+   ],
+   "metallic": 0.0,
+   "albedo": "veg_ramp_olive_b_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.1,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.03,
+    "flutter": 0.035
+   }
+  },
+  {
+   "name": "W_palm_frond",
+   "colour": [
+    0.4196,
+    0.6039,
+    0.2588
+   ],
+   "metallic": 0.0,
+   "albedo": "palm_frond_cutout_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.5,
+   "double_sided": true,
+   "metallic_smoothness": null,
+   "smoothness": 0.15,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.22,
+    "flutter": 0.28
+   }
+  },
+  {
+   "name": "W_palm_frond_b",
+   "colour": [
+    0.4196,
+    0.6039,
+    0.2588
+   ],
+   "metallic": 0.0,
+   "albedo": "palm_frond_b_cutout_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.5,
+   "double_sided": true,
+   "metallic_smoothness": null,
+   "smoothness": 0.15,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.22,
+    "flutter": 0.28
+   }
+  },
+  {
+   "name": "W_grass_tuft",
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "metallic": 0.0,
+   "albedo": "grass_tuft_cutout_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "metallic_smoothness": null,
+   "smoothness": 0.1,
+   "alpha_clip": 0.45,
+   "double_sided": true,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.0,
+    "flutter": 0.07,
+    "upright": true,
+    "shrink_from": 52.0,
+    "shrink_to": 64.0
+   }
   }
  ]
 }
