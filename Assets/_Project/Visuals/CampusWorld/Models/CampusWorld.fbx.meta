@@ -42,6 +42,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_B_letter_grey
+    second: {fileID: 2100000, guid: 4fe51a670a88c46c8b11d9da60223567, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_B_pool_water
     second: {fileID: 2100000, guid: 8723d19a7720a4ce3bb49caa2435ca89, type: 2}
   - first:
@@ -82,6 +87,16 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_B_sett_dark
+    second: {fileID: 2100000, guid: d98937b11d763484a87dce39bb9862d6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_slat_anthracite
+    second: {fileID: 2100000, guid: e9f32592ac00b4eaabcb4f17aed03529, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_B_solar
     second: {fileID: 2100000, guid: 0de55bd9454b24de8b4177c3df7ac2a5, type: 2}
   - first:
@@ -119,6 +134,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_B_wall_cream
     second: {fileID: 2100000, guid: 91f623de04b85414d9b1b0056891ed46, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_wall_umber
+    second: {fileID: 2100000, guid: 55216db8d5ff747faa3c67821a287058, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -169,6 +189,36 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_concrete_sand
     second: {fileID: 2100000, guid: 75f3cddc185974e5eb1b11e435f2ca32, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_calcada
+    second: {fileID: 2100000, guid: a111e9648630f488192f47d433289e6a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_concrete
+    second: {fileID: 2100000, guid: 7f53d3fba5829455db1afe8ad37be746, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_dark
+    second: {fileID: 2100000, guid: 68e1f6944331c429a80e9c293fd4f53d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_drain
+    second: {fileID: 2100000, guid: 3c312f9c365b64fd1936fc4f3a6383f7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_steel
+    second: {fileID: 2100000, guid: 30a8c85a998d94e428eada4b7b76b2e1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_void
+    second: {fileID: 2100000, guid: 569adbe8139094b8ba46cc5338adc4b5, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
