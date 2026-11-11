@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b44f184ad5706e6498516d14ab17b3ed, type: 3}
+  m_Name: ItemSettings
+  m_EditorClassIdentifier: CarcavelosCircuit.RaceFlow::CarcavelosCircuit.RaceFlow.ItemSettings
+  rowEveryCheckpoints: 2
+  rowAheadMetres: 14
+  boxesPerRow: 3
+  boxSpacing: 2.6
+  boxSize: 1.2
+  hoverHeight: 1.1
+  respawnSeconds: 3
+  rollSeconds: 1.1
+  espressoSeconds: 2
+  espressoMultiplier: 1.4
+  waveSeconds: 3
+  waveMultiplier: 1.6
+  ringCount: 3
+  ringFirstMetres: 18
+  ringSpacingMetres: 14
+  ringRadius: 1.7
+  ringLifeSeconds: 9
+  ringBoostSeconds: 0.9
+  ringBoostMultiplier: 1.5
+  deansBoostSeconds: 1.5
+  deansBoostMultiplier: 1.5
+  shieldSeconds: 8
+  shieldRefundSeconds: 1.2
+  shieldRefundMultiplier: 1.5
+  bumpMinDrop: 4
+  bumpDropShare: 0.3
+  levelSeconds: 0.5
+  farBehindSeconds: 2

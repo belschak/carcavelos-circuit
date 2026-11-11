@@ -58,6 +58,16 @@ PLAN = {
     "sfx_finish_jingle": (-12.0, False, False),
     "sfx_new_record": (-14.0, False, True),
     "sfx_hint_warning": (-15.0, False, False),
+    "el_item_box_break": (-16.0, False, True),  # item boxes (task R7), ElevenLabs Sound Effects
+    "sfx_item_roll_tick": (-22.0, False, False),  # own synth: needs the exact 25 ms length
+    "el_item_ready": (-16.0, False, True),
+    "el_item_bica": (-15.0, False, True),
+    "el_item_onda": (-14.0, False, True),
+    "el_item_seagull": (-16.0, False, True),     # Luc's four item designs (R7 redesign, 2026-11-10)
+    "el_item_ring": (-17.0, False, True),        # plays up to 3 times in a row, pitch rising
+    "el_item_deans_on": (-14.0, False, True),
+    "el_item_shield_block": (-15.0, False, True),
+    "el_item_shield_pop": (-17.0, False, True),
     # music
     "music_campus_loop": (-16.0, True, False),
     "music_results_loop": (-16.0, True, False),

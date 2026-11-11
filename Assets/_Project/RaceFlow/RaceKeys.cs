@@ -86,7 +86,14 @@ namespace CarcavelosCircuit.RaceFlow
             Keyboard keyboard = Keyboard.current;
             return keyboard != null && keyboard.rKey.wasPressedThisFrame;
         }
-    
+
+        // E = use the item in the HUD slot (task R7). The phone's touch "use item" button sends the same E key.
+        public static bool UseItemPressed()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null && keyboard.eKey.wasPressedThisFrame;
+        }
+
         // ---- Menu keys (task P7). Never Escape: in a browser it leaves fullscreen. ----
 
         // O = open or close the settings (start and results screen).

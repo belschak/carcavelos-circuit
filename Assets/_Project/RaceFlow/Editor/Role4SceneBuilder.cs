@@ -24,6 +24,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
     {
         private const string Root = "Assets/_Project/";
         public const string SettingsPath = Root + "RaceFlow/Settings/RaceSettings.asset";
+        private const string ItemSettingsPath = Root + "RaceFlow/Settings/ItemSettings.asset"; // item boxes (task R7)
         private const string ThemePath = Root + "RaceFlow/UI/RaceHudTheme.tss";
         private const string PanelPath = Root + "RaceFlow/UI/RaceHudPanelSettings.asset";
         private const string HudLayoutPath = Root + "RaceFlow/UI/RaceHud.uxml";
@@ -145,6 +146,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                     return new[] { typeof(Transform), typeof(AudioSource), typeof(RaceMusic) };
                 case "Ghost":
                     return new[] { typeof(Transform), typeof(GhostRecorder), typeof(GhostPlayer) };
+                case "Items":
+                    return new[] { typeof(Transform), typeof(ItemSystem), typeof(AudioSource), typeof(UIDocument), typeof(ItemSlotHud) };
                 default:
                     return null;
             }
@@ -222,6 +225,31 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             }
             EditorUtility.SetDirty(settings); // writes settings added later to the file, with their default values
             return settings;
+        }
+
+        // Item box tuning (task R7). Kept if it exists, like RaceSettings.
+        private static ItemSettings CreateItemSettings()
+        {
+            ItemSettings settings = AssetDatabase.LoadAssetAtPath<ItemSettings>(ItemSettingsPath);
+            if (settings == null)
+            {
+                settings = ScriptableObject.CreateInstance<ItemSettings>();
+                AssetDatabase.CreateAsset(settings, ItemSettingsPath);
+            }
+            EditorUtility.SetDirty(settings);
+            return settings;
+        }
+
+        // The item boxes' material. Emission is switched on in the asset, so the Web build keeps the emissive shader
+        // variant (ItemSystem adds the tile picture and the glow colour at runtime).
+        private static Material CreateItemBoxMaterial()
+        {
+            Material material = ColourMaterial("ItemBox", "#FFFFFF", 0.7f);
+            material.EnableKeyword("_EMISSION");
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+            material.SetColor("_EmissionColor", new Color(0.45f, 0.45f, 0.45f, 1f));
+            EditorUtility.SetDirty(material);
+            return material;
         }
 
         // UI Toolkit needs a PanelSettings asset (screen scaling) and a theme (default fonts and controls).
@@ -752,12 +780,61 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             hudToGhost.FindProperty("ghostPlayer").objectReferenceValue = ghostPlayer;
             hudToGhost.ApplyModifiedPropertiesWithoutUndo();
 
+            BuildItems(manager, panel);
+
             EditorSceneManager.SaveScene(scene, MainScenePath);
 
             // Fail loudly instead of shipping a Main.unity with empty references (the Web build hides null errors).
             if (settings == null || panel == null || kartPrefab == null || kartAudioPrefab == null)
             {
                 throw new System.Exception("Role4SceneBuilder: a Main.unity reference is missing (settings, panel or a prefab).");
+            }
+        }
+
+        // ---------- item boxes (task R7, decision 2026-11-10) ----------
+
+        // The "Items" root object: ItemSystem puts the boxes on the track at race start, ItemSlotHud shows the slot.
+        // Called while Main.unity is open, so the assets are created and loaded here (live references).
+        private static void BuildItems(RaceManager manager, PanelSettings panel)
+        {
+            ItemSettings itemSettings = CreateItemSettings();
+            Material boxMaterial = CreateItemBoxMaterial();
+
+            GameObject itemsObject = new GameObject("Items");
+            ItemSystem itemSystem = itemsObject.AddComponent<ItemSystem>();
+            AudioSource itemSource = AddAudioSource(itemsObject, null, false);
+            SerializedObject iso = new SerializedObject(itemSystem);
+            iso.FindProperty("raceManager").objectReferenceValue = manager;
+            iso.FindProperty("settings").objectReferenceValue = itemSettings;
+            iso.FindProperty("boxMaterial").objectReferenceValue = boxMaterial;
+            iso.FindProperty("source").objectReferenceValue = itemSource;
+            iso.FindProperty("boxBreak").objectReferenceValue = Clip("el_item_box_break");
+            iso.FindProperty("rollTick").objectReferenceValue = Clip("sfx_item_roll_tick");
+            iso.FindProperty("itemReady").objectReferenceValue = Clip("el_item_ready");
+            iso.FindProperty("ringSource").objectReferenceValue = AddAudioSource(itemsObject, null, false);
+            // Bica = Lisbon's word for an espresso, onda = Portuguese for wave: the clips kept their first names.
+            iso.FindProperty("espressoUse").objectReferenceValue = Clip("el_item_bica");
+            iso.FindProperty("waveUse").objectReferenceValue = Clip("el_item_onda");
+            iso.FindProperty("seagullCall").objectReferenceValue = Clip("el_item_seagull");
+            iso.FindProperty("ringCollect").objectReferenceValue = Clip("el_item_ring");
+            iso.FindProperty("deansOn").objectReferenceValue = Clip("el_item_deans_on");
+            iso.FindProperty("shieldBlock").objectReferenceValue = Clip("el_item_shield_block");
+            iso.FindProperty("shieldPop").objectReferenceValue = Clip("el_item_shield_pop");
+            iso.ApplyModifiedPropertiesWithoutUndo();
+
+            // Own UIDocument on the HUD's PanelSettings, drawn under the race HUD (menus and the pause card cover it).
+            UIDocument document = itemsObject.AddComponent<UIDocument>();
+            document.panelSettings = panel;
+            document.sortingOrder = -1f;
+            ItemSlotHud slotHud = itemsObject.AddComponent<ItemSlotHud>();
+            SerializedObject sho = new SerializedObject(slotHud);
+            sho.FindProperty("raceManager").objectReferenceValue = manager;
+            sho.FindProperty("items").objectReferenceValue = itemSystem;
+            sho.ApplyModifiedPropertiesWithoutUndo();
+
+            if (itemSettings == null || boxMaterial == null)
+            {
+                throw new System.Exception("Role4SceneBuilder: ItemSettings or the ItemBox material is missing.");
             }
         }
 

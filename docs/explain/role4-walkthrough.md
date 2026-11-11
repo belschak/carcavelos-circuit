@@ -532,6 +532,29 @@ Eleven Role 4 files the audit found unmentioned. Each: what it does, the functio
 
 - P pause (audit 9): 3.6 and 3.28. Menu sounds (audit 10): 3.11 and 3.29, enum `RaceFlow/MenuSound.cs`. Wall bump, take-off, chained boost (audit 11): 3.15 and 3.15b. Seaside ambience (audit 12): 3.11b and 3.19. Ghost chip (audit 13): 3.26. Ahead/behind chime, wrong-way and pause cues (audit 19): 3.11 and 3.29b. Loader keys and credits (audit 20, 21): 3.18 and 3.29. KartEffects on the kart (Q10): 3.17 step 4b. `MusicPlayer` deleted (audit 18): 3.16.
 - Every new clip is our own synth (`tools/audio-synth/synth_sfx.py`): `ui_open`, `ui_close`, `ui_page`, `sfx_wall_bump`, `sfx_takeoff_whoosh`, `amb_seaside_loop`.
+- Item boxes (task R7): 3.33.
+
+### 3.33 Item boxes (task R7, 2026-11-10)
+
+Luc's four item designs (Role 3, `items_showcase.png`), all with no rivals in mind: they make YOU faster.
+**Espresso** (2 s at x1.4, common), **Seagull Delivery** (3 lifebuoy rings on the road ahead, each ring = 0.9 s at x1.5, they chain), **Carcavelos Wave** (3 s at x1.6), **Dean's List** (rarest: 1.5 s golden boost + a shield for one wall bump). Boxes are azulejo tile cubes that spin, burst into shards and come back after 3 s.
+
+Files (all Role 4): `Shared/IKartBoost.cs` (the optional contract), `RaceFlow/ItemKind.cs`, `ItemSlot.cs`, `ItemOdds.cs`, `ItemBoxState.cs`, `ItemBoxLayout.cs`, `BumpShield.cs`, `RingPath.cs` (plain C#, the rules), `ItemSettings.cs` (ScriptableObject, numbers in `Settings/ItemSettings.asset`), `ItemBoxTexture.cs`, `ItemBox.cs`, `SeagullRing.cs`, `DeansHalo.cs`, `ItemSystem.cs` (MonoBehaviours), `UI/ItemSlotHud.cs` + `UI/ItemIcon.cs` (the HUD slot), `RaceKeys.UseItemPressed()` (E). Built into `Main.unity` by `Role4SceneBuilder.BuildItems` as the root object "Items".
+
+**Chain 1, driving through a box:** `ItemBox.OnTriggerEnter` (only if the box is there and the collider is our kart) -> `ItemSystem.OnBoxHit` (only while Racing, breaks the box, plays `el_item_box_break`) -> `ItemOdds.WeightsFor` + `ItemOdds.Pick` (catch-up odds from the last split against the personal best) -> `ItemSlot.TryStartRoll` (false if the slot is busy: the box still breaks, you get nothing).
+**Chain 2, the roll:** `ItemSystem.Update` calls `slot.Tick` every frame; each new roll step plays the tick, the landing plays `el_item_ready` and fires `ItemReady` (the HUD pops).
+**Chain 3, pressing E:** `ItemSystem.Update` -> `RaceKeys.UseItemPressed()` -> `ItemSystem.UseItem` (only Racing with input on) -> `ItemSlot.TryUse` -> `ItemSettings.BoostSecondsFor` -> `IKartBoost.AddBoost` (Espresso, Wave, Dean's List) -> then per item: Seagull -> `DropRings`; Dean's List -> `BumpShield.Activate` + `DeansHalo.Show`. Fires `ItemUsed` (HUD callout with the item's name, blue screen wave for the Wave).
+**Chain 4, a ring:** `DropRings` -> `RoadAhead` (a straight line from the kart's nose: the first try through the next two checkpoints cut the bend and put the rings on the grass in the web build) -> `RingPath.Place` (18, 32 and 46 m along it) -> `TryPlaceRing` (ground + wall check, like a box) -> `SeagullRing`. Driving through: `SeagullRing.OnTriggerEnter` -> `ItemSystem.OnRingHit` -> `AddBoost`, chime one step higher per ring, `RingCollected` -> HUD "RING 1/3" ... "PERFECT DELIVERY!".
+**Chain 5, the shield:** `ItemSystem.Update` -> `UpdateShield` -> `BumpShield.Tick(dt, Kart.Speed, ...)`: Blocked -> `AddBoost` (speed back), `el_item_shield_block`, coins fly off, HUD "BLOCKED!"; Expired -> `el_item_shield_pop`.
+
+- Point at: `ItemOdds` rows (Espresso / Seagull / Wave / Dean's List %). Ahead 60/30/10/0, level 40/30/22/8, behind 25/30/30/15, more than 2 s behind 10/25/35/30. The further behind, the bigger the items: classic catch-up. Dean's List never comes when you are ahead.
+- Point at: `BumpShield.IsBump`: a bump = the speed falls by at least 4 m/s AND at least 30 % in ONE frame. Braking loses about 0.5 m/s per frame, so it never counts. A recover (R) sets the speed to 0 on purpose: `ItemSystem.OnRecovered` -> `BumpShield.NoteTeleport` forgets the last speed, so that is not a bump either.
+- Point at: `ItemBoxLayout.RowPositions`: three boxes per row across the road, at right angles to the driving direction, 14 m after every second checkpoint. The direction comes from `ItemBoxLayout.RowDirection`: the forward of the checkpoint's respawn point (`RaceManager.TrackForwards`), because the straight line to the next checkpoint cuts every bend and put rows on the grass (found in the web build, 2026-11-10). Placed in code from the checkpoints at race start, so the boxes follow Noah's and Luc's map without anyone editing their scenes.
+- Question: "Why does the shield watch the speed instead of the collision?" Answer: "RaceFlow may only read the kart through its contracts. `IKartState` has `Speed` but no hit event, and adding one would change a contract for the whole team. A sudden speed drop is what a bump looks like from outside."
+- Question: "Why a new interface instead of adding `AddBoost` to `IKartState`?" Answer: "Changing `IKartState` would break every class that implements it. `IKartBoost` is optional: `ItemSystem` looks it up with `GetComponent<IKartBoost>()` in `SpawnBoxes`; without it the item is still used, just without a boost, and a Console line says so."
+- Question: "What happens if you hit a box while holding an item?" Answer: "`TryStartRoll` returns false, the box breaks anyway, the item you hold stays. One slot, no stacking."
+- Question: "Why does the E that ends a pause not use the item?" Answer: "`resumeFrame` remembers the frame the pause ended (`OnResumed`); `Update` skips `UseItem` in that frame."
+- Sounds: box break, ready, espresso (`el_item_bica`: bica = Lisbon's word for an espresso), wave (`el_item_onda`), seagull, ring, Dean's List fanfare, shield block and shield pop from ElevenLabs (David's Creator plan, `THIRD_PARTY.md`), the 25 ms roll tick from our own `synth_sfx.py`, all mastered by `process_wavs.py`.
 
 ---
 
@@ -578,12 +601,20 @@ All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceF
 | `BoostCueTests` | One whoosh per new boost (same frame or one frame after the release); a chained boost whooshes again; a sparkless drift, a wall, the air or input off while boosting do not; Reset forgets the running boost. |
 | `MenuSoundTests` | Audit 10: the three volume rows ask for the slider-step sound, the two on/off rows for the switch sound. |
 | `GhostFadeTests` | Hidden close, full far away, half in the middle, never weaker further away; bad settings do not break it; end fade 1 to 0; the strongest fade wins (camera, kart, end). |
+| `ItemSlotTests` | R7: new slot empty; the roll lands exactly once, then the item is ready; no use while rolling; a busy slot refuses a new item; None is never rolled; every item is one use; Clear empties even while rolling; roll steps grow from 0 to all, never go back and slow down towards the end; the icon cycles through the four items. |
+| `ItemOddsTests` | R7: every row adds up to 100; no best lap yet = level odds; the split picks the right row (ahead, level, behind, far behind); further behind = more Wave and Dean's List; Dean's List never when ahead; `Pick` splits the roll by the weights and never returns None. |
+| `BumpShieldTests` | R7: a big sudden drop is a bump, braking, speeding up or a too small drop is not; one bump is blocked once, then the shield is gone; no bump = runs out after its time; the first frame and a teleport (recover) never count. |
+| `RingPathTests` | R7: the Seagull's rings follow the road: straight ahead, round the corner to the next piece, straight on past the end, upright on a slope, one spot per ring, an empty first piece is skipped. |
+| `ItemBoxStateTests` | R7: a new box is there; a hit removes it and a second hit does nothing; it comes back after the respawn time, once; Reset brings it back at once. |
+| `ItemBoxLayoutTests` | R7: which checkpoints get a row; direction ignores height; the row sits the given metres along the road and stays inside a short gap; boxes are spaced across the road, centred and at right angles to the driving direction; zero boxes = empty. |
 
 Run: Unity Editor, Window > General > Test Runner > EditMode > Run All. Command line (Unity closed), Windows:
 
 ```
 "C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -runTests -batchmode -projectPath . -testPlatform EditMode -testResults TestResults/editmode.xml
 ```
+
+Play Mode (`Assets/_Project/Tests/PlayMode/ItemBoxPlayTests.cs`, R7, loads `Main` on `Track_CampusWorld`): boxes are placed on the track (17 in 6 rows); driving into a box rolls an item and E uses it as a boost (`IsBoosting` true); a full slot breaks the box but keeps the item; a box comes back and Retry resets the slot and every box; no items before the race starts. Run with `-testPlatform PlayMode`.
 
 How I would explain it: "Edit Mode tests run without pressing Play, in under a second. That only works because the rules are plain C# classes that do not need a scene."
 
