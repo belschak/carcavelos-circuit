@@ -241,7 +241,10 @@ RESTAURANTS = {
     "w213238771": dict(kind="pastorinha", storey=3.4, parapet=0.4),
 }
 SMALL = {
-    "w482697584": dict(kind="pavilion", walls=3.1, eave=0.35, pitch=0.55),
+    # V16e (survey V15, 2.4 and 2.7): the cove pavilion is the beach bar (a low long building with a raised deck) and
+    # the OSM building "Fonte dos Ingleses" is the white masonry prow with its hut; both are built by env_coast
+    "w482697584": dict(kind="bar"),
+    "w213240239": dict(kind="prow"),
     # V10f (survey F): the beach bar stands on promenade level, one level below the car park: from the aisle only its
     # dark low-pitched roof shows (eave 1.3 m, ridge 2.5 m above the car park), not a white house with a tiled roof
     "w213239659": dict(kind="pavilion", walls=3.4, eave=0.5, pitch=0.27, low=1.3, dark_roof=True),
@@ -321,6 +324,9 @@ def build_one(b, index):
     spec = SMALL[b["id"]]
     if spec["kind"] == "rampart":
         return build_rampart(b, spec)
+    if spec["kind"] in ("bar", "prow"):                 # V16e
+        import env_coast
+        return env_coast.build_bar(b) if spec["kind"] == "bar" else env_coast.build_prow(b)
     return build_kiosk(b, spec) if spec["kind"] == "kiosk" else build_pavilion(b, spec)
 
 
@@ -615,13 +621,16 @@ def build_pavilion(b, spec):
     return vol.mesh("B_" + b["id"], mats), det.mesh("BD_" + b["id"], mats)
 
 
+FORT_STONE, FORT_TOP = "#857B6C", "#746B5E"    # V16e (survey 2.10: #5f5e5e at midday, #bea085 in low sun): between the two
+
+
 def build_rampart(b, spec):
     """Fort outwork: sloped stone walls (talus) rising `rise` m above the highest ground, a 0.9 m parapet."""
     pts = b["points"]
     base = min(ground(x, y) for x, y in pts) - 1.0
     top = min(max(ground(x, y) for x, y in pts) + spec["rise"], spec.get("max_top", 99.0))
-    stone = E.material("fort_stone", "#C4B08A", 0.95)
-    mats = [stone, E.material("fort_top", "#A99A7B", 0.95)]
+    stone = E.material("fort_stone", FORT_STONE, 0.95)      # V16e: dark grey-brown (survey 2.10), as env_backdrop
+    mats = [stone, E.material("fort_top", FORT_TOP, 0.95)]
     inner = offset_polygon(pts, -spec["talus"])
     rim = offset_polygon(pts, -spec["talus"] - 0.6)
     vol = Geo()
@@ -677,6 +686,7 @@ KERB_LINES = [
                  (-220.4, -102.1), (-249.1, -86.3), (-249.0, -89.9), (-259.6, -90.2)]),
 ]
 KERB_W = 0.4                  # m, width of the kerb blocks
+CAP_DEPTH = 0.25              # m, V16e: on the cove's sea wall the kerb is the cap course; the stone face is env_coast's
 KERB_ROAD_GAP = 0.45          # m, the kerb's inner face stays this far outside the road edge
 STAIR_RUN, STAIR_RISE = 0.32, 0.15
 STAIRS = [   # name, kerb line, arc position of the top (nearest point to `top`), width, min drop, landing length
@@ -746,13 +756,16 @@ def kerb_top(x, y, mx, my):
     return max(ground(x - mx * 0.7, y - my * 0.7), ground(x, y)) + 0.05
 
 
-def build_kerb(g, samples, skip):
-    """Granite kerb strip; `skip` = arc ranges left open (where a stair cuts the edge)."""
+def build_kerb(g, samples, skip, cap=None):
+    """Granite kerb strip; `skip` = arc ranges left open (where a stair cuts the edge). V16e: with `cap` the outer
+    face is only that deep (the cap course of the cove's sea wall; env_coast.build_cove_wall builds the face)."""
     h = KERB_W / 2
     rows = []
     for x, y, mx, my, s in samples:
         zt = kerb_top(x, y, mx, my)
         zo = min(ground(x + mx * (h + 0.3), y + my * (h + 0.3)), zt - 0.3) - 0.25
+        if cap is not None:
+            zo = zt - cap
         zi = min(ground(x - mx * (h + 0.05), y - my * (h + 0.05)), zt) - 0.12
         rows.append(((x - mx * h, y - my * h), (x + mx * h, y + my * h), zt, zo, zi, s, (mx, my)))
     for r0, r1 in zip(rows, rows[1:]):
@@ -827,7 +840,8 @@ def build_cove_stair(g, samples, spec):
     return (s_top - 0.05, s_top + land)               # the kerb stays open where the landing is
 
 
-STEEL_SLOT = 8               # stainless steel railings (promenade object material list)
+STEEL_SLOT = 9               # stainless steel railings: the last entry of promenade_materials() (V16e: it was 8,
+                             # the dark roof material added later, so the stair railings came out black)
 TILE[STEEL_SLOT] = 2.0
 
 
@@ -909,7 +923,10 @@ def build_promenade():
         for spec in STAIRS:
             if spec["line"] == line["name"]:
                 skip.append(build_cove_stair(stairs, samples, spec))
-        build_kerb(kerb, samples, skip)
+        build_kerb(kerb, samples, skip, cap=CAP_DEPTH if line["name"] == "cove" else None)
+        if line["name"] == "cove":                       # V16e: the coursed-stone sea wall and its railing
+            import env_coast
+            env_coast.build_cove_wall(samples, skip)
         total += samples[-1][4]
     build_west_steps(stairs, WEST_STEPS)
     seats = Geo()

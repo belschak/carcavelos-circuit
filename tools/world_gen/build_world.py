@@ -31,6 +31,7 @@ import env_materials            # noqa: E402
 import env_interior             # noqa: E402
 import env_corridor             # noqa: E402
 import env_covebank             # noqa: E402  V10d: the cove bank outside the corridor
+import env_coast                # noqa: E402  V16e: coast section (forecourt, cove wall, terrace, bar, prow)
 import env_streets              # noqa: E402  V10f: the street section rebuilt from the Street View survey
 import env_street_objects       # noqa: E402
 import env_campus               # noqa: E402  V10c2: campus buildings, courtyards, pools
@@ -606,6 +607,7 @@ def main():
     env_track.build()
     env_trackside.build()                  # edge lines + corner signs (readability), exported with the track
     env_tunnel.build()
+    env_coast.build()                      # V16e: forecourt walls, terrace, details, railings (after the tunnel)
     carve_drive_throughs()
     env_interior.dress(PASSAGE_RUNS, PASSAGE_WIDTH, PASSAGE_WIDTHS)
     env_backdrop.build(heights)

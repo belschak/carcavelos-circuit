@@ -4,8 +4,8 @@
   "waterline": "where the swash ends at mid tide (top of the continuous foam), west to east, land on the left (north). The 3D terrain crosses z = 0 exactly on this line; the sea plane and the foam follow it.",
   "far_west": "the coast west of the world: a smooth curve to far_line_from_x, then a straight line (same numbers go to Sea.shader as the far coast, so the foam keeps hugging the beach outside the shore map).",
   "backshore": "inland edge of the beach, west to east: main beach = OSM sand edge in front of the road and Capricciosa; from there the sea edge of the OSM promenade area w482695608 (the same line as V10b's kerb, env_beachfront.KERB_LINES, checked against the orthophoto): the straight promenade, the ramp by the lifeguard post, the cove arc; then the cove's east wall.",
-  "cove_kerb": "the cove arc of the promenade's sea edge (V10b env_beachfront.KERB_LINES 'cove', OSM w482695608): coast.py pushes it out like V10b does, so the kerb's inner face stays 0.45 m outside the road edge; the sand lies coast.KERB_DROP below the promenade just outside the kerb (K03-K05, V10b's cove stair).",
-  "rocks": "low ochre limestone shelves and ribs (K06, K07, marker 05 'Felsrippe' at (-202, -127)); height = metres above the sand.",
+  "cove_kerb": "the cove arc of the promenade's sea edge (V10b env_beachfront.KERB_LINES 'cove', OSM w482695608): coast.py pushes it out like V10b does, so the kerb's inner face stays 0.45 m outside the road edge; the sand lies coast.cove_drop() (V16e: the sea wall's height, 0.9 to 3 m) below the promenade just outside the kerb (K03-K05, V10b's cove stair).",
+  "rocks": "low ochre limestone shelves and ribs (K06, K07, marker 05 'Felsrippe' at (-202, -127)); height = metres above the sand. V16e (survey V15, 2.11): the west rib is a 2.5 m ridge, the platform is flat, two dark reef fingers point west-south-west of the prow, an ochre scarp stands under the promenade's west part; optional keys per shelf: pieces (number of pieces), gap (factor on the sand between them), tiers, tilt (factor), tint + tint_alpha (ground-map colour, coast_plan.ground_paint).",
   "headland": "east of the cove the coast follows the edge of the backdrop land (the skirt south of the world (it slopes into the sea at the fort), the east skirt, the far land from y -100), land on the left; the fort (its own OSM footprint, V10b) stands at the end of the skirt. Just south of the world the line hugs the world's south edge until the skirt begins (x -18), so every point is either land or water."
  },
  "waterline": [
@@ -175,34 +175,41 @@
    ]
   },
   {
-   "name": "Felsrippe (marker 05)",
-   "height": 0.9,
+   "name": "west rock rib (V16e, survey 2.11)",
+   "height": 2.5,
+   "pieces": 3,
+   "gap": 0.2,
+   "tilt": 0.4,
+   "tint": "#B3A78F",
+   "tint_alpha": 0.55,
    "ring": [
-    [-216, -112],
-    [-208, -114],
-    [-203, -128],
-    [-201, -142],
-    [-203, -155],
-    [-207, -166],
-    [-211, -168],
-    [-210, -150],
-    [-209, -135],
-    [-213, -124],
-    [-219, -117]
+    [-211, -150],
+    [-203, -149],
+    [-200, -158],
+    [-199, -170],
+    [-200, -182],
+    [-203, -190],
+    [-208, -191],
+    [-210, -183],
+    [-209, -172],
+    [-210, -161]
    ]
   },
   {
-   "name": "platform east of the rib",
-   "height": 0.6,
+   "name": "flat rock platform (V16e, survey 2.11)",
+   "height": 0.35,
+   "pieces": 1,
+   "tiers": 1,
+   "tilt": 0.2,
+   "tint": "#ACA699",
+   "tint_alpha": 0.5,
    "ring": [
-    [-204, -148],
-    [-196, -147],
-    [-187, -158],
-    [-184, -174],
-    [-187, -189],
-    [-195, -194],
-    [-203, -190],
-    [-206, -172]
+    [-199, -150],
+    [-187, -149],
+    [-184, -156],
+    [-186, -164],
+    [-196, -166],
+    [-199, -160]
    ]
   },
   {
@@ -216,33 +223,66 @@
    ]
   },
   {
-   "name": "rib below the ramp",
-   "height": 0.8,
+   "name": "reef finger north (V16e, survey 2.11)",
+   "height": 0.45,
+   "pieces": 4,
+   "gap": 0.5,
+   "tiers": 1,
+   "tilt": 0.3,
+   "tint": "#5E5348",
+   "tint_alpha": 0.7,
    "ring": [
-    [-136, -184],
-    [-131, -184],
-    [-129, -195],
-    [-131, -210],
-    [-134, -212],
-    [-135, -197]
+    [-123.8, -196.3],
+    [-129.3, -200.5],
+    [-136.4, -203.4],
+    [-142.7, -206.4],
+    [-149.7, -209.6],
+    [-156.5, -210.7],
+    [-163.5, -213.2],
+    [-170.9, -214.8],
+    [-173.1, -209.1],
+    [-167.4, -204.6],
+    [-160.7, -201.5],
+    [-153.9, -198.3],
+    [-147.4, -196.5],
+    [-141.0, -193.0],
+    [-133.6, -189.3],
+    [-126.2, -189.6]
    ]
   },
   {
-   "name": "rocky point west of the cove",
-   "height": 0.6,
+   "name": "reef finger south (V16e, survey 2.11)",
+   "height": 0.5,
+   "pieces": 4,
+   "gap": 0.5,
+   "tiers": 1,
+   "tilt": 0.3,
+   "tint": "#5E5348",
+   "tint_alpha": 0.7,
    "ring": [
-    [-131, -206],
-    [-120, -205],
-    [-110, -213],
-    [-106, -224],
-    [-112, -233],
-    [-124, -236],
-    [-131, -228]
+    [-111.3, -212.0],
+    [-116.6, -218.4],
+    [-123.2, -220.5],
+    [-130.5, -222.4],
+    [-137.8, -225.1],
+    [-143.9, -227.7],
+    [-150.9, -230.5],
+    [-158.9, -231.4],
+    [-161.4, -225.9],
+    [-155.2, -220.2],
+    [-149.2, -218.3],
+    [-142.2, -213.5],
+    [-135.8, -210.9],
+    [-129.6, -208.7],
+    [-122.1, -204.7],
+    [-114.8, -203.7]
    ]
   },
   {
    "name": "cove ledge at the water",
    "height": 0.5,
+   "tint": "#6A6152",
+   "tint_alpha": 0.6,
    "ring": [
     [-96, -241],
     [-80, -244],
@@ -255,12 +295,34 @@
   {
    "name": "cove rock island",
    "height": 0.7,
+   "tint": "#6A6152",
+   "tint_alpha": 0.6,
    "ring": [
     [-58, -248],
     [-50, -247],
     [-45, -251],
     [-50, -256],
     [-57, -255]
+   ]
+  },
+  {
+   "name": "ochre scarp under the promenade's west part (V16e, survey 2.11)",
+   "height": 1.0,
+   "pieces": 3,
+   "gap": 0.3,
+   "tiers": 2,
+   "tilt": 0.3,
+   "tint": "#B8A382",
+   "tint_alpha": 0.6,
+   "ring": [
+    [-178.0, -127.2],
+    [-167.2, -132.6],
+    [-147.2, -149.2],
+    [-140.4, -151.6],
+    [-141.6, -156.4],
+    [-150.4, -154.6],
+    [-170.6, -138.0],
+    [-180.2, -132.2]
    ]
   }
  ],

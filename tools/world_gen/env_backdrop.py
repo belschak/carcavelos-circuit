@@ -342,7 +342,9 @@ FORT_WALL_TOP = 18.5      # V10b: rampart walk on the landward part (m above the
 FORT_SEA_TOP = 12.0       # ... stepping down to this at the west bastion on the rocks (K03-K06)
 FORT_ROCK_TOP, FORT_ROCK_REACH = 3.0, 9.0   # rocky headland under the fort: top height, reach beyond the walls
 FORT_AXIS = (0.964, -0.265)   # long axis of the fort, west to east
-TOWER_SIDE, TOWER_TOP = 10.0, 35.5   # square lighthouse tower (K05/K06: squat, battlemented); light at ~39 m (OSM)
+TOWER_SIDE, TOWER_TOP = 7.5, 33.0    # square lighthouse tower with a lantern; V16e (survey 2.10): a small tower, about
+                                     # 25 m above the sea at its parapet walk (was 10 m square, 35.5 m)
+FLAG_POLE = 9.0                      # V16e: a plain flag pole on the east bastion, a plain pale flag without emblem
 FORT_BLOCKS = ((75.0, -392.0, 44.0, 13.0, 23.0), (165.0, -432.0, 38.0, 12.0, 21.5), (28.0, -398.0, 18.0, 10.0, 19.5))
 #              inner buildings: centre x, y, length along FORT_AXIS, depth, top (m above the sea)
 
@@ -465,11 +467,20 @@ def build_fort(col):
             f.material_index = STONE
         for f in {f for v in cap["verts"] for f in v.link_faces}:
             f.material_index = TOP
+    k = max(range(n), key=lambda q: ring[q][0])                      # V16e: flag pole on the east bastion
+    fx, fy = inset(*ring[k], 3.5)
+    fz = heights[k] + 1.2
+    block(fx, fy, 0.14, 0.14, fz - 1.0, fz + FLAG_POLE, WHITE, WHITE)
+    for order in (1, -1):                                            # seen from both sides
+        flag = [bm.verts.new((fx + ux * a_, fy + uy * a_, fz + FLAG_POLE - b_))
+                for a_, b_ in ((0.14, 0.2), (2.6, 0.35), (2.6, 1.75), (0.14, 1.9))[::order]]
+        face(flag, WHITE)
     bm.normal_update()
     mesh = bpy.data.meshes.new("Landmark_Fort")
     bm.to_mesh(mesh)
     bm.free()
-    for m in (E.material("fort_stone", "#C4B08A", 0.95), E.material("fort_top", "#A99A7B", 0.95),
+    import env_beachfront                  # V16e: dark grey-brown stone (survey 2.10), same as the outworks
+    for m in (E.material("fort_stone", env_beachfront.FORT_STONE, 0.95), E.material("fort_top", env_beachfront.FORT_TOP, 0.95),
               E.material("lighthouse_white", "#F2F0EA", 0.7), E.material("lighthouse_red", "#7A2E29", 0.6),
               E.material("B_roof_tiles", "#C8664A", 0.85), E.material("fort_rock", "#8E7D59", 0.95)):
         mesh.materials.append(m)
@@ -582,6 +593,7 @@ def build_rocks(col, seed=505):
 
         area = coast.ring_area(ring)
         tiers = 1 if h < 0.45 or rng.random() < 0.2 else (2 if h < 1.0 or area < 60.0 else 3)
+        tiers = piece.get("tiers") or tiers             # V16e: set per shelf (flat platform, reef fingers)
         shares = {1: [1.0], 2: [rng.uniform(0.4, 0.6), 1.0],
                   3: [rng.uniform(0.28, 0.4), rng.uniform(0.6, 0.72), 1.0]}[tiers]
         depth = [0.0] * n

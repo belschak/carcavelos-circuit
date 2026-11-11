@@ -143,7 +143,8 @@ def widths(pts):
     sm = []
     for i in range(n):
         sm.append({s: sum(out[(i + k) % n][s] for k in range(-3, 4)) / 7 for s in (1, -1)})
-    return _hold_back(pts, sm)
+    import env_covebank                     # V16e: rows that would cross the cove's sea wall far out end before it
+    return env_covebank.hold_back(pts, _hold_back(pts, sm))
 
 
 # V15b (start straight): the race line now turns back 7.4 m from the underground car-park ramp (entrance_plan), which
@@ -201,7 +202,8 @@ def profile_height(p, offset, coarse):
         shoulder = min(shoulder, max(0.5, held - road_half - 1.0))       # 1 m before its edge (no step there)
     x = p["x"] + _nrm(p)[0] * offset
     y = p["y"] + _nrm(p)[1] * offset
-    outer = coarse(x, y)
+    import env_covebank                     # V16e (imported here: env_covebank imports this module)
+    outer = env_covebank.land_beside_cove(x, y, coarse(x, y))      # the promenade does not sag towards the cove's wall
     if wall_row(p):
         side = 1 if offset > 0 else -1
         if d <= half:

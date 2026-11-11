@@ -68,6 +68,8 @@ def build_lines(pts, fr, col):
             oa, ob = E.half_width(a) - LINE_INSET, E.half_width(b) - LINE_INSET
             face = bm.faces.new((at(a, na, oa, za), at(b, nb, ob, zb), at(b, nb, ob - LINE_W, zb), at(a, na, oa - LINE_W, za)))
             face.material_index = 0 if T.visual_surface(a) in DARK_SURFACES else 1
+    import env_coast                       # V16e: flush paint of the coast section (slot drains, step nosings)
+    env_coast.road_paint(bm, pts, fr)
     bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=0.005)
     bm.normal_update()
     for f in bm.faces:

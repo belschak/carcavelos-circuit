@@ -177,14 +177,16 @@ def apply():
     import env_plaza                      # V10i: nodes under and round the upper plaza, the courtyard, the stairs
     env_plaza.shape_heights(heights)
 
+    import coast_plan                     # V16e: the berm by the promenade and the terrace west of the cove (land)
+    coast_plan.shape_heights(heights, E.X0, E.Y0, E.STEP)
     # coast (coast.py): seabed, beach and cove from the traced waterline; land never below LAND_MIN
     _SHAPED["h"] = [row[:] for row in heights]
     beach = 0
     for j in range(E.ROWS):
         for i in range(E.COLS):
             x, y = E.X0 + i * E.STEP, E.Y0 + j * E.STEP
-            if E.distance_to_route(x, y) < ROAD_HALF + 4:
-                continue
+            if E.distance_to_route(x, y) < ROAD_HALF + 4 and not coast.in_cove(x, y):   # V16e: the cove's sand lies
+                continue                                  # beyond the kerb (never under the road), also close to it
             heights[j][i] = coast_height(x, y, heights[j][i])
             beach += coast.in_beach(x, y)
     print(f"  coast: {beach} terrain vertices on the beach (waterline from coast_trace.json)")

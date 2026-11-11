@@ -222,6 +222,12 @@ def write_mask():
     mask[..., 0] = mask[..., 0] * (1.0 - cover) + streets[..., 0] * cover       # V10f: lawn as the street plan says
     mask[..., 1] = mask[..., 1] * (1.0 - cover)
     path = path * (1.0 - cover)
+    import coast_plan                              # V16e: no lawn on the forecourt and the terrace, little on the field
+    cl = np.asarray(coast_plan.ground_layers((W * SS, H * SS), lambda x, y: to_px(x, y, SS), lawn_mask=True)
+                    .resize((MASK_W, mh), Image.LANCZOS), np.float32) / 255.0
+    mask[..., 0] = mask[..., 0] * (1.0 - cl[..., 3]) + cl[..., 0] * cl[..., 3]
+    mask[..., 1] = mask[..., 1] * (1.0 - cl[..., 3])
+    path = path * (1.0 - cl[..., 3])
     lawn = mask[..., 0] * (1.0 - beach) * (1.0 - path) * land
     sand = np.clip(mask[..., 1] * land + beach, 0.0, 1.0) * (1.0 - rock) * (1.0 - path)
     out = np.dstack([lawn, sand, np.clip(metres / WET_RANGE, 0.0, 1.0), 1.0 - rock])
@@ -270,6 +276,9 @@ def main():
     arr = arr + (np.array(entrance_plan.CALCADA_RGB, np.float32) - arr) * ent
     streets = np.asarray(street_layers(SS).resize((W, H), Image.LANCZOS), np.float32)      # V10f: over everything
     arr = arr + (streets[..., :3] - arr) * (streets[..., 3:4] / 255.0)
+    import coast_plan                              # V16e: forecourt concrete, dry field, terrace, rock tints
+    cl = np.asarray(coast_plan.ground_layers((W * SS, H * SS), lambda x, y: to_px(x, y, SS)).resize((W, H), Image.LANCZOS), np.float32)
+    arr = arr + (cl[..., :3] - arr) * (cl[..., 3:4] / 255.0)
     write_mask()
 
     # soft contact shadow around buildings (baked ambient occlusion on the ground)
