@@ -60,7 +60,7 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 ### Role 1: Alessandro
 | ID | Task | Due | Status |
 |---|---|---|---|
-| D7 | **Slower driving, first** (medals, bots and lap times depend on it): lower top speed and acceleration in `KartTuning` so the campus lap feels controllable; post the new top speed in the group | Wed 11 | claimed (Alessandro, 2026-11-11) |
+| D7 | **Slower driving, first** (medals, bots and lap times depend on it): lower top speed and acceleration in `KartTuning` so the campus lap feels controllable; post the new top speed in the group | Wed 11 | in review (Alessandro, 2026-11-11, PR #73) |
 | D8 | `IKartDrivable` on `KartController`: when `InputSource` is set the kart reads `InputSource.ReadInput().Clamped()` instead of the keyboard; `InputEnabled` still wins. Luc's bots need it | Thu 12 | todo |
 | D9 | Name tags above every kart (reads `IRacer.DisplayName` + `MapColor` from `RacerRegistry`), always facing the camera, hidden for the player's own kart, fade with distance | Fri 13 | todo |
 | D10 | Flying animation in the air: the kart body tilts with the jump (nose up on take-off, down before landing), small wobble, lands upright (`IsGrounded` unchanged) | Fri 13 | todo |
