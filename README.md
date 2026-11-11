@@ -58,26 +58,41 @@ Read AGENTS.md and follow its Git workflow section A before anything else: check
 |---|---|
 | [TASKS.md](TASKS.md) | The board: every task, owner role, due date, status |
 | [docs/team.md](docs/team.md) | Roles, owners, folders, scenes |
-| [docs/interfaces.md](docs/interfaces.md) | Contracts between modules (`IKartState`, `TrackInfo`, `RaceRules`) |
+| [docs/interfaces.md](docs/interfaces.md) | Contracts between modules (`IKartState`, `TrackInfo`, `RaceRules`, round 2: `IRacer`, `ITrackProgress`, `IKartDrivable`) |
+| [docs/round2-briefs.md](docs/round2-briefs.md) | Round 2: what each person builds, with a prompt to paste into your AI |
+| [docs/explain/](docs/explain/) | Walkthroughs for the presentation: how each part works, why, its limits |
 | [docs/plan.md](docs/plan.md) | Milestones + definition of done per role |
 | [docs/decisions.md](docs/decisions.md) | Why things are the way they are |
 | [docs/route.md](docs/route.md) | The campus route |
 | [docs/verification.md](docs/verification.md) | What we test before each merge and release |
 | [docs/builds.md](docs/builds.md) | Every Web build: URL, commit, result |
 | [THIRD_PARTY.md](THIRD_PARTY.md) | Every external asset and its licence |
-| [docs/course-requirements.md](docs/course-requirements.md) | Official course rules we are graded against |
+| [docs/course-requirements.md](docs/course-requirements.md) | Official course rules + **grading rubric** (read before every task) |
 
 ## Deadlines
 | Date | |
 |---|---|
-| **Fri 13 Nov** | Every role's part merged into `main` |
-| Tue 17 Nov | Feature freeze |
-| Fri 20 Nov | Release candidate at the deployed URL |
+| Wed 11 Nov | Slower driving (D7) + `TrackProgress` (T8): bots, positions and medals build on them |
+| **Fri 13 Nov** | Every round 2 feature merged into `main` ([TASKS.md](TASKS.md) > Round 2) |
+| Tue 17 Nov | The map looks like the campus videos |
+| Sun 22 Nov | Feature freeze: only fixes after this |
 | **Mon 23 Nov 23:59** | **Moodle submission** (public repo link, see [docs/course-requirements.md](docs/course-requirements.md)) |
-| 24 Nov or 4 Dec | Presentation: live demo + code walkthrough |
+| Tue 24 Nov or Fri 4 Dec | Presentation: live demo + repository walkthrough |
+
+## How we are graded (target: High on all six)
+Official rubric from the course wiki; full Low/Mid/High table and our checklist: [docs/course-requirements.md](docs/course-requirements.md).
+
+| Criterion | Weight | High means |
+|---|---|---|
+| It works | 20 % | All workflows run without errors, including with invalid input |
+| UI and experience | 20 % | Workflows are direct; results and errors are clear |
+| Scope and ambition | 20 % | Substantial features well beyond a solo project, implemented consistently |
+| Verification | 10 % | Tests cover accepted and rejected actions and edge cases, all pass on `main` |
+| Security | 10 % | Access control + input validation enforced; dependencies minimal, pinned, no known vulnerabilities; no credentials in the repo |
+| Repository walkthrough | 20 % | Everyone explains how it is built, why, its limits, and how it could change |
 
 ## How to build
 Web build steps: [docs/setup.md#web-build-role-3-or-the-build-backup](docs/setup.md#web-build-role-3-or-the-build-backup). Role 3 makes this reproducible by a second person (task V7).
 
 ## Credits
-Map data © OpenStreetMap contributors (ODbL). Sound effects: elevenlabs.io (kart engine and drift sounds made by Luc Tippmann, boost by David Belschak), all other sounds and the music are our own synthesised work. Third-party assets: [THIRD_PARTY.md](THIRD_PARTY.md). Original game, not affiliated with Nintendo or Nova SBE.
+Map data © OpenStreetMap contributors (ODbL). Sound effects: elevenlabs.io (kart engine and drift sounds made by Luc Tippmann, boost by David Belschak), all other sounds and the music are our own synthesised work. Characters: Microsoft Rocketbox Avatar Library (MIT, © 2020 Microsoft). Third-party assets: [THIRD_PARTY.md](THIRD_PARTY.md). Original game, not affiliated with Nintendo or Nova SBE.

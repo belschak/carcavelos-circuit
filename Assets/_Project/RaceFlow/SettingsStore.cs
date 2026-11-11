@@ -19,6 +19,22 @@ namespace CarcavelosCircuit.RaceFlow
             PlayerPrefs.Save(); // in a Web build this writes to the browser right away
         }
 
+        // ---- The last name typed on the leaderboard (task R10), so the save form is filled in next time ----
+        private const string NameKey = "CarcavelosCircuit.PlayerName";
+
+        // "" if none is saved, or if the saved one no longer passes the name rules (edited by hand, rules changed).
+        public static string LoadPlayerName()
+        {
+            string name = PlayerPrefs.GetString(NameKey, "");
+            return PlayerNameRules.IsValidStoredName(name) ? name : "";
+        }
+
+        public static void SavePlayerName(string name)
+        {
+            PlayerPrefs.SetString(NameKey, name);
+            PlayerPrefs.Save();
+        }
+
         // Master volume and mute: AudioListener.volume scales every sound in the game at once.
         // Music and effects: read by RaceMusic and RaceSounds through SoundLevels.
         public static void Apply(GameSettings settings)

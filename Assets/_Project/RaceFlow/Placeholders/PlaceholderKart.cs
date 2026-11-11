@@ -5,10 +5,12 @@ using UnityEngine.InputSystem;
 namespace CarcavelosCircuit.RaceFlow
 {
     // STAND-IN kart so the race flow, HUD and sound can be tested before Alessandro's KartController (Role 1) exists.
-    // It is deliberately simple (a box that slides) and only implements the IKartState contract.
+    // It is deliberately simple (a box that slides) and only implements the IKartState contract,
+    // plus IKartBoost so the item boxes (task R7) can be tested with it too, and IKartDrivable so RaceFlow's dev test
+    // bots (task R8) can drive it before Role 1's KartController has D8.
     // Main.unity swaps it for the real Kart prefab: RaceBootstrap > Kart Prefab.
     [RequireComponent(typeof(Rigidbody))]
-    public class PlaceholderKart : MonoBehaviour, IKartState
+    public class PlaceholderKart : MonoBehaviour, IKartState, IKartBoost, IKartDrivable
     {
         [SerializeField, Tooltip("Top speed in metres per second (20 m/s = 72 km/h)")]
         private float maxSpeed = 20f;
@@ -43,6 +45,7 @@ namespace CarcavelosCircuit.RaceFlow
         private bool driftHeld;
         private float driftSeconds;
         private float boostSecondsLeft;
+        private float itemBoostMultiplier = 1f; // from an item (IKartBoost), 1 = no item boost running
 
         public float Speed
         {
@@ -79,7 +82,13 @@ namespace CarcavelosCircuit.RaceFlow
 
         public bool IsGrounded { get; private set; }
 
+        // Steer was added to IKartState for Role 3's steering wheel (2026-11-10); the stand-in kart never reports it.
+        public float Steer => 0f;
+
         public bool InputEnabled { get; set; }
+
+        // IKartDrivable: null = the keyboard (as before). Set = a bot drives; InputEnabled still wins.
+        public IKartInputSource InputSource { get; set; }
 
         private void Awake()
         {
@@ -92,8 +101,16 @@ namespace CarcavelosCircuit.RaceFlow
             throttleInput = 0f;
             steerInput = 0f;
             driftHeld = false;
+            if (InputEnabled && InputSource != null)
+            {
+                KartInput input = InputSource.ReadInput().Clamped(); // a bot's maths error cannot make it faster
+                throttleInput = input.Throttle;
+                steerInput = input.Steer;
+                driftHeld = input.Drift;
+                return;
+            }
             Keyboard keyboard = Keyboard.current;
-            if (!InputEnabled || keyboard == null)
+            if (!InputEnabled || keyboard == null || InputSource != null)
             {
                 return;
             }
@@ -112,6 +129,10 @@ namespace CarcavelosCircuit.RaceFlow
             if (boostSecondsLeft > 0f)
             {
                 boostSecondsLeft -= dt;
+                if (boostSecondsLeft <= 0f)
+                {
+                    itemBoostMultiplier = 1f; // the item boost is used up
+                }
             }
             UpdateDrift(dt);
 
@@ -122,7 +143,7 @@ namespace CarcavelosCircuit.RaceFlow
 
             Vector3 velocity = body.linearVelocity;
             float forwardSpeed = Vector3.Dot(velocity, transform.forward);
-            float topSpeed = IsBoosting ? maxSpeed * boostMultiplier : maxSpeed;
+            float topSpeed = IsBoosting ? maxSpeed * Mathf.Max(boostMultiplier, itemBoostMultiplier) : maxSpeed;
 
             // Gas, brake/reverse, or roll out slowly when no key is pressed.
             if (IsBoosting)
@@ -238,6 +259,14 @@ namespace CarcavelosCircuit.RaceFlow
             IsDrifting = false;
             driftSeconds = 0f;
             boostSecondsLeft = 0f;
+            itemBoostMultiplier = 1f;
+        }
+
+        // IKartBoost: an item adds boost time; the faster multiplier wins while the boost runs.
+        public void AddBoost(float seconds, float speedMultiplier)
+        {
+            boostSecondsLeft += seconds;
+            itemBoostMultiplier = Mathf.Max(itemBoostMultiplier, speedMultiplier);
         }
     }
 }
