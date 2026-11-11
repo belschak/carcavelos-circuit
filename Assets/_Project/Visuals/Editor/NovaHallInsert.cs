@@ -138,6 +138,8 @@ namespace CarcavelosCircuit.Visuals.Editor
                 roads++;
             }
 
+            int carpets = MakeLaneColliders(worldRoot.transform);
+
             var hall = (GameObject)PrefabUtility.InstantiatePrefab(model, worldRoot.transform);
             hall.name = "NovaHall (Noah, #45)";
             foreach (MeshFilter mf in hall.GetComponentsInChildren<MeshFilter>(true))
@@ -157,7 +159,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             }
 
             return "Nova hall in: " + hidden + " old objects off, " + props + " old props off, " + cut + " meshes cut, " + roads +
-                   " door roads, " + (fence ? "white fence in, " + railings + " metal railings off" : "no white fence prefab, railings stay");
+                   " door roads, " + carpets + " lane colliders, " + (fence ? "white fence in, " + railings + " metal railings off" : "no white fence prefab, railings stay");
         }
 
         private static void LoadRoute()
@@ -297,6 +299,127 @@ namespace CarcavelosCircuit.Visuals.Editor
             go.AddComponent<MeshRenderer>().sharedMaterial = mat;
             go.AddComponent<MeshCollider>().sharedMesh = mesh;
             GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
+        }
+
+        // V14 + hall, from the first bot race on the merged world: every kart was thrown 0.5 to 4.6 m into the air at each
+        // of the four hall doors and 0.3 to 0.9 m at a seam inside the hall floor (route point 44), all on dead level
+        // ground. The kart is a ball; where it rolls from one mesh collider onto the next (road -> door road -> hall
+        // floor), or over an edge between two unwelded parts of one mesh, PhysX kicks it (same finding as V10i on the
+        // plaza). Cure, as there: ONE welded, invisible driving surface per hall lane, from before the door road outside
+        // the entry door to after the door road outside the exit door. It lies LaneLift over the floor, so every border
+        // underneath is out of the ball's contact reach (2 cm), and at both ends it sinks through the road at a flat
+        // angle, so the kart changes collider where both are plain faces. Its side edges are sunk under the floor behind
+        // the fence line. Nothing is drawn.
+        private const float LaneLift = 0.04f;                       // m over the hall floor and the door roads
+        private static readonly float[] LaneEnds = { -0.06f, -0.03f, 0f, 0.02f };   // heights over the road, outermost row first
+        private const int LaneLead = 5;                             // route points (2 m) before / after the door road
+        private const float LaneSide = 1.0f;                        // m outside the road edge: behind the fence and its wall
+        private const float LaneSkirt = 0.9f;                       // ... and from there down under the floor
+        private const float LaneSkirtDrop = 0.14f;
+        private const int LaneColumns = 6;                          // faces across the road (about 1.3 m wide: no slivers)
+
+        private static int MakeLaneColliders(Transform parent)
+        {
+            int n = routeAfter.Length;
+            var holder = new GameObject("NovaHall lane colliders");
+            holder.transform.SetParent(parent, false);
+            int made = 0, i = 0;
+            while (i < n)
+            {
+                if (!Inside(routeBefore[i].x, routeBefore[i].z))
+                {
+                    i++;
+                    continue;
+                }
+                int a = i;
+                while (i + 1 < n && Inside(routeBefore[i + 1].x, routeBefore[i + 1].z))
+                {
+                    i++;
+                }
+                int b = i;
+                i++;
+                // Reach out over the door roads at both ends (pieces that touch this run), then LaneLead points more.
+                int first = a, last = b;
+                foreach (int[] piece in doorPieces)
+                {
+                    if (piece[1] >= a - 1 && piece[1] <= a + 1)
+                    {
+                        first = Mathf.Min(first, piece[0]);
+                    }
+                    if (piece[0] >= b - 1 && piece[0] <= b + 1)
+                    {
+                        last = Mathf.Max(last, piece[1]);
+                    }
+                }
+                first = Mathf.Max(0, first - LaneLead);
+                last = Mathf.Min(n - 1, last + LaneLead);
+                MakeLaneCollider(holder.transform, first, last, made);
+                made++;
+            }
+            return made;
+        }
+
+        private static void MakeLaneCollider(Transform parent, int first, int last, int k)
+        {
+            int cols = LaneColumns + 3;                             // skirt, edge, inner columns, edge, skirt
+            var verts = new List<Vector3>();
+            var tris = new List<int>();
+            var held = new Vector3[cols];
+            for (int i = first; i <= last; i++)
+            {
+                Vector3 c = routeAfter[i];
+                Vector3 f = routeAfter[Mathf.Min(i + 2, last)] - routeAfter[Mathf.Max(i - 2, first)];
+                f.y = 0f;
+                f.Normalize();
+                Vector3 r = Vector3.Cross(Vector3.up, f);
+                float half = widthAfter[i] / 2 + LaneSide;
+                int fromEnd = Mathf.Min(i - first, last - i);
+                float lift = fromEnd < LaneEnds.Length ? LaneEnds[fromEnd] : LaneLift;
+                for (int col = 0; col < cols; col++)
+                {
+                    float off, y = c.y + lift;
+                    if (col == 0 || col == cols - 1)
+                    {
+                        off = (half + LaneSkirt) * (col == 0 ? -1f : 1f);
+                        y = c.y - LaneSkirtDrop;
+                    }
+                    else
+                    {
+                        off = Mathf.Lerp(-half, half, (col - 1) / (float)LaneColumns);
+                    }
+                    Vector3 v = new Vector3(c.x, y, c.z) + r * off;
+                    // On the inside of a tight turn a column would run backwards for a moment: hold it where it was.
+                    if (i > first && Vector3.Dot(new Vector3(v.x - held[col].x, 0f, v.z - held[col].z), f) <= 0.05f)
+                    {
+                        v = new Vector3(held[col].x, y, held[col].z);
+                    }
+                    held[col] = v;
+                    verts.Add(v);
+                }
+                if (i > first)
+                {
+                    int q = verts.Count - 2 * cols;
+                    for (int col = 0; col < cols - 1; col++)
+                    {
+                        int a0 = q + col, a1 = q + col + 1, b0 = a0 + cols, b1 = a1 + cols;
+                        if ((verts[a0] - verts[b0]).sqrMagnitude < 1e-6f && (verts[a1] - verts[b1]).sqrMagnitude < 1e-6f)
+                        {
+                            continue;                               // both columns held: no face
+                        }
+                        tris.Add(a0); tris.Add(b0); tris.Add(b1);   // seen from above: clockwise = facing up
+                        tris.Add(a0); tris.Add(b1); tris.Add(a1);
+                    }
+                }
+            }
+            var mesh = new Mesh { name = "HallLaneCollider_" + k };
+            mesh.SetVertices(verts);
+            mesh.SetTriangles(tris, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            AssetDatabase.CreateAsset(mesh, CutMeshDir + "/HallLaneCollider_" + k + ".asset");
+            var go = new GameObject("Hall lane " + k + " ColliderOnly");
+            go.transform.SetParent(parent, false);
+            go.AddComponent<MeshCollider>().sharedMesh = mesh;
         }
 
         private static Material MostUsed(Dictionary<Material, int> count)
