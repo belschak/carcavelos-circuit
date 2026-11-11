@@ -35,7 +35,7 @@ sys.path.insert(0, HERE)
 import env_common as E  # noqa: E402
 
 SKIP_COLLECTIONS = {"Track_RouteGuide", "Hero", "Render_Lights", "Tmp_Cutters"}
-ROAD = {"Track_Road", "Track_JumpKicker", "Track_PlazaDeck", "Track_PlazaLow", "Track_PlazaStairsDrive_ColliderOnly"}
+ROAD = {"Track_Road", "Track_JumpKickerDrive_ColliderOnly", "Track_PlazaDrive_ColliderOnly", "Track_PlazaLow"}
 ALLOWED_ON_ROAD = {"Track_Kerbs", "Track_EdgeLines"}   # painted on top of the road on purpose
 EXPECTED_TIGHT = ("Tunnel_Shell", "Interior_Passages", "Tunnel_")
 TERRAIN = ("World_Ground", "World_GroundCorridor")

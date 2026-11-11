@@ -854,13 +854,22 @@ def apply_via_override(points, buildings, beach_tunnel, tunnel_len, spec):
         raise ValueError("via override: heights_from_at <= from_at < to_at, and not across point 0")
     xy = lambda i: (points[i]["x"], points[i]["y"])
     ctrl = [xy(a - 2), xy(a - 1), xy(a)] + [tuple(v) for v in spec["via"]] + [xy(b), xy(b + 1), xy(b + 2)]
-    line = _catmull_open(ctrl)
+    raw = _catmull_open(ctrl)
+    line = raw
     for _ in range(spec.get("ease_passes", 60)):
         line = [line[0]] + [((line[i - 1][0] + line[i][0] + line[i + 1][0]) / 3,
                              (line[i - 1][1] + line[i][1] + line[i + 1][1]) / 3) for i in range(1, len(line) - 1)] + [line[-1]]
-    ia = min(range(len(line)), key=lambda i: math.dist(line[i], xy(a)))
-    ib = min(range(len(line)), key=lambda i: math.dist(line[i], xy(b)))
-    line = [xy(a)] + line[ia + 1:ib] + [xy(b)]
+    ia = min(range(len(raw)), key=lambda i: math.dist(raw[i], xy(a)))
+    ib = min(range(len(raw)), key=lambda i: math.dist(raw[i], xy(b)))
+    # the eased line takes over gradually (over JOIN m after from_at and before to_at): at the two joins the line is
+    # the spline itself, which passes through the old points with their direction, so there is no kink
+    join = spec.get("join_m", 8.0) / 0.25
+    mixed = []
+    for i in range(ia, ib + 1):
+        w = min(1.0, (i - ia) / join, (ib - i) / join)
+        w = w * w * (3 - 2 * w)
+        mixed.append((raw[i][0] + (line[i][0] - raw[i][0]) * w, raw[i][1] + (line[i][1] - raw[i][1]) * w))
+    line = [xy(a)] + mixed[1:-1] + [xy(b)]
     length = sum(math.dist(p, q) for p, q in zip(line, line[1:]))
     count = int(round(length / SPACING)) - 1
     new_xy, _ = _resample_open(line, count)
@@ -876,7 +885,7 @@ def apply_via_override(points, buildings, beach_tunnel, tunnel_len, spec):
                     "track_z": PL.FLOOR1, "zone": "plaza deck", "level": "", "surface": spec["surface"]})
     points[a + 1:b] = new
     b = a + 1 + count
-    for i in range(h0, b):                                   # heights, zones, surfaces from the stairs' own profile
+    for i in range(h0, b + 1):                               # heights, zones, surfaces from the stairs' own profile
         p = points[i]
         s, _u = PL.stair_frame(p["x"], p["y"])
         s = round(s, 1)

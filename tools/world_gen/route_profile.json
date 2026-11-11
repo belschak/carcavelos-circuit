@@ -129,9 +129,9 @@
   "kicker": {
     "type": "ramp",
     "length_m": 6.0,
-    "rise_m": 0.75,
-    "power": 1.5,
-    "why": "V10i (Luc, 2026-11-11): a real jump at the west end of the roof terrace. A kicker ramp rises 0.75 m over the last 6 m of the deck, then a free drop to the lawn (before: a 35 degree concrete wedge led down from the edge, karts just fell). Tuned with the headless bot race."
+    "rise_m": 0.65,
+    "power": 2.0,
+    "why": "V10i (Luc, 2026-11-11): a real jump at the west end of the roof terrace. A kicker ramp rises 0.65 m over the last 6 m of the deck (a parabola: level where it starts, 12 degrees at the lip), then a free drop to the lawn (before: a 35 degree concrete wedge led down from the edge, karts just fell). Tuned with the headless bot race: power 1.5 had a kink at its start that made some karts hop on the ramp and jump short."
   },
   "surface_overrides": true,
   "section_overrides": [
@@ -223,32 +223,44 @@
           79.95
         ],
         [
-          85.0,
-          84.0
+          84.62,
+          83.46
         ],
         [
-          82.9,
-          88.6
+          83.27,
+          86.74
         ],
         [
-          80.0,
-          92.8
+          80.87,
+          90.18
         ],
         [
-          76.8,
-          96.8
+          77.95,
+          93.48
         ],
         [
-          73.6,
-          100.8
+          75.04,
+          96.77
         ],
         [
-          70.4,
-          104.8
+          72.12,
+          100.07
         ],
         [
-          67.7,
-          108.4
+          69.26,
+          103.31
+        ],
+        [
+          67.93,
+          105.14
+        ],
+        [
+          66.98,
+          107.17
+        ],
+        [
+          66.43,
+          109.37
         ]
       ],
       "ease_passes": 60,

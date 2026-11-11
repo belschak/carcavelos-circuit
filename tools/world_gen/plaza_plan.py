@@ -8,9 +8,12 @@ Deviations from the survey, all on purpose (the road is 8 m wide, the survey is 
   stairs       9.5 m wide instead of 6.0 (8 m road + 0.75 m to each railing), along the race line (bearing 331, real
                340), 22.0 m long (11 route steps) instead of 21.8 m
   stair down   moved about 9 m east and turned parallel to the race line (survey 74..82.2 x 89.1..100.3, here a
-               6.5 x 10.5 m slot whose west side is 4.9 m from the centreline): the 8 m road needs the neck beside
+               6.5 x 10 m slot whose west side is 5.2 m from the centreline): the 8 m road needs the neck beside
                the fence. Open at the top, an underpass links its foot to the courtyard (for a later lower path)
-  S5           open plaza (survey text, photo I03): the fence turns west at the skylight's south edge
+  S5           open plaza (survey text, photo I03)
+  court, north the strip north of the S4 platform ends at y = 93.6 (survey 98.1): from the fence's corner the 8 m road
+               has to swing 8 m west and turn north into the atrium; with the corner at 98.1 that bend had a 5 m
+               radius, now 12 m
   fence        its south end runs round skylight S3 (survey: S3 "inside the fence"), S3 itself 0.5 m further west
   passage      9.6 m clear under the bridge (survey: about 8 m), so the road's shoulders are not inside the walls
 """
@@ -30,9 +33,15 @@ STAIR_TOP = (100.33, 8.65)          # route point at the last riser (survey: top
 STAIR_HALF = 4.75                   # m: half width of the stair block; railings stand 0.15 m inside
 STAIR_RISERS = 21                   # east half: risers; the west half has seating tiers, two steps each
 STAIR_SAG_M = 4.0                   # vertical curve at the foot, centred on the first riser
-STAIR_CREST_M = 8.0                 # vertical curve at the top ...
-STAIR_CREST_BEFORE_TOP = 1.5        # ... its middle lies this far before the last riser (the deck dips 7 cm there)
-JUDDER_M = 0.012                    # peak-to-peak height of the rounded ripple on the driving surface, one per step
+STAIR_CREST_M = 10.7                # vertical curve at the top (radius 67 m: at 21 m/s a kart needs 0.67 g to follow
+                                    # it; with the first try, 8 m / radius 50 m, the bots floated 0.3 m over the top)
+STAIR_CREST_BEFORE_TOP = 1.35       # ... its middle lies this far before the last riser: the curve ends 4 m after
+                                    # it, the deck dips 12 cm at the last riser and is level 4 m further on
+SEAM = 0.05                         # m: where the plaza's collider meets the border of the road's collider it lies this
+                                    # far above it (see env_plaza.build_drive); PhysX makes contacts within 2 cm
+SEAM_STEPS = (-0.06, -0.03, 0.0, 0.03)   # heights over the road of the strip that passes through the road's surface, one
+                                    # value per route point (2 m) towards the border
+JUDDER_M = 0.010                    # peak-to-peak height of the rounded ripple on the driving surface, one per step
 
 
 def _unit(ax, ay, bx, by):
@@ -79,11 +88,13 @@ STAIR_REACH = (-STAIR_SAG_M / 2, STAIR_LEN - STAIR_CREST_BEFORE_TOP + STAIR_CRES
 
 def judder(s):
     """Rounded ripple on the stair's driving surface (m, 0..JUDDER_M): one soft bump per step, fading in and out
-    over the first and last two steps."""
+    over two steps at each end of the even slope (a ripple on the crest curve helped lift the karts off)."""
     tread = STAIR_LEN / (STAIR_RISERS - 1)
     if s <= 0.0 or s >= STAIR_LEN:
         return 0.0
-    fade = min(1.0, s / (2 * tread), (STAIR_LEN - s) / (2 * tread))
+    lo, hi = STAIR_SAG_M / 2, STAIR_LEN - STAIR_CREST_BEFORE_TOP - STAIR_CREST_M / 2 - 2 * tread   # the even slope only,
+    # ending two steps before the crest curve (a kart that comes onto the curve with a ripple's kick floats over the top):
+    fade = max(0.0, min(1.0, (s - lo) / (2 * tread), (hi - s) / (2 * tread)))            # no ripple on the crest curve
     return JUDDER_M * fade * (0.5 - 0.5 * math.cos(2 * math.pi * s / tread))
 
 
@@ -159,22 +170,23 @@ SKYLIGHTS = {
 # ---------------------------------------------------------------------------------------------------------------
 _S3N = 61.2                          # the courtyard starts north of skylight S3
 FENCE_SOUTH = [(74.5, 54.7), (81.9, 54.9), (81.9, _S3N), PIER[0]]            # round S3 to the bridge's west pier
-COURT_END = (58.5, 98.2)             # the fence meets the Gallery south of skylight S5
-FENCE_NORTH = [PIER[3], (80.1, 82.4), (71.9, 87.0), (69.6, 98.1), COURT_END]
+COURT_END = (60.3, 93.6)             # the fence turns west here and meets the Gallery
+COURT_CORNER = (70.55, 93.5)         # (survey: the strip goes on to y = 98.1; 4.6 m shorter here, see the note on top)
+FENCE_NORTH = [PIER[3], (80.1, 82.4), (71.9, 87.0), COURT_CORNER, COURT_END]
 S4_PLATFORM = [(65.16, 81.2), (71.9, 81.2), (71.9, 87.0), (62.85, 87.0), (63.2, 86.2), (63.6, 85.1)]
 # two voids (counter-clockwise): the court south of the S4 platform and the strip north of it
 COURT_SOUTH = [(72.9, _S3N), (81.9, _S3N), PIER[0], PIER[3], (80.1, 82.4), (79.2, 82.9), (74.5, 85.54), (71.9, 87.0), (71.9, 81.2), (65.16, 81.2),
                (65.4, 80.6), (67.6, 74.7), (69.7, 75.0), (72.1, 63.2)]
-COURT_NORTH = [(62.85, 87.0), (71.9, 87.0), (69.6, 98.1), COURT_END]
+COURT_NORTH = [(62.85, 87.0), (71.9, 87.0), COURT_CORNER, COURT_END]
 COURTS = [COURT_SOUTH, COURT_NORTH]
 # Stair down to Floor 0 (the slot): a parallelogram beside the race line (4.9 m from the centreline, the stair stays
-# on the right as in Luc's drawing 10), 6.5 m wide, 10.5 m long. Steps go down to the south; at the bottom a level
+# on the right as in Luc's drawing 10), 6.5 m wide, 10 m long. Steps go down to the south; at the bottom a level
 # landing, from there an underpass under the plaza (and under the race line) to the courtyard. Open at the top
 # (north), so a later lower path (jump into the courtyard, through it, up this stair) only needs a ramp at S3.
-SLOT_ORIGIN = (87.48, 91.16)         # south-west corner
-SLOT_DIR = (-0.607, 0.795)           # uphill (north-north-west), parallel to the race line there
-SLOT_RIGHT = (0.795, 0.607)
-SLOT_LEN, SLOT_W, SLOT_LANDING = 10.5, 6.5, 3.0
+SLOT_ORIGIN = (86.75, 91.38)         # south-west corner
+SLOT_DIR = (-0.663, 0.749)           # uphill (north-north-west), parallel to the race line there
+SLOT_RIGHT = (0.749, 0.663)
+SLOT_LEN, SLOT_W, SLOT_LANDING = 10.0, 6.5, 2.5
 SLOT_RISERS = 18
 
 
@@ -225,7 +237,7 @@ _east_dir = _unit(*TREE_ROW[0], *TREE_ROW[1])[:2]
 DECK_SE = _edge_point(G_WEST[3], G_WEST[4], 137.5)
 DECK_NE = _hit(DECK_SE, _east_dir, MAIN_EAST[16], (MAIN_EAST[16][0] + 0.931, MAIN_EAST[16][1] + 0.365))
 DECK = [EDGE_W, TOP_W, TOP_E, EDGE_E, G_WEST[1], G_WEST[2], G_WEST[3], DECK_SE, DECK_NE, MAIN_EAST[16], MAIN_EAST[15],
-        MAIN_EAST[14], MAIN_EAST[13], MAIN_EAST[12], MAIN_EAST[11], MAIN_EAST[10], MAIN_EAST[9], COURT_END, (69.6, 98.1),
+        MAIN_EAST[14], MAIN_EAST[13], MAIN_EAST[12], MAIN_EAST[11], MAIN_EAST[10], MAIN_EAST[9], COURT_END, COURT_CORNER,
         (71.9, 87.0), (80.1, 82.4), PIER[3],
         PIER[0], (81.9, _S3N), (72.9, _S3N), MAIN_EAST[2]]
 DECK_ISLANDS = [S4_PLATFORM]
@@ -290,7 +302,7 @@ def on_deck(x, y):
 def deck_z(x, y):
     """Height of the deck: DECK_Z, except just above the stairs where it follows the end of their crest curve."""
     s, u = stair_frame(x, y)
-    if STAIR_LEN <= s < STAIR_REACH[1] and abs(u) < STAIR_HALF + 2.0:
+    if STAIR_LEN - 0.02 <= s < STAIR_REACH[1] and abs(u) < STAIR_HALF + 2.0:      # (a vertex on the last riser may be 0.1 mm short)
         dip = FLOOR1 - stair_profile(s)
         w = 1.0 if abs(u) <= STAIR_HALF else 1.0 - (abs(u) - STAIR_HALF) / 2.0
         return DECK_Z - dip * w

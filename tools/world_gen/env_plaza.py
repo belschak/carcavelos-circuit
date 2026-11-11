@@ -1,7 +1,7 @@
 """The upper plaza, the terracotta stairs and the sunken courtyard (V10i, 2026-11-11), from plaza_plan.py.
 
 Driving surfaces (collection Track_Surface, exported with the track, colliders in Unity):
-  Track_PlazaDeck                    the Floor-1 paving, one ochre surface from facade to facade, at road height
+  Track_PlazaDeck_NoCollide          the Floor-1 paving, one ochre surface from facade to facade, at road height
                                      (the road on the plaza IS this deck: env_track builds no road on zone "stairs" /
                                      "plaza deck"); five flush frosted-glass skylights and the library's floor are
                                      cut into the same mesh (no second surface anywhere)
@@ -9,9 +9,12 @@ Driving surfaces (collection Track_Surface, exported with the track, colliders i
                                      of the stair slot and the underpass
   Track_PlazaStairs_NoCollide        what you see of the stairs: steps on the east half, seating tiers on the west
                                      half, and the steps in the slot. No collider (CampusWorldBuilder: "NoCollide")
-  Track_PlazaStairsDrive_ColliderOnly  what the kart drives on: the stairs' smooth profile 3.5 cm above the step
-                                     noses, with a rounded ripple of plaza_plan.JUDDER_M per step. Not drawn
+  Track_PlazaDrive_ColliderOnly      what the kart drives on, ONE welded mesh: the deck, the stairs' smooth profile
+                                     3.5 cm above the step noses with a rounded ripple of plaza_plan.JUDDER_M per
+                                     step, and a strip at each end that passes through the road's surface (see
+                                     build_drive: a kart must never roll over the border of a collider). Not drawn
                                      (CampusWorldBuilder: "ColliderOnly"; hidden from renders here, qa_geometry sees it)
+  Track_PlazaSlotDrive_ColliderOnly  the smooth slope over the steps in the stair slot
 World (collection World_Plaza, CampusWorld.fbx):
   World_PlazaWalls                   retaining walls round the courtyard and under the deck's south edge, the stairs'
                                      cheeks, the slot's walls, the underpass, the deck's edge to the lawn, planters,
@@ -177,19 +180,55 @@ def shape_heights(heights):
     print(f"  plaza: {changed} terrain nodes set under and round the upper plaza")
 
 
+TONGUE_COLS = (4.9, 4.0, -4.0, -4.9)     # m left of the centreline: the strip's columns in the atrium
+
+
+_TONGUE = {}
+
+
+def tongue_far(_ring=None):
+    """The four points across the tongue's far end (left to right), TONGUE_COLS from the centreline."""
+    a, b = _TONGUE["far"]
+    return [(a[0] + (b[0] - a[0]) * (4.9 - o) / 9.8, a[1] + (b[1] - a[1]) * (4.9 - o) / 9.8) for o in TONGUE_COLS]
+
+
+def entry_rise(x, y, ring):
+    """How far the collider lies over the deck at a point of the tongue: 0 at its start, ENTRY_SEAM at its far end,
+    by the distance along the race line (first tests raised only the far end: where a vertex of the building's outline
+    lay 0.7 m before it the ramp was 7 % steep and every kart hopped 20 cm)."""
+    if not (P.inside(x, y, ring) or P.poly_distance(x, y, ring) < 0.02):
+        return 0.0
+    pts = E.route_points()
+    i0, i1 = _TONGUE["span"]
+    best = None
+    for i in range(i0, i1):
+        a, b = pts[i], pts[i + 1]
+        dx, dy = b["x"] - a["x"], b["y"] - a["y"]
+        t = min(1.0, max(0.0, ((x - a["x"]) * dx + (y - a["y"]) * dy) / (dx * dx + dy * dy)))
+        d = math.hypot(x - a["x"] - dx * t, y - a["y"] - dy * t)
+        if best is None or d < best[0]:
+            best = (d, (i + t - i0) / (i1 - i0))
+    t = best[1]
+    return ENTRY_SEAM * t * t * (3 - 2 * t)
+
+
 def tongue():
-    """The deck's piece from the atrium's facade to the first road point inside the building."""
+    """The deck's piece along the road into the atrium: from 10 m before the facade (the road cuts through the corner
+    of the building there, whose floor lies 6 cm lower: without the tongue a kart dropped onto it and hit the deck's
+    edge again) to the first road point inside the building. 4.9 m to each side of the centreline."""
     pts = E.route_points()
     n = len(pts)
-    own = [i for i, p in enumerate(pts) if P.owns_route_point(p)]
-    last = own[-1]
-    ring = []
-    for i, side in ((last - 1, 1), (last + 1, 1), (last + 1, -1), (last - 1, -1)):
+    last = [i for i, p in enumerate(pts) if P.owns_route_point(p)][-1]
+    left, right = [], []
+    for i in range(last - 5, last + 2):
         a, b, p = pts[(i - 1) % n], pts[(i + 1) % n], pts[i % n]
         d = math.hypot(b["x"] - a["x"], b["y"] - a["y"])
         nx, ny = -(b["y"] - a["y"]) / d, (b["x"] - a["x"]) / d
-        ring.append((p["x"] + nx * side * 4.9, p["y"] + ny * side * 4.9))
-    return ccw(ring)
+        left.append((p["x"] + nx * 4.9, p["y"] + ny * 4.9))
+        right.append((p["x"] - nx * 4.9, p["y"] - ny * 4.9))
+    _TONGUE["far"] = (left[-1], right[-1])
+    _TONGUE["span"] = (last - 5, last + 1)
+    return left + right[::-1]
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -197,7 +236,7 @@ def tongue():
 # ---------------------------------------------------------------------------------------------------------------
 def build_deck(col):
     tng = tongue()
-    lip = [P.stair_point(P.STAIR_LEN + s, u) for s in (0.85, 1.7, P.STAIR_REACH[1] - P.STAIR_LEN) for u in (-P.STAIR_HALF, P.STAIR_HALF)]
+    lip = [P.stair_point(P.STAIR_LEN + s, u) for s in (1.0, 2.0, 3.0, P.STAIR_REACH[1] - P.STAIR_LEN) for u in (-P.STAIR_HALF, P.STAIR_HALF)]
     rings = [P.DECK, tng, P.STAIR_DOWN, P.LIB_GROUND] + P.DECK_ISLANDS + list(P.SKYLIGHTS.values())
     verts, edges = [], []
     for ring in rings:
@@ -212,8 +251,11 @@ def build_deck(col):
         base = len(verts)
         verts += [Vector(P.stair_point(P.STAIR_LEN, u)), Vector(P.stair_point(P.STAIR_REACH[1], u))]
         edges.append((base, base + 1))
+    verts += [Vector(P.stair_point(P.STAIR_LEN, u)) for u in STAIR_COLS[1:-1]]     # the stairs' columns end here
+    verts += [Vector(q) for q in tongue_far(tng)[1:3]]                             # ... and the atrium strip's columns
     out_v, _e, out_f, *_ = delaunay_2d_cdt(verts, edges, [], 0, 1e-4)
-    m = Mesh("Track_PlazaDeck", ["ochre", "glass", "floor"])
+    m = Mesh("Track_PlazaDeck_NoCollide", ["ochre", "glass", "floor"])
+    tris = []
     count = {"ochre": 0, "glass": 0, "floor": 0}
     for f in out_f:
         tri = [out_v[i] for i in f]
@@ -230,9 +272,89 @@ def build_deck(col):
         if (pts[1][0] - pts[0][0]) * (pts[2][1] - pts[0][1]) - (pts[1][1] - pts[0][1]) * (pts[2][0] - pts[0][0]) < 0:
             pts.reverse()
         m.face(pts, key, tile={"ochre": TILE_OCHRE, "glass": TILE_GLASS, "floor": 2.0}[key])
+        tris.append(pts)
         count[key] += 1
     m.finish(col)
-    return count
+    return count, tris, tng
+
+
+STAIR_COLS = [P.STAIR_HALF * k / 4 for k in range(-4, 5)]       # 9 columns, 1.19 m apart: no sliver triangles
+ENTRY_SEAM = P.SEAM         # m: the collider's tongue ends this far over the road's border in the atrium; it rises to that
+                            # evenly over the tongue's 12 m (entry_rise) and then sinks through the road as a strip
+ENTRY_STRIP = True
+DRIVE_LIFT = 0.002          # m: the collider lies this far over what is drawn (which of two level surfaces a ray meets
+                            # first is then defined)
+
+
+def build_drive(col, deck_tris, tng):
+    """The one welded collider of the stairs and the deck.
+
+    Lesson from the first bot races: where a kart rolled from one mesh collider onto the next (road -> stairs,
+    stairs -> deck, deck -> road in the atrium), level or with a small drop, it was kicked up to 1.5 m into the air
+    (the ball meets the border edge of a mesh). So this is one mesh with shared vertices, and at both ends it does
+    not stop at the road's end: it runs on along the road as a strip that passes through the road's surface at a flat
+    angle (3 cm per 2 m, plaza_plan.SEAM_STEPS). The kart changes from one collider to the other where both are plain
+    faces, and every border edge lies at least 5 cm under the surface the kart is on at that moment (PhysX makes
+    contacts within 2 cm: a border 1.5 cm under the kart still kicked it). Thin sliver triangles kicked too: the
+    stairs' rows are cut into 1.2 m columns."""
+    pts = E.route_points()
+    n = len(pts)
+    bm = bmesh.new()
+
+    def face(ring):
+        f = bm.faces.new([bm.verts.new(p) for p in ring])
+        f.normal_update()
+        if f.normal.z < 0:
+            f.normal_flip()
+    far = tongue_far(tng)                                       # 4 points across the tongue's far end
+    for tri in deck_tris:                                       # the deck; the tongue's far end 5 cm over the road
+        face([(x, y, z + DRIVE_LIFT + entry_rise(x, y, tng)) for x, y, z in tri])
+    length, treads = P.STAIR_LEN, P.STAIR_RISERS - 1
+    rows = treads * 4
+
+    def zdrive(s):                                              # 5 cm over the road's end at the foot, easing out
+        return P.stair_profile(s) + P.LIFT + P.judder(s) + DRIVE_LIFT + P.SEAM * max(0.0, 1 - s / 4.0) ** 2
+    grid = [[(*P.stair_point(length * k / rows, u), zdrive(length * k / rows)) for u in STAIR_COLS] for k in range(rows + 1)]
+    grid[-1] = [(x, y, P.deck_z(x, y) + DRIVE_LIFT) for x, y, _z in grid[-1]]              # the deck's own edge
+
+    def frame(i):
+        a, b, p = pts[(i - 1) % n], pts[(i + 1) % n], pts[i % n]
+        d = math.hypot(b["x"] - a["x"], b["y"] - a["y"])
+        return p, (-(b["y"] - a["y"]) / d, (b["x"] - a["x"]) / d)
+    foot = next(i for i, p in enumerate(pts) if p["zone"] == "stairs")                 # the route point at the first riser
+    lead = []                                                   # strip under / through the road before the stairs
+    for back, rel in zip((4, 3, 2, 1), P.SEAM_STEPS):
+        p, (nx, ny) = frame(foot - back)
+        z = p["track_z"] + P.LIFT
+        row = []
+        for c, u in enumerate(STAIR_COLS):                      # u > 0 = right of the driving direction
+            edge = c in (0, len(STAIR_COLS) - 1)
+            off = (5.2 if edge else 4.0 * abs(u) / STAIR_COLS[-2]) * (1 if u > 0 else -1)
+            row.append((p["x"] - nx * off, p["y"] - ny * off, z - 0.14 if edge else z + rel))
+        lead.append(row)
+    grid = lead + grid
+    for r0, r1 in zip(grid, grid[1:]):
+        for c in range(len(STAIR_COLS) - 1):
+            face([r0[c], r0[c + 1], r1[c + 1], r1[c]])
+    last = [i for i, p in enumerate(pts) if P.owns_route_point(p)][-1]
+    prev = [(x, y, P.DECK_Z + DRIVE_LIFT + ENTRY_SEAM) for x, y in far]  # strip over / through the road in the atrium
+    for ahead, rel in zip((2, 3, 4, 5), reversed(P.SEAM_STEPS) if ENTRY_STRIP else ()):
+        p, (nx, ny) = frame(last + ahead)
+        z = p["track_z"] + P.LIFT
+        row = [(p["x"] + nx * o, p["y"] + ny * o, z - 0.14 if abs(o) > 4.5 else z + rel) for o in TONGUE_COLS]
+        for c in range(len(row) - 1):
+            face([prev[c], prev[c + 1], row[c + 1], row[c]])
+        prev = row
+    bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=0.004)
+    bm.normal_update()
+    mesh = bpy.data.meshes.new("Track_PlazaDrive_ColliderOnly")
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(mat("ochre"))
+    obj = E.new_object("Track_PlazaDrive_ColliderOnly", mesh, col)
+    obj.hide_render = True
+    obj["collider_only"] = 1
+    return len(mesh.polygons)
 
 
 def build_low(col):
@@ -303,13 +425,7 @@ def build_stairs(col):
                 "ochre", tile=TILE_OCHRE)
     vis.finish(col)
 
-    drv = Mesh("Track_PlazaStairsDrive_ColliderOnly", ["terracotta"])
-    rows = int(round(length / (d / 8)))
-    for k in range(-2, rows):                                 # starts 0.3 m before the first riser, on the road
-        a, b = length * k / rows, length * (k + 1) / rows
-        za, zb = zmain(a) + P.judder(a), zmain(b) + P.judder(b)
-        drv.face([(*P.stair_point(a, -half), za), (*P.stair_point(a, half), za), (*P.stair_point(b, half), zb), (*P.stair_point(b, -half), zb)],
-                 "terracotta")
+    drv = Mesh("Track_PlazaSlotDrive_ColliderOnly", ["terracotta"])
     drv.face([(*P.slot_point(P.SLOT_LANDING, 0.0), zslot(P.SLOT_LANDING)), (*P.slot_point(P.SLOT_LANDING, P.SLOT_W), zslot(P.SLOT_LANDING)),
               (*P.slot_point(P.SLOT_LEN, P.SLOT_W), zslot(P.SLOT_LEN)), (*P.slot_point(P.SLOT_LEN, 0.0), zslot(P.SLOT_LEN))], "terracotta")
     drv.finish(col, hide=True)
@@ -403,8 +519,8 @@ def build_walls(col):
 # planters (hedge boxes) on the plaza side of the fence where the road is far enough away, and round the stair slot
 PLANTERS = [((76.0, 53.6), (81.0, 53.75)),            # in front of the fence round S3
             ((82.8, 55.6), (82.8, 60.4)),
-            ((72.6, 88.3), (71.3, 94.5)),             # along the fence in the pocket north of the courtyard's corner
-            ((93.9, 95.6), (88.2, 103.1))]            # east side of the stair slot
+            ((72.7, 88.0), (71.65, 92.7)),             # along the fence in the pocket north of the courtyard's corner
+            ((92.3, 96.0), (87.0, 102.0))]            # east side of the stair slot
 LOUNGERS = [((104.3, 22.3), 0.35), ((106.6, 26.6), 0.35), ((109.8, 30.2), 0.35)]    # survey: three south of the library
 
 
@@ -463,7 +579,8 @@ def build_fences(col):
 def build():
     track = E.collection("Track_Surface")
     world = E.collection("World_Plaza")
-    count = build_deck(track)
+    count, tris, tng = build_deck(track)
+    faces = build_drive(track, tris, tng)
     build_low(track)
     build_stairs(track)
     build_walls(world)
@@ -476,7 +593,7 @@ def build():
 # Dressing: nothing generic on the plaza; a row of olives east of the library, olives in the courtyard whose crowns
 # show over the fence, round planters by the Gallery, cafe tables north of the library
 # ---------------------------------------------------------------------------------------------------------------
-TREES_COURT = [(69.2, 77.6), (74.8, 64.2), (61.6, 95.6)]          # by the walls: the courtyard floor stays clear
+TREES_COURT = [(69.2, 77.6), (74.8, 64.2), (64.6, 90.4)]          # by the walls: the courtyard floor stays clear
 POTS = [(89.2, 23.6), (86.4, 30.8), (81.3, 44.2), (77.6, 51.6), (111.5, 26.2), (99.0, 86.5), (104.0, 87.2)]
 CAFE = [(97.5, 93.0), (102.5, 96.0), (107.0, 92.0), (99.5, 100.5)]
 

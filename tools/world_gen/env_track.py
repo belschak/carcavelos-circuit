@@ -96,6 +96,17 @@ def build_road(pts, fr, col):
     for i in range(n):
         a, b = pts[i], pts[(i + 1) % n]
         if is_drop(a, b):
+            if E.ROUTE["jump"].get("kicker", {}).get("type") == "ramp":
+                # V10i: the landing road starts under the lip (its border edge lies at the foot of the terrace wall,
+                # not 2 m out on the lawn where a slow kart would roll over it)
+                (_, na), (_, nb) = fr[i], fr[(i + 1) % n]
+                zb, h = road_z(b), E.half_width(b)
+                q = [bm.verts.new((a["x"] + na[0] * h, a["y"] + na[1] * h, zb)), bm.verts.new((a["x"] - na[0] * h, a["y"] - na[1] * h, zb)),
+                     bm.verts.new((b["x"] - nb[0] * h, b["y"] - nb[1] * h, zb)), bm.verts.new((b["x"] + nb[0] * h, b["y"] + nb[1] * h, zb))]
+                f = bm.faces.new(q)
+                f.material_index = surfaces.index(visual_surface(b))
+                for loop, c in zip(f.loops, ((0, 0), (4, 0), (4, 1), (0, 1))):
+                    loop[uv].uv = c
             continue                               # the jump: no road across the drop
         if a["zone"] in PLAZA_ZONES:
             continue                               # V10i: the stairs and the plaza deck are the road there (env_plaza)
@@ -439,7 +450,56 @@ def build_ramp(pts, fr, col, kick):
     bm.to_mesh(mesh)
     bm.free()
     mesh.materials.append(E.material("T_kerb", "#FF8A1F", roughness=0.7))
-    return E.new_object("Track_JumpKicker", mesh, col)
+    E.new_object("Track_JumpKicker_NoCollide", mesh, col)        # to look at; the kart drives on the collider below
+
+    # The collider (not drawn): the same ramp 5 cm higher at its start (easing to 0.5 cm at the lip), cut into
+    # 0.5 x 1 m faces (sliver triangles kicked the karts), and before it a strip along the road that comes up
+    # through the road's surface at a flat angle: a kart must never roll over the border of a collider (it was
+    # kicked into the air there), so it changes from the road to this mesh where both are plain faces.
+    cols = [half * c / 4 for c in range(-4, 5)]
+    grid = []
+    for back, rel in ((4, -0.06), (3, -0.03), (2, 0.0), (1, 0.03)):
+        i = (j - int(round(length / 2.0)) - back) % n
+        p, (_, nrm) = pts[i], fr[i]
+        z = road_z(p)
+        grid.append([(p["x"] + nrm[0] * u, p["y"] + nrm[1] * u, z - 0.1 if abs(u) > half - 0.01 else z + rel) for u in cols])
+    csteps = int(round(length / 0.5))
+    for k in range(csteps + 1):
+        t = k / csteps
+        l, r, _z, _s = row(k * steps // csteps)
+        z = base + 0.05 * (1 - t) ** 2 + 0.005 * t + rise * t ** power
+        grid.append([(l[0] + (r[0] - l[0]) * (half - u) / (2 * half), l[1] + (r[1] - l[1]) * (half - u) / (2 * half), z) for u in cols])
+    cm = bmesh.new()
+
+    def cface(ring, up=True):
+        f = cm.faces.new([cm.verts.new(q) for q in ring])
+        f.normal_update()
+        if up and f.normal.z < 0:
+            f.normal_flip()
+        return f
+    for r0, r1 in zip(grid, grid[1:]):
+        for c in range(len(cols) - 1):
+            cface([r0[c], r0[c + 1], r1[c + 1], r1[c]])
+    def outward(f, d):                                          # turn an upright face so it looks along d
+        if f.normal.x * d[0] + f.normal.y * d[1] < 0:
+            f.normal_flip()
+    (tx, ty), (nx, ny) = fr[j]
+    for r0, r1 in zip(grid[4:], grid[5:]):                     # the ramp's solid sides and its front
+        for c, sgn in ((0, -1), (len(cols) - 1, 1)):            # column 0 = right of the driving direction
+            outward(cface([(r0[c][0], r0[c][1], base - 0.1), (r1[c][0], r1[c][1], base - 0.1), r1[c], r0[c]], up=False),
+                    (nx * sgn, ny * sgn))
+    end = grid[-1]
+    outward(cface([(end[0][0], end[0][1], base - 0.3), end[0], end[-1], (end[-1][0], end[-1][1], base - 0.3)], up=False), (tx, ty))
+    bmesh.ops.remove_doubles(cm, verts=cm.verts[:], dist=0.004)
+    cm.normal_update()
+    cmesh = bpy.data.meshes.new("Track_JumpKickerDrive")
+    cm.to_mesh(cmesh)
+    cm.free()
+    cmesh.materials.append(E.material("T_kerb", "#FF8A1F", roughness=0.7))
+    obj = E.new_object("Track_JumpKickerDrive_ColliderOnly", cmesh, col)
+    obj.hide_render = True
+    obj["collider_only"] = 1
+    return obj
 
 
 def build_kicker(pts, fr, col):

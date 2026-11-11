@@ -128,7 +128,7 @@ for name in INSTANCES:
         lo, hi = bounds(o)
         checks.append({"name": o.name, "min": lo, "max": hi})
 objects = []
-for name in ("Track_JumpKicker", "Landmark_FortSaoJuliao", "Tunnel_Shell", "Track_Road"):
+for name in ("Track_JumpKicker_NoCollide", "Landmark_FortSaoJuliao", "Tunnel_Shell", "Track_Road"):
     o = bpy.data.objects.get(name)
     if o:
         lo, hi = bounds(o)
