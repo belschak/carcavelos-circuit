@@ -1,0 +1,448 @@
+/* Leaderboard card and "save your time" form (task R10). Loaded after RaceHud.uss (see RaceHud.uxml), same tokens
+   and the same tile language: a dark rounded card with a coloured lip, true pills, keycaps, an azulejo diamond.
+   The elements are made in code (Leaderboard/LeaderboardPanel.cs and SaveTimeForm.cs); C# only switches classes.
+   Where the cards sit and how they slide in: UI/StartScreen.uss (.lb-host--start, .lb-host--results). */
+
+/* ---------- Card ---------- */
+.lb {
+    flex-grow: 1;
+    padding: 16px 18px 14px 18px;
+    border-radius: 22px;
+    background-color: rgba(29, 29, 31, 0.90);
+    border-bottom-width: 6px;
+    border-bottom-color: var(--cc-blue);
+}
+
+.lb-head {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.lb-gem {
+    width: 18px;
+    height: 18px;
+    rotate: 45deg;
+    border-radius: 4px;
+    border-width: 3px;
+    border-color: var(--cc-white);
+    background-color: var(--cc-blue);
+    margin: 0 14px 0 6px;
+}
+
+.lb-titles {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.lb-title {
+    font-size: 22px;
+    letter-spacing: 4px;
+    color: var(--cc-white);
+}
+
+.lb-sub {
+    margin-top: 2px;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--cc-sand);
+}
+
+/* Where the times come from: a small pill with a coloured dot (online = blue, this device = sand, offline = coral). */
+.lb-source {
+    flex-direction: row;
+    align-items: center;
+    height: 26px;
+    padding: 0 11px 0 9px;
+    border-radius: 13px; /* half the height = a true pill */
+    background-color: rgba(234, 234, 236, 0.08);
+}
+
+.lb-source-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    margin-right: 7px;
+    background-color: var(--cc-asphalt);
+}
+
+.lb-source-text {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.80);
+}
+
+.lb-source--online .lb-source-dot { background-color: var(--cc-blue); }
+.lb-source--device .lb-source-dot { background-color: var(--cc-sand); }
+.lb-source--offline .lb-source-dot { background-color: var(--cc-coral); }
+.lb-source--offline .lb-source-text { color: var(--cc-coral); }
+
+/* A short line above the list: "NO TIMES YET", "LOADING TIMES...", or the offline note (a coral chip). */
+.lb-note {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--cc-sand);
+    white-space: normal;
+}
+
+.lb-note--offline {
+    padding: 6px 10px 7px 10px;
+    border-radius: 8px;
+    background-color: var(--cc-coral);
+    color: var(--cc-white);
+}
+
+/* ---------- Rows ---------- */
+.lb-row {
+    flex-direction: row;
+    align-items: center;
+    height: 37px;
+    margin-bottom: 4px;
+    padding: 0 12px 0 5px;
+    border-radius: 10px;
+    border-left-width: 4px; /* always there (see-through), so the coloured edge of "mine" / "new" never shifts the text */
+    border-left-color: rgba(0, 0, 0, 0);
+    background-color: rgba(234, 234, 236, 0.05);
+    opacity: 0;
+    translate: 22px 0;
+    transition-property: opacity, translate;
+    transition-duration: 200ms, 320ms;
+    transition-timing-function: ease-out, ease-out-cubic;
+}
+
+.lb-rows--in .lb-row {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.lb-rank {
+    width: 28px;
+    height: 28px;
+    margin-right: 12px;
+    border-radius: 8px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(234, 234, 236, 0.10);
+}
+
+.lb-rank-text {
+    font-size: 15px;
+    color: var(--cc-white);
+}
+
+/* The podium: gold, silver and bronze rank tiles (the medal tokens), dark digits on them. */
+.lb-row--p1 .lb-rank { background-color: var(--medal-gold); }
+.lb-row--p2 .lb-rank { background-color: var(--medal-silver); }
+.lb-row--p3 .lb-rank { background-color: var(--medal-bronze); }
+.lb-row--p1 .lb-rank-text,
+.lb-row--p2 .lb-rank-text,
+.lb-row--p3 .lb-rank-text { color: var(--cc-black); }
+
+.lb-name {
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 17px;
+    letter-spacing: 1px;
+    color: var(--cc-white);
+}
+
+.lb-time {
+    margin-left: 10px;
+    font-size: 18px;
+    color: var(--cc-white);
+}
+
+/* "You": orange everywhere, like the player on the minimap and in the positions. The player's own times (saved
+   from this browser) get the orange edge and a soft tint; the row just saved is brighter. */
+.lb-row--mine {
+    background-color: rgba(255, 138, 31, 0.16);
+    border-left-color: var(--cc-orange);
+}
+
+.lb-row--new {
+    background-color: rgba(255, 138, 31, 0.36);
+    border-left-color: var(--cc-orange);
+}
+
+/* Empty arcade slots "- - -": dim, and no podium colour yet (three classes beat ".lb-row--p1 .lb-rank"). */
+.lb-row--empty .lb-name,
+.lb-row--empty .lb-time,
+.lb-row--empty .lb-rank-text,
+.lb-row--empty.lb-row--p1 .lb-rank-text,
+.lb-row--empty.lb-row--p2 .lb-rank-text,
+.lb-row--empty.lb-row--p3 .lb-rank-text {
+    color: rgba(234, 234, 236, 0.28);
+}
+
+.lb-row--empty .lb-rank,
+.lb-row--empty.lb-row--p1 .lb-rank,
+.lb-row--empty.lb-row--p2 .lb-rank,
+.lb-row--empty.lb-row--p3 .lb-rank {
+    background-color: rgba(234, 234, 236, 0.06);
+}
+
+/* Loading: grey bars where the name and the time will be. */
+.lb-row--skeleton .lb-name {
+    height: 10px;
+    margin-right: 70px;
+    border-radius: 5px;
+    background-color: rgba(234, 234, 236, 0.10);
+}
+
+.lb-row--skeleton .lb-time {
+    width: 70px;
+    height: 10px;
+    border-radius: 5px;
+    background-color: rgba(234, 234, 236, 0.10);
+}
+
+.lb-row--skeleton .lb-rank-text {
+    color: rgba(234, 234, 236, 0.28);
+}
+
+/* On the results card the list is a bit tighter: the form sits above it. */
+.lb--results .lb-row {
+    height: 31px;
+    margin-bottom: 3px;
+}
+
+.lb--results .lb-rank {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+}
+
+.lb--results .lb-name { font-size: 16px; }
+.lb--results .lb-time { font-size: 16px; }
+.lb--results .lb-head { margin-bottom: 10px; }
+
+/* ---------- Save form ---------- */
+.lb-form {
+    margin-bottom: 10px;
+    padding: 10px 12px 10px 12px;
+    border-radius: 14px;
+    background-color: rgba(234, 234, 236, 0.07);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--cc-lip);
+}
+
+.lb-form--hidden {
+    display: none;
+}
+
+.lb-form--saving {
+    opacity: 0.75;
+}
+
+.lb-form-edit--off {
+    display: none;
+}
+
+.lb-form-head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.lb-form-title {
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: var(--cc-sand);
+}
+
+.lb-form-time {
+    font-size: 18px;
+    color: var(--cc-white);
+}
+
+.lb-form-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lb-field-wrap {
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 44px;
+    margin-right: 10px;
+}
+
+/* The TextField: a white "keycap" box with a dark lip; the lip turns orange while you type. */
+.lb-name-field {
+    flex-grow: 1;
+    margin: 0;
+    padding: 0;
+}
+
+.lb-name-field .unity-base-text-field__input {
+    margin: 0;
+    padding: 0 12px 0 12px;
+    border-width: 0;
+    border-bottom-width: 4px;
+    border-bottom-color: #9A9AA0;
+    border-radius: 10px;
+    background-color: var(--cc-white);
+    font-size: 20px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    color: var(--cc-black);
+    --unity-cursor-color: var(--cc-black);
+    --unity-selection-color: rgba(45, 140, 214, 0.45);
+}
+
+.lb-name-field:focus .unity-base-text-field__input,
+.lb-name-field .unity-base-text-field__input:focus {
+    border-bottom-color: var(--cc-orange);
+    background-color: #FFFFFF;
+}
+
+.lb-placeholder {
+    position: absolute;
+    left: 14px;
+    top: 0;
+    bottom: 4px;
+    -unity-text-align: middle-left;
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: rgba(29, 29, 31, 0.40);
+}
+
+.lb-placeholder--off {
+    display: none;
+}
+
+.lb-save {
+    height: 44px;
+    margin: 0;
+    padding: 0 22px 0 22px;
+    border-width: 0;
+    border-bottom-width: 4px;
+    border-bottom-color: #B35C0E;
+    border-radius: 22px; /* half the height = a true pill */
+    background-image: none;
+    background-color: var(--cc-orange);
+    font-size: 18px;
+    letter-spacing: 4px;
+    color: var(--cc-black);
+}
+
+.lb-save:hover {
+    background-color: #FFA550;
+}
+
+.lb-save:hover:active {
+    scale: 0.95 0.95;
+}
+
+/* Key hint under the field: TAB "type your name" until you type, then ENTER "save". */
+.lb-form-keys {
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.lb-form-keys--on {
+    display: flex;
+}
+
+/* Phones: no keys, so no key hints. */
+.lb-form--touch .lb-form-keys,
+.lb-form--touch .lb-form-keys--on {
+    display: none;
+}
+
+.keycap--wide-small {
+    min-width: 46px;
+}
+
+.lb-key-text {
+    margin-left: 8px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.70);
+}
+
+/* Problems with the name, in our own words: a coral line that punches once. */
+.lb-msg {
+    margin-top: 6px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.75);
+    white-space: normal;
+    transition-property: scale;
+    transition-duration: 140ms;
+    transition-timing-function: ease-out-back;
+}
+
+.lb-msg--error {
+    color: var(--cc-coral);
+}
+
+.lb-msg--pop {
+    scale: 1.08 1.08;
+    transition-duration: 0s;
+}
+
+/* After saving: "YOU ARE #4" big, where it was saved under it. */
+.lb-form-result {
+    display: none;
+    align-items: center;
+    padding: 2px 0 2px 0;
+}
+
+.lb-form-result--on {
+    display: flex;
+}
+
+.lb-result-rank {
+    font-size: 34px;
+    letter-spacing: 3px;
+    color: var(--cc-white);
+    text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* "#10 ON THIS DEVICE" is twice as long as "YOU ARE #4": smaller, so it stays inside the card (also at 4:3). */
+.lb-result-rank--long {
+    font-size: 22px;
+    letter-spacing: 1px;
+}
+
+.lb-result-text {
+    margin-top: 2px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--cc-sand);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+
+/* ---------- Narrow windows (4:3): the title and the source pill must share a 318 px card ---------- */
+.hud--narrow .lb-title {
+    font-size: 18px;
+    letter-spacing: 2px;
+}
+
+.hud--narrow .lb-gem {
+    margin: 0 10px 0 4px;
+}
+
+.hud--narrow .lb-source {
+    padding: 0 8px 0 7px;
+}
+
+/* ---------- Reduced motion: rows are simply there, the problem line does not punch ---------- */
+.reduce-motion .lb-row {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.reduce-motion .lb-msg--pop {
+    scale: 1 1;
+}

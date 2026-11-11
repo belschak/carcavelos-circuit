@@ -1006,13 +1006,6 @@
     margin-bottom: 6px;
 }
 
-.title {
-    font-size: 88px;
-    letter-spacing: 2px;
-    color: var(--cc-white);
-    text-shadow: 0 5px 0 rgba(0, 0, 0, 0.35);
-}
-
 .title-2 {
     font-size: 34px;
     letter-spacing: 22px;

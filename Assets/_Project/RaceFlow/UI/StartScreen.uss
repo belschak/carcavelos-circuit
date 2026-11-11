@@ -1,0 +1,389 @@
+/* Start screen "Carcavelos Round 3" (task R11). Loaded after RaceHud.uss (see RaceHud.uxml), same tokens and
+   the same animation pattern: RaceHud adds "intro-in" to the start screen a moment after it shows, and every rule
+   ".intro-in .x" below is the end state that the transitions run to. UI/TitleScreen.cs makes the title letters
+   (with a growing transition-delay each) and runs the light sweep.
+   Layout at the 1280x720 reference: the title lockup in the left part, the leaderboard card (Leaderboard.uss) on the
+   right, the key legend at the bottom. Narrow windows (RaceHud adds hud--narrow below 1230 px, e.g. 4:3) get smaller
+   type at the end of this file, reduced motion gets no animation at all (last block). */
+
+/* ---------- Layout ---------- */
+.ts-layout {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    flex-direction: row;
+    align-items: center;
+    padding: 36px 56px 76px 56px; /* bottom: room for the key legend */
+}
+
+.start-screen .ts-hero {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+/* The kicker, the letters and the CIRCUIT row share one width: the width of the letters. */
+.ts-lockup {
+    align-items: stretch;
+}
+
+/* ---------- Kicker ---------- */
+.ts-kicker-row {
+    flex-direction: row;
+    align-items: center;
+    margin-left: 6px;
+}
+
+.ts-kicker-gem {
+    width: 11px;
+    height: 11px;
+    rotate: 45deg;
+    border-radius: 2px;
+    background-color: var(--cc-orange);
+    margin-right: 12px;
+}
+
+.start-screen .ts-kicker {
+    margin-bottom: 0;
+    font-size: 16px;
+    letter-spacing: 5px;
+}
+
+/* ---------- Logo: CARCAVELOS, one Label per letter (TitleScreen) ---------- */
+.ts-logo {
+    flex-direction: row;
+}
+
+.ts-letters {
+    flex-direction: row;
+}
+
+/* Each letter drops in from above, a little too big, and settles (ease-out-back = a small overshoot). */
+.ts-letter {
+    font-size: 108px;
+    color: var(--cc-white);
+    text-shadow: 0 7px 0 rgba(18, 59, 94, 0.85);
+    opacity: 0;
+    translate: 0 -80px;
+    scale: 1.4 1.4;
+    transition-property: opacity, translate, scale;
+    transition-duration: 160ms, 460ms, 460ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back;
+}
+
+.intro-in .ts-letter {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1 1;
+}
+
+/* The light sweep: two bands that each clip a gold copy of the letters (TitleScreen moves them). A wide soft band
+   and a narrow bright core on the same centre read as one sheen with soft edges. Hidden between sweeps. */
+.ts-glint {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 56px;
+    overflow: hidden;
+    opacity: 0;
+}
+
+.ts-glint--soft {
+    width: 170px;
+}
+
+.ts-glint--on {
+    opacity: 1;
+}
+
+.ts-letters--glint {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Three classes: beats ".intro-in .ts-letter", the copy never drops in, it is always in place. */
+.ts-glint .ts-letters--glint .ts-letter {
+    color: #FFD27A;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    opacity: 1;
+    translate: 0 0;
+    scale: 1 1;
+    transition-duration: 0s;
+}
+
+.ts-glint.ts-glint--soft .ts-letters--glint .ts-letter {
+    color: rgba(255, 196, 104, 0.55);
+}
+
+/* ---------- CIRCUIT row: a calcada wave that wipes open, then the word slides in ---------- */
+.ts-sub-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: -4px;
+}
+
+.start-screen .ts-wave {
+    flex-grow: 1;
+    width: auto;
+    height: 16px;
+    margin: 0 20px 0 8px;
+    transform-origin: 0% 50%;
+    scale: 0 1;
+    transition-property: scale;
+    transition-duration: 520ms;
+    transition-timing-function: ease-out-cubic;
+    transition-delay: 560ms;
+}
+
+.intro-in .ts-wave {
+    scale: 1 1;
+}
+
+.start-screen .ts-circuit {
+    font-size: 42px;
+    letter-spacing: 16px;
+    padding-left: 0;
+    margin-right: -16px; /* letter-spacing also follows the last T: pull it back so T lines up with S above */
+    opacity: 0;
+    translate: 50px 0;
+    transition-property: opacity, translate;
+    transition-duration: 300ms, 420ms;
+    transition-timing-function: ease-out, ease-out-cubic;
+    transition-delay: 640ms;
+}
+
+.intro-in .ts-circuit {
+    opacity: 1;
+    translate: 0 0;
+}
+
+/* ---------- The slogan stamp: lands like NEW RECORD on the results card ---------- */
+.ts-slogan {
+    align-self: center;
+    margin-top: 20px;
+    padding: 5px 22px 6px 22px;
+    border-radius: 10px;
+    background-color: var(--cc-sand);
+    border-width: 4px;
+    border-color: var(--cc-white);
+    border-bottom-color: #B8975E;
+    color: var(--cc-black);
+    font-size: 28px;
+    letter-spacing: 4px;
+    opacity: 0;
+    scale: 2.3 2.3;
+    rotate: -14deg;
+    transition-property: opacity, scale, rotate;
+    transition-duration: 160ms, 300ms, 300ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back;
+    transition-delay: 980ms;
+}
+
+.intro-in .ts-slogan {
+    opacity: 1;
+    scale: 1 1;
+    rotate: -3deg;
+}
+
+/* ---------- Prompt, best time, menu (RaceHud and HudMenus run them; only sizes and timing change here) ---------- */
+.start-screen .ts-prompt {
+    margin-top: 32px;
+    height: 54px;
+    border-radius: 27px; /* half the height = a true pill */
+    padding: 0 30px 0 30px;
+    font-size: 22px;
+    letter-spacing: 4px;
+}
+
+/* The best time sits on the bright sunset band, so it gets a dark chip (sand on sand would not be readable).
+   No best yet: TitleScreen adds ts-best--empty and the chip is gone. */
+.start-screen .ts-best {
+    margin-top: 14px;
+    padding: 4px 16px 5px 16px;
+    border-radius: 15px;
+    background-color: rgba(18, 59, 94, 0.82);
+    font-size: 19px;
+}
+
+.start-screen .ts-best--empty {
+    display: none;
+}
+
+.start-screen .ts-menu {
+    margin-top: 16px;
+}
+
+.intro-in .ts-prompt { transition-delay: 1150ms, 1150ms, 0ms; }
+.intro-in .ts-best { transition-delay: 1250ms, 1250ms, 0ms; }
+.intro-in .ts-menu { transition-delay: 1300ms, 1300ms, 0ms; }
+
+/* ---------- Key legend at the bottom ---------- */
+.ts-footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 16px;
+    align-items: center;
+}
+
+.start-screen .ts-controls {
+    margin-top: 0;
+    padding: 6px 16px;
+    border-radius: 12px;
+}
+
+.intro-in .ts-controls { transition-delay: 1400ms, 1400ms, 0ms; }
+
+/* ---------- Racing stripes at the left edge: slide in first, under everything ---------- */
+.ts-stripes {
+    position: absolute;
+    top: -240px;
+    bottom: -240px;
+    left: -40px;
+    flex-direction: row;
+    rotate: 14deg;
+    opacity: 0;
+    translate: -260px 0;
+    transition-property: opacity, translate;
+    transition-duration: 300ms, 700ms;
+    transition-timing-function: ease-out, ease-out-cubic;
+}
+
+.intro-in .ts-stripes {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.ts-stripe {
+    height: 100%;
+    margin-right: 12px;
+}
+
+.ts-stripe--blue {
+    width: 46px;
+    background-color: rgba(45, 140, 214, 0.55);
+}
+
+.ts-stripe--orange {
+    width: 22px;
+    background-color: rgba(255, 138, 31, 0.80);
+}
+
+.ts-stripe--sand {
+    width: 9px;
+    background-color: rgba(227, 196, 141, 0.65);
+}
+
+/* ---------- The leaderboard card on the right slides in after the title ---------- */
+.lb-host--start {
+    width: 384px;
+    margin-left: 28px;
+    opacity: 0;
+    translate: 70px 0;
+    transition-property: opacity, translate;
+    transition-duration: 300ms, 520ms;
+    transition-timing-function: ease-out, ease-out-cubic;
+    transition-delay: 700ms;
+}
+
+.intro-in .lb-host--start {
+    opacity: 1;
+    translate: 0 0;
+}
+
+/* ---------- Results screen: the card and the leaderboard side by side ---------- */
+.hud-root .results-screen {
+    flex-direction: row;
+}
+
+.lb-host--results {
+    width: 372px;
+    margin-left: 20px;
+    opacity: 0;
+    translate: 50px 0;
+    transition-property: opacity, translate;
+    transition-duration: 260ms, 420ms;
+    transition-timing-function: ease-out, ease-out-cubic;
+    transition-delay: 450ms;
+}
+
+.results--in .lb-host--results {
+    opacity: 1;
+    translate: 0 0;
+}
+
+/* ---------- Narrow windows (4:3, 16:10) ---------- */
+.hud--narrow .ts-layout {
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+.hud--narrow .ts-letter {
+    font-size: 74px;
+    text-shadow: 0 5px 0 rgba(18, 59, 94, 0.85);
+}
+
+.hud--narrow .start-screen .ts-circuit {
+    font-size: 30px;
+    letter-spacing: 11px;
+    margin-right: -11px;
+}
+
+.hud--narrow .ts-slogan {
+    font-size: 22px;
+}
+
+.hud--narrow .start-screen .ts-prompt {
+    font-size: 18px;
+    letter-spacing: 3px;
+}
+
+.hud--narrow .lb-host--start {
+    width: 330px;
+    margin-left: 16px;
+}
+
+.hud--narrow .lb-host--results {
+    width: 318px;
+    margin-left: 12px;
+}
+
+.hud--narrow .start-screen .ts-controls {
+    scale: 0.82 0.82;
+}
+
+/* ---------- Reduced motion: everything is simply there, nothing moves, nothing flashes ----------
+   The start values are set to the end values, so adding "intro-in" changes nothing (the letters' inline delays
+   then do nothing either). TitleScreen also skips the light sweep. */
+.reduce-motion .ts-letter,
+.reduce-motion .intro-in .ts-letter {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1 1;
+}
+
+.reduce-motion .ts-wave {
+    scale: 1 1;
+}
+
+.reduce-motion .ts-circuit,
+.reduce-motion .ts-stripes,
+.reduce-motion .lb-host--start,
+.reduce-motion .lb-host--results {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.reduce-motion .ts-slogan {
+    opacity: 1;
+    scale: 1 1;
+    rotate: -3deg;
+}
+
+.reduce-motion .ts-glint {
+    opacity: 0;
+}

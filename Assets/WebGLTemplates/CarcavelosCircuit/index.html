@@ -506,6 +506,17 @@
       touchPanel.addEventListener("pointercancel", onFingerUp);
       touchPanel.addEventListener("contextmenu", function (event) { event.preventDefault(); }); // long press
       window.addEventListener("blur", releaseAllFingers);
+
+      // The game says when a race runs (countdown or racing, task R10/R11: RaceFlow/Web/WebPage.cs sends the event
+      // "cc-race-state"). Outside a race the driving buttons hide (style.css: html:not(.cc-racing)), so they never
+      // cover the title, the leaderboard or the name field; every held key is let go first.
+      window.addEventListener("cc-race-state", function (event) {
+        var racing = !!(event.detail && event.detail.racing);
+        if (!racing) {
+          releaseAllFingers();
+        }
+        document.documentElement.classList.toggle("cc-racing", racing);
+      });
       document.addEventListener("visibilitychange", releaseAllFingers);
 
       // A short tap on the game (not on a button) = a mouse click at that spot. The game ignores touches on its
