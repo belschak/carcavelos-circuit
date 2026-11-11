@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 8900000, guid: 791f5fc4090594dd7b1571da2a870b28, type: 3}
-  m_Sun: {fileID: 4010089408363602716}
+  m_Sun: {fileID: 7672590366703512417}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &81512345
+--- !u!1 &130078505
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,53 +127,115 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 81512346}
-  - component: {fileID: 81512348}
-  - component: {fileID: 81512347}
+  - component: {fileID: 130078506}
   m_Layer: 0
-  m_Name: Checkpoint 9
+  m_Name: RespawnPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &81512346
+--- !u!4 &130078506
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 81512345}
+  m_GameObject: {fileID: 130078505}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.045653168, z: -0, w: 0.9989574}
-  m_LocalPosition: {x: 95.67, y: 16.560001, z: 32.01}
+  m_LocalRotation: {x: -0, y: -0.031034054, z: -0, w: 0.99951833}
+  m_LocalPosition: {x: -0.15624762, y: -1.4000001, z: 3.9997628}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2072635073}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &190021456
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 190021457}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &190021457
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 190021456}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.039611667, z: -0, w: 0.99921525}
+  m_LocalPosition: {x: -0.17262107, y: -1.500001, z: 3.9965343}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2134342433}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &210599189
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 210599190}
+  - component: {fileID: 210599192}
+  - component: {fileID: 210599191}
+  m_Layer: 0
+  m_Name: Checkpoint 4
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &210599190
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 210599189}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.5521355, z: -0, w: 0.83375436}
+  m_LocalPosition: {x: -220.89, y: 9.8, z: -23.46}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1128779227}
-  m_Father: {fileID: 1452428088}
+  - {fileID: 939926324}
+  m_Father: {fileID: 1310263310}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &81512347
+--- !u!114 &210599191
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 81512345}
+  m_GameObject: {fileID: 210599189}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 9
-  respawnPoint: {fileID: 1128779227}
---- !u!65 &81512348
+  index: 4
+  respawnPoint: {fileID: 939926324}
+--- !u!65 &210599192
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 81512345}
+  m_GameObject: {fileID: 210599189}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -188,7 +250,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 12, y: 6, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &250030545
+--- !u!1 &304071992
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -196,30 +258,68 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 250030546}
+  - component: {fileID: 304071993}
+  - component: {fileID: 304071995}
+  - component: {fileID: 304071994}
   m_Layer: 0
-  m_Name: RespawnPoint
+  m_Name: Checkpoint 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &250030546
+--- !u!4 &304071993
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 250030545}
+  m_GameObject: {fileID: 304071992}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.21322086, z: -0, w: 0.97700405}
-  m_LocalPosition: {x: -0.82930183, y: -0.8800001, z: 3.8704283}
+  m_LocalRotation: {x: -0, y: 0.9327642, z: -0, w: -0.36048728}
+  m_LocalPosition: {x: 46.586, y: 16.560001, z: 66.872}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1752011699}
+  m_Children:
+  - {fileID: 721463401}
+  m_Father: {fileID: 1310263310}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &364493432
+--- !u!114 &304071994
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 304071992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 1
+  respawnPoint: {fileID: 721463401}
+--- !u!65 &304071995
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 304071992}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 11, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &335342991
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -227,38 +327,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 364493433}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &364493433
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 364493432}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.029678553, z: -0, w: 0.9995595}
-  m_LocalPosition: {x: -0.13124406, y: -1.6799998, z: 3.9928524}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1325682778}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &457282922
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 457282923}
+  - component: {fileID: 335342992}
   m_Layer: 0
   m_Name: Preview (Role 3)
   m_TagString: Untagged
@@ -266,24 +335,24 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &457282923
+--- !u!4 &335342992
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 457282922}
+  m_GameObject: {fileID: 335342991}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1452428088}
-  - {fileID: 794727672}
+  - {fileID: 1310263310}
+  - {fileID: 2057644420}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &618439412
+--- !u!1 &349552254
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -291,7 +360,76 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 618439413}
+  - component: {fileID: 349552255}
+  - component: {fileID: 349552257}
+  - component: {fileID: 349552256}
+  m_Layer: 0
+  m_Name: Checkpoint 3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &349552255
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 349552254}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.8384924, z: -0, w: 0.5449133}
+  m_LocalPosition: {x: -109.84, y: 9.85, z: -45.68}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1534151721}
+  m_Father: {fileID: 1310263310}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &349552256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 349552254}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 3
+  respawnPoint: {fileID: 1534151721}
+--- !u!65 &349552257
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 349552254}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &387592063
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 387592064}
   m_Layer: 0
   m_Name: RespawnPoint
   m_TagString: Untagged
@@ -299,22 +437,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &618439413
+--- !u!4 &387592064
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 618439412}
+  m_GameObject: {fileID: 387592063}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.003579259, y: -1.6199999, z: 3.9954543}
+  m_LocalRotation: {x: -0, y: -0.10815328, z: -0, w: 0.9941343}
+  m_LocalPosition: {x: -0.531463, y: -1.500001, z: 3.9595528}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1228384431}
+  m_Father: {fileID: 1618259844}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &688727312
+--- !u!1 &499320940
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -322,7 +460,1282 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 688727313}
+  - component: {fileID: 499320941}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &499320941
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 499320940}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.010055631, z: -0, w: 0.9999495}
+  m_LocalPosition: {x: -0.035316885, y: -1.4899998, z: 3.9966915}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2059512597}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &652958229
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 652958230}
+  - component: {fileID: 652958232}
+  - component: {fileID: 652958231}
+  m_Layer: 0
+  m_Name: Checkpoint 9
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &652958230
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 652958229}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.045653168, z: -0, w: 0.9989574}
+  m_LocalPosition: {x: 95.67, y: 16.560001, z: 32.01}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1648476935}
+  m_Father: {fileID: 1310263310}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &652958231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 652958229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 9
+  respawnPoint: {fileID: 1648476935}
+--- !u!65 &652958232
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 652958229}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &721463400
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 721463401}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &721463401
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 721463400}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0.16659771, z: -0, w: -0.9860249}
+  m_LocalPosition: {x: 0.87463903, y: -1.500001, z: 3.868672}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 304071993}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &747486324
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 747486325}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &747486325
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 747486324}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.07992892, z: -0, w: 0.9968006}
+  m_LocalPosition: {x: -0.0004683733, y: -1.500001, z: 3.9998846}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1920502759}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &939926323
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 939926324}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &939926324
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 939926323}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.018233865, z: -0, w: 0.99983376}
+  m_LocalPosition: {x: -0.05384016, y: -1.5, z: 3.9958947}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 210599190}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &964608682
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 964608683}
+  - component: {fileID: 964608685}
+  - component: {fileID: 964608684}
+  m_Layer: 0
+  m_Name: Checkpoint 5
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &964608683
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964608682}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.9260636, z: -0, w: 0.37736753}
+  m_LocalPosition: {x: -190.43, y: 6.4, z: -85.65}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1186079544}
+  m_Father: {fileID: 1310263310}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &964608684
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964608682}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 5
+  respawnPoint: {fileID: 1186079544}
+--- !u!65 &964608685
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964608682}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &1029709002
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1029709003}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1029709003
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1029709002}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.029678553, z: -0, w: 0.9995595}
+  m_LocalPosition: {x: -0.13124406, y: -1.6799998, z: 3.9928524}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1093124738}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1093124737
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1093124738}
+  - component: {fileID: 1093124740}
+  - component: {fileID: 1093124739}
+  m_Layer: 0
+  m_Name: Checkpoint 7
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1093124738
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093124737}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.5887192, z: -0, w: 0.8083376}
+  m_LocalPosition: {x: -3.49, y: 6.15, z: -122}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1029709003}
+  m_Father: {fileID: 1310263310}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1093124739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093124737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 7
+  respawnPoint: {fileID: 1029709003}
+--- !u!65 &1093124740
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093124737}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &1186079543
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1186079544}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1186079544
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1186079543}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.003579259, y: -1.6199999, z: 3.9954543}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 964608683}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1310263309
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1310263310}
+  - component: {fileID: 1310263312}
+  - component: {fileID: 1310263311}
+  m_Layer: 0
+  m_Name: Race
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1310263310
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1310263309}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1618259844}
+  - {fileID: 304071993}
+  - {fileID: 2059512597}
+  - {fileID: 349552255}
+  - {fileID: 210599190}
+  - {fileID: 964608683}
+  - {fileID: 2072635073}
+  - {fileID: 1093124738}
+  - {fileID: 1364569110}
+  - {fileID: 652958230}
+  - {fileID: 1920502759}
+  - {fileID: 2134342433}
+  - {fileID: 1617418635}
+  m_Father: {fileID: 335342992}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1310263311
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1310263309}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 401241f58550b462aa5ba5b33ef10f51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.TrackProgress
+  roadPoints:
+  - {x: -16.26, y: 14.56, z: 133}
+  - {x: -14.33, y: 14.56, z: 132.49}
+  - {x: -12.35, y: 14.56, z: 132.18}
+  - {x: -10.36, y: 14.56, z: 132.02}
+  - {x: -8.36, y: 14.56, z: 132.02}
+  - {x: -6.36, y: 14.56, z: 132.16}
+  - {x: -4.38, y: 14.56, z: 132.39}
+  - {x: -2.4, y: 14.56, z: 132.7}
+  - {x: -0.43, y: 14.56, z: 133.05}
+  - {x: 1.53, y: 14.56, z: 133.42}
+  - {x: 3.5, y: 14.56, z: 133.79}
+  - {x: 5.47, y: 14.56, z: 134.12}
+  - {x: 7.45, y: 14.56, z: 134.39}
+  - {x: 9.44, y: 14.56, z: 134.58}
+  - {x: 11.44, y: 14.56, z: 134.65}
+  - {x: 13.826, y: 14.56, z: 136.826}
+  - {x: 15.699, y: 14.56, z: 137.528}
+  - {x: 17.634, y: 14.56, z: 138.017}
+  - {x: 19.63, y: 14.56, z: 138.067}
+  - {x: 21.587, y: 14.56, z: 137.676}
+  - {x: 23.41, y: 14.56, z: 136.864}
+  - {x: 25.009, y: 14.56, z: 135.669}
+  - {x: 26.305, y: 14.56, z: 134.152}
+  - {x: 27.235, y: 14.56, z: 132.387}
+  - {x: 27.941, y: 14.56, z: 130.515}
+  - {x: 28.643, y: 14.56, z: 128.643}
+  - {x: 29.345, y: 14.56, z: 126.77}
+  - {x: 30.048, y: 14.56, z: 124.897}
+  - {x: 30.75, y: 14.56, z: 123.025}
+  - {x: 31.452, y: 14.56, z: 121.152}
+  - {x: 32.154, y: 14.56, z: 119.279}
+  - {x: 32.857, y: 14.56, z: 117.407}
+  - {x: 33.559, y: 14.56, z: 115.534}
+  - {x: 34.261, y: 14.56, z: 113.661}
+  - {x: 34.963, y: 14.56, z: 111.789}
+  - {x: 35.665, y: 14.56, z: 109.916}
+  - {x: 36.368, y: 14.56, z: 108.043}
+  - {x: 37.07, y: 14.56, z: 106.171}
+  - {x: 37.772, y: 14.56, z: 104.298}
+  - {x: 38.474, y: 14.56, z: 102.425}
+  - {x: 39.177, y: 14.56, z: 100.553}
+  - {x: 39.879, y: 14.56, z: 98.68}
+  - {x: 40.581, y: 14.56, z: 96.807}
+  - {x: 41.283, y: 14.56, z: 94.935}
+  - {x: 41.986, y: 14.56, z: 93.062}
+  - {x: 42.688, y: 14.56, z: 91.189}
+  - {x: 43.39, y: 14.56, z: 89.317}
+  - {x: 44.092, y: 14.56, z: 87.444}
+  - {x: 44.795, y: 14.56, z: 85.571}
+  - {x: 45.497, y: 14.56, z: 83.699}
+  - {x: 46.199, y: 14.56, z: 81.826}
+  - {x: 46.901, y: 14.56, z: 79.954}
+  - {x: 47.604, y: 14.56, z: 78.081}
+  - {x: 48.306, y: 14.56, z: 76.208}
+  - {x: 48.82, y: 14.56, z: 74.28}
+  - {x: 48.901, y: 14.56, z: 72.286}
+  - {x: 48.54, y: 14.56, z: 70.323}
+  - {x: 47.755, y: 14.56, z: 68.489}
+  - {x: 46.586, y: 14.56, z: 66.872}
+  - {x: 45.088, y: 14.56, z: 65.553}
+  - {x: 43.337, y: 14.56, z: 64.597}
+  - {x: 41.467, y: 14.56, z: 63.887}
+  - {x: 39.16, y: 14.56, z: 62.83}
+  - {x: 37.24, y: 14.56, z: 62.27}
+  - {x: 35.29, y: 14.56, z: 61.8}
+  - {x: 33.34, y: 14.56, z: 61.39}
+  - {x: 31.37, y: 14.56, z: 61.03}
+  - {x: 29.4, y: 14.56, z: 60.71}
+  - {x: 27.42, y: 14.56, z: 60.41}
+  - {x: 25.43, y: 14.56, z: 60.15}
+  - {x: 23.45, y: 14.56, z: 59.91}
+  - {x: 21.46, y: 14.56, z: 59.69}
+  - {x: 19.47, y: 14.56, z: 59.49}
+  - {x: 17.48, y: 14.56, z: 59.29}
+  - {x: 15.49, y: 14.56, z: 59.09}
+  - {x: 13.5, y: 14.56, z: 58.87}
+  - {x: 11.52, y: 14.56, z: 58.63}
+  - {x: 9.54, y: 14.56, z: 58.35}
+  - {x: 7.56, y: 14.56, z: 58.03}
+  - {x: 5.6, y: 14.56, z: 57.67}
+  - {x: 3.63, y: 14.56, z: 57.28}
+  - {x: 1.68, y: 14.56, z: 56.87}
+  - {x: -0.28, y: 14.56, z: 56.45}
+  - {x: -2.23, y: 13.16, z: 56.03}
+  - {x: -4.19, y: 11.76, z: 55.63}
+  - {x: -6.16, y: 10.75, z: 55.25}
+  - {x: -8.13, y: 10.75, z: 54.9}
+  - {x: -10.1, y: 10.75, z: 54.58}
+  - {x: -12.08, y: 10.75, z: 54.28}
+  - {x: -14.06, y: 10.74, z: 54}
+  - {x: -16.04, y: 10.74, z: 53.74}
+  - {x: -18.03, y: 10.74, z: 53.49}
+  - {x: -20.01, y: 10.74, z: 53.25}
+  - {x: -22, y: 10.74, z: 53}
+  - {x: -23.98, y: 10.74, z: 52.77}
+  - {x: -25.97, y: 10.75, z: 52.53}
+  - {x: -27.95, y: 10.76, z: 52.29}
+  - {x: -29.94, y: 10.77, z: 52.06}
+  - {x: -31.93, y: 10.78, z: 51.82}
+  - {x: -33.91, y: 10.79, z: 51.58}
+  - {x: -35.9, y: 10.8, z: 51.34}
+  - {x: -37.88, y: 10.81, z: 51.09}
+  - {x: -39.87, y: 10.82, z: 50.84}
+  - {x: -41.85, y: 10.83, z: 50.59}
+  - {x: -43.83, y: 10.84, z: 50.34}
+  - {x: -45.82, y: 10.86, z: 50.08}
+  - {x: -47.8, y: 10.87, z: 49.81}
+  - {x: -49.78, y: 10.88, z: 49.54}
+  - {x: -51.76, y: 10.89, z: 49.26}
+  - {x: -53.74, y: 10.9, z: 48.97}
+  - {x: -55.72, y: 10.92, z: 48.68}
+  - {x: -57.69, y: 10.93, z: 48.37}
+  - {x: -59.67, y: 10.94, z: 48.06}
+  - {x: -61.64, y: 10.95, z: 47.74}
+  - {x: -63.62, y: 10.96, z: 47.4}
+  - {x: -65.58, y: 10.97, z: 47.05}
+  - {x: -67.55, y: 10.98, z: 46.69}
+  - {x: -69.52, y: 10.98, z: 46.31}
+  - {x: -71.47, y: 10.99, z: 45.91}
+  - {x: -73.43, y: 10.99, z: 45.49}
+  - {x: -75.38, y: 10.98, z: 45.04}
+  - {x: -77.32, y: 10.98, z: 44.56}
+  - {x: -79.25, y: 10.97, z: 44.05}
+  - {x: -81.17, y: 10.95, z: 43.48}
+  - {x: -83.07, y: 10.93, z: 42.85}
+  - {x: -84.94, y: 10.91, z: 42.14}
+  - {x: -86.76, y: 10.88, z: 41.31}
+  - {x: -88.51, y: 10.84, z: 40.35}
+  - {x: -90.16, y: 10.8, z: 39.22}
+  - {x: -91.66, y: 10.75, z: 37.89}
+  - {x: -92.95, y: 10.7, z: 36.37}
+  - {x: -94, y: 10.65, z: 34.67}
+  - {x: -94.8, y: 10.59, z: 32.83}
+  - {x: -95.35, y: 10.53, z: 30.91}
+  - {x: -95.7, y: 10.48, z: 28.94}
+  - {x: -95.91, y: 10.42, z: 26.95}
+  - {x: -96.02, y: 10.36, z: 24.96}
+  - {x: -96.07, y: 10.3, z: 22.96}
+  - {x: -96.08, y: 10.25, z: 20.96}
+  - {x: -96.08, y: 10.19, z: 18.96}
+  - {x: -96.07, y: 10.14, z: 16.96}
+  - {x: -96.05, y: 10.09, z: 14.96}
+  - {x: -96.02, y: 10.04, z: 12.96}
+  - {x: -95.99, y: 9.99, z: 10.96}
+  - {x: -95.95, y: 9.94, z: 8.96}
+  - {x: -95.9, y: 9.89, z: 6.96}
+  - {x: -95.85, y: 9.84, z: 4.96}
+  - {x: -95.8, y: 9.79, z: 2.96}
+  - {x: -95.76, y: 9.74, z: 0.96}
+  - {x: -95.72, y: 9.69, z: -1.04}
+  - {x: -95.69, y: 9.64, z: -3.04}
+  - {x: -95.68, y: 9.58, z: -5.04}
+  - {x: -95.68, y: 9.53, z: -7.04}
+  - {x: -95.71, y: 9.47, z: -9.04}
+  - {x: -95.75, y: 9.42, z: -11.04}
+  - {x: -95.82, y: 9.36, z: -13.04}
+  - {x: -95.9, y: 9.3, z: -15.04}
+  - {x: -96.01, y: 9.23, z: -17.03}
+  - {x: -96.13, y: 9.16, z: -19.03}
+  - {x: -96.27, y: 9.09, z: -21.02}
+  - {x: -96.44, y: 9.02, z: -23.02}
+  - {x: -96.63, y: 8.95, z: -25.01}
+  - {x: -96.88, y: 8.87, z: -26.99}
+  - {x: -97.19, y: 8.79, z: -28.97}
+  - {x: -97.58, y: 8.7, z: -30.93}
+  - {x: -98.1, y: 8.62, z: -32.86}
+  - {x: -98.76, y: 8.53, z: -34.75}
+  - {x: -99.59, y: 8.44, z: -36.57}
+  - {x: -100.6, y: 8.35, z: -38.29}
+  - {x: -101.79, y: 8.26, z: -39.9}
+  - {x: -103.15, y: 8.18, z: -41.36}
+  - {x: -104.66, y: 8.09, z: -42.67}
+  - {x: -106.3, y: 8.01, z: -43.82}
+  - {x: -108.03, y: 7.93, z: -44.82}
+  - {x: -109.84, y: 7.85, z: -45.68}
+  - {x: -111.69, y: 7.78, z: -46.42}
+  - {x: -113.59, y: 7.71, z: -47.06}
+  - {x: -115.51, y: 7.65, z: -47.61}
+  - {x: -117.46, y: 7.59, z: -48.07}
+  - {x: -119.42, y: 7.54, z: -48.47}
+  - {x: -121.39, y: 7.49, z: -48.81}
+  - {x: -123.37, y: 7.45, z: -49.09}
+  - {x: -125.36, y: 7.41, z: -49.32}
+  - {x: -127.35, y: 7.38, z: -49.5}
+  - {x: -129.34, y: 7.36, z: -49.62}
+  - {x: -131.34, y: 7.34, z: -49.69}
+  - {x: -133.34, y: 7.33, z: -49.72}
+  - {x: -135.34, y: 7.32, z: -49.69}
+  - {x: -137.34, y: 7.32, z: -49.6}
+  - {x: -139.34, y: 7.32, z: -49.47}
+  - {x: -141.33, y: 7.33, z: -49.28}
+  - {x: -143.31, y: 7.35, z: -49.05}
+  - {x: -145.3, y: 7.37, z: -48.78}
+  - {x: -147.27, y: 7.4, z: -48.47}
+  - {x: -149.24, y: 7.43, z: -48.12}
+  - {x: -151.2, y: 7.46, z: -47.74}
+  - {x: -153.16, y: 7.49, z: -47.34}
+  - {x: -155.12, y: 7.53, z: -46.91}
+  - {x: -157.06, y: 7.57, z: -46.45}
+  - {x: -159.01, y: 7.61, z: -45.98}
+  - {x: -160.95, y: 7.65, z: -45.49}
+  - {x: -162.88, y: 7.69, z: -44.98}
+  - {x: -164.81, y: 7.73, z: -44.47}
+  - {x: -166.74, y: 7.76, z: -43.94}
+  - {x: -168.67, y: 7.79, z: -43.4}
+  - {x: -170.59, y: 7.82, z: -42.85}
+  - {x: -172.51, y: 7.84, z: -42.29}
+  - {x: -174.43, y: 7.86, z: -41.73}
+  - {x: -176.35, y: 7.87, z: -41.16}
+  - {x: -178.27, y: 7.88, z: -40.59}
+  - {x: -180.18, y: 7.89, z: -40.01}
+  - {x: -182.09, y: 7.89, z: -39.43}
+  - {x: -184, y: 7.89, z: -38.83}
+  - {x: -185.91, y: 7.88, z: -38.23}
+  - {x: -187.81, y: 7.87, z: -37.6}
+  - {x: -189.7, y: 7.86, z: -36.95}
+  - {x: -191.58, y: 7.85, z: -36.28}
+  - {x: -193.46, y: 7.83, z: -35.58}
+  - {x: -195.32, y: 7.82, z: -34.86}
+  - {x: -197.18, y: 7.8, z: -34.12}
+  - {x: -199.02, y: 7.79, z: -33.35}
+  - {x: -200.86, y: 7.77, z: -32.56}
+  - {x: -202.69, y: 7.76, z: -31.75}
+  - {x: -204.52, y: 7.76, z: -30.93}
+  - {x: -206.34, y: 7.75, z: -30.1}
+  - {x: -208.15, y: 7.75, z: -29.26}
+  - {x: -209.97, y: 7.75, z: -28.42}
+  - {x: -211.78, y: 7.75, z: -27.58}
+  - {x: -213.59, y: 7.76, z: -26.73}
+  - {x: -215.41, y: 7.77, z: -25.9}
+  - {x: -217.23, y: 7.78, z: -25.07}
+  - {x: -219.06, y: 7.79, z: -24.26}
+  - {x: -220.89, y: 7.8, z: -23.46}
+  - {x: -222.74, y: 7.8, z: -22.69}
+  - {x: -224.59, y: 7.8, z: -21.95}
+  - {x: -226.47, y: 7.8, z: -21.25}
+  - {x: -228.36, y: 7.79, z: -20.61}
+  - {x: -230.28, y: 7.78, z: -20.04}
+  - {x: -232.23, y: 7.75, z: -19.57}
+  - {x: -234.2, y: 7.71, z: -19.23}
+  - {x: -236.19, y: 7.66, z: -19.05}
+  - {x: -238.19, y: 7.6, z: -19.06}
+  - {x: -240.17, y: 7.53, z: -19.29}
+  - {x: -242.11, y: 7.45, z: -19.78}
+  - {x: -243.95, y: 7.35, z: -20.55}
+  - {x: -245.65, y: 7.26, z: -21.6}
+  - {x: -247.11, y: 7.15, z: -22.96}
+  - {x: -248.21, y: 7.05, z: -24.63}
+  - {x: -248.78, y: 6.95, z: -26.54}
+  - {x: -248.75, y: 6.85, z: -28.53}
+  - {x: -248.16, y: 6.75, z: -30.44}
+  - {x: -247.16, y: 6.65, z: -32.17}
+  - {x: -245.91, y: 6.56, z: -33.73}
+  - {x: -244.51, y: 6.48, z: -35.16}
+  - {x: -243.03, y: 6.4, z: -36.51}
+  - {x: -241.52, y: 6.32, z: -37.82}
+  - {x: -240.01, y: 6.25, z: -39.12}
+  - {x: -238.49, y: 6.17, z: -40.43}
+  - {x: -236.99, y: 6.09, z: -41.75}
+  - {x: -235.5, y: 6.01, z: -43.08}
+  - {x: -234.01, y: 5.94, z: -44.42}
+  - {x: -232.53, y: 5.86, z: -45.76}
+  - {x: -231.05, y: 5.78, z: -47.11}
+  - {x: -229.58, y: 5.7, z: -48.46}
+  - {x: -228.11, y: 5.62, z: -49.81}
+  - {x: -226.63, y: 5.54, z: -51.17}
+  - {x: -225.16, y: 5.47, z: -52.52}
+  - {x: -223.69, y: 5.4, z: -53.87}
+  - {x: -222.22, y: 5.34, z: -55.23}
+  - {x: -220.75, y: 5.28, z: -56.58}
+  - {x: -219.28, y: 5.22, z: -57.94}
+  - {x: -217.81, y: 5.17, z: -59.3}
+  - {x: -216.34, y: 5.12, z: -60.66}
+  - {x: -214.87, y: 5.08, z: -62.02}
+  - {x: -213.41, y: 5.03, z: -63.38}
+  - {x: -211.94, y: 4.99, z: -64.74}
+  - {x: -210.48, y: 4.96, z: -66.11}
+  - {x: -209.02, y: 4.92, z: -67.47}
+  - {x: -207.57, y: 4.89, z: -68.84}
+  - {x: -206.11, y: 4.85, z: -70.22}
+  - {x: -204.66, y: 4.82, z: -71.59}
+  - {x: -203.21, y: 4.78, z: -72.97}
+  - {x: -201.77, y: 4.75, z: -74.36}
+  - {x: -200.33, y: 4.71, z: -75.75}
+  - {x: -198.9, y: 4.68, z: -77.14}
+  - {x: -197.47, y: 4.64, z: -78.55}
+  - {x: -196.06, y: 4.59, z: -79.96}
+  - {x: -194.64, y: 4.55, z: -81.37}
+  - {x: -193.23, y: 4.5, z: -82.79}
+  - {x: -191.83, y: 4.45, z: -84.22}
+  - {x: -190.43, y: 4.4, z: -85.65}
+  - {x: -189.03, y: 4.34, z: -87.08}
+  - {x: -187.64, y: 4.28, z: -88.51}
+  - {x: -186.24, y: 4.22, z: -89.94}
+  - {x: -184.84, y: 4.16, z: -91.37}
+  - {x: -183.44, y: 4.1, z: -92.79}
+  - {x: -182.03, y: 4.04, z: -94.21}
+  - {x: -180.61, y: 3.97, z: -95.62}
+  - {x: -179.18, y: 3.91, z: -97.02}
+  - {x: -177.75, y: 3.85, z: -98.41}
+  - {x: -176.3, y: 3.79, z: -99.79}
+  - {x: -174.83, y: 3.72, z: -101.16}
+  - {x: -173.36, y: 3.66, z: -102.51}
+  - {x: -171.87, y: 3.6, z: -103.84}
+  - {x: -170.37, y: 3.54, z: -105.16}
+  - {x: -168.85, y: 3.49, z: -106.47}
+  - {x: -167.32, y: 3.43, z: -107.76}
+  - {x: -165.78, y: 3.37, z: -109.03}
+  - {x: -164.23, y: 3.32, z: -110.3}
+  - {x: -162.67, y: 3.27, z: -111.55}
+  - {x: -161.11, y: 3.22, z: -112.79}
+  - {x: -159.54, y: 3.17, z: -114.03}
+  - {x: -157.96, y: 3.12, z: -115.26}
+  - {x: -156.39, y: 3.08, z: -116.49}
+  - {x: -154.81, y: 3.04, z: -117.72}
+  - {x: -153.23, y: 3, z: -118.95}
+  - {x: -151.65, y: 2.96, z: -120.18}
+  - {x: -150.08, y: 2.92, z: -121.41}
+  - {x: -148.51, y: 2.89, z: -122.65}
+  - {x: -146.94, y: 2.86, z: -123.9}
+  - {x: -145.38, y: 2.84, z: -125.15}
+  - {x: -143.83, y: 2.81, z: -126.42}
+  - {x: -142.3, y: 2.79, z: -127.7}
+  - {x: -140.78, y: 2.77, z: -129}
+  - {x: -139.28, y: 2.75, z: -130.32}
+  - {x: -137.8, y: 2.73, z: -131.67}
+  - {x: -136.35, y: 2.71, z: -133.05}
+  - {x: -134.95, y: 2.69, z: -134.47}
+  - {x: -133.58, y: 2.67, z: -135.93}
+  - {x: -132.28, y: 2.65, z: -137.45}
+  - {x: -131.03, y: 2.62, z: -139.01}
+  - {x: -129.84, y: 2.6, z: -140.62}
+  - {x: -128.71, y: 2.57, z: -142.27}
+  - {x: -127.62, y: 2.54, z: -143.94}
+  - {x: -126.54, y: 2.51, z: -145.63}
+  - {x: -125.47, y: 2.48, z: -147.32}
+  - {x: -124.35, y: 2.45, z: -148.97}
+  - {x: -123.16, y: 2.42, z: -150.58}
+  - {x: -121.85, y: 2.4, z: -152.09}
+  - {x: -120.4, y: 2.38, z: -153.47}
+  - {x: -118.81, y: 2.36, z: -154.68}
+  - {x: -117.08, y: 2.35, z: -155.68}
+  - {x: -115.23, y: 2.35, z: -156.44}
+  - {x: -113.3, y: 2.36, z: -156.96}
+  - {x: -111.33, y: 2.38, z: -157.27}
+  - {x: -109.33, y: 2.4, z: -157.38}
+  - {x: -107.33, y: 2.44, z: -157.33}
+  - {x: -105.34, y: 2.47, z: -157.15}
+  - {x: -103.36, y: 2.52, z: -156.88}
+  - {x: -101.39, y: 2.57, z: -156.53}
+  - {x: -99.43, y: 2.62, z: -156.12}
+  - {x: -97.48, y: 2.67, z: -155.66}
+  - {x: -95.54, y: 2.73, z: -155.18}
+  - {x: -93.61, y: 2.79, z: -154.67}
+  - {x: -91.68, y: 2.85, z: -154.14}
+  - {x: -89.76, y: 2.91, z: -153.6}
+  - {x: -87.83, y: 2.97, z: -153.04}
+  - {x: -85.92, y: 3.03, z: -152.46}
+  - {x: -84.01, y: 3.09, z: -151.87}
+  - {x: -82.11, y: 3.15, z: -151.26}
+  - {x: -80.21, y: 3.22, z: -150.62}
+  - {x: -78.32, y: 3.28, z: -149.95}
+  - {x: -76.45, y: 3.34, z: -149.25}
+  - {x: -74.59, y: 3.41, z: -148.51}
+  - {x: -72.76, y: 3.47, z: -147.72}
+  - {x: -70.95, y: 3.54, z: -146.87}
+  - {x: -69.17, y: 3.6, z: -145.94}
+  - {x: -67.46, y: 3.67, z: -144.92}
+  - {x: -65.82, y: 3.74, z: -143.78}
+  - {x: -64.28, y: 3.82, z: -142.49}
+  - {x: -62.89, y: 3.89, z: -141.06}
+  - {x: -61.68, y: 3.97, z: -139.47}
+  - {x: -60.67, y: 4.05, z: -137.75}
+  - {x: -59.84, y: 4.14, z: -135.93}
+  - {x: -59.15, y: 4.22, z: -134.05}
+  - {x: -58.51, y: 4.32, z: -132.15}
+  - {x: -57.84, y: 4.41, z: -130.27}
+  - {x: -57.01, y: 4.51, z: -128.45}
+  - {x: -55.94, y: 4.6, z: -126.77}
+  - {x: -54.58, y: 4.7, z: -125.31}
+  - {x: -52.95, y: 4.79, z: -124.15}
+  - {x: -51.14, y: 4.89, z: -123.32}
+  - {x: -49.21, y: 4.98, z: -122.79}
+  - {x: -47.23, y: 5.06, z: -122.49}
+  - {x: -45.24, y: 5.15, z: -122.35}
+  - {x: -43.24, y: 5.23, z: -122.32}
+  - {x: -41.24, y: 5.3, z: -122.36}
+  - {x: -39.24, y: 5.37, z: -122.44}
+  - {x: -37.24, y: 5.44, z: -122.54}
+  - {x: -35.25, y: 5.51, z: -122.65}
+  - {x: -33.25, y: 5.57, z: -122.76}
+  - {x: -31.25, y: 5.63, z: -122.86}
+  - {x: -29.26, y: 5.67, z: -122.96}
+  - {x: -27.26, y: 5.69, z: -123.06}
+  - {x: -25.26, y: 5.68, z: -123.17}
+  - {x: -23.26, y: 5.65, z: -123.27}
+  - {x: -21.27, y: 5.58, z: -123.38}
+  - {x: -19.27, y: 5.48, z: -123.49}
+  - {x: -17.27, y: 5.34, z: -123.6}
+  - {x: -15.27, y: 5.18, z: -123.69}
+  - {x: -13.28, y: 5, z: -123.76}
+  - {x: -11.28, y: 4.81, z: -123.75}
+  - {x: -9.29, y: 4.62, z: -123.49}
+  - {x: -7.33, y: 4.44, z: -123.1}
+  - {x: -5.4, y: 4.28, z: -122.61}
+  - {x: -3.49, y: 4.15, z: -122}
+  - {x: -1.6, y: 4.04, z: -121.36}
+  - {x: 0.27, y: 3.97, z: -120.65}
+  - {x: 2.13, y: 3.93, z: -119.91}
+  - {x: 3.96, y: 3.9, z: -119.1}
+  - {x: 5.72, y: 3.9, z: -118.17}
+  - {x: 7.28, y: 3.91, z: -116.91}
+  - {x: 8.82, y: 3.93, z: -115.64}
+  - {x: 10.37, y: 3.95, z: -114.37}
+  - {x: 11.91, y: 3.97, z: -113.1}
+  - {x: 13.45, y: 4, z: -111.82}
+  - {x: 14.99, y: 4.03, z: -110.55}
+  - {x: 16.54, y: 4.06, z: -109.28}
+  - {x: 18.08, y: 4.09, z: -108}
+  - {x: 19.62, y: 4.12, z: -106.73}
+  - {x: 21.17, y: 4.15, z: -105.46}
+  - {x: 22.71, y: 4.17, z: -104.19}
+  - {x: 24.25, y: 4.2, z: -102.91}
+  - {x: 25.79, y: 4.23, z: -101.64}
+  - {x: 27.34, y: 4.26, z: -100.37}
+  - {x: 28.88, y: 4.29, z: -99.1}
+  - {x: 30.42, y: 4.32, z: -97.82}
+  - {x: 31.97, y: 4.35, z: -96.55}
+  - {x: 33.51, y: 4.37, z: -95.28}
+  - {x: 35.05, y: 4.4, z: -94}
+  - {x: 36.59, y: 4.43, z: -92.73}
+  - {x: 38.14, y: 4.46, z: -91.46}
+  - {x: 39.68, y: 4.49, z: -90.19}
+  - {x: 41.22, y: 4.52, z: -88.91}
+  - {x: 42.76, y: 4.55, z: -87.64}
+  - {x: 44.31, y: 4.57, z: -86.37}
+  - {x: 45.85, y: 4.6, z: -85.1}
+  - {x: 47.39, y: 4.63, z: -83.82}
+  - {x: 48.94, y: 4.66, z: -82.55}
+  - {x: 50.48, y: 4.69, z: -81.28}
+  - {x: 52.02, y: 4.72, z: -80}
+  - {x: 53.56, y: 4.75, z: -78.73}
+  - {x: 55.11, y: 4.77, z: -77.46}
+  - {x: 56.65, y: 4.8, z: -76.19}
+  - {x: 58.19, y: 4.83, z: -74.91}
+  - {x: 59.73, y: 4.86, z: -73.64}
+  - {x: 61.28, y: 4.89, z: -72.37}
+  - {x: 62.82, y: 4.92, z: -71.09}
+  - {x: 64.36, y: 4.97, z: -69.82}
+  - {x: 65.91, y: 5.03, z: -68.55}
+  - {x: 67.45, y: 5.12, z: -67.28}
+  - {x: 68.99, y: 5.23, z: -66}
+  - {x: 70.59, y: 5.38, z: -64.84}
+  - {x: 72.55, y: 5.57, z: -64.46}
+  - {x: 74.54, y: 5.79, z: -64.5}
+  - {x: 76.54, y: 6.05, z: -64.67}
+  - {x: 78.52, y: 6.32, z: -64.95}
+  - {x: 80.48, y: 6.62, z: -65.31}
+  - {x: 82.42, y: 6.92, z: -65.8}
+  - {x: 84.33, y: 7.23, z: -66.41}
+  - {x: 86.2, y: 7.54, z: -67.12}
+  - {x: 88.03, y: 7.85, z: -67.91}
+  - {x: 89.87, y: 8.16, z: -68.7}
+  - {x: 91.8, y: 8.47, z: -69.18}
+  - {x: 93.79, y: 8.78, z: -69.23}
+  - {x: 95.74, y: 9.09, z: -68.8}
+  - {x: 97.54, y: 9.4, z: -67.95}
+  - {x: 99.17, y: 9.7, z: -66.78}
+  - {x: 100.61, y: 9.99, z: -65.4}
+  - {x: 101.91, y: 10.27, z: -63.88}
+  - {x: 103.1, y: 10.51, z: -62.28}
+  - {x: 104.2, y: 10.73, z: -60.61}
+  - {x: 105.24, y: 10.91, z: -58.9}
+  - {x: 106.24, y: 11.04, z: -57.16}
+  - {x: 107.19, y: 11.13, z: -55.41}
+  - {x: 108.11, y: 11.2, z: -53.63}
+  - {x: 109, y: 11.23, z: -51.84}
+  - {x: 109.87, y: 11.25, z: -50.04}
+  - {x: 110.72, y: 11.26, z: -48.23}
+  - {x: 111.55, y: 11.26, z: -46.41}
+  - {x: 112.34, y: 11.26, z: -44.57}
+  - {x: 113.11, y: 11.26, z: -42.72}
+  - {x: 113.84, y: 11.26, z: -40.87}
+  - {x: 114.54, y: 11.26, z: -38.99}
+  - {x: 115.19, y: 11.26, z: -37.1}
+  - {x: 115.76, y: 11.26, z: -35.18}
+  - {x: 116.24, y: 11.26, z: -33.24}
+  - {x: 116.62, y: 11.26, z: -31.28}
+  - {x: 116.86, y: 11.26, z: -29.29}
+  - {x: 116.95, y: 11.26, z: -27.3}
+  - {x: 116.86, y: 11.26, z: -25.3}
+  - {x: 116.58, y: 11.26, z: -23.32}
+  - {x: 116.13, y: 11.26, z: -21.37}
+  - {x: 115.54, y: 11.27, z: -19.46}
+  - {x: 114.81, y: 11.28, z: -17.6}
+  - {x: 113.97, y: 11.32, z: -15.79}
+  - {x: 113.05, y: 11.38, z: -14.01}
+  - {x: 112.08, y: 11.47, z: -12.27}
+  - {x: 111.07, y: 11.6, z: -10.54}
+  - {x: 110.04, y: 11.77, z: -8.82}
+  - {x: 109.01, y: 11.98, z: -7.11}
+  - {x: 107.97, y: 12.22, z: -5.4}
+  - {x: 106.95, y: 12.48, z: -3.68}
+  - {x: 105.94, y: 12.77, z: -1.96}
+  - {x: 104.94, y: 13.05, z: -0.22}
+  - {x: 103.96, y: 13.34, z: 1.52}
+  - {x: 103, y: 13.6, z: 3.28}
+  - {x: 102.07, y: 13.84, z: 5.05}
+  - {x: 101.18, y: 14.05, z: 6.84}
+  - {x: 100.33, y: 14.22, z: 8.65}
+  - {x: 99.53, y: 14.35, z: 10.48}
+  - {x: 98.81, y: 14.44, z: 12.35}
+  - {x: 98.16, y: 14.5, z: 14.24}
+  - {x: 97.61, y: 14.54, z: 16.16}
+  - {x: 97.14, y: 14.55, z: 18.1}
+  - {x: 96.77, y: 14.56, z: 20.07}
+  - {x: 96.48, y: 14.56, z: 22.05}
+  - {x: 96.26, y: 14.56, z: 24.03}
+  - {x: 96.09, y: 14.56, z: 26.03}
+  - {x: 95.95, y: 14.56, z: 28.02}
+  - {x: 95.82, y: 14.56, z: 30.02}
+  - {x: 95.67, y: 14.56, z: 32.01}
+  - {x: 95.48, y: 14.56, z: 34}
+  - {x: 95.22, y: 14.56, z: 35.99}
+  - {x: 94.87, y: 14.56, z: 37.95}
+  - {x: 94.4, y: 14.56, z: 39.9}
+  - {x: 93.81, y: 14.56, z: 41.81}
+  - {x: 93.1, y: 14.56, z: 43.68}
+  - {x: 92.19, y: 14.56, z: 45.45}
+  - {x: 90.94, y: 14.56, z: 47.01}
+  - {x: 89.58, y: 14.56, z: 48.47}
+  - {x: 88.14, y: 14.56, z: 49.86}
+  - {x: 86.64, y: 14.56, z: 51.18}
+  - {x: 85.17, y: 14.56, z: 52.53}
+  - {x: 83.82, y: 14.56, z: 53.98}
+  - {x: 82.19, y: 14.56, z: 55.13}
+  - {x: 80.73, y: 14.56, z: 56.5}
+  - {x: 79.39, y: 14.56, z: 57.97}
+  - {x: 78.43, y: 14.56, z: 59.73}
+  - {x: 77.33, y: 14.56, z: 61.4}
+  - {x: 76.64, y: 14.56, z: 63.27}
+  - {x: 75.9, y: 14.56, z: 65.13}
+  - {x: 75.93, y: 14.56, z: 67.13}
+  - {x: 75.7, y: 14.56, z: 69.11}
+  - {x: 75.15, y: 14.56, z: 71.03}
+  - {x: 74.65, y: 14.56, z: 72.97}
+  - {x: 74.33, y: 14.56, z: 74.94}
+  - {x: 74.09, y: 14.56, z: 76.93}
+  - {x: 73.9, y: 14.56, z: 78.92}
+  - {x: 73.46, y: 14.56, z: 80.87}
+  - {x: 72.65, y: 14.56, z: 82.69}
+  - {x: 71.79, y: 14.56, z: 84.49}
+  - {x: 70.95, y: 14.56, z: 86.31}
+  - {x: 70.16, y: 14.56, z: 88.15}
+  - {x: 69.4, y: 14.56, z: 90}
+  - {x: 68.66, y: 14.56, z: 91.85}
+  - {x: 67.96, y: 14.56, z: 93.73}
+  - {x: 67.53, y: 14.56, z: 95.68}
+  - {x: 67.19, y: 14.56, z: 97.65}
+  - {x: 66.86, y: 14.56, z: 99.62}
+  - {x: 66.65, y: 14.56, z: 101.61}
+  - {x: 66.48, y: 14.56, z: 103.6}
+  - {x: 66.37, y: 14.56, z: 105.6}
+  - {x: 66.3, y: 14.56, z: 107.6}
+  - {x: 66.28, y: 14.56, z: 109.6}
+  - {x: 66.31, y: 14.56, z: 111.6}
+  - {x: 62.27, y: 14.56, z: 107.465}
+  - {x: 61.543, y: 14.56, z: 109.328}
+  - {x: 60.453, y: 14.56, z: 110.989}
+  - {x: 58.811, y: 14.56, z: 112.106}
+  - {x: 56.99, y: 14.56, z: 112.934}
+  - {x: 55.169, y: 14.56, z: 113.762}
+  - {x: 53.517, y: 14.56, z: 114.866}
+  - {x: 52.42, y: 14.56, z: 116.522}
+  - {x: 51.711, y: 14.56, z: 118.392}
+  - {x: 51.009, y: 14.56, z: 120.264}
+  - {x: 50.307, y: 14.56, z: 122.137}
+  - {x: 49.604, y: 14.56, z: 124.01}
+  - {x: 48.902, y: 14.56, z: 125.882}
+  - {x: 48.2, y: 14.56, z: 127.755}
+  - {x: 47.498, y: 14.56, z: 129.628}
+  - {x: 46.795, y: 14.56, z: 131.5}
+  - {x: 45.809, y: 14.56, z: 133.229}
+  - {x: 44.32, y: 14.56, z: 134.55}
+  - {x: 42.635, y: 14.56, z: 135.627}
+  - {x: 40.966, y: 14.56, z: 136.728}
+  - {x: 39.628, y: 14.56, z: 138.202}
+  - {x: 38.797, y: 14.56, z: 140.014}
+  - {x: 38.094, y: 14.56, z: 141.887}
+  - {x: 37.399, y: 14.56, z: 143.762}
+  - {x: 37.239, y: 14.56, z: 145.735}
+  - {x: 38.05, y: 14.56, z: 147.54}
+  - {x: 39.628, y: 14.56, z: 148.733}
+  - {x: 41.496, y: 14.56, z: 149.445}
+  - {x: 43.369, y: 14.56, z: 150.147}
+  - {x: 45.242, y: 14.56, z: 150.849}
+  - {x: 47.114, y: 14.56, z: 151.552}
+  - {x: 48.987, y: 14.56, z: 152.254}
+  - {x: 50.86, y: 14.56, z: 152.956}
+  - {x: 52.732, y: 14.56, z: 153.658}
+  - {x: 54.605, y: 14.56, z: 154.361}
+  - {x: 56.478, y: 14.56, z: 155.063}
+  - {x: 58.35, y: 14.56, z: 155.765}
+  - {x: 60.223, y: 14.56, z: 156.467}
+  - {x: 62.096, y: 14.56, z: 157.17}
+  - {x: 63.968, y: 14.56, z: 157.872}
+  - {x: 65.841, y: 14.56, z: 158.574}
+  - {x: 67.714, y: 14.56, z: 159.276}
+  - {x: 69.586, y: 14.56, z: 159.979}
+  - {x: 71.459, y: 14.56, z: 160.681}
+  - {x: 73.332, y: 14.56, z: 161.383}
+  - {x: 75.204, y: 14.56, z: 162.085}
+  - {x: 76.68, y: 14.56, z: 160.37}
+  - {x: 77.31, y: 14.56, z: 162.26}
+  - {x: 77.93, y: 14.56, z: 164.17}
+  - {x: 78.5, y: 14.56, z: 166.08}
+  - {x: 78.99, y: 14.56, z: 168.02}
+  - {x: 79.37, y: 14.56, z: 169.98}
+  - {x: 79.63, y: 14.56, z: 171.97}
+  - {x: 79.9, y: 14.56, z: 173.95}
+  - {x: 79.95, y: 14.56, z: 175.94}
+  - {x: 79.68, y: 14.56, z: 177.92}
+  - {x: 79.1, y: 14.56, z: 179.83}
+  - {x: 78.23, y: 14.56, z: 181.62}
+  - {x: 77.1, y: 14.56, z: 183.26}
+  - {x: 75.77, y: 14.56, z: 184.75}
+  - {x: 74.28, y: 14.56, z: 186.08}
+  - {x: 72.64, y: 14.56, z: 187.22}
+  - {x: 70.83, y: 14.56, z: 188.08}
+  - {x: 68.95, y: 14.56, z: 188.75}
+  - {x: 67.03, y: 14.56, z: 189.3}
+  - {x: 65.08, y: 14.56, z: 189.74}
+  - {x: 63.11, y: 14.56, z: 190.08}
+  - {x: 61.12, y: 14.56, z: 190.17}
+  - {x: 59.12, y: 14.56, z: 190.08}
+  - {x: 57.13, y: 14.56, z: 189.91}
+  - {x: 55.14, y: 14.56, z: 189.67}
+  - {x: 53.17, y: 14.56, z: 189.36}
+  - {x: 51.21, y: 14.56, z: 188.96}
+  - {x: 49.27, y: 14.56, z: 188.47}
+  - {x: 47.35, y: 14.56, z: 187.89}
+  - {x: 45.44, y: 14.56, z: 187.3}
+  - {x: 43.53, y: 14.56, z: 186.73}
+  - {x: 41.62, y: 14.56, z: 186.12}
+  - {x: 39.75, y: 14.56, z: 185.42}
+  - {x: 37.92, y: 14.56, z: 184.62}
+  - {x: 36.12, y: 14.56, z: 183.74}
+  - {x: 34.37, y: 14.56, z: 182.78}
+  - {x: 32.65, y: 14.56, z: 181.76}
+  - {x: 30.97, y: 14.56, z: 180.67}
+  - {x: 29.29, y: 14.56, z: 179.58}
+  - {x: 27.64, y: 14.56, z: 178.46}
+  - {x: 26.05, y: 14.56, z: 177.24}
+  - {x: 24.46, y: 14.56, z: 176.03}
+  - {x: 22.84, y: 14.56, z: 174.86}
+  - {x: 21.17, y: 14.56, z: 173.75}
+  - {x: 19.43, y: 14.56, z: 172.77}
+  - {x: 17.65, y: 14.56, z: 171.86}
+  - {x: 15.91, y: 14.56, z: 170.88}
+  - {x: 14.12, y: 14.56, z: 169.99}
+  - {x: 12.34, y: 14.56, z: 169.08}
+  - {x: 10.48, y: 14.56, z: 168.33}
+  - {x: 8.6, y: 14.56, z: 167.68}
+  - {x: 6.68, y: 14.56, z: 167.11}
+  - {x: 4.82, y: 14.56, z: 166.39}
+  - {x: 2.9, y: 14.56, z: 165.86}
+  - {x: 1.05, y: 14.56, z: 165.1}
+  - {x: -0.77, y: 14.56, z: 164.27}
+  - {x: -2.57, y: 14.56, z: 163.39}
+  - {x: -4.37, y: 14.56, z: 162.52}
+  - {x: -6.18, y: 14.56, z: 161.67}
+  - {x: -8.01, y: 14.56, z: 160.88}
+  - {x: -9.82, y: 14.56, z: 160.02}
+  - {x: -11.62, y: 14.56, z: 159.14}
+  - {x: -13.43, y: 14.56, z: 158.3}
+  - {x: -15.26, y: 14.56, z: 157.49}
+  - {x: -17.13, y: 14.56, z: 156.79}
+  - {x: -19.07, y: 14.56, z: 156.29}
+  - {x: -21, y: 14.56, z: 155.79}
+  - {x: -22.93, y: 14.56, z: 155.25}
+  - {x: -24.82, y: 14.56, z: 154.6}
+  - {x: -26.62, y: 14.56, z: 153.74}
+  - {x: -28.21, y: 14.56, z: 152.56}
+  - {x: -29.43, y: 14.56, z: 151}
+  - {x: -30.08, y: 14.56, z: 149.13}
+  - {x: -30.06, y: 14.56, z: 147.15}
+  - {x: -29.53, y: 14.56, z: 145.23}
+  - {x: -28.66, y: 14.56, z: 143.43}
+  - {x: -27.57, y: 14.56, z: 141.75}
+  - {x: -26.33, y: 14.56, z: 140.19}
+  - {x: -24.97, y: 14.56, z: 138.72}
+  - {x: -23.5, y: 14.56, z: 137.36}
+  - {x: -21.94, y: 14.56, z: 136.11}
+  - {x: -20.29, y: 14.56, z: 134.99}
+  - {x: -18.55, y: 14.56, z: 134}
+  spacing: 6
+  keepTurnDegrees: 4
+--- !u!114 &1310263312
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1310263309}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b05bdc890823d4f5c809d396e3d92011, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.TrackInfo
+  checkpoints:
+  - {fileID: 1618259845}
+  - {fileID: 304071994}
+  - {fileID: 2059512598}
+  - {fileID: 349552256}
+  - {fileID: 210599191}
+  - {fileID: 964608684}
+  - {fileID: 2072635074}
+  - {fileID: 1093124739}
+  - {fileID: 1364569111}
+  - {fileID: 652958231}
+  - {fileID: 1920502760}
+  - {fileID: 2134342434}
+  spawnPoint: {fileID: 1617418635}
+--- !u!1 &1364569109
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1364569110}
+  - component: {fileID: 1364569112}
+  - component: {fileID: 1364569111}
+  m_Layer: 0
+  m_Name: Checkpoint 8
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1364569110
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1364569109}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.7465497, z: -0, w: 0.66532964}
+  m_LocalPosition: {x: 91.8, y: 10.47, z: -69.18}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1732521121}
+  m_Father: {fileID: 1310263310}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1364569111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1364569109}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 8
+  respawnPoint: {fileID: 1732521121}
+--- !u!65 &1364569112
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1364569109}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &1534151720
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1534151721}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1534151721
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1534151720}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.05711603, z: -0, w: 0.9983676}
+  m_LocalPosition: {x: 0.26196063, y: -1.6400003, z: 3.9872646}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 349552255}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1617418634
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1617418635}
   m_Layer: 0
   m_Name: SpawnPoint
   m_TagString: Untagged
@@ -330,22 +1743,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &688727313
+--- !u!4 &1617418635
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 688727312}
+  m_GameObject: {fileID: 1617418634}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.90896726, z: -0, w: 0.41686752}
   m_LocalPosition: {x: -23.5, y: 14.860001, z: 137.36}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1452428088}
+  m_Father: {fileID: 1310263310}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &730797185
+--- !u!1 &1618259843
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -353,7 +1766,76 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 730797186}
+  - component: {fileID: 1618259844}
+  - component: {fileID: 1618259846}
+  - component: {fileID: 1618259845}
+  m_Layer: 0
+  m_Name: Checkpoint 0 (start-finish)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1618259844
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1618259843}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.816587, z: -0, w: 0.5772224}
+  m_LocalPosition: {x: -16.26, y: 16.560001, z: 133}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 387592064}
+  m_Father: {fileID: 1310263310}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1618259845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1618259843}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 0
+  respawnPoint: {fileID: 387592064}
+--- !u!65 &1618259846
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1618259843}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &1648476934
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1648476935}
   m_Layer: 0
   m_Name: RespawnPoint
   m_TagString: Untagged
@@ -361,22 +1843,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &730797186
+--- !u!4 &1648476935
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 730797185}
+  m_GameObject: {fileID: 1648476934}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.05711603, z: -0, w: 0.9983676}
-  m_LocalPosition: {x: 0.26196063, y: -1.6400003, z: 3.9872646}
+  m_LocalRotation: {x: -0, y: -0.034121253, z: -0, w: 0.99941766}
+  m_LocalPosition: {x: -0.0851005, y: -1.500001, z: 4.004458}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1602857863}
+  m_Father: {fileID: 652958230}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &794727671
+--- !u!1 &1732521120
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -384,8 +1866,108 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 794727672}
-  - component: {fileID: 794727673}
+  - component: {fileID: 1732521121}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1732521121
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1732521120}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.21322086, z: -0, w: 0.97700405}
+  m_LocalPosition: {x: -0.82930183, y: -0.8800001, z: 3.8704283}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1364569110}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1920502758
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1920502759}
+  - component: {fileID: 1920502761}
+  - component: {fileID: 1920502760}
+  m_Layer: 0
+  m_Name: Checkpoint 10
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1920502759
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1920502758}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.17843936, z: -0, w: 0.9839509}
+  m_LocalPosition: {x: 48.2, y: 16.560001, z: 127.755}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 747486325}
+  m_Father: {fileID: 1310263310}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1920502760
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1920502758}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 10
+  respawnPoint: {fileID: 747486325}
+--- !u!65 &1920502761
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1920502758}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &2057644419
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2057644420}
+  - component: {fileID: 2057644421}
   m_Layer: 0
   m_Name: Preview Camera
   m_TagString: Untagged
@@ -393,28 +1975,28 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &794727672
+--- !u!4 &2057644420
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 794727671}
+  m_GameObject: {fileID: 2057644419}
   serializedVersion: 2
   m_LocalRotation: {x: 0.016383987, y: 0.9082649, z: -0.035724793, w: 0.4165455}
   m_LocalPosition: {x: -28.425945, y: 16.86, z: 141.60088}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 457282923}
+  m_Father: {fileID: 335342992}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!20 &794727673
+--- !u!20 &2057644421
 Camera:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 794727671}
+  m_GameObject: {fileID: 2057644419}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
@@ -459,7 +2041,7 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!1 &831018293
+--- !u!1 &2059512596
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -467,9 +2049,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 831018294}
-  - component: {fileID: 831018296}
-  - component: {fileID: 831018295}
+  - component: {fileID: 2059512597}
+  - component: {fileID: 2059512599}
+  - component: {fileID: 2059512598}
   m_Layer: 0
   m_Name: Checkpoint 2
   m_TagString: Untagged
@@ -477,43 +2059,43 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &831018294
+--- !u!4 &2059512597
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 831018293}
+  m_GameObject: {fileID: 2059512596}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.77022064, z: -0, w: 0.6377776}
   m_LocalPosition: {x: -67.55, y: 12.98, z: 46.69}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1967663060}
-  m_Father: {fileID: 1452428088}
+  - {fileID: 499320941}
+  m_Father: {fileID: 1310263310}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &831018295
+--- !u!114 &2059512598
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 831018293}
+  m_GameObject: {fileID: 2059512596}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
   index: 2
-  respawnPoint: {fileID: 1967663060}
---- !u!65 &831018296
+  respawnPoint: {fileID: 499320941}
+--- !u!65 &2059512599
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 831018293}
+  m_GameObject: {fileID: 2059512596}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -528,7 +2110,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 12, y: 6, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &933701094
+--- !u!1 &2072635072
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -536,949 +2118,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 933701095}
-  - component: {fileID: 933701097}
-  - component: {fileID: 933701096}
-  m_Layer: 0
-  m_Name: Checkpoint 0 (start-finish)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &933701095
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 933701094}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.816587, z: -0, w: 0.5772224}
-  m_LocalPosition: {x: -16.26, y: 16.560001, z: 133}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1148576161}
-  m_Father: {fileID: 1452428088}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &933701096
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 933701094}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 0
-  respawnPoint: {fileID: 1148576161}
---- !u!65 &933701097
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 933701094}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &985010203
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 985010204}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &985010204
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 985010203}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.07992892, z: -0, w: 0.9968006}
-  m_LocalPosition: {x: -0.0004683733, y: -1.500001, z: 3.9998846}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2060683257}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1128779226
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1128779227}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1128779227
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1128779226}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.034121253, z: -0, w: 0.99941766}
-  m_LocalPosition: {x: -0.0851005, y: -1.500001, z: 4.004458}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 81512346}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1148576160
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1148576161}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1148576161
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1148576160}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.10815328, z: -0, w: 0.9941343}
-  m_LocalPosition: {x: -0.531463, y: -1.500001, z: 3.9595528}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 933701095}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1228384430
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1228384431}
-  - component: {fileID: 1228384433}
-  - component: {fileID: 1228384432}
-  m_Layer: 0
-  m_Name: Checkpoint 5
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1228384431
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1228384430}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.9260636, z: -0, w: 0.37736753}
-  m_LocalPosition: {x: -190.43, y: 6.4, z: -85.65}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 618439413}
-  m_Father: {fileID: 1452428088}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1228384432
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1228384430}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 5
-  respawnPoint: {fileID: 618439413}
---- !u!65 &1228384433
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1228384430}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1325682777
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1325682778}
-  - component: {fileID: 1325682780}
-  - component: {fileID: 1325682779}
-  m_Layer: 0
-  m_Name: Checkpoint 7
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1325682778
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1325682777}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.5887192, z: -0, w: 0.8083376}
-  m_LocalPosition: {x: -3.49, y: 6.15, z: -122}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 364493433}
-  m_Father: {fileID: 1452428088}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1325682779
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1325682777}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 7
-  respawnPoint: {fileID: 364493433}
---- !u!65 &1325682780
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1325682777}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1452428087
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1452428088}
-  - component: {fileID: 1452428089}
-  m_Layer: 0
-  m_Name: Race
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1452428088
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1452428087}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 933701095}
-  - {fileID: 1882666699}
-  - {fileID: 831018294}
-  - {fileID: 1602857863}
-  - {fileID: 1778761784}
-  - {fileID: 1228384431}
-  - {fileID: 2087632252}
-  - {fileID: 1325682778}
-  - {fileID: 1752011699}
-  - {fileID: 81512346}
-  - {fileID: 2060683257}
-  - {fileID: 1628756451}
-  - {fileID: 688727313}
-  m_Father: {fileID: 457282923}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1452428089
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1452428087}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b05bdc890823d4f5c809d396e3d92011, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.TrackInfo
-  checkpoints:
-  - {fileID: 933701096}
-  - {fileID: 1882666700}
-  - {fileID: 831018295}
-  - {fileID: 1602857864}
-  - {fileID: 1778761785}
-  - {fileID: 1228384432}
-  - {fileID: 2087632253}
-  - {fileID: 1325682779}
-  - {fileID: 1752011700}
-  - {fileID: 81512347}
-  - {fileID: 2060683258}
-  - {fileID: 1628756452}
-  spawnPoint: {fileID: 688727313}
---- !u!1 &1602857862
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1602857863}
-  - component: {fileID: 1602857865}
-  - component: {fileID: 1602857864}
-  m_Layer: 0
-  m_Name: Checkpoint 3
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1602857863
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1602857862}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.8384924, z: -0, w: 0.5449133}
-  m_LocalPosition: {x: -109.84, y: 9.85, z: -45.68}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 730797186}
-  m_Father: {fileID: 1452428088}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1602857864
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1602857862}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 3
-  respawnPoint: {fileID: 730797186}
---- !u!65 &1602857865
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1602857862}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1628756450
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1628756451}
-  - component: {fileID: 1628756453}
-  - component: {fileID: 1628756452}
-  m_Layer: 0
-  m_Name: Checkpoint 11
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1628756451
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1628756450}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.76818204, z: -0, w: 0.64023155}
-  m_LocalPosition: {x: 53.17, y: 16.560001, z: 189.36}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1986656385}
-  m_Father: {fileID: 1452428088}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1628756452
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1628756450}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 11
-  respawnPoint: {fileID: 1986656385}
---- !u!65 &1628756453
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1628756450}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1651537049
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1651537050}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1651537050
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1651537049}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -0.16659771, z: -0, w: -0.9860249}
-  m_LocalPosition: {x: 0.87463903, y: -1.500001, z: 3.868672}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1882666699}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1669938264
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1669938265}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1669938265
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1669938264}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.018233865, z: -0, w: 0.99983376}
-  m_LocalPosition: {x: -0.05384016, y: -1.5, z: 3.9958947}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1778761784}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1752011698
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1752011699}
-  - component: {fileID: 1752011701}
-  - component: {fileID: 1752011700}
-  m_Layer: 0
-  m_Name: Checkpoint 8
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1752011699
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1752011698}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.7465497, z: -0, w: 0.66532964}
-  m_LocalPosition: {x: 91.8, y: 10.47, z: -69.18}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 250030546}
-  m_Father: {fileID: 1452428088}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1752011700
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1752011698}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 8
-  respawnPoint: {fileID: 250030546}
---- !u!65 &1752011701
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1752011698}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1778761783
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1778761784}
-  - component: {fileID: 1778761786}
-  - component: {fileID: 1778761785}
-  m_Layer: 0
-  m_Name: Checkpoint 4
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1778761784
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1778761783}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.5521355, z: -0, w: 0.83375436}
-  m_LocalPosition: {x: -220.89, y: 9.8, z: -23.46}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1669938265}
-  m_Father: {fileID: 1452428088}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1778761785
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1778761783}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 4
-  respawnPoint: {fileID: 1669938265}
---- !u!65 &1778761786
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1778761783}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1882666698
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1882666699}
-  - component: {fileID: 1882666701}
-  - component: {fileID: 1882666700}
-  m_Layer: 0
-  m_Name: Checkpoint 1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1882666699
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1882666698}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.9327642, z: -0, w: -0.36048728}
-  m_LocalPosition: {x: 46.586, y: 16.560001, z: 66.872}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1651537050}
-  m_Father: {fileID: 1452428088}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1882666700
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1882666698}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 1
-  respawnPoint: {fileID: 1651537050}
---- !u!65 &1882666701
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1882666698}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 11, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1967663059
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1967663060}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1967663060
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1967663059}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.010055631, z: -0, w: 0.9999495}
-  m_LocalPosition: {x: -0.035316885, y: -1.4899998, z: 3.9966915}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 831018294}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1986656384
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1986656385}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1986656385
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1986656384}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.039611667, z: -0, w: 0.99921525}
-  m_LocalPosition: {x: -0.17262107, y: -1.500001, z: 3.9965343}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1628756451}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2014990793
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2014990794}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2014990794
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2014990793}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.031034054, z: -0, w: 0.99951833}
-  m_LocalPosition: {x: -0.15624762, y: -1.4000001, z: 3.9997628}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2087632252}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2060683256
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2060683257}
-  - component: {fileID: 2060683259}
-  - component: {fileID: 2060683258}
-  m_Layer: 0
-  m_Name: Checkpoint 10
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2060683257
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2060683256}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.17843936, z: -0, w: 0.9839509}
-  m_LocalPosition: {x: 48.2, y: 16.560001, z: 127.755}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 985010204}
-  m_Father: {fileID: 1452428088}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2060683258
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2060683256}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 10
-  respawnPoint: {fileID: 985010204}
---- !u!65 &2060683259
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2060683256}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 10, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &2087632251
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2087632252}
-  - component: {fileID: 2087632254}
-  - component: {fileID: 2087632253}
+  - component: {fileID: 2072635073}
+  - component: {fileID: 2072635075}
+  - component: {fileID: 2072635074}
   m_Layer: 0
   m_Name: Checkpoint 6
   m_TagString: Untagged
@@ -1486,43 +2128,43 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2087632252
+--- !u!4 &2072635073
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2087632251}
+  m_GameObject: {fileID: 2072635072}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.6513832, z: -0, w: 0.7587489}
   m_LocalPosition: {x: -103.36, y: 4.52, z: -156.88}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2014990794}
-  m_Father: {fileID: 1452428088}
+  - {fileID: 130078506}
+  m_Father: {fileID: 1310263310}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2087632253
+--- !u!114 &2072635074
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2087632251}
+  m_GameObject: {fileID: 2072635072}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
   index: 6
-  respawnPoint: {fileID: 2014990794}
---- !u!65 &2087632254
+  respawnPoint: {fileID: 130078506}
+--- !u!65 &2072635075
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2087632251}
+  m_GameObject: {fileID: 2072635072}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -1537,7 +2179,76 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 12, y: 6, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!1001 &4010089408363602715
+--- !u!1 &2134342432
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2134342433}
+  - component: {fileID: 2134342435}
+  - component: {fileID: 2134342434}
+  m_Layer: 0
+  m_Name: Checkpoint 11
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2134342433
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2134342432}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.76818204, z: -0, w: 0.64023155}
+  m_LocalPosition: {x: 53.17, y: 16.560001, z: 189.36}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 190021457}
+  m_Father: {fileID: 1310263310}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2134342434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2134342432}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 11
+  respawnPoint: {fileID: 190021457}
+--- !u!65 &2134342435
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2134342432}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1001 &7672590366703512416
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -1594,14 +2305,14 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4f4c24bec6ad34ddcaa1f392c78dffc3, type: 3}
---- !u!108 &4010089408363602716 stripped
+--- !u!108 &7672590366703512417 stripped
 Light:
   m_CorrespondingSourceObject: {fileID: 3870158246098212228, guid: 4f4c24bec6ad34ddcaa1f392c78dffc3, type: 3}
-  m_PrefabInstance: {fileID: 4010089408363602715}
+  m_PrefabInstance: {fileID: 7672590366703512416}
   m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 4010089408363602715}
-  - {fileID: 457282923}
+  - {fileID: 7672590366703512416}
+  - {fileID: 335342992}
