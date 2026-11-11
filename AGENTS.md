@@ -4,7 +4,19 @@ Single-player 3D kart time trial on Nova SBE's Carcavelos campus. Unity **6000.3
 
 Deadlines (round 2, `TASKS.md`): every feature merged **Fri 13 Nov 2026**, map looks like the campus videos Tue 17, feature freeze **Sun 22** (fixes only), **Moodle submission Mon 23 Nov 23:59**, presentations W11/W12 (Tue 24 Nov or Fri 4 Dec). Round 2 tasks per person, with a prompt to paste into your AI: `docs/round2-briefs.md`.
 
-**Official course rules we are graded against: `docs/course-requirements.md` (read it once).** The ones that affect every session: the repo becomes **public** (never commit secrets or personal data), **every member must commit their own code from their own GitHub account**, the deployed code must be on `main`, **Security is graded** (no credentials in the repo, validate every input, minimal pinned dependencies) and **all four of us get the same grade**, so any member must be able to explain any part.
+## Grading: read this before EVERY task (same grade for all four of us, we aim for High = 20/20 everywhere)
+Official rubric from the course wiki (team project page), full Low/Mid/High table and our checklist per criterion: `docs/course-requirements.md`. Every task, PR and review is judged against it.
+
+| # | Criterion (weight) | High (100 %) means | What it means for your task |
+|---|---|---|---|
+| 1 | It works (20 %) | All workflows run without errors, **including with invalid input** | Every input has a defined, visible result; no console errors in the Web build |
+| 2 | UI and experience (20 %) | Workflows are direct; **results and errors are clear** | One key/tap to the next step; errors in plain words on screen |
+| 3 | Scope and ambition (20 %) | Substantial features well beyond a solo project, **implemented consistently** | Finish and polish your feature; same look as the rest (`docs/art-style.md` if present) |
+| 4 | Verification (10 %) | Tests cover **accepted and rejected actions and edge cases**, all pass on `main` | Edit Mode tests for every rule: accepted + rejected + edge; never merge red |
+| 5 | Security (10 %) | **Access control and input validation enforced; dependencies minimal, pinned, no known vulnerabilities**; no credentials in the repo | No keys/passwords/personal data; validate every input; no new packages without the team's OK |
+| 6 | Repository walkthrough (20 %) | Members explain **how it is built, why, its limits, and how it could change** | Simple code + your `docs/explain/` walkthrough; your human must be able to explain it |
+
+Other official rules that affect every session: the repo becomes **public**, **every member commits their own code from their own GitHub account**, the deployed code must be on `main`, and **any member can be asked about any part** in the walkthrough.
 
 ## Git workflow: every session, every AI, step by step (non-negotiable)
 Four people and their AIs push into one repo every day. These steps keep everyone building on the newest version instead of overwriting each other. If a step fails or something looks unexpected: stop and tell your human, do not improvise with Git.
@@ -85,6 +97,7 @@ Read `docs/interfaces.md`. Kart exposes `IKartState`, the track exposes `TrackIn
 - After you create a script: tell the human "switch to Unity, wait for compile, check the Console", then commit the `.cs` together with its `.meta`.
 
 ## Definition of done (for every task)
+- Grading check (table at the top): invalid input handled and shown, accepted + rejected + edge-case tests, no secrets, your human can explain how, why and the limits.
 - Unity Console shows 0 errors and 0 new warnings after recompile.
 - Played in Play Mode in your own test scene; for gameplay also in `Main.unity` once it exists.
 - Edit Mode tests pass if you touched rules (`docs/setup.md` has the command).
