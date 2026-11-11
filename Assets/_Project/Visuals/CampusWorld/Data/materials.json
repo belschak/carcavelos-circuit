@@ -91,42 +91,6 @@
    "smoothness": 0.95
   },
   {
-   "name": "W_B_roof_brown",
-   "colour": [
-    0.3621,
-    0.3176,
-    0.2883
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_B_wall_umber",
-   "colour": [
-    0.2956,
-    0.2267,
-    0.1982
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
    "name": "W_B_wall_white",
    "colour": [
     0.9152,
@@ -150,6 +114,24 @@
     0.831,
     0.823,
     0.803
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_B_roof_brown",
+   "colour": [
+    0.3621,
+    0.3176,
+    0.2883
    ],
    "metallic": 0.0,
    "albedo": null,
@@ -289,42 +271,6 @@
    "smoothness": 0.1
   },
   {
-   "name": "W_B_wall_cream",
-   "colour": [
-    0.883,
-    0.8509,
-    0.7871
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.15
-  },
-  {
-   "name": "W_B_roof_tiles",
-   "colour": [
-    0.7792,
-    0.3995,
-    0.2956
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.15
-  },
-  {
    "name": "W_beach_roof",
    "colour": [
     0.9353,
@@ -379,6 +325,24 @@
    "smoothness": 0.2
   },
   {
+   "name": "W_B_roof_tiles",
+   "colour": [
+    0.7792,
+    0.3995,
+    0.2956
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
    "name": "W_B_glass_dark",
    "colour": [
     0.1526,
@@ -395,6 +359,24 @@
    "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.9
+  },
+  {
+   "name": "W_B_wall_cream",
+   "colour": [
+    0.883,
+    0.8509,
+    0.7871
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
   },
   {
    "name": "W_B_deck_paving",
@@ -725,132 +707,6 @@
    "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.25
-  },
-  {
-   "name": "W_B_letter_grey",
-   "colour": [
-    0.5442,
-    0.5442,
-    0.5365
-   ],
-   "metallic": 0.25,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.45
-  },
-  {
-   "name": "W_entrance_calcada",
-   "colour": [
-    0.8429,
-    0.803,
-    0.6687
-   ],
-   "metallic": 0.0,
-   "albedo": "entrance_calcada_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_entrance_drain",
-   "colour": [
-    0.4829,
-    0.2411,
-    0.1947
-   ],
-   "metallic": 0.0,
-   "albedo": "entrance_drain_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.25
-  },
-  {
-   "name": "W_entrance_concrete",
-   "colour": [
-    0.835,
-    0.807,
-    0.7238
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_entrance_void",
-   "colour": [
-    0.0196,
-    0.0196,
-    0.0196
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.0
-  },
-  {
-   "name": "W_entrance_dark",
-   "colour": [
-    0.1982,
-    0.2053,
-    0.216
-   ],
-   "metallic": 0.3,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.5
-  },
-  {
-   "name": "W_entrance_steel",
-   "colour": [
-    0.614,
-    0.6257,
-    0.6374
-   ],
-   "metallic": 0.7,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.6
   },
   {
    "name": "W_B_interior_column",
@@ -1263,31 +1119,6 @@
    "smoothness": 0.5
   },
   {
-   "name": "W_entrance_lamp_light",
-   "colour": [
-    0.9555,
-    0.9353,
-    0.8429
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": {
-    "colour": [
-     1.0,
-     0.9111,
-     0.6844
-    ],
-    "strength": 2.0
-   },
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.6
-  },
-  {
    "name": "W_lamp_foot",
    "colour": [
     0.2375,
@@ -1484,24 +1315,6 @@
    "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
-  },
-  {
-   "name": "W_entrance_seat",
-   "colour": [
-    0.9272,
-    0.9152,
-    0.875
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.2
   },
   {
    "name": "W_study_wood",
@@ -1925,7 +1738,7 @@
     0.5211
    ],
    "metallic": 0.0,
-   "albedo": null,
+   "albedo": "plaza_ochre_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
@@ -1943,7 +1756,7 @@
     0.7475
    ],
    "metallic": 0.0,
-   "albedo": null,
+   "albedo": "skylight_glass_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
@@ -2103,6 +1916,24 @@
    "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.15
+  },
+  {
+   "name": "W_T_cut_wall",
+   "colour": [
+    0.8509,
+    0.7594,
+    0.5945
+   ],
+   "metallic": 0.0,
+   "albedo": "render_ochre_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
   },
   {
    "name": "W_lawn",
@@ -2333,29 +2164,6 @@
    "smoothness": 0.1
   },
   {
-   "name": "W_tree_plaza",
-   "colour": [
-    0.4335,
-    0.6062,
-    0.325
-   ],
-   "metallic": 0.0,
-   "albedo": "veg_ramp_plaza_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "wind": {
-    "shader": "CarcavelosCircuit/Foliage",
-    "bend": 0.05,
-    "flutter": 0.04
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
    "name": "W_leaf",
    "colour": [
     0.3696,
@@ -2518,60 +2326,6 @@
    ],
    "metallic": 0.0,
    "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_B_slat_anthracite",
-   "colour": [
-    0.2411,
-    0.2519,
-    0.2628
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.2
-  },
-  {
-   "name": "W_B_sett_dark",
-   "colour": [
-    0.3733,
-    0.3621,
-    0.3398
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_T_cut_wall",
-   "colour": [
-    0.8509,
-    0.7594,
-    0.5945
-   ],
-   "metallic": 0.0,
-   "albedo": "render_ochre_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,

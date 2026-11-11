@@ -58,6 +58,34 @@ Both were built apart and touch in five places; each is settled in the plan file
 - **Horizon Hall's undercroft**: `campus_plan.LOWER_PLAZA` reaches behind the set-back Floor-0 front and is level right up to V10i's stairs (`env_campus.lower_nodes`).
 - **Ground paint**: the Gallery arcade and Horizon Hall's undercroft are paving (`campus_plan.GROUND_PAINT`).
 
+### Courtyard shortcut, Luc's yellow route (V14b, 2026-11-11)
+
+No route file is touched; the shortcut is world geometry only (`plaza_plan.py` section "V14b", `env_plaza.py`). One straight axis, bearing 338 (parallel to the Gallery), from the top of the terracotta stairs: a painted boost-pad area without function (centre (84.3, 46.4); a pad of PR #72 belongs there) -> a kicker beside skylight S3 (6.5 m long, 4.4 m wide, 0.70 m high, 8 degrees at the lip, Boost Orange stripes) whose lip stands in a gap of the courtyard fence -> flight into the sunken courtyard (Floor 0) -> a stair-ramp back up (23.5 m, 6 m wide, 20 %, visible terracotta steps under a smooth collider with the stairs' ripple; it replaces V10i's S4 platform and the court's north strip) -> the plaza 9 m before checkpoint 10 (route point 551). Hedge boxes (`FUNNEL`) lead the exit so that it always passes through checkpoint 10's trigger. Kicker, courtyard floor and climb are faces of the ONE welded plaza collider (`env_plaza.shortcut_drive`): no collider border anywhere on the line; `Track_PlazaCourt_NoCollide`, `Track_ShortcutKicker_NoCollide`, `Track_ShortcutPaint_NoCollide` are to look at only. Upright collider faces must look outwards (a lip front that looked into the ramp kicked karts upwards). Driven test: local harness `Assets/_Local/ShortcutTest/` in the bots prototype (not in the repo), numbers in the atlas report V14b.
+
+### Noah's hall in the V14 world (V14 + hall integration, 2026-11-11)
+
+Noah's Nova hall (#45, in the build through `NovaHallInsert.cs`, #77) replaces the main building, his white fence (#63) the metal railings. Run order after every bundle export, from the repo root:
+
+```bash
+python3 tools/world_gen/hall_route.py       # #77: Noah's two hall lanes into Data/track.json (points inside the building)
+python3 tools/world_gen/hall_join.py        # the plaza line runs into the east lane's first point at the atrium door D4
+python3 tools/world_gen/pin_checkpoints.py  # checkpoints back on Noah's places (checkpoint_anchors.json)
+python3 tools/world_gen/fence_free.py       # Data/fence_free.json: where the white fence stays out
+Unity -batchmode -projectPath . -executeMethod CarcavelosCircuit.Track.Editor.WhiteGuardrailBuilder.Build -quit   # fence on this route
+Unity -batchmode -projectPath . -executeMethod CarcavelosCircuit.Visuals.Editor.CampusWorldBuilder.BuildAndCheck
+```
+
+- **Footprint cut.** `NovaHallInsert` cuts ground and `Track_*` meshes out of the building's outline. The plaza deck, the sunken courtyard and their collider end exactly on that outline (`plaza_plan.MAIN_EAST`): a vertex ON the outline is not "inside" (0.25 m tolerance), the upper plaza (`Track_Plaza*`, `Track_Shortcut*`) gets no door road, and with `plaza_plan.HALL_IN` the deck has no tongue into the old drive-through. What is still cut on purpose: the Floor-0 paving under the old Gallery deck (`plaza_plan.UNDERS`).
+- **Join at door D4** (`hall_join.py`): V14's plaza line ended where the old drive-through began, past the door. The last 19 m are re-laid as one curve (10 m radius) into the lane's first point; 685 route points, lap 1,370 m. Only `track.json` changes (the plaza there is one deck, no road strip); `route.json` and `qa_geometry.py` still know the old end, so qa reports 15 `covered` at s = 1,108 to 1,112 m (the old building's floor under three points that no longer exist in `track.json`).
+- **Lane colliders** (`NovaHallInsert.MakeLaneColliders`): one welded, invisible driving surface per hall lane, 4 cm over the hall floor, from 10 m before the door road outside the entry door to 10 m after the one outside the exit door, sinking through the road at both ends. Without it every kart was thrown 0.5 to 4.6 m into the air at each hall door and at a seam in the hall floor (the same collider-border kick V10i found on the plaza).
+- **Fence-free places** (`fence_free.py`, `FenceFreeZones.cs`): the terrace jump, the terracotta stairs, the plaza's left side (courtyard fence, shortcut), the straight tunnel ramp, the promenade's sea side, the gap in the Marginal's median. The fence instance in the campus world gets trimmed copies of Noah's two meshes; his prefab and builder are untouched.
+- **Shortcut exit.** The hedge boxes (`plaza_plan.FUNNEL`) lead from the climb's top to the door's left frame; a kart beside them passes checkpoint 10 at most 4.6 m left of its middle (trigger: 6 m).
+- **Luc's three fixes of the same day.** Tunnel: `env_tunnel.build_portal_jambs` closes the slit between the tunnel wall (0.6 m outside the road edge) and the ramp wall (at the road edge) at the north portal. Shortcut stair: it opens like a fan to the right (`plaza_plan.CLIMB_EAST_FOOT`, `climb_point` stretches the right half): 8.5 m wide at the foot, east side at the bridge's pier, 6 m at the top; it cannot leave the flight line (karts at 15 m/s and more land on it) and its top cannot go east (red line). Ripple: `plaza_plan.JUDDER_M` 1.0 -> 1.6 cm on the terracotta stairs and the climb, fading out three steps before the crest curve (`JUDDER_END`).
+
+### Capricciosa hairpin wide enough to drift (V14c, 2026-11-11, proposal for Noah)
+
+First block in `route_profile.json "section_overrides"`, `"type": "curve"` (`route_from_sketch.py apply_curve_override()`): from the route point at (-238.19, -19.06) the curvature rises evenly over 9 m to a 12.5 m radius, holds for 22.4 m, falls over 14 m into a counter-curve of 25 m and returns to zero; the two hold lengths are solved so that the line ends on the old car-park aisle line. Before: 6.7 m at the apex (at 18 m/s and 110 degrees per second the kart needs 9.4 m without a drift; 12.5 m is the middle of its drift steering range). 26 points become 29, lap 1,326 -> 1,332 m in `route.json` (1,376 m in `track.json` with the hall lanes); every other point keeps its values and is renumbered by 3. Heights follow the ground under the new line. It stands first in the list because it changes the point count before the two later sections (V10g's `wall_cuts` are index ranges). Paving, kerbs and parked cars follow by themselves (`street_plan` keeps 4.95 m / 6.6 m from the centreline); `dressing_frozen.json` has two new refresh zones. Delete the block to get the old line back.
+
 ## What is in the world (modules)
 
 | Module | What it builds |

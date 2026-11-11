@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -9,6 +10,8 @@ namespace CarcavelosCircuit.RaceFlow
     // - "PAUSED" overlay while RaceManager.IsPaused (the RaceManager does the pausing, this only shows it).
     // - The "reduce-motion" class on the HUD root (the USS removes slides, shakes and punches).
     // - Tells the RaceManager when a menu uses the keys and the mouse, so they do not also start the race.
+    // - Says when a menu sound should play (event SoundRequested, audit 10). RaceHud passes it on to RaceSounds,
+    //   which picks the clip. So this class stays silent itself and needs no AudioSource.
     // Plain C# (no MonoBehaviour), so the scene needs no new component. Escape is never used: it leaves browser fullscreen.
     public class HudMenus
     {
@@ -41,6 +44,10 @@ namespace CarcavelosCircuit.RaceFlow
         private bool creditsOpen;
         private float toastVisibleUntil; // unscaled time: the toast also works while the race is paused
         private int closedFrame = -1; // frame in which a menu was closed (its click must not start the race)
+
+        // Open, close, page turn, slider step, on/off, mute. Fired AFTER the new settings are applied, so a slider
+        // step's click already plays at the new volume (an audible preview).
+        public event Action<MenuSound> SoundRequested;
 
         public bool ReducedMotion
         {
@@ -77,8 +84,8 @@ namespace CarcavelosCircuit.RaceFlow
             // Load the saved settings and use them at once (volume and reduced motion are right from the first frame).
             settings = SettingsStore.Load();
             SettingsStore.Apply(settings);
-            settingsPanel = new SettingsPanel(settingsCard, settings, OnSettingsChanged);
-            creditsPanel = new CreditsPanel(creditsCard);
+            settingsPanel = new SettingsPanel(settingsCard, settings, OnPanelChanged);
+            creditsPanel = new CreditsPanel(creditsCard, OnPageTurned);
             ShowSettingsEverywhere();
 
             // ClickEvent fires when the mouse button goes UP on the element. The press itself happened while the
@@ -108,7 +115,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 if (settingsOpen || creditsOpen)
                 {
-                    CloseMenus();
+                    HideMenus(); // the race starts (Enter on the results): no close sound on top of the retry click
                 }
             }
             else if (RaceKeys.SettingsPressed())
@@ -181,6 +188,7 @@ namespace CarcavelosCircuit.RaceFlow
                 settingsPanel.Refresh();
             }
             ShowMenus();
+            PlaySound(open ? MenuSound.Open : MenuSound.Close);
         }
 
         private void OpenCredits(bool open)
@@ -192,9 +200,17 @@ namespace CarcavelosCircuit.RaceFlow
                 creditsPanel.Open();
             }
             ShowMenus();
+            PlaySound(open ? MenuSound.Open : MenuSound.Close);
         }
 
+        // The player closed a card (CLOSE button or a click next to it).
         private void CloseMenus()
+        {
+            HideMenus();
+            PlaySound(MenuSound.Close);
+        }
+
+        private void HideMenus()
         {
             settingsOpen = false;
             creditsOpen = false;
@@ -224,6 +240,26 @@ namespace CarcavelosCircuit.RaceFlow
             toastText.text = settings.Muted ? "SOUND OFF" : "SOUND ON";
             toast.EnableInClassList("toast--off", settings.Muted);
             toastVisibleUntil = Time.unscaledTime + ToastSeconds;
+            PlaySound(MenuSound.Mute);
+        }
+
+        // A row of the settings card changed: use it first, then the sound, so a volume step is heard at its new level.
+        private void OnPanelChanged(SettingsItem item)
+        {
+            OnSettingsChanged();
+            PlaySound(SoundFor(item));
+        }
+
+        // A volume row clicks like a slider step, an on/off row (sound, reduced motion) like a switch.
+        // Public and static so an Edit Mode test can check it without a HUD.
+        public static MenuSound SoundFor(SettingsItem item)
+        {
+            return GameSettings.IsVolume(item) ? MenuSound.SliderStep : MenuSound.Toggle;
+        }
+
+        private void OnPageTurned()
+        {
+            PlaySound(MenuSound.PageTurn);
         }
 
         // Any change (panel, M key, SOUND button): use it, save it, show it.
@@ -233,6 +269,11 @@ namespace CarcavelosCircuit.RaceFlow
             SettingsStore.Save(settings);
             ShowSettingsEverywhere();
             settingsPanel.Refresh();
+        }
+
+        private void PlaySound(MenuSound sound)
+        {
+            if (SoundRequested != null) SoundRequested(sound);
         }
 
         // The parts outside the settings card that show a setting.

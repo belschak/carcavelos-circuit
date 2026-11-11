@@ -23,6 +23,16 @@ namespace CarcavelosCircuit.RaceFlow
             return EaseOutCubic((elapsed - delay) / duration);
         }
 
+        // "Overshoot and settle" (the same curve as USS ease-out-back): starts fast, goes about 10 % past the end,
+        // comes back to exactly 1. Used for punches drawn from C# (the position number). t is clamped to 0..1.
+        public static float OutBack(float t)
+        {
+            t = Clamp01(t);
+            const float back = 1.70158f;   // the usual overshoot amount for this curve
+            float u = t - 1f;
+            return 1f + (back + 1f) * u * u * u + back * u * u;
+        }
+
         private static float Clamp01(float t)
         {
             if (t < 0f) return 0f;

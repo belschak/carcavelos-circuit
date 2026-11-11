@@ -5,6 +5,9 @@ namespace CarcavelosCircuit.RaceFlow
     // Task R5 (race part) + P4 polish: countdown beeps, checkpoint chime, finish jingle, new-record sting,
     // click on retry, whoosh on respawn, warning cue for a missed checkpoint.
     // P6b: a soft thud when the medal badge lands on the results card, plus a small ping for a new medal.
+    // Audit 10: menu sounds (open, close, page turn, slider step, on/off, mute), asked for by the HUD's menus.
+    // Audit 19: the checkpoint chime is 2 semitones higher when you are ahead of your best, 2 lower when behind;
+    // one quiet warning each time the WRONG WAY chip appears; a short cue when the race pauses and resumes.
     // Results card sounds wait for the finish beat (FinishMoment.BeatFor) and count in REAL time, because the
     // finish slow motion changes Time.timeScale (PlayDelayed and Time.unscaledTime both ignore it).
     // It listens to the RaceManager's events. The sound files live in Audio/Clips; their loudness is set in the
@@ -23,6 +26,15 @@ namespace CarcavelosCircuit.RaceFlow
 
         [SerializeField, Tooltip("Second 2D AudioSource for sounds that start a moment later (record sting, retry beep)")]
         private AudioSource delayedSource;
+
+        [SerializeField, Tooltip("The HUD: its menus ask for menu sounds through RaceHud.MenuSoundRequested (audit 10)")]
+        private RaceHud hud;
+
+        [SerializeField, Tooltip("2D AudioSource for menu sounds. Awake makes it ignore AudioListener.pause, so M still clicks while the race is paused")]
+        private AudioSource menuSource;
+
+        [SerializeField, Tooltip("2D AudioSource only for the checkpoint chime: its pitch says ahead or behind (audit 19)")]
+        private AudioSource chimeSource;
 
         [SerializeField, Tooltip("Short low beep for 3, 2, 1")]
         private AudioClip countdownBeep;
@@ -54,6 +66,15 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("Two falling notes when the hint 'Missed a checkpoint' appears (sfx_hint_warning)")]
         private AudioClip hintWarning;
 
+        [SerializeField, Tooltip("Settings or credits card opens: two quick rising notes (ui_open)")]
+        private AudioClip menuOpen;
+
+        [SerializeField, Tooltip("A card closes: the same two notes falling (ui_close)")]
+        private AudioClip menuClose;
+
+        [SerializeField, Tooltip("Credits turn to the other page: a short paper swish (ui_page)")]
+        private AudioClip pageTurn;
+
         [SerializeField, Range(0f, 1f)]
         private float volume = 1f;
 
@@ -72,13 +93,33 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Range(0f, 1f), Tooltip("The new-medal ping, quieter than the record sting")]
         private float newMedalSparkleVolume = 0.55f;
 
+        [SerializeField, Range(0f, 1f), Tooltip("WRONG WAY reuses the missed-checkpoint warning this much quieter (audit 19)")]
+        private float wrongWayVolume = 0.6f;
+
+        [SerializeField, Tooltip("Pitch of the pause and resume cues (the menu close and open notes, a bit lower)")]
+        private float pauseCuePitch = 0.8f;
+
         private RaceState stateLastFrame = RaceState.Ready;
         private float lastHintUntil;
         private float stampAt = -1f;    // Time.unscaledTime when the medal thud plays, -1 = none waiting
         private float sparkleAt = -1f;  // same for the new-medal ping
 
+        // ignoreListenerPause is not saved in scene files (it only exists at runtime), so it is set here, not by the
+        // builder. With it, the menu source keeps playing while the pause holds AudioListener.pause on.
+        private void Awake()
+        {
+            if (menuSource != null)
+            {
+                menuSource.ignoreListenerPause = true;
+            }
+        }
+
         private void OnEnable()
         {
+            if (hud != null) hud.MenuSoundRequested += OnMenuSound;
+            if (hud != null) hud.WrongWayShown += OnWrongWayShown;
+            raceManager.Paused += OnPaused;
+            raceManager.Resumed += OnResumed;
             raceManager.CountdownStep += OnCountdownStep;
             raceManager.CheckpointPassed += OnCheckpointPassed;
             raceManager.LapFinished += OnLapFinished;
@@ -88,6 +129,10 @@ namespace CarcavelosCircuit.RaceFlow
 
         private void OnDisable()
         {
+            if (hud != null) hud.MenuSoundRequested -= OnMenuSound;
+            if (hud != null) hud.WrongWayShown -= OnWrongWayShown;
+            raceManager.Paused -= OnPaused;
+            raceManager.Resumed -= OnResumed;
             raceManager.CountdownStep -= OnCountdownStep;
             raceManager.CheckpointPassed -= OnCheckpointPassed;
             raceManager.LapFinished -= OnLapFinished;
@@ -155,10 +200,39 @@ namespace CarcavelosCircuit.RaceFlow
             Duck(-3f, countdownBeep);
         }
 
+        // RaceManager has already compared this checkpoint with your best lap (HasSplitDelta, LastSplitDelta),
+        // so the chime can say ahead or behind (SplitChime). It has its own source, so changing its pitch never
+        // bends another sound.
         private void OnCheckpointPassed(int index)
         {
-            Play(checkpointChime);
+            int semitones = SplitChime.Semitones(raceManager.HasSplitDelta, raceManager.LastSplitDelta);
+            if (chimeSource != null && checkpointChime != null)
+            {
+                chimeSource.pitch = SplitChime.Pitch(semitones);
+                chimeSource.PlayOneShot(checkpointChime, volume * SoundLevels.Effects);
+            }
+            else
+            {
+                Play(checkpointChime); // an old scene without the chime source: normal pitch
+            }
             Duck(-4f, checkpointChime);
+        }
+
+        private void OnWrongWayShown()
+        {
+            Play(hintWarning, wrongWayVolume);
+        }
+
+        // The menu notes, lower: falling = "stopped", rising = "go on". On the menu source, because the pause has
+        // just switched AudioListener.pause on and that source ignores it.
+        private void OnPaused()
+        {
+            PlayMenu(menuClose, pauseCuePitch);
+        }
+
+        private void OnResumed()
+        {
+            PlayMenu(menuOpen, pauseCuePitch);
         }
 
         private void OnLapFinished(float lapSeconds, bool newRecord)
@@ -200,6 +274,37 @@ namespace CarcavelosCircuit.RaceFlow
         private void OnRecovered()
         {
             Play(respawnWhoosh);
+        }
+
+        // Audit 10. The volume rows reuse the retry click: SoundLevels.Effects was already set to the new level, so
+        // the click is an audible preview of it. Different pitches tell a step, an on/off and the mute key apart.
+        private void OnMenuSound(MenuSound sound)
+        {
+            switch (sound)
+            {
+                case MenuSound.Open: PlayMenu(menuOpen, 1f); break;
+                case MenuSound.Close: PlayMenu(menuClose, 1f); break;
+                case MenuSound.PageTurn: PlayMenu(pageTurn, 1f); break;
+                case MenuSound.SliderStep: PlayMenu(retryClick, 1f); break;
+                case MenuSound.Toggle: PlayMenu(retryClick, 0.85f); break;
+                case MenuSound.Mute: PlayMenu(retryClick, 1.12f); break;
+            }
+        }
+
+        // Menu sounds have their own source: it ignores AudioListener.pause (set in Awake), and its
+        // pitch can change without bending a race sound that is still ringing on the first source.
+        private void PlayMenu(AudioClip clip, float pitch)
+        {
+            if (menuSource == null)
+            {
+                Play(clip); // an old scene without the menu source: no pitch change on the shared source
+                return;
+            }
+            if (clip != null)
+            {
+                menuSource.pitch = pitch;
+                menuSource.PlayOneShot(clip, volume * SoundLevels.Effects);
+            }
         }
 
         // PlayOneShot lets several sounds overlap on one AudioSource. A missing clip is simply skipped.

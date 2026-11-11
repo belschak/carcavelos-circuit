@@ -1,0 +1,128 @@
+"""Joins the plaza line to Noah's east hall lane at the atrium door D4 (V14 + Nova hall, 2026-11-11).
+
+hall_route.py (task V12) replaces the route points inside the Edificio Principal with Noah's hall lanes and leaves
+everything outside alone. V14's line over the upper plaza (library passage, neck beside the courtyard) still ends
+where the OLD drive-through began, at (66.3, 111.6): east of the hall door and behind its facade line. So the raw
+track.json ran past the door, jumped 5.8 m back to the lane's first point and turned 133 degrees there. In the build
+Role 2's HallDoorApproach lines the road up with the door, but everything that reads track.json itself (bots,
+TrackProgress, minimap, the fence, the self-test's "road under every point") got the zigzag.
+
+This script re-lays only the last metres of the plaza line in front of that one door:
+  - the points behind the door's facade line are dropped,
+  - from BACK_POINTS points before them a smooth curve (cubic Hermite, tangents = the line's own direction there and
+    the lane's first direction) runs into the lane's first point, cut into 2 m steps like the rest.
+The plaza there is one paved deck (no road strip), so no geometry has to follow. Heights, width and zone are taken
+from the old points. Nothing else moves; the points after the join are renumbered (the script prints by how many).
+The other three doors (D1, D3, D5) lie on Noah's own line and are his to decide; they are left alone.
+
+Run order after every bundle export:  hall_route.py -> hall_join.py -> pin_checkpoints.py
+Safe to run again: once the line ends on the lane it finds nothing behind the facade and changes nothing.
+
+    python3 tools/world_gen/hall_join.py            # rewrites track.json in place
+    python3 tools/world_gen/hall_join.py --check    # only prints what it would do
+"""
+import json
+import math
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
+TRACK = os.path.join(REPO, "Assets/_Project/Visuals/CampusWorld/Data/track.json")
+DOORS = os.path.join(REPO, "Assets/_Project/Visuals/CampusWorld/Data/HallDoors.json")
+DOOR = "D4_entrance_room"
+HALL_ZONE = "atrium"        # zone hall_route.py gives the lane points
+STEP = 2.0                  # metres between route points
+BACK_POINTS = 8             # the curve starts this many points before the first dropped one (about 16 m)
+TANGENT = 1.3               # Hermite tangent length as a share of the chord: 1.3 gave the widest bend (10 m radius)
+BEHIND_M = -1.0             # points closer than this to the facade line (or behind it) are dropped
+
+
+def hermite(p0, t0, p1, t1, n=400):
+    out = []
+    for k in range(n + 1):
+        s = k / n
+        h00, h10, h01, h11 = 2 * s ** 3 - 3 * s ** 2 + 1, s ** 3 - 2 * s ** 2 + s, -2 * s ** 3 + 3 * s ** 2, s ** 3 - s ** 2
+        out.append((h00 * p0[0] + h10 * t0[0] + h01 * p1[0] + h11 * t1[0],
+                    h00 * p0[1] + h10 * t0[1] + h01 * p1[1] + h11 * t1[1]))
+    return out
+
+
+def unit(a, b):
+    d = math.hypot(b[0] - a[0], b[1] - a[1])
+    return ((b[0] - a[0]) / d, (b[1] - a[1]) / d)
+
+
+def join(track):
+    door = next(d for d in json.load(open(DOORS))["doors"] if d["name"] == DOOR)
+    pts = track["points"]
+    n = len(pts)
+    xz = lambda i: (pts[i]["x"], pts[i]["z"])
+    # the lane's first point: the hall point nearest the door whose predecessor is not a hall point
+    firsts = [i for i in range(n) if pts[i]["zone"] == HALL_ZONE and pts[i - 1]["zone"] != HALL_ZONE]
+    lane = min(firsts, key=lambda i: math.hypot(pts[i]["x"] - door["x"], pts[i]["z"] - door["z"]))
+    depth = lambda i: (pts[i]["x"] - door["x"]) * door["nx"] + (pts[i]["z"] - door["z"]) * door["nz"]
+    drop = lane
+    while depth(drop - 1) > BEHIND_M:                        # outside points behind (or on) the facade line
+        drop -= 1
+    turn = abs((math.atan2(*unit(xz(lane - 1), xz(lane))) - math.atan2(*unit(xz(lane - 2), xz(lane - 1))) + math.pi)
+               % (2 * math.pi) - math.pi)
+    if drop == lane and math.dist(xz(lane - 1), xz(lane)) < 1.5 * STEP and turn < math.radians(25):
+        return None, [f"{DOOR}: the line already ends on the lane (point {lane}), nothing to do"]
+    a = drop - BACK_POINTS                                   # last point that stays where it is
+    p0, p1 = xz(a), xz(lane)
+    d0, d1 = unit(xz(a - 1), xz(a + 1)), unit(xz(lane), xz(lane + 1))
+    chord = math.dist(p0, p1)
+    line = hermite(p0, (d0[0] * chord * TANGENT, d0[1] * chord * TANGENT), p1, (d1[0] * chord * TANGENT, d1[1] * chord * TANGENT))
+    length = sum(math.dist(u, v) for u, v in zip(line, line[1:]))
+    count = int(round(length / STEP)) - 1                    # new points strictly between a and the lane's first point
+    step = length / (count + 1)
+    new_xy, walked, want = [], 0.0, step
+    for u, v in zip(line, line[1:]):
+        seg = math.dist(u, v)
+        while walked + seg >= want and len(new_xy) < count:
+            f = (want - walked) / seg
+            new_xy.append((u[0] + (v[0] - u[0]) * f, u[1] + (v[1] - u[1]) * f))
+            want += step
+        walked += seg
+    radius = min(_radius(line[k - 20], line[k], line[k + 20]) for k in range(20, len(line) - 20))
+    template = pts[a]
+    new = [dict(template, x=round(x, 3), z=round(z, 3)) for x, z in new_xy]
+    old_count = lane - a - 1
+    out_pts = [dict(p) for p in pts[:a + 1]] + new + [dict(p) for p in pts[lane:]]
+    shift = count - old_count
+    m = len(out_pts)
+    for k, p in enumerate(out_pts):
+        p["s"] = round(k * STEP, 1)
+    remap = lambda i: i if i <= a else max(a + 1, i + shift) if i >= lane else min(a + 1 + count - 1, i)
+    out = dict(track)
+    start = remap(track["start_index"])
+    out.update({"points": out_pts, "length_m": m * STEP, "start_index": start, "jump_index": remap(track["jump_index"]),
+                "spawn_index": (start - 4) % m, "checkpoints": [remap(c) for c in track["checkpoints"]]})
+    report = [f"{DOOR}: points {a + 1}-{lane - 1} ({old_count}, {lane - drop} of them behind the facade line) -> {count} points "
+              f"on a {length:.1f} m curve into the lane's first point ({p1[0]:.2f}, {p1[1]:.2f}), step {step:.3f} m, "
+              f"tightest bend {radius:.1f} m radius",
+              f"route {n} -> {m} points, lap {track['length_m']:.0f} -> {m * STEP:.0f} m; points after the join renumbered by {shift:+d}"]
+    return out, report
+
+
+def _radius(a, b, c):
+    h1 = math.atan2(b[1] - a[1], b[0] - a[0])
+    h2 = math.atan2(c[1] - b[1], c[0] - b[0])
+    d = abs((h2 - h1 + math.pi) % (2 * math.pi) - math.pi)
+    return math.dist(a, b) / d if d > 1e-6 else 1e9
+
+
+def main():
+    track = json.load(open(TRACK))
+    out, report = join(track)
+    print("\n".join(report))
+    if out is None or "--check" in sys.argv:
+        return
+    with open(TRACK, "w") as fh:
+        json.dump(out, fh, indent=0)
+    print("written:", os.path.relpath(TRACK, REPO))
+
+
+if __name__ == "__main__":
+    main()

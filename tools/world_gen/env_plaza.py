@@ -235,9 +235,9 @@ def tongue():
 # The deck
 # ---------------------------------------------------------------------------------------------------------------
 def build_deck(col):
-    tng = tongue()
+    tng = None if P.HALL_IN else tongue()                      # V14 + hall: the deck ends on the building's outline
     lip = [P.stair_point(P.STAIR_LEN + s, u) for s in (1.0, 2.0, 3.0, P.STAIR_REACH[1] - P.STAIR_LEN) for u in (-P.STAIR_HALF, P.STAIR_HALF)]
-    rings = [P.DECK, tng, P.STAIR_DOWN, P.LIB_GROUND] + P.DECK_ISLANDS + list(P.SKYLIGHTS.values())
+    rings = [P.DECK] + ([tng] if tng else []) + [P.STAIR_DOWN, P.LIB_GROUND, P.KICK_ON_DECK] + P.DECK_ISLANDS + list(P.SKYLIGHTS.values())
     verts, edges = [], []
     for ring in rings:
         base = len(verts)
@@ -252,7 +252,10 @@ def build_deck(col):
         verts += [Vector(P.stair_point(P.STAIR_LEN, u)), Vector(P.stair_point(P.STAIR_REACH[1], u))]
         edges.append((base, base + 1))
     verts += [Vector(P.stair_point(P.STAIR_LEN, u)) for u in STAIR_COLS[1:-1]]     # the stairs' columns end here
-    verts += [Vector(q) for q in tongue_far(tng)[1:3]]                             # ... and the atrium strip's columns
+    if tng:
+        verts += [Vector(q) for q in tongue_far(tng)[1:3]]                         # ... and the atrium strip's columns
+    verts += [Vector(P.climb_point(P.CLIMB_LEN, u)) for u in CLIMB_COLS[1:-1]]     # V14b: the climb's columns end here
+    verts += [Vector(P.climb_point(P.KICK_START_S, u)) for u in KICK_COLS[1:-1]]   # ... and the kicker's start here
     out_v, _e, out_f, *_ = delaunay_2d_cdt(verts, edges, [], 0, 1e-4)
     m = Mesh("Track_PlazaDeck_NoCollide", ["ochre", "glass", "floor"])
     tris = []
@@ -260,8 +263,10 @@ def build_deck(col):
     for f in out_f:
         tri = [out_v[i] for i in f]
         cx, cy = sum(v.x for v in tri) / 3, sum(v.y for v in tri) / 3
-        if P.inside(cx, cy, P.STAIR_DOWN) or not (P.inside(cx, cy, P.DECK) or P.inside(cx, cy, tng)
+        if P.inside(cx, cy, P.STAIR_DOWN) or not (P.inside(cx, cy, P.DECK) or (tng and P.inside(cx, cy, tng))
                                                    or any(P.inside(cx, cy, i) for i in P.DECK_ISLANDS)):
+            continue
+        if P.inside(cx, cy, P.KICK_ON_DECK):                    # V14b: the kicker stands here (own surface, welded on)
             continue
         key = "ochre"
         if any(P.inside(cx, cy, r) for r in P.SKYLIGHTS.values()):
@@ -279,6 +284,9 @@ def build_deck(col):
 
 
 STAIR_COLS = [P.STAIR_HALF * k / 4 for k in range(-4, 5)]       # 9 columns, 1.19 m apart: no sliver triangles
+CLIMB_COLS = [P.CLIMB_HALF * k / 3 for k in range(-3, 4)]       # V14b: 7 columns, 1 m apart, on the courtyard climb
+KICK_COLS = [P.KICK_U[0] + (P.KICK_U[1] - P.KICK_U[0]) * k / 4 for k in range(5)]   # 5 columns, 1.1 m apart
+KICK_ROWS = int(round(P.KICK_LEN / 0.5))
 ENTRY_SEAM = P.SEAM         # m: the collider's tongue ends this far over the road's border in the atrium; it rises to that
                             # evenly over the tongue's 12 m (entry_rise) and then sinks through the road as a strip
 ENTRY_STRIP = True
@@ -304,11 +312,11 @@ def build_drive(col, deck_tris, tng):
     def face(ring):
         f = bm.faces.new([bm.verts.new(p) for p in ring])
         f.normal_update()
-        if f.normal.z < 0:
+        if f.normal.z < -0.3:                                   # (upright faces come in with the right winding)
             f.normal_flip()
-    far = tongue_far(tng)                                       # 4 points across the tongue's far end
+    far = tongue_far(tng) if tng else None                      # 4 points across the tongue's far end
     for tri in deck_tris:                                       # the deck; the tongue's far end 5 cm over the road
-        face([(x, y, z + DRIVE_LIFT + entry_rise(x, y, tng)) for x, y, z in tri])
+        face([(x, y, z + DRIVE_LIFT + (entry_rise(x, y, tng) if tng else 0.0)) for x, y, z in tri])
     length, treads = P.STAIR_LEN, P.STAIR_RISERS - 1
     rows = treads * 4
 
@@ -337,14 +345,15 @@ def build_drive(col, deck_tris, tng):
         for c in range(len(STAIR_COLS) - 1):
             face([r0[c], r0[c + 1], r1[c + 1], r1[c]])
     last = [i for i, p in enumerate(pts) if P.owns_route_point(p)][-1]
-    prev = [(x, y, P.DECK_Z + DRIVE_LIFT + ENTRY_SEAM) for x, y in far]  # strip over / through the road in the atrium
-    for ahead, rel in zip((2, 3, 4, 5), reversed(P.SEAM_STEPS) if ENTRY_STRIP else ()):
+    prev = [(x, y, P.DECK_Z + DRIVE_LIFT + ENTRY_SEAM) for x, y in far] if tng else []   # strip over / through the road in the atrium
+    for ahead, rel in zip((2, 3, 4, 5), reversed(P.SEAM_STEPS) if ENTRY_STRIP and tng else ()):
         p, (nx, ny) = frame(last + ahead)
         z = p["track_z"] + P.LIFT
         row = [(p["x"] + nx * o, p["y"] + ny * o, z - 0.14 if abs(o) > 4.5 else z + rel) for o in TONGUE_COLS]
         for c in range(len(row) - 1):
             face([prev[c], prev[c + 1], row[c + 1], row[c]])
         prev = row
+    shortcut_drive(face)
     bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=0.004)
     bm.normal_update()
     mesh = bpy.data.meshes.new("Track_PlazaDrive_ColliderOnly")
@@ -357,17 +366,153 @@ def build_drive(col, deck_tris, tng):
     return len(mesh.polygons)
 
 
+def kick_grid():
+    """Rows of the kicker's surface (start -> lip), KICK_COLS across, heights over the deck."""
+    return [[(*P.climb_point(P.KICK_START_S + P.KICK_LEN * k / KICK_ROWS, u), P.DECK_Z + P.kick_profile(P.KICK_LEN * k / KICK_ROWS))
+             for u in KICK_COLS] for k in range(KICK_ROWS + 1)]
+
+
+def climb_lane_in_court():
+    return [P.CLIMB_LANE[0], P.CLIMB_LANE[1], P.CLIMB_Q, P.CLIMB_QW]
+
+
+def shortcut_drive(face):
+    """V14b, the courtyard shortcut's driving surfaces, into the same welded collider as the deck and the stairs:
+    the kicker (its first row = vertices of the deck, so there is no border where a kart rolls onto it), the
+    courtyard floor (what you see of it, Track_PlazaCourt_NoCollide, has no collider), and the climb: a smooth
+    surface over the visible steps with the stairs' ripple; its first row = vertices of the floor, its last row =
+    vertices of the deck's edge. 0.28 x 1 m faces on the climb, 0.5 x 1.1 m on the kicker (no slivers)."""
+    grid = [[(x, y, z + DRIVE_LIFT) for x, y, z in row] for row in kick_grid()]
+    for r0, r1 in zip(grid, grid[1:]):
+        for c in range(len(KICK_COLS) - 1):
+            face([r0[c], r0[c + 1], r1[c + 1], r1[c]])
+        # cheeks, down into the deck, each looking outwards (first test: with the winding left to chance the lip's
+        # front looked into the ramp and kicked 2 of 8 karts 2 to 4 m/s upwards as they left the lip)
+        a, b = r1[0], r0[0]
+        face([(a[0], a[1], P.DECK_Z - 0.3), (b[0], b[1], P.DECK_Z - 0.3), b, a])
+        a, b = r0[-1], r1[-1]
+        face([(a[0], a[1], P.DECK_Z - 0.3), (b[0], b[1], P.DECK_Z - 0.3), b, a])
+    a, b = grid[-1][-1], grid[-1][0]                            # the lip's front, looking into the courtyard
+    face([(a[0], a[1], P.DECK_Z - 0.3), (b[0], b[1], P.DECK_Z - 0.3), b, a])
+    # the courtyard floor, cut round the climb's foot
+    lane = climb_lane_in_court()
+    court = ccw(P.COURT_SOUTH)
+    verts, edges = [], []
+    for ring in (court, lane):
+        base = len(verts)
+        verts += [Vector(p) for p in ring]
+        edges += [(base + k, base + (k + 1) % len(ring)) for k in range(len(ring))]
+    verts += [Vector(P.climb_point(0.0, u)) for u in CLIMB_COLS[1:-1]]
+    xs, ys = [p[0] for p in court], [p[1] for p in court]
+    y = min(ys) + 1.5
+    while y < max(ys):                                           # inner points every 2.5 m: no long thin triangles
+        x = min(xs) + 1.5
+        while x < max(xs):
+            if (P.inside(x, y, court) and P.poly_distance(x, y, court) > 1.0 and not P.inside(x, y, lane)
+                    and P.poly_distance(x, y, lane) > 1.0):
+                verts.append(Vector((x, y)))
+            x += 2.5
+        y += 2.5
+    out_v, _e, out_f, *_ = delaunay_2d_cdt(verts, edges, [], 0, 1e-4)
+    for f in out_f:
+        tri = [out_v[i] for i in f]
+        cx, cy = sum(v.x for v in tri) / 3, sum(v.y for v in tri) / 3
+        if P.inside(cx, cy, court) and not P.inside(cx, cy, lane):
+            face([(v.x, v.y, P.LOW_Z + DRIVE_LIFT) for v in tri])
+    rows = (P.CLIMB_RISERS - 1) * 4
+    grid = [[(*P.climb_point(P.CLIMB_LEN * k / rows, u),
+              P.climb_profile(P.CLIMB_LEN * k / rows) + P.LIFT + P.climb_judder(P.CLIMB_LEN * k / rows) + DRIVE_LIFT)
+             for u in CLIMB_COLS] for k in range(rows + 1)]
+    for r0, r1 in zip(grid, grid[1:]):
+        for c in range(len(CLIMB_COLS) - 1):
+            face([r0[c], r0[c + 1], r1[c + 1], r1[c]])
+
+
 def build_low(col):
     m = Mesh("Track_PlazaLow", ["ochre"])
+    c = Mesh("Track_PlazaCourt_NoCollide", ["ochre"])          # V14b: the court's collider is in the welded drive mesh
     landing = [P.slot_point(0, 0), P.slot_point(0, P.SLOT_W), P.slot_point(P.SLOT_LANDING, P.SLOT_W), P.slot_point(P.SLOT_LANDING, 0)]
     for ring in P.COURTS + P.LOWS + [P.UNDERPASS, landing]:
+        target = c if ring in P.COURTS else m
         ring = ccw(ring)
         for tri in tessellate_polygon([[Vector((x, y, 0.0)) for x, y in ring]]):
             pts = [(ring[i][0], ring[i][1], P.LOW_Z) for i in tri]
             if (pts[1][0] - pts[0][0]) * (pts[2][1] - pts[0][1]) - (pts[1][1] - pts[0][1]) * (pts[2][0] - pts[0][0]) < 0:
                 pts.reverse()
-            m.face(pts, "ochre", tile=TILE_OCHRE)
+            target.face(pts, "ochre", tile=TILE_OCHRE)
     m.finish(col)
+    c.finish(col)
+
+
+def build_kicker(col):
+    """V14b: what you see of the shortcut's kicker: Boost Orange stripes across (the kerb texture, like the terrace
+    kicker), solid sides, a front under the lip. No collider (the welded drive mesh carries it)."""
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    grid = kick_grid()
+    w = P.KICK_U[1] - P.KICK_U[0]
+    for k, (r0, r1) in enumerate(zip(grid, grid[1:])):
+        s0, s1 = P.KICK_LEN * k / KICK_ROWS, P.KICK_LEN * (k + 1) / KICK_ROWS
+        top = bm.faces.new([bm.verts.new(p) for p in (r0[0], r0[-1], r1[-1], r1[0])])
+        for loop, c in zip(top.loops, ((0.0, s0 / 2), (w / 2, s0 / 2), (w / 2, s1 / 2), (0.0, s1 / 2))):
+            loop[uv].uv = c
+        for a, b, flip in ((r0[0], r1[0], True), (r0[-1], r1[-1], False)):
+            vs = [bm.verts.new((a[0], a[1], P.DECK_Z - 0.05)), bm.verts.new((b[0], b[1], P.DECK_Z - 0.05)), bm.verts.new(b), bm.verts.new(a)]
+            side = bm.faces.new(vs[::-1] if flip else vs)
+            for loop in side.loops:
+                loop[uv].uv = (0.05, loop.vert.co.z)
+    a, b = grid[-1][0], grid[-1][-1]
+    front = bm.faces.new([bm.verts.new((a[0], a[1], P.DECK_Z - 0.05)), bm.verts.new(a), bm.verts.new(b), bm.verts.new((b[0], b[1], P.DECK_Z - 0.05))])
+    for loop in front.loops:
+        loop[uv].uv = (0.05, loop.vert.co.z)
+    bm.normal_update()
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    mesh = bpy.data.meshes.new("Track_ShortcutKicker")
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(E.material("T_kerb", "#FF8A1F", roughness=0.7))
+    E.new_object("Track_ShortcutKicker_NoCollide", mesh, col)
+
+
+PAINT_LIFT = 0.04           # m over the paving (as env_trackside.LINE_LIFT)
+
+
+def build_paint(col):
+    """V14b, paint only (no collider): the boost-pad area before the kicker (Boost Orange with three white chevrons;
+    it does nothing, a pad of PR #72 belongs here), white lane lines on the courtyard floor from under the lip to the
+    climb's foot, and two orange chevrons on the floor that point at the climb."""
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+
+    def quad(pts, z, mi):
+        f = bm.faces.new([bm.verts.new((x, y, z)) for x, y in pts])
+        f.normal_update()
+        if f.normal.z < 0:
+            f.normal_flip()
+        f.material_index = mi
+
+    def chevron(s, u, half, arm, thick, z, mi):                 # a V that points up the axis, its tip at (s, u)
+        for sign in (-1, 1):
+            quad([P.climb_point(s, u), P.climb_point(s - arm, u + sign * half), P.climb_point(s - arm - thick, u + sign * half),
+                  P.climb_point(s - thick, u)], z, mi)
+    zd, zl = P.DECK_Z + PAINT_LIFT, P.LOW_Z + PAINT_LIFT
+    (s0, s1), (u0, u1) = P.PAD_S, P.PAD_U
+    quad([P.climb_point(s0, u0), P.climb_point(s0, u1), P.climb_point(s1, u1), P.climb_point(s1, u0)], zd, 0)
+    um = (u0 + u1) / 2
+    for k in range(3):
+        chevron(s0 + 1.75 + 1.4 * k, um, 1.25, 0.9, 0.45, zd + 0.01, 1)
+    a, b = P.KICK_LIP_S + 2.6, -0.4                             # lane lines: from behind the pier to the foot
+    for u in P.KICK_U:
+        quad([P.climb_point(a, u - 0.07), P.climb_point(a, u + 0.07), P.climb_point(b, u + 0.07), P.climb_point(b, u - 0.07)], zl, 1)
+    for s in (-6.2, -2.6):
+        chevron(s, (P.KICK_U[0] + P.KICK_U[1]) / 2, 1.5, 1.0, 0.5, zl, 0)
+    bm.normal_update()
+    mesh = bpy.data.meshes.new("Track_ShortcutPaint")
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(E.material("sign_chevron", E.PALETTE["boost_orange"], roughness=0.6))
+    mesh.materials.append(E.material("edge_line_white", "#EDEDE8", roughness=0.6))
+    E.new_object("Track_ShortcutPaint_NoCollide", mesh, col)
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -423,6 +568,10 @@ def build_stairs(col):
     # the stair in the slot
     build_steps(vis, P.slot_point, zslot, P.SLOT_LANDING, P.SLOT_LEN, P.SLOT_RISERS - 1, 0.0, P.SLOT_W, P.LOW_Z, zslot(P.SLOT_LEN),
                 "ochre", tile=TILE_OCHRE)
+    # V14b: the climb out of the courtyard (the shortcut), terracotta like the main stairs
+    zclimb = lambda s: P.climb_profile(s) + P.LIFT                      # noqa: E731
+    build_steps(vis, P.climb_point, zclimb, 0.0, P.CLIMB_LEN, P.CLIMB_RISERS - 1, -P.CLIMB_HALF, P.CLIMB_HALF, P.LOW_Z,
+                zclimb(P.CLIMB_LEN), "terracotta")
     vis.finish(col)
 
     drv = Mesh("Track_PlazaSlotDrive_ColliderOnly", ["terracotta"])
@@ -457,7 +606,7 @@ def build_walls(col):
     mouth = {tuple(P.UNDERPASS_COURT[0]), tuple(P.UNDERPASS_COURT[1])}
     for court in P.COURTS:                                     # courtyard walls (the Gallery's own wall on the west)
         for a, b in zip(court, court[1:] + court[:1]):
-            if _on_main(a, b):
+            if _on_main(a, b) or {tuple(a), tuple(b)} == {tuple(P.COURT_OPEN_EDGE[0]), tuple(P.COURT_OPEN_EDGE[1])}:
                 continue
             bottom = P.UNDERPASS_CEILING if {tuple(a), tuple(b)} == mouth else low
             m.wall(a, b, P.deck_z(*a), P.deck_z(*b), bottom, _inward(a, b, court))
@@ -475,6 +624,27 @@ def build_walls(col):
             a, b = k * d, min(k + tier, treads) * d
             z = max(tread_z(zmain, 0, P.STAIR_LEN, treads, a + 0.01, tier), P.LOW_Z)
             m.wall(P.stair_point(a, u), P.stair_point(b, u), z, z, low, out, "terracotta")
+    # V14b, the climb: terracotta cheeks beside its foot in the court (following the steps), white slot walls from
+    # the steps up to the deck further up, and the pier under the kicker's lip
+    zclimb = lambda s: P.climb_profile(s) + P.LIFT                      # noqa: E731
+    ct = P.CLIMB_RISERS - 1
+    dc = P.CLIMB_LEN / ct
+    for u, s_end, out in ((P.CLIMB_HALF, P.CLIMB_Q_S, P.SC_RIGHT), (-P.CLIMB_HALF, P.CLIMB_LW_S, (-P.SC_RIGHT[0], -P.SC_RIGHT[1]))):
+        for k in range(ct):
+            a, b = k * dc, min((k + 1) * dc, s_end)
+            if b - a < 1e-6:
+                break
+            z = max(tread_z(zclimb, 0, P.CLIMB_LEN, ct, a + 0.01), P.LOW_Z)
+            m.wall(P.climb_point(a, u), P.climb_point(b, u), z, z, low, out, "terracotta")
+    for u, s_from, out in ((P.CLIMB_HALF, P.CLIMB_Q_S, (-P.SC_RIGHT[0], -P.SC_RIGHT[1])), (-P.CLIMB_HALF, P.CLIMB_Q_S, P.SC_RIGHT)):
+        n = 10
+        for k in range(n):
+            a, b = s_from + (P.CLIMB_LEN - s_from) * k / n, s_from + (P.CLIMB_LEN - s_from) * (k + 1) / n
+            m.wall(P.climb_point(a, u), P.climb_point(b, u), P.DECK_Z, P.DECK_Z, zclimb(a) - STEP_UNDER - 0.25, out,
+                   bottom_b=zclimb(b) - STEP_UNDER - 0.25)
+    pier = P.KICK_PIER
+    for a, b in ((pier[0], pier[3]), (pier[3], pier[2]), (pier[2], pier[1])):
+        m.wall(a, b, P.DECK_Z, P.DECK_Z, low, tuple(-c for c in _inward(a, b, pier)))
     # the slot: west and east walls down to the steps, the south end; the underpass mouth stays open on the west
     zslot = lambda s: P.slot_profile(s) + P.LIFT                        # noqa: E731
     n = 8
@@ -509,6 +679,9 @@ def build_walls(col):
     for a, b in PLANTERS:
         m.prism(strip(a, b, 0.55), P.DECK_Z - 0.05, P.DECK_Z + 0.5, "white")
         m.prism(strip(a, b, 0.42), P.DECK_Z + 0.45, P.DECK_Z + 0.95, "hedge")
+    for a, b in zip(P.FUNNEL, P.FUNNEL[1:]):                   # V14b: hedge boxes that lead the climb's exit to checkpoint 10
+        m.prism(strip(a, b, 0.5), P.DECK_Z - 0.05, P.DECK_Z + 0.5, "white")
+        m.prism(strip(a, b, 0.37), P.DECK_Z + 0.45, P.DECK_Z + 0.95, "hedge")
     for (x, y), turn in LOUNGERS:
         c, s = math.cos(turn), math.sin(turn)
         base = [(-1.0, -0.45), (1.0, -0.45), (1.0, 0.45), (-1.0, 0.45)]
@@ -519,9 +692,7 @@ def build_walls(col):
 
 
 # planters (hedge boxes) on the plaza side of the fence where the road is far enough away, and round the stair slot
-PLANTERS = [((76.0, 53.6), (81.0, 53.75)),            # in front of the fence round S3
-            ((82.8, 55.6), (82.8, 60.4)),
-            ((72.7, 88.0), (71.65, 92.7)),             # along the fence in the pocket north of the courtyard's corner
+PLANTERS = [((72.7, 88.0), (71.65, 92.7)),             # along the fence in the pocket north of the courtyard's corner
             ((92.3, 96.0), (87.0, 102.0))]            # east side of the stair slot
 LOUNGERS = [((104.3, 22.3), 0.35), ((106.6, 26.6), 0.35), ((109.8, 30.2), 0.35)]    # survey: three south of the library
 
@@ -529,8 +700,7 @@ LOUNGERS = [((104.3, 22.3), 0.35), ((106.6, 26.6), 0.35), ((109.8, 30.2), 0.35)]
 def fence_lines():
     """[(polyline of (x, y, z), closed)] for every railing."""
     dz = lambda pts: [(x, y, P.deck_z(x, y)) for x, y in pts]            # noqa: E731
-    lines = [dz(P.FENCE_SOUTH), dz(P.FENCE_NORTH), dz([(72.9, 61.2), (81.9, 61.2)]),
-             dz([P.S4_PLATFORM[0], P.S4_PLATFORM[1], P.S4_PLATFORM[2], P.S4_PLATFORM[3]]),
+    lines = [dz(P.FENCE_SOUTH), dz(P.FENCE_SOUTH_W), dz(P.FENCE_NORTH), dz(P.FENCE_CLIMB_W),      # V14b
              dz([P.EDGE_W, P.TOP_W]), dz([P.TOP_E, P.EDGE_E]),
              dz([P.slot_point(P.SLOT_LEN, 0), P.slot_point(0, 0), P.slot_point(0, P.SLOT_W), P.slot_point(P.SLOT_LEN, P.SLOT_W)])]
     lines += [dz(line) for line in P.FENCE_GALLERY]          # V10 integration: on the Gallery deck's edge over the court
@@ -585,6 +755,8 @@ def build():
     count, tris, tng = build_deck(track)
     faces = build_drive(track, tris, tng)
     build_low(track)
+    build_kicker(track)
+    build_paint(track)
     build_stairs(track)
     build_walls(world)
     metres = build_fences(world)
@@ -596,8 +768,8 @@ def build():
 # Dressing: nothing generic on the plaza; a row of olives east of the library, olives in the courtyard whose crowns
 # show over the fence, round planters by the Gallery, cafe tables north of the library
 # ---------------------------------------------------------------------------------------------------------------
-TREES_COURT = [(69.2, 77.6), (74.8, 64.2), (64.6, 90.4)]          # by the walls: the courtyard floor stays clear
-POTS = [(89.2, 23.6), (86.4, 30.8), (81.3, 44.2), (77.6, 51.6), (111.5, 26.2), (99.0, 86.5), (104.0, 87.2)]
+TREES_COURT = [(78.4, 79.6)]          # V14b: by the east wall, clear of the shortcut's landing and lane
+POTS = [(89.2, 23.6), (86.4, 30.8), (80.2, 44.2), (77.6, 51.6), (111.5, 26.2), (99.0, 86.5), (104.0, 87.2)]
 CAFE = [(97.5, 93.0), (102.5, 96.0), (107.0, 92.0), (99.5, 100.5)]
 
 
@@ -629,7 +801,7 @@ def dress(veg, props):
         if P.on_deck(x, y) and E.distance_to_route(x, y) > 9.0:
             plant("Veg_Olive" if k % 2 else "Veg_Olive_B", x, y, P.DECK_Z, rng.uniform(0.82, 0.95))
     for x, y in TREES_COURT:
-        if P.in_court(x, y):
+        if P.in_court(x, y) and not P.on_climb(x, y, 0.2):
             plant("Veg_Olive", x, y, P.LOW_Z, rng.uniform(0.95, 1.05))
     for x, y in POTS:
         prop("Prop_PlanterRound", x, y)

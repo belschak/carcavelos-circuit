@@ -35,6 +35,10 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             Role4SceneBuilder.BuildAll();
             Role4SceneBuilder.MergeBuildScenes(AssetDatabase.LoadAssetAtPath<RaceSettings>(Role4SceneBuilder.SettingsPath));
 
+            // The online leaderboard's address and public key from the CI secrets, only for this build (task R10).
+            // After BuildAll (which always saves the config empty), before anything else changes the project.
+            LeaderboardBuildConfig.FillFromEnvironment();
+
             // Build with the Web URP asset as the project default, so the build does not also carry the shader variants
             // of the PC asset (Forward+, SSAO). The editor's default is put back afterwards, even if the build fails.
             RenderPipelineAsset webPipeline = Role4WebQuality.SetUp();
@@ -65,6 +69,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             }
             finally
             {
+                LeaderboardBuildConfig.Clear(); // the asset in the repo stays empty
                 GraphicsSettings.defaultRenderPipeline = AssetDatabase.LoadAssetAtPath<RenderPipelineAsset>(editorPipelinePath);
                 AssetDatabase.SaveAssets();
             }
