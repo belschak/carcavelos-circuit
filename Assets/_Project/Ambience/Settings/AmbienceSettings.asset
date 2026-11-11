@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d03f1855bcb71b4fa6b834068e9ea15, type: 3}
+  m_Name: AmbienceSettings
+  m_EditorClassIdentifier: CarcavelosCircuit.Ambience::CarcavelosCircuit.Ambience.AmbienceSettings
+  seaNames:
+  - Backdrop_Sea
+  - Sea
+  - Ocean
+  - Water
+  anchorNames:
+  - SpawnPoint
+  - Checkpoint
+  - RespawnPoint
+  beachLength: 240
+  beachSamples: 80
+  scanStep: 2
+  maxScanDistance: 260
+  spawnDistance: 105
+  breakDistance: 30
+  waveSpeed: 4.2
+  wavesPerSet: 4
+  wavePeriod: 8.5
+  setLull: 14
+  swellHeight: 0.45
+  breakHeight: 2.2
+  whitewaterShare: 0.55
+  peelSpeed: 5.2
+  runUp: 7
+  swashSeconds: 4.5
+  endFade: 32
+  deepWater: {r: 0.13, g: 0.47, b: 0.78, a: 1}
+  faceWater: {r: 0.05, g: 0.36, b: 0.6, a: 1}
+  crestWater: {r: 0.4, g: 0.9, b: 0.88, a: 1}
+  foam: {r: 0.97, g: 0.99, b: 1, a: 1}
+  surferCount: 4
+  paddleSpeed: 1.4
+  catchWindow: 8
+  minRideHeight: 0.9
+  rideSpeed: {x: 5, y: 7}
+  fallChance: 0.3
+  fallSeconds: 1.3
+  respawnSeconds: 4
+  kickOutDistance: 11
+  carveSeconds: 2.2
+  wetsuitColours:
+  - {r: 0.11, g: 0.11, b: 0.12, a: 1}
+  - {r: 0.12, g: 0.16, b: 0.24, a: 1}
+  - {r: 0.11, g: 0.11, b: 0.12, a: 1}
+  - {r: 0.16, g: 0.2, b: 0.2, a: 1}
+  boardColours:
+  - {r: 0.92, g: 0.92, b: 0.93, a: 1}
+  - {r: 0.89, g: 0.77, b: 0.55, a: 1}
+  - {r: 0.92, g: 0.92, b: 0.93, a: 1}
+  - {r: 0.55, g: 0.78, b: 0.9, a: 1}
+  skinColours:
+  - {r: 0.87, g: 0.68, b: 0.54, a: 1}
+  - {r: 0.6, g: 0.42, b: 0.3, a: 1}
+  - {r: 0.78, g: 0.58, b: 0.44, a: 1}
+  - {r: 0.43, g: 0.29, b: 0.21, a: 1}
+  hairColours:
+  - {r: 0.16, g: 0.11, b: 0.08, a: 1}
+  - {r: 0.62, g: 0.48, b: 0.28, a: 1}
+  - {r: 0.08, g: 0.07, b: 0.06, a: 1}
+  - {r: 0.35, g: 0.22, b: 0.12, a: 1}

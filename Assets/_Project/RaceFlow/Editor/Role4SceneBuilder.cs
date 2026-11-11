@@ -148,6 +148,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                     return new[] { typeof(Transform), typeof(GhostRecorder), typeof(GhostPlayer) };
                 case "Items":
                     return new[] { typeof(Transform), typeof(ItemSystem), typeof(AudioSource), typeof(UIDocument), typeof(ItemSlotHud) };
+                case "Ambience":
+                    return new[] { typeof(Transform), typeof(CarcavelosCircuit.Ambience.SeasideAmbience) }; // waves + surfers (R12)
                 default:
                     return null;
             }
@@ -781,6 +783,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             hudToGhost.ApplyModifiedPropertiesWithoutUndo();
 
             BuildItems(manager, panel);
+            CarcavelosCircuit.Ambience.Editor.AmbienceBuilder.AddToScene(); // waves + surfers on the beach (R12)
 
             EditorSceneManager.SaveScene(scene, MainScenePath);
 

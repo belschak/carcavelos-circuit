@@ -49,7 +49,7 @@ Four people and their AIs push into one repo every day. These steps keep everyon
 | `Assets/_Project/Driving/**` | 1 Driving + camera |
 | `Assets/_Project/Track/**`, `docs/route.md` | 2 Track + race rules |
 | `Assets/_Project/Visuals/**`, `docs/art-style.md`, `docs/builds.md` | 3 Kart, visuals + web release |
-| `Assets/_Project/RaceFlow/**`, `Assets/_Project/Audio/**`, `Assets/_Project/Shared/**`, `ProjectSettings/**`, `Packages/**` | 4 Race flow, UI + sound (integrator) |
+| `Assets/_Project/RaceFlow/**`, `Assets/_Project/Audio/**`, `Assets/_Project/Shared/**`, `Assets/_Project/Ambience/**`, `ProjectSettings/**`, `Packages/**` | 4 Race flow, UI + sound (integrator) |
 | `Assets/_Project/Tests/**` | each role adds tests for its own code only |
 Names and handles: `docs/team.md`. Need a change outside your paths? Add a row under "Requests between roles" in `TASKS.md` addressed to that role.
 
