@@ -79,15 +79,20 @@
     scale: 1 1;
 }
 
-/* The light sweep: a band that clips a gold copy of the letters (TitleScreen moves both). Hidden between sweeps. */
+/* The light sweep: two bands that each clip a gold copy of the letters (TitleScreen moves them). A wide soft band
+   and a narrow bright core on the same centre read as one sheen with soft edges. Hidden between sweeps. */
 .ts-glint {
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
-    width: 90px;
+    width: 56px;
     overflow: hidden;
     opacity: 0;
+}
+
+.ts-glint--soft {
+    width: 170px;
 }
 
 .ts-glint--on {
@@ -102,12 +107,16 @@
 
 /* Three classes: beats ".intro-in .ts-letter", the copy never drops in, it is always in place. */
 .ts-glint .ts-letters--glint .ts-letter {
-    color: #FFE6AE;
+    color: #FFD27A;
     text-shadow: 0 0 0 rgba(0, 0, 0, 0);
     opacity: 1;
     translate: 0 0;
     scale: 1 1;
     transition-duration: 0s;
+}
+
+.ts-glint.ts-glint--soft .ts-letters--glint .ts-letter {
+    color: rgba(255, 196, 104, 0.55);
 }
 
 /* ---------- CIRCUIT row: a calcada wave that wipes open, then the word slides in ---------- */

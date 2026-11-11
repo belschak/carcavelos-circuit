@@ -10,9 +10,10 @@ namespace CarcavelosCircuit.RaceFlow
     //    with its own transition-delay), the racing stripes slide in, the wave wipes open, CIRCUIT slides in, and
     //    the team's slogan CARCAVELOS ROUND 3 lands like a stamp. The USS animates; C# only sets the delays.
     // 2. Light sweep: every few seconds a band of light runs over the letters. Trick: a narrow box with
-    //    overflow: hidden moves to the right while a second, gold copy of the letters inside it moves left by the
-    //    same amount, so the copy stays exactly on top of the white letters and only shows inside the band.
-    //    Written as two translates per frame (no layout pass), only while the sweep runs.
+    //    overflow: hidden moves to the right while a gold copy of the letters inside it moves left by the same
+    //    amount, so the copy stays exactly on top of the white letters and only shows inside the band. Two such
+    //    bands share one centre (a wide soft one and a narrow bright core), so the sheen has soft edges.
+    //    Written as four translates per frame (no layout pass), only while the sweep runs.
     // With reduced motion (the "reduce-motion" class HudMenus puts on hud-root) everything is simply there:
     // no drop, no stamp, no sweep (the USS sets the durations to 0, this script skips the sweep).
     [RequireComponent(typeof(UIDocument))]
@@ -38,8 +39,10 @@ namespace CarcavelosCircuit.RaceFlow
         private VisualElement hudRoot;
         private VisualElement startScreen;
         private VisualElement logo;
-        private VisualElement glint;
+        private VisualElement glint;          // the narrow bright core
         private VisualElement glintLetters;
+        private VisualElement softGlint;      // the wide soft band around it
+        private VisualElement softGlintLetters;
         private float introStart = -1f; // real time when "intro-in" appeared, -1 = not on the start screen
         private bool sweepWasRunning;
 
@@ -51,8 +54,11 @@ namespace CarcavelosCircuit.RaceFlow
             logo = root.Q<VisualElement>("title-logo");
             glint = root.Q<VisualElement>("title-glint");
             glintLetters = root.Q<VisualElement>("title-glint-letters");
+            softGlint = root.Q<VisualElement>("title-glint-soft");
+            softGlintLetters = root.Q<VisualElement>("title-glint-soft-letters");
             AddLetters(root.Q<VisualElement>("title-letters"), true);
             AddLetters(glintLetters, false);
+            AddLetters(softGlintLetters, false);
             introStart = -1f;
         }
 
@@ -108,16 +114,26 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
             float progress = Mathf.SmoothStep(0f, 1f, inCycle / sweepSeconds); // slow in, fast over the middle, slow out
+            // The centre of the sheen runs from just left of the title to just right of it.
             float width = logo.resolvedStyle.width;
-            float band = glint.resolvedStyle.width;
-            float x = Mathf.Lerp(-band, width, progress);
-            glint.style.translate = new Translate(x, 0f);
-            glintLetters.style.translate = new Translate(-x, 0f);
+            float soft = softGlint.resolvedStyle.width;
+            float centre = Mathf.Lerp(-soft * 0.5f, width + soft * 0.5f, progress);
+            MoveBand(glint, glintLetters, centre);
+            MoveBand(softGlint, softGlintLetters, centre);
             if (!sweepWasRunning)
             {
                 glint.AddToClassList("ts-glint--on");
+                softGlint.AddToClassList("ts-glint--on");
                 sweepWasRunning = true;
             }
+        }
+
+        // The band goes to "centre", its gold letters the same distance back, so they stay on the white ones.
+        private static void MoveBand(VisualElement band, VisualElement letters, float centre)
+        {
+            float x = centre - band.resolvedStyle.width * 0.5f;
+            band.style.translate = new Translate(x, 0f);
+            letters.style.translate = new Translate(-x, 0f);
         }
 
         private void StopSweep()
@@ -125,6 +141,7 @@ namespace CarcavelosCircuit.RaceFlow
             if (sweepWasRunning)
             {
                 glint.RemoveFromClassList("ts-glint--on");
+                softGlint.RemoveFromClassList("ts-glint--on");
                 sweepWasRunning = false;
             }
         }

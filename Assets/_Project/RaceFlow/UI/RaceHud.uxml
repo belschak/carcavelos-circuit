@@ -166,6 +166,9 @@
                         </ui:VisualElement>
                         <ui:VisualElement name="title-logo" class="ts-logo">
                             <ui:VisualElement name="title-letters" class="ts-letters" />
+                            <ui:VisualElement name="title-glint-soft" class="ts-glint ts-glint--soft">
+                                <ui:VisualElement name="title-glint-soft-letters" class="ts-letters ts-letters--glint" />
+                            </ui:VisualElement>
                             <ui:VisualElement name="title-glint" class="ts-glint">
                                 <ui:VisualElement name="title-glint-letters" class="ts-letters ts-letters--glint" />
                             </ui:VisualElement>

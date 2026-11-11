@@ -101,6 +101,8 @@
     margin-bottom: 4px;
     padding: 0 12px 0 5px;
     border-radius: 10px;
+    border-left-width: 4px; /* always there (see-through), so the coloured edge of "mine" / "new" never shifts the text */
+    border-left-color: rgba(0, 0, 0, 0);
     background-color: rgba(234, 234, 236, 0.05);
     opacity: 0;
     translate: 22px 0;
@@ -157,13 +159,11 @@
 /* The player's own rows: blue like the time panel's accent. The row just saved: orange, like the start pill. */
 .lb-row--mine {
     background-color: rgba(45, 140, 214, 0.30);
-    border-left-width: 4px;
     border-left-color: var(--cc-blue);
 }
 
 .lb-row--new {
     background-color: rgba(255, 138, 31, 0.32);
-    border-left-width: 4px;
     border-left-color: var(--cc-orange);
 }
 
@@ -411,6 +411,20 @@
 
 .lb-form-result--offline .lb-result-text {
     color: var(--cc-coral);
+}
+
+/* ---------- Narrow windows (4:3): the title and the source pill must share a 318 px card ---------- */
+.hud--narrow .lb-title {
+    font-size: 18px;
+    letter-spacing: 2px;
+}
+
+.hud--narrow .lb-gem {
+    margin: 0 10px 0 4px;
+}
+
+.hud--narrow .lb-source {
+    padding: 0 8px 0 7px;
 }
 
 /* ---------- Reduced motion: rows are simply there, the problem line does not punch ---------- */
