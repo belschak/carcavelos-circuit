@@ -381,15 +381,84 @@ def board(m, f, u, o, width=1.8, height=2.0, material="board"):
     block(m, f, u - 0.25, u + 0.25, o - 0.04, o + 0.04, 0.0, 0.15, "steel_dark")
 
 
+# Outline of the grand piano seen from above, in piano metres: x from the keyboard (-1.0) to the tail (+1.0),
+# y = +0.7 the long straight side (left of the pianist), the curved "bentside" on the right (Noah's look A, T10).
+PIANO_OUTLINE = [(-1.0, 0.7), (0.75, 0.7), (0.92, 0.62), (1.0, 0.45), (1.0, 0.2), (0.9, 0.0), (0.7, -0.15),
+                 (0.45, -0.25), (0.15, -0.42), (-0.15, -0.62), (-0.35, -0.7), (-1.0, -0.7)]
+PIANO_LID_FROM_X = -0.55     # the lid covers the case from here to the tail (the part in front stays flat)
+PIANO_LID_DEG = 35.0         # how far the lid is propped open
+PIANO_CASE = (0.62, 0.98)    # bottom and top of the black case (m above the floor)
+
+
 def grand_piano(m, f, u, o, turn_deg=0):
+    """Black concert grand: curved case, lid open on a stick, keys, music stand, three legs, pedals, bench."""
     h = f.h + math.radians(turn_deg)
     p = f.at(u, o, 0)
     c, s = math.cos(h), math.sin(h)
-    m.box((p[0], p[1], 0.9), 1.0, 0.7, 0.12, "piano", h)                  # body
-    m.box((p[0] + 0.5 * c, p[1] + 0.5 * s, 0.82), 0.5, 0.58, 0.05, "piano", h)
-    for dx, dy in ((0.8, 0.5), (0.8, -0.5), (-0.7, 0.0)):
-        m.box((p[0] + dx * c - dy * s, p[1] + dx * s + dy * c, 0.39), 0.05, 0.05, 0.39, "piano", h)
-    m.box((p[0] - 1.15 * c, p[1] - 1.15 * s, 0.45), 0.2, 0.3, 0.02, "black", h)    # stool
+
+    def at(dx, dy, z):                                                    # piano metres -> world
+        return (p[0] + dx * c - dy * s, p[1] + dx * s + dy * c, z)
+
+    def piece(dx, dy, z, hx, hy, hz, material):                           # box in piano metres
+        m.box(at(dx, dy, z), hx, hy, hz, material, h)
+
+    _prism(m, [at(x, y, 0) for x, y in PIANO_OUTLINE], PIANO_CASE[0], PIANO_CASE[1], "piano")
+    # open lid: hinged along the straight side, the curved side lifted by PIANO_LID_DEG
+    lift = math.radians(PIANO_LID_DEG)
+    lid = [(PIANO_LID_FROM_X, 0.7)] + [pt for pt in PIANO_OUTLINE if pt[0] > PIANO_LID_FROM_X] + [(PIANO_LID_FROM_X, -0.7)]
+    under, over = [], []
+    for x, y in lid:
+        d = 0.7 - y
+        under.append(at(x, 0.7 - d * math.cos(lift), PIANO_CASE[1] + d * math.sin(lift)))
+        # 2.5 cm thick, along the lid's normal (0, sin, cos)
+        over.append(at(x, 0.7 - d * math.cos(lift) + 0.025 * math.sin(lift), PIANO_CASE[1] + d * math.sin(lift) + 0.025 * math.cos(lift)))
+    _slab(m, under, over, "piano")
+    # lid stick from the rim on the curved side up to the lid
+    d = 0.7 - (-0.2)
+    m.beam(at(0.35, -0.2, PIANO_CASE[1]), at(0.35, 0.7 - d * math.cos(lift), PIANO_CASE[1] + d * math.sin(lift)),
+           0.025, 0.025, "piano")
+    # keyboard: white key bed, 36 black keys in groups of two and three, black cheeks at both ends
+    piece(-1.12, 0.0, 0.72, 0.1, 0.64, 0.03, "table")                      # in front of the case
+    white = 1.28 / 52
+    for k in range(51):
+        if k % 7 in (0, 1, 3, 4, 5):
+            piece(-1.08, -0.64 + (k + 1) * white, 0.765, 0.06, 0.0065, 0.015, "piano")
+    for side in (-1, 1):
+        piece(-1.12, side * 0.67, 0.75, 0.1, 0.03, 0.06, "piano")
+    piece(-1.12, 0.0, 0.66, 0.1, 0.7, 0.03, "piano")                        # rail under the keys
+    piece(-0.72, 0.0, 1.12, 0.015, 0.34, 0.13, "piano")                     # music stand
+    # three tapered legs, pedal lyre with three pedals
+    for dx, dy in ((-0.82, 0.55), (-0.82, -0.55), (0.78, 0.45)):
+        m.cylinder(at(dx, dy, 0.0), 0.04, PIANO_CASE[0], "piano", sides=10, top_radius=0.07)
+    piece(-0.7, 0.0, 0.33, 0.03, 0.09, 0.29, "piano")
+    for dy in (-0.06, 0.0, 0.06):
+        piece(-0.78, dy, 0.06, 0.06, 0.012, 0.008, "rail")
+    # bench in front of the keys
+    piece(-1.7, 0.0, 0.48, 0.18, 0.38, 0.04, "piano")
+    for dx in (-0.14, 0.14):
+        for dy in (-0.33, 0.33):
+            piece(-1.7 + dx, dy, 0.22, 0.025, 0.025, 0.22, "piano")
+
+
+def _prism(m, outline, z0, z1, material):
+    """Solid with a flat outline (world points, any shape) from height z0 to z1."""
+    bottom = [(x, y, z0) for x, y, _ in outline]
+    top = [(x, y, z1) for x, y, _ in outline]
+    _slab(m, bottom, top, material)
+
+
+def _slab(m, lower, upper, material):
+    """Closes two matching outlines (same number of points) into a solid: both faces plus the sides."""
+    n = len(lower)
+    cx = sum(q[0] for q in lower) / n
+    cy = sum(q[1] for q in lower) / n
+    down = Vector(lower[0]) - Vector(upper[0])
+    m.face(lower, material, tuple(down))
+    m.face(upper, material, tuple(-down))
+    for i in range(n):
+        j = (i + 1) % n
+        out = ((lower[i][0] + lower[j][0]) / 2 - cx, (lower[i][1] + lower[j][1]) / 2 - cy, 0)
+        m.face([lower[i], lower[j], upper[j], upper[i]], material, out)
 
 
 def desk(m, f, u, o, length=6.0, depth=1.2):
