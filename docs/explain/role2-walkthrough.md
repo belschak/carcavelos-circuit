@@ -25,7 +25,7 @@ The line is built on first use (not in `Awake`), so it does not matter which scr
 
 **Limits.** Distances are flat (x/z): a bridge over another road would confuse the closest-point search (our route has
 none). No road points = `LapLength` 0, and RaceFlow quietly falls back to its rougher line through the checkpoints.
-The race scene `Track_CampusWorld` belongs to Luc, so his `CampusWorldBuilder` adds the component (request Q19).
+The race scene `Track_CampusWorld` belongs to Luc, so his `CampusWorldBuilder` adds the component (request Q20).
 
 **Tests.** `Tests/EditMode/RacingLineBuilderTests.cs`: start point first, order kept, reversed line turned round,
 no direction = order kept, duplicates removed, corners kept while thinning, no gap above spacing + 1 point,
