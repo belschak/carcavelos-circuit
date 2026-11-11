@@ -30,6 +30,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | T4 | `Checkpoint`, `SpawnPoint`, respawn points, `TrackInfo` | Tue 10 | done (Noah, #48) |
 | T5 | `RaceRules` (plain C#) + Edit Mode tests: order, wrong way, duplicate finish, missed checkpoint | Wed 11 | done (Noah, #47) |
 | T6 | Lap time 35-60 s check with the real kart; adjust route | Fri 13 | todo |
+| T7 | Low white fence (posts + two flat boards) along both road edges of the campus world `Track_CampusWorld`, none in the tunnel or at the terrace jump; prefab `Track/Prefabs/WhiteGuardrails.prefab` built by `WhiteGuardrailBuilder` from Role 3's `track.json` | Fri 13 | in review (Noah, PR #63) |
 
 ## Role 3: Kart, visuals + web release (Luc)
 | ID | Task | Due | Status |
@@ -70,7 +71,7 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 ### Role 2: Noah
 | ID | Task | Due | Status |
 |---|---|---|---|
-| T7 | Barriers / guardrails along the road (your draft #63) so karts cannot fall off or cut corners | Fri 13 | claimed (Noah, #63) |
+| T7 | Barriers / guardrails along the road (your draft #63) so karts cannot fall off or cut corners | Fri 13 | in review (Noah, #63) |
 | T8 | **`TrackProgress` implements `ITrackProgress`** on the `TrackInfo` root: racing line in driving order (start line first), `DistanceAlongLap`, `PointAt`, `DirectionAt`. May wrap `Shared/TrackPolyline`. Positions, minimap and bots read it | Wed 11 | todo |
 | T9 | Realistic main building inside: atrium, KPMG gallery, staircase (from your help PRs #44/#45), made by your own builder under `Track/` as a prefab; Luc places it in the campus world (request Q18) | Tue 17 | todo |
 | T10 | Piano in the atrium + piano sounds when a kart drives past or hits it (clip + script in your folder, CC0 or own recording, listed in `THIRD_PARTY.md`) | Tue 17 | todo |
@@ -124,3 +125,4 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 | Q15 | 4 -> 1 | Item boxes (R7) give their boosts through the new optional contract `Shared/IKartBoost` (`AddBoost(seconds, speedMultiplier)`, `docs/interfaces.md`). Please let `KartController` implement it: help PR `help/role1-Q15-item-boost-david` (about 15 lines: boost time is added, the higher multiplier wins, `ResetTo` and the end of the boost clear it). You review and merge, or change it however you like | in review: help PR #61, Alessandro merges |
 | Q17 | 3 -> 4 | Bots in the race (V10 needs R8): RaceFlow switches `InputEnabled` for every registered `IRacer` and puts them on grid slots on GO and Retry; bots only register and drive | done (#69: RaceFlow handles every registered IRacer) |
 | Q18 | 2 -> 3 | Place Noah's prefabs (T9 atrium/gallery/staircase, T10 piano, T11 volleyball) in `CampusWorldBuilder`, one line each; Noah sends the prefab paths | open |
+| Q19 | 2 -> 3 | Guardrails (T7): `Track/Prefabs/WhiteGuardrails.prefab` sits at 0/0/0 and lines up with the road from `track.json`. Please add it to `Track_CampusWorld` (one line in `CampusWorldBuilder.BuildScene`: `PrefabUtility.InstantiatePrefab` of that prefab under the root, if it exists), and switch off your own railings along the road (`Prop_RailingSegment` near the road, the hall's track railing) so there is only one kind of fence on the whole map | open |
