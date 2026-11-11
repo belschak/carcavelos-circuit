@@ -1,3 +1,4 @@
+using System;
 using UnityEngine.UIElements;
 
 namespace CarcavelosCircuit.RaceFlow
@@ -10,10 +11,12 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly VisualElement[] pages;
         private readonly VisualElement[] dots;
         private readonly VisualElement nextButton;
+        private readonly Action pageTurned; // HudMenus plays the page-turn sound (audit 10)
         private int page;
 
-        public CreditsPanel(VisualElement card)
+        public CreditsPanel(VisualElement card, Action pageTurned)
         {
+            this.pageTurned = pageTurned;
             pages = new VisualElement[] { card.Q<VisualElement>("credits-page-1"), card.Q<VisualElement>("credits-page-2") };
             dots = new VisualElement[] { card.Q<VisualElement>("credits-dot-1"), card.Q<VisualElement>("credits-dot-2") };
             nextButton = card.Q<VisualElement>("credits-next");
@@ -21,7 +24,7 @@ namespace CarcavelosCircuit.RaceFlow
             for (int i = 0; i < dots.Length; i++)
             {
                 int target = i; // a copy per dot, so each dot opens its own page
-                dots[i].RegisterCallback<ClickEvent>(evt => ShowPage(target));
+                dots[i].RegisterCallback<ClickEvent>(evt => GoTo(target));
             }
             ShowPage(0);
         }
@@ -56,7 +59,19 @@ namespace CarcavelosCircuit.RaceFlow
 
         private void Turn(int direction)
         {
-            ShowPage(MenuNavigation.Wrap(page, direction, pages.Length));
+            GoTo(MenuNavigation.Wrap(page, direction, pages.Length));
+        }
+
+        // A page turn the player asked for: show it and let HudMenus play the sound. A click on the dot of the
+        // page that is already shown changes nothing, so it makes no sound either.
+        private void GoTo(int index)
+        {
+            if (index == page)
+            {
+                return;
+            }
+            ShowPage(index);
+            pageTurned();
         }
 
         // The shown page fades in (USS "is-shown"), the dot of that page turns sand.
