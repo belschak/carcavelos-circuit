@@ -30,7 +30,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | T4 | `Checkpoint`, `SpawnPoint`, respawn points, `TrackInfo` | Tue 10 | done (Noah, #48) |
 | T5 | `RaceRules` (plain C#) + Edit Mode tests: order, wrong way, duplicate finish, missed checkpoint | Wed 11 | done (Noah, #47) |
 | T6 | Lap time 35-60 s check with the real kart; adjust route | Fri 13 | todo |
-| T7 | Low white fence (posts + two flat boards) along both road edges of the campus world `Track_CampusWorld`, none in the tunnel or at the terrace jump; prefab `Track/Prefabs/WhiteGuardrails.prefab` built by `WhiteGuardrailBuilder` from Role 3's `track.json` | Fri 13 | in review (Noah, PR #63) |
+| T7 | Low white fence (posts + two flat boards) along both road edges of the campus world `Track_CampusWorld`, none in the tunnel or at the terrace jump; prefab `Track/Prefabs/WhiteGuardrails.prefab` built by `WhiteGuardrailBuilder` from Role 3's `track.json` | Fri 13 | done (Noah, PR #63) |
 
 ## Role 3: Kart, visuals + web release (Luc)
 | ID | Task | Due | Status |
