@@ -11,8 +11,11 @@
 //    third, stretched scale, and a rougher normal. V10d: the shelves' steep faces (geometry normal) are darker and a
 //    little greyer with thin layer lines by height, the flat tops lighter, and rock near sea level wet and dark.
 // Lit like URP Lit without the specular term (except the wet sand's sheen): main light with received shadows, sky
-// light, fog, screen-space ambient occlusion when the renderer has it. Cost per pixel: 6 texture reads, no loops,
-// no branches.
+// light, fog, screen-space ambient occlusion when the renderer has it.
+// V17 "AAA" pass: (1) the lawn glows warm when you look towards the low sun (light through the blades), (2) the
+// sky light reaches less into the gaps between blades and sand grains (micro shadows from the detail map, so the
+// shade side has texture too), (3) dry ground picks up a little sky at very flat angles (sheen far down the road).
+// Cost per pixel: 6 texture reads, no loops, no branches (the V17 terms are arithmetic only).
 // World-space detail UVs, so static batching changes nothing. Made by CampusWorldBuilder.BuildMaterials from the
 // "ground" block in Data/materials.json; if this shader is missing, the ground stays URP Lit with the colour map.
 Shader "CarcavelosCircuit/Ground"
@@ -34,6 +37,8 @@ Shader "CarcavelosCircuit/Ground"
         _RockFace ("Rock (linear): top brightness, face brightness, face layers per m, face greying", Vector) = (1.1, 0.45, 3.2, 0.3)
         _RockWet ("Wet rock: fully wet below height m, dry above m, -, -", Vector) = (0.35, 1.3, 0, 0)
         _RockWetTint ("Wet rock (linear multiplier rgb)", Vector) = (0.45, 0.46, 0.4, 0)
+        _GrassGlow ("Lawn against the sun (light through the blades, linear rgb)", Color) = (0.55, 0.62, 0.12, 1)
+        _Micro ("V17: lawn glow strength, micro shadow strength, flat-angle sky sheen, -", Vector) = (0.45, 0.55, 0.12, 0)
     }
     SubShader
     {
@@ -42,7 +47,7 @@ Shader "CarcavelosCircuit/Ground"
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         CBUFFER_START(UnityPerMaterial)
-            half4 _BaseColor, _WetColor;
+            half4 _BaseColor, _WetColor, _GrassGlow, _Micro;
             float4 _Detail, _StrataTile;
             half4 _Grass, _Sand, _WetSheen, _Rock, _RockFace, _RockWet, _RockWetTint;
         CBUFFER_END
@@ -155,7 +160,17 @@ Shader "CarcavelosCircuit/Ground"
                 half3 Hv = normalize(sun.direction + V);
                 half3 gloss = sun.color * (sun.shadowAttenuation * pow(saturate(dot(N, Hv)), _WetSheen.x) * _WetSheen.y);
                 half grazing = pow(1.0 - saturate(dot(N, V)), 4.0) * _WetSheen.z;
-                half3 color = albedo * (sky + direct);
+                // V17: micro shadows: the sky light reaches less into the dark parts of the detail (gaps between blades,
+                // ripple troughs, rock grain); up close only, so far away nothing tiles
+                half cavity = mask.r * fine.r + mask.g * (fine.b * 0.5 + fine.a * 0.5) + rock * fine.a;
+                cavity = lerp(1.0, saturate(0.55 + cavity), _Micro.y * fade);
+                half3 color = albedo * (sky * cavity + direct);
+                // V17: lawn against the low sun: light through the blades, only where the sun reaches
+                half againstSun = pow(saturate(dot(-V, sun.direction) + 0.15), 4.0);
+                color += _GrassGlow.rgb * sun.color * (mask.r * (1.0 - rock) * againstSun * sun.shadowAttenuation * _Micro.x * (0.6 + 0.8 * fine.r));
+                // V17: very flat angles (far down the road) pick up a little sky, like every real surface does
+                half flat = pow(1.0 - saturate(dot(N, V)), 5.0) * _Micro.z;
+                color = lerp(color, SampleSH(reflect(-V, N)), flat);
                 color = lerp(color, SampleSH(reflect(-V, N)), grazing * sheen) + gloss * sheen;
                 return half4(MixFog(color, i.fogFactor), 1.0);
             }

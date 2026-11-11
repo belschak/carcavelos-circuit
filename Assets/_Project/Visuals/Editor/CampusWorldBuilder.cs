@@ -37,6 +37,10 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string LookProfile = SettingsDir + "/CampusWorld_Look.asset";
         // Golden hour (design pass 2026-11-09): low warm sun from the west-south-west. Must match make_sky.py.
         private const float SunAzimuth = 245f, SunElevation = 19f;
+        // V17: warm sea haze = the painted sky's colour just above the horizon (sky_panorama.png, about #E0D3BC),
+        // a little darker so far walls do not glow. 0.0008 per metre: 21 % at 300 m, 55 % at 1 km.
+        private static readonly Color HazeColour = new Color(0.86f, 0.81f, 0.73f);
+        private const float HazeDensity = 0.0008f;
         private const string ScenePath = "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity";
         private const string WorldPrefabPath = Root + "/CampusWorld.prefab";
         private const string WorldRootName = "CampusWorld";                  // root of the prefab and of its instance
@@ -719,7 +723,8 @@ namespace CarcavelosCircuit.Visuals.Editor
 
         // Golden hour (design reference, 2026-11-09): a low warm sun from the west-south-west, long soft shadows,
         // cool blue fill, a painted sky with cumulus clouds (also the reflection source), and a gentle warm grade.
-        // No fog, no bake. Sun and look volume are part of the prefab. Sky light, sky and reflections are scene
+        // V17 "AAA" pass: a stronger sun against a darker, cooler fill (more contrast between sun and shade, like a
+        // real late afternoon), a filmic tone curve, and a light warm sea haze for depth. No bake. Sun and look volume are part of the prefab. Sky light, sky and reflections are scene
         // settings, so CampusWorldLighting (on the prefab root) writes them into whichever scene holds the prefab while
         // that scene is the active one (the race makes the track scene active).
         private static void AddSunAndSky(GameObject root)
@@ -728,10 +733,12 @@ namespace CarcavelosCircuit.Visuals.Editor
             sunObject.transform.SetParent(root.transform, false);
             Light sun = sunObject.AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.intensity = 1.25f;
-            sun.color = new Color(1f, 0.878f, 0.71f);                                // #FFE0B5
+            sun.intensity = 1.9f;                                                    // V17: was 1.25; the filmic curve rolls it off
+            sun.color = new Color(1f, 0.855f, 0.67f);                                // #FFDAAB, a touch warmer than V8's #FFE0B5
             sun.shadows = LightShadows.Soft;
-            sun.shadowStrength = 0.85f;                                              // shade stays readable
+            sun.shadowStrength = 0.92f;                                              // shade stays readable (the fill lights it)
+            sun.shadowBias = 0.04f;                                                  // V17: no shadow acne on the long, flat paving
+            sun.shadowNormalBias = 0.35f;
             float az = SunAzimuth * Mathf.Deg2Rad, el = SunElevation * Mathf.Deg2Rad;
             var towardsSun = new Vector3(Mathf.Sin(az) * Mathf.Cos(el), Mathf.Sin(el), Mathf.Cos(az) * Mathf.Cos(el));
             sunObject.transform.rotation = Quaternion.LookRotation(-towardsSun);
@@ -761,9 +768,13 @@ namespace CarcavelosCircuit.Visuals.Editor
             CampusWorldLighting lighting = root.AddComponent<CampusWorldLighting>();
             var so = new SerializedObject(lighting);
             so.FindProperty("sun").objectReferenceValue = sun;
-            so.FindProperty("skyColour").colorValue = new Color(0.70f, 0.76f, 0.87f);       // #B3C2DE cool fill
-            so.FindProperty("horizonColour").colorValue = new Color(0.66f, 0.66f, 0.66f);
-            so.FindProperty("groundColour").colorValue = new Color(0.62f, 0.55f, 0.46f);    // warm bounce from the paving
+            // V17: the fill is darker than V8's (#B3C2DE / grey / #9E8C75), so shade reads as shade and the sun as sun;
+            // only a little bluer (bluer still turned the tunnel and the hall cold); the ground bounce stays warm.
+            so.FindProperty("skyColour").colorValue = new Color(0.56f, 0.62f, 0.76f);       // #8F9EC2 sky fill
+            so.FindProperty("horizonColour").colorValue = new Color(0.60f, 0.59f, 0.57f);
+            so.FindProperty("groundColour").colorValue = new Color(0.56f, 0.46f, 0.35f);    // warm bounce from the paving
+            so.FindProperty("hazeColour").colorValue = HazeColour;                          // the sky's horizon colour
+            so.FindProperty("hazeDensity").floatValue = HazeDensity;
             so.FindProperty("skybox").objectReferenceValue = skybox;
             so.FindProperty("reflection").objectReferenceValue = cube;                     // glass and gloss reflect the sky
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -776,8 +787,13 @@ namespace CarcavelosCircuit.Visuals.Editor
             volume.sharedProfile = BuildLookProfile();
         }
 
-        // Tonemapping + a gentle grade, made by code so every laptop gets the same look. Bloom stays in Role 4's
+        // Tonemapping + a grade, made by code so every laptop gets the same look. Bloom stays in Role 4's
         // RaceCameraVolume (Main.unity); the overrides do not overlap.
+        // V17: ACES (the filmic curve of film and most console games) instead of Neutral: highlights roll off softly
+        // instead of clipping, mid-tones get more contrast. ACES darkens the mid-tones, so the exposure goes up.
+        // Shadows a little cooler and highlights a little warmer (golden hour), blue and orange stay clean.
+        private const float LookExposure = 0.45f, LookContrast = 12f, LookSaturation = 6f;
+
         private static VolumeProfile BuildLookProfile()
         {
             EnsureFolder(SettingsDir);
@@ -788,13 +804,16 @@ namespace CarcavelosCircuit.Visuals.Editor
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
             AssetDatabase.CreateAsset(profile, LookProfile);
             Tonemapping tone = profile.Add<Tonemapping>(true);
-            tone.mode.Override(TonemappingMode.Neutral);
+            tone.mode.Override(TonemappingMode.ACES);
             ColorAdjustments grade = profile.Add<ColorAdjustments>(true);
-            grade.postExposure.Override(0.1f);
-            grade.contrast.Override(8f);
-            grade.saturation.Override(12f);
+            grade.postExposure.Override(LookExposure);
+            grade.contrast.Override(LookContrast);
+            grade.saturation.Override(LookSaturation);
             WhiteBalance warm = profile.Add<WhiteBalance>(true);
-            warm.temperature.Override(4f);
+            warm.temperature.Override(6f);
+            ShadowsMidtonesHighlights split = profile.Add<ShadowsMidtonesHighlights>(true);
+            split.shadows.Override(new Vector4(0.98f, 0.99f, 1.03f, -0.02f));       // a hint cooler, slightly deeper shade
+            split.highlights.Override(new Vector4(1.04f, 1.0f, 0.95f, 0f));          // warm sunlit tops
             foreach (VolumeComponent c in profile.components)
             {
                 c.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
@@ -979,10 +998,11 @@ namespace CarcavelosCircuit.Visuals.Editor
 
             SceneManager.SetActiveScene(holder);
             RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.fog = true;
+            RenderSettings.fog = false;
             var second = (GameObject)PrefabUtility.InstantiatePrefab(asset, holder);
             bool painted = AssetDatabase.LoadAssetAtPath<Cubemap>(SkyTexture) != null;
-            bool applied = RenderSettings.ambientMode == AmbientMode.Trilight && !RenderSettings.fog &&
+            bool applied = RenderSettings.ambientMode == AmbientMode.Trilight && RenderSettings.fog &&
+                           Mathf.Approximately(RenderSettings.fogDensity, HazeDensity) &&
                            RenderSettings.sun != null && RenderSettings.sun.transform.IsChildOf(second.transform) &&
                            (!painted || (RenderSettings.skybox != null && RenderSettings.skybox.name == "Sky_Painted" &&
                                          RenderSettings.defaultReflectionMode == DefaultReflectionMode.Custom &&

@@ -7,6 +7,9 @@
 // sway is the same whether the trees are drawn one by one or merged by static batching (the dressing is marked
 // static, and a static batch has no object space and no per-tree data left). Neighbouring trees are out of step.
 // Shadows move with the leaves (ShadowCaster uses the same displacement and alpha clip).
+// V17 "AAA" pass: soft "wrapped" sun light (leaves are thin, the light wraps round a canopy instead of cutting off
+// hard), a warm yellow-green glow when you look at a tree against the low sun (light through the leaves), and the
+// inside and the lower part of a crown darker than its sunny top (the sway weights double as a height in the tree).
 // Cost: one texture read per pixel, a handful of sines per vertex, no specular term (cheaper than URP Lit).
 // Made by CampusWorldBuilder.BuildMaterials from the "wind" block in Data/materials.json; if this shader is
 // missing, the trees stay URP Lit and stand still.
@@ -24,6 +27,8 @@ Shader "CarcavelosCircuit/Foliage"
         _BackShade ("Back faces: brightness", Range(0, 1)) = 0.78
         [Toggle] _FlipBack ("Back faces: normal turned over (leaves); off for upright grass cards", Float) = 1
         _Shrink ("Grass tufts sink away: from m, to m, 1 / (to - from) or 0 = off, unused", Vector) = (0, 0, 0, 0)
+        _Translucency ("V17 light through the leaves (linear rgb)", Color) = (0.62, 0.66, 0.16, 1)
+        _Leaf ("V17: wrap 0..1, glow strength, crown base darkness, -", Vector) = (0.4, 0.9, 0.4, 0)
     }
     SubShader
     {
@@ -33,7 +38,7 @@ Shader "CarcavelosCircuit/Foliage"
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         CBUFFER_START(UnityPerMaterial)
-            half4 _BaseColor;
+            half4 _BaseColor, _Translucency, _Leaf;
             float4 _Wind, _WindSpeed, _Shrink;
             half _Cutoff, _BackShade, _AlphaClip, _Cull, _FlipBack;
         CBUFFER_END
@@ -103,6 +108,7 @@ Shader "CarcavelosCircuit/Foliage"
                 float2 uv : TEXCOORD2;
                 half fogFactor : TEXCOORD3;
                 half3 tint : TEXCOORD4;
+                half height : TEXCOORD5;          // V17: 0 at the trunk base / blade root, 1 at the top or a frond tip
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -116,6 +122,7 @@ Shader "CarcavelosCircuit/Foliage"
                 o.normalWS = TransformObjectToWorldNormal(v.normalOS);
                 o.uv = v.uv;
                 o.tint = v.color.rgb;
+                o.height = max(v.sway.x, v.sway.y);
                 o.fogFactor = ComputeFogFactor(o.positionCS.z);
                 return o;
             }
@@ -136,10 +143,16 @@ Shader "CarcavelosCircuit/Foliage"
                 float4 shadowCoord = TransformWorldToShadowCoord(i.positionWS);
                 #endif
                 Light sun = GetMainLight(shadowCoord, i.positionWS, half4(1, 1, 1, 1));
-                half lit = saturate(dot(N, sun.direction));
+                // V17: wrapped light: thin leaves stay lit a little past the terminator, so a crown is round, not cut
+                half lit = saturate((dot(N, sun.direction) + _Leaf.x) / (1.0 + _Leaf.x));
                 half through = saturate(dot(-N, sun.direction)) * 0.5;            // a leaf lit from behind glows a little
                 half3 direct = sun.color * (sun.shadowAttenuation * lerp(lit, max(lit, through), 1.0 - front));
-                half3 sky = SampleSH(N);
+                // V17: looking at the tree against the low sun: warm light shines through the leaves
+                half3 V = normalize(_WorldSpaceCameraPos - i.positionWS);
+                half againstSun = pow(saturate(dot(-V, sun.direction)), 4.0);
+                direct += _Translucency.rgb * sun.color * (againstSun * sun.shadowAttenuation * _Leaf.y * (0.4 + 0.6 * i.height));
+                // V17: less sky light low in the crown and near the trunk (the crown shades itself)
+                half3 sky = SampleSH(N) * lerp(1.0 - _Leaf.z, 1.0, saturate(i.height * 1.4));
                 #if defined(_SCREEN_SPACE_OCCLUSION)
                 AmbientOcclusionFactor ao = GetScreenSpaceAmbientOcclusion(GetNormalizedScreenSpaceUV(i.positionCS));
                 direct *= ao.directAmbientOcclusion;
