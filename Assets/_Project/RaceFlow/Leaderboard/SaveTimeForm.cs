@@ -8,8 +8,12 @@ namespace CarcavelosCircuit.RaceFlow
     // slot; LeaderboardHud decides what happens (checks the name, calls the service). Look: UI/Leaderboard.uss.
     // The name field is a UI Toolkit TextField: a click (or a tap, which the Web page turns into a click) puts the
     // cursor in it, and in a phone browser Unity then opens the phone's keyboard. Tab also jumps into it.
+    // Look (task R15, art direction 3.8): a tall cream field with ink letters in the display face, a "7/16" counter,
+    // an orange focus ring that pulses while you type, SAVE as the orange plate button, problems as a coral chip.
     public class SaveTimeForm
     {
+        private const int PulseMs = 450; // the focus ring dims and comes back every 0.45 s while you type
+
         // SAVE was clicked (Enter while typing is read by LeaderboardHud, which then does the same).
         public event Action SaveRequested;
 
@@ -19,6 +23,7 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly Label timeLabel;
         private readonly TextField field;
         private readonly Label placeholder;
+        private readonly Label counter;
         private readonly Button saveButton;
         private readonly VisualElement keysIdle;
         private readonly VisualElement keysTyping;
@@ -48,10 +53,13 @@ namespace CarcavelosCircuit.RaceFlow
             field.isDelayed = false;
             wrap.Add(field);
             placeholder = HudBuild.Text("YOUR NAME", "lb-placeholder f-ui", wrap); // TextField has no placeholder of its own we can style
+            counter = HudBuild.Text(CountLine(""), "lb-count f-num", wrap);
             saveButton = new Button(OnSaveClicked);
             saveButton.text = "SAVE";
             saveButton.AddToClassList("lb-save");
-            saveButton.AddToClassList("f-ui");
+            saveButton.AddToClassList("plate");
+            saveButton.AddToClassList("plate--orange");
+            saveButton.AddToClassList("f-display");
             saveButton.focusable = false; // after a click it must not keep focus, or Space/Enter would press it again
             row.Add(saveButton);
 
@@ -68,6 +76,7 @@ namespace CarcavelosCircuit.RaceFlow
             resultText = HudBuild.Text("", "lb-result-text f-ui", resultBox);
 
             field.RegisterValueChangedCallback(evt => OnTyped());
+            field.schedule.Execute(PulseRing).Every(PulseMs); // only changes something while the field has the cursor
             clickable = true;
             SetClickable(false); // clicks only while the form is open on the results card
             Hide();
@@ -146,6 +155,14 @@ namespace CarcavelosCircuit.RaceFlow
                 return reply.Source == LeaderboardSource.Online ? "OUTSIDE THE ONLINE TOP 10" : "OUTSIDE THE TOP 10 ON THIS DEVICE";
             }
             return reply.Source == LeaderboardSource.Online ? "ON THE ONLINE LEADERBOARD" : "";
+        }
+
+        // "7/16": letters typed out of the most a name may have (PlayerNameRules.MaxLength). Spaces at the ends are
+        // not counted (they are removed when saving). Public and static for an Edit Mode test.
+        public static string CountLine(string typed)
+        {
+            int length = typed == null ? 0 : typed.Trim().Length;
+            return length + "/" + PlayerNameRules.MaxLength;
         }
 
         // Phones in a Web build (WebPage.UsesNamePrompt): a tap on the field opens the browser's own text box instead
@@ -240,6 +257,13 @@ namespace CarcavelosCircuit.RaceFlow
             Refresh();
         }
 
+        // While the cursor is in the field the orange ring dims and comes back (a gentle "type here"); otherwise it rests.
+        private void PulseRing()
+        {
+            bool typing = State == SaveFormState.Editing && HasFocus();
+            field.EnableInClassList("lb-name-field--pulse", typing && !field.ClassListContains("lb-name-field--pulse"));
+        }
+
         private void Refresh()
         {
             root.EnableInClassList("lb-form--hidden", State == SaveFormState.Hidden);
@@ -247,6 +271,8 @@ namespace CarcavelosCircuit.RaceFlow
             editBox.EnableInClassList("lb-form-edit--off", State == SaveFormState.Saved);
             resultBox.EnableInClassList("lb-form-result--on", State == SaveFormState.Saved);
             placeholder.EnableInClassList("lb-placeholder--off", field.value.Length > 0);
+            counter.text = CountLine(field.value);
+            counter.EnableInClassList("lb-count--full", field.value.Trim().Length >= PlayerNameRules.MaxLength);
         }
 
         private void ShowMessage(string text, bool isError)

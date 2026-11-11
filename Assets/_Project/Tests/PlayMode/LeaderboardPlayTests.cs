@@ -140,7 +140,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
             VisualElement root = leaderboard.GetComponent<UIDocument>().rootVisualElement;
             Assert.AreEqual(RaceState.Ready, race.State);
             Assert.AreEqual(10, root.Q<VisualElement>("title-letters").childCount, "C-A-R-C-A-V-E-L-O-S, one label each");
-            Assert.IsTrue(HasLabel(root, "ts-slogan", "CARCAVELOS ROUND 3"), "the team's slogan is on the start screen");
+            Assert.IsTrue(HasLabel(root, "ts-slogan", "ROUND 3"), "the team's round stamp is beside CIRCUIT (task R15: the name is not repeated)");
             Assert.AreEqual(10, root.Q<VisualElement>("start-board-host").Query<VisualElement>(className: "lb-row").ToList().Count, "ten rows on the start board");
             yield return null;
         }

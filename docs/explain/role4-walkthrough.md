@@ -601,6 +601,27 @@ Files (all Role 4): plain C# rules `RaceFlow/RacerGrid.cs` (slots), `LapProgress
 - Question: "Why does Enter not retry while you type?" Answer: "`RaceKeys.TextEntryActive`: while the name field has the cursor, every game key reads as not pressed. It stays on for one frame after the Enter that saves, because RaceManager reads Enter later in the same frame."
 - Question: "What if the server sends HTML or a giant answer?" Answer: "`TryParseRows` only accepts a JSON list under 64 KB; anything else counts as offline. Names are shown with rich text off, so even a tag could never become formatting."
 
+### 3.36 Arcade UI restyle "Azulejo Arcade" (task R15, 2026-11-11)
+
+**What.** Same screens, same behaviour, new look: one chunky display face (Unbounded Black) with thick navy outlines and a hard shadow, one condensed face for numbers and UI (Barlow Condensed ExtraBold), coloured plates with a cream stroke and a hard navy shadow instead of the grey "dark mode" cards, a podium on the leaderboard, the results card in "celebrate first" order, and short overshoot motion. Art direction: the R15 spec (Portuguese seaside campus identity; no Nintendo look, names or layouts).
+
+**Files.**
+- `UI/HudArt.uss`: the ONE place for colour tokens (`:root`), the two fonts (`.f-display`, `.f-num`, `.f-ui`) and the plate classes (`.plate`, `.plate--blue`, `.plate--orange`, `.chip`, `.shield`, `.item-frame`). Loaded by the theme `UI/RaceHudTheme.tss` (`@import`), so it reaches every UI document on the HUD's PanelSettings: RaceHud.uxml and the parts built in code (`ItemSlotHud`, `PositionsHud`). `UI/HudColors.cs` has the same values for C#.
+- `UI/PlateArt.cs` (plain C#, tested) draws the plate pictures pixel by pixel: a rounded rectangle (distance to the edge = soft edge), a gradient, a cream stroke, a bright "bevel" line and a hard shadow. `UI/PlateLook.cs` = what one plate looks like.
+- `Editor/HudArtBuilder.cs` (menu Carcavelos > Build HUD Art) writes those PNGs to `UI/Art/` and makes the two SDF font assets from the TTFs in `UI/Fonts/` (each with its `OFL.txt`).
+- Screens: `RaceHud.uxml` (title: no lattice, stripes or kicker; CIRCUIT on a tilted orange plate with a small ROUND 3 stamp; results: FINISH, medal, time, delta chip, stats, buttons), `UI/StartScreen.uss`, `UI/RaceHud.uss`, `UI/Leaderboard.uss`; `Leaderboard/LeaderboardPanel.cs` (podium shields, avatars, alternating rows, YOU tag, your row slides in last and punches), `Leaderboard/LeaderboardAvatar.cs` (name -> colour), `Leaderboard/SaveTimeForm.cs` (cream field in the display face, "7/16" counter, pulsing orange focus ring, coral problem chip), `ResultsCopy.cs` (results words), `UI/PositionsHud.cs` (position now bottom centre on a plate, coloured by place, minimap on a see-through plate with a cream road), `UI/ItemSlotHud.cs` (azulejo tile frame), `HudEasing.OutBack` (C# punches with the same overshoot as USS `ease-out-back`).
+
+**Why this way.**
+- USS in Unity 6.3 has no `box-shadow`, no gradients and no `@keyframes`. A plate picture shown 9-sliced (`-unity-slice-*`: the corners keep their size, the middle stretches) gives gradient, stroke and shadow on any size with no extra elements. Drawn at twice the size and halved with `-unity-slice-scale`, so it stays sharp on a phone.
+- Text outlines and hard text shadows only work with SDF font assets, and only as thick as the padding round each letter in the atlas (9 px here). The atlases are **static** (all letters a name may use are baked in once), so the `.asset` files never change while playing.
+- Fewer, bigger words: no text under 15 px except the credits, and the 13 px "dashboard" labels are gone. The title legend shows only DRIVE and DRIFT; R, Enter and P are shown at GO.
+- Results copy (`ResultsCopy`, tested): a slower lap shows a small coral chip "+0.504 s OFF YOUR BEST" (a faster one a mint "NEW BEST!"), never a full-width red banner; the top medal says "HIGHEST MEDAL ON THIS TRACK" instead of "beat your own time" right above "slower than your best"; a stat that is 0 shows a dim "-" (a "0" looks broken).
+- Position bottom centre: on a phone both bottom corners are under the thumbs, and our own layout should not copy the well-known "bottom right" of other kart racers.
+
+**Limits / how it could change.** Hover states are scale only (UI Toolkit cannot tint a 9-sliced picture lighter). The plate colours are baked into the PNGs: change `HudArtBuilder` and run it again, then the USS needs nothing. A name with a letter outside Latin-1 shows that letter in Unity's default font inside the display face (top 3 only). No 3D hero kart on the title yet (the map fly-over still runs behind it). New UI-only colours (ink, plate, mint, sun ...) still need Luc's OK as rows in `docs/art-style.md`.
+- Question: "Why are the panels pictures and not CSS?" Answer: "USS has no box-shadow or gradient. One small picture per plate, cut into 9 parts, gives the gradient, the cream stroke and the hard shadow at any size, and our own code draws it (`PlateArt`), so there is no third-party art."
+- Question: "Why two fonts, and are we allowed to ship them?" Answer: "One loud display face for big moments, one condensed face for numbers that must not jitter. Both are SIL Open Font License 1.1: free to use and ship in a game, as long as the licence file goes with them (`OFL.txt` next to each font) and we do not sell the font on its own. They are in THIRD_PARTY.md and on the credits page."
+
 ---
 
 ## 4. Tests

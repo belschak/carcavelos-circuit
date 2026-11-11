@@ -5,9 +5,10 @@ namespace CarcavelosCircuit.RaceFlow
 {
     // The item slot on the HUD (task R7). On the "Items" object in Main.unity, with its own UIDocument on the same
     // PanelSettings as the race HUD, drawn just below it (sorting order -1) so the pause card and menus cover it.
-    // Built in code (no UXML): a rounded tile under the checkpoint panel with the item icon (ItemIcon), a charge
+    // Built in code (no UXML): an azulejo tile (task R15: the "item-frame" picture in UI/HudArt.uss, blue and white
+    // tile border round a navy middle) under the checkpoint panel with the item icon (ItemIcon), a charge
     // badge (only for an item with more than one use; none has that right now) and an "E" key cap. While the slot
-    // rolls the icons spin; when the item is ready the tile pops and its border flashes sand; while you hold an item
+    // rolls the icons spin; when the item is ready the tile pops and flashes sand; while you hold an item
     // it breathes gently. On use the item's name pops under the slot ("ESPRESSO!", "CARCAVELOS WAVE!" ...).
     // Extras: the Wave sends a blue wave across the screen; the Seagull's rings count up ("RING 2/3", "PERFECT
     // DELIVERY!"); while the Dean's List shield is on the screen edge glows gold, and a bump shows "BLOCKED!".
@@ -15,7 +16,7 @@ namespace CarcavelosCircuit.RaceFlow
     [RequireComponent(typeof(UIDocument))]
     public class ItemSlotHud : MonoBehaviour
     {
-        private const float SlotSize = 104f;
+        private const float SlotSize = 112f;
         private const float PopSeconds = 0.35f;
         private const float CalloutSeconds = 0.9f;
         private const float WaveSeconds = 0.6f;
@@ -163,10 +164,10 @@ namespace CarcavelosCircuit.RaceFlow
             badge.style.opacity = showBadge ? 1f : 0f;
             badge.text = "x" + itemSlot.Charges;
 
-            // Empty = a faint outline, rolling = full tile with the spinning icon (slight shake), ready = full + pop.
+            // Empty = a faint tile, rolling = full tile with the spinning icon (slight shake), ready = full + pop.
             float scale = 1f;
             float sincePop = now - readyAt;
-            Color border = HudColors.Blue;
+            Color tint = Color.white; // white = the picture's own colours
             if (itemSlot.IsEmpty)
             {
                 slot.style.opacity = 0.45f;
@@ -180,10 +181,10 @@ namespace CarcavelosCircuit.RaceFlow
                 }
                 else if (sincePop < PopSeconds)
                 {
-                    // 1 -> 1.25 -> 1 with a little overshoot, and the border flashes sand.
+                    // Punch: straight to 1.3, back to 1 with a little overshoot, and the tile flashes sand.
                     float p = sincePop / PopSeconds;
-                    scale = 1f + 0.25f * Mathf.Sin(p * Mathf.PI) * (1f - p * 0.3f);
-                    border = Color.Lerp(HudColors.Sand, HudColors.Blue, p);
+                    scale = Mathf.LerpUnclamped(1.3f, 1f, HudEasing.OutBack(p));
+                    tint = Color.Lerp(HudColors.Sand, Color.white, p);
                 }
                 else
                 {
@@ -191,7 +192,7 @@ namespace CarcavelosCircuit.RaceFlow
                 }
             }
             slot.style.scale = new Scale(new Vector3(scale, scale, 1f));
-            SetBorderColour(slot, border);
+            slot.style.unityBackgroundImageTintColor = tint;
         }
 
         private void UpdateCallout(float now)
@@ -288,7 +289,7 @@ namespace CarcavelosCircuit.RaceFlow
             // Column under the checkpoint panel (that panel is about 72 px tall).
             VisualElement column = new VisualElement();
             column.pickingMode = PickingMode.Ignore;
-            column.style.marginTop = 86f;
+            column.style.marginTop = 94f;
             column.style.marginRight = PositionsHud.MapColumnWidth; // the minimap sits at the right edge beside the slot (task R9)
             column.style.alignItems = Align.FlexEnd; // right edge of the screen: the callout grows to the left, never off screen (phone check 2026-11-10)
             column.style.opacity = 0f;
@@ -299,11 +300,8 @@ namespace CarcavelosCircuit.RaceFlow
             slot.pickingMode = PickingMode.Ignore;
             slot.style.width = SlotSize;
             slot.style.height = SlotSize;
-            slot.style.backgroundColor = new Color(29f / 255f, 29f / 255f, 31f / 255f, 0.82f); // --cc-panel
-            SetRadius(slot, 20f);
-            SetBorderWidth(slot, 4f);
-            slot.style.borderBottomWidth = 7f; // the darker "lip" every HUD tile has
-            SetBorderColour(slot, HudColors.Blue);
+            slot.AddToClassList("item-frame"); // the azulejo tile picture (UI/HudArt.uss), shadow included
+            slot.style.paddingBottom = 6f;     // centre the icon on the tile, not on tile + shadow
             slot.style.alignItems = Align.Center;
             slot.style.justifyContent = Justify.Center;
             column.Add(slot);
@@ -313,7 +311,8 @@ namespace CarcavelosCircuit.RaceFlow
             icon.style.height = 72f;
             slot.Add(icon);
 
-            badge = MakeLabel("x3", 20f, HudColors.Black);
+            badge = MakeLabel("x3", 20f, HudColors.Ink);
+            badge.AddToClassList("f-num");
             badge.style.position = Position.Absolute;
             badge.style.right = -10f;
             badge.style.bottom = -10f;
@@ -326,7 +325,8 @@ namespace CarcavelosCircuit.RaceFlow
             badge.style.opacity = 0f;
             slot.Add(badge);
 
-            Label key = MakeLabel("E", 15f, HudColors.Black);
+            Label key = MakeLabel("E", 17f, HudColors.Ink);
+            key.AddToClassList("f-ui");
             key.style.position = Position.Absolute;
             key.style.left = -10f;
             key.style.bottom = -10f;
@@ -334,14 +334,14 @@ namespace CarcavelosCircuit.RaceFlow
             key.style.height = 26f;
             key.style.unityTextAlign = TextAnchor.MiddleCenter;
             key.style.backgroundColor = HudColors.White;
-            key.style.borderBottomWidth = 3f;
-            key.style.borderBottomColor = HudColors.Asphalt;
+            key.style.borderBottomWidth = 4f;
+            key.style.borderBottomColor = new Color(0.79f, 0.71f, 0.54f, 1f); // the keycap lip (RaceHud.uss .keycap)
             SetRadius(key, 6f);
             slot.Add(key);
 
-            callout = MakeLabel("ESPRESSO!", 34f, HudColors.Orange);
-            callout.style.marginTop = 16f;
-            callout.style.letterSpacing = 2f;
+            callout = MakeLabel("ESPRESSO!", 30f, HudColors.Orange);
+            callout.AddToClassList("f-display"); // the display face with its ink outline: readable over any background
+            callout.style.marginTop = 14f;
             callout.style.opacity = 0f;
             callout.style.transformOrigin = new TransformOrigin(Length.Percent(100f), Length.Percent(50f)); // pop from the right edge
             column.Add(callout);
@@ -353,7 +353,6 @@ namespace CarcavelosCircuit.RaceFlow
             label.pickingMode = PickingMode.Ignore;
             label.style.fontSize = size;
             label.style.color = colour;
-            label.style.unityFontStyleAndWeight = FontStyle.Bold;
             label.style.marginLeft = 0f;
             label.style.marginRight = 0f;
             label.style.marginTop = 0f;
@@ -377,13 +376,5 @@ namespace CarcavelosCircuit.RaceFlow
             element.style.borderRightWidth = width;
         }
 
-        // The bottom edge stays darker (the lip), the other three take the colour.
-        private static void SetBorderColour(VisualElement element, Color colour)
-        {
-            element.style.borderTopColor = colour;
-            element.style.borderLeftColor = colour;
-            element.style.borderRightColor = colour;
-            element.style.borderBottomColor = Color.Lerp(colour, Color.black, 0.45f);
-        }
     }
 }
