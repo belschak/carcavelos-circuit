@@ -306,6 +306,13 @@ namespace CarcavelosCircuit.Visuals.Editor
                 MarkStatic(go);
             }
 
+            // Noah's Nova hall (task V12, help PR #45): replaces the old building block, white fence (Q19) with it.
+            string hall = NovaHallInsert.Apply(root);
+            if (hall != null)
+            {
+                Debug.Log("CampusWorldBuilder: " + hall);
+            }
+
             TrackData data = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json"));
             AddRaceParts(root, data);
             AddSunAndSky(root);
@@ -416,7 +423,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 foreach (Material m in r.sharedMaterials)
                 {
                     if (m == null || m.shader == null || m.shader.name.StartsWith("Hidden/InternalError", StringComparison.Ordinal) ||
-                        !AssetDatabase.GetAssetPath(m).StartsWith(MatDir, StringComparison.Ordinal))
+                        !KnownMaterial(AssetDatabase.GetAssetPath(m)))
                     {
                         if (bad < 10)
                         {
@@ -462,15 +469,35 @@ namespace CarcavelosCircuit.Visuals.Editor
 
             TrackData data = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json"));
             Physics.SyncTransforms();
-            int miss = 0, tested = 0;
-            for (int i = 0; i < data.points.Length; i += 3)
+            // The road the kart drives: track.json, lined up with the Nova hall doors where the hall is in (V12).
+            var centre = new Vector3[data.points.Length];
+            var width = new float[data.points.Length];
+            for (int i = 0; i < centre.Length; i++)
             {
-                if (Mathf.Abs(i - data.jump_index) < 3)
+                centre[i] = Pos(data.points[i]);
+                width[i] = data.points[i].width;
+            }
+            var original = (Vector3[])centre.Clone();
+            if (NovaHallInsert.HasHall())
+            {
+                CarcavelosCircuit.Track.Editor.HallDoorApproach.Apply(centre, width, null);
+            }
+            int miss = 0, tested = 0, inHall = 0;
+            for (int i = 0; i < data.points.Length; i++)
+            {
+                // Every third point, plus every point moved to a hall door (the new door roads).
+                if ((i % 3 != 0 && centre[i] == original[i]) || Mathf.Abs(i - data.jump_index) < 3)
                 {
                     continue;
                 }
+                // Inside the hall the karts drive Noah's own lanes; track.json still has the old line there (V12 follow-up).
+                if (NovaHallInsert.HasHall() && NovaHallInsert.InsideHall(centre[i]))
+                {
+                    inHall++;
+                    continue;
+                }
                 tested++;
-                Vector3 p = Pos(data.points[i]);
+                Vector3 p = centre[i];
                 if (!Physics.Raycast(p + Vector3.up * 1.5f, Vector3.down, out RaycastHit hit, 4f) || Mathf.Abs(hit.point.y - p.y) > 0.2f)
                 {
                     if (miss < 8)
@@ -480,7 +507,8 @@ namespace CarcavelosCircuit.Visuals.Editor
                     miss++;
                 }
             }
-            report.AppendLine("road collider under the route: " + (tested - miss) + " of " + tested + " points");
+            report.AppendLine("road collider under the route: " + (tested - miss) + " of " + tested + " points" +
+                              (inHall > 0 ? " (" + inHall + " inside the Nova hall not checked: old line, hall has its own lanes)" : ""));
             if (miss > 0)
             {
                 failures++;
@@ -547,6 +575,15 @@ namespace CarcavelosCircuit.Visuals.Editor
         {
             var go = (GameObject)PrefabUtility.InstantiatePrefab(Model(model), parent);
             return go;
+        }
+
+        // Materials the self-test accepts: Luc's material folder, the ones inside Noah's hall model (#45) and
+        // Role 2's track materials (the white fence).
+        private static bool KnownMaterial(string path)
+        {
+            return path.StartsWith(MatDir, StringComparison.Ordinal) ||
+                   path == Root + "/Models/NovaHallWorld.fbx" ||
+                   path.StartsWith("Assets/_Project/Track/Materials/", StringComparison.Ordinal);
         }
 
         private static void MarkStatic(GameObject go)

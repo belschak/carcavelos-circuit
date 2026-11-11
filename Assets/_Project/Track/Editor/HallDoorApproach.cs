@@ -6,11 +6,11 @@ namespace CarcavelosCircuit.Track.Editor
     // T7: lines the route up with the doors of the Nova hall. On the last metres before each door the route runs
     // straight along the door's axis, as wide as the door minus the fence gap (so the fence lands on the door frame),
     // and one route point sits exactly on the facade (so the road can end there with a clean edge).
-    // The doors come from the hall generator (HallDoors.json in the hall test folder). Without that file nothing changes.
+    // The doors come from the hall generator (HallDoors.json next to the hall model in Visuals/CampusWorld/Data). Without that file nothing changes.
     // Used by WhiteGuardrailBuilder (the fence) and by the hall test scene builder (new road pieces at the doors).
     public static class HallDoorApproach
     {
-        public const string DoorsPath = "Assets/_Preview/HallDoors.json";
+        public const string DoorsPath = "Assets/_Project/Visuals/CampusWorld/Data/HallDoors.json"; // next to the hall model (V12)
         private const float Reach = 14f;      // metres in front of the door where the route starts to line up
         private const float Full = 3f;        // ... fully lined up from this close to the door
         private const float FenceGap = 0.3f;  // same as WhiteGuardrailBuilder.EdgeOffset: fence this far outside the road
