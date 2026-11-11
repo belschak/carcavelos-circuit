@@ -289,6 +289,7 @@ namespace CarcavelosCircuit.RaceFlow
             VisualElement column = new VisualElement();
             column.pickingMode = PickingMode.Ignore;
             column.style.marginTop = 86f;
+            column.style.marginRight = PositionsHud.MapColumnWidth; // the minimap sits at the right edge beside the slot (task R9)
             column.style.alignItems = Align.FlexEnd; // right edge of the screen: the callout grows to the left, never off screen (phone check 2026-11-10)
             column.style.opacity = 0f;
             safe.Add(column);
