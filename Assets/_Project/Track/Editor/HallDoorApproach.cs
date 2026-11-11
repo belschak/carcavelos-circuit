@@ -38,6 +38,12 @@ namespace CarcavelosCircuit.Track.Editor
         // building, are marked in inHall (may be null): the hall's own fence is there. Returns how many points moved.
         public static int Apply(Vector3[] centre, float[] width, bool[] inHall)
         {
+            return Apply(centre, width, inHall, null);
+        }
+
+        // Same, and also lists the route point that now sits on the facade of each door (where a new road piece ends).
+        public static int Apply(Vector3[] centre, float[] width, bool[] inHall, System.Collections.Generic.List<int> onFacadeList)
+        {
             if (!HasDoors())
             {
                 return 0;
@@ -94,6 +100,10 @@ namespace CarcavelosCircuit.Track.Editor
                 }
                 // One point exactly on the facade line, in the middle of the door.
                 centre[onFacade] = new Vector3(d.x, centre[onFacade].y, d.z);
+                if (onFacadeList != null)
+                {
+                    onFacadeList.Add(onFacade);
+                }
             }
             return moved;
         }
