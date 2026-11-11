@@ -315,6 +315,9 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const int LaneLead = 5;                             // route points (2 m) before / after the door road
         private const float LaneSide = 1.0f;                        // m outside the road edge: behind the fence and its wall
         private const float LaneSkirt = 0.9f;                       // ... and from there down under the floor
+        private const float LaneSkirtOutside = 4.0f;                // outside the building the sides sink over 4 m (4.5 %): at the atrium
+                                                                    // door the shortcut's karts come onto the lane from the open plaza
+                                                                    // (a boosted kart that met the 0.9 m side at 33 m/s stopped dead)
         private const float LaneSkirtDrop = 0.14f;
         private const int LaneColumns = 6;                          // faces across the road (about 1.3 m wide: no slivers)
 
@@ -340,8 +343,13 @@ namespace CarcavelosCircuit.Visuals.Editor
                 i++;
                 // Reach out over the door roads at both ends (pieces that touch this run), then LaneLead points more.
                 int first = a, last = b;
-                foreach (int[] piece in doorPieces)
+                for (int k = 0; k < doorPieces.Count; k++)
                 {
+                    int[] piece = doorPieces[k];
+                    if (pieceCuts[k] == 0)
+                    {
+                        continue;                                   // no door road there (the plaza deck at D4): the facade is the only border
+                    }
                     if (piece[1] >= a - 1 && piece[1] <= a + 1)
                     {
                         first = Mathf.Min(first, piece[0]);
@@ -380,7 +388,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                     float off, y = c.y + lift;
                     if (col == 0 || col == cols - 1)
                     {
-                        off = (half + LaneSkirt) * (col == 0 ? -1f : 1f);
+                        off = (half + (Inside(routeBefore[i].x, routeBefore[i].z) ? LaneSkirt : LaneSkirtOutside)) * (col == 0 ? -1f : 1f);
                         y = c.y - LaneSkirtDrop;
                     }
                     else
