@@ -92,31 +92,29 @@ namespace CarcavelosCircuit.RaceFlow
             Replay();
         }
 
-        // The answer is here. myName = rows with this name are highlighted (the player's own times);
-        // newRank = the row just saved (1-based, 0 = none) gets an extra flash.
-        public void Show(List<LeaderboardEntry> entries, LeaderboardSource source, string myName, int newRank)
+        // The answer is here. mine = the times saved from this browser (rows that match get the "you" colour);
+        // newRank = the row just saved (1-based, 0 = none) is brighter still.
+        public void Show(List<LeaderboardEntry> entries, LeaderboardSource source, List<LeaderboardEntry> mine, int newRank)
         {
             switch (source)
             {
                 case LeaderboardSource.Online:
                     SetSource("lb-source--online", "ONLINE");
-                    SetNote(entries.Count == 0 ? "NO TIMES YET  ·  SET THE FIRST ONE" : "");
                     break;
                 case LeaderboardSource.ThisDevice:
                     SetSource("lb-source--device", "THIS DEVICE");
-                    SetNote(entries.Count == 0 ? "NO TIMES ON THIS DEVICE YET" : "");
                     break;
                 default:
                     SetSource("lb-source--offline", "OFFLINE");
-                    SetNote(onResults ? "LEADERBOARD OFFLINE - YOUR TIME IS SAVED ON THIS DEVICE" : "LEADERBOARD OFFLINE - TIMES FROM THIS DEVICE");
                     break;
             }
+            SetNote(NoteFor(source, entries.Count, onResults));
             for (int i = 0; i < rows.Length; i++)
             {
                 if (i < entries.Count)
                 {
-                    bool mine = PlayerNameRules.SameName(entries[i].name, myName);
-                    SetRowState(i, i + 1 == newRank ? "lb-row--new" : (mine ? "lb-row--mine" : ""));
+                    bool isMine = LeaderboardRanking.IsMine(entries[i], mine);
+                    SetRowState(i, i + 1 == newRank ? "lb-row--new" : (isMine ? "lb-row--mine" : ""));
                     names[i].text = entries[i].name;
                     times[i].text = HudFormat.Time(RaceTimer.ToMilliseconds(entries[i].seconds));
                 }
@@ -128,6 +126,17 @@ namespace CarcavelosCircuit.RaceFlow
                 }
             }
             Replay();
+        }
+
+        // The line above the rows. An empty board (a fresh browser, or nobody saved yet) invites the first time;
+        // offline is said here and only here. Public and static so an Edit Mode test can check the words.
+        public static string NoteFor(LeaderboardSource source, int entryCount, bool onResults)
+        {
+            if (source == LeaderboardSource.OfflineFallback)
+            {
+                return onResults ? "LEADERBOARD OFFLINE - YOUR TIME IS SAVED ON THIS DEVICE" : "LEADERBOARD OFFLINE - TIMES FROM THIS DEVICE";
+            }
+            return entryCount == 0 ? "NO TIMES YET - BE THE FIRST!" : "";
         }
 
         // Scene name to a readable title: "Track_CampusWorld" -> "CAMPUS WORLD", "Track_NovaCampus" -> "NOVA CAMPUS".

@@ -156,14 +156,15 @@
     color: var(--cc-white);
 }
 
-/* The player's own rows: blue like the time panel's accent. The row just saved: orange, like the start pill. */
+/* "You": orange everywhere, like the player on the minimap and in the positions. The player's own times (saved
+   from this browser) get the orange edge and a soft tint; the row just saved is brighter. */
 .lb-row--mine {
-    background-color: rgba(45, 140, 214, 0.30);
-    border-left-color: var(--cc-blue);
+    background-color: rgba(255, 138, 31, 0.16);
+    border-left-color: var(--cc-orange);
 }
 
 .lb-row--new {
-    background-color: rgba(255, 138, 31, 0.32);
+    background-color: rgba(255, 138, 31, 0.36);
     border-left-color: var(--cc-orange);
 }
 
@@ -350,6 +351,12 @@
     display: flex;
 }
 
+/* Phones: no keys, so no key hints. */
+.lb-form--touch .lb-form-keys,
+.lb-form--touch .lb-form-keys--on {
+    display: none;
+}
+
 .keycap--wide-small {
     min-width: 46px;
 }
@@ -400,6 +407,12 @@
     text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
 }
 
+/* "#10 ON THIS DEVICE" is twice as long as "YOU ARE #4": smaller, so it stays inside the card (also at 4:3). */
+.lb-result-rank--long {
+    font-size: 22px;
+    letter-spacing: 1px;
+}
+
 .lb-result-text {
     margin-top: 2px;
     font-size: 12px;
@@ -409,9 +422,6 @@
     -unity-text-align: middle-center;
 }
 
-.lb-form-result--offline .lb-result-text {
-    color: var(--cc-coral);
-}
 
 /* ---------- Narrow windows (4:3): the title and the source pill must share a 318 px card ---------- */
 .hud--narrow .lb-title {

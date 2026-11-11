@@ -37,6 +37,7 @@ namespace CarcavelosCircuit.RaceFlow
         private bool startBoardLoaded;
         private int typingFrame = -10;  // last frame the name field had the cursor (or Enter saved)
         private RaceState lastState = RaceState.Ready;
+        private bool sentRacing;        // what the Web page was last told (its driving buttons show only in a race)
 
         // The service in use (made on first use). Public so a Play Mode test can read it.
         public ILeaderboardService Service
@@ -77,6 +78,12 @@ namespace CarcavelosCircuit.RaceFlow
             resultsBoard = new LeaderboardPanel(resultsHost, TopCount, true);
             form = new SaveTimeForm(resultsBoard.FormSlot);
             form.SaveRequested += SaveTypedName;
+            if (WebPage.UsesNamePrompt)
+            {
+                form.UseNamePrompt(); // phone browser: the name is typed in the browser's own text box
+            }
+            sentRacing = false;
+            WebPage.SendRaceState(false);
             playerName = SettingsStore.LoadPlayerName();
             startBoardLoaded = false;
             raceManager.LapFinished += OnLapFinished;
@@ -112,6 +119,14 @@ namespace CarcavelosCircuit.RaceFlow
                 form.Hide(); // left the results (retry): close the form
             }
             lastState = state;
+
+            // The page's touch buttons for driving only during a race, so on a phone they never cover the boards.
+            bool racing = state == RaceState.Countdown || state == RaceState.Racing;
+            if (racing != sentRacing)
+            {
+                sentRacing = racing;
+                WebPage.SendRaceState(racing);
+            }
 
             // The form takes clicks only while the results card is really there (RaceHud adds st-results then).
             bool cardIn = state == RaceState.Results && hudRoot.ClassListContains("st-results");
@@ -213,10 +228,11 @@ namespace CarcavelosCircuit.RaceFlow
                 if (!reply.Success)
                 {
                     // Only possible when even this device could not answer (a broken track name): show an empty list.
-                    board.Show(new List<LeaderboardEntry>(), LeaderboardSource.OfflineFallback, playerName, 0);
+                    board.Show(new List<LeaderboardEntry>(), LeaderboardSource.OfflineFallback, null, 0);
                     return;
                 }
-                board.Show(LeaderboardRanking.WithoutTooFast(reply.Entries, minSeconds), reply.Source, playerName, newRank);
+                List<LeaderboardEntry> mine = LocalLeaderboardService.SavedHere(raceManager.TrackName); // saved from this browser
+                board.Show(LeaderboardRanking.WithoutTooFast(reply.Entries, minSeconds), reply.Source, mine, newRank);
             });
         }
 

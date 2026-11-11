@@ -38,6 +38,7 @@ namespace CarcavelosCircuit.RaceFlow
 
         private VisualElement hudRoot;
         private VisualElement startScreen;
+        private Label bestLabel;              // "YOUR BEST 1:02.345" (RaceHud writes it, "" without a best time)
         private VisualElement logo;
         private VisualElement glint;          // the narrow bright core
         private VisualElement glintLetters;
@@ -51,6 +52,7 @@ namespace CarcavelosCircuit.RaceFlow
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
             hudRoot = root.Q<VisualElement>("hud-root");
             startScreen = root.Q<VisualElement>("start-screen");
+            bestLabel = root.Q<Label>("start-best");
             logo = root.Q<VisualElement>("title-logo");
             glint = root.Q<VisualElement>("title-glint");
             glintLetters = root.Q<VisualElement>("title-glint-letters");
@@ -95,6 +97,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 introStart = Time.unscaledTime;
             }
+            bestLabel.EnableInClassList("ts-best--empty", bestLabel.text.Length == 0); // no empty chip without a best time
             if (hudRoot.ClassListContains("reduce-motion"))
             {
                 StopSweep();

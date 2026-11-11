@@ -151,6 +151,68 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void RankLine_OnlineOrThisDevice()
+        {
+            LeaderboardReply reply = new LeaderboardReply();
+            reply.Success = true;
+            reply.Rank = 4;
+            reply.Source = LeaderboardSource.Online;
+            Assert.AreEqual("YOU ARE #4", SaveTimeForm.RankLine(reply));
+            reply.Source = LeaderboardSource.OfflineFallback;
+            Assert.AreEqual("#4 ON THIS DEVICE", SaveTimeForm.RankLine(reply), "a local place never looks online");
+            reply.Source = LeaderboardSource.ThisDevice;
+            Assert.AreEqual("#4 ON THIS DEVICE", SaveTimeForm.RankLine(reply));
+            reply.Rank = 0;
+            Assert.AreEqual("SAVED", SaveTimeForm.RankLine(reply));
+            Assert.AreEqual("NOT SAVED", SaveTimeForm.RankLine(LeaderboardReply.Failed()));
+        }
+
+        [Test]
+        public void IsMine_OnlyTimesSavedHere()
+        {
+            System.Collections.Generic.List<LeaderboardEntry> mine = new System.Collections.Generic.List<LeaderboardEntry> { new LeaderboardEntry("Ana", 61.234f) };
+            Assert.IsTrue(LeaderboardRanking.IsMine(new LeaderboardEntry("ANA", 61.234f), mine));
+            Assert.IsFalse(LeaderboardRanking.IsMine(new LeaderboardEntry("Ana", 62f), mine), "another Ana's time is not mine");
+            Assert.IsFalse(LeaderboardRanking.IsMine(new LeaderboardEntry("Rui", 61.234f), mine));
+            Assert.IsFalse(LeaderboardRanking.IsMine(new LeaderboardEntry("Ana", 61.234f), null), "nothing saved here");
+        }
+
+        [Test]
+        public void NoteFor_EmptyBoard_InvitesTheFirstTime()
+        {
+            Assert.AreEqual("NO TIMES YET - BE THE FIRST!", LeaderboardPanel.NoteFor(LeaderboardSource.ThisDevice, 0, false), "fresh browser, no backend");
+            Assert.AreEqual("NO TIMES YET - BE THE FIRST!", LeaderboardPanel.NoteFor(LeaderboardSource.Online, 0, true));
+            Assert.AreEqual("", LeaderboardPanel.NoteFor(LeaderboardSource.Online, 3, false), "a full board needs no note");
+            Assert.AreEqual("", LeaderboardPanel.NoteFor(LeaderboardSource.ThisDevice, 10, true));
+        }
+
+        [Test]
+        public void NoteFor_Offline_SaysItOnce()
+        {
+            Assert.AreEqual("LEADERBOARD OFFLINE - YOUR TIME IS SAVED ON THIS DEVICE", LeaderboardPanel.NoteFor(LeaderboardSource.OfflineFallback, 2, true));
+            Assert.AreEqual("LEADERBOARD OFFLINE - TIMES FROM THIS DEVICE", LeaderboardPanel.NoteFor(LeaderboardSource.OfflineFallback, 0, false), "offline wins over the empty note");
+        }
+
+        [Test]
+        public void SavedHere_ListsOnlyThisDevicesTimes()
+        {
+            LocalLeaderboardService device = new LocalLeaderboardService(LeaderboardSource.ThisDevice);
+            Assert.AreEqual(0, LocalLeaderboardService.SavedHere(Track).Count, "nothing saved yet: an empty list, not null");
+            device.SubmitTime(Track, "Ana", 61.5f, reply => { });
+            System.Collections.Generic.List<LeaderboardEntry> mine = LocalLeaderboardService.SavedHere(Track);
+            Assert.AreEqual(1, mine.Count);
+            Assert.AreEqual("Ana", mine[0].name);
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("bad track name!")]
+        public void SavedHere_BrokenTrackName_IsEmpty(string track)
+        {
+            Assert.AreEqual(0, LocalLeaderboardService.SavedHere(track).Count);
+        }
+
+        [Test]
         public void ResultLine_SaysWhereTheTimeIs()
         {
             LeaderboardReply reply = new LeaderboardReply();
@@ -159,10 +221,11 @@ namespace CarcavelosCircuit.Tests.EditMode
             reply.Source = LeaderboardSource.Online;
             Assert.AreEqual("ON THE ONLINE LEADERBOARD", SaveTimeForm.ResultLine(reply));
             reply.Source = LeaderboardSource.OfflineFallback;
-            Assert.AreEqual("LEADERBOARD OFFLINE - YOUR TIME IS SAVED ON THIS DEVICE", SaveTimeForm.ResultLine(reply));
+            Assert.AreEqual("", SaveTimeForm.ResultLine(reply), "offline is said once, by the card's note");
             reply.Source = LeaderboardSource.ThisDevice;
             reply.Rank = 0;
-            StringAssert.StartsWith("OUTSIDE THE TOP 10", SaveTimeForm.ResultLine(reply));
+            Assert.AreEqual("OUTSIDE THE TOP 10 ON THIS DEVICE", SaveTimeForm.ResultLine(reply));
+            Assert.AreEqual("THIS TIME COULD NOT BE SAVED", SaveTimeForm.ResultLine(LeaderboardReply.Failed()));
         }
     }
 }

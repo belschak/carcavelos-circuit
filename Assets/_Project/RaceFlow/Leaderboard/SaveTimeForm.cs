@@ -112,35 +112,56 @@ namespace CarcavelosCircuit.RaceFlow
         public void ShowSaved(LeaderboardReply reply)
         {
             State = SaveFormState.Saved;
-            if (!reply.Success)
-            {
-                resultRank.text = "";
-                resultText.text = "THIS TIME COULD NOT BE SAVED";
-            }
-            else
-            {
-                resultRank.text = reply.Rank > 0 ? "YOU ARE #" + reply.Rank : "SAVED";
-                resultText.text = ResultLine(reply);
-            }
-            resultBox.EnableInClassList("lb-form-result--offline", reply.Source == LeaderboardSource.OfflineFallback);
+            resultRank.text = RankLine(reply);
+            resultRank.EnableInClassList("lb-result-rank--long", resultRank.text.Length > 10); // "#10 ON THIS DEVICE" must fit the card
+            resultText.text = ResultLine(reply);
+            resultText.style.display = resultText.text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             Refresh();
         }
 
-        // The line under "YOU ARE #4". Public and static so an Edit Mode test can check the words.
-        public static string ResultLine(LeaderboardReply reply)
+        // The big line after saving. Online: "YOU ARE #4". From this device (no online leaderboard, or offline):
+        // "#4 ON THIS DEVICE", so a local place never looks like an online one. Public and static for an Edit Mode test.
+        public static string RankLine(LeaderboardReply reply)
         {
-            string where;
-            switch (reply.Source)
+            if (!reply.Success)
             {
-                case LeaderboardSource.Online: where = "ON THE ONLINE LEADERBOARD"; break;
-                case LeaderboardSource.ThisDevice: where = "ON THIS DEVICE"; break;
-                default: where = "LEADERBOARD OFFLINE - YOUR TIME IS SAVED ON THIS DEVICE"; break;
+                return "NOT SAVED";
             }
             if (reply.Rank == 0)
             {
-                return "OUTSIDE THE TOP " + LocalLeaderboardList.Keep + "  ·  " + where;
+                return "SAVED";
             }
-            return where;
+            return reply.Source == LeaderboardSource.Online ? "YOU ARE #" + reply.Rank : "#" + reply.Rank + " ON THIS DEVICE";
+        }
+
+        // The small line under it. Offline says nothing here: the card's coral note already says it, once.
+        public static string ResultLine(LeaderboardReply reply)
+        {
+            if (!reply.Success)
+            {
+                return "THIS TIME COULD NOT BE SAVED";
+            }
+            if (reply.Rank == 0)
+            {
+                return reply.Source == LeaderboardSource.Online ? "OUTSIDE THE ONLINE TOP 10" : "OUTSIDE THE TOP 10 ON THIS DEVICE";
+            }
+            return reply.Source == LeaderboardSource.Online ? "ON THE ONLINE LEADERBOARD" : "";
+        }
+
+        // Phones in a Web build (WebPage.UsesNamePrompt): a tap on the field opens the browser's own text box instead
+        // of focusing the game's field, because only that one reliably brings up the phone keyboard. The key hints
+        // (Tab, Enter) are hidden: there are no keys.
+        public void UseNamePrompt()
+        {
+            field.focusable = false;
+            root.AddToClassList("lb-form--touch");
+            field.RegisterCallback<ClickEvent>(evt =>
+            {
+                if (State == SaveFormState.Editing)
+                {
+                    field.value = WebPage.PromptName(field.value);
+                }
+            });
         }
 
         // The key hint follows what the keys do right now: Tab to start typing, Enter to save while typing.

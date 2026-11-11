@@ -68,6 +68,18 @@ namespace CarcavelosCircuit.RaceFlow
             return 0;
         }
 
+        // Is this line one of the player's own times? Only times saved from this browser count (the device list,
+        // which FallbackLeaderboardService always fills first): same name and the same time to the millisecond.
+        // So somebody else who picks the same name is not highlighted, unless they also had the very same time.
+        public static bool IsMine(LeaderboardEntry entry, List<LeaderboardEntry> mine)
+        {
+            if (entry == null || mine == null)
+            {
+                return false;
+            }
+            return RankOf(mine, entry.name, entry.seconds) > 0;
+        }
+
         private static void Cut(List<LeaderboardEntry> list, int keep)
         {
             if (keep < 0)

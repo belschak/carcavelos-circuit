@@ -199,9 +199,18 @@
     letter-spacing: 4px;
 }
 
+/* The best time sits on the bright sunset band, so it gets a dark chip (sand on sand would not be readable).
+   No best yet: TitleScreen adds ts-best--empty and the chip is gone. */
 .start-screen .ts-best {
     margin-top: 14px;
-    font-size: 20px;
+    padding: 4px 16px 5px 16px;
+    border-radius: 15px;
+    background-color: rgba(18, 59, 94, 0.82);
+    font-size: 19px;
+}
+
+.start-screen .ts-best--empty {
+    display: none;
 }
 
 .start-screen .ts-menu {

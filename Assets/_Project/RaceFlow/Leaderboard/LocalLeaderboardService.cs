@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace CarcavelosCircuit.RaceFlow
@@ -49,6 +50,16 @@ namespace CarcavelosCircuit.RaceFlow
                 reply.Success = true;
             }
             done(reply);
+        }
+
+        // The times saved from this browser for a track (best 10), to highlight the player's own rows.
+        public static List<LeaderboardEntry> SavedHere(string track)
+        {
+            if (!LapTimeRules.IsValidTrack(track))
+            {
+                return new List<LeaderboardEntry>();
+            }
+            return Load(track).Top(LocalLeaderboardList.Keep);
         }
 
         private static LocalLeaderboardList Load(string track)
