@@ -397,6 +397,60 @@
    "smoothness": 0.1
   },
   {
+   "name": "W_library_ribbon",
+   "colour": [
+    0.4829,
+    0.6101,
+    0.6844
+   ],
+   "metallic": 0.4,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.88
+  },
+  {
+   "name": "W_plaza_dark",
+   "colour": [
+    0.2411,
+    0.2519,
+    0.2664
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.3
+  },
+  {
+   "name": "W_plaza_rail",
+   "colour": [
+    0.2956,
+    0.3103,
+    0.3287
+   ],
+   "metallic": 0.6,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.55
+  },
+  {
    "name": "W_T_concrete_light",
    "colour": [
     0.7832,
@@ -1677,22 +1731,40 @@
    "smoothness": 0.4
   },
   {
-   "name": "W_T_asphalt",
+   "name": "W_T_plaza_ochre",
    "colour": [
-    0.3361,
-    0.3472,
-    0.3696
+    0.887,
+    0.7396,
+    0.5211
    ],
    "metallic": 0.0,
-   "albedo": "asphalt_albedo.png",
-   "normal": "asphalt_normal.png",
-   "normal_strength": 0.6,
+   "albedo": "plaza_ochre_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
    "alpha_clip": 0.0,
    "double_sided": false,
-   "metallic_smoothness": "asphalt_metallic_smoothness.png",
-   "smoothness": 0.1
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
+   "name": "W_T_skylight",
+   "colour": [
+    0.6101,
+    0.7238,
+    0.7475
+   ],
+   "metallic": 0.0,
+   "albedo": "skylight_glass_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.65
   },
   {
    "name": "W_T_concrete_polished",
@@ -1711,6 +1783,42 @@
    "double_sided": false,
    "metallic_smoothness": "concrete_polished_metallic_smoothness.png",
    "smoothness": 0.65
+  },
+  {
+   "name": "W_plaza_terracotta",
+   "colour": [
+    0.7792,
+    0.3995,
+    0.2956
+   ],
+   "metallic": 0.0,
+   "albedo": "terracotta_steps_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
+   "name": "W_T_asphalt",
+   "colour": [
+    0.3361,
+    0.3472,
+    0.3696
+   ],
+   "metallic": 0.0,
+   "albedo": "asphalt_albedo.png",
+   "normal": "asphalt_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": "asphalt_metallic_smoothness.png",
+   "smoothness": 0.1
   },
   {
    "name": "W_T_concrete_sand",
@@ -1747,24 +1855,6 @@
    "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.05
-  },
-  {
-   "name": "W_T_terracotta",
-   "colour": [
-    0.7792,
-    0.3995,
-    0.2956
-   ],
-   "metallic": 0.0,
-   "albedo": "terracotta_steps_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.2
   },
   {
    "name": "W_T_tunnel_floor",
@@ -2172,6 +2262,24 @@
    },
    "metallic_smoothness": null,
    "smoothness": 0.1
+  },
+  {
+   "name": "W_T_terracotta",
+   "colour": [
+    0.7792,
+    0.3995,
+    0.2956
+   ],
+   "metallic": 0.0,
+   "albedo": "terracotta_steps_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.2
   },
   {
    "name": "W_B_pool_water",

@@ -37,8 +37,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_T_plaza_ochre
+    second: {fileID: 2100000, guid: c6e0559daa34a4cc597357d4802e83ef, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_T_sand
     second: {fileID: 2100000, guid: cb4df7b947503462aa1302ab6f94d9ff, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_skylight
+    second: {fileID: 2100000, guid: 158e3c95d7bd44eecba116a66f08b886, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -59,6 +69,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_edge_line_white
     second: {fileID: 2100000, guid: cb80ba6a17cc04414914b48dcada5d72, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_plaza_terracotta
+    second: {fileID: 2100000, guid: 70e713d00742e4df1b6d751b136449ef, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

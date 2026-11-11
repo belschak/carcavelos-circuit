@@ -242,6 +242,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_library_ribbon
+    second: {fileID: 2100000, guid: 1565b706486db43b5ae25deb72fbfa9b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_lighthouse_red
     second: {fileID: 2100000, guid: b0f9239f8ff334386a1f2f27911b948e, type: 2}
   - first:
@@ -249,6 +254,21 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_lighthouse_white
     second: {fileID: 2100000, guid: b44dd5ee5fda5472180efbbca0950b85, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_plaza_dark
+    second: {fileID: 2100000, guid: 576e1364abea64d84b359ccf375b042e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_plaza_rail
+    second: {fileID: 2100000, guid: af1b8ceeb774049a480692b41feda641, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_plaza_terracotta
+    second: {fileID: 2100000, guid: 70e713d00742e4df1b6d751b136449ef, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
