@@ -165,13 +165,19 @@ public static class CampusWorldInterior
         {
             for (int s = doorPieces[k][0]; s < doorPieces[k][1]; s++)
             {
-                Vector3 a = routeBefore[s], b = routeBefore[(s + 1) % n];
-                Vector2 ab = new Vector2(b.x - a.x, b.z - a.z), ap = new Vector2(p.x - a.x, p.z - a.z);
-                float t = Mathf.Clamp01(Vector2.Dot(ap, ab) / Mathf.Max(0.0001f, ab.sqrMagnitude));
-                if ((ap - ab * t).magnitude < Mathf.Max(widthBefore[s], widthBefore[(s + 1) % n]) / 2 + 1.5f) return k;
+                // Luc's road along the old line, and anything under the new piece (same height: it would flicker).
+                if (NearSegment(p, routeBefore[s], routeBefore[(s + 1) % n], Mathf.Max(widthBefore[s], widthBefore[(s + 1) % n]) / 2 + 1.5f)) return k;
+                if (NearSegment(p, routeAfter[s], routeAfter[(s + 1) % n], Mathf.Max(widthAfter[s], widthAfter[(s + 1) % n]) / 2 + 1.5f)) return k;
             }
         }
         return -1;
+    }
+
+    private static bool NearSegment(Vector3 p, Vector3 a, Vector3 b, float reach)
+    {
+        Vector2 ab = new Vector2(b.x - a.x, b.z - a.z), ap = new Vector2(p.x - a.x, p.z - a.z);
+        float t = Mathf.Clamp01(Vector2.Dot(ap, ab) / Mathf.Max(0.0001f, ab.sqrMagnitude));
+        return (ap - ab * t).magnitude < reach;
     }
 
     // Straight road piece along the lined-up route from point first to point last, 6 cm above the ground like Luc's.
@@ -262,6 +268,11 @@ public static class CampusWorldInterior
             {
                 Vector3 c = go.transform.TransformPoint((v[tri[i]] + v[tri[i + 1]] + v[tri[i + 2]]) / 3f);
                 if (Inside(c.x, c.z)) { removed++; continue; }
+                if (go.name.StartsWith("Track_") && (InsideWorld(go, v[tri[i]]) || InsideWorld(go, v[tri[i + 1]]) || InsideWorld(go, v[tri[i + 2]])))
+                {
+                    removed++;                                    // road reaching over the facade: same height as the hall floor
+                    continue;
+                }
                 int piece = go.name.StartsWith("Track_") ? DoorPieceAt(c) : -1;
                 if (piece >= 0)
                 {
@@ -289,6 +300,12 @@ public static class CampusWorldInterior
         MeshCollider mc = go.GetComponent<MeshCollider>();
         if (mc != null) mc.sharedMesh = mesh;
         return true;
+    }
+
+    private static bool InsideWorld(GameObject go, Vector3 local)
+    {
+        Vector3 w = go.transform.TransformPoint(local);
+        return Inside(w.x, w.z);
     }
 
     // Point in polygon (ray casting) on the footprint.
