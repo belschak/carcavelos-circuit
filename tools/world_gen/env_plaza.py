@@ -235,9 +235,9 @@ def tongue():
 # The deck
 # ---------------------------------------------------------------------------------------------------------------
 def build_deck(col):
-    tng = tongue()
+    tng = None if P.HALL_IN else tongue()                      # V14 + hall: the deck ends on the building's outline
     lip = [P.stair_point(P.STAIR_LEN + s, u) for s in (1.0, 2.0, 3.0, P.STAIR_REACH[1] - P.STAIR_LEN) for u in (-P.STAIR_HALF, P.STAIR_HALF)]
-    rings = [P.DECK, tng, P.STAIR_DOWN, P.LIB_GROUND, P.KICK_ON_DECK] + P.DECK_ISLANDS + list(P.SKYLIGHTS.values())
+    rings = [P.DECK] + ([tng] if tng else []) + [P.STAIR_DOWN, P.LIB_GROUND, P.KICK_ON_DECK] + P.DECK_ISLANDS + list(P.SKYLIGHTS.values())
     verts, edges = [], []
     for ring in rings:
         base = len(verts)
@@ -252,7 +252,8 @@ def build_deck(col):
         verts += [Vector(P.stair_point(P.STAIR_LEN, u)), Vector(P.stair_point(P.STAIR_REACH[1], u))]
         edges.append((base, base + 1))
     verts += [Vector(P.stair_point(P.STAIR_LEN, u)) for u in STAIR_COLS[1:-1]]     # the stairs' columns end here
-    verts += [Vector(q) for q in tongue_far(tng)[1:3]]                             # ... and the atrium strip's columns
+    if tng:
+        verts += [Vector(q) for q in tongue_far(tng)[1:3]]                         # ... and the atrium strip's columns
     verts += [Vector(P.climb_point(P.CLIMB_LEN, u)) for u in CLIMB_COLS[1:-1]]     # V14b: the climb's columns end here
     verts += [Vector(P.climb_point(P.KICK_START_S, u)) for u in KICK_COLS[1:-1]]   # ... and the kicker's start here
     out_v, _e, out_f, *_ = delaunay_2d_cdt(verts, edges, [], 0, 1e-4)
@@ -262,7 +263,7 @@ def build_deck(col):
     for f in out_f:
         tri = [out_v[i] for i in f]
         cx, cy = sum(v.x for v in tri) / 3, sum(v.y for v in tri) / 3
-        if P.inside(cx, cy, P.STAIR_DOWN) or not (P.inside(cx, cy, P.DECK) or P.inside(cx, cy, tng)
+        if P.inside(cx, cy, P.STAIR_DOWN) or not (P.inside(cx, cy, P.DECK) or (tng and P.inside(cx, cy, tng))
                                                    or any(P.inside(cx, cy, i) for i in P.DECK_ISLANDS)):
             continue
         if P.inside(cx, cy, P.KICK_ON_DECK):                    # V14b: the kicker stands here (own surface, welded on)
@@ -313,9 +314,9 @@ def build_drive(col, deck_tris, tng):
         f.normal_update()
         if f.normal.z < -0.3:                                   # (upright faces come in with the right winding)
             f.normal_flip()
-    far = tongue_far(tng)                                       # 4 points across the tongue's far end
+    far = tongue_far(tng) if tng else None                      # 4 points across the tongue's far end
     for tri in deck_tris:                                       # the deck; the tongue's far end 5 cm over the road
-        face([(x, y, z + DRIVE_LIFT + entry_rise(x, y, tng)) for x, y, z in tri])
+        face([(x, y, z + DRIVE_LIFT + (entry_rise(x, y, tng) if tng else 0.0)) for x, y, z in tri])
     length, treads = P.STAIR_LEN, P.STAIR_RISERS - 1
     rows = treads * 4
 
@@ -344,8 +345,8 @@ def build_drive(col, deck_tris, tng):
         for c in range(len(STAIR_COLS) - 1):
             face([r0[c], r0[c + 1], r1[c + 1], r1[c]])
     last = [i for i, p in enumerate(pts) if P.owns_route_point(p)][-1]
-    prev = [(x, y, P.DECK_Z + DRIVE_LIFT + ENTRY_SEAM) for x, y in far]  # strip over / through the road in the atrium
-    for ahead, rel in zip((2, 3, 4, 5), reversed(P.SEAM_STEPS) if ENTRY_STRIP else ()):
+    prev = [(x, y, P.DECK_Z + DRIVE_LIFT + ENTRY_SEAM) for x, y in far] if tng else []   # strip over / through the road in the atrium
+    for ahead, rel in zip((2, 3, 4, 5), reversed(P.SEAM_STEPS) if ENTRY_STRIP and tng else ()):
         p, (nx, ny) = frame(last + ahead)
         z = p["track_z"] + P.LIFT
         row = [(p["x"] + nx * o, p["y"] + ny * o, z - 0.14 if abs(o) > 4.5 else z + rel) for o in TONGUE_COLS]

@@ -488,6 +488,12 @@ namespace CarcavelosCircuit.Visuals.Editor
             {
                 Debug.Log("CampusWorldBuilder: " + hall);
             }
+            // V14: the white fence stays out where the world has its own edge or the way must be open (fence_free.json).
+            string fenceFree = FenceFreeZones.Apply(root);
+            if (fenceFree != null)
+            {
+                Debug.Log("CampusWorldBuilder: " + fenceFree);
+            }
 
             AddTunnelGuards(root, JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json")));
             AddGrassTufts(root);

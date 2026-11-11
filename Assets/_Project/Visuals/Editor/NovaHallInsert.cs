@@ -43,6 +43,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         // road, last = the point on the facade), and which road materials it replaces (the most used one is kept).
         private static List<int[]> doorPieces;
         private static List<Dictionary<Material, int>> pieceMaterials;
+        private static List<int> pieceCuts;                         // road triangles taken out in front of each door
         private static Material roadMaterial;                       // fallback: the first material of the old road
 
         // Edificio Principal footprint (Noah's world_data.json, metres; x = east, z = north).
@@ -123,10 +124,18 @@ namespace CarcavelosCircuit.Visuals.Editor
 
             var doorRoads = new GameObject("NovaHall door roads");
             doorRoads.transform.SetParent(worldRoot.transform, false);
+            int roads = 0;
             for (int k = 0; k < doorPieces.Count; k++)
             {
                 Material m = MostUsed(pieceMaterials[k]);
+                // V14: in front of the atrium door (D4) the road IS the plaza deck, one paved surface up to the facade.
+                // No road strip was taken out there, so no door road is laid on top of the deck (it would flicker).
+                if (m == null && pieceCuts[k] == 0)
+                {
+                    continue;
+                }
                 MakeDoorRoad(doorRoads.transform, doorPieces[k][0], doorPieces[k][1], m != null ? m : roadMaterial, k);
+                roads++;
             }
 
             var hall = (GameObject)PrefabUtility.InstantiatePrefab(model, worldRoot.transform);
@@ -147,7 +156,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 fenceObject.transform.position = Vector3.zero;
             }
 
-            return "Nova hall in: " + hidden + " old objects off, " + props + " old props off, " + cut + " meshes cut, " + doorPieces.Count +
+            return "Nova hall in: " + hidden + " old objects off, " + props + " old props off, " + cut + " meshes cut, " + roads +
                    " door roads, " + (fence ? "white fence in, " + railings + " metal railings off" : "no white fence prefab, railings stay");
         }
 
@@ -170,6 +179,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             roadMaterial = null;
             doorPieces = new List<int[]>();
             pieceMaterials = new List<Dictionary<Material, int>>();
+            pieceCuts = new List<int>();
             int n = routeAfter.Length;
             int i = 0;
             while (i < n)
@@ -189,6 +199,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 int last = facade.Contains(b) ? b : b + 1;
                 doorPieces.Add(new[] { first, last });
                 pieceMaterials.Add(new Dictionary<Material, int>());
+                pieceCuts.Add(0);
                 i++;
             }
         }
@@ -342,6 +353,9 @@ namespace CarcavelosCircuit.Visuals.Editor
             }
             mesh.subMeshCount = src.subMeshCount;
             bool road = go.name.StartsWith("Track_");
+            // V14's upper plaza (deck, courtyard, stairs, shortcut and their welded collider) is not a road strip that a
+            // door road could replace: it only loses what lies inside the building.
+            bool strip = road && !go.name.StartsWith("Track_Plaza") && !go.name.StartsWith("Track_Shortcut");
             int removed = 0;
             for (int s = 0; s < src.subMeshCount; s++)
             {
@@ -360,9 +374,10 @@ namespace CarcavelosCircuit.Visuals.Editor
                         removed++; // road reaching over the facade: same height as the hall floor
                         continue;
                     }
-                    int piece = road ? DoorPieceAt(c) : -1;
+                    int piece = strip ? DoorPieceAt(c) : -1;
                     if (piece >= 0)
                     {
+                        pieceCuts[piece]++;
                         // In front of a hall door: the old road goes, the new straight piece replaces it (remember its material).
                         MeshRenderer mr = go.GetComponent<MeshRenderer>();
                         if (go.name.StartsWith("Track_Road") && mr != null && s < mr.sharedMaterials.Length)
@@ -398,10 +413,31 @@ namespace CarcavelosCircuit.Visuals.Editor
             return true;
         }
 
+        // True for a vertex that reaches into the building, more than EdgeTolerance behind its outline. A vertex ON the
+        // outline does not count: the plaza deck, the sunken courtyard and their collider (V14) end exactly on the
+        // Gallery's edge, and without the tolerance float noise decided which of their big triangles were thrown away
+        // (533 m2 of the deck and 585 m2 of its collider in the first merged build).
+        private const float EdgeTolerance = 0.25f;
+
         private static bool InsideWorld(GameObject go, Vector3 local)
         {
             Vector3 w = go.transform.TransformPoint(local);
-            return Inside(w.x, w.z);
+            return Inside(w.x, w.z) && OutlineDistance(w.x, w.z) > EdgeTolerance;
+        }
+
+        // Distance (m) from a point to the footprint's outline.
+        private static float OutlineDistance(float x, float z)
+        {
+            float best = float.MaxValue;
+            int n = Footprint.Length / 2;
+            for (int i = 0, j = n - 1; i < n; j = i++)
+            {
+                Vector2 a = new Vector2(Footprint[2 * j], Footprint[2 * j + 1]), b = new Vector2(Footprint[2 * i], Footprint[2 * i + 1]);
+                Vector2 ab = b - a, ap = new Vector2(x, z) - a;
+                float t = Mathf.Clamp01(Vector2.Dot(ap, ab) / Mathf.Max(0.0001f, ab.sqrMagnitude));
+                best = Mathf.Min(best, (ap - ab * t).magnitude);
+            }
+            return best;
         }
 
         // Point in polygon (ray casting) on the footprint.

@@ -39,6 +39,10 @@ STAIR_CREST_BEFORE_TOP = 1.35       # ... its middle lies this far before the la
                                     # it, the deck dips 12 cm at the last riser and is level 4 m further on
 SEAM = 0.05                         # m: where the plaza's collider meets the border of the road's collider it lies this
                                     # far above it (see env_plaza.build_drive); PhysX makes contacts within 2 cm
+# V14 + Nova hall (#77): Noah's hall replaces the main building, inside and outside. The deck then ends exactly on the
+# building's outline (MAIN_EAST = the hall's footprint in NovaHallInsert.cs): no tongue into the old drive-through and
+# no collider strip through its road, the hall's own floor starts at the facade.
+HALL_IN = True
 SEAM_STEPS = (-0.06, -0.03, 0.0, 0.03)   # heights over the road of the strip that passes through the road's surface, one
                                     # value per route point (2 m) towards the border
 JUDDER_M = 0.010                    # peak-to-peak height of the rounded ripple on the driving surface, one per step
