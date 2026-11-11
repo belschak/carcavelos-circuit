@@ -4,7 +4,7 @@ WhiteGuardrailBuilder puts the fence along both road edges of the whole lap (0.3
 1 m wall behind it), except in the tunnel, the hall and the zone "kicker". V14 has places where that is wrong:
 
   jump        V14's route has no zone "kicker" any more (the kicker is a ramp on the terrace deck), so the fence would
-              hang across the 4.4 m drop behind the terrace lip
+              hang across the 4.4 m drop behind the terrace lip, and beside the 6 m ramp up to 0.7 m over the deck
   stairs      the terracotta stairs have their own railings (0.15 m inside the stair block's edge) and guard colliders
   plaza       left side only: the plaza deck is the road; on its left are the courtyard's own fence, the way to the
               shortcut's kicker and, at the atrium door, the shortcut's exit. A fence there closes the shortcut.
@@ -71,7 +71,7 @@ def main():
         free.append({"from": max(0, a), "to": min(n - 1, b), "side": side, "why": why})
 
     j = track["jump_index"]
-    add(j, j + 3, 0, "terrace jump: the drop behind the lip and the first landing metres")
+    add(j - 3, j + 3, 0, "terrace jump: the kicker ramp (the deck beside it stays 0.65 m lower), the drop behind the lip, the first landing metres")
     for a, b in zone_runs(pts, "stairs"):
         add(a - 1, b + 1, 0, "terracotta stairs: own railings and guard colliders")
     for a, b in zone_runs(pts, "plaza deck"):
