@@ -11,8 +11,8 @@ namespace CarcavelosCircuit.RaceFlow
     // generateVisualContent only runs after MarkDirtyRepaint, so the road is drawn once and the trail only when it grows.
     public class MinimapLine : VisualElement
     {
-        private static readonly Color OutlineColour = new Color(0f, 0f, 0f, 0.55f);
-        private static readonly Color RoadColour = new Color(0.918f, 0.918f, 0.925f, 0.92f); // --cc-white
+        private static readonly Color OutlineColour = HudColors.WithAlpha(HudColors.Ink, 0.85f); // --ink
+        private static readonly Color RoadColour = HudColors.Cream;                                // --cream
 
         private readonly bool isRoad;
         private readonly Color trailColour;
@@ -61,8 +61,8 @@ namespace CarcavelosCircuit.RaceFlow
             painter.lineCap = LineCap.Round;
             if (isRoad)
             {
-                StrokePath(painter, points.Count, true, 11f, OutlineColour);
-                StrokePath(painter, points.Count, true, 6f, RoadColour);
+                StrokePath(painter, points.Count, true, 8f, OutlineColour); // 4 px cream road with a 2 px ink edge (task R15)
+                StrokePath(painter, points.Count, true, 4f, RoadColour);
                 DrawStartBar(painter);
             }
             else if (drawCount >= 2)

@@ -13,8 +13,10 @@ namespace CarcavelosCircuit.RaceFlow
     // - Minimap: right edge, under the checkpoint panel, at the same height as the item slot (which moved one map
     //   width to the left, see ItemSlotHud). Top area on purpose: on a phone the touch pedals cover the right side
     //   from about 290 px down, and the minimap must never sit under a thumb.
-    // - Position: bottom right, beside the speed gauge (where arcade racers put it). On narrow screens (4:3, 16:10)
-    //   the footer key bar needs that gap, so it moves above the speed gauge instead.
+    // - Position (task R15): bottom centre, on a navy plate, the place number in the display face coloured by place
+    //   (gold, silver, bronze, cream). Bottom centre on purpose: on a phone both bottom corners are under the thumbs
+    //   (steer buttons left, pedals right), and our own layout should not copy the well-known "bottom right" of other
+    //   kart racers. The first-seconds key hint (RaceHud.uss .controls-hint) sits just above it.
     // The map is fixed, not rotating: turned once so the start straight points up, then the player learns one picture
     // of the track, which reads better on a small phone screen than a spinning map (MinimapFit).
     // Everything animates on real time (Time.unscaledTime), like RaceHud; Reduced Motion = no pops, no pulsing.
@@ -26,18 +28,9 @@ namespace CarcavelosCircuit.RaceFlow
         public const float MapGap = 14f;                // between the minimap and the item slot
         public const float MapColumnWidth = MapSize + MapGap; // ItemSlotHud keeps this much free at the right edge
         private const float MapPadding = 17f;           // racing line to the tile edge
-        private const float NarrowHudWidth = 1230f;     // same switch as RaceHud (hud--narrow)
-        private const float GaugeWidth = 176f;          // RaceHud.uss .speed-gauge
-        private const float PopSeconds = 0.42f;
+        private const float PopSeconds = 0.3f;
         private const float ChevronSeconds = 1.4f;
 
-        private static readonly Color MedalGold = new Color(0.949f, 0.702f, 0.239f, 1f);   // --medal-gold #F2B33D
-        private static readonly Color MedalSilver = new Color(0.773f, 0.800f, 0.839f, 1f); // --medal-silver #C5CCD6
-        private static readonly Color MedalBronze = new Color(0.788f, 0.541f, 0.333f, 1f); // --medal-bronze #C98A55
-        // --cc-panel's colour, a little denser (0.82 there): the coloured place number must keep its contrast over bright sand, sky or a kerb
-        private static readonly Color Panel = new Color(29f / 255f, 29f / 255f, 31f / 255f, 0.90f);
-        private static readonly Color MapPanel = new Color(29f / 255f, 29f / 255f, 31f / 255f, 0.92f); // denser still: a map over building windows or palms must read at a glance
-        private static readonly Color Lip = new Color(0f, 0f, 0f, 0.45f);                   // --cc-lip
 
         [SerializeField]
         private RaceManager raceManager;
@@ -67,7 +60,6 @@ namespace CarcavelosCircuit.RaceFlow
         private Vector2 builtForSize;
         private bool shown;
         private bool positionShown;
-        private bool narrow;
         private int shownPosition = -1;
         private int shownTotal = -1;
         private float changedAt = -10f;
@@ -87,7 +79,6 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (root != null)
             {
-                root.UnregisterCallback<GeometryChangedEvent>(OnRootResized);
                 mapArea.UnregisterCallback<GeometryChangedEvent>(OnMapResized);
             }
         }
@@ -149,16 +140,14 @@ namespace CarcavelosCircuit.RaceFlow
                 Color colour = ColourFor(position);
                 positionNumber.style.color = colour;
                 positionSuffix.style.color = colour;
-                positionBox.style.borderLeftColor = colour;
             }
 
-            // Pop: 1 -> 1.28 -> 1 with a little overshoot (the item slot's pop). Reduced motion: no scale change.
+            // Punch: straight to 1.25, back to 1 with a small overshoot (HudEasing.OutBack). Reduced motion: no scale change.
             float since = now - changedAt;
             float scale = 1f;
             if (!reduced && since < PopSeconds)
             {
-                float p = since / PopSeconds;
-                scale = 1f + 0.28f * Mathf.Sin(p * Mathf.PI) * (1f - p * 0.3f);
+                scale = Mathf.LerpUnclamped(1.25f, 1f, HudEasing.OutBack(since / PopSeconds));
             }
             positionNumber.style.scale = new Scale(new Vector3(scale, scale, 1f));
 
@@ -168,7 +157,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 float p = since / ChevronSeconds;
                 chevron.style.opacity = p < 0.75f ? 1f : 1f - (p - 0.75f) / 0.25f;
-                chevron.SetFill(gained ? HudColors.Blue : HudColors.Coral);
+                chevron.SetFill(gained ? HudColors.Mint : HudColors.Coral);
                 chevron.style.rotate = new Rotate(Angle.Degrees(gained ? 0f : 180f));
                 float hop = reduced ? 0f : (gained ? -5f : 5f) * Mathf.Sin(Mathf.Min(1f, p * 3f) * Mathf.PI);
                 chevron.style.translate = new Translate(0f, hop);
@@ -179,13 +168,13 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        // 1st gold, 2nd silver, 3rd bronze (the medal tokens), everyone else white.
+        // 1st sun gold, 2nd silver, 3rd bronze (the podium tokens), everyone else cream.
         private static Color ColourFor(int position)
         {
-            if (position == 1) return MedalGold;
-            if (position == 2) return MedalSilver;
-            if (position == 3) return MedalBronze;
-            return HudColors.White;
+            if (position == 1) return HudColors.Sun;
+            if (position == 2) return HudColors.Silver;
+            if (position == 3) return HudColors.Bronze;
+            return HudColors.Cream;
         }
 
         // ---------- minimap ----------
@@ -236,7 +225,7 @@ namespace CarcavelosCircuit.RaceFlow
                     botIndex++;
                     dot.style.backgroundColor = racer.MapColor;
                     dot.style.opacity = 1f;
-                    PlaceCentred(dot, point, 10f);
+                    PlaceCentred(dot, point, 12f);
                 }
             }
             for (int i = botIndex; i < botDots.Count; i++)
@@ -318,10 +307,10 @@ namespace CarcavelosCircuit.RaceFlow
                 dot.style.position = Position.Absolute;
                 dot.style.left = 0f;
                 dot.style.top = 0f;
-                dot.style.width = 10f;
-                dot.style.height = 10f;
-                SetRadius(dot, 5f);
-                SetBorder(dot, 1.5f, new Color(0f, 0f, 0f, 0.8f));
+                dot.style.width = 12f;
+                dot.style.height = 12f;
+                SetRadius(dot, 6f);
+                SetBorder(dot, 2f, HudColors.Cream); // a cream ring: every racer reads on the dark tile and on the road
                 botDots.Add(dot);
                 dotLayer.Insert(1, dot); // above the player's halo, under the player's dot (a bot right beside you stays visible)
             }
@@ -331,19 +320,6 @@ namespace CarcavelosCircuit.RaceFlow
         private static void PlaceCentred(VisualElement element, Vector2 point, float size)
         {
             element.style.translate = new Translate(point.x - size * 0.5f, point.y - size * 0.5f);
-        }
-
-        private void OnRootResized(GeometryChangedEvent evt)
-        {
-            bool isNarrow = evt.newRect.width < NarrowHudWidth;
-            if (isNarrow == narrow)
-            {
-                return;
-            }
-            narrow = isNarrow;
-            // Wide: beside the speed gauge. Narrow: above it (the footer key bar uses the gap beside it).
-            positionBox.style.marginRight = narrow ? 0f : GaugeWidth + 16f;
-            positionBox.style.marginBottom = narrow ? GaugeWidth + 14f : 0f;
         }
 
         private void OnMapResized(GeometryChangedEvent evt)
@@ -360,7 +336,6 @@ namespace CarcavelosCircuit.RaceFlow
             fit = null;
             shown = false;
             positionShown = false;
-            narrow = false;
 
             root = new VisualElement();
             root.name = "positions-root";
@@ -374,7 +349,6 @@ namespace CarcavelosCircuit.RaceFlow
             root.style.opacity = 0f;
             FadeOn(root, 0.25f);
             documentRoot.Add(root);
-            root.RegisterCallback<GeometryChangedEvent>(OnRootResized);
 
             // Same safe frame as RaceHud.uss (.hud-safe): max 1600 wide, 26 px from the top, 34 from the sides, 24 from the bottom.
             VisualElement safe = new VisualElement();
@@ -399,26 +373,13 @@ namespace CarcavelosCircuit.RaceFlow
             mapFrame.name = "minimap";
             mapFrame.pickingMode = PickingMode.Ignore;
             mapFrame.style.alignSelf = Align.FlexEnd;
-            mapFrame.style.marginTop = 86f; // under the checkpoint panel, level with the item slot
+            mapFrame.style.marginTop = 94f; // under the checkpoint panel, level with the item slot
             mapFrame.style.width = MapSize;
             mapFrame.style.height = MapSize;
-            mapFrame.style.backgroundColor = MapPanel;
-            SetRadius(mapFrame, 22f);
-            mapFrame.style.borderBottomWidth = 5f;
-            mapFrame.style.borderBottomColor = Lip; // the darker "lip" every HUD tile has
-            mapFrame.style.overflow = Overflow.Hidden;
+            mapFrame.AddToClassList("plate");      // a see-through navy plate with a cream stroke (UI/HudArt.uss)
+            mapFrame.AddToClassList("plate--map");
             mapFrame.style.opacity = 0f;
             safe.Add(mapFrame);
-
-            // Faint azulejo tiles in the background (the start screen's pattern), so the tile is not a flat grey box.
-            AzulejoPattern pattern = new AzulejoPattern();
-            pattern.style.position = Position.Absolute;
-            pattern.style.left = 0f;
-            pattern.style.right = 0f;
-            pattern.style.top = 0f;
-            pattern.style.bottom = 0f;
-            pattern.style.opacity = 0.04f;
-            mapFrame.Add(pattern);
 
             mapArea = new VisualElement();
             mapArea.pickingMode = PickingMode.Ignore;
@@ -426,7 +387,7 @@ namespace CarcavelosCircuit.RaceFlow
             mapArea.style.left = 0f;
             mapArea.style.right = 0f;
             mapArea.style.top = 0f;
-            mapArea.style.bottom = 0f;
+            mapArea.style.bottom = 6f; // the plate's shadow
             mapFrame.Add(mapArea);
             mapArea.RegisterCallback<GeometryChangedEvent>(OnMapResized);
 
@@ -473,10 +434,10 @@ namespace CarcavelosCircuit.RaceFlow
 
             VisualElement playerDot = new VisualElement();
             playerDot.pickingMode = PickingMode.Ignore;
-            playerDot.style.width = 12f;
-            playerDot.style.height = 12f;
-            SetRadius(playerDot, 6f);
-            SetBorder(playerDot, 2f, Color.white);
+            playerDot.style.width = 14f;
+            playerDot.style.height = 14f;
+            SetRadius(playerDot, 7f);
+            SetBorder(playerDot, 2f, HudColors.Cream);
             playerDot.style.backgroundColor = PlayerRacer.PlayerColour;
             playerMarker.Add(playerDot);
 
@@ -491,39 +452,32 @@ namespace CarcavelosCircuit.RaceFlow
 
         private void BuildPositionBox(VisualElement safe)
         {
-            // Bottom right, beside the speed gauge: big "2", "ND" and "/ 6" stacked to its right.
+            // Bottom centre: big "2", a small raised "ND" and "/ 6" stacked to its right, on a navy plate.
             positionBox = new VisualElement();
             positionBox.name = "position";
             positionBox.pickingMode = PickingMode.Ignore;
-            positionBox.style.alignSelf = Align.FlexEnd;
-            positionBox.style.marginRight = GaugeWidth + 16f;
+            positionBox.style.alignSelf = Align.Center;
             positionBox.style.flexDirection = FlexDirection.Row;
             positionBox.style.alignItems = Align.Center;
-            positionBox.style.backgroundColor = Panel;
-            SetRadius(positionBox, 16f);
-            positionBox.style.borderBottomWidth = 5f;
-            positionBox.style.borderBottomColor = Lip;
-            positionBox.style.borderLeftWidth = 6f;
-            positionBox.style.borderLeftColor = HudColors.White;
-            positionBox.style.paddingLeft = 16f;
+            positionBox.AddToClassList("plate"); // UI/HudArt.uss: the navy plate picture
+            positionBox.style.paddingLeft = 18f;
             positionBox.style.paddingRight = 20f;
-            positionBox.style.paddingTop = 2f;
-            positionBox.style.paddingBottom = 6f;
+            positionBox.style.paddingTop = 0f;
+            positionBox.style.paddingBottom = 10f; // 6 px of it is the plate's shadow
             positionBox.style.opacity = 0f;
             FadeOn(positionBox, 0.25f);
             safe.Add(positionBox);
 
-            positionNumber = MakeLabel("1", 84f, HudColors.White);
+            positionNumber = MakeLabel("1", 56f, HudColors.Cream);
+            positionNumber.AddToClassList("f-display"); // Unbounded with the ink outline and hard shadow
             positionNumber.style.unityTextAlign = TextAnchor.MiddleCenter;
-            positionNumber.style.minWidth = 52f;
-            positionNumber.style.textShadow = new TextShadow { offset = new Vector2(0f, 3f), blurRadius = 0f, color = new Color(0f, 0f, 0f, 0.35f) };
+            positionNumber.style.minWidth = 46f;
             positionNumber.style.transformOrigin = new TransformOrigin(Length.Percent(50f), Length.Percent(60f));
             positionBox.Add(positionNumber);
 
             VisualElement side = new VisualElement();
             side.pickingMode = PickingMode.Ignore;
-            side.style.marginLeft = 8f;
-            side.style.translate = new Translate(0f, 1.75f); // "TH" lines up with the top of the big number, "/ 6" with its baseline
+            side.style.marginLeft = 6f;
             side.style.justifyContent = Justify.Center;
             positionBox.Add(side);
 
@@ -533,8 +487,8 @@ namespace CarcavelosCircuit.RaceFlow
             suffixRow.style.alignItems = Align.Center;
             side.Add(suffixRow);
 
-            positionSuffix = MakeLabel("ST", 30f, HudColors.White);
-            positionSuffix.style.letterSpacing = 1f;
+            positionSuffix = MakeLabel("ST", 22f, HudColors.Cream);
+            positionSuffix.AddToClassList("f-display");
             suffixRow.Add(positionSuffix);
 
             chevron = new TriangleMark(HudColors.Blue, new Color(0f, 0f, 0f, 0.35f), 1f);
@@ -544,8 +498,9 @@ namespace CarcavelosCircuit.RaceFlow
             chevron.style.opacity = 0f;
             suffixRow.Add(chevron);
 
-            positionTotal = MakeLabel("/ 1", 24f, HudColors.WithAlpha(HudColors.White, 0.7f));
-            positionTotal.style.marginTop = 7f; // its baseline sits on the big number's baseline
+            positionTotal = MakeLabel("/ 1", 24f, HudColors.WithAlpha(HudColors.Cream, 0.75f));
+            positionTotal.AddToClassList("f-num");
+            positionTotal.style.marginTop = 0f;
             positionTotal.style.letterSpacing = 1f;
             side.Add(positionTotal);
         }
@@ -558,7 +513,6 @@ namespace CarcavelosCircuit.RaceFlow
             label.pickingMode = PickingMode.Ignore;
             label.style.fontSize = size;
             label.style.color = colour;
-            label.style.unityFontStyleAndWeight = FontStyle.Bold;
             label.style.marginLeft = 0f;
             label.style.marginRight = 0f;
             label.style.marginTop = 0f;

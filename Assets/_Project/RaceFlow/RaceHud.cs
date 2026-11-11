@@ -288,34 +288,30 @@ namespace CarcavelosCircuit.RaceFlow
             root.Q<VisualElement>("drift-tick").style.left = Length.Percent(stage1At * 100f);
         }
 
-        // Shapes drawn in code (UI/SpeedArc.cs, CalcadaWave.cs, AzulejoPattern.cs) go into the empty "...-host" elements.
+        // Shapes drawn in code (UI/SpeedArc.cs, the confetti) go into the empty "...-host" elements. The start and results
+        // screens no longer get the full-screen azulejo lattice or the wave underline (task R15: one focal point, no noise).
         private void AddDrawnShapes(VisualElement root)
         {
             speedArc = new SpeedArc();
             root.Q<VisualElement>("speed-arc-host").Add(speedArc);
-            root.Q<VisualElement>("start-wave-host").Add(new CalcadaWave());
-            root.Q<VisualElement>("results-wave-host").Add(new CalcadaWave());
-            root.Q<VisualElement>("start-pattern-host").Add(new AzulejoPattern());
-            root.Q<VisualElement>("results-pattern-host").Add(new AzulejoPattern());
             confetti = new ConfettiBurst();
             resultsScreen.Add(confetti); // last child = drawn above the card, and it fades with the results screen
         }
 
         private void MakeTextures()
         {
-            // Start screen: deep Atlantic at the top, sea blue, a thin sunset line, dark at the bottom.
-            // The middle stays fairly see-through so the 3D scene shows behind the title.
-            startGradient = HudTextures.VerticalGradient(
-                HudColors.WithAlpha(HudColors.BlueDeep, 0.94f),
-                HudColors.WithAlpha(HudColors.BlueDeep, 0.80f),
-                HudColors.WithAlpha(HudColors.Blue, 0.55f),
-                HudColors.WithAlpha(HudColors.Orange, 0.42f),
-                HudColors.WithAlpha(HudColors.Black, 0.92f));
+            // Start screen (task R15): dark navy behind the logo on the left (the text must pop), fading to almost clear
+            // in the middle so the campus shows, a light veil again behind the leaderboard plate on the right.
+            startGradient = HudTextures.HorizontalGradient(
+                HudColors.WithAlpha(HudColors.Ink, 0.88f),
+                HudColors.WithAlpha(HudColors.BlueDeep, 0.66f),
+                HudColors.WithAlpha(HudColors.BlueDeep, 0.18f),
+                HudColors.WithAlpha(HudColors.Ink, 0.40f));
             Child(startScreen, "start-bg").style.backgroundImage = new StyleBackground(startGradient);
 
             resultsGradient = HudTextures.VerticalGradient(
-                HudColors.WithAlpha(HudColors.BlueDeep, 0.84f),
-                HudColors.WithAlpha(HudColors.Black, 0.92f));
+                HudColors.WithAlpha(HudColors.BlueDeep, 0.80f),
+                HudColors.WithAlpha(HudColors.Ink, 0.92f));
             Child(resultsScreen, "results-bg").style.backgroundImage = new StyleBackground(resultsGradient);
 
             glowLeftTexture = HudTextures.EdgeGlow(HudColors.Orange, 0.55f, true);
@@ -460,19 +456,8 @@ namespace CarcavelosCircuit.RaceFlow
                 int deltaMilliseconds = RaceTimer.ToMilliseconds(lapSeconds) - RaceTimer.ToMilliseconds(previousBest);
                 resultsDeltaValue.style.display = DisplayStyle.Flex;
                 resultsDeltaValue.text = HudFormat.Delta(deltaMilliseconds, true);
-                // The words follow the rounded number on screen, so "+0.000 s" never says "faster".
-                if (deltaMilliseconds < 0)
-                {
-                    resultsDeltaText.text = "FASTER THAN YOUR BEST";
-                }
-                else if (deltaMilliseconds == 0)
-                {
-                    resultsDeltaText.text = "SAME AS YOUR BEST";
-                }
-                else
-                {
-                    resultsDeltaText.text = "SLOWER THAN YOUR BEST";
-                }
+                // The words follow the rounded number on screen, so "+0.000 s" never says "new best".
+                resultsDeltaText.text = ResultsCopy.DeltaWords(deltaMilliseconds);
                 resultsDelta.EnableInClassList("res-delta--ahead", deltaMilliseconds < 0);
                 resultsBest.text = (isRecord ? "PREVIOUS BEST  " : "YOUR BEST  ") + HudFormat.Time(RaceTimer.ToMilliseconds(previousBest));
             }
@@ -501,34 +486,23 @@ namespace CarcavelosCircuit.RaceFlow
             Medal best = raceManager.BestMedal; // already includes this lap
             Medal next = MedalRules.NextTarget(medal);
             float nextSeconds = raceManager.MedalSeconds(next);
-            if (medal < best)
-            {
-                resultsMedalNext.text = "YOUR BEST MEDAL  " + MedalRules.Name(best);
-            }
-            else if (medal == Medal.DeansList)
-            {
-                resultsMedalNext.text = isNew ? "NEW MEDAL!  TOP TIER REACHED" : "TOP TIER: BEAT YOUR OWN TIME";
-            }
-            else if (nextSeconds > 0f)
-            {
-                string start = isNew ? "NEW MEDAL!  NEXT  " : "NEXT  ";
-                resultsMedalNext.text = start + MedalRules.Name(next) + "  " + HudFormat.Time(RaceTimer.ToMilliseconds(nextSeconds));
-            }
-            else
-            {
-                resultsMedalNext.text = ""; // medal times broken (RaceManager logs the error)
-            }
+            string nextTime = nextSeconds > 0f ? HudFormat.Time(RaceTimer.ToMilliseconds(nextSeconds)) : "";
+            resultsMedalNext.text = ResultsCopy.MedalLine(medal, bestBefore, best, next, nextTime);
+            resultsMedalNext.style.display = resultsMedalNext.text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
-        // Lap report: four numbers from RunStats. A zero drift or boost count is dimmed (the coach explains how).
+        // Lap report: four numbers from RunStats. Nothing measured shows a dim "-" (ResultsCopy), never a broken-looking "0".
         private void ShowLapReport(RunStats stats)
         {
-            statSpeedValue.text = HudFormat.Whole(Mathf.RoundToInt(stats.TopSpeed * 3.6f)); // m/s to km/h
-            statDriftsValue.text = HudFormat.Whole(stats.Drifts);
-            statBoostsValue.text = HudFormat.Whole(stats.Boosts);
-            statAirValue.text = HudFormat.OneDecimal(stats.AirSeconds) + " s";
-            statDrifts.EnableInClassList("stat--zero", stats.Drifts == 0);
-            statBoosts.EnableInClassList("stat--zero", stats.Boosts == 0);
+            int topSpeed = Mathf.RoundToInt(stats.TopSpeed * 3.6f); // m/s to km/h
+            statSpeedValue.text = ResultsCopy.Count(topSpeed);
+            statDriftsValue.text = ResultsCopy.Count(stats.Drifts);
+            statBoostsValue.text = ResultsCopy.Count(stats.Boosts);
+            statAirValue.text = ResultsCopy.AirTime(stats.AirSeconds);
+            statSpeedValue.parent.EnableInClassList("stat--zero", ResultsCopy.IsEmptyCount(topSpeed));
+            statDrifts.EnableInClassList("stat--zero", ResultsCopy.IsEmptyCount(stats.Drifts));
+            statBoosts.EnableInClassList("stat--zero", ResultsCopy.IsEmptyCount(stats.Boosts));
+            statAirValue.parent.EnableInClassList("stat--zero", ResultsCopy.IsEmptyAirTime(stats.AirSeconds));
         }
 
         // Exactly one medal colour class (medal--bronze ... medal--none) on the element.
@@ -682,7 +656,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             else
             {
-                float breathe = 1f + 0.035f * (0.5f + 0.5f * Mathf.Sin(Time.time * 3.2f));
+                float breathe = 1f + 0.04f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 6.98f)); // 1 to 1.04, once every 0.9 s
                 pressAnyKey.style.scale = new Scale(new Vector3(breathe, breathe, 1f));
             }
 
@@ -694,9 +668,15 @@ namespace CarcavelosCircuit.RaceFlow
 
             if (shownLoading.Changed(raceManager.IsSetUp ? 0 : 1))
             {
-                pressAnyKey.text = raceManager.IsSetUp ? "PRESS ANY KEY OR TAP TO START" : "LOADING TRACK...";
+                pressAnyKey.text = raceManager.IsSetUp ? StartPrompt(WebPage.UsesNamePrompt) : "LOADING TRACK...";
                 pressAnyKey.EnableInClassList("pill--loading", !raceManager.IsSetUp);
             }
+        }
+
+        // Few, big words (task R15): a phone has no keys, a computer has no touch screen (usually).
+        public static string StartPrompt(bool isPhone)
+        {
+            return isPhone ? "TAP TO START" : "PRESS ANY KEY";
         }
 
         private void UpdateTimes()
