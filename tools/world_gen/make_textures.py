@@ -1163,12 +1163,44 @@ def make_grass_tuft(W=256, H=128, seed=1515):
     img.resize((W, H), Image.LANCZOS).save(os.path.join(TEX_DIR, "grass_tuft_cutout_albedo.png"))
 
 
+# ----------------------------------------------------------------------------------------------
+# V10c. Solar panel array tile (3 m x 3 m, 512 px) and smooth sandy-ochre render (cutting walls, 2 x 2 m)
+# ----------------------------------------------------------------------------------------------
+def make_solar_panel(S=512, seed=1301):
+    """Dark blue-black photovoltaic cells in 6 x 6 panels per tile, silver frame lines, faint sky gradient."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(S, S)
+    cell = S / 6.0
+    fx = np.abs((X % cell) - cell / 2) / (cell / 2)            # 0 centre .. 1 edge of one panel
+    fy = np.abs((Y % cell) - cell / 2) / (cell / 2)
+    edge = np.maximum(fx, fy)
+    cells_x = np.abs(((X % cell) / cell * 6 % 1.0) - 0.5) * 2    # 6 cell columns per panel
+    base = lerp(rgb("#1B2436"), rgb("#2F4260"), np.clip(0.5 + 0.12 * noise((S, S), 40, rng), 0, 1)[..., None])
+    base = base * (1.0 - 0.10 * smoothstep(0.78, 1.0, cells_x))[..., None]      # busbar-like cell lines
+    frame = smoothstep(0.93, 0.98, edge)
+    out = lerp(base, rgb("#A9B0B8"), frame[..., None])
+    save("solar_panel_albedo.png", out)
+
+
+def make_render_ochre(S=512, seed=1302):
+    """Smooth warm rendered concrete wall (S01/S02/S08): sandy ochre, soft stains, a faint panel joint."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(S, S)
+    n = noise((S, S), 60, rng) * 0.025 + noise((S, S), 6, rng) * 0.008
+    base = rgb("#DAC399")
+    out = base[None, None, :] * (1.0 + n)[..., None]
+    joint = np.exp(-((np.abs((X % (S / 2)) - 1)) / 1.2) ** 2) * 0.05
+    out = out * (1.0 - joint)[..., None]
+    save("render_ochre_albedo.png", out)
+
+
 BUILDERS = {
     "calcada": make_calcada, "concrete_sand": make_concrete_sand, "concrete_polished": make_concrete_polished,
     "asphalt": make_asphalt, "terracotta": make_terracotta, "sand": make_sand, "grass": make_grass,
     "facade": make_facade, "window": make_window_band, "kerb": make_kerb, "mural": make_mural,
     "palm_frond": make_palm_frond, "sea_waves": make_sea_waves,
     "ground_detail": make_ground_detail, "grass_tuft": make_grass_tuft,
+    "solar_panel": make_solar_panel, "render_ochre": make_render_ochre,
 }
 BUILDERS.update({"timber_deck": make_timber_deck, "granite_kerb": make_granite_kerb, "thatch": make_thatch})   # V10b
 

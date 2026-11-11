@@ -138,6 +138,40 @@ def build_portal(p, inward, cover, name, col):
     return E.new_object(name, mesh, col)
 
 
+BEAM_HALF = HEADWALL_HALF - 0.4              # V10c: broad flat lintel over each portal (S06, S07)
+BEAM_Z0, BEAM_Z1, BEAM_OUT = CEILING, CEILING + 1.4, 0.9
+CUT_WALL_COLOUR = "#DAC399"              # V10c: smooth warm-ochre render on the sunken ramps (S01, S02, S08)
+
+
+def box_faces(bm, corners_lo, corners_hi):
+    """Closed box from two rectangles (4 corners each, same order, counter-clockwise seen from above)."""
+    lo = [bm.verts.new(c) for c in corners_lo]
+    hi = [bm.verts.new(c) for c in corners_hi]
+    bm.faces.new(lo[::-1])
+    bm.faces.new(hi)
+    for k in range(4):
+        bm.faces.new((lo[k], lo[(k + 1) % 4], hi[(k + 1) % 4], hi[k]))
+
+
+def build_portal_beam(p, inward, name, col):
+    """Flat concrete lintel beam in front of the headwall opening (above the clear height: drive corridor untouched)."""
+    dx, dy = inward
+    nrm = (-dy, dx)
+    z0 = p["track_z"]
+
+    def pt(side, z, along):
+        return (p["x"] + nrm[0] * side + dx * along, p["y"] + nrm[1] * side + dy * along, z0 + z)
+    bm = bmesh.new()
+    rect = lambda z: [pt(-BEAM_HALF, z, 0.0), pt(-BEAM_HALF, z, -BEAM_OUT), pt(BEAM_HALF, z, -BEAM_OUT), pt(BEAM_HALF, z, 0.0)]
+    box_faces(bm, rect(BEAM_Z0), rect(BEAM_Z1))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(E.material("portal_concrete", "#ECEAE4", roughness=0.85))
+    return E.new_object(name, mesh, col)
+
+
 def build():
     pts = tunnel_points()
     if len(pts) < 3:
@@ -148,3 +182,9 @@ def build():
     cover = env_terrain.PROFILE.get("tunnel_cover_m", 4.8)
     for (p, inward), name in zip(env_terrain.portals(), ("Tunnel_PortalSouth", "Tunnel_PortalNorth")):
         build_portal(p, inward, cover, name, col)
+        build_portal_beam(p, inward, name.replace("Portal", "PortalBeam"), col)
+    wall = E.material("T_cut_wall", CUT_WALL_COLOUR, roughness=0.9)        # V10c: ochre render (texture in env_materials)
+    wall.diffuse_color = E.hex_rgba(CUT_WALL_COLOUR)
+    bsdf = wall.node_tree.nodes.get("Principled BSDF")
+    if bsdf:
+        bsdf.inputs["Base Color"].default_value = E.hex_rgba(CUT_WALL_COLOUR)
