@@ -33,6 +33,7 @@ import env_corridor             # noqa: E402
 import env_covebank             # noqa: E402  V10d: the cove bank outside the corridor
 import env_streets              # noqa: E402  V10f: the street section rebuilt from the Street View survey
 import env_street_objects       # noqa: E402
+import env_capricciosa          # noqa: E402  V16g: Capricciosa forecourt, sea wall, car-park corner
 import env_campus               # noqa: E402  V10c2: campus buildings, courtyards, pools
 import env_plaza                # noqa: E402  V10i: upper plaza, stairs, sunken courtyard
 import dressing_freeze         # noqa: E402  V10i: dressing stays put outside changed route sections
@@ -301,6 +302,7 @@ def build_dressing():
     veg, props = env_plaza.dress(veg, props)               # V10i: the upper plaza's own trees and furniture
     veg, props = env_entrance.dress(veg, props, protos)    # V15a: entrance plaza: young staked trees, seat blocks, lamps
     veg, props = env_street_objects.dress_promenade(veg, props)   # V15c: promenade bollards, flood masts, machines
+    veg, props = env_capricciosa.dress(veg, props, protos)        # V16g: builds its statics, then its own dressing
     env_vegetation.instance_for_preview(veg, protos)
     env_props.instance_for_preview(props, protos)
     print(f"  dressing: {len(protos)} prototypes, {len(veg)} plants, {len(props)} props")
