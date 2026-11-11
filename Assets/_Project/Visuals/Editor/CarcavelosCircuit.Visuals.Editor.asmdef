@@ -4,7 +4,10 @@
     "references": [
         "CarcavelosCircuit.Track",
         "CarcavelosCircuit.RaceFlow",
-        "CarcavelosCircuit.Track.Editor"
+        "CarcavelosCircuit.Track.Editor",
+        "CarcavelosCircuit.Visuals",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [
         "Editor"
