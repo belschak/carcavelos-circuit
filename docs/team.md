@@ -7,7 +7,7 @@ One owner per role. The owner is the only person (and the only AI) who edits the
 | 1 Driving + camera | Alessandro Rossi (@alessandrorossicareer-ctrl) | Role 4 | `Assets/_Project/Driving/` (kart controller, input, drift/boost, recovery, chase camera, `Driving_TestBed.unity`) |
 | 2 Campus track + race rules | Noah (@NoahSchlag1) | Role 3 | `Assets/_Project/Track/` (track geometry, colliders, spawn, checkpoints, `RaceRules.cs`, `Track_Campus.unity`) |
 | 3 Kart, visuals + web release | Luc Tippmann (@LucNovaSBE02) | Role 2 | `Assets/_Project/Visuals/` (kart + driver mesh, palette, landmarks, materials, `KartEffects.cs`, `Visuals_Showroom.unity`), Web build + itch.io page + `docs/builds.md`; `art-source/` stays outside the repo |
-| 4 Race flow, UI + sound | David Belschak (@belschak) | Role 1 | `Assets/_Project/RaceFlow/`, `Assets/_Project/Audio/` (all sound + music), `Assets/_Project/Shared/`, `Main.unity`, `ProjectSettings/`, `Packages/` |
+| 4 Race flow, UI + sound | David Belschak (@belschak) | Role 1 | `Assets/_Project/RaceFlow/`, `Assets/_Project/Audio/` (all sound + music), `Assets/_Project/Shared/`, `Assets/_Project/Ambience/` (beach waves + surfers, R12), `Main.unity`, `ProjectSettings/`, `Packages/` |
 | Everyone | | | `Assets/_Project/Tests/` (each owner adds tests for their own rules), `docs/` |
 
 Team: David Belschak, Luc Tippmann, Alessandro Rossi, Noah. Roles fixed in the group chat on 2026-11-07. The four roles are meant to be equal in workload.

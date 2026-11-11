@@ -63,6 +63,16 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("How long a coach tip stays on screen (longer than a warning: it is a full sentence)")]
         private float coachHintSeconds = 3.5f;
 
+        [Header("Racers (task R8: bots on a grid behind the SpawnPoint)")]
+        [SerializeField, Tooltip("Metres between the two columns of the starting grid and the SpawnPoint's line (left and right of it)")]
+        private float gridSidewaysMetres = 2f;
+
+        [SerializeField, Tooltip("Metres from one grid row to the next, backwards from the SpawnPoint")]
+        private float gridRowMetres = 3f;
+
+        [SerializeField, Range(0, 5), Tooltip("DEV ONLY: simple test bots that follow the racing line, for tests and QA until Role 3's bots exist. Keep 0 in the game")]
+        private int devTestBots = 0;
+
         public string TrackSceneName { get { return trackSceneName; } }
         public string FallbackTrackSceneName { get { return fallbackTrackSceneName; } }
         public float MedalReferenceLapMetres { get { return medalReferenceLapMetres; } }
@@ -75,6 +85,9 @@ namespace CarcavelosCircuit.RaceFlow
         public float FallCheckCooldownSeconds { get { return fallCheckCooldownSeconds; } }
         public float CoachNoDriftSeconds { get { return coachNoDriftSeconds; } }
         public float CoachHintSeconds { get { return coachHintSeconds; } }
+        public float GridSidewaysMetres { get { return gridSidewaysMetres; } }
+        public float GridRowMetres { get { return gridRowMetres; } }
+        public int DevTestBots { get { return devTestBots; } }
 
         // Every track scene the race may load, in the order RaceBootstrap tries them (fallback last, empty names skipped).
         public string[] TrackScenesInOrder()

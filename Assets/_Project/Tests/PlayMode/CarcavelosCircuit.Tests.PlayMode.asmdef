@@ -4,7 +4,9 @@
     "references": [
         "UnityEngine.TestRunner",
         "CarcavelosCircuit.Shared",
-        "CarcavelosCircuit.RaceFlow"
+        "CarcavelosCircuit.Track",
+        "CarcavelosCircuit.RaceFlow",
+        "Unity.Cinemachine"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

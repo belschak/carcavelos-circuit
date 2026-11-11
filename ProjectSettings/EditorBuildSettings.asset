@@ -12,6 +12,12 @@ EditorBuildSettings:
     path: Assets/_Project/Track/Scenes/Track_Campus.unity
     guid: 4f14ff89a7d8e9b409b7ce04b67a799b
   - enabled: 1
+    path: Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity
+    guid: c6dfca16a98d649569f0b729d04005fb
+  - enabled: 1
+    path: Assets/_Project/Track/Scenes/Track_NovaCampus.unity
+    guid: 028a7097fd242934e848b773e58743f6
+  - enabled: 1
     path: Assets/_Project/RaceFlow/Scenes/RaceFlow_PlaceholderTrack.unity
     guid: c8e853439a7cf50498f0c6016cbd3aa8
   m_configObjects:

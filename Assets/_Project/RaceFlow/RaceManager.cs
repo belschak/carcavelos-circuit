@@ -1,5 +1,6 @@
 using System;
 using CarcavelosCircuit.Shared;
+using CarcavelosCircuit.Track;
 using UnityEngine;
 
 namespace CarcavelosCircuit.RaceFlow
@@ -32,8 +33,10 @@ namespace CarcavelosCircuit.RaceFlow
         public bool IsSetUp { get { return kart != null; } }
         public int CountdownFrom { get { return settings.CountdownFrom; } }
         public Transform KartTransform { get { return kartTransform; } }
+        public TrackInfo Track { get { return track; } } // the raced track (RaceRoster: grid slots behind its SpawnPoint, task R8)
         public string TrackName { get; private set; } = ""; // the track scene we race on (save keys, ghost check)
         public Vector3[] TrackPoints { get; private set; } = new Vector3[0]; // checkpoint positions in driving order (fly-over camera)
+        public Vector3[] TrackForwards { get; private set; } = new Vector3[0]; // road direction at each checkpoint (its respawn point), zero if unknown
         public float LapMetres { get; private set; } // lap length checkpoint to checkpoint (medal times scale with it)
         public int CheckpointCount { get { return checkpointList == null ? 0 : checkpointList.Length; } } // incl. the start/finish line
         public int CheckpointsPassed { get { return rules == null ? 0 : rules.LastValidCheckpoint; } } // this lap, in order
@@ -60,6 +63,8 @@ namespace CarcavelosCircuit.RaceFlow
         public event Action<float, bool> LapFinished;    // lap time, new record?
         public event Action Restarted;
         public event Action Recovered;                   // kart put back after R or a fall (respawn sound)
+        public event Action Paused;                      // the pause started (focus lost or P), audit 19 pause cue
+        public event Action Resumed;                     // the pause ended and the race runs again
 
         private readonly RaceTimer timer = new RaceTimer();
         private readonly RunStats runStats = new RunStats();
@@ -73,10 +78,10 @@ namespace CarcavelosCircuit.RaceFlow
         private CoachHint waitingCoachHint;    // a tip that waits until the hint chip is free
         private const string CoachSaveKey = "CarcavelosCircuit.CoachDone"; // one key for all tracks: it is about the player
         private RaceStateMachine stateMachine;
-        private PlaceholderLapRules rules;   // swap to RaceRules (Role 2) once T5 is merged
-        private PlaceholderTrack track;      // swap to TrackInfo (Role 2) once T4 is merged
+        private RaceRules rules;   // Role 2's lap rules (T5)
+        private TrackInfo track;   // Role 2's track contract (T4) on the track scene's root
         private PersonalBest personalBest;
-        private PlaceholderCheckpoint[] checkpointList; // the track's checkpoints (index 0 = start/finish), read by the HUD
+        private Checkpoint[] checkpointList; // the track's checkpoints (index 0 = start/finish), read by the HUD
         private FallCheck fallCheck;
         private IKartState kart;
         private Transform kartTransform;
@@ -85,7 +90,7 @@ namespace CarcavelosCircuit.RaceFlow
         private string saveKey;
 
         // Called once by RaceBootstrap after the track is loaded and the kart is spawned.
-        public void SetUp(GameObject kartObject, PlaceholderTrack loadedTrack, string trackName)
+        public void SetUp(GameObject kartObject, TrackInfo loadedTrack, string trackName)
         {
             kart = kartObject.GetComponent<IKartState>();
             if (kart == null)
@@ -101,15 +106,15 @@ namespace CarcavelosCircuit.RaceFlow
             kartBodies = kartObject.GetComponentsInChildren<Rigidbody>(true);
             kartColliders = kartObject.GetComponentsInChildren<Collider>(true);
 
-            PlaceholderCheckpoint[] checkpoints = track.Checkpoints;
+            Checkpoint[] checkpoints = track.Checkpoints;
             if (checkpoints == null)
             {
-                checkpoints = new PlaceholderCheckpoint[0];
+                checkpoints = new Checkpoint[0];
             }
             checkpointList = checkpoints;
             int checkpointCount = checkpoints.Length;
             CheckCheckpoints(checkpoints); // only logs errors, the race still starts so the kart can be tested
-            rules = new PlaceholderLapRules(checkpointCount);
+            rules = new RaceRules(checkpointCount);
             fallCheck = new FallCheck(settings.FallRecoverHeight, settings.FallCheckCooldownSeconds);
 
             // The best time is saved per track in PlayerPrefs (in the browser Unity keeps them in the site's IndexedDB storage).
@@ -120,6 +125,7 @@ namespace CarcavelosCircuit.RaceFlow
             // Medal times, stretched to this track's length (MedalScaling). A save from before medals existed gets the
             // medal its best time is worth.
             TrackPoints = CheckpointPositions(checkpoints);
+            TrackForwards = CheckpointForwards(checkpoints);
             LapMetres = MedalScaling.LoopLength(TrackPoints);
             medalThresholds = MedalScaling.ScaleTimes(settings.MedalThresholds(), settings.MedalReferenceLapMetres, LapMetres);
             Debug.Log("RaceManager: racing " + trackName + ", " + checkpointCount + " checkpoints, lap about "
@@ -157,7 +163,7 @@ namespace CarcavelosCircuit.RaceFlow
 
         // Where the checkpoints stand in driving order (index 0, 1, 2 ...), for the lap length. The list on the track
         // may be in any order, so we look each index up. A missing index is skipped.
-        private static Vector3[] CheckpointPositions(PlaceholderCheckpoint[] checkpoints)
+        private static Vector3[] CheckpointPositions(Checkpoint[] checkpoints)
         {
             var positions = new System.Collections.Generic.List<Vector3>();
             for (int index = 0; index < checkpoints.Length; index++)
@@ -174,9 +180,30 @@ namespace CarcavelosCircuit.RaceFlow
             return positions.ToArray();
         }
 
+        // The road direction at every checkpoint, same order as CheckpointPositions: the forward of its respawn point,
+        // which Role 2 places on the road facing the way you drive. Zero when a checkpoint has no respawn point
+        // (ItemBoxLayout then falls back to the straight line to the next checkpoint).
+        private static Vector3[] CheckpointForwards(Checkpoint[] checkpoints)
+        {
+            var forwards = new System.Collections.Generic.List<Vector3>();
+            for (int index = 0; index < checkpoints.Length; index++)
+            {
+                for (int i = 0; i < checkpoints.Length; i++)
+                {
+                    if (checkpoints[i] != null && checkpoints[i].Index == index)
+                    {
+                        Transform respawn = checkpoints[i].RespawnPoint;
+                        forwards.Add(respawn != null ? respawn.forward : Vector3.zero);
+                        break;
+                    }
+                }
+            }
+            return forwards.ToArray();
+        }
+
         // Unity sends OnTriggerEnter to the GameObject that owns the trigger collider. Role 2 may put the collider
         // on the checkpoint object itself or on a child, so a relay goes onto every object with a trigger collider.
-        private void AddRelays(PlaceholderCheckpoint checkpoint)
+        private void AddRelays(Checkpoint checkpoint)
         {
             Collider[] colliders = checkpoint.GetComponentsInChildren<Collider>(true);
             for (int i = 0; i < colliders.Length; i++)
@@ -192,7 +219,7 @@ namespace CarcavelosCircuit.RaceFlow
 
         // Swap-day safety net: a wrong track setup gives a clear red error instead of a lap that never finishes.
         // Rules (docs/interfaces.md): no empty entries, a trigger collider on every checkpoint, indices exactly 0..N-1.
-        private void CheckCheckpoints(PlaceholderCheckpoint[] checkpoints)
+        private void CheckCheckpoints(Checkpoint[] checkpoints)
         {
             int[] indices = new int[checkpoints.Length];
             for (int i = 0; i < checkpoints.Length; i++)
@@ -215,7 +242,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        private static bool HasTriggerCollider(PlaceholderCheckpoint checkpoint)
+        private static bool HasTriggerCollider(Checkpoint checkpoint)
         {
             Collider[] colliders = checkpoint.GetComponentsInChildren<Collider>(true);
             for (int i = 0; i < colliders.Length; i++)
@@ -281,7 +308,10 @@ namespace CarcavelosCircuit.RaceFlow
                     }
                 }
             }
-            return other.GetComponentInParent<IKartState>() != null;
+            // Only OUR kart (task R8): a bot's kart also has an IKartState, and it must never pass the player's
+            // checkpoints or take the player's item boxes.
+            IKartState owner = other.GetComponentInParent<IKartState>();
+            return owner != null && owner == kart;
         }
 
         // Time.timeScale is global and survives a scene load, so a slow motion that is cut off (scene unloaded,
@@ -312,8 +342,8 @@ namespace CarcavelosCircuit.RaceFlow
             // Before the pause check: the slow motion must notice a pause (it then leaves Time.timeScale at 0).
             UpdateSlowMotion();
 
-            // Paused (focus was lost): everything is frozen until a key or click. That key does nothing else,
-            // so it never also retries or recovers.
+            // Paused (focus was lost or P was pressed): everything is frozen until a key, a click or P again.
+            // That key does nothing else, so it never also retries or recovers.
             if (pause.IsPaused)
             {
                 kart.InputEnabled = false;
@@ -321,10 +351,16 @@ namespace CarcavelosCircuit.RaceFlow
                 {
                     AudioListener.pause = true; // RaceMusic unpauses the sound when focus comes back; we are still paused
                 }
-                if (pause.TryResume(RaceKeys.AnyKeyOrClickPressed()))
+                if (pause.TryResume(RaceKeys.AnyKeyOrClickPressed() || RaceKeys.PausePressed()))
                 {
                     EndPause();
                 }
+                return;
+            }
+
+            // P pauses the countdown or the race by hand (audit 9): the same pause as a lost focus.
+            if (RaceKeys.PausePressed() && StartPause(pause.OnPauseKey(State)))
+            {
                 return;
             }
 
@@ -548,14 +584,14 @@ namespace CarcavelosCircuit.RaceFlow
             HintVisibleUntil = Time.time + seconds;
         }
 
-        // ---- Pause on focus loss (task P7) ----
+        // ---- Pause on focus loss (task P7) and on the P key (audit 9) ----
         // Unity calls these on every MonoBehaviour: OnApplicationFocus(false) when the browser tab or the window
         // loses focus, OnApplicationPause(true) when the app is sent to the background.
         private void OnApplicationFocus(bool hasFocus)
         {
             if (!hasFocus)
             {
-                StartPause();
+                PauseForLostFocus();
             }
         }
 
@@ -563,23 +599,34 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (paused)
             {
-                StartPause();
+                PauseForLostFocus();
+            }
+        }
+
+        private void PauseForLostFocus()
+        {
+            if (pauseOnFocusLoss && IsSetUp)
+            {
+                StartPause(pause.OnFocusLost(State));
             }
         }
 
         // Time.timeScale = 0 freezes physics, Time.deltaTime and Time.timeAsDouble. The lap time comes from
-        // Time.timeAsDouble timestamps, so the paused seconds never count. RacePause decides if we may pause.
-        private void StartPause()
+        // Time.timeAsDouble timestamps, so the paused seconds never count. RacePause decides if we may pause
+        // (pauseStarted), this only does the Unity part. Returns pauseStarted, so the caller can stop its frame.
+        private bool StartPause(bool pauseStarted)
         {
-            if (!pauseOnFocusLoss || !IsSetUp || !pause.OnFocusLost(State))
+            if (!pauseStarted)
             {
-                return;
+                return false;
             }
             timeScaleBeforePause = Time.timeScale > 0f ? Time.timeScale : 1f;
             Time.timeScale = 0f;
             frozen = true;
             kart.InputEnabled = false; // ends a drift without a boost (the kart's own rule), so resuming never surges
             AudioListener.pause = true;
+            if (Paused != null) Paused();
+            return true;
         }
 
         // Back to normal speed. Safe to call when not paused: then it changes nothing.
@@ -593,6 +640,7 @@ namespace CarcavelosCircuit.RaceFlow
             frozen = false;
             Time.timeScale = timeScaleBeforePause;
             AudioListener.pause = false;
+            if (Resumed != null) Resumed();
         }
 
         // The medal time for one tier in seconds (for the HUD), -1 if there is none.
