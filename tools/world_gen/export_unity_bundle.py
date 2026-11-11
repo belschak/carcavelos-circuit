@@ -86,6 +86,8 @@ for obj in bpy.data.objects:
             e["water"] = {"shader": m["water_shader"], "normal": m["water_normal"], "shore_map": m["water_shore_map"],
                           "shore_rect": [round(v, 3) for v in m["water_shore_rect"]],
                           "shore_range": float(m["water_shore_range"]), "coast": float(m["water_coast"])}
+            if m.get("water_coast_west"):   # the far coast west of the shore map (env_backdrop: coast.far_line_y)
+                e["water"]["coast_west"] = [round(float(v), 4) for v in m["water_coast_west"]]
         b = m.node_tree.nodes.get("Principled BSDF") if m.node_tree else None
         if b:
             e["colour"] = srgb(b.inputs["Base Color"].default_value)

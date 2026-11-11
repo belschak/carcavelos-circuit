@@ -3,13 +3,17 @@
 - Road bed: within the road (+1 m) the terrain takes the driving height (route.json track_z); outside it
   blends back to the original terrain over a shoulder. Cuttings (the tunnel ramp) get a short, steep shoulder.
 - Tunnel cover: above the beach tunnel the terrain stays at least `tunnel_cover_m` above the tunnel floor.
-- Seabed: sea cells go below sea level so the water plane at z = 0 shows.
+- Coast (coast.py, traced from the orthophoto): every point gets its signed distance to the traced waterline. Sea side:
+  below the water (seabed). Beach zone (between waterline and backshore): open sand on the beach profile, which crosses
+  z = 0 exactly on the waterline, and the sand cove KERB_DROP below the curved promenade. All other land: never below
+  0.3 m, so no hollow inland can show the water plane.
 Indoor and on-roof route parts (atrium, terrace deck) are skipped: buildings carry them.
 """
 import json
 import math
 import os
 
+import coast
 import env_common as E
 
 PROFILE = json.load(open(os.path.join(E.HERE, "route_profile.json")))
@@ -17,8 +21,8 @@ ROAD_HALF = E.ROUTE_WIDTH / 2 + 1.0       # flat part (m from the centreline)
 SHOULDER = {"ramp": 9.0, "tunnel plaza": 10.0, "lower plaza": 14.0, "upper plaza": 14.0}
 DEFAULT_SHOULDER = 12.0
 CUT_ZONES = {"ramp", "tunnel plaza"}      # sunken approaches to the beach tunnel
-SEA_FLOOR = -1.5
-BEACH_MIN, BEACH_TOP = 0.3, 1.5    # beach height at the waterline and 30 m inland (m above the sea plane)
+LAND_MIN = 0.3            # m above the sea plane: the lowest any land point may lie (no inland hollow shows water)
+BACKSHORE_BLEND = 10.0    # m: inside the beach zone the sand profile takes over from the terrain over this distance
 
 
 def outside_portal(x, y, tunnel, k):
@@ -53,20 +57,6 @@ def in_portal_hole(x, y):
     return False
 
 
-def coast_side(x, y):
-    """Distance (m) to the nearest OSM coastline segment and whether (x, y) is on its land side."""
-    best, land = None, True
-    for line in E.DATA["coast"]:
-        for (ax, ay), (bx, by) in zip(line, line[1:]):
-            dx, dy = bx - ax, by - ay
-            seg = dx * dx + dy * dy or 1e-9
-            t = max(0.0, min(1.0, ((x - ax) * dx + (y - ay) * dy) / seg))
-            d = math.hypot(x - (ax + t * dx), y - (ay + t * dy))
-            if best is None or d < best:
-                best, land = d, (dx * (y - ay) - dy * (x - ax)) > 0
-    return best, land
-
-
 HOLE_BEYOND_EDGE = 6.0      # terrain faces this far beyond the road edge are removed in cuttings
 
 
@@ -97,6 +87,42 @@ def _orig_height(x, y):
 def smoothstep(t):
     t = min(max(t, 0.0), 1.0)
     return t * t * (3 - 2 * t)
+
+
+def _bilinear(h, x, y):
+    fx = min(max((x - E.X0) / E.STEP, 0), E.COLS - 1.001)
+    fy = min(max((y - E.Y0) / E.STEP, 0), E.ROWS - 1.001)
+    i, j = int(fx), int(fy)
+    ax, ay = fx - i, fy - j
+    return (h[j][i] * (1 - ax) * (1 - ay) + h[j][i + 1] * ax * (1 - ay) + h[j + 1][i] * (1 - ax) * ay
+            + h[j + 1][i + 1] * ax * ay)
+
+
+_SHAPED = {}                # the route-shaped height field before the coast rule (promenade heights at the kerb)
+
+
+def kerb_height(kx, ky):
+    """Promenade height at a point of the cove kerb: the road where the route runs along it, else the terrain."""
+    p = E.nearest_route_point(kx, ky)
+    if not p["tunnel"] and math.hypot(p["x"] - kx, p["y"] - ky) < 14.0:
+        return p["track_z"] - 0.05
+    h = _SHAPED.get("h") or E.DATA["grid"]["heights"]
+    return _bilinear(h, kx, ky)
+
+
+def coast_height(x, y, z):
+    """Terrain height at (x, y) after the coast rule, given the route-shaped height z there."""
+    s = coast.signed_distance(x, y)
+    if s < 0:                                               # sea: seabed, below the water plane
+        return min(z, coast.beach_z(s))
+    floor = min(coast.beach_z(s), LAND_MIN)
+    if coast.in_cove(x, y):
+        return max(coast.cove_z(x, y, kerb_height), floor)
+    if coast.in_beach(x, y):                                # open sand (the rock shelves are meshes on top)
+        target = coast.beach_z(s)
+        t = 1.0 if s <= 4.0 else smoothstep(coast.backshore_distance(x, y) / BACKSHORE_BLEND)
+        return max(z * (1 - t) + target * t, floor)
+    return max(z, floor)                                    # other land: never in a hollow below the water
 
 
 def apply():
@@ -146,29 +172,17 @@ def apply():
                 continue
             heights[j][i] = max(heights[j][i], near["track_z"] + cover)
 
-    # shoreline along the real OSM coastline (land is on the left of the line): a beach that runs into
-    # the water at z = 0, so the visible water edge follows the coast instead of the 5 m grid
+    # coast (coast.py): seabed, beach and cove from the traced waterline; land never below LAND_MIN
+    _SHAPED["h"] = [row[:] for row in heights]
+    beach = 0
     for j in range(E.ROWS):
         for i in range(E.COLS):
             x, y = E.X0 + i * E.STEP, E.Y0 + j * E.STEP
             if E.distance_to_route(x, y) < ROAD_HALF + 4:
                 continue
-            d, land = coast_side(x, y)
-            h0 = heights[j][i]
-            if land and d is not None and h0 < BEACH_TOP:
-                # the DEM puts the wide Carcavelos beach at about 0 m, right on the water plane (z-fighting):
-                # the beach rises from BEACH_MIN at the waterline to BEACH_TOP 30 m inland
-                heights[j][i] = max(h0, BEACH_MIN + (BEACH_TOP - BEACH_MIN) * min(d, 30.0) / 30.0)
-            elif d is None and E.DATA["grid"]["classes"][j][i] == "sand":
-                heights[j][i] = max(h0, BEACH_MIN)
-            if d is None or d > 40:
-                if E.DATA["grid"]["classes"][j][i] == "sea":
-                    heights[j][i] = min(heights[j][i], SEA_FLOOR)
-                continue
-            if not land:
-                heights[j][i] = min(heights[j][i], -0.35 + (SEA_FLOOR + 0.35) * smoothstep(d / 10.0))
-            elif d < 18 and heights[j][i] < 4.0:
-                heights[j][i] = min(heights[j][i], 0.3 + d * 0.18)
+            heights[j][i] = coast_height(x, y, heights[j][i])
+            beach += coast.in_beach(x, y)
+    print(f"  coast: {beach} terrain vertices on the beach (waterline from coast_trace.json)")
 
     E.set_heightfield(heights)
     print(f"  terrain: {changed} vertices reshaped along the route, tunnel covered by {cover} m")

@@ -68,6 +68,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             public string shader; public string normal; public string shore_map;
             public float[] shore_rect;    // world x0, z0, x1, z1 covered by the shore map
             public float shore_range; public float coast;
+            public float[] coast_west;    // far coast west of the shore map: world x, its z there, metres north per metre west
         }
         [Serializable] private class MatList { public MatInfo[] materials; }
         [Serializable] private class Item { public string name; public string proto; public float x, y, z, yaw, roll, scale; }
@@ -303,6 +304,11 @@ namespace CarcavelosCircuit.Visuals.Editor
                     }
                     SetFloat(mat, m.water.shore_range, "_ShoreRange");
                     SetFloat(mat, m.water.coast, "_CoastZ");
+                    float[] cw = m.water.coast_west;
+                    if (cw != null && cw.Length >= 3 && mat.HasProperty("_CoastWest"))
+                    {
+                        mat.SetVector("_CoastWest", new Vector4(cw[0], cw[1], cw[2], 0f));
+                    }
                 }
                 mat.enableInstancing = true;
                 EditorUtility.SetDirty(mat);

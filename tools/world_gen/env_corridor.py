@@ -7,7 +7,10 @@ Its heights come straight from the driving profile (route.json track_z):
   road (+1 m)    flat at the driving height
   shoulder       smooth blend to the terrain
   cuttings       never above a 45 degree plane from the road edge; those faces get the concrete material
-  outer part     blends into the 5 m world terrain, which has a hole under the corridor (covers_cell).
+  outer part     blends into the 5 m world terrain, which has a hole under the corridor (covers_cell) only where
+                 corridor faces really exist (has_face), so no gap opens next to a drop, a portal or the jump
+  cove kerb      on the sand side of the cove kerb (coast.COVE_KERB, the line of V10b's granite kerb) the ground
+                 drops from the promenade to the cove sand (coast.KERB_DROP) within KERB_BANK of the kerb's sea face
 After build_data(), env_common.ground_z returns this surface, so paths, props and trees sit on it.
 """
 import math
@@ -15,7 +18,9 @@ import math
 import bmesh
 import bpy
 
+import coast
 import env_common as E
+import env_terrain
 
 CORRIDOR = 26.0
 ROAD_HALF = E.ROUTE_WIDTH / 2 + 1.0
@@ -24,6 +29,8 @@ DEFAULT_SHOULDER = 12.0
 CUT_ZONES = {"ramp", "tunnel plaza", "tunnel"}   # "tunnel" = the few open metres in front of a portal
 FRACTIONS = [k / 26.0 for k in range(0, 13)] + [k / 26.0 for k in range(14, 27, 2)]   # 1 m, then 2 m steps
 SKIP_ZONES = {"terrace deck", "kicker"}           # on the CTT roof: the building carries the road
+
+KERB_BANK = 0.4           # m: width of the drop from the promenade to the cove sand, from the kerb's sea face
 
 _state = {"pts": [], "frames": [], "width": [], "cells": {}}
 
@@ -106,7 +113,65 @@ def profile_height(p, offset, coarse):
         z = outer
     if p["zone"] in CUT_ZONES and d > half:
         z = min(z, road + (d - half))
+    if d > half + 0.3 and _near_cove(x, y):
+        dk, (kx, ky), sand_side = coast.kerb_side(x, y)
+        if sand_side and coast.in_cove(x, y):      # beyond the cove kerb: down to the sand right at its sea face
+            rim = env_terrain.kerb_height(kx, ky)
+            sand = coast.cove_z(x, y, env_terrain.kerb_height)
+            t = min(max((dk - coast.KERB_HALF) / KERB_BANK, 0.0), 1.0)
+            z = min(z, rim + (sand - rim) * t)
     return z
+
+
+def kerb_crossing(p, side):
+    """Lateral offset (m, > 0) at which the normal of route point p meets the cove kerb on `side`, or None."""
+    nrm = _nrm(p)
+    rx, ry = side * nrm[0], side * nrm[1]
+    best = None
+    for (ax, ay), (bx, by) in zip(coast.COVE_KERB, coast.COVE_KERB[1:]):
+        ex, ey = bx - ax, by - ay
+        den = rx * ey - ry * ex
+        if abs(den) < 1e-9:
+            continue
+        t = ((ax - p["x"]) * ey - (ay - p["y"]) * ex) / den
+        u = ((ax - p["x"]) * ry - (ay - p["y"]) * rx) / den
+        if 0.0 <= u <= 1.0 and E.half_width(p) + 0.3 < t < CORRIDOR and (best is None or t < best):
+            best = t
+    return best
+
+
+def snap_to_kerb(p, offs):
+    """Where a row crosses the cove kerb, move its nearest two samples onto the kerb line and the foot of the bank,
+    so the drop to the sand follows the kerb instead of zig-zagging between rows (the order of the samples stays)."""
+    if not _near_cove(p["x"], p["y"]) and not any(_near_cove(p["x"] + _nrm(p)[0] * o, p["y"] + _nrm(p)[1] * o)
+                                                 for o in (-CORRIDOR, CORRIDOR)):
+        return offs
+    offs = list(offs)
+    for side in (1, -1):
+        k = kerb_crossing(p, side)
+        if k is None:
+            continue
+        idx = [i for i, o in enumerate(offs) if o * side > E.half_width(p) + 0.3]
+        idx.sort(key=lambda i: abs(offs[i]))
+        a = min(idx, key=lambda i: abs(abs(offs[i]) - k))
+        pos = idx.index(a)
+        if pos + 1 >= len(idx):
+            continue
+        b = idx[pos + 1]
+        nxt = abs(offs[idx[pos + 2]]) if pos + 2 < len(idx) else 1e9
+        prev = abs(offs[idx[pos - 1]]) if pos > 0 else E.half_width(p) + 0.3
+        rim, foot = max(k, prev + 0.05), min(k + KERB_BANK + 0.05, nxt - 0.05)
+        if prev < rim < foot < nxt:
+            offs[a], offs[b] = side * rim, side * foot
+    return offs
+
+
+_COVE_BOX = (min(p[0] for p in coast.COVE) - 2, min(p[1] for p in coast.COVE) - 2,
+             max(p[0] for p in coast.COVE) + 2, max(p[1] for p in coast.COVE) + 2)
+
+
+def _near_cove(x, y):
+    return _COVE_BOX[0] <= x <= _COVE_BOX[2] and _COVE_BOX[1] <= y <= _COVE_BOX[3]
 
 
 def _nrm(p):
@@ -152,34 +217,163 @@ def surface_z(x, y):
     return profile_height(p, off, E.coarse_ground_z)
 
 
-def inside_depth(x, y):
-    """How far (m) a point lies inside the corridor's outer edge; <= 0 outside or where the corridor has no faces."""
+def has_face(x, y):
+    """True if the corridor mesh has a face at (x, y): the two rows around the nearest point on that side are both
+    built and not split by a drop (the jump), and the point lies within the corridor's width."""
     p, d = nearest(x, y)
     if p is None:
-        return -1.0
+        return False
     pts, n, i = _state["pts"], len(_state["pts"]), p["i"]
-    for j in (i - 1, i):                         # faces on both sides of p must exist (no drop, both rows built)
-        a, b = pts[j % n], pts[(j + 1) % n]
-        if not (eligible(a) and eligible(b)) or abs(a["track_z"] - b["track_z"]) > 1.5:
-            return -1.0
+    t, nrm = _state["frames"][i]
+    along = (x - p["x"]) * t[0] + (y - p["y"]) * t[1]
+    j = i if along >= 0 else i - 1
+    a, b = pts[j % n], pts[(j + 1) % n]
+    if not ((eligible(a) or is_portal(a)) and (eligible(b) or is_portal(b))) or abs(a["track_z"] - b["track_z"]) > 1.5:
+        return False
+    other = b if along >= 0 else a                       # the neighbouring row on that side
+    if not eligible(other):                             # last row before a portal: no faces beyond it
+        if abs(along) > math.hypot(other["x"] - p["x"], other["y"] - p["y"]) + 0.3:
+            return False
+    off = (x - p["x"]) * nrm[0] + (y - p["y"]) * nrm[1]
+    return abs(off) <= _state["width"][i][1 if off > 0 else -1] and d <= _state["width"][i][1 if off > 0 else -1] + 1.0
+
+
+def inside_depth(x, y):
+    """How far (m) a point lies inside the corridor's outer edge; <= 0 outside or where the corridor has no faces."""
+    if not has_face(x, y):
+        return -1.0
+    p, d = nearest(x, y)
     nrm = _nrm(p)
     off = (x - p["x"]) * nrm[0] + (y - p["y"]) * nrm[1]
-    w = _state["width"][i][1 if off > 0 else -1]
-    return w - abs(off) if d <= w + 1.0 else -1.0
+    return _state["width"][p["i"]][1 if off > 0 else -1] - abs(off)
 
 
 SKIRT = 0.6        # m: vertical strip under both outer edges, hides the sunken 5 m ground behind it
 
 
-def covers_cell(cx, cy):
-    """True if a 5 m terrain face centred at (cx, cy) is fully replaced by the corridor."""
+ROAD_CLEAR = 3.0    # m beyond the road edge: a 5 m terrain cell this close to the road must lie below it
+TUNNEL_COVER_OK = 4.5   # m above the tunnel floor: terrain this high over the tunnel is its cover, not in the way
+
+
+def _rises_over_road(cx, cy, half):
+    """True if the 5 m cell centred at (cx, cy) comes within ROAD_CLEAR of the road (any route point, tunnel and
+    kicker included) with a corner higher than the road there: such a cell would cut into the road, the kicker or
+    a tunnel mouth, so it stays out even where the corridor has no faces."""
+    corners = ((-half, -half), (half, -half), (half, half), (-half, half))
+    for p in _state["pts"]:
+        if abs(p["x"] - cx) > half + 12 or abs(p["y"] - cy) > half + 12:
+            continue
+        for ox, oy in corners:
+            x, y = cx + ox, cy + oy
+            z = E.coarse_ground_z(x, y)
+            top = p["track_z"] + TUNNEL_COVER_OK if p["tunnel"] else 1e9
+            if math.hypot(p["x"] - x, p["y"] - y) < E.half_width(p) + ROAD_CLEAR and p["track_z"] - 0.15 < z < top:
+                return True
+    return False
+
+
+def cell_state(cx, cy, half=2.5):
+    """Why a 5 m terrain face centred at (cx, cy) is left out: "corridor" (its centre lies 4.5 m inside the corridor
+    edge and the corridor has faces at the centre and all four corners), "road" (the corridor has no faces there,
+    next to the jump drop, a tunnel portal or the end of a ground-level passage, but the cell would rise over the
+    road; build_gap_patches puts a low floor there), or None (the cell stays)."""
     p, d = nearest(cx, cy)
     if p is None:
-        return False
+        return None
     nrm = _nrm(p)
     off = (cx - p["x"]) * nrm[0] + (cy - p["y"]) * nrm[1]
     side = 1 if off > 0 else -1
-    return d < _state["width"][p["i"]][side] - 4.5
+    if d >= _state["width"][p["i"]][side] - 4.5:
+        return None
+    if all(has_face(cx + ox, cy + oy) for ox, oy in ((0, 0), (-half, -half), (half, -half), (half, half), (-half, half))):
+        return "corridor"
+    return "road" if _rises_over_road(cx, cy, half) else None
+
+
+def covers_cell(cx, cy, half=2.5):
+    """True if a 5 m terrain face centred at (cx, cy) is left out (cell_state)."""
+    return cell_state(cx, cy, half) is not None
+
+
+SINK_UNDER_CORRIDOR = 0.35   # as in build_world.build_ground: the 5 m ground sinks this much under the corridor
+PATCH_BELOW_ROAD = 0.3       # m: a gap patch lies this far under the lowest road point near it
+PATCH_OVERLAP = 1.0          # m: and reaches this far under its neighbours
+
+
+def build_gap_patches():
+    """Low floors for the 5 m cells that stay out because they would rise over the road where the corridor has no
+    faces (beside the jump kicker, at the tunnel portals; also under the portal mouths, floor only): without them the
+    hole showed the water plane, and with the sea clipped to the coast it would show the sky. Each floor lies
+    PATCH_BELOW_ROAD under the lowest road point near it, overlaps its neighbours, and gets walls up to every
+    neighbouring terrain cell that is drawn (not inside a tunnel mouth), so the gap reads as a shallow pit in the
+    ground. Ground-map material."""
+    gx = lambda i: E.X0 + i * E.STEP                                    # noqa: E731
+    gy = lambda j: E.Y0 + j * E.STEP                                    # noqa: E731
+
+    def drawn(i, j):
+        if not (0 <= i < E.COLS - 1 and 0 <= j < E.ROWS - 1):
+            return False
+        cx, cy = gx(i) + E.STEP / 2, gy(j) + E.STEP / 2
+        return not env_terrain.in_portal_hole(cx, cy) and not covers_cell(cx, cy)
+
+    def vertex_z(i, j):
+        x, y = gx(i), gy(j)
+        return E.coarse_ground_z(x, y) - SINK_UNDER_CORRIDOR * smoothstep((inside_depth(x, y) - 0.5) / 2.0)
+
+    tunnel = [p for p in _state["pts"] if p["tunnel"]]
+
+    def in_tunnel(x, y):
+        return any(math.hypot(p["x"] - x, p["y"] - y) < E.half_width(p) + 2.0 for p in tunnel)
+
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    count = 0
+    for j in range(E.ROWS - 1):
+        for i in range(E.COLS - 1):
+            cx, cy = gx(i) + E.STEP / 2, gy(j) + E.STEP / 2
+            portal = env_terrain.in_portal_hole(cx, cy)        # the headwall closes these; a floor catches slivers
+            if not portal and cell_state(cx, cy) != "road":
+                continue
+            near = [p["track_z"] for p in _state["pts"]
+                    if math.hypot(p["x"] - cx, p["y"] - cy) < E.STEP + E.half_width(p) + ROAD_CLEAR + 2.0]
+            corners = [vertex_z(i, j), vertex_z(i + 1, j), vertex_z(i + 1, j + 1), vertex_z(i, j + 1)]
+            floor = min(corners + near) - PATCH_BELOW_ROAD
+            e = PATCH_OVERLAP
+            quad = [(gx(i) - e, gy(j) - e), (gx(i + 1) + e, gy(j) - e), (gx(i + 1) + e, gy(j + 1) + e), (gx(i) - e, gy(j + 1) + e)]
+            faces = [bm.faces.new([bm.verts.new((x, y, floor)) for x, y in quad])]
+            # walls up to the drawn neighbours: (edge corner a, edge corner b, neighbour cell)
+            for (ai, aj), (bi, bj), (ni, nj) in (((i, j), (i + 1, j), (i, j - 1)), ((i + 1, j), (i + 1, j + 1), (i + 1, j)),
+                                                  ((i + 1, j + 1), (i, j + 1), (i, j + 1)), ((i, j + 1), (i, j), (i - 1, j))):
+                if portal or not drawn(ni, nj):
+                    continue
+                za, zb = vertex_z(ai, aj), vertex_z(bi, bj)
+                if max(za, zb) <= floor + 0.01 or in_tunnel(gx(ai), gy(aj)) or in_tunnel(gx(bi), gy(bj)):
+                    continue                                # no wall inside a tunnel mouth (the portal closes it)
+                wall = [bm.verts.new((gx(ai), gy(aj), floor)), bm.verts.new((gx(bi), gy(bj), floor)),
+                        bm.verts.new((gx(bi), gy(bj), zb)), bm.verts.new((gx(ai), gy(aj), za))]
+                f = bm.faces.new(wall)
+                f.normal_update()
+                mx, my = (gx(ai) + gx(bi)) / 2, (gy(aj) + gy(bj)) / 2
+                if f.normal.x * (cx - mx) + f.normal.y * (cy - my) < 0:   # face into the pit
+                    f.normal_flip()
+                faces.append(f)
+            for f in faces:
+                f.normal_update()
+                if f is faces[0] and f.normal.z < 0:
+                    f.normal_flip()
+                for loop in f.loops:
+                    co = loop.vert.co
+                    loop[uv].uv = ((co.x - E.X0) / (E.X1 - E.X0), (co.y - E.Y0) / (E.Y1 - E.Y0))
+            count += 1
+    if not count:
+        bm.free()
+        return
+    mesh = bpy.data.meshes.new("Ground_GapPatches")
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(E.material("ground_map", "#A6AA82", roughness=0.95))
+    E.new_object("World_GroundGapPatches", mesh, E.collection("World_Ground"))
+    print(f"  ground gaps: {count} cells beside the kicker and the portals get a low floor")
 
 
 def is_cut_face(p, o0, o1):
@@ -204,7 +398,7 @@ def build_mesh():
             continue
         nrm = _nrm(p)
         w = _state["width"][p["i"]]
-        offs = [-f * w[-1] for f in reversed(FRACTIONS[1:])] + [f * w[1] for f in FRACTIONS]
+        offs = snap_to_kerb(p, [-f * w[-1] for f in reversed(FRACTIONS[1:])] + [f * w[1] for f in FRACTIONS])
         shift = (0.0, 0.0)
         if is_portal(p):
             # 0.6 m into the tunnel, under its floor: the tunnel ring and this row use slightly different
@@ -261,3 +455,4 @@ def build_mesh():
     mesh.materials.append(E.material("ground_map", "#A6AA82", roughness=0.95))
     mesh.materials.append(E.material("T_cut_wall", E.PALETTE["concrete_sand"], roughness=0.9))
     E.new_object("World_GroundCorridor", mesh, E.collection("World_Ground"))
+    build_gap_patches()

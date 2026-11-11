@@ -5,9 +5,13 @@
 //  - one tiling detail texture, read by world position at a small and a large scale: blade strokes and soft
 //    patches on the lawn, ripples and grain on the sand; the small scale fades out with distance, the large one
 //    stays, so nothing tiles or stripes far away; a matching detail normal gives the low sun something to catch;
-//  - sand is darker in a wet band at the waterline and a little lighter further up.
-// Lit like URP Lit without the specular term: main light with received shadows, sky light, fog, screen-space
-// ambient occlusion when the renderer has it. Cost per pixel: 5 texture reads, no loops, no branches.
+//  - sand: the colour map paints the dry beach, the darker wet band and the cove (make_groundmap.py); the shader adds
+//    a soft sheen on the wet band (sun highlight and sky at flat angles) that fades up the beach;
+//  - rock shelves (mask alpha = 1 - rock): grain, blotches and thin strata lines from the detail texture read at a
+//    third, stretched scale, and a rougher normal.
+// Lit like URP Lit without the specular term (except the wet sand's sheen): main light with received shadows, sky
+// light, fog, screen-space ambient occlusion when the renderer has it. Cost per pixel: 6 texture reads, no loops,
+// no branches.
 // World-space detail UVs, so static batching changes nothing. Made by CampusWorldBuilder.BuildMaterials from the
 // "ground" block in Data/materials.json; if this shader is missing, the ground stays URP Lit with the colour map.
 Shader "CarcavelosCircuit/Ground"
@@ -16,13 +20,16 @@ Shader "CarcavelosCircuit/Ground"
     {
         [MainTexture] [NoScaleOffset] _BaseMap ("Ground colour map", 2D) = "white" {}
         [MainColor] _BaseColor ("Tint", Color) = (1, 1, 1, 1)
-        [NoScaleOffset] _GroundMask ("Mask: R lawn, G sand, B beach height (linear)", 2D) = "black" {}
+        [NoScaleOffset] _GroundMask ("Mask: R lawn, G sand, B beach height, A 1 - rock (linear)", 2D) = "black" {}
         [NoScaleOffset] _DetailMap ("Detail: R blades, G patches, B ripples, A grain (linear)", 2D) = "gray" {}
         [NoScaleOffset] _DetailNormal ("Detail normal: RG lawn, BA sand (linear)", 2D) = "gray" {}
         _Detail ("Detail: small tile m, large tile m, fade from m, fade to m", Vector) = (6, 47, 30, 120)
         _Grass ("Lawn: blades, patches, patch tint, normal", Vector) = (0.42, 0.34, 1, 0.6)
-        _Sand ("Sand: ripples, grain, patches, normal", Vector) = (0.22, 0.3, 0.22, 1.0)
-        _WetColor ("Wet sand (multiplies)", Color) = (0.66, 0.62, 0.58, 1)
+        _Sand ("Sand: ripples, grain, patches, normal", Vector) = (0.22, 0.26, 0.15, 1.0)
+        _WetColor ("Wet sand (multiplies the painted wet band)", Color) = (0.95, 0.94, 0.92, 1)
+        _WetSheen ("Wet sand sheen: sharpness, sun highlight, sky at flat angles, reach (beach height 0..1)", Vector) = (60, 0.35, 0.3, 0.5)
+        _Rock ("Rock: grain, blotches, strata lines, normal", Vector) = (0.4, 0.3, 0.35, 0.9)
+        _StrataTile ("Rock strata: tile m along x, along z", Vector) = (15, 5, 0, 0)
     }
     SubShader
     {
@@ -32,8 +39,8 @@ Shader "CarcavelosCircuit/Ground"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         CBUFFER_START(UnityPerMaterial)
             half4 _BaseColor, _WetColor;
-            float4 _Detail;
-            half4 _Grass, _Sand;
+            float4 _Detail, _StrataTile;
+            half4 _Grass, _Sand, _WetSheen, _Rock;
         CBUFFER_END
         ENDHLSL
 
@@ -91,24 +98,30 @@ Shader "CarcavelosCircuit/Ground"
             {
                 float3 pw = i.positionWS;
                 half3 macro = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv).rgb * _BaseColor.rgb;
-                half3 mask = SAMPLE_TEXTURE2D(_GroundMask, sampler_GroundMask, i.uv).rgb;
+                half4 mask = SAMPLE_TEXTURE2D(_GroundMask, sampler_GroundMask, i.uv);
+                half rock = 1.0 - mask.a;
                 float2 smallUV = pw.xz / _Detail.x;
                 half4 fine = SAMPLE_TEXTURE2D(_DetailMap, sampler_DetailMap, smallUV);
                 half patch = SAMPLE_TEXTURE2D(_DetailMap, sampler_DetailMap, pw.zx / _Detail.y + 0.37).g - 0.5;
                 half4 bump = SAMPLE_TEXTURE2D(_DetailNormal, sampler_DetailNormal, smallUV) * 2.0 - 1.0;
+                half strata = SAMPLE_TEXTURE2D(_DetailMap, sampler_DetailMap, pw.xz / _StrataTile.xy + 0.61).b;
                 half fade = 1.0 - smoothstep(_Detail.z, _Detail.w, distance(pw, _WorldSpaceCameraPos));
 
                 // lawn: blade strokes up close, soft lighter (yellower) and darker (cooler) patches at any distance
                 half3 lawn = macro * (1.0 + (fine.r - 0.5) * _Grass.x * fade + patch * _Grass.y);
                 lawn *= 1.0 + patch * _Grass.z * half3(0.10, 0.02, -0.14);
 
-                // sand: ripples and grain up close, soft patches, a dark wet band at the waterline, lighter dry sand above
-                half wet = 1.0 - smoothstep(0.07, 0.3, mask.b);
+                // sand: ripples and grain up close, soft patches; the wet band is painted, here only a slight darkening
+                half wet = 1.0 - smoothstep(0.1, 0.55, mask.b);
                 half3 sand = macro * (1.0 + ((fine.b - 0.5) * _Sand.x + (fine.a - 0.5) * _Sand.y) * fade + patch * _Sand.z);
-                sand *= lerp(half3(1, 1, 1), _WetColor.rgb, wet) * (1.0 + 0.07 * smoothstep(0.35, 1.0, mask.b));
+                sand *= lerp(half3(1, 1, 1), _WetColor.rgb, wet) * (1.0 + 0.03 * smoothstep(0.35, 1.0, mask.b));
 
-                half3 albedo = lerp(lerp(macro, lawn, mask.r), sand, mask.g);
-                half2 tilt = (bump.rg * (mask.r * _Grass.w) + bump.ba * (mask.g * _Sand.w * (1.0 - 0.6 * wet))) * fade;
+                // rock: coarse grain and blotches, thin dark strata lines (ridges of the ripple channel, stretched)
+                half strataLine = smoothstep(0.8, 0.96, strata) * fade;
+                half3 stone = macro * (1.0 + (fine.a - 0.5) * _Rock.x * fade + patch * _Rock.y) * (1.0 - _Rock.z * strataLine);
+
+                half3 albedo = lerp(lerp(lerp(macro, lawn, mask.r), sand, mask.g), stone, rock);
+                half2 tilt = (bump.rg * (mask.r * _Grass.w + rock * _Rock.w) + bump.ba * (mask.g * _Sand.w * (1.0 - 0.6 * wet))) * fade;
                 half3 N = normalize(normalize(i.normalWS) + half3(tilt.x, 0.0, tilt.y));
 
                 #if defined(_MAIN_LIGHT_SHADOWS_SCREEN)
@@ -124,7 +137,15 @@ Shader "CarcavelosCircuit/Ground"
                 direct *= ao.directAmbientOcclusion;
                 sky *= ao.indirectAmbientOcclusion;
                 #endif
-                return half4(MixFog(albedo * (sky + direct), i.fogFactor), 1.0);
+                // wet sand sheen: a soft sun highlight and a little sky at flat angles, fading up the beach
+                half sheen = mask.g * (1.0 - smoothstep(0.0, _WetSheen.w, mask.b)) * (1.0 - rock);
+                half3 V = normalize(_WorldSpaceCameraPos - pw);
+                half3 Hv = normalize(sun.direction + V);
+                half3 gloss = sun.color * (sun.shadowAttenuation * pow(saturate(dot(N, Hv)), _WetSheen.x) * _WetSheen.y);
+                half grazing = pow(1.0 - saturate(dot(N, V)), 4.0) * _WetSheen.z;
+                half3 color = albedo * (sky + direct);
+                color = lerp(color, SampleSH(reflect(-V, N)), grazing * sheen) + gloss * sheen;
+                return half4(MixFog(color, i.fogFactor), 1.0);
             }
             ENDHLSL
         }

@@ -1,7 +1,8 @@
 // Moving sea for the campus world (Role 3). One flat plane, no wave geometry, no depth or opaque texture:
 //  - two copies of one tiling wave normal map scroll in different directions, sizes and speeds: moving sun glints;
 //  - a baked shore-distance map, read by world position, gives turquoise shallows, deeper blue further out, and a
-//    white foam band at the water's edge that slides in and out;
+//    white foam band at the water's edge that slides in and out; outside the map a straight coast line takes over,
+//    which turns north-west west of _CoastWest.x (Carcavelos beach beyond the world edge, env_backdrop.py);
 //  - lit by the main light, the sky light and the sky reflection, with the same fog as URP Lit.
 // Cost per pixel: 4 texture reads (2 x wave normal, shore map, sky reflection), no loops, no branches.
 // Made by CampusWorldBuilder.BuildMaterials from the "water" block in Data/materials.json; if this shader is
@@ -19,6 +20,7 @@ Shader "CarcavelosCircuit/Sea"
         _ShoreRect ("Shore map: world x0, z0, 1 / width, 1 / depth", Vector) = (0, 0, 0.001, 0.001)
         _ShoreRange ("Shore map: metres at value 1", Float) = 60
         _CoastZ ("Coast line outside the map (world z)", Float) = -100
+        _CoastWest ("Far coast west of x: x, its z there, metres north per metre west (off by default)", Vector) = (-100000, 0, 0, 0)
         _WaveA ("Waves A: size m, direction x, direction z, speed m/s", Vector) = (13, 1, 0.35, 0.9)
         _WaveB ("Waves B: size m, direction x, direction z, speed m/s", Vector) = (21, -0.45, 1, 0.6)
         _NormalStrength ("Wave strength", Range(0, 1)) = 0.3
@@ -34,7 +36,7 @@ Shader "CarcavelosCircuit/Sea"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         CBUFFER_START(UnityPerMaterial)
             half4 _BaseColor, _ShallowColor, _DeepColor, _FoamColor;
-            float4 _ShoreRect, _WaveA, _WaveB;
+            float4 _ShoreRect, _WaveA, _WaveB, _CoastWest;
             half4 _Glint, _Foam;
             float _ShoreRange, _CoastZ;
             half _NormalStrength, _Reflection;
@@ -100,7 +102,11 @@ Shader "CarcavelosCircuit/Sea"
                 half mapped = SAMPLE_TEXTURE2D(_ShoreMap, sampler_ShoreMap, suv).r * _ShoreRange;
                 float2 edge = abs(suv - 0.5) * 2.0;
                 half outside = smoothstep(0.92, 1.0, max(edge.x, edge.y));
-                float open = max(_CoastZ - pw.z, 0.0);                           // metres south of the coast line
+                // straight coast z = _CoastZ; west of _CoastWest.x the coast turns north-west (the long beach beyond
+                // the world edge); the vertical gap there is scaled to the distance across the slanted line
+                half west = step(pw.x, _CoastWest.x);
+                float coastZ = lerp(_CoastZ, _CoastWest.y + (_CoastWest.x - pw.x) * _CoastWest.z, west);
+                float open = max(coastZ - pw.z, 0.0) * lerp(1.0, rsqrt(1.0 + _CoastWest.z * _CoastWest.z), west);
                 half shore = lerp(mapped, min(open, _ShoreRange), outside);
 
                 // colour: turquoise shallows -> sea blue -> deep blue towards the open sea

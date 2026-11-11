@@ -1,16 +1,21 @@
-"""Paints the ground colour map (one texture over the whole world) from the OSM shapes.
+"""Paints the ground colour map (one texture over the whole world) from the OSM shapes and the traced coast.
 
 Run with the media-tools Python after world_data.py:  ~/Documents/nova/.media-tools/bin/python make_groundmap.py
-Output: textures/ground_colour.png (2048 px wide, about 0.34 m per pixel), out/groundmap_preview.png
-Smooth borders (drawn at 3x and scaled down), subtle variation, soft contact shadows around buildings,
-footpaths, a wet-sand strip along the real coastline. Ground mesh UVs: u = (x - X0) / width, v = (y - Y0) / height.
+Output: textures/ground_colour.png (2048 px wide, about 0.34 m per pixel), textures/ground_mask_data.png (for
+Ground.shader), out/groundmap_preview.png.
+Smooth borders (drawn at 3x and scaled down), subtle variation, soft contact shadows around buildings, footpaths.
+The coast comes from coast_trace.json (coast.py), traced from the orthophoto: the sea is everything seaward of the
+traced waterline (dark wet sand under the water, only a sliver of it ever shows), the beach zone is pale dry sand with
+a darker wet band at the water, a slightly darker cove, faint tide lines, and ochre rock shelves with cracks.
+Ground mesh UVs: u = (x - X0) / width, v = (y - Y0) / height.
 """
 import json
-import math
 import os
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
+
+import coast
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = json.load(open(os.path.join(HERE, "world_data.json")))
@@ -18,12 +23,24 @@ X0, Y0, X1, Y1 = DATA["bounds"]
 W = 2048
 H = int(round(W * (Y1 - Y0) / (X1 - X0)))
 SS = 3                                          # supersampling for smooth edges
+MPP = (X1 - X0) / W                             # metres per pixel
 
 COLOURS = {
     "ground": (166, 170, 130), "grass": (143, 179, 122), "wood": (104, 140, 90), "paved": (201, 197, 188),
-    "pitch": (122, 170, 104), "sand": (227, 196, 141), "water": (64, 140, 200), "seabed": (58, 118, 150),
-    "wet_sand": (201, 168, 119), "road": (85, 88, 94), "footway": (218, 213, 200), "steps": (200, 192, 178),
+    "pitch": (122, 170, 104), "sand": (219, 194, 150), "water": (64, 140, 200),
+    "road": (85, 88, 94), "footway": (218, 213, 200), "steps": (200, 192, 178),
 }
+# the coast, stylised from the orthophoto samples (dry sand #d0ba9a, cove #c2aa8a, wet #b49c7a, rock #8e7d59)
+SAND_DRY = np.array((219, 194, 150), np.float32)       # main beach, a touch paler and warmer than the photo
+SAND_COVE = np.array((205, 181, 141), np.float32)      # the sheltered cove: a little darker
+SAND_WET = np.array((182, 156, 117), np.float32)       # the band the swash wets
+SEABED = np.array((150, 131, 102), np.float32)         # under the water (only a sliver at the waterline shows)
+ROCK = np.array((150, 127, 90), np.float32)            # ochre-brown limestone
+ROCK_DARK = np.array((96, 82, 60), np.float32)         # cracks and shadowed steps
+ROCK_WET = np.array((104, 97, 72), np.float32)         # rock in the swash: wet, a little green
+WET_BAND = 11.0                                        # m of darker sand above the waterline
+ROCK_PAD = 0.8                                         # m: rock colour reaches this far beyond a rock outline
+FILL_AS_AREA = set(coast.C.get("fill_as_area", []))      # OSM ways painted as filled paved areas (the promenade)
 ROADS = {"primary", "primary_link", "secondary", "tertiary", "residential", "unclassified", "service", "living_street"}
 
 
@@ -47,82 +64,147 @@ def fbm(h, w, seed, octaves=5):
     return out / total
 
 
+def polygon_mask(rings, w=W, h=H, pad_m=0.0):
+    """Float mask (h, w), 1 inside any of the rings, anti-aliased (drawn at SS x and scaled down)."""
+    img = Image.new("L", (w * SS, h * SS), 0)
+    d = ImageDraw.Draw(img)
+    s = w / W
+    for ring in rings:
+        d.polygon([to_px(x, y, SS * s) for x, y in ring], fill=255)
+    if pad_m > 0:
+        img = img.filter(ImageFilter.MaxFilter(2 * int(round(pad_m / MPP * SS * s)) + 1))
+    return np.asarray(img.resize((w, h), Image.LANCZOS), np.float32) / 255.0
+
+
+def is_fake_water(area):
+    return area["kind"] == "water" and any(coast.inside(px, py, area["ring"]) for px, py in coast.C["water_to_lawn"])
+
+
+def area_kind(area):
+    return "grass" if is_fake_water(area) else area["kind"]
+
+
+def coast_masks(w=W, h=H):
+    """sea, beach zone, cove and rock masks (float, (h, w)) and the distance in metres from the water."""
+    from scipy.ndimage import distance_transform_edt
+    sea = polygon_mask([coast.sea_polygon(inland=0.0, west_x=X0 - 50, south_y=Y0 - 50, east_x=X1 + 50)], w, h)
+    beach = polygon_mask([coast.BEACH_ZONE], w, h) * (1.0 - sea)
+    cove = polygon_mask([coast.COVE], w, h) * (1.0 - sea)
+    rock = polygon_mask([r["ring"] for r in coast.ROCKS], w, h, pad_m=ROCK_PAD)
+    metres = distance_transform_edt(sea < 0.5) * (X1 - X0) / w
+    return sea, beach, cove, rock, metres
+
+
+def smoothstep(e0, e1, x):
+    t = np.clip((x - e0) / (e1 - e0), 0.0, 1.0)
+    return t * t * (3 - 2 * t)
+
+
+def paint_coast(arr, path_alpha):
+    """Sea floor, sand (dry, wet band, cove, tide lines) and rock shelves over the painted areas; paths stay on top."""
+    sea, beach, cove, rock, metres = coast_masks()
+    hh, ww = arr.shape[:2]
+    grain = fbm(hh, ww, 21, octaves=4) - 0.5
+    swell = np.asarray(Image.fromarray((fbm(hh // 8, ww // 8, 25, 3) * 255).astype(np.uint8))   # slow wobble (20-80 m)
+                       .resize((ww, hh), Image.BICUBIC), np.float32) / 255.0 - 0.5          # for the wet edge, tide lines
+    streak = np.asarray(Image.fromarray((fbm(hh // 4, ww // 4, 22, 3) * 255).astype(np.uint8))
+                        .resize((ww, hh * 3), Image.BICUBIC).resize((ww, hh), Image.BILINEAR), np.float32) / 255.0 - 0.5
+    # sand: wet band at the water, dry above it (a little paler far up the beach), the cove a shade darker
+    dry = SAND_DRY * (1.0 + 0.035 * smoothstep(30.0, 110.0, metres))[..., None]
+    from scipy.ndimage import gaussian_filter
+    cove = gaussian_filter(cove, 8.0)                                   # the cove's sand fades into the beach's
+    dry = dry + (SAND_COVE - SAND_DRY) * cove[..., None]
+    wet = smoothstep(WET_BAND, 1.5, metres + swell * 8.0 + grain * 1.5)
+    sand = dry + (SAND_WET - dry) * wet[..., None]
+    # faint tide lines: thin, slightly darker, wobbling bands of drift about 14 and 23 m up the beach
+    for at, width, depth in ((14.5, 0.8, 0.09), (23.0, 0.6, 0.05)):
+        line = np.exp(-((metres - at - swell * 9.0) / width) ** 2)
+        sand *= (1.0 - depth * line)[..., None]
+    sand *= (1.0 + 0.05 * grain + 0.04 * streak * cove)[..., None]       # wind streaks in the cove
+    # rock: ochre shelves in layers: thin dark strata lines along the coast, a few cracks across them, coarse
+    # grain and blotches, wet and greenish in the swash
+    rows, cols = np.mgrid[0:hh, 0:ww].astype(np.float32)
+    u = (cols * np.cos(0.45) - rows * np.sin(0.45)) * MPP                # metres along about WNW, the shore's direction
+    layer = (u / 1.7 + 2.2 * (fbm(hh, ww, 26, 3) - 0.5)) % 1.0
+    strata = np.exp(-((layer - 0.5) / 0.07) ** 2)
+    cracks = np.exp(-((fbm(hh, ww, 23, octaves=3) - 0.5) / 0.008) ** 2)
+    rock_col = ROCK * (1.0 + 0.25 * grain + 0.12 * (fbm(hh, ww, 24, 2) - 0.5))[..., None]
+    rock_col = rock_col + (ROCK_DARK - rock_col) * np.clip(0.55 * strata + 0.6 * cracks, 0.0, 0.8)[..., None]
+    rock_col = rock_col + (ROCK_WET - rock_col) * smoothstep(7.0, 1.0, metres)[..., None]
+    beach = np.clip(gaussian_filter(beach, 2.5) * 1.15, 0.0, 1.0) * (1.0 - sea)   # soft sand-to-grass edge (~1 m)
+    keep = 1.0 - path_alpha
+    out = arr + (SEABED - arr) * sea[..., None]
+    out = out + (sand - out) * (beach * keep)[..., None]
+    out = out + (rock_col - out) * (rock * (1.0 - sea) * keep)[..., None]
+    return out
+
+
 MASK_W = 1024
-SHORE_FILE = os.path.join(HERE, "textures", "sea_shore_data.png")       # env_backdrop.write_shore_map
-SHORE_MARGIN = (300.0, 400.0)                                            # env_backdrop.shore_rect
 WET_RANGE = 20.0                                                         # metres of beach coded in the blue channel
 
 
-def write_mask(sea):
+def write_mask():
     """textures/ground_mask_data.png (1024 px wide, same UVs as ground_colour.png; linear numbers, not colour) for
-    the ground shader: R = lawn (grass, wood, pitch), G = sand, both without the paths that cross them (open ground
-    counts as a bit of both, paved areas as neither), and
-    B = how far up the beach a point is, 0 at the waterline .. 1 at WET_RANGE metres or more (wet sand band, dry
-    sand further up). The waterline comes from the shore map of the sea (the real 3D shoreline) when it exists,
-    else from the 5 m sea mask."""
-    from scipy.ndimage import distance_transform_edt
+    the ground shader: R = lawn (grass, wood, pitch), G = sand (OSM sand and the beach zone), both without the paths
+    that cross them (open ground counts as a bit of both, paved areas as neither),
+    B = how far up the beach a point is, 0 at the traced waterline .. 1 at WET_RANGE metres or more (wet band, dry
+    sand further up), A = 1 - rock (the rock shelves; a mask without alpha reads as no rock)."""
     big = Image.new("RGB", (W * SS, H * SS), (140, 90, 0))      # open ground: dry scrub, part lawn and part sand
     draw = ImageDraw.Draw(big)
     for kind in ("grass", "wood", "paved", "pitch", "sand", "water"):
         fill = {"grass": (255, 0, 0), "wood": (255, 0, 0), "pitch": (255, 0, 0), "sand": (0, 255, 0)}.get(kind, (0, 0, 0))
         for area in DATA["areas"]:
-            if area["kind"] == kind:
+            if area_kind(area) == kind:
                 draw.polygon([to_px(x, y, SS) for x, y in area["ring"]], fill=fill)
+    paths = Image.new("L", (W * SS, H * SS), 0)
+    pd = ImageDraw.Draw(paths)
     for p in DATA["paths"]:
-        if not p["tunnel"]:
+        if p["id"] in FILL_AS_AREA:
+            pd.polygon([to_px(x, y, SS) for x, y in p["points"]], fill=255)
+        elif not p["tunnel"]:
             width = max(1, int(p["width"] / (X1 - X0) * W * SS))
-            draw.line([to_px(x, y, SS) for x, y in p["points"]], fill=(0, 0, 0), width=width, joint="curve")
+            pd.line([to_px(x, y, SS) for x, y in p["points"]], fill=255, width=width, joint="curve")
     mh = int(round(MASK_W * H / W))
     mask = np.asarray(big.resize((MASK_W, mh), Image.LANCZOS), np.float32) / 255.0
-    if os.path.exists(SHORE_FILE):                         # sea = shore distance > 0, cut to the world bounds
-        shore = Image.open(SHORE_FILE).convert("L")
-        sx0, sy0, sx1, sy1 = X0 - SHORE_MARGIN[0], Y0 - SHORE_MARGIN[1], X1 + SHORE_MARGIN[0], Y1
-        box = ((X0 - sx0) / (sx1 - sx0) * shore.width, (sy1 - Y1) / (sy1 - sy0) * shore.height,
-               (X1 - sx0) / (sx1 - sx0) * shore.width, (sy1 - Y0) / (sy1 - sy0) * shore.height)
-        water = np.asarray(shore.resize((MASK_W, mh), Image.BILINEAR, box=box)) > 0
-        from scipy.ndimage import binary_dilation       # only the sea itself, not gaps in the ground further inland
-        open_sea = np.asarray(sea.resize((MASK_W, mh), Image.BILINEAR)) > 127
-        water &= binary_dilation(open_sea, iterations=int(20.0 / ((X1 - X0) / MASK_W)))
-    else:
-        water = np.asarray(sea.resize((MASK_W, mh), Image.BILINEAR)) > 127
-    metres = distance_transform_edt(~water) * (X1 - X0) / MASK_W
-    out = np.dstack([mask[..., 0], mask[..., 1], np.clip(metres / WET_RANGE, 0.0, 1.0)])
-    Image.fromarray(np.round(out * 255.0).astype(np.uint8), "RGB").save(os.path.join(HERE, "textures", "ground_mask_data.png"))
-    print(f"ground_mask_data.png {MASK_W}x{mh} px")
+    path = np.asarray(paths.resize((MASK_W, mh), Image.LANCZOS), np.float32) / 255.0
+    sea, beach, _cove, rock, metres = coast_masks(MASK_W, mh)
+    land = 1.0 - sea
+    lawn = mask[..., 0] * (1.0 - beach) * (1.0 - path) * land
+    sand = np.clip(mask[..., 1] * land + beach, 0.0, 1.0) * (1.0 - rock) * (1.0 - path)
+    out = np.dstack([lawn, sand, np.clip(metres / WET_RANGE, 0.0, 1.0), 1.0 - rock * land])
+    Image.fromarray(np.round(out * 255.0).astype(np.uint8), "RGBA").save(os.path.join(HERE, "textures", "ground_mask_data.png"))
+    print(f"ground_mask_data.png {MASK_W}x{mh} px (RGBA: lawn, sand, beach height, 1 - rock)")
 
 
 def main():
     os.makedirs(os.path.join(HERE, "textures"), exist_ok=True)
     big = Image.new("RGB", (W * SS, H * SS), COLOURS["ground"])
     draw = ImageDraw.Draw(big)
-
-    # sea: the 5 m grid sea mask, smoothly upscaled and thresholded (the 3D shoreline follows the OSM coastline)
-    classes = DATA["grid"]["classes"]
-    mask = np.array([[1.0 if c == "sea" else 0.0 for c in row] for row in classes[::-1]], np.float32)
-    sea = Image.fromarray((mask * 255).astype(np.uint8)).resize((W * SS, H * SS), Image.BILINEAR)
-    sea = sea.point(lambda v: 255 if v > 127 else 0)
-    big.paste(Image.new("RGB", big.size, COLOURS["seabed"]), mask=sea)
-
     for kind in ("grass", "wood", "paved", "pitch", "sand", "water"):
         for area in DATA["areas"]:
-            if area["kind"] == kind:
+            if area_kind(area) == kind:
                 draw.polygon([to_px(x, y, SS) for x, y in area["ring"]], fill=COLOURS[kind])
 
-    # paths: roads, footways, steps
+    # paths: roads, footways, steps (a separate layer, so they stay on top of the beach)
+    paths = Image.new("RGBA", (W * SS, H * SS), (0, 0, 0, 0))
+    pd = ImageDraw.Draw(paths)
     for p in DATA["paths"]:
         if p["tunnel"]:
             continue
         colour = COLOURS["road"] if p["type"] in ROADS else (COLOURS["steps"] if p["type"] == "steps" else COLOURS["footway"])
+        if p["id"] in FILL_AS_AREA:                      # a paved area (the promenade): filled, not stroked
+            pd.polygon([to_px(x, y, SS) for x, y in p["points"]], fill=colour + (255,))
+            continue
         width = max(1, int(p["width"] / (X1 - X0) * W * SS))
-        draw.line([to_px(x, y, SS) for x, y in p["points"]], fill=colour, width=width, joint="curve")
+        pd.line([to_px(x, y, SS) for x, y in p["points"]], fill=colour + (255,), width=width, joint="curve")
 
-    # coastline: wet sand strip
-    for line in DATA["coast"]:
-        draw.line([to_px(x, y, SS) for x, y in line], fill=COLOURS["wet_sand"], width=int(4 / (X1 - X0) * W * SS))
-
-    img = big.resize((W, H), Image.LANCZOS)
-    arr = np.asarray(img, np.float32)
-    write_mask(sea)
+    arr = np.asarray(big.resize((W, H), Image.LANCZOS), np.float32)
+    layer = np.asarray(paths.resize((W, H), Image.LANCZOS), np.float32)
+    alpha = layer[..., 3] / 255.0
+    path_rgb = layer[..., :3]                     # Pillow scales RGBA premultiplied and returns straight colour
+    arr = paint_coast(arr, alpha)
+    arr = arr + (path_rgb - arr) * alpha[..., None]
+    write_mask()
 
     # soft contact shadow around buildings (baked ambient occlusion on the ground)
     shadow = Image.new("L", (W, H), 0)
@@ -138,11 +220,10 @@ def main():
     arr *= (1.0 + 0.16 * var)[..., None]
     arr = np.clip(arr, 0, 255).astype(np.uint8)
 
-    os.makedirs(os.path.join(HERE, "textures"), exist_ok=True)
     os.makedirs(os.path.join(HERE, "out"), exist_ok=True)
     Image.fromarray(arr).save(os.path.join(HERE, "textures", "ground_colour.png"))
     Image.fromarray(arr).resize((1024, int(1024 * H / W))).save(os.path.join(HERE, "out", "groundmap_preview.png"))
-    print(f"ground_colour.png {W}x{H} px, {(X1 - X0) / W:.2f} m per pixel")
+    print(f"ground_colour.png {W}x{H} px, {MPP:.2f} m per pixel")
 
 
 if __name__ == "__main__":
