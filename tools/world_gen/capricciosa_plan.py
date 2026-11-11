@@ -85,8 +85,9 @@ LOOP_R = 12.5
 ISLAND_R = 8.15                 # the paving is clipped at street_plan.KEEP_OUT (4.95 m from the centreline = r 7.55)
 ISLAND_EAST = ((-220.5, -34.0), (-220.5, -43.0))      # blunt east end: the lawn belt begins here
 ISLAND_BAND = 1.15              # dark granite-sett band along the island's edge
-BED_C = (-238.2, -31.9)         # round planted bed in the middle (white kerb wall, lawn, one palm): the thing you turn around
-BED_R = 2.9
+BED_C = (-238.2, -31.9)         # V16g had a round planted bed with a palm here; V18 (team walk 7 Nov, Street View 2022/2026):
+BED_R = 2.9                     # the real tip is plain calcada with a kerb and a stop sign, so no bed and no palm
+STOP_SIGN = (-244.4, -31.9)     # V18: stop sign (round sign above) at the island's west tip, 6.8 m off the centreline
 BIKE_DOCK = ((-234.6, -36.6), (-222.9, -37.9))        # 12 m of generic racks (survey ST11: (-222..-236, -37))
 BIN_PAD = ((-226.9, -41.0), (-222.1, -41.3))          # four recycling bins on a sett pad (real: (-232..-243, -42), now road)
 SCREEN_AT = (-212.0, -38.0)     # the advert screen's place: a blank dark screen box, nothing on it
@@ -106,8 +107,8 @@ def island_ring(r=ISLAND_R, inset=0.0):
 #    street_plan: t along the bay row (south-east), s behind the bay front.
 # =====================================================================================================
 PORTAL = dict(t_mid=20.5, mouth=5.1, back=3.8, s0=5.3, s1=9.3, front_h=3.4, back_h=0.85, wall=0.35,
-              riser=0.16, tread=0.35, stair_s=5.9)
-HATCH = dict(t=(18.15, 22.85), s=(-2.0, 4.8), stripe=0.45)          # stripes straight across, zone about 5 x 7 m
+              riser=0.16, tread=0.35, stair_s=5.9, stair_half=1.0)   # V18 (walk): the stair is 2 m wide, white cheeks beside it
+HATCH = dict(t=(18.15, 22.85), s=(-0.2, 4.8), stripe=0.45)          # stripes straight across, zone about 5 x 5 m (V18: walk)
 HEDGE_KERB = (0.25, 0.3)        # concrete upstand in front of the hedge: height, width
 SIGN_WALL = dict(at=(-261.0, -45.0), length=3.0, height=1.2)        # blank white wall on the hedge line
 DATE_PALM = (-262.0, -44.0)     # the broad low date-type palm south-east of the portal
@@ -216,13 +217,9 @@ def extend(sp):
     global S
     S = sp
     hp = S.hedge_pt
-    # --- the island inside the hairpin: dark sett band, pale calcada inside, a round bed in the middle ---
+    # --- the island inside the hairpin: dark sett band, pale calcada inside (V18: no bed in the middle) ---
     S.layer("H island band", "setts", island_ring(), S.frame_uv(LOOP_C, (1.0, 0.0), 2.0, 2.0))
     S.layer("H island", "calcada", island_ring(inset=ISLAND_BAND))
-    bed = [(BED_C[0] + BED_R * math.cos(math.radians(a)), BED_C[1] + BED_R * math.sin(math.radians(a)))
-           for a in range(0, 360, 30)]
-    S.layer("H island bed", None, bed, ground="lawn")
-    S.RAISED.append({"kind": "island", "ring": bed, "height": 0.4, "top": None, "side": "wall_white", "rim": 0.25})
     (ax, ay), (bx, by) = BIN_PAD
     u = unit(bx - ax, by - ay)
     S.layer("H bin pad", "setts", S.rect((ax, ay), u, -0.6, math.hypot(bx - ax, by - ay) + 0.6, -0.75, 0.75),

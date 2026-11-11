@@ -66,10 +66,11 @@ def make_drain(W=128, H=128, seed=1402):
 
 
 def make_planks(S_=1024, seed=1403):
-    """u (x) runs along the planks. 16 rows of 0.375 m; in every row the 6 m are cut into planks of 0.6-1.5 m."""
+    """u (x) runs along the slabs. V18 (team walk 7 Nov): 10 rows of 0.6 m, in every row the 6 m are cut into grey
+    rectangular slabs of 0.9-1.8 m (V16 had 16 rows of 0.375 m planks of 0.6-1.5 m)."""
     rng = np.random.default_rng(seed)
     X, Y = grid(S_, S_)
-    rows = 16
+    rows = 10
     rh = S_ / rows
     r = np.minimum((Y / rh).astype(np.int64), rows - 1)
     fy = Y / rh - r
@@ -81,7 +82,7 @@ def make_planks(S_=1024, seed=1403):
         cuts, x = [], rng.uniform(0.0, 0.6) * px_m
         while x < S_ - 0.5 * px_m:
             cuts.append(x)
-            x += rng.uniform(0.6, 1.5) * px_m
+            x += rng.uniform(0.9, 1.8) * px_m
         cuts = np.array(cuts)
         row = r == k
         xs = X[row]
@@ -93,7 +94,7 @@ def make_planks(S_=1024, seed=1403):
         d_end[row] = dist
     d = np.minimum(np.minimum(fy, 1 - fy) * rh, d_end)
     base = rgb(P.PLANK)
-    plank = np.where(warm[..., None] >= 0, lerp(base, rgb("#E6DDCB"), warm[..., None] * 0.5),
+    plank = np.where(warm[..., None] >= 0, lerp(base, rgb("#CFCAC0"), warm[..., None] * 0.5),
                      lerp(base, rgb("#D6D4CF"), -warm[..., None] * 0.5))
     plank = plank * (tone * (1.0 + 0.025 * noise((S_, S_), 3.0, rng) + 0.012 * noise((S_, S_), 0.7, rng)))[..., None]
     streak = noise((S_, S_), 40.0, rng, 1.2)                             # faint brushing along the plank

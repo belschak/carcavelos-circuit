@@ -135,15 +135,19 @@ def portal(g):
             break
         z -= p["riser"]
         steps += 1
-        g.obox(hp(tm, s + p["tread"] / 2), u, half(s) - 0.04, p["tread"] / 2, lo, z, "timber", skip=("bottom", "+u", "-u"))
+        g.obox(hp(tm, s + p["tread"] / 2), u, p["stair_half"], p["tread"] / 2, lo, z, "timber", skip=("bottom", "+u", "-u"))
         s += p["tread"]
+    for side in (-1.0, 1.0):                                      # V18: white cheeks beside the 2 m stair, at forecourt level
+        w = half(s1) - p["stair_half"]
+        g.obox(hp(tm + side * (p["stair_half"] + w / 2), (p["stair_s"] + s1) / 2), u, w / 2, (s1 - p["stair_s"]) / 2, lo, zp,
+               "palette", ("bottom",), "white")
     zl = max(ST.ground(*hp(tm + k, sx)) for k in (-1.5, 0.0, 1.5) for sx in (s, (s + s1) / 2, s1 + 0.3)) + 0.05
     zl = min(zl, z)
     g.obox(hp(tm, (s + s1 + 0.4) / 2), u, half(s1) + 0.1, (s1 + 0.4 - s) / 2, lo, zl, "timber", skip=("bottom", "+u", "-u"))
     g.obox(hp(tm, p["stair_s"] - 0.05), u, half(p["stair_s"]) - 0.04, 0.05, zp + 0.006, zp + 0.014, "palette", ("bottom",),
            "yellow")
     for side in (-1.0, 1.0):                                      # steel handrails
-        t0 = lambda sx: tm + side * (half(sx) - 0.14)             # noqa: E731
+        t0 = lambda sx: tm + side * (p["stair_half"] - 0.06)      # noqa: E731  V18: on the 2 m stair's edges
         top, end = hp(t0(p["stair_s"] - 0.3), p["stair_s"] - 0.3), hp(t0(s + 0.3), s + 0.3)
         g.beam((*top, zp + 0.9), (*end, zl + 0.9), 0.05, 0.05, "palette", "steel_grey")
         g.post(*top, zp - 0.1, zp + 0.9, 0.05, "palette", "steel_grey")
@@ -455,14 +459,8 @@ def dress(veg, props, protos):
         lst.append(_entry(proto, x, y, rot, scale, z))
         return True
 
-    # the island inside the hairpin: one slender fan palm and low shrubs in the bed, the bike dock, the bins
-    bx, by = CP.BED_C
-    zb = surface(bx, by) + 0.28
-    add(new_v, "Veg_FanPalm_B", bx, by, 200.0, 0.8, clear=S.PROP_CLEAR + 2.0, z=zb - 0.1)
-    for k in range(4):
-        a = math.radians(40 + 90 * k)
-        add(new_v, "Veg_Shrub" if k % 2 else "Veg_Shrub_B", bx + 1.7 * math.cos(a), by + 1.7 * math.sin(a), rng.uniform(0, 360),
-            rng.uniform(0.7, 0.9), z=zb)
+    # the island inside the hairpin (V18, team walk 7 Nov): plain calcada, a stop sign at its west tip; the bike dock, the bins
+    add(new_p, "Prop_SignStop", *CP.STOP_SIGN, facing_rot(S.bearing(270.0)))
     (ax, ay), (ex, ey) = CP.BIKE_DOCK
     du = S.unit(ex - ax, ey - ay)
     length = math.hypot(ex - ax, ey - ay)

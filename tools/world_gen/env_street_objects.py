@@ -1175,6 +1175,39 @@ def promenade_placements(veg, props):
     return new_v, new_p, removed
 
 
+UPPER_PATH_S = (772.0, 810.0)      # V18: the straight of the upper promenade path towards the tunnel forecourt (A4)
+UPPER_PATH_STEP = 7.5              # m between seat blocks (orthophoto: about 6 on the north edge, 3 on the south edge)
+UPPER_PATH_OFF = 6.9               # m off the centreline: the real path is 6-7 m wide, our road 8 m, so the blocks
+                                   # stand on the lawn edge just outside the 6.6 m clearance
+
+
+def upper_path_seats(props):
+    """V18 (team walk 7 Nov, video IMG_7723 7:15-7:57): white block seats on both sides of the upper promenade path."""
+    pts = E.route_points()
+    s_acc, out = [0.0], []
+    for a, b in zip(pts, pts[1:]):
+        s_acc.append(s_acc[-1] + math.hypot(b["x"] - a["x"], b["y"] - a["y"]))
+    taken = [(p["x"], p["y"]) for p in props]
+    nxt = {1: UPPER_PATH_S[0], -1: UPPER_PATH_S[0] + UPPER_PATH_STEP / 2}
+    for i in range(1, len(pts) - 1):
+        for side in (1, -1):
+            if not (nxt[side] <= s_acc[i] <= UPPER_PATH_S[1]) or (side == -1 and s_acc[i] > UPPER_PATH_S[0] + 26.0):
+                continue
+            nxt[side] = s_acc[i] + UPPER_PATH_STEP
+            a, b = pts[i - 1], pts[i + 1]
+            d = math.hypot(b["x"] - a["x"], b["y"] - a["y"])
+            nx, ny = -(b["y"] - a["y"]) / d * side, (b["x"] - a["x"]) / d * side          # side 1 = left = north here
+            x, y = pts[i]["x"] + nx * UPPER_PATH_OFF, pts[i]["y"] + ny * UPPER_PATH_OFF
+            if S.route_distance(x, y) < S.PROP_CLEAR or any(math.hypot(x - tx, y - ty) < 2.0 for tx, ty in taken):
+                continue
+            out.append({"proto": "Prop_SeatBlockPlaza", "x": round(x, 3), "y": round(y, 3), "z": round(E.ground_z(x, y) + 0.04, 3),
+                        "rot_z": round(math.atan2(b["y"] - a["y"], b["x"] - a["x"]), 4), "scale": 1.0})
+            taken.append((x, y))
+    print(f"  upper promenade path (V18): {len(out)} seat blocks, min "
+          f"{min((S.route_distance(o['x'], o['y']) for o in out), default=0):.2f} m off the centreline")
+    return out
+
+
 def dress_promenade(veg, props):
     """V15c, called after dressing_freeze.apply: an explicit edit of the dressing lists. Removes the dark road lamps
     along the promenade (the real ones are white flood masts) and the few older props that stand where a seat-wall,
@@ -1185,6 +1218,7 @@ def dress_promenade(veg, props):
     veg2, props2 = list(veg) + plants, [p for p in props if id(p) not in gone] + ours
     import env_coast                       # V16e: the coast section's own edits (berm, forecourt, cove, portal deck)
     veg2, props2 = env_coast.dress(veg2, props2)
+    props2 += upper_path_seats(props2)       # V18 (team walk 7 Nov 2026): white seat blocks along the upper promenade path
     for fname, items in (("placements_vegetation.json", veg2), ("placements_props.json", props2)):
         path = os.path.join(E.OUT, fname)
         data = json.load(open(path))

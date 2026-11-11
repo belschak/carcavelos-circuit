@@ -792,7 +792,7 @@ def long_room_furniture(m, f):
         round_table(m, f, u, 12.5 if k % 2 == 0 else 14.0, 4)
         round_table(m, f, u + 2.0, 19.5 if k % 2 == 0 else 21.0, 4 if k % 3 else 3)
     grand_piano(m, f, PIANO_U, 5.4, 90)                                 # was at u 86, squeezed between two tables
-    grand_piano(m, f, 113.0, 8.6, 90)
+    # V18 (Luc, 11 Nov): the second grand piano at u 113 is gone; the atrium has one piano (T10 above)
     for k, u in enumerate(K.Frame().samples(82.0, LONG_END_U - 3.0, 16.0)):  # fig trees in pots along the glass
         if abs(u - TERRACE_DOOR_U) > 4.5:
             big_plant(m, f, u, 2.4, 9 + k)

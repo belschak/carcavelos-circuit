@@ -80,6 +80,12 @@ SEAT_RING_C, SEAT_RING_R = (157.7, 147.0), 5.0   # cream concrete ring bench, ou
 _REPORT = []                 # (what, least distance to the centreline)
 
 
+# V18 (team walk 7 Nov 2026): the lawn strip north of the loop behind A, positions from the 2023 orthophoto
+# (the ortho places them 2-4 m closer to our road, which runs over the real lawn's edge: pushed out to 7.8 m / 6.9 m)
+NORTH_LOOP_TREES = [(20.7, 183.0), (27.2, 187.5), (35.7, 192.2), (41.9, 194.4), (48.5, 196.3)]
+NORTH_LOOP_CABINETS = [(54.6, 196.6), (57.2, 196.8)]
+
+
 def _clear(what, pts, limit=CLEAR):
     import street_plan as S
     d = min(S.route_distance(x, y) for x, y in pts)
@@ -334,6 +340,19 @@ def dress(veg, props, protos):
             veg2.append({"proto": "Veg_PlazaTree_B" if k % 2 else "Veg_PlazaTree", "x": x, "y": y,
                          "z": round(ST.ground(x, y), 3), "rot_z": round(1.3 * k, 4), "scale": round(0.56 + 0.06 * (k % 3), 3)})
             n_saplings += 1
+    # V18 (team walk 7 Nov 2026, video IMG_7725 6:00-6:35): along the north loop behind A the lawn strip on the right
+    # carries a row of young trees, and grey technical cabinets stand in its east part (orthophoto 2023 positions)
+    for k, (x, y) in enumerate(NORTH_LOOP_TREES):
+        if "Veg_PlazaTree" in protos and S.route_distance(x, y) >= E.KEEP_CLEAR + 1.5:
+            _REPORT.append(("young trees on the north loop's lawn", S.route_distance(x, y) - 0.8))
+            veg2.append({"proto": "Veg_PlazaTree" if k % 2 else "Veg_PlazaTree_B", "x": x, "y": y,
+                         "z": round(ST.ground(x, y), 3), "rot_z": round(0.9 * k, 4), "scale": round(0.62 + 0.06 * (k % 3), 3)})
+            n_saplings += 1
+    for k, (x, y) in enumerate(NORTH_LOOP_CABINETS):
+        if "Prop_CabinetGrey" in protos and S.route_distance(x, y) >= CLEAR:
+            _REPORT.append(("grey cabinets on the north loop's lawn", S.route_distance(x, y) - 0.5))
+            props2.append({"proto": "Prop_CabinetGrey", "x": x, "y": y, "z": round(ST.ground(x, y), 3),
+                           "rot_z": round(math.radians(-25.0), 4), "scale": 1.0})
     for fname, items in (("placements_vegetation.json", veg2), ("placements_props.json", props2)):
         path = os.path.join(E.OUT, fname)
         if not os.path.exists(path):
