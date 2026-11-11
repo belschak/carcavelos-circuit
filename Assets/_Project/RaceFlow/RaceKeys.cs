@@ -8,6 +8,30 @@ namespace CarcavelosCircuit.RaceFlow
     // Keyboard.current is null when no keyboard exists, so every check guards against that.
     public static class RaceKeys
     {
+        // True while the player types a name on the results card (task R10, set by LeaderboardHud). Then every
+        // letter is text, not a game key: M must not mute, O not open the settings, Enter not retry.
+        public static bool TextEntryActive { get; set; }
+
+        // The keyboard for game keys, or null while a name is typed (every check below then says "not pressed").
+        private static Keyboard GameKeyboard()
+        {
+            return TextEntryActive ? null : Keyboard.current;
+        }
+
+        // While typing a name: Enter saves it (read here on purpose without GameKeyboard, which is off then).
+        public static bool NameSubmitPressed()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null && (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame);
+        }
+
+        // Tab jumps into the name field on the results card, so the leaderboard works without a mouse.
+        public static bool NameFieldKeyPressed()
+        {
+            Keyboard keyboard = GameKeyboard();
+            return keyboard != null && keyboard.tabKey.wasPressedThisFrame;
+        }
+
         // "Press any key to start": any normal key or a mouse click. The click also unlocks sound in the browser.
         // Not every key: Alt-Tab, Ctrl, F11 (fullscreen) or Escape should not start the countdown by accident.
         public static bool AnyKeyOrClickPressed()
@@ -18,7 +42,7 @@ namespace CarcavelosCircuit.RaceFlow
                 return true;
             }
 
-            Keyboard keyboard = Keyboard.current;
+            Keyboard keyboard = GameKeyboard();
             if (keyboard == null || !keyboard.anyKey.wasPressedThisFrame)
             {
                 return false; // quick exit: nothing was pressed, no need to look at every key
@@ -76,21 +100,21 @@ namespace CarcavelosCircuit.RaceFlow
         // Enter = retry (full reset). Not Escape: in a browser Escape leaves fullscreen.
         public static bool RetryPressed()
         {
-            Keyboard keyboard = Keyboard.current;
+            Keyboard keyboard = GameKeyboard();
             return keyboard != null && (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame);
         }
 
         // R = recover (back to the last valid checkpoint, timer keeps running).
         public static bool RecoverPressed()
         {
-            Keyboard keyboard = Keyboard.current;
+            Keyboard keyboard = GameKeyboard();
             return keyboard != null && keyboard.rKey.wasPressedThisFrame;
         }
 
         // E = use the item in the HUD slot (task R7). The phone's touch "use item" button sends the same E key.
         public static bool UseItemPressed()
         {
-            Keyboard keyboard = Keyboard.current;
+            Keyboard keyboard = GameKeyboard();
             return keyboard != null && keyboard.eKey.wasPressedThisFrame;
         }
 
@@ -99,28 +123,28 @@ namespace CarcavelosCircuit.RaceFlow
         // O = open or close the settings (start and results screen).
         public static bool SettingsPressed()
         {
-            Keyboard keyboard = Keyboard.current;
+            Keyboard keyboard = GameKeyboard();
             return keyboard != null && keyboard.oKey.wasPressedThisFrame;
         }
 
         // C = open or close the credits (start screen).
         public static bool CreditsPressed()
         {
-            Keyboard keyboard = Keyboard.current;
+            Keyboard keyboard = GameKeyboard();
             return keyboard != null && keyboard.cKey.wasPressedThisFrame;
         }
 
         // P = pause or continue, during the countdown and the race (audit 9). Never Escape: it leaves fullscreen.
         public static bool PausePressed()
         {
-            Keyboard keyboard = Keyboard.current;
+            Keyboard keyboard = GameKeyboard();
             return keyboard != null && keyboard.pKey.wasPressedThisFrame;
         }
 
         // M = sound on/off, at any time (also during the race and the pause).
         public static bool MutePressed()
         {
-            Keyboard keyboard = Keyboard.current;
+            Keyboard keyboard = GameKeyboard();
             return keyboard != null && keyboard.mKey.wasPressedThisFrame;
         }
 
@@ -128,7 +152,7 @@ namespace CarcavelosCircuit.RaceFlow
         // -1, 0 or +1, so the menu code needs no if per key.
         public static int MenuVertical()
         {
-            Keyboard keyboard = Keyboard.current;
+            Keyboard keyboard = GameKeyboard();
             if (keyboard == null) return 0;
             if (keyboard.wKey.wasPressedThisFrame || keyboard.upArrowKey.wasPressedThisFrame) return -1;
             if (keyboard.sKey.wasPressedThisFrame || keyboard.downArrowKey.wasPressedThisFrame) return 1;
@@ -137,7 +161,7 @@ namespace CarcavelosCircuit.RaceFlow
 
         public static int MenuHorizontal()
         {
-            Keyboard keyboard = Keyboard.current;
+            Keyboard keyboard = GameKeyboard();
             if (keyboard == null) return 0;
             if (keyboard.aKey.wasPressedThisFrame || keyboard.leftArrowKey.wasPressedThisFrame) return -1;
             if (keyboard.dKey.wasPressedThisFrame || keyboard.rightArrowKey.wasPressedThisFrame) return 1;
@@ -156,7 +180,7 @@ namespace CarcavelosCircuit.RaceFlow
         // Space flips an on/off row (Enter stays retry, so it is not used in menus).
         public static bool MenuTogglePressed()
         {
-            Keyboard keyboard = Keyboard.current;
+            Keyboard keyboard = GameKeyboard();
             return keyboard != null && keyboard.spaceKey.wasPressedThisFrame;
         }
     }

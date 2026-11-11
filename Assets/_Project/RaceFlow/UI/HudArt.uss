@@ -1,0 +1,109 @@
+/* "Azulejo Arcade" (task R15): the colour tokens, the two fonts and the plates of the whole HUD.
+   Loaded by the theme (RaceHudTheme.tss imports this file), so it reaches every UI document on the race HUD's
+   PanelSettings: RaceHud.uxml, and the parts built in code (ItemSlotHud, PositionsHud). ":root" = the top of the panel,
+   so the tokens below are known everywhere. Same values as UI/HudColors.cs: change both together.
+
+   Why plates are pictures: USS in Unity 6.3 has no box-shadow and no gradients. Each plate is a small PNG
+   (made by Editor/HudArtBuilder with UI/PlateArt) with a gradient, a cream stroke, a bright "bevel" line and a hard
+   shadow baked in. "-unity-slice-*" cuts it into 9 parts: the corners keep their size, the middle stretches, so one
+   picture fits every panel. The pictures are drawn at twice the size (sharp on phones), so the slices are halved
+   with -unity-slice-scale. The shadow is part of the picture, so a plate needs about 6 px more padding at the bottom. */
+
+:root {
+    /* Base palette (docs/art-style.md) */
+    --cc-white: #FFF6E3;       /* = cream: all light text */
+    --cc-black: #0E2238;       /* = ink: dark text, outlines */
+    --cc-asphalt: #55585E;
+    --cc-sand: #E3C48D;
+    --cc-blue: #2D8CD6;
+    --cc-blue-deep: #123B5E;
+    --cc-orange: #FF8A1F;
+    --cc-coral: #E6463C;
+    --cc-panel: rgba(19, 49, 79, 0.94);  /* = plate, for the few parts that are a plain colour */
+    --cc-lip: rgba(14, 34, 56, 0.55);    /* = ink at 0.55, the hard shadow under a tile */
+    --drift-s1: #2D8CD6;       /* swap these two if the drift colour mapping changes */
+    --drift-s2: #FF8A1F;
+
+    /* Azulejo Arcade UI tokens (UI only: need Luc's OK as rows in docs/art-style.md) */
+    --ink: #0E2238;
+    --plate: #13314F;
+    --plate-alt: #183C60;
+    --plate-blue-hi: #45A8F2;
+    --plate-blue-lo: #1E6BB3;
+    --plate-orange-hi: #FFB04A;
+    --plate-orange-lo: #F27A12;
+    --lip-orange: #A84A00;
+    --cream: #FFF6E3;
+    --sun: #FFC93C;
+    --silver: #D6DEE8;
+    --bronze: #D98B4E;
+    --mint: #3FD68C;
+
+    /* Medal tiers: the podium colours (Dean's List = azulejo blue and white) */
+    --medal-bronze: #D98B4E;
+    --medal-silver: #D6DEE8;
+    --medal-gold: #FFC93C;
+    --medal-deans: #2D8CD6;
+
+    /* Every text that sets no font of its own (text fields, buttons) gets the UI face. */
+    -unity-font-definition: url("Fonts/BarlowCondensed/BarlowCondensed-ExtraBold-SDF.asset");
+}
+
+/* ---------- Fonts: the ONE place to change them ----------
+   Display (titles, FINISH, countdown, position, big words): Unbounded Black, cream with a thick ink outline and a
+   hard ink shadow straight down (no blur: a hard offset reads "sticker", a blur reads "web page").
+   Numbers and UI: Barlow Condensed ExtraBold. Timers use HudFormat.DigitWidth (<mspace>) so digits never jitter.
+   Both are SIL OFL 1.1 (OFL.txt next to each font, THIRD_PARTY.md, credits page). */
+.f-display {
+    -unity-font-definition: url("Fonts/Unbounded/Unbounded-Black-SDF.asset");
+    -unity-font-style: normal;
+    -unity-text-outline-width: 3px;
+    -unity-text-outline-color: #0E2238;
+    text-shadow: 0 4px 0 rgba(14, 34, 56, 0.70);
+}
+
+.f-num,
+.f-ui {
+    -unity-font-definition: url("Fonts/BarlowCondensed/BarlowCondensed-ExtraBold-SDF.asset");
+    -unity-font-style: normal;
+}
+
+/* ---------- Plates ---------- */
+.plate {
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("Art/plate-navy.png");
+    -unity-slice-left: 36;
+    -unity-slice-right: 36;
+    -unity-slice-top: 36;
+    -unity-slice-bottom: 48;
+    -unity-slice-scale: 0.5px;
+    border-width: 0;
+}
+
+.plate--blue { background-image: url("Art/plate-blue.png"); }
+.plate--orange { background-image: url("Art/plate-orange.png"); }
+.plate--map { background-image: url("Art/plate-map.png"); }
+
+/* Small chips: a smaller picture with smaller corners. */
+.chip {
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("Art/plate-cream.png");
+    -unity-slice-left: 26;
+    -unity-slice-right: 26;
+    -unity-slice-top: 26;
+    -unity-slice-bottom: 34;
+    -unity-slice-scale: 0.5px;
+    border-width: 0;
+}
+
+.chip--coral { background-image: url("Art/plate-coral.png"); }
+.chip--mint { background-image: url("Art/plate-mint.png"); }
+.chip--orange { background-image: url("Art/plate-orange-row.png"); -unity-slice-top: 22; -unity-slice-bottom: 28; -unity-slice-left: 22; -unity-slice-right: 22; }
+
+/* Rank shields on the podium (leaderboard places 1-3). */
+.shield { background-image: url("Art/shield-sun.png"); -unity-background-scale-mode: stretch-to-fill; }
+.shield--silver { background-image: url("Art/shield-silver.png"); }
+.shield--bronze { background-image: url("Art/shield-bronze.png"); }
+
+/* The item slot: an azulejo tile (ItemSlotHud). */
+.item-frame { background-image: url("Art/item-frame.png"); -unity-background-scale-mode: stretch-to-fill; }

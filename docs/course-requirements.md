@@ -20,15 +20,17 @@ Sources: the course wiki https://2477-introduction-programming.gitlab.io/wiki/ (
 
 **All team members receive the same grade** (team project = 40 % of the course grade).
 
-## Grading criteria (Low 30 % / Mid 70 % / High 100 % of each weight)
-| # | Criterion | Weight | High (100 %) means |
-|---|---|---|---|
-| 1 | It works | 20 % | The deployed app runs all workflows without errors, **including invalid input** |
-| 2 | User interface and experience | 20 % | Workflows are direct; results **and errors** are clearly shown to the user |
-| 3 | Scope and ambition | 20 % | Substantial features that go well beyond a solo project, implemented consistently |
-| 4 | Verification | 10 % | Tests cover **accepted and rejected actions and edge cases**, and all pass on `main` |
-| 5 | Security | 10 % | **No credentials in the repo; access control and input validation enforced; dependencies minimal, pinned, without known vulnerabilities** |
-| 6 | Repository walkthrough | 20 % | Members explain how it is built, **why**, what its **limits** are, and how it could change |
+## Grading criteria (official rubric from the wiki "Team project" page, checked again 2026-11-11)
+Each criterion is scored Low (30 % of its weight), Mid (70 %) or High (100 %). **Our target: High on all six.**
+
+| # | Criterion (weight) | Low (30 %) | Mid (70 %) | High (100 %) |
+|---|---|---|---|---|
+| 1 | It works (20 %) | Deployed app is down or crashes in main workflows | App runs, but some workflows fail or need workarounds | All workflows run without errors, **including with invalid input** |
+| 2 | User interface and experience (20 %) | Interface does not suit the problem; users need help to complete tasks | Interface suits the problem, but some workflows have extra steps or unclear feedback | Interface suits the problem; workflows are direct, and **results and errors are clear** |
+| 3 | Scope and ambition (20 %) | Little more than a solo project in size and features | Several features that integrate into one product | Substantial features **well beyond a solo project, implemented consistently** |
+| 4 | Verification (10 %) | No tests, or tests that do not check the required behaviour | Tests cover main workflows but miss rejected actions or edge cases | Tests cover **accepted and rejected actions and edge cases**, and all pass on `main` |
+| 5 | Security (10 %) | Credentials in the repo, or sensitive data exposed or stored insecurely | No credentials in the repo, but gaps in access control, input validation, or dependencies | **Access control and input validation enforced; dependencies minimal, pinned, and free of known vulnerabilities** |
+| 6 | Repository walkthrough (20 %) | Members cannot explain how the project is built or where its parts are | Members explain what the main parts do, but not why they were built that way or their limits | Members explain **how it is built, why, its limits, and how it could change** |
 
 ## How we score High on each criterion (checklist, tick before Sun 22)
 1. **It works**: the deployed build is a `main` commit; the whole loop (start screen, countdown, race with bots, finish, results, leaderboard, retry) runs in Chrome, Firefox, Safari and on a phone without a console error; bad input (empty or rude name, unplugged internet, tab switch, falling off the map, driving backwards) has a defined, visible result.

@@ -41,7 +41,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | V5 | `KartEffects`: drift sparks + boost flame, reads `IKartState` only | Thu 12 | todo |
 | V6 | Complete race at the itch.io URL, logged in `docs/builds.md` | Thu 12 | todo |
 | V7 | README "How to build" reproducible by a second person | Fri 13 | todo |
-| V8 | `Visuals/CampusWorld/CampusWorld.prefab`: the whole campus world as one prefab (colliders, trees and props, sun and sky light) for Role 2's `Track_Campus`; `Track_CampusWorld` stays Role 3's preview with the race placeholders | Tue 10 | claimed (Luc, 2026-11-09) |
+| V8 | `Visuals/CampusWorld/CampusWorld.prefab`: the whole campus world as one prefab (colliders, trees and props, sun and sky light) for Role 2's `Track_Campus`; `Track_CampusWorld` stays Role 3's preview with the race placeholders | Tue 10 | done (Luc, #37) |
 
 ## Role 4: Race flow, UI + sound (David)
 | ID | Task | Due | Status |
@@ -95,13 +95,14 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 ### Role 4: David
 | ID | Task | Due | Status |
 |---|---|---|---|
-| R8 | Race flow for every racer: grid slots behind the `SpawnPoint` for registered bots, `InputEnabled` on GO / off at the finish for every racer, Retry puts every racer back; the player registers as `IRacer` | Thu 12 | todo |
-| R9 | Live positions ("2nd / 6") + minimap top right (racing line + racer dots, player highlighted); works with `ITrackProgress` or the checkpoint fallback | Fri 13 | todo |
-| R10 | Online time leaderboard with names: every finished time saved and ranked, top 10 on the start screen; name validation, offline fallback, no credentials in the repo (BLOCKED part: David creates the free database account) | Fri 13 | todo |
-| R11 | Start screen "Carcavelos Round 3" (title animation, slot for the leaderboard) + "Lab opener" (meaning to be confirmed by David) | Fri 13 | todo |
-| R12 | Waves rolling onto the beach + 2-4 surfers riding them (new Role 4 folder `Ambience/`, placed at runtime, no edit to Luc's scene) | Tue 17 | todo |
-| R13 | After D7: new medal times + re-record the Dean's ghost on the final track | Tue 17 | todo |
+| R8 | Race flow for every racer: grid slots behind the `SpawnPoint` for registered bots, `InputEnabled` on GO / off at the finish for every racer, Retry puts every racer back; the player registers as `IRacer` | Thu 12 | done (David, #69) |
+| R9 | Live positions ("2nd / 6") + minimap top right (racing line + racer dots, player highlighted); works with `ITrackProgress` or the checkpoint fallback | Fri 13 | done (David, #69) |
+| R10 | Online time leaderboard with names: every finished time saved and ranked, top 10 on the start screen; name validation, offline fallback, no credentials in the repo (BLOCKED part: David creates the free database account) | Fri 13 | done (David, #68; online part BLOCKED until David creates the Supabase project, offline "this device" board works) |
+| R11 | Start screen "Carcavelos Round 3" (title animation, slot for the leaderboard) + "Lab opener" (meaning to be confirmed by David) | Fri 13 | done (David, #68; "Lab opener" waits for David) |
+| R12 | Waves rolling onto the beach + 2-4 surfers riding them (new Role 4 folder `Ambience/`, placed at runtime, no edit to Luc's scene) | Tue 17 | done (David, #66) |
+| R13 | After D7: new medal times + re-record the Dean's ghost on the final track | Tue 17 | todo (waits for D7 #73 to merge: new top speed 18 m/s, 26.1 m/s boosted) |
 | R14 | Integration, deploy check with Luc (V6/G5), README for the submission | Sun 22 | todo |
+| R15 | Arcade UI restyle per art direction: OFL fonts, colour tokens, plates, motion; title, HUD, results, leaderboard, name entry | Fri 13 | done (David, #71) |
 
 ## Course submission (official, `docs/course-requirements.md`)
 | ID | Task | Who | Due | Status |
@@ -122,5 +123,5 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 | Q13 | 1 -> 4 | Chase camera (D2) is ready as the prefab `Driving/ChaseCamera.prefab` (Cinemachine: Follow + Rotation Composer, offset 0/3/-6). To use it in `Main.unity` instead of `PlaceholderChaseCamera`: put a `CinemachineBrain` on the Main Camera, add the prefab, and when the kart spawns set the prefab's `CinemachineCamera.Follow` (Tracking Target) to the kart. After `ResetTo` (retry / recovery) call `CinemachineCamera.OnTargetObjectWarped(kartTransform, newPosition - oldPosition)` so the camera jumps with the kart instead of flying across the track. Your decision when to swap (Role 4 owns `Main.unity`); I can pair on it | done 2026-11-10 (#51): `ChaseCameraRig` puts a CinemachineBrain on the Main Camera, sets Follow to the spawned kart and snaps the camera after retry/recovery; `PlaceholderChaseCamera` removed |
 | Q16 | 4 -> 3 | Item looks for R7 (your four designs are now the items): HUD icons as PNG (256 px, transparent) and, if you like, the models (lifebuoy ring, gold coin halo, seagull) as prefabs under `Assets/_Project/Visuals/Items/`. Tell David the paths; RaceFlow then swaps its code-drawn placeholders (`UI/ItemIcon.cs`, `SeagullRing.cs`, `DeansHalo.cs`) for them via a slot in `ItemSettings`. No other change needed on your side | open |
 | Q15 | 4 -> 1 | Item boxes (R7) give their boosts through the new optional contract `Shared/IKartBoost` (`AddBoost(seconds, speedMultiplier)`, `docs/interfaces.md`). Please let `KartController` implement it: help PR `help/role1-Q15-item-boost-david` (about 15 lines: boost time is added, the higher multiplier wins, `ResetTo` and the end of the boost clear it). You review and merge, or change it however you like | in review: help PR #61, Alessandro merges |
-| Q17 | 3 -> 4 | Bots in the race (V10 needs R8): RaceFlow switches `InputEnabled` for every registered `IRacer` and puts them on grid slots on GO and Retry; bots only register and drive | open (R8) |
+| Q17 | 3 -> 4 | Bots in the race (V10 needs R8): RaceFlow switches `InputEnabled` for every registered `IRacer` and puts them on grid slots on GO and Retry; bots only register and drive | done (#69: RaceFlow handles every registered IRacer) |
 | Q18 | 2 -> 3 | Place Noah's prefabs (T9 atrium/gallery/staircase, T10 piano, T11 volleyball) in `CampusWorldBuilder`, one line each; Noah sends the prefab paths | open |
