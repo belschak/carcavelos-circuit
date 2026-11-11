@@ -35,9 +35,9 @@ G_FASCIA = (F1 - 0.6, F1 + 0.4)                     # the Floor-1 slab's white e
 G_COLUMN_R = 0.225                                  # round columns 0.45 m under the slab edge ...
 G_COLUMN_STEP = 7.5                                 # ... every 7-8 m
 G_BAND = 3.9                                        # m: dark glass band under the box, toward the upper plaza
-G_BOX_TOP = F1 + 10.5                               # the blank box (survey 8.5 m on the 3.9 m band, +-1.5; the flying
-#                                                     roof beside it is the highest line of G in every panorama)
-G_ROOF_Z = (24.7, 25.2)                             # thin flying roof slab (0.5 m edge)
+G_BOX_TOP = F1 + 10.9                               # the blank box (survey: 8.5 m on the 3.9 m band, +-1.5: the low end,
+#                                                     because the flying roof beside it is G's highest line in every panorama)
+G_ROOF_Z = (25.3, 25.8)                             # thin flying roof slab (0.5 m edge); its column is 14.15 m tall
 # the slab covers the glazed block and projects 6 m beyond its south side and, south of the box, 6.5 m to the west
 G_ROOF_RING = [G(-6.5, -6.0), G(19.5, -6.0), G(19.5, 27.6), G(-0.5, 27.6), G(-0.5, 7.5), G(-6.5, 7.5)]
 G_TALL_COLUMN = G(-6.0, -5.5)                       # the ONE slender column under its outer corner (survey (124..128,
