@@ -237,9 +237,24 @@ def ground(x, y):
 # Restaurants
 # =====================================================================================================
 RESTAURANTS = {
-    "w213238769": dict(kind="capricciosa", storey=3.9, parapet=0.45),
-    "w213238771": dict(kind="pastorinha", storey=3.4, parapet=0.4),
+    "w213238769": dict(kind="capricciosa", storey=3.9, parapet=0.3),      # V16g: parapets 0.45 / 0.4 -> 0.3 / 0.35
+    "w213238771": dict(kind="pastorinha", storey=3.4, parapet=0.35),
 }
+# V16g (survey 3.7): Capricciosa is clad in white horizontal boards (the street section's slat texture, 4 boards per
+# 0.85 m), A Pastorinha is cream-yellow with a white scalloped parapet. Two more material slots, restaurants only.
+BOARDS, PAL = 9, 10
+TILE[BOARDS] = 0.85
+
+
+def restaurant_materials():
+    import env_streets
+    return building_materials() + [env_streets.mat("slats"), env_streets.mat("palette")]
+
+
+def pal(colour, n=4):
+    """UVs that put a face on one cell of the street palette."""
+    import env_streets
+    return [env_streets.pal_uv(colour)] * n
 SMALL = {
     "w482697584": dict(kind="pavilion", walls=3.1, eave=0.35, pitch=0.55),
     # V10f (survey F): the beach bar stands on promenade level, one level below the car park: from the aisle only its
@@ -329,13 +344,16 @@ def build_restaurant(b):
     spec, pts, floor, top = lay["spec"], lay["points"], lay["floor"], lay["top"]
     others = [footprint(k)["points"] for k in RESTAURANTS if k != b["id"]]
     base = min(ground(x, y) for x, y in pts) - 0.8
-    mats = building_materials()
+    mats = restaurant_materials()
+    cream = spec["kind"] == "pastorinha"
+    skin = PAL if cream else BOARDS                     # V16g: cream-yellow render / white boards
+    skin_uv = pal("cream") if cream else None
 
     vol = Geo()                                         # closed main volume: plinth band, wall band, roof, bottom
     for _k, p, q, _l, _u, n in edges(pts):
         out = (n[0], n[1], 0.0)
         vol.face([(*p, base), (*q, base), (*q, floor), (*p, floor)], PLINTH, out=out)
-        vol.face([(*p, floor), (*q, floor), (*q, top), (*p, top)], WALL, out=out)
+        vol.face([(*p, floor), (*q, floor), (*q, top), (*p, top)], skin, out=out, uvs=skin_uv)
     vol.face([(*p, top) for p in pts], ROOF, out=(0, 0, 1))
     vol.face([(*p, base) for p in pts], WALL, out=(0, 0, -1))
 
@@ -347,7 +365,9 @@ def build_restaurant(b):
     for k in range(m):
         p, q, pi, qi = pts[k], pts[(k + 1) % m], inner[k], inner[(k + 1) % m]
         nrm = norm((q[1] - p[1], -(q[0] - p[0])))
-        det.face([(*p, top), (*q, top), (*q, ptop), (*p, ptop)], WALL, out=(nrm[0], nrm[1], 0))
+        det.face([(*p, top), (*q, top), (*q, ptop), (*p, ptop)], WALL if cream else BOARDS, out=(nrm[0], nrm[1], 0))
+        if cream and math.hypot(q[0] - p[0], q[1] - p[1]) > 5.0 and not shared(p, q, others):
+            scallops(det, p, q, ptop, nrm)
         det.face([(*p, ptop), (*q, ptop), (*qi, ptop), (*pi, ptop)], ROOF, out=(0, 0, 1))
         det.face([(*pi, top + 0.02), (*qi, top + 0.02), (*qi, ptop), (*pi, ptop)], WALL, out=(-nrm[0], -nrm[1], 0))
 
@@ -464,52 +484,106 @@ def railing_line(g, pts3, mat, post=0.07, rails=(0.5, 0.95), rail=0.05, step=2.0
         g.post(last.x, last.y, last.z - 0.1, last.z + max(rails) + 0.03, post, mat)
 
 
+def scallops(g, p, q, z, nrm, pitch=1.5, radius=0.6):
+    """White scallops on a parapet (A Pastorinha, survey C06 / C08): flat half-rounds standing on the rim."""
+    length = math.hypot(q[0] - p[0], q[1] - p[1])
+    k = max(1, int(length // pitch))
+    u = ((q[0] - p[0]) / length, (q[1] - p[1]) / length)
+    start = (length - k * pitch) / 2
+    arc = [(-radius, 0.0), (-radius * 0.72, radius * 0.5), (0.0, radius * 0.72), (radius * 0.72, radius * 0.5), (radius, 0.0)]
+    for j in range(k):
+        c = start + (j + 0.5) * pitch
+        for side in (1.0, -1.0):
+            off = 0.02 if side > 0 else 0.23
+            g.face([(p[0] + u[0] * (c + a) - nrm[0] * off, p[1] + u[1] * (c + a) - nrm[1] * off, z - 0.02 + h) for a, h in arc],
+                   WALL, out=(nrm[0] * side, nrm[1] * side, 0))
+
+
 def capricciosa_terrace(g, lay):
-    """Timber deck on the sand (6 m deep), low white railing, pergola over the north-west part (photos W01-W03 in
-    the atlas index describe it; the ortho shows the striped pergola roof and palms on the open part)."""
-    t0, t1, depth, zd = lay["deck"]
-    deck_slab(g, lay, t0, t1, depth, zd, DECK, PLINTH)
-    edge = [at(lay, t0, 0.15, zd), at(lay, t0, depth - 0.1, zd), at(lay, t1, depth - 0.1, zd), at(lay, t1, 0.15, zd)]
-    railing_line(g, edge, WALL, post=0.08, rails=(0.45, 0.95), rail=0.07, step=2.2)
-    # pergola: white posts on the outer edge, white beams, timber slats parallel to the wall
-    zp = lay["floor"] + 2.95
-    tp0, tp1 = t0 + 0.3, min(PERGOLA_TO, t1)
-    stops = list(frange(tp0 + 0.2, tp1 - 0.2, (tp1 - tp0 - 0.4) / max(1, round((tp1 - tp0) / 3.6))))
+    """V16g (survey 3.7, Appendix G 2.4 and 2.7). North-west part: the covered terrace, a dark stained deck under a
+    cream awning on white steel rafters that fall from the roof edge to an outer beam on posts; its north-west edge a
+    white wall with a row of openings. South-east part: an open timber deck with white pergola frames. Along the sea
+    wall (capricciosa_plan.SEA_LINE, built by env_capricciosa) a white post-and-rail balustrade."""
+    import capricciosa_plan as CP
+    import street_plan
+    zd = lay["deck"][3]
+    u, n = lay["u"], lay["n"]
+    (t0, t1), depth = CP.COVERED["t"], CP.COVERED["depth"]
+    c = [at(lay, t0, 0.0), at(lay, t1, 0.0), at(lay, t1, depth), at(lay, t0, depth)]
+    g.face([(*p, zd) for p in c], PAL, out=(0, 0, 1), uvs=pal("wood_dark"))
+    for p, q, out in ((c[1], c[2], u), (c[2], c[3], n), (c[3], c[0], (-u[0], -u[1]))):
+        g.face([(*p, zd - 0.6), (*q, zd - 0.6), (*q, zd), (*p, zd)], PLINTH, out=(out[0], out[1], 0))
+    zb, ze = lay["top"] - 0.12, zd + CP.COVERED["eave"]
+    edge = depth - 0.3
+    k = max(1, round((t1 - t0 - 0.4) / CP.COVERED["rafter"]))
+    for j in range(k + 1):                                             # white steel rafters, about 1 m apart
+        t = t0 + 0.2 + (t1 - t0 - 0.4) * j / k
+        g.beam(at(lay, t, 0.05, zb), at(lay, t, edge, ze), 0.06, 0.14, WALL, ends=False)
+    g.beam(at(lay, t0, edge, ze - 0.09), at(lay, t1, edge, ze - 0.09), 0.14, 0.2, WALL)
+    k = max(1, round((t1 - t0) / CP.COVERED["post_step"]))
+    for j in range(k + 1):
+        x, y = at(lay, t0 + 0.1 + (t1 - t0 - 0.2) * j / k, edge)
+        g.post(x, y, zd, ze - 0.18, 0.12, WALL)
+    a = [at(lay, t0 + 0.1, 0.05), at(lay, t1 - 0.1, 0.05), at(lay, t1 - 0.1, edge + 0.25), at(lay, t0 + 0.1, edge + 0.25)]
+    zs = [zb + 0.09, zb + 0.09, ze + 0.08, ze + 0.08]
+    g.face([(*p, z) for p, z in zip(a, zs)], PAL, out=(0, 0, 1), uvs=pal("cream"))       # the awning, top and underside
+    g.face([(*p, z - 0.015) for p, z in zip(a, zs)], PAL, out=(0, 0, -1), uvs=pal("cream"))
+    # the white wall with a row of openings on the terrace's north-west edge
+    tw, s0, s1 = t0 - 0.2, 0.3, depth
+    wu = n
+    bays = max(1, int((s1 - s0 - 0.75) // 1.95))
+    pier = (s1 - s0 - bays * 1.2) / (bays + 1)
+    for z0, z1 in ((zd - 0.3, zd + 0.75), (zd + 1.55, zd + 2.2)):
+        g.obox(at(lay, tw, (s0 + s1) / 2), wu, (s1 - s0) / 2, 0.2, z0, z1, WALL, skip=())
+    for j in range(bays + 1):
+        sc = s0 + pier / 2 + j * (pier + 1.2)
+        g.obox(at(lay, tw, sc), wu, pier / 2, 0.2, zd + 0.75, zd + 1.55, WALL, skip=("top", "bottom"))
+    # the open deck south-east of it: timber, white pergola frames
+    (o0, o1), od = CP.OPEN_DECK["t"], CP.OPEN_DECK["depth"]
+    deck_slab(g, lay, o0, o1, od, zd, DECK, PLINTH)
+    zp = lay["top"] - 0.15
+    stops = [o0 + 1.0 + (o1 - o0 - 2.0) * j / 3 for j in range(4)]
     for t in stops:
-        x, y = at(lay, t, depth - 0.45)
-        g.post(x, y, zd, zp - 0.25, 0.17, WALL)
-        g.beam(at(lay, t, 0.05, zp - 0.13), at(lay, t, depth - 0.3, zp - 0.13), 0.14, 0.26, WALL)
-    g.beam(at(lay, tp0, depth - 0.45, zp - 0.13), at(lay, tp1, depth - 0.45, zp - 0.13), 0.18, 0.26, WALL)
-    for s in frange(0.45, depth - 0.35, 0.5):
-        g.beam(at(lay, tp0, s, zp + 0.08), at(lay, tp1, s, zp + 0.08), 0.07, 0.16, DECK)
+        x, y = at(lay, t, od - 0.4)
+        g.post(x, y, zd, zp - 0.1, 0.13, WALL)
+        g.beam(at(lay, t, 0.05, zp), at(lay, t, od - 0.2, zp), 0.12, 0.2, WALL)
+    g.beam(at(lay, stops[0] - 0.3, od - 0.4, zp), at(lay, stops[-1] + 0.3, od - 0.4, zp), 0.14, 0.2, WALL)
+    # white balustrade on the sea wall's outer edge, with returns at both ends
+    line, off = CP.SEA_LINE, CP.SEA_FACE - 0.22
+    zt = street_plan.TERRACE_Z + CP.SEA_TOP
+    total, kink = CP.line_length(line), CP.line_length(line[:2])
+    pts = [CP.side_pt(line, 0.0, -CP.SEA_BACK + 0.1)] + [CP.side_pt(line, sx, off) for sx in (0.0, kink, total)] \
+        + [CP.side_pt(line, total, -CP.SEA_BACK + 0.1)]
+    railing_line(g, [(*p, zt) for p in pts], WALL, post=0.08, rails=(0.5, 1.0), rail=0.06, step=2.3)
 
 
 def pastorinha_terrace(g, lay):
-    """Stone terrace with a solid white balustrade under a white canopy on slim posts (ortho: white roof strip on
-    the sea side of PA)."""
+    """V16g (survey 2.7, 2.8): a stone terrace with a solid white balustrade carrying glazed windbreak panels (about
+    1.6 m in all) under a white pergola on slim posts."""
     t0, t1, depth, zt = lay["deck"]
     deck_slab(g, lay, t0, t1, depth, zt, PLINTH, PLINTH)
+    n, u = lay["n"], lay["u"]
     # solid balustrade on the outer edge and the north-west end
     for (ta, sa), (tb, sb) in (((t0, 0.1), (t0, depth)), ((t0, depth), (t1, depth))):
         a, b = at(lay, ta, sa - 0.1 if sa > 1 else sa), at(lay, tb, sb - 0.1)
         g.beam((*a, zt + 0.43), (*b, zt + 0.43), 0.2, 0.86, WALL)
-    zc_wall, zc_out = lay["floor"] + 3.0, lay["floor"] + 2.65
-    over = 0.35
-    c = [at(lay, t0 - 0.2, 0.0), at(lay, t1, 0.0), at(lay, t1, depth + over), at(lay, t0 - 0.2, depth + over)]
-    zs = [zc_wall, zc_wall, zc_out, zc_out]
-    g.face([(*p, z + 0.18) for p, z in zip(c, zs)], ROOF, out=(0, 0, 1))
-    g.face([(*p, z) for p, z in zip(c, zs)], WALL, out=(0, 0, -1))
-    for k in range(4):
-        p, q = c[k], c[(k + 1) % 4]
-        if k == 0:
-            continue                                       # against the wall
-        mid = lerp2(p, q, 0.5)
-        ctr = lerp2(c[0], c[2], 0.5)
-        g.face([(*p, zs[k]), (*q, zs[(k + 1) % 4]), (*q, zs[(k + 1) % 4] + 0.18), (*p, zs[k] + 0.18)], WALL,
-               out=(mid[0] - ctr[0], mid[1] - ctr[1], 0))
-    for t in frange(t0 + 0.4, t1 - 0.3, (t1 - t0 - 0.7) / max(1, round((t1 - t0) / 4.5))):
+    zp = lay["floor"] + 2.5
+    k = max(1, round((t1 - t0) / 4.5))
+    stops = [t0 + 0.4 + (t1 - t0 - 0.7) * j / k for j in range(k + 1)]
+    for t in stops:
         x, y = at(lay, t, depth - 0.2)
-        g.post(x, y, zt, zc_out + 0.02, 0.13, WALL)
+        g.post(x, y, zt, zp - 0.1, 0.13, WALL)
+        g.beam(at(lay, t, 0.05, zp), at(lay, t, depth + 0.2, zp), 0.12, 0.2, WALL)
+    for s in (depth - 0.2, depth / 2):
+        g.beam(at(lay, t0, s, zp + 0.16), at(lay, t1, s, zp + 0.16), 0.1, 0.12, WALL)
+    for ta, tb in zip(stops, stops[1:]):                                # glass between the posts, seen from both sides
+        a, b = at(lay, ta + 0.1, depth - 0.2), at(lay, tb - 0.1, depth - 0.2)
+        w = (tb - ta) / TILE[GLASS]
+        for side in (1.0, -1.0):
+            g.face([(*a, zt + 0.86), (*b, zt + 0.86), (*b, zt + 1.62), (*a, zt + 1.62)], GLASS,
+                   out=(n[0] * side, n[1] * side, 0), uvs=[(0, 0.1), (w, 0.1), (w, 0.6), (0, 0.6)])
+        g.beam((*a, zt + 1.64), (*b, zt + 1.64), 0.05, 0.05, WALL, ends=False)
+    _ = u
 
 
 def deck_spots(bid):
