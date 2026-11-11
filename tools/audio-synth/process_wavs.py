@@ -42,12 +42,15 @@ PLAN = {
     "kart_drift_squeal": (None, True, False),
     "kart_drift_sparks": (-21.0, True, False),
     "amb_wind_loop": (-22.0, True, False),
+    "amb_seaside_loop": (-22.0, True, False),  # audit 12, RaceMusic plays it about 20 dB lower again
     "kart_drift_start": (-15.0, False, False),
     "kart_drift_stage_up": (-15.0, False, False),
     "el_boost_whoosh": (-15.0, False, False),
     "sfx_landing_thud": (-15.0, False, False),
     "sfx_respawn": (-15.0, False, False),
     "sfx_shift_pop": (-15.0, False, False),
+    "sfx_wall_bump": (-15.0, False, False),
+    "sfx_takeoff_whoosh": (-17.0, False, False),
     # stingers bus (played at volume 1.0, the level lives in the file)
     "sfx_countdown_beep": (-15.0, False, False),
     "sfx_go_beep": (-13.0, False, False),
@@ -60,6 +63,9 @@ PLAN = {
     "music_results_loop": (-16.0, True, False),
     # interface
     "ui_click": (-20.0, False, False),
+    "ui_open": (-21.0, False, False),
+    "ui_close": (-21.0, False, False),
+    "ui_page": (-23.0, False, False),
 }
 
 

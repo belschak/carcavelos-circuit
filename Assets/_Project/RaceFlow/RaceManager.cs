@@ -61,6 +61,8 @@ namespace CarcavelosCircuit.RaceFlow
         public event Action<float, bool> LapFinished;    // lap time, new record?
         public event Action Restarted;
         public event Action Recovered;                   // kart put back after R or a fall (respawn sound)
+        public event Action Paused;                      // the pause started (focus lost or P), audit 19 pause cue
+        public event Action Resumed;                     // the pause ended and the race runs again
 
         private readonly RaceTimer timer = new RaceTimer();
         private readonly RunStats runStats = new RunStats();
@@ -313,8 +315,8 @@ namespace CarcavelosCircuit.RaceFlow
             // Before the pause check: the slow motion must notice a pause (it then leaves Time.timeScale at 0).
             UpdateSlowMotion();
 
-            // Paused (focus was lost): everything is frozen until a key or click. That key does nothing else,
-            // so it never also retries or recovers.
+            // Paused (focus was lost or P was pressed): everything is frozen until a key, a click or P again.
+            // That key does nothing else, so it never also retries or recovers.
             if (pause.IsPaused)
             {
                 kart.InputEnabled = false;
@@ -322,10 +324,16 @@ namespace CarcavelosCircuit.RaceFlow
                 {
                     AudioListener.pause = true; // RaceMusic unpauses the sound when focus comes back; we are still paused
                 }
-                if (pause.TryResume(RaceKeys.AnyKeyOrClickPressed()))
+                if (pause.TryResume(RaceKeys.AnyKeyOrClickPressed() || RaceKeys.PausePressed()))
                 {
                     EndPause();
                 }
+                return;
+            }
+
+            // P pauses the countdown or the race by hand (audit 9): the same pause as a lost focus.
+            if (RaceKeys.PausePressed() && StartPause(pause.OnPauseKey(State)))
+            {
                 return;
             }
 
@@ -549,14 +557,14 @@ namespace CarcavelosCircuit.RaceFlow
             HintVisibleUntil = Time.time + seconds;
         }
 
-        // ---- Pause on focus loss (task P7) ----
+        // ---- Pause on focus loss (task P7) and on the P key (audit 9) ----
         // Unity calls these on every MonoBehaviour: OnApplicationFocus(false) when the browser tab or the window
         // loses focus, OnApplicationPause(true) when the app is sent to the background.
         private void OnApplicationFocus(bool hasFocus)
         {
             if (!hasFocus)
             {
-                StartPause();
+                PauseForLostFocus();
             }
         }
 
@@ -564,23 +572,34 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (paused)
             {
-                StartPause();
+                PauseForLostFocus();
+            }
+        }
+
+        private void PauseForLostFocus()
+        {
+            if (pauseOnFocusLoss && IsSetUp)
+            {
+                StartPause(pause.OnFocusLost(State));
             }
         }
 
         // Time.timeScale = 0 freezes physics, Time.deltaTime and Time.timeAsDouble. The lap time comes from
-        // Time.timeAsDouble timestamps, so the paused seconds never count. RacePause decides if we may pause.
-        private void StartPause()
+        // Time.timeAsDouble timestamps, so the paused seconds never count. RacePause decides if we may pause
+        // (pauseStarted), this only does the Unity part. Returns pauseStarted, so the caller can stop its frame.
+        private bool StartPause(bool pauseStarted)
         {
-            if (!pauseOnFocusLoss || !IsSetUp || !pause.OnFocusLost(State))
+            if (!pauseStarted)
             {
-                return;
+                return false;
             }
             timeScaleBeforePause = Time.timeScale > 0f ? Time.timeScale : 1f;
             Time.timeScale = 0f;
             frozen = true;
             kart.InputEnabled = false; // ends a drift without a boost (the kart's own rule), so resuming never surges
             AudioListener.pause = true;
+            if (Paused != null) Paused();
+            return true;
         }
 
         // Back to normal speed. Safe to call when not paused: then it changes nothing.
@@ -594,6 +613,7 @@ namespace CarcavelosCircuit.RaceFlow
             frozen = false;
             Time.timeScale = timeScaleBeforePause;
             AudioListener.pause = false;
+            if (Resumed != null) Resumed();
         }
 
         // The medal time for one tier in seconds (for the HUD), -1 if there is none.

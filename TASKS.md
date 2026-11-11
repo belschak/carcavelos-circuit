@@ -50,6 +50,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | R3 | HUD: countdown, timer, final time, boost cue, retry button, "Press any key to start" screen | Wed 11 | done (David, 2026-11-08) |
 | R4 | Retry (full reset) + recovery key R (respawn at last valid checkpoint, timer keeps running) | Thu 12 | done (David, 2026-11-08) |
 | R5 | Audio (ElevenLabs or CC0): engine loop (pitch by speed), drift, boost, countdown beeps, finish jingle, music. WAV sources, loops tested in the Web build. Free ElevenLabs plan = credit "Sound effects: elevenlabs.io" in game + itch page. Every file listed in `THIRD_PARTY.md` | Fri 13 | done (David, 2026-11-08) |
+| R6 | Polish from the 2026-11-10 audit: P pause, menu sounds, wall bump / take-off / chained boost sounds, seaside ambience, ghost chip, ahead/behind chime, wrong-way and pause cues, loader keys, KartEffects on the kart when Luc's prefab exists (his request Q10, #46), MusicPlayer deleted, walkthrough complete | Fri 13 | in review (David, 2026-11-10, stacked on #51) |
 
 ## Course submission (official, `docs/course-requirements.md`)
 | ID | Task | Who | Due | Status |

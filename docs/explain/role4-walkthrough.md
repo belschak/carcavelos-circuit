@@ -1,6 +1,6 @@
 # Role 4 walkthrough: race flow, HUD, sound (David's cheat sheet)
 
-For the live code walkthrough at the final presentation. Every file below is described as it really is in the repo on 2026-11-08. Line numbers are approximate pointers (`File.cs:NN`), so you can jump there while presenting.
+For the live code walkthrough at the final presentation. Every file below is described as it really is in the repo on 2026-11-10 (polish pass: audit items 6, 9-13, 18-21 and Luc's Q10). Line numbers are approximate pointers (`File.cs:NN`), so you can jump there while presenting.
 
 ---
 
@@ -29,7 +29,8 @@ RaceManager.Update()  every frame
   |
   +--> RaceHud (UI Toolkit)  polls State, LapSeconds, BestSeconds, Kart ... every frame, new text only on change
   +--> RaceSounds            listens to events CountdownStep, CheckpointPassed, LapFinished, Restarted, Recovered
-  '--> KartAudio (Audio)     reads IKartState of its parent kart every frame; MusicPlayer loops music
+  +--> RaceMusic             listens to the same events: music, seaside ambience and the mix levels per phase
+  '--> KartAudio (Audio)     reads IKartState of its parent kart every frame (engine, drift, boost, bump, jump)
 ```
 
 Suggested order for the live walkthrough (about 5 minutes):
@@ -126,6 +127,7 @@ Decides which phase we are in. No Unity types, only numbers and events, so fully
 - `RetryPressed()`: Enter or numpad Enter.
 - `RecoverPressed()`: R.
 - Menu keys (task P7): `SettingsPressed()` O, `CreditsPressed()` C, `MutePressed()` M, `MenuVertical()` / `MenuHorizontal()` (-1, 0, +1 from W/S/arrows and A/D/arrows), `MenuTogglePressed()` Space, `TryGetMousePosition`. O, C and M are not start keys: opening the settings must not also start the race.
+- `PausePressed()` P (audit 9): pause or continue during the countdown and the race. P is not a start key either; `RaceManager` reads it on its own. Never Escape (it leaves browser fullscreen).
 - Every method checks `Keyboard.current != null` (no keyboard = null).
 - How I would explain it: "All race keys in one place. `wasPressedThisFrame` is true only in the one frame the key goes down, so holding Enter does not retry 60 times a second."
 - Concept: Input System (new). The kart uses `isPressed` (held), race flow uses `wasPressedThisFrame` (tap).
@@ -194,10 +196,12 @@ Entry point of `Main.unity` (task R1). Serialized: `settings`, `kartPrefab`, `ka
 Race interface sounds on two 2D `AudioSource`s (one for sounds that play now, one for sounds that start a moment later). `OnEnable` subscribes to `CountdownStep`, `CheckpointPassed`, `LapFinished`, `Restarted`, `Recovered`; `OnDisable` unsubscribes. Volume is 1.0 for everything: the loudness of each sound lives in the file (`process_wavs.py`).
 
 - `OnCountdownStep(n)`: low beep for 3, 2, 1, high GO beep for 0. On a retry the first beep waits 0.1 s (`PlayLater`), because `RaceManager.Retry()` fires beep "3" and the `Restarted` click in the same frame and the beep would hide the click. A retry is recognised by the state of the last frame (`stateLastFrame` was Racing or Results).
-- `OnCheckpointPassed`: chime. `OnLapFinished`: jingle; on a new record the sting starts 0.7 s later (`recordStingDelay`), so the two do not blur into one sound. `OnRestarted`: click (`ui_click`). `OnRecovered`: whoosh (`sfx_respawn`).
+- `OnCheckpointPassed`: chime on its own `chimeSource`, pitched by `SplitChime` (audit 19): 2 semitones up when you are ahead of your best at this checkpoint, 2 down when behind, normal without a best lap. `OnLapFinished`: jingle; on a new record the sting starts 0.7 s later (`recordStingDelay`), so the two do not blur into one sound. `OnRestarted`: click (`ui_click`). `OnRecovered`: whoosh (`sfx_respawn`).
 - `Update()`: plays `sfx_hint_warning` once when a new "Missed a checkpoint" hint appears. There is no hint event, but `HintVisibleUntil` moves forward every time a hint is shown, so "later than last frame" = new hint.
 - Every stinger calls `music.Duck(dB, 0.6 x clip length)`: the music dips under it and comes back.
 - `Play(clip)`: `source.PlayOneShot(clip, volume)`, skips missing clips. `PlayLater(clip, delay)`: `delayedSource.PlayDelayed(delay)`; a new one replaces a waiting one (a retry stops a record sting).
+- Audit 19: `OnWrongWayShown` (from `RaceHud.WrongWayShown`, fired only on the frame the chip appears) plays the missed-checkpoint warning at 60 %, once per show. `OnPaused` / `OnResumed` (new `RaceManager.Paused` / `Resumed` events, fired by `StartPause` and `EndPause`) play the menu close / open notes at pitch 0.8 on the menu source, which ignores `AudioListener.pause`.
+- Menu sounds (audit 10): `OnMenuSound(MenuSound)` answers `RaceHud.MenuSoundRequested` with one `switch`: `ui_open` / `ui_close` for a card, `ui_page` for a credits page, and the retry click (`ui_click`) for a volume step (pitch 1), an on/off row (0.85) and M (1.12). They play on a third source, `menuSource`; `RaceSounds.Awake` sets its `ignoreListenerPause = true` (that flag is not saved in scene files, so the builder cannot set it), so M still clicks while the race is paused. "HudMenus fires the event after it applied the new settings, so a step on the Effects bar clicks at the new level: that is the audible preview." Muting sets `AudioListener.volume` to 0 at once, so only "sound on" is heard.
 - Concept: `OnEnable`/`OnDisable` are the right pair for subscribing, they also run when the component is switched on and off.
 
 ### 3.11b `RaceFlow/RaceMusic.cs` (MonoBehaviour, on the Music object)
@@ -208,6 +212,7 @@ The music and the overall mix, following the race. Four `LevelFade`s (race music
 - GO (`CountdownStep(0)`): race music restarts from bar 1 (`timeSamples = 2048`, right after the loop padding) at normal pitch and fades in over 0.12 s. The music is 120 BPM, so its beats line up with the 1 s and 0.5 s countdown steps.
 - Final stretch: when the last checkpoint before the finish is passed, the music glides up one semitone (pitch 1.0595 over 2 s, `Mathf.MoveTowards`) and gets 3 dB louder. The last checkpoint is `RaceManager.CheckpointCount - 1` (index 0 is the start/finish line), so the lift plays on every lap, the first one too.
 - Finish (`LapFinished`): race music fades out, engine and effects -14 dB (`KartAudio.SetMixLevels`), the results loop starts 1.8 s later (`PlayDelayed`), after the jingle.
+- Seaside ambience (audit 12): a fifth `LevelFade` for `amb_seaside_loop` (waves + distant gulls, own synth) on a third source on the Music object. It loops from the title screen on: -20 dB on the title and in the countdown, -24 dB while racing (engine and music fill the space), -18 dB on the results screen, always with 1.5 s fades. It follows the Effects slider and is never ducked ("the sea does not get quieter for a beep"). Point at: the `ambienceLevel.FadeTo(...)` line in each event handler. Likely question: "Why a loop and not a recording of the real beach?" Answer: "Own synth = no licence question, 8 s and 700 KB, and a loop has no start or end you could hear."
 - `Duck(db, hold)`: called by `RaceSounds`. Down at 200 dB/s, hold, back at 15 dB/s: "the slow return is what makes it sound like a radio mix pumping, not a volume jump".
 - `OnApplicationFocus` / `OnApplicationPause` -> `AudioListener.pause`: in a hidden browser tab Unity stops updating, but the browser would keep playing the engine and music loops; this pauses every source.
 - The kart is spawned at runtime, so the `KartAudio` is looked up once it exists: `(raceManager.Kart as Component).GetComponentInChildren<KartAudio>()`.
@@ -267,13 +272,25 @@ Nine 2D AudioSources: five loops that always run (engine low, engine high, tyre 
 - Teleport check at the start of `Update`: if the kart moved more than `teleportDistance` (10 m) in one frame, it was put back (R, fall, retry), so `airSeconds = 0` and `wasGrounded = true`. "Audio may only read `IKartState`, it cannot hear the RaceManager's `Recovered` event. Without this, landing on the respawn point after a fall would play a thud on top of the whoosh."
 - `UpdateDrift`: chirp on the frame a drift starts; squeal fades in/out with `Mathf.MoveTowards`; sparks volume/pitch from `DriftSound` by stage; chime each time the stage goes up, pitched higher per stage, alternating between `stageSource` and `secondStageSource`. "The chime is 1.2 s long and stage 2 comes 0.8 s after stage 1. Changing the pitch of a source that still rings would bend the first chime."
 - `UpdateWind`: volume `0.35 * speed01^2` (only audible when fast), pitch 0.8 to 1.2. "The cheapest way to make speed feel fast."
-- `UpdateBoostAndLanding`: whoosh on the first frame of a boost (`IsBoosting && !wasBoosting`); landing thud after at least 0.3 s in the air.
+- `UpdateBoostAndLanding(dt, bumped)`: boost whoosh when `BoostCue.Update` says so (a new boost, or a chained one, see below); take-off whoosh (`sfx_takeoff_whoosh`) when `TakeOffDetector.Update` says so; landing thud after at least 0.3 s in the air.
+- `UpdateWallBump(dt)` (audit 11): `WallBumpDetector.Update(Speed, IsGrounded, InputEnabled, dt)`; on a bump `sfx_wall_bump`, louder for a harder hit (`VolumeFor`: 0.5 at a 4 m/s drop, 1 at 15 m/s). It returns `bumped`, so a drift that a wall cancelled never sounds like a chained boost.
+- The teleport check also resets the three detectors (a respawn stops the kart on purpose and may drop it onto the road: no thud, no take-off whoosh).
 - How I would explain it: "Two engine recordings, low and high revs. Playing a recording faster raises its pitch like a tape, and between low and high revs one fades into the other. I remember last frame's values (`wasDrifting`, `wasBoosting`, `lastDriftStage`, `wasGrounded`) to detect the moment something starts."
 - Concept: edge detection with a 'was' flag; `Audio` asmdef only references `Shared`.
 
-### 3.16 `Audio/MusicPlayer.cs` (no longer used in Main since P4)
+### 3.15b `Audio/WallBumpDetector.cs` + `TakeOffDetector.cs` + `BoostCue.cs` (plain C#, audit 11)
 
-`[RequireComponent(typeof(AudioSource))]`; `Start()` sets loop, volume 0.3, 2D, plays the clip if set. Replaced in `Main.unity` by `RaceFlow/RaceMusic` (3.11b); the file stays until it is deleted in the Unity Editor. "Browsers mute audio until the first input; Unity resumes it then, and the start screen guarantees that input."
+Three guesses from `IKartState` alone, because the contract has no "hit a wall", "took off" or "boost extended" event. Each is one small class with an `Update(...)` that returns `true` on the one frame a sound should play.
+
+- `WallBumpDetector.Update(speed, grounded, canDrive, dt)`: a bump = on the ground, input on, the speed fell by at least 4 m/s in ONE frame AND that drop divided by the frame time is above 60 m/s2. "The kart brakes at 30 m/s2 at most, so even a 0.2 s hitch on a slow laptop (6 m/s lost while braking) stays silent." Then a 0.4 s cooldown, so grinding along a wall is one thud. Reverse counts by size (`Mathf.Abs`). `Reset()` after a teleport. Point at: the two `if`s before `LastDrop = drop`.
+- `TakeOffDetector.Update(grounded, canDrive, dt)`: counts air time; at 0.15 s it fires once per jump. It is only "armed" after the kart stood on the ground, so spawning above the grid or dropping onto a respawn point is no jump. Works with `IsGrounded`, so Role 1's ramp jump (D4) needs no contract change.
+- `BoostCue.Update(boosting, drifting, stage, grounded, canDrive, bumped)`: whoosh when the boost starts (rising edge), or when a drift with sparks ends while a boost is still running (Role 1's `KartController` then makes the running boost longer, `if (earned > boostSecondsLeft)`, so `IsBoosting` never goes false and the edge never fires). Not in the air, not without input, not on a wall bump: those end the drift without a boost.
+- Likely question: "How do you know the kart hit a wall if Role 1 never tells you?" Answer: "I do not know it, I guess it: a drop that is far faster than any brake can only be a hit. The rule is one line, and `WallBumpDetectorTests` proves a hard brake in a slow frame does not count."
+- Honest limit: the thresholds are first guesses, written without a playtest on the campus track; tune `bumpMinSpeedDrop` / `bumpMinDeceleration` on the `KartAudio` prefab (through the builder) if the thud fires too often or never.
+
+### 3.16 `Audio/MusicPlayer.cs` (deleted 2026-11-10, audit 18)
+
+The first music script (loop one clip at volume 0.3) was replaced by `RaceFlow/RaceMusic` (3.11b) in P4 and had no reference left in any scene or prefab, so it and its builder allowance are gone. The synth clips `loop_drift`, `loop_engine`, `sfx_boost_whoosh`, `sfx_drift_stage1` are also unused on purpose: CC0 backups of Luc's ElevenLabs kart sounds (`THIRD_PARTY.md`), not referenced by any scene, so they are not in the Web build.
 
 ### 3.17 `RaceFlow/Editor/Role4SceneBuilder.cs` (editor only)
 
@@ -286,6 +303,7 @@ Menu **Carcavelos Circuit > Build Role 4 Scenes** (`[MenuItem("Carcavelos Circui
 3. `CreatePanelSettings()`: theme file + PanelSettings (scale with screen size, 1280x720, match 0.5).
 0b. `SetUpAudioImport()` -> `AudioImportSetup.ApplyAll()` (own file, also menu **Carcavelos Circuit > Apply Audio Import Settings** or batch `-executeMethod CarcavelosCircuit.RaceFlow.Editor.AudioImportSetup.ApplyAll`): every clip in `Audio/Clips` gets Normalize off (Unity would push each clip to full peak and undo our loudness levels; no public property, so via `SerializedObject` field `m_Normalize`), Decompress On Load + Preload (also the music: only then does the Web build use the WAV loop points), Web override AAC with quality 1.0 (effects) or 0.7 (music). Only clips whose settings differ are re-imported.
 4. `CreateKartAudioPrefab()`: 9 AudioSources + `KartAudio`, clips `kart_engine_low/high`, `kart_drift_squeal/sparks/start/stage_up` (Luc's), `amb_wind_loop`, `el_boost_whoosh`, `sfx_landing_thud`, `sfx_shift_pop`. Every source gets `dopplerLevel = 0`. Private fields are filled with `SerializedObject.FindProperty(...)`.
+4b. `FindKartEffectsPrefab()` (Luc's request Q10): the prefab named exactly `KartEffects` under `Visuals/` (Role 3's drift smoke, sparks and boost flame, PR #46). If it exists, `RaceBootstrap.kartAttachments` gets it as a second entry next to the KartAudio prefab, so `RaceBootstrap` spawns it as a child of the kart; if not, the list stays at one entry and Main is unchanged. "Found by name like the kart model, so the day #46 is merged, one builder run adds the effects."
 5. `FindRealKartPrefab()` (~line 199): `AssetDatabase.FindAssets("Kart t:Prefab")` under `Assets/_Project/Driving`; uses a prefab only if it is named exactly `Kart` and its root has a component implementing `IKartState`. "The kart swap is automatic: once Alessandro's prefab exists, re-running the builder puts it into Main."
 6. Only if no real kart was found: `CreatePlaceholderKartPrefab()`: Rigidbody (150 kg, interpolate, continuous collision, X/Z rotation frozen), frictionless box collider, `PlaceholderKart`, a `Visual` child made of primitives.
 7. `BuildPlaceholderTrackScene()`: built from Role 2's real parts (`TrackInfo`, `Checkpoint`, `SpawnPoint`, `RespawnPoint`), a ~230 m rectangular loop around a sand "building", walls, cones, a kicker ramp, 4 checkpoint triggers (15 m wide) each with a `RespawnPoint` child 4 m after it, and a `SpawnPoint` just after the start line.
@@ -322,7 +340,8 @@ SIZES_PLACEHOLDER
 The template `Assets/WebGLTemplates/CarcavelosCircuit/` (`index.html` + `TemplateData/style.css`) is plain HTML/CSS/JS. Unity fills in the `{{{ ... }}}` parts (file names, product name) when it builds.
 - The canvas is `position: fixed; inset: 0` = always the whole window, no scrollbars. Unity renders at that size times `devicePixelRatio`, which we cap at 1.5 (sharp on a laptop, but a 4K screen does not cost 4x the GPU).
 - Loading screen: `createUnityInstance(canvas, config, onProgress)` calls `onProgress` with 0..1; we move the road fill and the kart dot. 0 to 0.9 is the download, 0.9 to 1 is starting the engine.
-- There is no separate "Click to start" layer: the game's start screen already asks for any key, and a click on the canvas counts as a key and unlocks the sound (browsers only allow audio after a click or key).
+- After loading, a "Click to play" screen: the click (or a key) gives the page keyboard focus, switches the sound on (`unlockSound()` resumes every `AudioContext` the game made) and fades the loader out. Audit 21: a key there ONLY closes it. A `keydown` listener on `window` in the capture phase is added before Unity starts, so it runs before any listener Unity adds later; while `closePlayScreen` is set it calls it, `preventDefault()` and `stopImmediatePropagation()`, so the game never sees that key and its own start screen (title + map fly-over) is not skipped. Tab, Shift, Ctrl, Alt, Meta and keys on an error card pass through. Checked in Chrome with a fake loader that records keys: the first key reached no game listener, the second reached all four, Tab did not close the screen, a click did.
+- The controls dock under the loader lists the same keys as the start screen, P (pause) and C (credits) included (audit 20).
 - Errors: no WebGL 2, a file that fails to download, or an error from Unity show a readable box instead of a blank page.
 
 - How I would explain it: "The build is code, like the scenes. Whoever builds gets the same small build, and the page is ours, not Unity's default box."
@@ -332,7 +351,11 @@ The template `Assets/WebGLTemplates/CarcavelosCircuit/` (`index.html` + `Templat
 
 Pure Python (only standard library: `math`, `random`, `wave`, `array`). Builds sounds from sine partials, filtered noise and envelopes and writes 16-bit mono 44.1 kHz WAV. `SOUNDS` maps file names to functions: countdown beep (440 Hz), GO beep (880 Hz), checkpoint chime, finish jingle, new-record sting, drift pings, `ui_click`, `sfx_respawn`, the `amb_wind_loop`, plus synth versions of boost/engine/drift sounds (`sfx_boost_whoosh`, `loop_engine`, `loop_drift`, `sfx_drift_stage1/2`, kept as CC0 backups; the prefab uses Luc's `kart_*` files and the ElevenLabs boost) and a 32 s music loop (120 BPM, A minor). `loop_crossfade()` fades the extra tail over the start, so loops have no click. Seeded `random.Random(seed)` = the same output every run.
 
-Since P4 it also makes `sfx_hint_warning` (missed checkpoint), `sfx_shift_pop` (gear change) and `music_results_loop` (16 s, 120 BPM, C major).
+Since P4 it also makes `sfx_hint_warning` (missed checkpoint), `sfx_shift_pop` (gear change) and `music_results_loop` (16 s, 120 BPM, C major). Audit 11: `sfx_wall_bump` (low knock + body thump, 0.22 s) and `sfx_takeoff_whoosh` (rising band-passed air, 0.45 s).
+
+Audit 12: `amb_seaside_loop` (8 s, `seaside_loop()`): low-passed noise rumble and band-passed wash hiss, both swelling with two wave envelopes per loop (the second one smaller, so it never sounds like a clock), plus three distant gull calls (`gull_call`: a falling, wobbly tone with harmonics, low-passed). Mastered to -22 dBFS RMS as a loop (pad + `smpl`).
+
+Polish pass (2026-11-10): `ui_open` / `ui_close` (`menu_notes`: two quick blips E6 -> A6 and back, 0.15 s) and `ui_page` (band-passed noise sweeping up, a paper swish, 0.16 s) for the menus.
 
 `tools/audio-synth/process_wavs.py` is the mastering step, run after the synth script (standard library only):
 1. Re-level by loudness (RMS) to a target per sound (for example countdown beep -15 dBFS, engine loops unchanged at about -16.5), never a peak above -1 dBFS. "Peak normalising makes a short beep and a long engine loop look equally loud but sound very different; RMS is closer to what we hear."
@@ -401,6 +424,7 @@ One recorded lap: the kart's position and rotation every 0.05 s (20 Hz) from GO.
 
 - `GhostRecorder.LateUpdate()`: on the first racing frame (GO, also after a retry) `Clear()`, then `Record(raceManager.LapSeconds, kart pose)` every frame. `LateUpdate` so it stores the pose the player sees. `OnLapFinished(time, newRecord)`: only on a record, save `ToSaveString()` in PlayerPrefs (a lap over 120 s deletes the old ghost instead, so the ghost never belongs to a slower lap than the best time).
 - `GhostPlayer.LateUpdate()`: once the race is set up, `BuildBody()` copies only the meshes of the kart's `Visual` child into a new `GhostKart` object (same place relative to the kart, every sub-mesh with our copy of `Ghost.mat`, no shadows). No Rigidbody, no collider, no script, so it can never hit the kart or count a checkpoint; no meshes = a kart-sized box. The ghost's clock: 0 in Ready and Countdown, exactly `LapSeconds` while racing (the same clock as the recording, so it is in sync), keeps counting in Results. After its last sample it rolls on, slowing to a stop, while fading out. Alpha = `maxAlpha` (0.4) x `GhostFade.Combined(distance to kart, distance to camera, time after the end)`: at GO it stands on your kart and is invisible, it appears as you separate, and it never fills the screen in front of the camera. Your own ghost is light blue, the Dean's ghost warm gold. `Restarted` reloads (a record from the lap before drives along from now on); the save text is only parsed again when it changed.
+- Ghost chip (audit 13): `RaceHud.UpdateGhostChip(state)` reads `ghostPlayer.HasGhost`, `IsShippedGhost` and `GhostLapSeconds` (the builder wires the `GhostPlayer` into the HUD) and shows "GHOST: DEAN 1:02.4" (gold dot) or "GHOST: YOUR BEST 0:58.1" (blue dot) under the medal chip during the countdown and the race; no ghost = no chip. `HudFormat.TimeTenths` cuts to tenths like a stopwatch, `HudFormat.GhostName` picks the words. One `ShownNumber` holds both facts (`ms x 2 + 1 if Dean's`), so the labels are written only when the ghost changes (after a new record and a retry). In narrow windows the callouts moved down to 266 px to stay clear of the extra pill. Likely question: "Why x 2 + 1?" Answer: "So one int changes when either the time or the owner changes, and the HUD still builds no string per frame."
 - How I would explain it: "The recorder writes, PlayerPrefs is the hand-over, the player reads. The ghost has no physics at all, it is only a picture we move every frame."
 
 ### 3.27 `RaceFlow/GameSettings.cs` + `SettingsItem.cs` + `SettingsStore.cs` + `SoundLevels.cs` (task P7, settings)
@@ -418,13 +442,14 @@ One recorded lap: the kart's position and rotation every 0.05 s (20 Hz) from GO.
 
 `RacePause` decides, `RaceManager` does it.
 
-- `CanPauseIn(state)`: only Countdown and Racing (nothing runs on the start or results screen). `OnFocusLost(state)` returns `true` only on the frame the pause starts (a second focus loss changes nothing). `TryResume(keyOrClick)` ends it only on a key or click; getting focus back alone does not. `Clear()` for Retry.
-- `RaceManager.OnApplicationFocus(false)` / `OnApplicationPause(true)` (Unity calls them on every MonoBehaviour when the tab or window loses focus) -> `StartPause()`: remembers `Time.timeScale`, sets it to 0, kart input off, `AudioListener.pause = true`.
-- `Update()` while paused: input stays off, sound stays paused (P4's `RaceMusic` unpauses sound when focus comes back, the race is still paused), and a key or click calls `EndPause()`. Then `return`: the key that continues does nothing else, so Enter never also retries.
+- `CanPauseIn(state)`: only Countdown and Racing (nothing runs on the start or results screen). `OnFocusLost(state)` and `OnPauseKey(state)` (audit 9, the P key) both call the same private `TryStart`, so both pauses follow exactly the same rules; it returns `true` only on the frame the pause starts (a second focus loss changes nothing). `TryResume(keyOrClick)` ends it only on a key or click; getting focus back alone does not. `Clear()` for Retry.
+- `RaceManager.OnApplicationFocus(false)` / `OnApplicationPause(true)` (Unity calls them on every MonoBehaviour when the tab or window loses focus) -> `PauseForLostFocus()` -> `StartPause(pause.OnFocusLost(State))`. The P key in `Update()` -> `StartPause(pause.OnPauseKey(State))`. `StartPause(pauseStarted)` does only the Unity part: remembers `Time.timeScale`, sets it to 0, kart input off, `AudioListener.pause = true`.
+- `Update()` while paused: input stays off, sound stays paused (P4's `RaceMusic` unpauses sound when focus comes back, the race is still paused), and a key, a click or P again calls `EndPause()`. Then `return`: the key that continues does nothing else, so Enter never also retries.
+- The P key is listed in the start screen controls, in the countdown key bar (not in narrow windows, no room) and on the PAUSED card.
 - Why the lap time is fair: `timeScale = 0` freezes physics, `Time.deltaTime` and `Time.timeAsDouble`; the official time is two `timeAsDouble` timestamps, so paused seconds never count. `OnDestroy` and `Retry` call `EndPause()`, so the game is never left frozen.
 - `pauseOnFocusLoss` (Inspector, default on) switches it off for testing in the Editor.
 - `MenuUsesInput` (set by the HUD): while true, the start screen ignores "any key", so a click on SETTINGS does not start the race.
-- How I would explain it: "Focus lost during the race: time scale 0, everything stands still, the clock too. Any key or click continues."
+- How I would explain it: "Focus lost or P during the race: time scale 0, everything stands still, the clock too. Any key, a click or P again continues."
 
 ### 3.29 `RaceFlow/UI/HudMenus.cs` + `SettingsPanel.cs` + `CreditsPanel.cs` (task P7, the menus)
 
@@ -434,9 +459,15 @@ Plain C# classes (no MonoBehaviour): `RaceHud.OnEnable` creates `HudMenus`, `Rac
 - `MouseOnStartButton()`: `panel.Pick(point)` finds the element under the mouse (screen y flipped first: screen pixels start bottom left, the panel top left). On the start screen only the menu buttons catch clicks, so if the mouse is on one of them, `MenuUsesInput` is true before the click arrives.
 - Clicks use `ClickEvent` (mouse button up), so the button press itself happened while the menu was still open or the mouse was on a button: it never leaks into "press any key".
 - `SettingsPanel`: five rows from `RaceHud.uxml` (`set-master` ... `set-motion`); ten diamond cells per volume bar made in code; W/S choose (wraps, `MenuNavigation.Wrap`), A/D change, Space flips on/off; the mouse moves the highlight (`PointerEnterEvent`), `-`/`+`, a click on diamond 7 = 70 %, a click on an on/off row flips it. `Refresh()` only switches classes and uses cached "0 %" ... "100 %" strings.
-- `CreditsPanel`: two pages (team, tools and sources) that fade in with `is-shown`; A/D, Space or NEXT PAGE turn, the dots jump. Texts are in the UXML (names as in `docs/team.md`, credits as in `THIRD_PARTY.md`).
+- Credits page 2 "BUILT WITH" lists Cinemachine since Q13 (audit 20).
+- `CreditsPanel`: two pages (team, tools and sources) that fade in with `is-shown`; A/D, Space or NEXT PAGE turn, the dots jump. Texts are in the UXML (names as in `docs/team.md`, credits as in `THIRD_PARTY.md`). `GoTo(page)` calls the `pageTurned` callback only if the page really changes.
+- Menu sounds (audit 10): `HudMenus.SoundRequested` (an `Action<MenuSound>` event, enum in `RaceFlow/MenuSound.cs`) fires on open, close, page turn, a volume step, an on/off row and mute. `SoundFor(item)` (static, tested) picks `SliderStep` for the three volume rows and `Toggle` for the on/off rows. `SettingsPanel` reports which row changed (`Action<SettingsItem>`). Closing because the race starts (`HideMenus`) is silent, so it never covers the retry click. `RaceHud` passes the event on as `MenuSoundRequested`, because `HudMenus` is made new in every `RaceHud.OnEnable`, while `RaceSounds` needs one object to subscribe to.
 - Reduced motion: one class on the root; the last block of `RaceHud.uss` sets `translate: 0 0`, `scale: 1 1` and the final rotation for every slide, shake, punch and stamp, one class more specific than the rule it beats. Fades stay. The breathing start pill is an inline style (beats all USS), so `RaceHud.UpdateStartScreen` checks `menus.ReducedMotion`.
 - How I would explain it: "The menus are classes that switch CSS classes. The USS decides how it looks, the RaceManager decides what the race does."
+
+### 3.29b `RaceFlow/SplitChime.cs` (static, plain C#, audit 19)
+
+`Semitones(hasSplitDelta, deltaSeconds)`: no best lap = 0; otherwise the delta in rounded milliseconds (`RaceTimer.ToMilliseconds`, the same rounding as the split chip) below 0 = ahead = +2, else -2 (so "+0.000", which the chip calls BEHIND, is the low chime too). `Pitch(semitones) = 2^(semitones / 12)`: +2 = 1.1225, -2 = 0.8909, +12 = 2 (one octave). Point at: `RaceSounds.OnCheckpointPassed`, three lines. Likely question: "Why 2^(n/12)?" Answer: "Western music splits an octave (double frequency) into 12 equal steps, so one step multiplies the frequency by the 12th root of 2. Playing a clip faster by that factor raises it by exactly one semitone."
 
 ### 3.30 `RaceFlow/FinishMoment.cs` + `ConfettiSim.cs` + `UI/ConfettiBurst.cs` (task P6b, the finish moment)
 
@@ -448,6 +479,59 @@ When the kart crosses the line, the game slows down for a moment, the lap time g
 - `ConfettiSim` (plain C#): 30 pieces as parallel arrays (`X`, `Y`, `Angle`, `Flip` ...), shot up in a cone, gravity 1400 px/s2, air drag, spin, a paper flip (width follows a cosine), fade over the last 0.4 s, all gone after 1.9 s. The same seed gives the same burst (tests rely on it); the arrays are reused, so a second burst makes no garbage.
 - `ConfettiBurst` (a `VisualElement`, last child of the results screen): draws each piece as a turned rectangle with `painter2D` in white, blue, orange, sand. It ignores the mouse and only asks for a redraw while pieces fly.
 - How I would explain it: "One class knows the timing, the RaceManager bends time, the HUD waits a beat and runs on real time, so the clock on screen is exact while the world slows down."
+
+### 3.31 Small helpers that were missing from this sheet (audit 6)
+
+Eleven Role 4 files the audit found unmentioned. Each: what it does, the function to point at, one likely question with an answer.
+
+**`RaceFlow/MedalScaling.cs`** (static, plain C#). Makes the four medal times fit any track: `RaceSettings` holds them for a reference lap of `medalReferenceLapMetres` (158.1 m, the placeholder loop), and a longer track gets proportionally longer times.
+- Point at: `LoopLength(points)` (straight lines checkpoint to checkpoint in driving order, the last one back to the start; under 2 points = 0) and `ScaleTimes(times, referenceLength, trackLength)` (times x `trackLength / referenceLength`, rounded to a tenth; if rounding would make two tiers equal on a tiny track it keeps the exact values; a missing length keeps the reference times). Called once in `RaceManager.SetUp`.
+- Question: "Why measure straight lines, not the real driving line?" Answer: "It is shorter than the real line, but measured the same way on every track, and a ratio is all the scaling needs." (Honest: the reference times still come from the placeholder loop, so the final medal times must be re-tuned on the real track.)
+
+**`RaceFlow/WrongWayDetector.cs`** (plain C#). Decides when the HUD shows WRONG WAY.
+- Point at: `Update(kartForward, signedSpeed, toNextCheckpoint, dt)`: the dot product of the moving direction (forward, or backwards when reversing) and the direction to the next checkpoint, both flat (y = 0). Below -0.25 (more than about 105 degrees away) for 1 s = wrong way; above 0.15 for 0.4 s = right way again; in between nothing changes. Under 2 m/s it keeps its last answer. `RaceHud.UpdateCallouts` calls it; `Reset()` on GO, Retry and Recover.
+- Question: "Why two thresholds and two timers?" Answer: "Hysteresis: with one threshold the warning would flicker on and off in every tight corner. The gap between -0.25 and 0.15 is a dead band where nothing changes."
+
+**`RaceFlow/StuckDetector.cs`** (plain C#). Decides when the HUD shows "STUCK? R RECOVER".
+- Point at: `Update(speed, dt)`: slower than 1.5 m/s for 3 s = stuck, but only once "armed" (the kart was faster than 3 m/s once since GO or the last recover), so a player waiting at the start is never told to press R.
+- Question: "Why the arming?" Answer: "Without it the hint would pop up 3 s after GO for anyone who has not pressed W yet."
+
+**`RaceFlow/FlyoverPath.cs`** (static, plain C#). The maths of the start-screen map fly-over (`MapFlyover` on the Main Camera moves the camera with it, then hands over to `ChaseCameraRig`).
+- Point at: `Measure(points, out centre, out radius)` (box around the checkpoints, the farthest one gives the radius), `OrbitPosition(centre, radius, angle, minHeight)` (a circle above the track, high enough to see all of it), `Ease(t)` (smoothstep `t*t*(3-2t)`), `Glide(from, to, t, hump)` (lerp with a sine hump so the camera does not skim through buildings on the way down to the kart).
+- Question: "Why a hump?" Answer: "A straight line from high above to just behind the kart can cut through roofs; `sin(e * pi)` lifts the middle of the path and is 0 at both ends, so start and end stay exact."
+
+**`RaceFlow/CheckpointProgress.cs`** (static, plain C#). The checkpoint pips on the HUD.
+- Point at: `CheckpointsToPass(count)` (count - 1, because checkpoint 0 is the start/finish line) and `StateOf(pip, passed)` (Passed / Next / Ahead). `RaceHud.UpdateCheckpoints` draws one diamond per checkpoint plus the finish.
+- Question: "A track with 4 checkpoints shows how many pips?" Answer: "4: three to pass and the finish."
+
+**`RaceFlow/HudEasing.cs`** (static, plain C#). The two HUD animations C# drives itself; everything else is a USS transition.
+- Point at: `EaseOutCubic(t) = 1 - (1 - t)^3` (fast start, soft landing) and `CountUp(elapsed, delay, duration)` (the results time counting up after a delay; 0 s duration jumps at the delay).
+- Question: "Why not a USS transition for the count-up?" Answer: "USS can animate a property, not the digits of a text. So C# writes the number each frame and `HudEasing` decides how far along it is."
+
+**`RaceFlow/UI/SpeedArc.cs`** (a `VisualElement`). The round speed gauge, a 270-degree arc drawn with `painter2D`.
+- Point at: `Set(value01, colour)` (redraws only if the change is visible: 0.2 % or a new colour, via `MarkDirtyRepaint`) and `Draw` (background arc, ten ticks, the fill from 135 degrees to `135 + 270 x value`).
+- Question: "Does it redraw every frame?" Answer: "No. `generateVisualContent` only runs after `MarkDirtyRepaint`, and `Set` calls that only for a visible change."
+
+**`RaceFlow/UI/HudColors.cs`** (static). The HUD palette for C# (the gauge and the gradient textures cannot read USS variables). Same values as the tokens at the top of `RaceHud.uss`, from `docs/art-style.md`.
+- Point at: `DriftStage(stage)` (white, blue, orange) and `WithAlpha`.
+- Question: "Why is the palette written twice?" Answer: "USS variables only exist for USS. Code-drawn parts need real `Color` values, so both lists must change together; the comment at the top says so."
+
+**`RaceFlow/UI/HudTextures.cs`** (static). Unity 6.3's USS has no `linear-gradient`, so gradients are tiny 1x128 / 128x1 textures made at runtime and stretched with bilinear filtering.
+- Point at: `VerticalGradient(stops)` (start and results backgrounds), `EdgeGlow(colour, alpha, left)` (the orange boost glow: `alpha x fade x fade`, very soft towards the middle), `Destroy` (called in `RaceHud.OnDisable`, textures made in code are not cleaned up by themselves).
+- Question: "Why destroy them by hand?" Answer: "A `Texture2D` made with `new` lives until it is destroyed; without `Destroy` every re-enable of the HUD would leak four textures."
+
+**`RaceFlow/UI/AzulejoPattern.cs`** (a `VisualElement`). The tile pattern behind the start, results and pause screens: per 72 px tile a diamond, a small inner diamond and a quarter circle in the corner that joins into full circles across tiles. Drawn once per resize, low opacity set in USS.
+- Point at: `Draw`: one path for all tiles, one `Stroke()` at the end.
+- Question: "Why one path?" Answer: "One stroke call for about 180 tiles is one mesh; a stroke per tile would be 180."
+
+**`RaceFlow/UI/CalcadaWave.cs`** (a `VisualElement`). The Lisbon "mar largo" pavement wave used as a divider on the start, results, pause, settings and credits cards: a white band with black stone below a sine wave.
+- Point at: `Draw`: white rectangle, then a filled shape whose top edge follows `middle + amplitude x sin(x / 28 px x 2 pi)`, sampled every 2 px.
+- Question: "Where do the shapes come from, any asset?" Answer: "No asset: drawn in code with `painter2D`, our own work, so nothing to license."
+
+### 3.32 Added in the polish pass (2026-11-10), where to find them
+
+- P pause (audit 9): 3.6 and 3.28. Menu sounds (audit 10): 3.11 and 3.29, enum `RaceFlow/MenuSound.cs`. Wall bump, take-off, chained boost (audit 11): 3.15 and 3.15b. Seaside ambience (audit 12): 3.11b and 3.19. Ghost chip (audit 13): 3.26. Ahead/behind chime, wrong-way and pause cues (audit 19): 3.11 and 3.29b. Loader keys and credits (audit 20, 21): 3.18 and 3.29. KartEffects on the kart (Q10): 3.17 step 4b. `MusicPlayer` deleted (audit 18): 3.16.
+- Every new clip is our own synth (`tools/audio-synth/synth_sfx.py`): `ui_open`, `ui_close`, `ui_page`, `sfx_wall_bump`, `sfx_takeoff_whoosh`, `amb_seaside_loop`.
 
 ---
 
@@ -475,13 +559,24 @@ All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceF
 | `RunStatsTests` | A 3 s drift counts once, two drifts twice; boosts on the rising edge; top speed keeps the max (reverse counts); air time sums only airborne frames, longest jump keeps the max; recoveries counted and end the jump; negative frame time ignored; Reset clears everything. |
 | `OnboardingCoachTests` | "How to drift" after 5 s, once; not at all if the player drifted first; "hold longer" on a stage 0 release, once, not after a stage 1 release; praise on the first stage 2 boost (also one frame late), once, and no "hold longer" after it; nothing while not racing and that time does not count; a drift ended by the finish gives no tip; saved flags stop all tips; every tip has text and a kind. |
 | `GameSettingsTests` | Defaults (100 %, sound on, motion on); 10 % steps stop at 0 and 100 %; levels clamped to 0..10; mute silences the listener and keeps the master volume; master up unmutes, down does not; music/effects never touch mute; on/off rows (left off, right on, click flips); save string round trip with a dot; empty, broken or partly broken saves keep defaults; out-of-range values clamped; an odd saved volume snaps to the grid. |
-| `RacePauseTests` | Focus loss pauses in Countdown and Racing, not on the start or results screen; a second focus loss changes nothing; stays paused until a key or click (focus alone does not resume); a key while not paused is no resume; Clear ends it. |
-| `MenuNavigationTests` | Down wraps to the top, up from the top goes to the last row, two pages flip, an empty list is safe. `RaceKeysTests` adds: O, C and M never start the race. |
+| `RacePauseTests` | Focus loss pauses in Countdown and Racing, not on the start or results screen; a second focus loss changes nothing; stays paused until a key or click (focus alone does not resume); a key while not paused is no resume; Clear ends it. P key (audit 9): pauses in Countdown and Racing, not on the start or results screen, no second pause on top of a focus pause. |
+| `MenuNavigationTests` | Down wraps to the top, up from the top goes to the last row, two pages flip, an empty list is safe. `RaceKeysTests` adds: O, C, M and P never start the race. |
 | `FinishMomentTests` | Full speed at 0 s and after 1.2 s; 0.3 during the hold; NaN, negative and infinity = full speed; a 1 ms sweep never leaves 0.3..1; only down, then only up; no jump at the joins; `IsSlowMotionRunning` edges; beat 0.6 s (0 with reduced motion) ends during the speed-up; confetti for a record or a better medal only, never for the same or a worse medal, no medal, or with reduced motion; confetti waits for the stamp that lands last. |
 | `ConfettiSimTests` | The asked number of pieces at the origin; the same seed gives the same burst; every piece starts going up; gravity pulls every piece down in the end; fresh = alpha 1, fading near the end; done after the longest life; a 3 s hitch is clamped to 0.05 s; zero, negative or NaN steps change nothing; Clear, a negative count and no burst at all = done; a second burst reuses the arrays. |
-| `PersonalBestTests` (P5 additions) | Best medal only goes up; survives the save string; a save from before medals loads with no medal; a broken medal number keeps the time but no medal. `HudFormatTests` adds `OneDecimal` (0.84 -> "0.8", 1.25 -> "1.3", negative -> "0.0"). |
+| `PersonalBestTests` (P5 additions) | Best medal only goes up; survives the save string; a save from before medals loads with no medal; a broken medal number keeps the time but no medal. `HudFormatTests` adds `OneDecimal` (0.84 -> "0.8", 1.25 -> "1.3", negative -> "0.0"), and for the ghost chip (audit 13) `TimeTenths` (62456 ms -> "1:02.4", 58199 -> "0:58.1", cut not rounded, negative -> "0:00.0", digits wrapped) and `GhostName`. |
 | `GhostRecordingTests` | Empty recording has no pose; uneven frames still give samples exactly every 0.05 s; halfway between two samples = halfway position and rotation; clamped before the start and after the end; one sample works at any time; a teleport jumps instead of gliding (also inside one frame); repeated or old times add nothing; stops at 120 s; `Clear` starts over; end velocity; save text round trip (under 1 cm, under 0.2 degrees); yaw across 360 stays a small change; same text on a Portuguese laptop; a 60 s lap stays under 40 KB; other track or checkpoint count = ignored; broken texts = no ghost. |
 | `GhostLoaderTests` | Own ghost wins over the shipped one; fresh browser races the shipped ghost; broken or outdated own ghost falls back to the shipped one; nothing valid (or a shipped ghost from the old layout) = no ghost; save key next to the personal best. |
+| `MedalScalingTests` | A 10 m square is 40 m; the placeholder loop matches the reference length in `RaceSettings`; under 2 points = 0; same length keeps the times, twice the length doubles them; rounded to a tenth and still valid; a tiny track keeps the tiers apart; no usable length keeps the reference; null stays null; default track scene order. |
+| `WrongWayDetectorTests` | Driving towards the checkpoint is fine; 1 s away = wrong way; turning round clears it after the exit time; sideways never triggers; standing still keeps the answer; reversing towards the checkpoint is fine; height is ignored; Reset clears it. |
+| `StuckDetectorTests` | Waiting at the start is never stuck; after driving, 3 s still = stuck; grinding slower than 1.5 m/s counts as still; driving again clears it; reversing fast also arms it; Reset disarms. |
+| `FlyoverPathTests` | Centre and radius of a square; no points = 0; a big track is seen from high and far enough, a tiny one never below the minimum; `Ease` stays in 0..1; `Glide` ends exactly at the target with a hump on the way. |
+| `CheckpointProgressTests` | The start/finish line is not a checkpoint to pass; first pip next at the start; after two, two passed and the third next; after all, the finish pip is next. |
+| `HudEasingTests` | Ease-out starts at 0, ends at 1, is fast at the start, clamps, never goes back; the count-up waits for its delay, a 0 s count-up jumps at the delay. |
+| `SplitChimeTests` | Audit 19: ahead +2, behind -2, no best lap 0; exactly even and -0.4 ms count as behind like the chip, -0.6 ms as ahead; pitch 1, 1.1225, 0.8909, 2 for 0, +2, -2, +12. |
+| `WallBumpDetectorTests` | Audit 11: a 15 m/s drop in one frame is a bump; the hardest brake in a 0.2 s frame is not; a small scrape, the air, the countdown, the first frame, a reset and a paused frame are not; grinding gives one thud, another after the cooldown; reverse counts; volume 0.5 to 1. |
+| `TakeOffDetectorTests` | One whoosh after 0.15 s of air; a short hop is silent; the next jump fires again; nothing without input; after spawn or a reset it waits until the kart touched the ground. |
+| `BoostCueTests` | One whoosh per new boost (same frame or one frame after the release); a chained boost whooshes again; a sparkless drift, a wall, the air or input off while boosting do not; Reset forgets the running boost. |
+| `MenuSoundTests` | Audit 10: the three volume rows ask for the slider-step sound, the two on/off rows for the switch sound. |
 | `GhostFadeTests` | Hidden close, full far away, half in the middle, never weaker further away; bad settings do not break it; end fade 1 to 0; the strongest fade wins (camera, kart, end). |
 
 Run: Unity Editor, Window > General > Test Runner > EditMode > Run All. Command line (Unity closed), Windows:
@@ -552,6 +647,8 @@ Do it on a branch `role4/<task-id>-swap-contract`, after `git pull` of `main` wi
 23. **What happens when I switch the browser tab mid-lap?** `RaceManager.OnApplicationFocus(false)` sets `Time.timeScale = 0`: physics, `Time.deltaTime` and `Time.timeAsDouble` stand still, so the lap time (two `timeAsDouble` timestamps) gains nothing. The PAUSED overlay waits for a click or key, and that key does nothing else.
 24. **How does reduced motion work without an `if` in every animation?** One class `reduce-motion` on the HUD root. The USS rules at the end of `RaceHud.uss` override every slide, shake and punch with its resting value, so the C# that adds the pop classes stays the same. Only the breathing pill (an inline style) needs one `if`.
 25. **Why does the HUD use `Time.unscaledTime` at the finish?** The finish slow motion sets `Time.timeScale` to 0.3, and `Time.time` / `Time.deltaTime` follow it. The results count-up, the stamp timings and the confetti would then run three times slower and get out of step with the USS transitions (UI Toolkit animates in real time). `Time.unscaledTime` ignores the time scale. The lap time itself is safe either way: it was taken from two `Time.timeAsDouble` timestamps before the slow motion started.
+26. **Why does P pause and not Escape?** In a browser Escape leaves fullscreen and cannot be caught reliably. P goes through exactly the same `RacePause` rule as a lost focus (`OnPauseKey` and `OnFocusLost` both call `TryStart`), so there is one pause, not two.
+27. **How can sound play while the game is paused?** The pause sets `AudioListener.pause = true`, which stops every source except those with `ignoreListenerPause`. `RaceSounds.Awake` sets that on the menu source only, so M and the pause/resume cues are heard and the engine and music stay silent.
 
 ---
 
@@ -566,10 +663,10 @@ Fixed on 2026-11-08 and no longer weak spots: drift boost after the finish, drif
 - **Camera object is switched off as a whole** (`RaceBootstrap.cs:97`, `SetActive(false)`): anything else on that GameObject or its children goes off too. Fine as long as test cameras sit on their own object.
 - **Kart prefab name is strict** (`Role4SceneBuilder.FindRealKartPrefab`): exactly `Kart`, under `Driving/`, `IKartState` on the root. A prefab called "Kart Variant" or with the controller on a child is ignored and the placeholder stays, silently apart from the missing Console line.
 - **Bloom not yet checked in a Web build with real effects**: it depends on Role 3's sparks and flames being bright enough (above threshold 0.9). Check it looks right and the frame rate stays fine on a normal laptop.
-- **P4 audio not yet heard in a real build** (written without opening Unity): gear-change feel, ducking amounts, music start on GO and gapless loops (smpl + 2048 pad) must be checked in the Web build with headphones (`audio-polish-plan.md` section 7).
+- **Polish-pass sounds not yet heard in a Web build** (P4 audio was, see `docs/builds.md`): menu sounds, wall bump, take-off, chained boost, seaside ambience, ahead/behind chime, wrong-way and pause cues are unit tested and compile, but loudness and feel need one lap in Chrome with headphones. The wall-bump thresholds (4 m/s in one frame, 60 m/s2) are first guesses.
+- **New HUD parts not yet seen rendered**: the ghost chip under the medal chip, the P key in the countdown key bar (left out in narrow windows), the longer PAUSED pill text. Check at 1280x720 and in a 4:3 window.
 - **Medal times are placeholders** (12.0 / 11.0 / 10.2 / 9.6 s on the placeholder track). Re-tune them in `RaceSettings.asset` once the campus track lands; the personal-best key is per track scene, so the new track starts fresh anyway.
 - **Settings, credits, pause (P7) not yet seen in Unity**: compiled and unit tested outside Unity, but the card layout (row widths, credit page height, the results row with Retry + Enter + Settings) and the reduced-motion overrides were never rendered. Check at 1280x720 and in a small window.
-- **Music and effects sliders need P4's one-line hooks** (`SoundLevels.Music` / `.Effects` in `RaceMusic.Apply` and `RaceSounds.Play`); master and mute work without them.
 - **Pause on the Web**: Unity stops the game loop when the tab loses focus (Run In Background is off), so the PAUSED card appears when the player comes back; the click that gives the canvas focus may or may not count as the "continue" click, a second click always does.
 - **Coach tips are not yet playtested** with a first-time player (5 s trigger, wording). Medal colours, like coral, still need Luc's OK in `docs/art-style.md`.
 - **Ghost (stretch item) not yet seen in Unity**: the code compiles and has tests, but the look (alpha 0.4, fade 1.5 to 8 m, colours), the transparent material in the Web build and the copy of Role 3's real kart meshes still need a Play Mode and a Web build check. The Dean's ghost must be recorded on the final track (after T6/D6) and again after every track change, otherwise the game ignores it (no error, simply no ghost). If the real kart's `Visual` child has effect meshes that are switched on at spawn, they are copied into the ghost too.

@@ -20,6 +20,9 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("Spawned as children of the kart, e.g. the KartAudio prefab (engine, drift, boost sounds)")]
         private GameObject[] kartAttachments;
 
+        [SerializeField, Tooltip("Role 3's kart model (KartVisual). Put into the kart's empty Visual slot until Role 3 does it in the prefab (Q14 bridge). May be empty")]
+        private GameObject kartModel;
+
         [SerializeField]
         private RaceManager raceManager;
 
@@ -69,6 +72,7 @@ namespace CarcavelosCircuit.RaceFlow
             Transform spawn = track.SpawnPoint;
             GameObject kartObject = Instantiate(kartPrefab, spawn.position, spawn.rotation);
             kartObject.name = "Kart";
+            KartModelSwap.AddModelIfMissing(kartObject, kartModel);
             for (int i = 0; i < kartAttachments.Length; i++)
             {
                 if (kartAttachments[i] != null)

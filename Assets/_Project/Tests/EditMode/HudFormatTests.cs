@@ -22,6 +22,31 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(".007", HudFormat.StripTags(HudFormat.TimeFraction(1007)));
         }
 
+        // Audit 13: the ghost chip time is cut to tenths, never rounded up to a time the ghost did not reach.
+        [TestCase(62456, "1:02.4")]
+        [TestCase(58199, "0:58.1")]
+        [TestCase(59999, "0:59.9")]
+        [TestCase(60000, "1:00.0")]
+        [TestCase(0, "0:00.0")]
+        [TestCase(-500, "0:00.0")]
+        public void TimeTenths_CutsToTenths(int milliseconds, string expected)
+        {
+            Assert.AreEqual(expected, HudFormat.StripTags(HudFormat.TimeTenths(milliseconds)));
+        }
+
+        [Test]
+        public void TimeTenths_WrapsTheDigitsLikeTheLapTimer()
+        {
+            Assert.AreEqual(Open + "1" + Close + ":" + Open + "02" + Close + "." + Open + "4" + Close, HudFormat.TimeTenths(62456));
+        }
+
+        [Test]
+        public void GhostName_SaysWhoseLapItIs()
+        {
+            Assert.AreEqual("GHOST: DEAN", HudFormat.GhostName(true));
+            Assert.AreEqual("GHOST: YOUR BEST", HudFormat.GhostName(false));
+        }
+
         [Test]
         public void Time_ReadsLikeTheLapTimer()
         {
