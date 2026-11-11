@@ -31,6 +31,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         private static Vector3[] centre;
         private static float[] width;
         private static bool[] freeRight, freeLeft;
+        private static string postLog;
 
         // Returns a line for the build log, or null when there is nothing to do.
         public static string Apply(GameObject worldRoot)
@@ -82,6 +83,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             }
 
             candidates = null;
+            postLog = "";
             MeshFilter mf = fence.GetComponent<MeshFilter>();
             MeshCollider mc = fence.GetComponent<MeshCollider>();
             int cutFence, cutWall = 0, posts;
@@ -100,7 +102,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 pieces += (freeRight[k] ? 1 : 0) + (freeLeft[k] ? 1 : 0);
             }
             return "white fence left out on " + pieces + " pieces (" + list.free.Length + " places): " + cutFence + " fence and " + cutWall +
-                   " wall triangles off, " + posts + " end posts added";
+                   " wall triangles off, " + posts + " end posts added (route point and side:" + postLog + ")";
         }
 
         // The mesh without the triangles that belong to a free piece; for the visible fence, an end post at every cut.
@@ -142,6 +144,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                         if (free[k] != free[before] && HadFence(owner, v, tri, kept, side))
                         {
                             AddPost(verts, normals, uvs, keep, owner.InverseTransformPoint(FencePoint(k, side)), hasNormals, hasUv);
+                            postLog += " " + k + (side > 0 ? "R" : "L");
                             posts++;
                         }
                     }
@@ -173,20 +176,25 @@ namespace CarcavelosCircuit.Visuals.Editor
             {
                 BuildCandidates();
             }
-            float best = Reach * Reach;
-            bool free = false;
+            float bestFree = Reach * Reach, bestKept = float.MaxValue;
             foreach (Piece piece in candidates)
             {
                 float d = SegmentDistanceSquared(c, piece.a, piece.b);
-                // At a shared fence point (a post) a free piece wins over its kept neighbour: a new end post goes there.
-                if (d < best - 0.0004f || (d < best + 0.0004f && piece.free && !free))
+                if (piece.free)
                 {
-                    best = Mathf.Min(best, d);
-                    free = piece.free;
+                    bestFree = Mathf.Min(bestFree, d);
+                }
+                else
+                {
+                    bestKept = Mathf.Min(bestKept, d);
                 }
             }
-            return free;
+            // At a shared fence point stands a post (9 cm square): its faces on the kept piece's side are a few cm nearer
+            // to that piece. The free piece wins there (a new end post goes in), so no half post is left standing.
+            return bestFree < Reach * Reach && bestFree <= bestKept + PostTie;
         }
+
+        private const float PostTie = 0.012f;   // m2: (11 cm) squared
 
         private struct Piece { public Vector3 a, b; public bool free; }
         private static List<Piece> candidates;
