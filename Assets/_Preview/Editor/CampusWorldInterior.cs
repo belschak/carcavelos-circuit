@@ -17,6 +17,8 @@ public static class CampusWorldInterior
     private const string TrackData = "Assets/_Project/Visuals/CampusWorld/Data/track.json";
     private const string RailingProto = "Prop_RailingSegment"; // Luc's metal railing; the white fence replaces it
     private const float RailingReach = 8f;                     // railings this close to the route are switched off
+    private const string HallRails = "Hall_Track_Rails";       // the hall's lilac railing; the white fence replaces it
+    private const string FencePrefab = "Assets/_Project/Track/Prefabs/WhiteGuardrails.prefab";
 
     // The route before and after HallDoorApproach lined it up with the hall doors (for moving the road mesh).
     [System.Serializable] private class TrackPoint { public float x, y, z, width; }
@@ -94,6 +96,16 @@ public static class CampusWorldInterior
         {
             mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
             GameObjectUtility.SetStaticEditorFlags(mf.gameObject, StaticEditorFlags.BatchingStatic);
+            if (mf.gameObject.name == HallRails) mf.gameObject.SetActive(false);   // one kind of fence only
+        }
+
+        // The white fence (Role 2): built fresh from the route, the doors and the hall course, then put in at 0/0/0.
+        WhiteGuardrailBuilder.Build();
+        GameObject fencePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(FencePrefab);
+        if (fencePrefab != null)
+        {
+            var fence = (GameObject)PrefabUtility.InstantiatePrefab(fencePrefab, scene);
+            fence.transform.position = Vector3.zero;
         }
 
         EditorSceneManager.SaveScene(scene);
@@ -169,6 +181,7 @@ public static class CampusWorldInterior
         var uvs = new List<Vector2>();
         var tris = new List<int>();
         float along = 0f;
+        Vector3 lastLeft = Vector3.zero, lastRight = Vector3.zero;
         for (int i = first; i <= last; i++)
         {
             Vector3 c = routeAfter[i];
@@ -177,8 +190,13 @@ public static class CampusWorldInterior
             Vector3 r = Vector3.Cross(Vector3.up, f.normalized);
             float half = widthAfter[i] / 2;
             if (i > first) along += Vector3.Distance(routeAfter[i - 1], c);
-            verts.Add(c - r * half); uvs.Add(new Vector2(-half / 4f, along / 4f));
-            verts.Add(c + r * half); uvs.Add(new Vector2(half / 4f, along / 4f));
+            Vector3 left = c - r * half, right = c + r * half;
+            // On the inside of a tight turn an edge would run backwards for a moment: hold it where it was instead.
+            if (i > first && Vector3.Dot(left - lastLeft, f) <= 0f) left = lastLeft;
+            if (i > first && Vector3.Dot(right - lastRight, f) <= 0f) right = lastRight;
+            lastLeft = left; lastRight = right;
+            verts.Add(left); uvs.Add(new Vector2(-half / 4f, along / 4f));
+            verts.Add(right); uvs.Add(new Vector2(half / 4f, along / 4f));
             if (i > first)
             {
                 int q = verts.Count - 4;                          // left/right of the previous and this point
