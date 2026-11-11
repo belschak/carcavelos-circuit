@@ -94,8 +94,8 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 ### Role 4: David
 | ID | Task | Due | Status |
 |---|---|---|---|
-| R8 | Race flow for every racer: grid slots behind the `SpawnPoint` for registered bots, `InputEnabled` on GO / off at the finish for every racer, Retry puts every racer back; the player registers as `IRacer` | Thu 12 | todo |
-| R9 | Live positions ("2nd / 6") + minimap top right (racing line + racer dots, player highlighted); works with `ITrackProgress` or the checkpoint fallback | Fri 13 | todo |
+| R8 | Race flow for every racer: grid slots behind the `SpawnPoint` for registered bots, `InputEnabled` on GO / off at the finish for every racer, Retry puts every racer back; the player registers as `IRacer` | Thu 12 | claimed (David, 2026-11-11) |
+| R9 | Live positions ("2nd / 6") + minimap top right (racing line + racer dots, player highlighted); works with `ITrackProgress` or the checkpoint fallback | Fri 13 | claimed (David, 2026-11-11) |
 | R10 | Online time leaderboard with names: every finished time saved and ranked, top 10 on the start screen; name validation, offline fallback, no credentials in the repo (BLOCKED part: David creates the free database account) | Fri 13 | todo |
 | R11 | Start screen "Carcavelos Round 3" (title animation, slot for the leaderboard) + "Lab opener" (meaning to be confirmed by David) | Fri 13 | todo |
 | R12 | Waves rolling onto the beach + 2-4 surfers riding them (new Role 4 folder `Ambience/`, placed at runtime, no edit to Luc's scene) | Tue 17 | todo |
