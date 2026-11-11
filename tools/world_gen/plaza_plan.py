@@ -302,6 +302,9 @@ COURT_SOUTH = [COURT_SOUTH_EDGE[0], COURT_SOUTH_EDGE[1], PIER[0], PIER[3], _DIAG
                CLIMB_QW, CLIMB_LW, _S4W, (65.4, 80.6), (67.6, 74.7), (69.7, 75.0), (72.1, 63.2)]
 COURT_OPEN_EDGE = (CLIMB_Q, CLIMB_QW)                             # no wall: the climb goes on into the slot here
 CLIMB_SLOT = [CLIMB_QW, CLIMB_Q, CLIMB_LANE[2], CLIMB_LANE[3]]
+# hedge boxes along the last metres of the slot's west side (no railing there) and 8 m on across the plaza: whoever
+# comes up the climb passes checkpoint 10 (route point 551, trigger 6 m to each side) at most 5.2 m left of its middle
+FUNNEL = [climb_point(CLIMB_FENCE_TO + 0.5, -CLIMB_HALF - 0.6), climb_point(CLIMB_LEN, -CLIMB_HALF - 0.6), (63.3, 102.0)]
 COURTS = [COURT_SOUTH]
 # Stair down to Floor 0 (the slot): a parallelogram beside the race line (4.9 m from the centreline, the stair stays
 # on the right as in Luc's drawing 10), 6.5 m wide, 10 m long. Steps go down to the south; at the bottom a level

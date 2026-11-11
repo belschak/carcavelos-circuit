@@ -311,7 +311,7 @@ def build_drive(col, deck_tris, tng):
     def face(ring):
         f = bm.faces.new([bm.verts.new(p) for p in ring])
         f.normal_update()
-        if f.normal.z < 0:
+        if f.normal.z < -0.3:                                   # (upright faces come in with the right winding)
             f.normal_flip()
     far = tongue_far(tng)                                       # 4 points across the tongue's far end
     for tri in deck_tris:                                       # the deck; the tongue's far end 5 cm over the road
@@ -385,10 +385,13 @@ def shortcut_drive(face):
     for r0, r1 in zip(grid, grid[1:]):
         for c in range(len(KICK_COLS) - 1):
             face([r0[c], r0[c + 1], r1[c + 1], r1[c]])
-        for c in (0, len(KICK_COLS) - 1):                       # cheeks, down into the deck
-            a, b = r0[c], r1[c]
-            face([(a[0], a[1], P.DECK_Z - 0.3), (b[0], b[1], P.DECK_Z - 0.3), b, a])
-    a, b = grid[-1][0], grid[-1][-1]                            # the lip's front
+        # cheeks, down into the deck, each looking outwards (first test: with the winding left to chance the lip's
+        # front looked into the ramp and kicked 2 of 8 karts 2 to 4 m/s upwards as they left the lip)
+        a, b = r1[0], r0[0]
+        face([(a[0], a[1], P.DECK_Z - 0.3), (b[0], b[1], P.DECK_Z - 0.3), b, a])
+        a, b = r0[-1], r1[-1]
+        face([(a[0], a[1], P.DECK_Z - 0.3), (b[0], b[1], P.DECK_Z - 0.3), b, a])
+    a, b = grid[-1][-1], grid[-1][0]                            # the lip's front, looking into the courtyard
     face([(a[0], a[1], P.DECK_Z - 0.3), (b[0], b[1], P.DECK_Z - 0.3), b, a])
     # the courtyard floor, cut round the climb's foot
     lane = climb_lane_in_court()
@@ -675,6 +678,9 @@ def build_walls(col):
     for a, b in PLANTERS:
         m.prism(strip(a, b, 0.55), P.DECK_Z - 0.05, P.DECK_Z + 0.5, "white")
         m.prism(strip(a, b, 0.42), P.DECK_Z + 0.45, P.DECK_Z + 0.95, "hedge")
+    for a, b in zip(P.FUNNEL, P.FUNNEL[1:]):                   # V14b: hedge boxes that lead the climb's exit to checkpoint 10
+        m.prism(strip(a, b, 0.5), P.DECK_Z - 0.05, P.DECK_Z + 0.5, "white")
+        m.prism(strip(a, b, 0.37), P.DECK_Z + 0.45, P.DECK_Z + 0.95, "hedge")
     for (x, y), turn in LOUNGERS:
         c, s = math.cos(turn), math.sin(turn)
         base = [(-1.0, -0.45), (1.0, -0.45), (1.0, 0.45), (-1.0, 0.45)]
