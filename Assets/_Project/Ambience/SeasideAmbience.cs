@@ -212,7 +212,7 @@ namespace CarcavelosCircuit.Ambience
                 ITrackProgress progress = roots[r].GetComponentInChildren<ITrackProgress>();
                 if (progress != null && progress.RacingLine != null)
                 {
-                    for (int i = 0; i < progress.RacingLine.Count; i += 4)
+                    for (int i = 0; i < progress.RacingLine.Count; i += 10)   // every 10th point is plenty and keeps the raycasts few
                     {
                         points.Add(progress.RacingLine[i]);
                     }
