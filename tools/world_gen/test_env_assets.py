@@ -197,6 +197,10 @@ def rule_checks(veg, props, V, P):
         if p["proto"] in deck_like:
             continue
         d = E.distance_to_route(p["x"], p["y"])
+        if p.get("site") == "terrace":         # restaurant terrace furniture (V10b): beside the wall on purpose
+            if d < E.KEEP_CLEAR - 0.01:
+                problems.append(f"{p['proto']} at ({p['x']:.1f}, {p['y']:.1f}) only {d:.1f} m from the route")
+            continue
         if p["proto"] in P.HALL_PROTOS and E.nearest_route_point(p["x"], p["y"]).get("zone") == "atrium":
             if d < P.HALL_ROAD_BAND + P.FOOTPRINT[p["proto"]] * 0.5 - 0.01:      # atrium bay furniture
                 problems.append(f"{p['proto']} at ({p['x']:.1f}, {p['y']:.1f}) only {d:.1f} m from the route (hall)")
@@ -232,6 +236,7 @@ LINEUP = (  # rows from back to front: (y, gap, [name or (name, centre x)]); wit
                 "Prop_RailingSegment", "Prop_RailingSegment", "Veg_Shrub_B"]),
     (-6.0, 0.9, ["Prop_TroughBloom", "Prop_BistroTable", "Prop_BistroChair", "Prop_PlanterRound", "Prop_StudyTable",
                  "Prop_GrandPiano"]),
+    (-12.0, 1.2, ["Prop_ParasolThatch", "Prop_SunLounger", "Prop_LifeguardTower", "Prop_StonePile"]),   # beach (V10b)
 )
 
 

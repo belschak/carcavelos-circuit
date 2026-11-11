@@ -72,6 +72,13 @@ NUDGE_RADII = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0)   # an OSM tree that brea
                                                           # spot that fits (at most 8 m)
 REPORT = {}                                # filled by place(): OSM trees kept / moved / dropped
 CLEARINGS = (((-75.0, -148.0), 9.0),)   # open terraces kept free of invented plants: the beach bar (parasols)
+# V10b beach pass (2026-11-10): no invented plants on the restaurant terraces, the straw-parasol rows, the cove sand
+# (photos K03-K07: open sand) and the pavilion terrace
+BEACH_CLEARINGS = (((-290.2, -60.5), 15.0), ((-309.0, -46.0), 9.0), ((-343.6, -32.5), 20.0), ((-322.0, -30.0), 6.0),
+                   ((-66.0, -182.0), 26.0), ((-46.0, -147.0), 6.0))      # checked for the pampas clumps (step 5)
+LOW_PINE_AREA = (-140.0, -152.0, -96.0, -130.0)   # x0, y0, x1, y1: the lawn islands by the promenade (K02): the real
+LOW_PINE_SCALE = (0.52, 0.62)                    # trees there are low, wind-shaped pines, not palms
+DECK_PALM_SCALE = (0.68, 0.78)                   # palms on Capricciosa's terrace (env_beachfront.deck_spots)
 ROAD_TYPES = {"primary", "primary_link", "secondary", "tertiary", "residential", "unclassified", "service",
               "living_street"}
 FOOT_TYPES = {"footway", "pedestrian", "steps", "path", "cycleway"}
@@ -980,6 +987,16 @@ def place(seed=SEED, write=True):
         if not done:
             stats["osm_dropped"].append((round(x, 1), round(y, 1), kind))
 
+    # 1b. V10b: the real trees on the lawn islands by the promenade are low, wind-shaped pines (K02), not palms.
+    # Swapped after the fact with their own random numbers, so every other plant keeps its place and variant.
+    low_rng = random.Random(seed + 11)
+    for k, p in enumerate(placed):
+        if _kind(p["proto"]) == "palm" and LOW_PINE_AREA[0] <= p["x"] <= LOW_PINE_AREA[2] \
+                and LOW_PINE_AREA[1] <= p["y"] <= LOW_PINE_AREA[3]:
+            placed[k] = dict(p, proto=KIND["pine"]["protos"][low_rng.randrange(2)],
+                             scale=round(low_rng.uniform(*LOW_PINE_SCALE), 3))
+            stats["low_pines"] = stats.get("low_pines", 0) + 1
+
     # 2. Palm rows -------------------------------------------------------------------------------------------
     def row(points, offsets, side_sign=None):
         """Palms every ~PALM_SPACING m along a polyline, at the first lateral offset that fits."""
@@ -1011,6 +1028,21 @@ def place(seed=SEED, write=True):
         land = _land_side(prom)
         row([(q["x"], q["y"]) for q in prom], [E.KEEP_CLEAR + KIND["palm"]["crown"] * 1.12 + 0.3 + k * 1.5
                                                for k in range(3)], side_sign=land)
+
+    # 2b. Palms on Capricciosa's terrace (V10b): they stand on the deck, so they skip the building rule ---------
+    import env_beachfront as B
+    deck_rng = random.Random(seed + 10)              # own random numbers: the other steps stay as they were
+    for bid in B.RESTAURANTS:
+        for kind_, x, y, z, _rot in B.deck_spots(bid):
+            if kind_ != "palm":
+                continue
+            s = deck_rng.uniform(*DECK_PALM_SCALE)
+            if E.distance_to_route(x, y) < E.KEEP_CLEAR + KIND["palm"]["crown"] * s:
+                continue
+            proto = KIND["palm"]["protos"][deck_rng.randrange(2)]
+            placed.append({"proto": proto, "x": round(x, 3), "y": round(y, 3), "z": round(z, 3),
+                           "rot_z": round(deck_rng.uniform(0, 2 * math.pi), 4), "scale": round(s, 3)})
+            occ.add(x, y, KIND["palm"]["space"] * s)
 
     # 3. Umbrella pines on 'wood' ground ----------------------------------------------------------------------
     cell = math.sqrt(WOOD_AREA_PER_PINE)
@@ -1076,7 +1108,10 @@ def place(seed=SEED, write=True):
         for _ in range(rng.randint(3, 7)):
             if count(("shrub", "grass")) >= MAX_LOW:
                 break
-            add("grass", cx + rng.gauss(0, 2.2), cy + rng.gauss(0, 2.2), factor=0.9)
+            gx, gy = cx + rng.gauss(0, 2.2), cy + rng.gauss(0, 2.2)
+            if any(math.hypot(gx - bx, gy - by) < r + KIND["grass"]["crown"] for (bx, by), r in BEACH_CLEARINGS):
+                continue                                 # V10b: open sand at the terraces, parasol rows and cove
+            add("grass", gx, gy, factor=0.9)
 
     # caps (never expected to bite, but the game budget is a promise)
     trees = [p for p in placed if _kind(p["proto"]) in TREE_KINDS][:MAX_TREES]

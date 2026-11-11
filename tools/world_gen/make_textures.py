@@ -550,6 +550,76 @@ def make_kerb(W=256, H=64, seed=1010):
 
 
 # ----------------------------------------------------------------------------------------------
+# 10b. Beachfront objects (V10b, 2026-11-10): timber deck, granite promenade kerb, straw parasol
+# ----------------------------------------------------------------------------------------------
+def make_timber_deck(S=512, seed=1616):
+    """Weathered timber decking, 2 m x 2 m (512 px), tiles both ways: 14 boards of 14.3 cm running along x
+    (u), dark gaps between them, staggered butt joints, a grey-brown tone per board and fine grain streaks.
+    For the restaurant terraces on the sand (Capricciosa, A Pastorinha) and the pergola slats."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(S, S)
+    boards = 14
+    bh = S / boards
+    row = np.floor(Y / bh).astype(int) % boards
+    tone = rng.uniform(-0.10, 0.08, boards)
+    hue = rng.uniform(-0.03, 0.03, boards)
+    base = lerp(rgb("#8F7154"), rgb("#B39373"), 0.5)
+    alb = base * (1.0 + tone[row])[..., None] + (hue[row])[..., None] * np.array([1.0, 0.2, -0.8])
+    grain = noise((S, S), 22.0, rng, 0.9) * 0.05 + noise((S, S), 5.0, rng, 0.5) * 0.035
+    alb = alb * (1.0 + grain)[..., None]
+    alb = lerp(alb, rgb("#A8A39A"), (0.10 + 0.08 * noise((S, S), 60.0, rng).clip(0, None))[..., None])   # silvering
+    gap = np.minimum(np.mod(Y, bh), bh - np.mod(Y, bh))
+    alb = alb * (1.0 - 0.55 * smoothstep(2.2, 0.6, gap))[..., None]
+    for b in range(boards):                                      # two butt joints per board, wrap-aware
+        for x0 in rng.uniform(0, S, 2):
+            d = np.abs(wrap(X - x0, S))
+            m = (row == b) & (d < 1.4)
+            alb[m] = alb[m] * 0.55
+    save("timber_deck_albedo.png", match_mean(alb, "#A2825F", 0.8))
+
+
+def make_granite_kerb(W=512, H=128, seed=1717):
+    """Promenade kerb of dressed stone blocks, 4 m x 1 m (512 x 128), tiles along x: blocks of 0.8-1.4 m with dark
+    joints, mostly speckled grey granite with the odd lighter limestone block (photos K03-K07). v 0-0.35 is the
+    top of the kerb, v 0.35-1 the face that drops to the sand (env_beachfront maps it like that)."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(H, W)
+    lengths = []
+    while sum(lengths) < W - 1:
+        lengths.append(rng.uniform(0.8, 1.4) * W / 4)
+    lengths = np.array(lengths) * (W / sum(lengths))
+    edges = np.concatenate([[0.0], np.cumsum(lengths)])
+    block = np.clip(np.searchsorted(edges, X, side="right") - 1, 0, len(lengths) - 1)
+    pal = [rgb("#8B8F92"), rgb("#7E8386"), rgb("#969794"), rgb("#B9B2A3")]
+    pick = rng.choice(len(pal), len(lengths), p=[0.34, 0.3, 0.22, 0.14])
+    cols = np.array([pal[k] * rng.uniform(0.95, 1.05) for k in pick])
+    alb = cols[block]
+    speck = noise((H, W), 0.7, rng) * 0.07 + noise((H, W), 2.0, rng) * 0.03 + noise((H, W), 14.0, rng) * 0.03
+    alb = alb * (1.0 + speck)[..., None]
+    joint = np.min(np.abs(X[..., None] - edges[None, None, :]), axis=-1)
+    joint = np.minimum(joint, np.abs(W - X))
+    alb = alb * (1.0 - 0.45 * smoothstep(2.0, 0.5, joint))[..., None]
+    v = Y / H
+    alb = alb * (1.0 + 0.10 * smoothstep(0.30, 0.35, v) * smoothstep(0.42, 0.36, v))[..., None]   # worn arris
+    alb = alb * (1.0 - 0.10 * smoothstep(0.55, 1.0, v))[..., None]                                 # damp foot
+    save("granite_kerb_albedo.png", alb)
+
+
+def make_thatch(W=256, H=256, seed=1818):
+    """Straw of a beach parasol (the dried-grass parasols on Carcavelos beach), tiles along x (u = around the
+    parasol), v = 0 at the tip to 1 at the rim: thin straw strands along v, lighter on top, darker and ragged
+    towards the rim."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(H, W)
+    strands = noise((H, W), 0.6, rng, 18.0) * 0.10 + noise((H, W), 2.5, rng, 40.0) * 0.07
+    alb = lerp(rgb("#C8A96B"), rgb("#9C7E48"), smoothstep(0.1, 1.0, Y / H)[..., None])
+    alb = alb * (1.0 + strands)[..., None]
+    bands = 0.05 * np.sin(Y / H * TAU * 3.0 + 0.4 * noise((H, W), 20.0, rng))     # tied layers
+    alb = alb * (1.0 - bands)[..., None]
+    save("thatch_albedo.png", match_mean(alb, "#B39461", 0.6))
+
+
+# ----------------------------------------------------------------------------------------------
 # 11. Original tunnel mural, 12 m x 3 m (2048 x 512), tiles horizontally
 # ----------------------------------------------------------------------------------------------
 def sd_circle(X, Y, cx, cy, r):
@@ -1100,6 +1170,7 @@ BUILDERS = {
     "palm_frond": make_palm_frond, "sea_waves": make_sea_waves,
     "ground_detail": make_ground_detail, "grass_tuft": make_grass_tuft,
 }
+BUILDERS.update({"timber_deck": make_timber_deck, "granite_kerb": make_granite_kerb, "thatch": make_thatch})   # V10b
 
 
 def main(argv):

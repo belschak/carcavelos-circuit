@@ -15,6 +15,7 @@ import bmesh
 import bpy
 
 import env_common as E
+import env_beachfront           # V10b: beachfront restaurants, cove pavilion, promenade edge
 
 STOREY = 3.5
 WALL, GLASS, ROOF, STEEL, GLASS_ROOF = range(5)
@@ -152,6 +153,8 @@ def build_canopy(b, index):
 
 
 def build_one(b, index):
+    if env_beachfront.owns(b):
+        return env_beachfront.build_one(b, index)
     if b.get("osm_building") == "roof":
         return build_canopy(b, index)
     pts = b["points"]
@@ -355,3 +358,4 @@ def build():
         if details.polygons:
             det = E.new_object("BD_" + name[2:], details, col)
             det.parent = obj
+    env_beachfront.build_promenade()
