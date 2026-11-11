@@ -102,6 +102,7 @@ RAIL_OFFSET = 0.35           # guard rail distance outside the road edge (m)
 RAIL_STOP = 0.15             # rails stop this far inside a facade; at a door they then end exactly at the frame
 RAIL_FLARE = 8.0             # within this many metres of a door the rails swing out (or in) to the door frame
 FRAME_REACH = 4.5            # a rail ending this close to a door frame is joined to it (with a curve beyond 2.5 m)
+FRAME_GAP = 0.35             # ... and that curve keeps this far into the opening, clear of the glass beside the door
 
 
 def rounded_line(points, radii, step=0.5):
@@ -275,8 +276,9 @@ def guard_rails(m, f, door_map):
                         bridge = []
                         for k in range(8, -1, -1):                       # from the run end (k=8 excluded) to the frame
                             t = k / 8
-                            bridge.append(((1 - t) ** 2 * e[0] + 2 * (1 - t) * t * ctrl[0] + t * t * run[end][0],
-                                           (1 - t) ** 2 * e[1] + 2 * (1 - t) * t * ctrl[1] + t * t * run[end][1]))
+                            gap = FRAME_GAP * (1 - t * t)                 # off the niche's glass wall, into the opening
+                            bridge.append(((1 - t) ** 2 * e[0] + 2 * (1 - t) * t * ctrl[0] + t * t * run[end][0] + ax / al * gap,
+                                           (1 - t) ** 2 * e[1] + 2 * (1 - t) * t * ctrl[1] + t * t * run[end][1] + ay / al * gap))
                         bridge = bridge[1:]
                     if end == 0:
                         for p in bridge:
