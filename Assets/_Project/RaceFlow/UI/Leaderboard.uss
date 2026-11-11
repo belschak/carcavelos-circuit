@@ -1,0 +1,614 @@
+/* Leaderboard plate and "save your time" form (task R10, restyled in R15 "Azulejo Arcade"). Loaded after RaceHud.uss
+   (see RaceHud.uxml), same tokens (UI/HudArt.uss). It must read as a RANKING, not a table: a blue header plate, a
+   podium (places 1-3 taller, with gold, silver and bronze shields and the name in the display face), a small round
+   avatar in a colour made from the name, alternating row colours, and your own row as an orange plate with a YOU tag.
+   The elements are made in code (Leaderboard/LeaderboardPanel.cs and SaveTimeForm.cs); C# only switches classes.
+   Where the plates sit and how they slide in: UI/StartScreen.uss (.lb-host--start, .lb-host--results). */
+
+/* ---------- Plate and header ---------- */
+.lb {
+    flex-grow: 1;
+    padding: 12px 14px 20px 14px; /* bottom: the plate's shadow */
+}
+
+.lb-head {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 6px 12px 14px 12px; /* blue plate, bottom = its shadow */
+}
+
+.lb-gem {
+    width: 18px;
+    height: 18px;
+    rotate: 45deg;
+    border-radius: 4px;
+    border-width: 3px;
+    border-color: var(--ink);
+    background-color: var(--sun);
+    margin: 0 14px 0 6px;
+}
+
+.lb-titles {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.lb-title {
+    font-size: 19px; /* Unbounded is wide: at 19 px LEADERBOARD leaves room for the source pill, also at 4:3 */
+    letter-spacing: 0;
+    color: var(--cc-white);
+    -unity-text-outline-width: 2px;
+    text-shadow: 0 3px 0 rgba(14, 34, 56, 0.7);
+}
+
+.lb-sub {
+    margin-top: 0;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: rgba(255, 246, 227, 0.92);
+}
+
+/* Where the times come from: a small pill with a coloured dot (online = mint, this device = sand, offline = coral). */
+.lb-source {
+    flex-shrink: 0;
+    margin-left: 6px;
+    flex-direction: row;
+    align-items: center;
+    height: 26px;
+    padding: 0 10px 0 8px;
+    border-radius: 13px; /* half the height = a true pill */
+    background-color: rgba(14, 34, 56, 0.55);
+}
+
+.lb-source-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 5px;
+    margin-right: 6px;
+    background-color: var(--cc-asphalt);
+}
+
+.lb-source-text {
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: var(--cc-white);
+}
+
+.lb-source--online .lb-source-dot { background-color: var(--mint); }
+.lb-source--device .lb-source-dot { background-color: var(--cc-sand); }
+.lb-source--offline .lb-source-dot { background-color: var(--cc-coral); }
+.lb-source--offline .lb-source-text { color: #FF9A90; }
+
+/* A short line above the list: "NO TIMES YET", "LOADING TIMES...", or the offline note (a coral chip). */
+.lb-note {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: var(--cc-sand);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.lb-note--offline {
+    padding: 4px 12px 11px 12px;
+    background-image: url("Art/plate-coral.png");
+    -unity-slice-left: 26;
+    -unity-slice-right: 26;
+    -unity-slice-top: 26;
+    -unity-slice-bottom: 34;
+    -unity-slice-scale: 0.5px;
+    color: var(--cc-white);
+}
+
+/* ---------- Rows ----------
+   They slide in from the right one after another with a little overshoot (LeaderboardPanel sets the delays);
+   your own row comes last and gets a punch. */
+.lb-row {
+    flex-direction: row;
+    align-items: center;
+    height: 34px;
+    margin-bottom: 4px;
+    padding: 0 12px 0 6px;
+    border-radius: 10px;
+    background-color: rgba(19, 49, 79, 1);
+    opacity: 0;
+    translate: 60px 0;
+    transition-property: opacity, translate, scale;
+    transition-duration: 160ms, 260ms, 220ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back;
+}
+
+.lb-row--alt {
+    background-color: var(--plate-alt);
+}
+
+.lb-rows--in .lb-row {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.lb-row--pop {
+    scale: 1.08 1.08;
+    transition-duration: 0s;
+}
+
+/* Rank: a small dark disc with the number; the podium gets shields instead. */
+.lb-rank {
+    width: 26px;
+    height: 26px;
+    margin-right: 8px;
+    border-radius: 13px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(14, 34, 56, 0.6);
+    border-width: 2px;
+    border-color: rgba(255, 246, 227, 0.3);
+}
+
+.lb-rank-text {
+    font-size: 17px;
+    color: var(--cc-white);
+}
+
+/* The podium: places 1-3 are taller, their rank is a shield (UI/HudArt.uss .shield) and the name is in the display face. */
+.lb-row--p1,
+.lb-row--p2,
+.lb-row--p3 {
+    height: 44px;
+}
+
+.lb-row--p1 .lb-rank,
+.lb-row--p2 .lb-rank,
+.lb-row--p3 .lb-rank {
+    width: 34px;
+    height: 40px;
+    margin-top: 4px;
+    border-width: 0;
+    border-radius: 0;
+    background-color: rgba(0, 0, 0, 0);
+    padding-bottom: 8px;
+}
+
+.lb-row--p1 .lb-rank-text,
+.lb-row--p2 .lb-rank-text,
+.lb-row--p3 .lb-rank-text {
+    font-size: 15px;
+    color: var(--ink);
+    -unity-text-outline-width: 0;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    -unity-text-align: middle-center;
+}
+
+/* A round avatar per racer, in a colour made from the name (LeaderboardAvatar), so it reads as people. */
+.lb-avatar {
+    width: 16px;
+    height: 16px;
+    margin-right: 10px;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: var(--cc-white);
+}
+
+.lb-name {
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 20px;
+    letter-spacing: 0;
+    color: var(--cc-white);
+}
+
+.lb-row--p1 .lb-name,
+.lb-row--p2 .lb-name,
+.lb-row--p3 .lb-name {
+    font-size: 17px;
+    -unity-text-outline-width: 2px;
+    text-shadow: 0 2px 0 rgba(14, 34, 56, 0.7);
+}
+
+.lb-time {
+    margin-left: 10px;
+    font-size: 21px;
+    color: var(--cc-white);
+}
+
+.lb-row--p1 .lb-time { color: var(--sun); }
+
+/* "YOU": a small ink tag, only on your own rows. */
+.lb-you {
+    display: none;
+    margin-left: 8px;
+    padding: 0 6px 1px 6px;
+    border-radius: 5px;
+    background-color: var(--ink);
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: var(--cc-white);
+}
+
+/* "You": orange everywhere, like the player on the minimap and in the positions. Your saved times get an orange plate
+   and the YOU tag; the row just saved punches when it lands. */
+.lb-row--mine,
+.lb-row--new {
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("Art/plate-orange-row.png");
+    -unity-slice-left: 22;
+    -unity-slice-right: 22;
+    -unity-slice-top: 22;
+    -unity-slice-bottom: 28;
+    -unity-slice-scale: 0.5px;
+    padding-bottom: 3px;
+}
+
+.lb-row--mine .lb-you,
+.lb-row--new .lb-you {
+    display: flex;
+}
+
+.lb-row--mine .lb-name,
+.lb-row--new .lb-name,
+.lb-row--mine .lb-time,
+.lb-row--new .lb-time,
+.lb-row--mine.lb-row--p1 .lb-time,
+.lb-row--new.lb-row--p1 .lb-time {
+    color: var(--ink);
+    -unity-text-outline-width: 0;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+.lb-row--mine .lb-rank,
+.lb-row--new .lb-rank {
+    background-color: var(--ink);
+}
+
+/* ...but a podium shield keeps its see-through corners (3 classes beat the rule above). */
+.lb-row--mine.lb-row--p1 .lb-rank, .lb-row--new.lb-row--p1 .lb-rank,
+.lb-row--mine.lb-row--p2 .lb-rank, .lb-row--new.lb-row--p2 .lb-rank,
+.lb-row--mine.lb-row--p3 .lb-rank, .lb-row--new.lb-row--p3 .lb-rank {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* Empty arcade slots "- - -": dim, no podium shield yet (three classes beat the podium rules). */
+.lb-row--empty .lb-name,
+.lb-row--empty .lb-time,
+.lb-row--empty .lb-rank-text,
+.lb-row--empty.lb-row--p1 .lb-rank-text,
+.lb-row--empty.lb-row--p2 .lb-rank-text,
+.lb-row--empty.lb-row--p3 .lb-rank-text,
+.lb-row--empty.lb-row--p1 .lb-time {
+    color: rgba(255, 246, 227, 0.32);
+}
+
+.lb-row--empty .lb-rank,
+.lb-row--empty.lb-row--p1 .lb-rank,
+.lb-row--empty.lb-row--p2 .lb-rank,
+.lb-row--empty.lb-row--p3 .lb-rank {
+    width: 26px;
+    height: 26px;
+    margin-top: 0;
+    padding-bottom: 0;
+    background-image: none;
+    background-color: rgba(14, 34, 56, 0.4);
+    border-width: 2px;
+    border-color: rgba(255, 246, 227, 0.2);
+    border-radius: 13px;
+}
+
+.lb-row--empty .lb-avatar,
+.lb-row--skeleton .lb-avatar {
+    background-color: rgba(255, 246, 227, 0.12);
+    border-color: rgba(255, 246, 227, 0.2);
+}
+
+.lb-row--empty .lb-name {
+    -unity-text-outline-width: 0;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+/* Loading: light bars where the name and the time will be. */
+.lb-row--skeleton .lb-name {
+    height: 10px;
+    margin-right: 70px;
+    border-radius: 5px;
+    background-color: rgba(255, 246, 227, 0.12);
+}
+
+.lb-row--skeleton .lb-time {
+    width: 70px;
+    height: 10px;
+    border-radius: 5px;
+    background-color: rgba(255, 246, 227, 0.12);
+}
+
+.lb-row--skeleton .lb-rank-text {
+    color: rgba(255, 246, 227, 0.3);
+}
+
+/* On the results screen the list is tighter: the form sits above it. */
+.lb--results .lb-row {
+    height: 30px;
+    margin-bottom: 3px;
+}
+
+.lb--results .lb-row--p1,
+.lb--results .lb-row--p2,
+.lb--results .lb-row--p3 {
+    height: 38px;
+}
+
+.lb--results .lb-rank {
+    width: 24px;
+    height: 24px;
+}
+
+.lb--results .lb-row--p1 .lb-rank,
+.lb--results .lb-row--p2 .lb-rank,
+.lb--results .lb-row--p3 .lb-rank {
+    width: 30px;
+    height: 35px;
+    padding-bottom: 7px;
+}
+
+.lb--results .lb-name { font-size: 19px; }
+.lb--results .lb-row--p1 .lb-name,
+.lb--results .lb-row--p2 .lb-name,
+.lb--results .lb-row--p3 .lb-name { font-size: 15px; }
+.lb--results .lb-time { font-size: 19px; }
+.lb--results .lb-head { margin-bottom: 8px; }
+
+/* ---------- Save form (name entry, art direction 3.8) ---------- */
+.lb-form {
+    margin-bottom: 10px;
+    padding: 10px 12px 12px 12px;
+    border-radius: 14px;
+    background-color: rgba(24, 60, 96, 0.95);
+    border-width: 2px;
+    border-color: rgba(255, 246, 227, 0.16);
+}
+
+.lb-form--hidden {
+    display: none;
+}
+
+.lb-form--saving {
+    opacity: 0.75;
+}
+
+.lb-form-edit--off {
+    display: none;
+}
+
+.lb-form-head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.lb-form-title {
+    font-size: 19px;
+    letter-spacing: 2px;
+    color: var(--cc-sand);
+}
+
+.lb-form-time {
+    font-size: 22px;
+    color: var(--cc-white);
+}
+
+.lb-form-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lb-field-wrap {
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 52px;
+    margin-right: 10px;
+}
+
+/* The TextField: a cream box with ink letters in the display face. The ring turns orange while you type and pulses
+   (SaveTimeForm toggles lb-name-field--pulse). */
+.lb-name-field {
+    flex-grow: 1;
+    margin: 0;
+    padding: 0;
+}
+
+.lb-name-field .unity-base-text-field__input {
+    margin: 0;
+    padding: 0 52px 0 12px; /* right: room for the "7/16" counter */
+    border-width: 3px;
+    border-color: rgba(14, 34, 56, 0.45);
+    border-radius: 12px;
+    background-color: var(--cc-white);
+    -unity-font-definition: url("Fonts/Unbounded/Unbounded-Black-SDF.asset");
+    -unity-font-style: normal;
+    font-size: 19px;
+    letter-spacing: 0;
+    color: var(--ink);
+    --unity-cursor-color: var(--ink);
+    --unity-selection-color: rgba(45, 140, 214, 0.45);
+    transition-property: border-color;
+    transition-duration: 200ms;
+}
+
+.lb-name-field:focus .unity-base-text-field__input,
+.lb-name-field .unity-base-text-field__input:focus {
+    border-color: var(--cc-orange);
+    background-color: #FFFFFF;
+}
+
+/* The pulse: the focus ring dims for a moment (2 classes, beats the focus rule above). */
+.lb-name-field--pulse .unity-base-text-field__input,
+.lb-name-field.lb-name-field--pulse:focus .unity-base-text-field__input {
+    border-color: var(--plate-orange-hi);
+}
+
+.lb-placeholder {
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    -unity-text-align: middle-left;
+    font-size: 19px;
+    letter-spacing: 1px;
+    color: rgba(14, 34, 56, 0.42);
+}
+
+.lb-placeholder--off {
+    display: none;
+}
+
+/* "7/16": how many letters are used, right-aligned inside the field. */
+.lb-count {
+    position: absolute;
+    right: 12px;
+    top: 0;
+    bottom: 0;
+    -unity-text-align: middle-right;
+    font-size: 16px;
+    color: rgba(14, 34, 56, 0.55);
+}
+
+.lb-count--full {
+    color: var(--cc-coral);
+}
+
+.lb-save {
+    height: 56px;
+    margin: 0;
+    padding: 0 22px 6px 22px;
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: var(--cc-white);
+    transition-property: scale, translate;
+    transition-duration: 160ms, 80ms;
+    transition-timing-function: ease-out-back, ease-out;
+}
+
+.lb-save:hover {
+    scale: 1.05 1.05;
+}
+
+.lb-save:hover:active {
+    scale: 0.97 0.97;
+    translate: 0 3px;
+}
+
+/* Key hint under the field: TAB "type your name" until you type, then ENTER "save". */
+.lb-form-keys {
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.lb-form-keys--on {
+    display: flex;
+}
+
+/* Phones: no keys, so no key hints. */
+.lb-form--touch .lb-form-keys,
+.lb-form--touch .lb-form-keys--on {
+    display: none;
+}
+
+.keycap--wide-small {
+    min-width: 46px;
+}
+
+.lb-key-text {
+    margin-left: 8px;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: rgba(255, 246, 227, 0.78);
+}
+
+/* Problems with the name, in our own words: a coral chip under the field that punches once. */
+.lb-msg {
+    margin-top: 6px;
+    font-size: 17px;
+    letter-spacing: 1px;
+    color: rgba(255, 246, 227, 0.8);
+    white-space: normal;
+    transition-property: scale;
+    transition-duration: 220ms;
+    transition-timing-function: ease-out-back;
+}
+
+.lb-msg--error {
+    padding: 3px 12px 10px 12px;
+    background-image: url("Art/plate-coral.png");
+    -unity-slice-left: 26;
+    -unity-slice-right: 26;
+    -unity-slice-top: 26;
+    -unity-slice-bottom: 34;
+    -unity-slice-scale: 0.5px;
+    color: var(--cc-white);
+}
+
+.lb-msg--pop {
+    scale: 1.15 1.15;
+    transition-duration: 0s;
+}
+
+/* After saving: "YOU ARE #4" big, where it was saved under it. */
+.lb-form-result {
+    display: none;
+    align-items: center;
+    padding: 2px 0 2px 0;
+}
+
+.lb-form-result--on {
+    display: flex;
+}
+
+.lb-result-rank {
+    font-size: 32px;
+    letter-spacing: 1px;
+    color: var(--cc-white);
+}
+
+/* "#10 ON THIS DEVICE" is twice as long as "YOU ARE #4": smaller, so it stays inside the card (also at 4:3). */
+.lb-result-rank--long {
+    font-size: 21px;
+    letter-spacing: 0;
+}
+
+.lb-result-text {
+    margin-top: 2px;
+    font-size: 17px;
+    letter-spacing: 1px;
+    color: var(--cc-sand);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+/* ---------- Narrow windows (4:3): the title and the source pill must share a 340 px plate ---------- */
+.hud--narrow .lb-title {
+    font-size: 17px;
+}
+
+.hud--narrow .lb-gem {
+    margin: 0 10px 0 4px;
+}
+
+.hud--narrow .lb-source {
+    padding: 0 8px 0 7px;
+}
+
+/* ---------- Reduced motion: rows are simply there, nothing punches ---------- */
+.reduce-motion .lb-row {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.reduce-motion .lb-row--pop,
+.reduce-motion .lb-msg--pop {
+    scale: 1 1;
+}

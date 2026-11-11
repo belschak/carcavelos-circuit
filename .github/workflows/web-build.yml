@@ -10,6 +10,7 @@
 #   UNITY_EMAIL    = the Unity account's email
 #   UNITY_PASSWORD = the Unity account's password
 # Without them the run stops at the first step with a clear message (no failed build).
+# Optional, for the online leaderboard (task R10): LEADERBOARD_URL and LEADERBOARD_ANON_KEY (backend/supabase/README.md).
 
 name: Web build
 
@@ -73,6 +74,11 @@ jobs:
           unityVersion: auto
           targetPlatform: WebGL
           buildMethod: CarcavelosCircuit.RaceFlow.Editor.Role4WebBuild.Build
+          # Online leaderboard (task R10, backend/supabase/README.md), optional: empty secrets = times stay on the
+          # player's device. Passed as Unity arguments, not as env: lines, because GameCI's Docker container only
+          # receives its own list of environment variables. LeaderboardBuildConfig checks them (https, *.supabase.co,
+          # public key only), puts them into this build and empties the config asset again afterwards.
+          customParameters: -leaderboardUrl ${{ secrets.LEADERBOARD_URL }} -leaderboardKey ${{ secrets.LEADERBOARD_ANON_KEY }}
 
       - name: Upload the build
         if: env.HAS_LICENSE == 'true'

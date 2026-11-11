@@ -287,6 +287,30 @@ def landing_thud():
     return normalise(soft_clip(out, 1.6), -2.0)
 
 
+def wall_bump():
+    # Wall hit (audit 11): a short low knock (a plastic bumper on a padded barrier) and a dull body thump.
+    # Shorter and rounder than the landing thud, so the two never sound alike.
+    seconds = 0.22
+    n = int(seconds * SR)
+    body = tone(90.0, seconds, partials=((1, 1.0), (2.1, 0.25)), glide_to=60.0)
+    body = mul(body, exp_decay(n, 0.15))
+    knock = bandpass(noise(n, 71), 650.0, q=2.5)
+    knock = mul(knock, exp_decay(n, 0.04))
+    out = [b + k * 2.2 for b, k in zip(body, knock)]
+    out = mul(out, envelope(n, 0.001, 0.04))
+    return normalise(soft_clip(out, 1.8), -2.0)
+
+
+def takeoff_whoosh():
+    # Take-off from a ramp (audit 11): air rushing past that rises and fades, lighter than the boost whoosh.
+    seconds = 0.45
+    n = int(seconds * SR)
+    centers = [500.0 + 2600.0 * (i / n) ** 0.7 for i in range(n)]
+    air = bandpass(noise(n, 81), centers, q=1.8)
+    air = mul(air, envelope(n, 0.06, 0.3))
+    return normalise(soft_clip(air, 1.2), -3.0)
+
+
 def engine_loop():
     # Two-stroke kart engine at idle-to-mid revs. Base firing rate 110 Hz; Unity's pitch (0.8 to 1.8)
     # raises it to about 200 Hz at top speed. 2 s = exactly 220 cycles, so harmonics loop without a click.
@@ -353,6 +377,41 @@ def ui_click():
     return normalise(out, -6.0)
 
 
+def menu_notes(names):
+    # Two quick soft blips (sine + a little octave), the same voice as ui_click, for opening and closing a card.
+    out = []
+    for i, name in enumerate(names):
+        length = 0.09
+        x = tone(note_freq(name), length, partials=((1, 1.0), (2, 0.2)))
+        x = mul(x, mul(exp_decay(len(x), 0.08), envelope(len(x), 0.002, 0.03)))
+        mix_into(out, x, i * 0.06, 0.8)
+    return normalise(out, -6.0)
+
+
+def ui_open():
+    # Settings or credits open (audit 10): two notes going up, "here it is".
+    return menu_notes(("E6", "A6"))
+
+
+def ui_close():
+    # A card closes: the same two notes going down.
+    return menu_notes(("A6", "E6"))
+
+
+def ui_page():
+    # Credits page turn: a short paper swish (noise through a band-pass that sweeps up) with a soft tap at the end.
+    seconds = 0.16
+    n = int(seconds * SR)
+    centers = [1200.0 + 3500.0 * (i / n) for i in range(n)]
+    swish = bandpass(noise(n, 51), centers, q=1.4)
+    swish = mul(swish, envelope(n, 0.03, 0.08))
+    tap = mul(highpass(noise(n, 53), 3000.0), exp_decay(n, 0.01))
+    out = [0.0] * n
+    mix_into(out, swish, 0.0, 1.0)
+    mix_into(out, tap[:int(0.04 * SR)], 0.11, 0.3)
+    return normalise(out[:n], -6.0)
+
+
 def respawn_whoosh():
     # Airy whoosh that rises, plus a soft sparkle on top: "you are back on the track".
     seconds = 0.6
@@ -379,6 +438,45 @@ def wind_loop():
     low = lowpass(noise(n, 43), 250.0)
     out = [r + l * 2.0 for r, l in zip(rush, low)]
     out = loop_crossfade(out, fade)
+    return normalise(out, -6.0)
+
+
+def gull_call(seed):
+    # One distant gull "kyow": a falling, wobbly cry with a few harmonics, softened like it is far away.
+    rnd = random.Random(seed)
+    length = 0.28 + 0.06 * rnd.random()
+    start = 1900.0 + 200.0 * rnd.random()
+    x = tone(start, length, partials=((1, 1.0), (2, 0.35), (3, 0.12)), vibrato=0.4, vib_rate=11.0,
+             glide_to=start * 0.62)
+    x = mul(x, envelope(len(x), 0.03, length * 0.6))
+    return lowpass(x, 3000.0)
+
+
+def seaside_loop():
+    # Praia de Carcavelos (audit 12): two waves rolling in and washing back, plus three distant gull calls.
+    # 8 s loop. RaceMusic plays it quietly (about -20 dB) under everything; standing still is no longer silent.
+    seconds = 8.0
+    fade = 0.5
+    n = int((seconds + fade) * SR)
+    # Waves: deep rumble (low-passed noise) and the hiss of the wash (band-passed noise), both swelling with
+    # the wave envelope. Two waves per loop, the second one smaller, so the loop does not sound like a clock.
+    rumble = lowpass(noise(n, 91), 220.0)
+    hiss = bandpass(noise(n, 93), 1800.0, q=0.7)
+    swell = [0.0] * n
+    for start, size in ((0.0, 1.0), (4.2, 0.7)):
+        for i in range(n):
+            t = i / SR - start
+            if t < 0.0:
+                t += seconds  # the tail of a wave from the end of the loop
+            if 0.0 <= t < 4.6:
+                rise = min(1.0, t / 1.6)           # the wave builds up
+                fall = math.exp(-max(0.0, t - 1.6) / 1.1)  # breaks and washes back
+                swell[i] = max(swell[i], size * rise * rise * fall)
+    waves = [(r * 2.2 + h * (0.4 + 0.8 * s)) * (0.15 + s) for r, h, s in zip(rumble, hiss, swell)]
+    out = list(waves)
+    for start, seed in ((1.3, 101), (1.75, 103), (5.6, 107)):
+        mix_into(out, gull_call(seed), start, 0.18)
+    out = loop_crossfade(out[:n], fade)
     return normalise(out, -6.0)
 
 
@@ -506,6 +604,18 @@ def results_loop():
     return normalise(soft_clip(out, 1.1), -3.0)
 
 
+# ---------- item boxes (task R7) ----------
+# Box break, ready, Bica and Onda come from ElevenLabs (el_item_*.wav, see THIRD_PARTY.md); only the tick is ours.
+
+def item_roll_tick():
+    # One click of the spinning slot: a very short, bright blip.
+    seconds = 0.03
+    n = int(seconds * SR)
+    x = tone(1600.0, seconds, partials=((1, 1.0), (2, 0.25)))
+    x = mul(x, mul(exp_decay(n, 0.012), envelope(n, 0.001, 0.005)))
+    return normalise(x, -3.0)
+
+
 SOUNDS = {
     "sfx_countdown_beep": countdown_beep,
     "sfx_go_beep": go_beep,
@@ -525,6 +635,13 @@ SOUNDS = {
     "sfx_hint_warning": hint_warning,
     "sfx_shift_pop": shift_pop,
     "music_results_loop": results_loop,
+    "ui_open": ui_open,
+    "ui_close": ui_close,
+    "ui_page": ui_page,
+    "sfx_wall_bump": wall_bump,
+    "sfx_takeoff_whoosh": takeoff_whoosh,
+    "amb_seaside_loop": seaside_loop,
+    "sfx_item_roll_tick": item_roll_tick,
 }
 
 

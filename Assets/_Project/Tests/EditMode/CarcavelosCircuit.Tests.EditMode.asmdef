@@ -8,6 +8,7 @@
         "CarcavelosCircuit.Track",
         "CarcavelosCircuit.RaceFlow",
         "CarcavelosCircuit.Audio",
+        "CarcavelosCircuit.Ambience",
         "Unity.InputSystem"
     ],
     "includePlatforms": [
