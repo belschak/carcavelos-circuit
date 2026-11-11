@@ -44,4 +44,4 @@ Team goal: **every role's part is done and merged by Fri 13 Nov 2026** (team mee
 - [ ] Audio: engine (pitch by speed), drift, boost, countdown beeps, finish jingle, music (ElevenLabs)
 
 ## Stretch (only after 13 Nov and only if the core is solid)
-Local personal best, a ghost of your best lap, a second kart colour, a short intro camera fly-over of the campus. Out of scope: items, AI opponents, multiplayer/split screen, kart selection, touch controls.
+Local personal best, a ghost of your best lap, a second kart colour, a short intro camera fly-over of the campus. Out of scope: items, AI opponents, multiplayer/split screen, kart selection. (Touch controls moved into scope on 2026-11-10, task P9.)

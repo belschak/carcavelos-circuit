@@ -61,16 +61,16 @@
 
         <section class="cc-panel cc-card" id="cc-panel-mobile" hidden>
           <svg class="cc-card-icon" viewBox="0 0 48 32" width="64" height="43" aria-hidden="true">
-            <rect x="8" y="3" width="32" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="3"/>
-            <path d="M3 27h42" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-            <rect x="21" y="9" width="6" height="6" rx="1.5" transform="rotate(45 24 12)" fill="#FF8A1F"/>
+            <rect x="3" y="5" width="42" height="22" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>
+            <circle cx="13" cy="16" r="4" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <rect x="32" y="13" width="6" height="6" rx="1.5" transform="rotate(45 35 16)" fill="#FF8A1F"/>
           </svg>
-          <h2>Best on a laptop with a keyboard</h2>
-          <p>You drive with the keys below and there are no touch controls. Open this page on a laptop or desktop for the full race.</p>
+          <h2>Race with touch controls</h2>
+          <p>Steer with the buttons on the left, gas and drift on the right. Turn your phone sideways for the widest view.</p>
           <div class="cc-actions">
-            <button class="cc-button" id="cc-load-anyway" type="button">Load anyway</button>
+            <button class="cc-button" id="cc-load-anyway" type="button">Load the game</button>
           </div>
-          <p class="cc-small">Loading anyway downloads the whole game, which is big on mobile data.</p>
+          <p class="cc-small">The game is a big download, so Wi-Fi is best.</p>
         </section>
 
         <section class="cc-panel cc-card" id="cc-panel-error" role="alert" hidden>
@@ -104,6 +104,12 @@
           <li><kbd>O</kbd><span class="cc-key-text">Settings</span></li>
           <li><kbd>C</kbd><span class="cc-key-text">Credits</span></li>
         </ul>
+        <!-- Same legend for phones and tablets (shown instead of the keys in touch mode). -->
+        <ul class="cc-controls cc-controls-touch" aria-label="Touch controls" hidden>
+          <li><span class="cc-keys"><kbd aria-label="Left and right buttons">&larr; &rarr;</kbd></span><span class="cc-key-text">Steer</span></li>
+          <li><kbd class="cc-wide">Gas</kbd><kbd class="cc-wide">Brake</kbd><span class="cc-key-text">Drive</span></li>
+          <li><kbd class="cc-wide">Drift</kbd><span class="cc-key-text">Hold in a corner, let go = boost</span></li>
+        </ul>
       </div>
 
       <div class="cc-wave" aria-hidden="true"></div>
@@ -115,6 +121,40 @@
     </button>
 
     <div id="cc-toast" hidden></div>
+
+    <!-- Touch controls (task P9): only on phones and tablets. Each button "presses" the keyboard key(s) in data-keys,
+         the same keys the game already reads, so no game code knows about touch. Script: "Touch controls" below. -->
+    <div id="cc-touch" hidden>
+      <div class="cc-touch-steer">
+        <button class="cc-touch-button" type="button" data-keys="KeyA" data-slide aria-label="Steer left">
+          <svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="cc-touch-button" type="button" data-keys="KeyD" data-slide aria-label="Steer right">
+          <svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <!-- Drift also holds the gas, so one thumb can drift while the other steers. -->
+      <div class="cc-touch-pedals">
+        <!-- Reserved for item boxes: remove "hidden" once the game reads E as "use item". -->
+        <button class="cc-touch-button cc-touch-item" type="button" data-keys="KeyE" aria-label="Use item" hidden>Item</button>
+        <button class="cc-touch-button cc-touch-brake" type="button" data-keys="KeyS" data-slide aria-label="Brake and reverse">Brake</button>
+        <button class="cc-touch-button cc-touch-drift" type="button" data-keys="KeyW Space" data-slide aria-label="Drift">Drift</button>
+        <button class="cc-touch-button cc-touch-gas" type="button" data-keys="KeyW" data-slide aria-label="Gas">Gas</button>
+      </div>
+
+      <div class="cc-touch-tools">
+        <button class="cc-touch-pill" type="button" data-keys="KeyR" aria-label="Recover to the last checkpoint">Recover</button>
+        <button class="cc-touch-pill" type="button" data-keys="Enter" aria-label="Retry from the start">Retry</button>
+      </div>
+    </div>
+
+    <!-- Portrait phones: a small hint to turn the phone (CSS shows it only in portrait). -->
+    <div id="cc-rotate" hidden>
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 9a8 8 0 0 1 3-5M21 15a8 8 0 0 1-3 5" fill="none" stroke="#FF8A1F" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Turn your phone sideways for a wider view</span>
+      <button id="cc-rotate-close" type="button" aria-label="Hide this hint">&times;</button>
+    </div>
 
     <script>
       var canvas = document.getElementById("cc-canvas");
@@ -149,6 +189,9 @@
         return key === "Tab" || key === "Shift" || key === "Control" || key === "Alt" || key === "Meta";
       }
 
+      // True on phones and tablets: shows the touch buttons and touch texts instead of the keyboard ones.
+      var touchMode = false;
+
       // ---------- Panels: only one shows in the middle of the loading screen ----------
       function showPanel(id) {
         var panels = loader.querySelectorAll(".cc-panel");
@@ -163,6 +206,13 @@
         "Drift longer: blue sparks, then orange sparks, then a bigger boost.",
         "Off the track? Press R to go back to the last checkpoint.",
         "Press Enter after the finish to try again.",
+        "Your best lap is saved in this browser."
+      ];
+      var touchTips = [
+        "Hold Drift in a corner (it keeps the gas on), let go for a boost.",
+        "Drift longer: blue sparks, then orange sparks, then a bigger boost.",
+        "Off the track? Tap Recover to go back to the last checkpoint.",
+        "Slide your thumb between Gas and Drift without lifting it.",
         "Your best lap is saved in this browser."
       ];
       var tipIndex = 0;
@@ -279,6 +329,10 @@
         onProgress(1);
         loader.classList.add("cc-ready");
         showPanel("cc-panel-play");
+        if (touchMode) {
+          document.querySelector("#cc-play-button span").textContent = "Tap to play";
+          document.querySelector(".cc-play-hint").textContent = "sound on";
+        }
         var started = false;
         function startGame() {
           if (started || loader.classList.contains("cc-failed")) {
@@ -292,6 +346,9 @@
           loader.classList.add("cc-done");
           setTimeout(function () { loader.hidden = true; }, 450);
           showFullscreenButton(unityInstance);
+          if (touchMode) {
+            showTouchControls();
+          }
         }
         // "click", not "pointerdown": the browser moves keyboard focus on mouse down, so only after it can the canvas keep it.
         // The play button is inside the loader, so its clicks (also Enter or Space on it) arrive here too.
@@ -302,15 +359,27 @@
       // ---------- Fullscreen button (top centre, hides while you drive) ----------
       function showFullscreenButton(unityInstance) {
         var fullscreenButton = document.getElementById("cc-fullscreen");
+        if (touchMode && !pageCanGoFullscreen()) {
+          return; // iPhone Safari has no fullscreen for web pages
+        }
         fullscreenButton.hidden = false;
         fullscreenButton.addEventListener("click", function () {
-          unityInstance.SetFullscreen(1);
+          if (touchMode) {
+            togglePageFullscreen(); // the whole page, so the touch buttons stay visible
+          } else {
+            unityInstance.SetFullscreen(1);
+          }
           canvas.focus(); // keys go to the game, not to the button
         });
 
         // Auto-hide: any key (driving) hides the button at once; moving the mouse shows it for 2.5 s.
+        // Not in touch mode: there is no mouse to bring it back, and the touch buttons send keys all the time.
         var idleTimer = 0;
-        function hideButton() { fullscreenButton.classList.add("cc-idle"); }
+        function hideButton() {
+          if (!touchMode) {
+            fullscreenButton.classList.add("cc-idle");
+          }
+        }
         document.addEventListener("keydown", hideButton);
         document.addEventListener("mousemove", function () {
           fullscreenButton.classList.remove("cc-idle");
@@ -318,6 +387,236 @@
           idleTimer = setTimeout(hideButton, 2500);
         });
         idleTimer = setTimeout(hideButton, 2500);
+      }
+
+      // ---------- Touch controls (task P9) ----------
+      // The game only reads the keyboard and the mouse. So a touch button sends the same key events a real keyboard
+      // would (KeyboardEvent on the canvas), and a short tap on the open game area sends a mouse click at that spot
+      // (start screen, the Retry button on the results screen, settings). The game code does not change at all.
+
+      // The keys the buttons use: the code names the key, key and keyCode are what older browser code reads.
+      var KEYS = {
+        KeyW: { key: "w", keyCode: 87 },      // gas
+        KeyA: { key: "a", keyCode: 65 },      // steer left
+        KeyS: { key: "s", keyCode: 83 },      // brake / reverse
+        KeyD: { key: "d", keyCode: 68 },      // steer right
+        Space: { key: " ", keyCode: 32 },     // drift
+        KeyR: { key: "r", keyCode: 82 },      // recover
+        Enter: { key: "Enter", keyCode: 13 }, // retry
+        KeyE: { key: "e", keyCode: 69 }       // use item (reserved)
+      };
+      var touchPanel = document.getElementById("cc-touch");
+      var heldCount = {};      // key code -> how many fingers hold it (Gas and Drift both hold W)
+      var fingerButton = {};   // finger (pointerId) -> the button under it, or null
+      var gameStarted = false; // set by showTouchControls; a touch before that is for the loading screen
+
+      function sendKey(type, code) {
+        canvas.dispatchEvent(new KeyboardEvent(type, {
+          code: code, key: KEYS[code].key, keyCode: KEYS[code].keyCode, which: KEYS[code].keyCode,
+          bubbles: true, cancelable: true
+        }));
+      }
+
+      // A key goes down with the first finger that holds it and up with the last one that lets go.
+      function holdKey(code) {
+        heldCount[code] = (heldCount[code] || 0) + 1;
+        if (heldCount[code] === 1) {
+          sendKey("keydown", code);
+        }
+      }
+
+      function releaseKey(code) {
+        if (!heldCount[code]) {
+          return;
+        }
+        heldCount[code] = heldCount[code] - 1;
+        if (heldCount[code] === 0) {
+          sendKey("keyup", code);
+        }
+      }
+
+      // Moves one finger from its old button (or none) to a new button (or none).
+      // New keys go down first, old keys up after: sliding from Gas to Drift keeps W held without a gap.
+      function setFingerButton(fingerId, button) {
+        var oldButton = fingerButton[fingerId] || null;
+        if (oldButton === button) {
+          return;
+        }
+        if (button) {
+          button.classList.add("cc-pressed");
+          var newKeys = button.dataset.keys.split(" ");
+          for (var j = 0; j < newKeys.length; j++) {
+            holdKey(newKeys[j]);
+          }
+          if (navigator.vibrate) {
+            navigator.vibrate(8); // tiny buzz on Android; iPhones ignore it
+          }
+        }
+        if (oldButton) {
+          oldButton.classList.remove("cc-pressed");
+          var oldKeys = oldButton.dataset.keys.split(" ");
+          for (var i = 0; i < oldKeys.length; i++) {
+            releaseKey(oldKeys[i]);
+          }
+        }
+        fingerButton[fingerId] = button;
+      }
+
+      // Lets go of every key, for example when the page goes to the background (no kart stuck at full gas).
+      function releaseAllFingers() {
+        for (var fingerId in fingerButton) {
+          setFingerButton(fingerId, null);
+        }
+        fingerButton = {};
+      }
+
+      // The touch button under a finger, or null. Only buttons with data-slide count while a finger slides,
+      // so a thumb can roll from Gas to Drift but never slide onto Retry by accident.
+      function slideButtonAt(x, y) {
+        var element = document.elementFromPoint(x, y);
+        var button = element ? element.closest("#cc-touch [data-slide]") : null;
+        return button && !button.hidden ? button : null;
+      }
+
+      touchPanel.addEventListener("pointerdown", function (event) {
+        var button = event.target.closest("[data-keys]");
+        if (!button) {
+          return;
+        }
+        event.preventDefault(); // no text selection, no zoom, no extra mouse events
+        unlockSound();          // the first tap may come before the sound is on
+        button.setPointerCapture(event.pointerId); // this finger's move and up events still arrive here when it slides off
+        setFingerButton(event.pointerId, button);
+      });
+
+      touchPanel.addEventListener("pointermove", function (event) {
+        var current = fingerButton[event.pointerId];
+        if (current && current.hasAttribute("data-slide")) {
+          setFingerButton(event.pointerId, slideButtonAt(event.clientX, event.clientY));
+        }
+      });
+
+      function onFingerUp(event) {
+        if (event.pointerId in fingerButton) {
+          setFingerButton(event.pointerId, null);
+          delete fingerButton[event.pointerId];
+        }
+      }
+      touchPanel.addEventListener("pointerup", onFingerUp);
+      touchPanel.addEventListener("pointercancel", onFingerUp);
+      touchPanel.addEventListener("contextmenu", function (event) { event.preventDefault(); }); // long press
+      window.addEventListener("blur", releaseAllFingers);
+      document.addEventListener("visibilitychange", releaseAllFingers);
+
+      // A short tap on the game (not on a button) = a mouse click at that spot. The game ignores touches on its
+      // own, so without this the start screen and the Retry button on the results screen could not be tapped.
+      var tapStart = null;
+      var mouseSeenDuringTap = false;
+      canvas.addEventListener("touchstart", function (event) {
+        var touch = event.changedTouches[0];
+        tapStart = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+        mouseSeenDuringTap = false;
+      }, { passive: true });
+
+      canvas.addEventListener("mousedown", function (event) {
+        if (event.isTrusted) {
+          mouseSeenDuringTap = true; // this browser already turns taps into clicks: do not click twice
+        }
+      });
+
+      canvas.addEventListener("touchend", function (event) {
+        var touch = event.changedTouches[0];
+        if (!tapStart || !touchMode) {
+          return;
+        }
+        var moved = Math.abs(touch.clientX - tapStart.x) + Math.abs(touch.clientY - tapStart.y);
+        var short = Date.now() - tapStart.time < 500;
+        tapStart = null;
+        if (moved > 20 || !short) {
+          return; // a swipe or a long press, not a tap
+        }
+        var x = touch.clientX;
+        var y = touch.clientY;
+        setTimeout(function () {
+          if (!mouseSeenDuringTap) {
+            clickAt(x, y);
+          }
+        }, 60);
+      }, { passive: true });
+
+      function clickAt(x, y) {
+        var types = ["mousemove", "mousedown", "mouseup"];
+        for (var i = 0; i < types.length; i++) {
+          canvas.dispatchEvent(new MouseEvent(types[i], {
+            clientX: x, clientY: y, button: 0, buttons: types[i] === "mousedown" ? 1 : 0,
+            bubbles: true, cancelable: true, view: window
+          }));
+        }
+      }
+
+      // Switches the page to touch texts: touch tips, touch legend, rotate hint. Called before loading.
+      function useTouchMode() {
+        touchMode = true;
+        document.documentElement.classList.add("cc-touch-mode"); // style.css: no scrolling, no zoom, no selection
+        tips = touchTips;
+        tipLine.textContent = tips[0];
+        document.querySelector(".cc-controls").hidden = true;
+        document.querySelector(".cc-controls-touch").hidden = false;
+        document.getElementById("cc-rotate").hidden = false; // style.css shows it only in portrait
+      }
+
+      // The fullscreen button moves into the Recover/Retry row (style.css), away from the countdown.
+      var fullscreenButtonElement = document.getElementById("cc-fullscreen");
+      function showTouchControls() {
+        gameStarted = true;
+        touchPanel.hidden = false;
+        document.querySelector(".cc-touch-tools").appendChild(fullscreenButtonElement);
+      }
+
+      // A laptop with a touch screen: a real touch on the game switches the buttons on, a real key press off again.
+      window.addEventListener("touchstart", function (event) {
+        if (event.isTrusted && gameStarted && !touchMode) {
+          useTouchMode();
+          showTouchControls();
+          fullscreenButtonElement.classList.remove("cc-idle");
+        }
+      }, { passive: true });
+
+      window.addEventListener("keydown", function (event) {
+        if (event.isTrusted && touchMode && gameStarted) {
+          touchMode = false;
+          releaseAllFingers();
+          touchPanel.hidden = true;
+          document.body.appendChild(fullscreenButtonElement); // back to its desktop place at the top centre
+          document.getElementById("cc-rotate").hidden = true;
+          document.documentElement.classList.remove("cc-touch-mode");
+        }
+      });
+
+      document.getElementById("cc-rotate-close").addEventListener("click", function () {
+        document.getElementById("cc-rotate").classList.add("cc-closed");
+      });
+
+      // Fullscreen for the whole page (Android, iPad). iPhone Safari cannot do it for web pages.
+      function pageCanGoFullscreen() {
+        var root = document.documentElement;
+        return Boolean(root.requestFullscreen || root.webkitRequestFullscreen);
+      }
+
+      function togglePageFullscreen() {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+          return;
+        }
+        var root = document.documentElement;
+        var request = root.requestFullscreen || root.webkitRequestFullscreen;
+        var result = request.call(root);
+        // In fullscreen Android can also lock the screen sideways. It refuses outside fullscreen, which is fine.
+        if (result && result.then && screen.orientation && screen.orientation.lock) {
+          result.then(function () {
+            return screen.orientation.lock("landscape");
+          }).catch(function () {});
+        }
       }
 
       // ---------- Start loading the game ----------
@@ -399,6 +698,7 @@
           null
         );
       } else if (isTouchOnlyDevice()) {
+        useTouchMode();
         showPanel("cc-panel-mobile");
         document.getElementById("cc-load-anyway").addEventListener("click", function () {
           loadGame();
