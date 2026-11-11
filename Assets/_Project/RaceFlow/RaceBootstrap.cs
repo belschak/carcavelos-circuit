@@ -1,4 +1,5 @@
 using System.Collections;
+using CarcavelosCircuit.Track;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -34,7 +35,7 @@ namespace CarcavelosCircuit.RaceFlow
             // Try the track scenes in RaceSettings order (Role 2's campus scene first, then the team's other campus
             // scenes, our small test loop last). The first one that is in the build list and has a track wins.
             string[] candidates = settings.TrackScenesInOrder();
-            PlaceholderTrack track = null;
+            TrackInfo track = null;
             string trackScene = "";
             for (int i = 0; i < candidates.Length && track == null; i++)
             {
@@ -47,10 +48,8 @@ namespace CarcavelosCircuit.RaceFlow
                 else if (SceneManager.GetSceneByName(candidates[i]).isLoaded)
                 {
                     // A scene without a track (still being built): close it so its test camera or lights do not show
-                    // up in the race. A warning, not a log line: on swap day Role 2's TrackInfo may already be in it
-                    // while this code still looks for PlaceholderTrack, and we would race another track unnoticed.
-                    Debug.LogWarning("RaceBootstrap: no PlaceholderTrack found in " + candidates[i] + ", trying the next track scene. "
-                        + "If Role 2's TrackInfo is already in it, do the swap (docs/explain/role4-walkthrough.md, section 5).");
+                    // up in the race. A plain log line: an empty track scene is normal while its owner builds it.
+                    Debug.Log("RaceBootstrap: no TrackInfo found in " + candidates[i] + ", trying the next track scene.");
                     yield return SceneManager.UnloadSceneAsync(candidates[i]);
                 }
             }
@@ -129,8 +128,9 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        // Looks through the scene's top-level objects for the track component.
-        private static PlaceholderTrack FindTrackIn(string sceneName)
+        // Looks through the scene's top-level objects for Role 2's TrackInfo. The old RaceFlow stand-in
+        // PlaceholderTrack is a TrackInfo too (a subclass), so scenes built before the swap are still found.
+        private static TrackInfo FindTrackIn(string sceneName)
         {
             Scene scene = SceneManager.GetSceneByName(sceneName);
             if (!scene.isLoaded)
@@ -140,7 +140,7 @@ namespace CarcavelosCircuit.RaceFlow
             GameObject[] roots = scene.GetRootGameObjects();
             for (int i = 0; i < roots.Length; i++)
             {
-                PlaceholderTrack track = roots[i].GetComponentInChildren<PlaceholderTrack>();
+                TrackInfo track = roots[i].GetComponentInChildren<TrackInfo>();
                 if (track != null)
                 {
                     return track;

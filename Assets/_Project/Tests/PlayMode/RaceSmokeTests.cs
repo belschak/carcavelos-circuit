@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using CarcavelosCircuit.RaceFlow;
+using CarcavelosCircuit.Track;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -64,6 +65,19 @@ namespace CarcavelosCircuit.Tests.PlayMode
             }
             PlayerPrefs.Save();
             savedStrings.Clear();
+            yield return null;
+        }
+
+        // Swap guard (Q5): RaceFlow reads Role 2's TrackInfo. If a campus scene's track parts were not found, the race
+        // would quietly fall back to Role 4's small test loop and every other test here would still pass on it.
+        [UnityTest]
+        public IEnumerator RacesOnACampusTrack_NotTheTestLoop()
+        {
+            Assert.AreNotEqual("RaceFlow_PlaceholderTrack", race.TrackName,
+                "the race fell back to the test loop: no campus scene in the build list has a TrackInfo (see the RaceBootstrap lines in the Console)");
+            TrackInfo track = Object.FindAnyObjectByType<TrackInfo>();
+            Assert.IsNotNull(track, "no TrackInfo in the loaded track scene");
+            Assert.AreEqual(track.gameObject.scene.name, race.TrackName, "the race uses the TrackInfo of the scene it says it races on");
             yield return null;
         }
 
@@ -188,7 +202,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
 
         private IEnumerator DriveIntoCheckpoint(int index)
         {
-            PlaceholderCheckpoint[] all = Object.FindObjectsByType<PlaceholderCheckpoint>(FindObjectsSortMode.None);
+            Checkpoint[] all = Object.FindObjectsByType<Checkpoint>(FindObjectsSortMode.None);
             for (int i = 0; i < all.Length; i++)
             {
                 if (all[i].Index == index)

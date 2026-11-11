@@ -1,6 +1,7 @@
 using CarcavelosCircuit.Audio;
 using CarcavelosCircuit.Shared;
 using CarcavelosCircuit.Shared.Editor;
+using CarcavelosCircuit.Track;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -471,8 +472,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             return block;
         }
 
-        // A small rectangular loop (about 230 m, roughly 20 s per lap) to test the race flow until Role 2's campus
-        // track has a TrackInfo. Drive direction: anticlockwise seen from above, starting east on the south straight.
+        // A small rectangular loop (about 230 m, roughly 20 s per lap): the last fallback if no campus scene has a track,
+        // and a quick test bed for the race flow. Built with Role 2's real track parts (TrackInfo, Checkpoint, SpawnPoint,
+        // RespawnPoint). Drive direction: anticlockwise seen from above, starting east on the south straight.
         private static void BuildPlaceholderTrackScene()
         {
             Material asphalt = ColourMaterial("Asphalt", "#55585E", 0.2f);
@@ -487,7 +489,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             sun.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
 
             GameObject root = new GameObject("PlaceholderTrack");
-            PlaceholderTrack track = root.AddComponent<PlaceholderTrack>();
+            TrackInfo track = root.AddComponent<TrackInfo>();
 
             GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "Ground";
@@ -524,7 +526,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             // Checkpoints: 0 = start/finish, then east, north, west straights. Each gets a respawn pose a bit after it.
             Vector3[] positions = { new Vector3(0f, 2f, -22.5f), new Vector3(32.5f, 2f, 0f), new Vector3(0f, 2f, 22.5f), new Vector3(-32.5f, 2f, 0f) };
             float[] yaws = { 90f, 0f, -90f, 180f };
-            PlaceholderCheckpoint[] checkpoints = new PlaceholderCheckpoint[positions.Length];
+            Checkpoint[] checkpoints = new Checkpoint[positions.Length];
             for (int i = 0; i < positions.Length; i++)
             {
                 GameObject cp = new GameObject("Checkpoint " + i);
@@ -538,8 +540,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 GameObject respawn = new GameObject("RespawnPoint");
                 respawn.transform.SetParent(cp.transform, false);
                 respawn.transform.localPosition = new Vector3(0f, -1.5f, 4f); // 4 m after the line, 0.5 m above ground
+                respawn.AddComponent<RespawnPoint>(); // only draws the marker in the Scene view
 
-                PlaceholderCheckpoint checkpoint = cp.AddComponent<PlaceholderCheckpoint>();
+                Checkpoint checkpoint = cp.AddComponent<Checkpoint>();
                 SerializedObject cso = new SerializedObject(checkpoint);
                 cso.FindProperty("index").intValue = i;
                 cso.FindProperty("respawnPoint").objectReferenceValue = respawn.transform;
@@ -551,6 +554,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             spawn.transform.SetParent(root.transform, false);
             spawn.transform.localPosition = new Vector3(4f, 0.3f, -22.5f); // just after the start line, facing east
             spawn.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+            spawn.AddComponent<SpawnPoint>(); // only draws the marker in the Scene view
 
             SerializedObject tso = new SerializedObject(track);
             SerializedProperty list = tso.FindProperty("checkpoints");

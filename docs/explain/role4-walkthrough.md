@@ -13,8 +13,8 @@ Main.unity
   |
   v
 RaceBootstrap.Start()  (coroutine)
-  |-- LoadSceneAsync("Track_Campus", Additive)   no track inside? -> load "RaceFlow_PlaceholderTrack"
-  |-- FindTrackIn(scene) -> PlaceholderTrack     (later: TrackInfo)
+  |-- LoadSceneAsync("Track_Campus", Additive)   no track inside? -> next: Track_CampusWorld, Track_NovaCampus, RaceFlow_PlaceholderTrack
+  |-- FindTrackIn(scene) -> TrackInfo            (Role 2, on the track scene)
   |-- Instantiate(kartPrefab) at SpawnPoint      + KartAudio prefab as a child
   |-- raceManager.SetUp(kart, track, sceneName)  checks the checkpoints, remembers the kart's colliders
   '-- chaseCamera.SetTarget(kart)                 only if a chase camera is set (it is removed once Role 1's camera exists)
@@ -52,7 +52,7 @@ Suggested order for the live walkthrough (about 5 minutes):
 | Race sounds in `RaceFlow/RaceSounds` and `RaceFlow/RaceMusic`, kart sounds in `Audio/KartAudio` | The `Audio` assembly may only reference `Shared`, so it cannot see `RaceManager`. Kart sounds only need `IKartState`, race sounds and music need the `RaceManager` events. `RaceFlow` references `Audio` (one direction only) for the mix maths and `KartAudio.SetMixLevels`. |
 | No AudioMixer: every mix level is a script fade in dB (`LevelFade`, `DuckEnvelope`) | Unity's Web build only supports mixer group volume (no Duck Volume, compressor, limiter), and there is no public API to create a mixer from code. Script fades do the same and behave identically in the Editor and the browser. |
 | HUD = UI Toolkit (`.uxml` + `.uss`) | Text files that work like HTML and CSS, no TextMesh Pro import, easy to read in a PR. PanelSettings scale from a 1280x720 reference. |
-| Plain C# classes for logic (`RaceTimer`, `RaceStateMachine`, `PersonalBest`, `PlaceholderLapRules`, `CheckpointValidation`, `FallCheck`, `ShownNumber`, `EnginePitch`), MonoBehaviours only as thin glue | Plain classes can be unit tested in Edit Mode with fake frame times, no scene needed. |
+| Plain C# classes for logic (`RaceTimer`, `RaceStateMachine`, `PersonalBest`, `CheckpointValidation`, `FallCheck`, `ShownNumber`, `EnginePitch`), MonoBehaviours only as thin glue | Plain classes can be unit tested in Edit Mode with fake frame times, no scene needed. |
 | Official lap time from two timestamps, added-up frame times only for the live timer | Adding thousands of float frame times drifts by milliseconds, and the finish happens inside a physics step between two frames. One subtraction of two `double` timestamps is exact. |
 | HUD builds a new string only when the shown number changes | Strings built every frame are garbage; on the Web the garbage collector cleans up all at once, which shows as a hitch mid-lap. |
 | Scenes and prefabs built by `Role4SceneBuilder` (editor script) | Nobody hand-edits scene YAML; same result on every laptop; re-runnable. The kart swap is automatic: it picks Role 1's `Kart` prefab as soon as it exists. |
@@ -152,7 +152,7 @@ Best lap time plus the time at each checkpoint of that best lap (for the "-0.412
 
 ### 3.9 `RaceFlow/RaceManager.cs` (MonoBehaviour, the race brain)
 
-Lives on `RaceSystems` in `Main.unity`. Owns a `RaceTimer`, a `RaceStateMachine`, `PlaceholderLapRules`, `PersonalBest`, and references to the track and the kart (`IKartState`).
+Lives on `RaceSystems` in `Main.unity`. Owns a `RaceTimer`, a `RaceStateMachine`, Noah's `RaceRules` (Role 2), `PersonalBest`, and references to the track (`TrackInfo`, Role 2) and the kart (`IKartState`).
 
 Public read-only values for the HUD: `State`, `CountdownNumber`, `LapSeconds`, `BestSeconds`, `PreviousBestSeconds`, `LastLapWasRecord`, `HasSplitDelta`, `LastSplitDelta`, `SplitVisibleUntil`, `HintText`, `HintVisibleUntil`, `Kart`, `IsSetUp`. "`{ get; private set; }`: everyone can read, only the RaceManager can write."
 
@@ -182,10 +182,10 @@ Events: `CountdownStep`, `CheckpointPassed`, `LapFinished(float time, bool recor
 
 Entry point of `Main.unity` (task R1). Serialized: `settings`, `kartPrefab`, `kartAttachments[]` (the KartAudio prefab), `raceManager`, `chaseCamera`.
 
-- `IEnumerator Start()` (~line 28): a coroutine. Loads the campus scene, looks for a track; if none, it logs a yellow warning (on swap day Noah's `TrackInfo` may already be there while this code still looks for `PlaceholderTrack`, so the warning says "do the swap"), unloads the campus scene (`SceneManager.UnloadSceneAsync`, so its test camera or lights do not end up in the race) and loads the fallback placeholder scene; error if still none. Then `SetActiveScene(track scene)` (its lighting and sky are used), `TurnOffTestCameras(track scene)`, `Instantiate(kartPrefab, spawn.position, spawn.rotation)`, instantiates each attachment as a child of the kart, `raceManager.SetUp` first, and only then, if a chase camera is set, `chaseCamera.SetTarget` and `Restarted += chaseCamera.SnapBehindTarget`. "The race comes first: once the placeholder camera is removed the field is empty, and that must never stop the race from being set up." `OnDestroy` removes the listener again.
+- `IEnumerator Start()` (~line 28): a coroutine. Loads the campus scene, looks for Noah's `TrackInfo`; if none (an empty scene still being built), it logs a plain line, unloads the campus scene (`SceneManager.UnloadSceneAsync`, so its test camera or lights do not end up in the race) and loads the fallback placeholder scene; error if still none. Then `SetActiveScene(track scene)` (its lighting and sky are used), `TurnOffTestCameras(track scene)`, `Instantiate(kartPrefab, spawn.position, spawn.rotation)`, instantiates each attachment as a child of the kart, `raceManager.SetUp` first, and only then, if a chase camera is set, `chaseCamera.SetTarget` and `Restarted += chaseCamera.SnapBehindTarget`. "The race comes first: once the placeholder camera is removed the field is empty, and that must never stop the race from being set up." `OnDestroy` removes the listener again.
 - `LoadSceneIfNeeded(name)`: skip if already loaded (both scenes open in the Editor); warn if not in the build list (`Application.CanStreamedLevelBeLoaded`); else `yield return SceneManager.LoadSceneAsync(name, LoadSceneMode.Additive)`.
 - `TurnOffTestCameras(name)` (~line 90): in the loaded track scene, every GameObject with a `Camera` is switched off (`SetActive(false)`) and every `AudioListener` disabled. "Owners may keep a test camera in their own scene. In the race only Main's camera may render and listen: two AudioListeners give a Unity warning, two cameras the wrong picture."
-- `FindTrackIn(name)`: loops over the scene's root objects with `GetComponentInChildren<PlaceholderTrack>()`. "No `GameObject.Find`, which is slow and breaks when someone renames an object."
+- `FindTrackIn(name)`: loops over the scene's root objects with `GetComponentInChildren<TrackInfo>()` (also finds the old `PlaceholderTrack`, which is now a subclass of `TrackInfo`). "No `GameObject.Find`, which is slow and breaks when someone renames an object."
 - How I would explain it: "Additive loading means the track scene is added on top of Main instead of replacing it. Each owner has their own scene, so we never get Git merge conflicts in scene files. A coroutine lets Start wait for the loading without freezing the game."
 - Detail you may be asked: because the track scene is made active before `Instantiate`, the spawned kart belongs to the track scene, not to Main.
 
@@ -235,11 +235,10 @@ The music and the overall mix, following the race. Four `LevelFade`s (race music
 - `SetVisible()`: `style.display = Flex / None`, only written when it changes.
 - Concept: polling (HUD reads every frame) vs events (sounds and the results screen react once). Garbage: every new string is memory the garbage collector must clean; in a Web build it cleans all at once at the end of a frame, so building 20 strings per frame shows as small hitches.
 
-### 3.13 `RaceFlow/Placeholders/` (stand-ins, deleted on swap day)
+### 3.13 `RaceFlow/Placeholders/` (stand-ins, mostly gone since the swap on 2026-11-10)
 
-- `PlaceholderCheckpoint`: `Index` (0 = start/finish) and `RespawnPoint` (serialized). Same idea as Noah's `Checkpoint`.
-- `PlaceholderTrack`: `Checkpoints[]`, `SpawnPoint`, `GetRespawnPoint(lastIndex)` (loops for the matching index, falls back to the spawn point). Same members as `TrackInfo`.
-- `PlaceholderLapRules` (plain C#): exactly the `RaceRules` API. `nextExpected` starts at 1; `PassCheckpoint(i)` true only if `i == nextExpected` and `0 < i < count`; `TryFinish()` true only when every checkpoint was passed, then sets `nextExpected = count + 1` so a second call fails; `LastValidCheckpoint` (0 = start); `StartLap()` and `Reset()`.
+- `PlaceholderLapRules` and its tests: deleted, RaceManager uses Noah's `RaceRules` (same API, his `RaceRulesTests` cover the same cases).
+- `PlaceholderTrack : TrackInfo` and `PlaceholderCheckpoint : Checkpoint`: now EMPTY subclasses, kept only for the switch-over week. "Track scenes built before the swap have these components saved in them. Because they are subclasses with no fields of their own, Unity loads the saved `checkpoints`, `spawnPoint`, `index` and `respawnPoint` straight into Noah's fields with the same names, and `GetComponentInChildren<TrackInfo>()` finds them. So the campus world raced on day one of the swap without anyone rebuilding their scene." Deleted once both campus builders add `TrackInfo`/`Checkpoint` and their scenes are rebuilt.
 - `PlaceholderKart : MonoBehaviour, IKartState` with `[RequireComponent(typeof(Rigidbody))]`. A sliding box: input read in `Update` (W/S/A/D, arrows, Space) only if `InputEnabled`; physics in `FixedUpdate` with `Time.fixedDeltaTime`: ground raycast for `IsGrounded`, accelerate/brake/roll out, remove sideways speed (less while drifting), cap at top speed (x1.35 while boosting), steer with `body.MoveRotation`. Drift: start with Space + steer + > 40 % speed (speed over the ground, not forward speed: a drifting kart points into the corner, so forward speed drops and the drift would cancel itself); while drifting the kart turns at 0.8x, keeps more slide and keeps its ground speed (the slide turns into forward speed, little drag), so a 1.6 s drift is possible; stage 1 at 0.8 s, stage 2 at 1.6 s; release = boost 0.4 s or 1.2 s; if `InputEnabled` goes false while drifting (finish line, results), the drift ends without a boost, so the kart does not surge after the finish. `ResetTo` sets transform and body, zeroes `linearVelocity` and `angularVelocity`, clears drift/boost.
   - "Input in Update, physics in FixedUpdate: Update runs once per drawn frame, FixedUpdate at a fixed 50 times per second, so physics behaves the same on fast and slow laptops."
   - "Unity 6 renamed `velocity` to `linearVelocity`."
@@ -289,7 +288,7 @@ Menu **Carcavelos Circuit > Build Role 4 Scenes** (`[MenuItem("Carcavelos Circui
 4. `CreateKartAudioPrefab()`: 9 AudioSources + `KartAudio`, clips `kart_engine_low/high`, `kart_drift_squeal/sparks/start/stage_up` (Luc's), `amb_wind_loop`, `el_boost_whoosh`, `sfx_landing_thud`, `sfx_shift_pop`. Every source gets `dopplerLevel = 0`. Private fields are filled with `SerializedObject.FindProperty(...)`.
 5. `FindRealKartPrefab()` (~line 199): `AssetDatabase.FindAssets("Kart t:Prefab")` under `Assets/_Project/Driving`; uses a prefab only if it is named exactly `Kart` and its root has a component implementing `IKartState`. "The kart swap is automatic: once Alessandro's prefab exists, re-running the builder puts it into Main."
 6. Only if no real kart was found: `CreatePlaceholderKartPrefab()`: Rigidbody (150 kg, interpolate, continuous collision, X/Z rotation frozen), frictionless box collider, `PlaceholderKart`, a `Visual` child made of primitives.
-7. `BuildPlaceholderTrackScene()`: a ~230 m rectangular loop around a sand "building", walls, cones, a kicker ramp, 4 checkpoint triggers (15 m wide) each with a `RespawnPoint` child 4 m after it, and a `SpawnPoint` just after the start line.
+7. `BuildPlaceholderTrackScene()`: built from Role 2's real parts (`TrackInfo`, `Checkpoint`, `SpawnPoint`, `RespawnPoint`), a ~230 m rectangular loop around a sand "building", walls, cones, a kicker ramp, 4 checkpoint triggers (15 m wide) each with a `RespawnPoint` child 4 m after it, and a `SpawnPoint` just after the start line.
 8. `BuildMainScene()`: rebuilds Main in place: opens the existing `Main.unity`, deletes only the builder's own root objects and keeps every other root object (logged as "kept ..."), so Role 1 can add a camera rig as its own root object. Then camera + AudioListener + chase camera, with `GetUniversalAdditionalCameraData().renderPostProcessing = true`; a global `Volume` object "PostProcessing" using `CreateVolumeProfile()`; `RaceSystems` (RaceManager, RaceBootstrap, two AudioSources, RaceSounds), `HUD` (UIDocument + RaceHud), `Music` (race music + results music AudioSources, RaceMusic), `Ghost` (GhostRecorder + GhostPlayer, see 3.17b). All references wired.
 9. `CreateVolumeProfile()` (called from step 8): `RaceFlow/Settings/RaceCameraVolume.asset` with Bloom (threshold 0.9 = only very bright pixels glow, intensity 0.6, scatter 0.6). If the asset already exists it is returned unchanged, so Role 3's tuning survives a rebuild.
 10. `MergeBuildScenes()`: Main, Track_Campus, RaceFlow_PlaceholderTrack first (ticked), then every other scene that was already in the build list, with its tick box. Merged, never replaced. (`ProjectSetup.SetBuildScenes` in Shared/Editor still writes only the three; run the builder after it if someone added scenes.)
@@ -465,7 +464,6 @@ All in `Assets/_Project/Tests/EditMode/` (asmdef references Shared, Track, RaceF
 | `RaceKeysTests` | Letters, Space, Enter, arrows start the race; Alt, Ctrl, Shift, Windows/Cmd, Tab, Escape, F1/F11/F12/F24, Print Screen do not. |
 | `RaceStateMachineTests` | Starts in Ready with input off; countdown fires 3, 2, 1, 0 then Racing with input on; not over at 2.9 s; one 10 s frame still fires every step; Finish only while racing, no double finish, input off in Results; retry countdown at 0.5 s per step; StateChanged reports Countdown, Racing, Results; bad settings (0 steps, 0 s) cannot freeze the race. |
 | `PersonalBestTests` | First lap is a record; slower or equal is not, faster is; no split delta without a best lap; deltas ahead (-0.5) and behind (+1); out-of-range index ignored; save string round trip; dot not comma; broken saves = no record; other checkpoint count keeps time, drops splits. |
-| `PlaceholderLapRulesTests` | In order then finish works; skipped checkpoint cannot finish; same checkpoint twice counts once; no double finish; `LastValidCheckpoint` for recovery; Reset starts over. |
 | `EnginePitchTests` | `Speed01` in 0..1 (capped while boosting, reverse counts, `MaxSpeed` 0 safe); `MoveLimited` respects rise/fall rates and stops at the target; `HighLoopMix` 0 / 0.5 / 1 at r 0.2 / 0.45 / 0.7 and flat near the edges; loop pitches match Luc's numbers. |
 | `DriftSoundTests` | Stage-up chime 12 % higher per stage; sparks silent at stage 0, louder per stage, capped at 1; sparks pitch rises per stage. |
 | `EnginePitchTests` (P4 part) | Equal-power crossfade keeps low^2 + high^2 = 1 and starts/ends with one loop; last gear ends at top speed and lower gears are longer; gear 1 starts at 0 revs, every gear tops out at 0.97, revs drop to 0.6 when the next gear starts. |
@@ -497,6 +495,8 @@ How I would explain it: "Edit Mode tests run without pressing Play, in under a s
 ---
 
 ## 5. Swap day checklist (when Noah's T4/T5 and Alessandro's D1 land)
+
+**Status 2026-11-10:** A done (steps 1-4; step 5 skipped: `Track_Campus` is still empty, so the test loop stays the last fallback). B 7-9 done (Role 1's `Kart` drives Main, Play Mode tests pass with it on `Track_CampusWorld`). Step 4b: Luc's builder via help PR; `NovaCampusBuilder` still adds the old names, which keep working as subclasses. Steps 10-12 for the camera and the delete wait for D2 (#40) and the builder swaps; `PlaceholderKart` stays until Alessandro's `Steer` change is in.
 
 Do it on a branch `role4/<task-id>-swap-contract`, after `git pull` of `main` with their PRs merged.
 
