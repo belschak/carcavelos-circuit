@@ -801,7 +801,7 @@ def dress(veg, props):
         if P.on_deck(x, y) and E.distance_to_route(x, y) > 9.0:
             plant("Veg_Olive" if k % 2 else "Veg_Olive_B", x, y, P.DECK_Z, rng.uniform(0.82, 0.95))
     for x, y in TREES_COURT:
-        if P.in_court(x, y):
+        if P.in_court(x, y) and not P.on_climb(x, y, 0.2):
             plant("Veg_Olive", x, y, P.LOW_Z, rng.uniform(0.95, 1.05))
     for x, y in POTS:
         prop("Prop_PlanterRound", x, y)

@@ -172,6 +172,39 @@ def build_portal_beam(p, inward, name, col):
     return E.new_object(name, mesh, col)
 
 
+def build_portal_jambs(p, inward, name, col):
+    """Closes the slit beside the mouth of a portal that opens onto a walled ramp (V10g's straight ramp, north end).
+
+    The tunnel's walls start 0.6 m outside the road edge (footway), the ramp's 45 degree walls right at the road edge:
+    two parallel planes 0.6 m apart. From inside, looking forward along the tunnel wall, the eye went between them,
+    out through the headwall's opening and behind the ramp wall, where nothing is drawn (Luc, 2026-11-11: "where the
+    tunnel walls on the left and right stop, you can see into nothing"). One upright strip per side in the portal's
+    plane, from the ramp wall's plane to behind the tunnel wall's, seen from both sides."""
+    dx, dy = inward
+    nrm = (-dy, dx)
+    z0 = p["track_z"]
+    half = E.half_width(p)
+
+    def pt(side, z, along=0.03):
+        return (p["x"] + nrm[0] * side + dx * along, p["y"] + nrm[1] * side + dy * along, z0 + z)
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    lo, hi = -0.4, CEILING + 0.05
+    for s in (1, -1):
+        # inner edge 5 cm behind the ramp wall's plane (road edge + height), so it never shows as a fin in front of it
+        ring = [pt(s * (half + lo + 0.10), lo), pt(s * (FLOOR_HALF + lo + 0.25), lo),
+                pt(s * (FLOOR_HALF + hi + 0.25), hi), pt(s * (half + hi + 0.10), hi)]
+        for corners in (ring, ring[::-1]):
+            face = bm.faces.new([bm.verts.new(c) for c in corners])
+            for loop in face.loops:                              # the ramp walls' own mapping (env_corridor), so it reads as wall
+                loop[uv].uv = (loop.vert.co.x / 2.0, loop.vert.co.z / 2.0)
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(E.material("T_cut_wall", CUT_WALL_COLOUR, roughness=0.9))
+    return E.new_object(name, mesh, col)
+
+
 def build():
     pts = tunnel_points()
     if len(pts) < 3:
@@ -183,6 +216,8 @@ def build():
     for (p, inward), name in zip(env_terrain.portals(), ("Tunnel_PortalSouth", "Tunnel_PortalNorth")):
         build_portal(p, inward, cover, name, col)
         build_portal_beam(p, inward, name.replace("Portal", "PortalBeam"), col)
+        if any(c["from_index"] <= p["i"] <= c["to_index"] for c in (E.ROUTE or {}).get("wall_cuts", [])):
+            build_portal_jambs(p, inward, name.replace("Portal", "PortalJambs") + "_NoCollide", col)
     wall = E.material("T_cut_wall", CUT_WALL_COLOUR, roughness=0.9)        # V10c: ochre render (texture in env_materials)
     wall.diffuse_color = E.hex_rgba(CUT_WALL_COLOUR)
     bsdf = wall.node_tree.nodes.get("Principled BSDF")

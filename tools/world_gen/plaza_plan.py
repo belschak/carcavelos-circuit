@@ -45,7 +45,8 @@ SEAM = 0.05                         # m: where the plaza's collider meets the bo
 HALL_IN = True
 SEAM_STEPS = (-0.06, -0.03, 0.0, 0.03)   # heights over the road of the strip that passes through the road's surface, one
                                     # value per route point (2 m) towards the border
-JUDDER_M = 0.010                    # peak-to-peak height of the rounded ripple on the driving surface, one per step
+JUDDER_M = 0.018                    # peak-to-peak height of the rounded ripple on the driving surface, one per step
+                                    # (V10i 1.0 cm; Luc, 2026-11-11: "the judder on the stairs can be a bit more")
 
 
 def _unit(ax, ay, bx, by):
@@ -191,14 +192,42 @@ CLIMB_SAG_M = 4.0                    # vertical curve at the foot
 CLIMB_CREST_M = 10.0                 # ... and at the top (radius 50 m), ending exactly at the top edge
 CLIMB_RISERS = 22                    # visible steps (21 treads of 1.12 m)
 CLIMB_FOOT = (CLIMB_TOP[0] - SC_DIR[0] * CLIMB_LEN, CLIMB_TOP[1] - SC_DIR[1] * CLIMB_LEN)
+# Luc, 2026-11-11: "you jump over the ramp, land, and the stairs should then be a bit further to the right, not
+# straight ahead". A kart at 15 m/s and more lands ON the climb (the court is 26 m long, the flight 14 to 33 m), so
+# the climb cannot leave the flight line, and its top cannot go east (4 m from the red line there). So the stair
+# opens like a fan to the right: its west wall stays, its east side starts at the bridge's pier (the shaded side of
+# the court) and runs in to the old 3 m at the top. At the foot it is 8.5 m wide and its middle lies 2.2 m right of
+# the flight line (before: 0.9 m); the wall-to-wall width where fast karts land is 7 m and more.
+CLIMB_EAST_FOOT = 5.5                # m right of the axis at the foot (the pier's face is at 5.56)
+CLIMB_EAST_TOP = CLIMB_HALF          # ... and at the top
+
+
+def _fan(s):
+    """How much wider than CLIMB_HALF the climb's right half is at s (1 before the foot: kicker, pad, court)."""
+    if s < 0.0:
+        return 1.0
+    t = min(s, CLIMB_LEN) / CLIMB_LEN
+    return (CLIMB_EAST_FOOT + (CLIMB_EAST_TOP - CLIMB_EAST_FOOT) * t) / CLIMB_HALF
 
 
 def climb_point(s, u):
-    """s metres up the climb from its foot (negative = before it, in the courtyard and on the plaza), u to the right."""
+    """s metres up the climb from its foot (negative = before it, in the courtyard and on the plaza), u to the right.
+    On the climb u runs from -CLIMB_HALF (west wall) to +CLIMB_HALF (east side), and the right half is stretched by
+    _fan(s): every row of steps, of the collider and of the walls follows the fan without knowing about it."""
+    if u > 0.0:
+        u *= _fan(s)
     return (CLIMB_FOOT[0] + SC_DIR[0] * s + SC_RIGHT[0] * u, CLIMB_FOOT[1] + SC_DIR[1] * s + SC_RIGHT[1] * u)
 
 
 def climb_frame(x, y):
+    """Inverse of climb_point: (s, u) with u in the climb's own -CLIMB_HALF .. CLIMB_HALF on the climb."""
+    dx, dy = x - CLIMB_FOOT[0], y - CLIMB_FOOT[1]
+    s, u = dx * SC_DIR[0] + dy * SC_DIR[1], dx * SC_RIGHT[0] + dy * SC_RIGHT[1]
+    return s, (u / _fan(s) if u > 0.0 else u)
+
+
+def climb_metres(x, y):
+    """(s, metres to the right of the axis): the plain frame, for measuring (landing spots, flight line)."""
     dx, dy = x - CLIMB_FOOT[0], y - CLIMB_FOOT[1]
     return dx * SC_DIR[0] + dy * SC_DIR[1], dx * SC_RIGHT[0] + dy * SC_RIGHT[1]
 
@@ -292,7 +321,8 @@ def _meet(p, d, a, b):
     return (p[0] + d[0] * t, p[1] + d[1] * t)
 
 
-CLIMB_Q = _meet(CLIMB_LANE[1], SC_DIR, *_DIAG)                    # the lane's east side meets the north-east wall
+_EAST_DIR = (CLIMB_LANE[2][0] - CLIMB_LANE[1][0], CLIMB_LANE[2][1] - CLIMB_LANE[1][1])    # along the fan's east side
+CLIMB_Q = _meet(CLIMB_LANE[1], _EAST_DIR, *_DIAG)                 # the lane's east side meets the north-east wall
 CLIMB_Q_S = climb_frame(*CLIMB_Q)[0]
 CLIMB_QW = climb_point(CLIMB_Q_S, -CLIMB_HALF)                    # ... the point across the lane from it
 _S4W = (65.16, 81.2)                                              # on the Gallery's roof edge
@@ -308,7 +338,10 @@ COURT_OPEN_EDGE = (CLIMB_Q, CLIMB_QW)                             # no wall: the
 CLIMB_SLOT = [CLIMB_QW, CLIMB_Q, CLIMB_LANE[2], CLIMB_LANE[3]]
 # hedge boxes along the last metres of the slot's west side (no railing there) and 8 m on across the plaza: whoever
 # comes up the climb passes checkpoint 10 (route point 551, trigger 6 m to each side) at most 5.2 m left of its middle
-FUNNEL = [climb_point(CLIMB_FENCE_TO + 0.5, -CLIMB_HALF - 0.6), climb_point(CLIMB_LEN, -CLIMB_HALF - 0.6), (63.3, 102.0)]
+# V14 + hall: the red line now runs into the middle of the hall's atrium door (hall_join.py), so the last box no
+# longer points at (63.3, 102.0), which is on that line now: it ends 4.3 m left of checkpoint 10's middle and from
+# there a second run leads to the door's left frame (the white fence is left out on this side, fence_free.py).
+FUNNEL = [climb_point(CLIMB_FENCE_TO + 0.5, -CLIMB_HALF - 0.6), climb_point(CLIMB_LEN, -CLIMB_HALF - 0.6), (62.6, 99.5), (59.6, 105.2)]
 COURTS = [COURT_SOUTH]
 # Stair down to Floor 0 (the slot): a parallelogram beside the race line (4.9 m from the centreline, the stair stays
 # on the right as in Luc's drawing 10), 6.5 m wide, 10 m long. Steps go down to the south; at the bottom a level

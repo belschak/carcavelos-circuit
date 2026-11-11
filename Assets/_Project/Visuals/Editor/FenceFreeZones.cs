@@ -182,7 +182,9 @@ namespace CarcavelosCircuit.Visuals.Editor
                 }
                 Vector2 ab = new Vector2(b.x - a.x, b.z - a.z), ac = new Vector2(c.x - a.x, c.z - a.z);
                 float t = Vector2.Dot(ac, ab) / Mathf.Max(0.0001f, ab.sqrMagnitude);
-                if (t < -0.02f || t > 1.02f)
+                // 0.3 m past both ends: Noah's posts stand on fence points made with a direction averaged over 4 route
+                // points, so the post at a piece's first point can lie a little before it (the post at the tunnel mouth did).
+                if (t < -0.15f || t > 1.15f)
                 {
                     continue;
                 }

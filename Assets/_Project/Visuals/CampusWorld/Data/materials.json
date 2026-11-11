@@ -1918,6 +1918,24 @@
    "smoothness": 0.15
   },
   {
+   "name": "W_T_cut_wall",
+   "colour": [
+    0.8509,
+    0.7594,
+    0.5945
+   ],
+   "metallic": 0.0,
+   "albedo": "render_ochre_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
    "name": "W_lawn",
    "colour": [
     0.5558,
@@ -2308,24 +2326,6 @@
    ],
    "metallic": 0.0,
    "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_T_cut_wall",
-   "colour": [
-    0.8509,
-    0.7594,
-    0.5945
-   ],
-   "metallic": 0.0,
-   "albedo": "render_ochre_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
