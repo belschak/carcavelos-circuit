@@ -355,6 +355,65 @@ namespace CarcavelosCircuit.Visuals.Editor
             }
             tso.FindProperty("spawnPoint").objectReferenceValue = spawn.transform;
             tso.ApplyModifiedPropertiesWithoutUndo();
+
+            AddBoostPads(race, data);
+        }
+
+        // Boost pads (task V11, BoostPadPlan): two before the jump so the kart flies far, a chain in the tunnel.
+        // Each pad sits on the road surface found by a ray and leans with it (the tunnel floor climbs a little).
+        private static void AddBoostPads(GameObject race, TrackData data)
+        {
+            Material material = BoostPadMaterial();
+            var group = new GameObject("BoostPads");
+            group.transform.SetParent(race.transform, false);
+
+            float[] s = data.points.Select(p => p.s).ToArray();
+            var distances = new List<float>(BoostPadPlan.JumpPads(data.points[data.jump_index].s));
+            bool[] covered = data.points.Select(p => p.tunnel).ToArray();
+            foreach (int[] run in BoostPadPlan.CoveredRuns(covered))
+            {
+                distances.AddRange(BoostPadPlan.TunnelPads(s[run[0]], s[run[1]]));
+            }
+
+            Physics.SyncTransforms();
+            foreach (float d in distances)
+            {
+                int i = BoostPadPlan.ClosestPoint(s, data.length_m, d);
+                TrackPoint p = data.points[i];
+                Vector3 position = Pos(p);
+                Vector3 up = Vector3.up;
+                if (Physics.Raycast(position + Vector3.up * 1.5f, Vector3.down, out RaycastHit hit, 4f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    position = hit.point;
+                    up = hit.normal;
+                }
+                var go = new GameObject("BoostPad s=" + p.s.ToString("0"));
+                go.transform.SetParent(group.transform, false);
+                go.transform.SetPositionAndRotation(position,
+                    Quaternion.LookRotation(Vector3.ProjectOnPlane(Forward(data, i), up).normalized, up));
+                go.AddComponent<BoostPad>().Configure(new Vector2(Mathf.Min(4.5f, p.width - 1f), 3f), material);
+            }
+            Debug.Log("CampusWorldBuilder: " + distances.Count + " boost pads.");
+        }
+
+        // URP Lit with emission on, so the Web build keeps the glowing shader variant. The chevrons come in code.
+        private static Material BoostPadMaterial()
+        {
+            const string path = "Assets/_Project/Visuals/BoostPads/BoostPad.mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                Shader lit = Shader.Find("Universal Render Pipeline/Lit");
+                material = new Material(lit != null ? lit : Shader.Find("Standard"));
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.SetColor("_BaseColor", Color.white);
+            material.SetFloat("_Smoothness", 0.35f);
+            material.SetColor("_EmissionColor", new Color(0.8f, 0.8f, 0.8f, 1f));
+            material.EnableKeyword("_EMISSION");
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            EditorUtility.SetDirty(material);
+            return material;
         }
 
         // docs/art-style.md: bright late-morning sun from one side, soft shadows, light-blue sky, no fog.
