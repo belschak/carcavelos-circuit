@@ -59555,7 +59555,7 @@ GameObject:
   - component: {fileID: 1690273075}
   - component: {fileID: 1690273076}
   m_Layer: 0
-  m_Name: BoostPad s=136
+  m_Name: BoostPad jump s=136
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -59588,8 +59588,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 513d162952a91441fbcf5bac4eaf4f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.Visuals::CarcavelosCircuit.Visuals.BoostPad
-  boostSeconds: 0.8
-  speedMultiplier: 1.35
+  boostSeconds: 1
+  speedMultiplier: 1.6
   size: {x: 4.5, y: 3}
   baseMaterial: {fileID: 2100000, guid: afc32a93063794e2e801b7c0624d4ca5, type: 2}
 --- !u!1001 &1690621516
@@ -69477,7 +69477,7 @@ GameObject:
   - component: {fileID: 2048884990}
   - component: {fileID: 2048884991}
   m_Layer: 0
-  m_Name: BoostPad s=156
+  m_Name: BoostPad jump s=156
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -69510,8 +69510,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 513d162952a91441fbcf5bac4eaf4f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.Visuals::CarcavelosCircuit.Visuals.BoostPad
-  boostSeconds: 0.8
-  speedMultiplier: 1.35
+  boostSeconds: 1
+  speedMultiplier: 1.6
   size: {x: 4.5, y: 3}
   baseMaterial: {fileID: 2100000, guid: afc32a93063794e2e801b7c0624d4ca5, type: 2}
 --- !u!1001 &2049271668
