@@ -261,6 +261,52 @@
     border-color: rgba(234, 234, 236, 0.55); /* hollow gem = not reachable this lap */
 }
 
+/* ---------- A3. Ghost chip (audit 13), under the medal chip: the same pill, a size smaller ---------- */
+.ghost-chip {
+    flex-direction: row;
+    align-items: center;
+    height: 28px;
+    margin-top: 6px;
+    padding: 0 12px 0 11px;
+    border-radius: 14px; /* half the height = a true pill */
+    background-color: var(--cc-panel);
+    border-bottom-width: 3px;
+    border-bottom-color: var(--cc-lip);
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 300ms;
+    transition-timing-function: ease-out;
+}
+
+.ghost-chip.is-shown {
+    opacity: 1;
+}
+
+/* A round dot in the ghost's own colour (GhostPlayer: Dean's ghost warm gold, your own ghost light blue). */
+.ghost-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    background-color: #8CCCFF;
+}
+
+.ghost-chip--deans .ghost-dot {
+    background-color: #FFCC66;
+}
+
+.ghost-chip-name {
+    margin-left: 9px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: rgba(234, 234, 236, 0.8);
+}
+
+.ghost-chip-time {
+    margin-left: 9px;
+    font-size: 16px;
+    color: var(--cc-white);
+}
+
 /* ---------- B. Checkpoint pips ---------- */
 .cp-panel {
     align-items: flex-end;
@@ -710,14 +756,20 @@
 }
 
 /* Narrow windows (RaceHud sets hud--narrow below 1230 reference px, e.g. 4:3 and 16:10). The hint chip drops
-   below the medal pill so it never covers the lap time, and the key bar moves right, into the gap between the
+   below the medal and ghost pills so it never covers the lap time, and the key bar moves right, into the gap between the
    drift panel (ends at 366 px) and the speed gauge (starts 210 px from the right). */
 .hud--narrow .callout {
-    top: 228px;
+    top: 266px; /* below the ghost chip too (audit 13) */
 }
 
 .hud--narrow .controls-hint {
     translate: 78px 0;
+}
+
+/* That gap has no room for a third key, so the P key (audit 9) is left out there. It is still listed on the start
+   screen and on the PAUSED card. A static part of a hint, never animated, so display:none is fine here. */
+.hud--narrow .controls-hint .key--pause {
+    display: none;
 }
 
 /* Keycaps (also used on the start and results screens). */
@@ -2028,7 +2080,8 @@
 }
 
 /* The next-medal chip can already show the next target after a new medal: hide it, the card tells the story. */
-.st-finish .medal-target.is-shown {
+.st-finish .medal-target.is-shown,
+.st-finish .ghost-chip.is-shown {
     opacity: 0;
 }
 

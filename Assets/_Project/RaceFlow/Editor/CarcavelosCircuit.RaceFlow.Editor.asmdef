@@ -5,9 +5,11 @@
         "CarcavelosCircuit.Shared",
         "CarcavelosCircuit.Shared.Editor",
         "CarcavelosCircuit.RaceFlow",
+        "CarcavelosCircuit.Track",
         "CarcavelosCircuit.Audio",
         "Unity.RenderPipelines.Core.Runtime",
-        "Unity.RenderPipelines.Universal.Runtime"
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.Cinemachine"
     ],
     "includePlatforms": [
         "Editor"

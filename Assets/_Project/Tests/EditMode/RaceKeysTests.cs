@@ -39,6 +39,7 @@ namespace CarcavelosCircuit.Tests.EditMode
         [TestCase(Key.O)] // settings
         [TestCase(Key.C)] // credits
         [TestCase(Key.M)] // mute
+        [TestCase(Key.P)] // pause: RaceManager reads P by itself, so it must not also start the race
         public void MenuKeys_DoNotStartTheRaceOrEndThePause(Key key)
         {
             Assert.IsFalse(RaceKeys.CountsAsStartKey(key));

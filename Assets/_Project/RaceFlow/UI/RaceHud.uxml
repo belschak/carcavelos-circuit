@@ -38,6 +38,13 @@
                             <ui:Label name="medal-target-name" text="BRONZE" class="medal-target-name f-ui" />
                             <ui:Label name="medal-target-time" text="0:12.000" class="medal-target-time f-num" />
                         </ui:VisualElement>
+
+                        <!-- The ghost you race (audit 13): whose lap and its time, dot in the ghost's colour. Hidden without a ghost -->
+                        <ui:VisualElement name="ghost-chip" class="ghost-chip">
+                            <ui:VisualElement class="ghost-dot" />
+                            <ui:Label name="ghost-chip-name" text="GHOST: DEAN" class="ghost-chip-name f-ui" />
+                            <ui:Label name="ghost-chip-time" text="1:02.4" class="ghost-chip-time f-num" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
 
                     <!-- Checkpoint progress: "2/3" and one diamond per checkpoint plus the finish (pips made in RaceHud.cs) -->
@@ -115,7 +122,9 @@
                 <ui:VisualElement class="keycap"><ui:Label text="R" class="f-ui" /></ui:VisualElement>
                 <ui:Label text="RECOVER" class="key-text f-ui" />
                 <ui:VisualElement class="keycap keycap--wide"><ui:Label text="ENTER" class="f-ui" /></ui:VisualElement>
-                <ui:Label text="RETRY" class="key-text key-text--last f-ui" />
+                <ui:Label text="RETRY" class="key-text f-ui" />
+                <ui:VisualElement class="keycap key--pause"><ui:Label text="P" class="f-ui" /></ui:VisualElement>
+                <ui:Label text="PAUSE" class="key-text key-text--last key--pause f-ui" />
             </ui:VisualElement>
         </ui:VisualElement>
 
@@ -153,7 +162,9 @@
                     <ui:VisualElement class="keycap"><ui:Label text="R" class="f-ui" /></ui:VisualElement>
                     <ui:Label text="RECOVER" class="key-text f-ui" />
                     <ui:VisualElement class="keycap keycap--wide"><ui:Label text="ENTER" class="f-ui" /></ui:VisualElement>
-                    <ui:Label text="RETRY" class="key-text key-text--last f-ui" />
+                    <ui:Label text="RETRY" class="key-text f-ui" />
+                    <ui:VisualElement class="keycap"><ui:Label text="P" class="f-ui" /></ui:VisualElement>
+                    <ui:Label text="PAUSE" class="key-text key-text--last f-ui" />
                 </ui:VisualElement>
                 <ui:Label name="start-best" text="" class="start-best f-num intro intro--5" />
                 <!-- Menu buttons (task P7). The keys O, C and M do the same, and never start the race -->
@@ -227,14 +238,14 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- ===== Pause (task P7): the tab or window lost focus during the countdown or the race ===== -->
+        <!-- ===== Pause (task P7): the tab or window lost focus, or P was pressed (audit 9), during the countdown or the race ===== -->
         <ui:VisualElement name="pause-screen" class="overlay pause-screen">
             <ui:VisualElement class="pause-bg" />
             <ui:VisualElement name="pause-pattern-host" class="pattern-host" />
             <ui:VisualElement class="pause-content">
                 <ui:Label text="PAUSED" class="pause-title f-display" />
                 <ui:VisualElement name="pause-wave-host" class="wave-host wave-host--small" />
-                <ui:Label text="CLICK OR PRESS ANY KEY TO CONTINUE" class="pill pause-pill f-ui" />
+                <ui:Label text="PRESS P, ANY KEY OR CLICK TO CONTINUE" class="pill pause-pill f-ui" />
                 <ui:Label text="THE CLOCK IS STOPPED" class="pause-note f-ui" />
             </ui:VisualElement>
         </ui:VisualElement>
@@ -350,7 +361,7 @@
                     <!-- Page 2: tools and sources (as in THIRD_PARTY.md and the README credits) -->
                     <ui:VisualElement name="credits-page-2" class="credits-page">
                         <ui:Label text="BUILT WITH" class="credits-head f-ui" />
-                        <ui:Label text="Unity 6.3 LTS  ·  Universal Render Pipeline  ·  UI Toolkit  ·  Input System  ·  Blender" class="credit-text f-ui" />
+                        <ui:Label text="Unity 6.3 LTS  ·  Universal Render Pipeline  ·  Cinemachine  ·  UI Toolkit  ·  Input System  ·  Blender" class="credit-text f-ui" />
                         <ui:Label text="SOUND" class="credits-head credits-head--next f-ui" />
                         <ui:Label text="Sound effects: elevenlabs.io (kart engine and drift by Luc Tippmann, boost by David Belschak). Music and all other sounds: our own synthesised work." class="credit-text f-ui" />
                         <ui:Label text="MAP DATA" class="credits-head credits-head--next f-ui" />
