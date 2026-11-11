@@ -166,7 +166,7 @@ COLUMN = 0.9
 LIB_NORTH_TOP = FLOOR1 + 8.6
 CURTAIN_BAYS = 12
 CURTAIN_FRAME = 0.45
-LIB_WEST_BAY = 4.3                  # west colonnade: 7 bays of about 4.5 m (V10i: 5.5 m)
+LIB_WEST_BAY = 4.3                  # west colonnade: 6 glazed bays of 4.35 m + the open loggia bay (V10i: 5 of 5.3 m)
 # the open cafe pergola against the main building (OSM w1414332250, building=roof): only its east part is the pergola
 # (16 x 9 m; the OSM outline's west part was a glass pavilion at the door of the old building: open plaza now)
 PERGOLA_ID = "w1414332250"

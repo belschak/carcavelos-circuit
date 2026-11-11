@@ -12,7 +12,7 @@ V16 (photosphere survey V15, E1 2.10 and E2 2.7; panoramas E16_h135, E25_h315, E
   loggia      the south end bay is open over both storeys to the south AND to the plaza (west): the blank upper wall
               ends at the porch's back line, the roof slab runs on over it, a square column stands in the open corner;
               6 m deep (V10i: 4.5 m, upper west wall across it, a one-storey pier: it read as a portal frame)
-  west face   7 glazed bays of about 4.3 m between the white piers (V10i: 5 bays of 5.5 m)
+  west face   6 glazed bays of 4.35 m between the white piers, then the open loggia bay (V10i: 5 bays of 5.3 m)
   north face  one two-storey curtain wall, 12 bays of 1.9 m, in a white frame 0.45 m thick (V10i: three separate
               ground-floor bays between thick piers under a blank wall); block and bridge 8.6 m high (V10i: 7.4 m)
   bridge      glass ribbon from 4.6 to 8.0 m in 7 panes; the passage keeps its piers, walls, width and clear height
