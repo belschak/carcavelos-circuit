@@ -13,6 +13,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -29,6 +31,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.92
   },
@@ -45,6 +49,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -61,6 +67,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.65
   },
@@ -77,6 +85,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.95
   },
@@ -93,6 +103,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.15
   },
@@ -109,6 +121,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -125,8 +139,46 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
+  },
+  {
+   "name": "W_fort_stone",
+   "colour": [
+    0.7633,
+    0.6844,
+    0.5365
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.05
+  },
+  {
+   "name": "W_fort_top",
+   "colour": [
+    0.6569,
+    0.5984,
+    0.479
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.05
   },
   {
    "name": "W_B_wall_1",
@@ -141,6 +193,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -157,6 +211,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -173,8 +229,82 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
+  },
+  {
+   "name": "W_beach_roof",
+   "colour": [
+    0.9353,
+    0.9192,
+    0.879
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_concrete_sand",
+   "colour": [
+    0.8469,
+    0.7832,
+    0.653
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_B_roof_tiles",
+   "colour": [
+    0.7792,
+    0.3995,
+    0.2956
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
+   "name": "W_B_solar",
+   "colour": [
+    0.1596,
+    0.2124,
+    0.2919
+   ],
+   "metallic": 0.2,
+   "albedo": "solar_panel_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.65
   },
   {
    "name": "W_B_interior_wall",
@@ -189,6 +319,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.2
   },
@@ -205,8 +337,52 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
+  },
+  {
+   "name": "W_ground_map",
+   "colour": [
+    0.6452,
+    0.6608,
+    0.5058
+   ],
+   "metallic": 0.0,
+   "albedo": "ground_colour.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "ground": {
+    "shader": "CarcavelosCircuit/Ground",
+    "mask": "ground_mask_data.png",
+    "detail": "ground_detail_data.png",
+    "detail_normal": "ground_detail_normal_data.png"
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.05
+  },
+  {
+   "name": "W_backdrop_land",
+   "colour": [
+    0.6101,
+    0.704,
+    0.5365
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.05
   },
   {
    "name": "W_far_white",
@@ -221,6 +397,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -237,6 +415,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -253,6 +433,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -269,24 +451,10 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
-  },
-  {
-   "name": "W_backdrop_land",
-   "colour": [
-    0.6101,
-    0.704,
-    0.5365
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.05
   },
   {
    "name": "W_sea_water",
@@ -301,21 +469,46 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.88,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "water": {
     "shader": "CarcavelosCircuit/Sea",
     "normal": "sea_waves_normal.png",
     "shore_map": "sea_shore_data.png",
     "shore_rect": [
-     -720.0,
+     -920.0,
      -670.0,
      580.0,
      240.0
     ],
     "shore_range": 60.0,
-    "coast": -100.0
-   }
+    "coast": -100.0,
+    "coast_west": [
+     -860.0,
+     68.0,
+     0.522
+    ]
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.88
+  },
+  {
+   "name": "W_timber_deck",
+   "colour": [
+    0.6296,
+    0.5058,
+    0.3733
+   ],
+   "metallic": 0.0,
+   "albedo": "timber_deck_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
   },
   {
    "name": "W_B_interior_column",
@@ -330,6 +523,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.4
   },
@@ -353,40 +548,10 @@
     "strength": 2.0
    },
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.5
-  },
-  {
-   "name": "W_fort_stone",
-   "colour": [
-    0.8469,
-    0.7991,
-    0.6922
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.05
-  },
-  {
-   "name": "W_fort_top",
-   "colour": [
-    0.7435,
-    0.704,
-    0.614
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.05
   },
   {
    "name": "W_lighthouse_white",
@@ -401,31 +566,46 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.3
   },
   {
    "name": "W_lighthouse_red",
    "colour": [
-    0.7792,
-    0.2231,
-    0.2375
+    0.4752,
+    0.1947,
+    0.1771
    ],
    "metallic": 0.0,
    "albedo": null,
    "normal": null,
    "normal_strength": 1.0,
-   "emission": {
-    "colour": [
-     1.0,
-     0.3547,
-     0.3103
-    ],
-    "strength": 2.0
-   },
+   "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
-   "smoothness": 0.5
+   "smoothness": 0.4
+  },
+  {
+   "name": "W_fort_rock",
+   "colour": [
+    0.5519,
+    0.4867,
+    0.351
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.05
   },
   {
    "name": "W_marker_jump",
@@ -440,6 +620,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -456,24 +638,46 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
   {
-   "name": "W_concrete_sand",
+   "name": "W_granite_kerb",
    "colour": [
-    0.8469,
-    0.7832,
-    0.653
+    0.5519,
+    0.5635,
+    0.5713
    ],
    "metallic": 0.0,
+   "albedo": "granite_kerb_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.2
+  },
+  {
+   "name": "W_steel",
+   "colour": [
+    0.6491,
+    0.6648,
+    0.6922
+   ],
+   "metallic": 0.85,
    "albedo": null,
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
-   "smoothness": 0.1
+   "smoothness": 0.7
   },
   {
    "name": "W_bench_wood",
@@ -488,6 +692,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.2
   },
@@ -504,24 +710,10 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.4
-  },
-  {
-   "name": "W_steel",
-   "colour": [
-    0.6491,
-    0.6648,
-    0.6922
-   ],
-   "metallic": 0.85,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.7
   },
   {
    "name": "W_gloss_black",
@@ -536,6 +728,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.5
   },
@@ -552,6 +746,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.25
   },
@@ -568,6 +764,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.5
   },
@@ -584,6 +782,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.3
   },
@@ -600,6 +800,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.6
   },
@@ -616,6 +818,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.8
   },
@@ -632,6 +836,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.5
   },
@@ -648,6 +854,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.55
   },
@@ -664,6 +872,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -687,6 +897,8 @@
     "strength": 2.0
    },
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.5
   },
@@ -703,8 +915,46 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.4
+  },
+  {
+   "name": "W_planter_cream",
+   "colour": [
+    0.8469,
+    0.807,
+    0.7277
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
+   "name": "W_lifeguard_flag",
+   "colour": [
+    0.9071,
+    0.7673,
+    0.2846
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.2
   },
   {
    "name": "W_chair_frame",
@@ -719,6 +969,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.4
   },
@@ -735,6 +987,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -751,6 +1005,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -767,24 +1023,28 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
-   "smoothness": 0.05
+   "smoothness": 0.2
   },
   {
-   "name": "W_planter_cream",
+   "name": "W_thatch",
    "colour": [
-    0.8469,
-    0.807,
-    0.7277
+    0.6962,
+    0.5751,
+    0.3808
    ],
    "metallic": 0.0,
-   "albedo": null,
+   "albedo": "thatch_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
-   "smoothness": 0.15
+   "smoothness": 0.05
   },
   {
    "name": "W_soil",
@@ -799,6 +1059,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.0
   },
@@ -815,6 +1077,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -831,6 +1095,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -847,6 +1113,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.3
   },
@@ -863,6 +1131,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.15
   },
@@ -879,6 +1149,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -895,6 +1167,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.15
   },
@@ -911,6 +1185,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.15
   },
@@ -927,6 +1203,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -943,6 +1221,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -959,6 +1239,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.4
   },
@@ -975,6 +1257,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.4
   },
@@ -991,6 +1275,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.6
   },
@@ -1007,6 +1293,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.4
   },
@@ -1023,6 +1311,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.3
   },
@@ -1039,6 +1329,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.2
   },
@@ -1055,6 +1347,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.4
   },
@@ -1071,6 +1365,8 @@
    "normal_strength": 0.6,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": "asphalt_metallic_smoothness.png",
    "smoothness": 0.1
   },
@@ -1087,6 +1383,8 @@
    "normal_strength": 0.6,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.2
   },
@@ -1103,6 +1401,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": "concrete_polished_metallic_smoothness.png",
    "smoothness": 0.65
   },
@@ -1119,6 +1419,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": "concrete_sand_metallic_smoothness.png",
    "smoothness": 0.1
   },
@@ -1135,6 +1437,8 @@
    "normal_strength": 0.6,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.05
   },
@@ -1151,6 +1455,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.2
   },
@@ -1167,6 +1473,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": "concrete_polished_metallic_smoothness.png",
    "smoothness": 0.1
   },
@@ -1190,6 +1498,8 @@
     "strength": 2.0
    },
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.5
   },
@@ -1206,6 +1516,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.15
   },
@@ -1222,6 +1534,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.15
   },
@@ -1238,6 +1552,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.3
   },
@@ -1254,6 +1570,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -1270,6 +1588,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -1286,150 +1606,146 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
   {
-   "name": "W_olive_bark",
+   "name": "W_tree_olive",
    "colour": [
-    0.4867,
-    0.4486,
-    0.3995
+    0.4071,
+    0.4943,
+    0.3621
    ],
    "metallic": 0.0,
-   "albedo": null,
+   "albedo": "veg_ramp_olive_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.05
-  },
-  {
-   "name": "W_olive_crown",
-   "colour": [
-    0.392,
-    0.4867,
-    0.3435
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.03,
+    "flutter": 0.035
+   },
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
   {
-   "name": "W_olive_crown_top",
+   "name": "W_tree_olive_b",
    "colour": [
-    0.6218,
-    0.6648,
-    0.4638
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_olive_bark_b",
-   "colour": [
-    0.5365,
-    0.4867,
-    0.4184
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.05
-  },
-  {
-   "name": "W_palm_trunk",
-   "colour": [
-    0.5984,
+    0.3883,
     0.5058,
-    0.3845
+    0.3361
    ],
    "metallic": 0.0,
-   "albedo": null,
+   "albedo": "veg_ramp_olive_b_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.03,
+    "flutter": 0.035
+   },
    "metallic_smoothness": null,
-   "smoothness": 0.05
+   "smoothness": 0.1
   },
   {
-   "name": "W_palm_leaf",
-   "colour": [
-    0.3733,
-    0.5365,
-    0.2519
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.2
-  },
-  {
-   "name": "W_palm_leaf_dark",
+   "name": "W_tree_palm",
    "colour": [
     0.2956,
     0.4297,
     0.2124
    ],
    "metallic": 0.0,
-   "albedo": null,
+   "albedo": "veg_ramp_palm_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.22,
+    "flutter": 0.28
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_palm_frond",
+   "colour": [
+    0.4184,
+    0.5984,
+    0.2664
+   ],
+   "metallic": 0.0,
+   "albedo": "palm_frond_cutout_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.5,
+   "double_sided": true,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.22,
+    "flutter": 0.28
+   },
    "metallic_smoothness": null,
    "smoothness": 0.15
   },
   {
-   "name": "W_palm_leaf_b",
-   "colour": [
-    0.4259,
-    0.5751,
-    0.2701
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.2
-  },
-  {
-   "name": "W_palm_leaf_dark_b",
+   "name": "W_tree_palm_b",
    "colour": [
     0.3361,
     0.4562,
     0.2303
    ],
    "metallic": 0.0,
-   "albedo": null,
+   "albedo": "veg_ramp_palm_b_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.22,
+    "flutter": 0.28
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_palm_frond_b",
+   "colour": [
+    0.4184,
+    0.5984,
+    0.2664
+   ],
+   "metallic": 0.0,
+   "albedo": "palm_frond_b_cutout_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.5,
+   "double_sided": true,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.22,
+    "flutter": 0.28
+   },
    "metallic_smoothness": null,
    "smoothness": 0.15
   },
@@ -1446,6 +1762,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.15
   },
@@ -1462,6 +1780,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
@@ -1478,6 +1798,8 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.15
   },
@@ -1494,141 +1816,73 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
   {
-   "name": "W_pine_bark",
+   "name": "W_tree_pine",
    "colour": [
-    0.4752,
-    0.325,
-    0.2303
+    0.2993,
+    0.4714,
+    0.3066
    ],
    "metallic": 0.0,
-   "albedo": null,
+   "albedo": "veg_ramp_pine_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.05
-  },
-  {
-   "name": "W_pine_crown",
-   "colour": [
-    0.2846,
-    0.4524,
-    0.2956
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.05,
+    "flutter": 0.04
+   },
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
   {
-   "name": "W_pine_crown_top",
+   "name": "W_tree_pine_b",
    "colour": [
-    0.4981,
-    0.6335,
-    0.3808
+    0.2737,
+    0.4372,
+    0.2883
    ],
    "metallic": 0.0,
-   "albedo": null,
+   "albedo": "veg_ramp_pine_b_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.05,
+    "flutter": 0.04
+   },
    "metallic_smoothness": null,
    "smoothness": 0.1
-  },
-  {
-   "name": "W_bark",
-   "colour": [
-    0.4184,
-    0.314,
-    0.2375
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.05
-  },
-  {
-   "name": "W_pine_crown_b",
-   "colour": [
-    0.2555,
-    0.4146,
-    0.2737
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_pine_crown_top_b",
-   "colour": [
-    0.4486,
-    0.5984,
-    0.3472
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_ground_map",
-   "colour": [
-    0.6452,
-    0.6608,
-    0.5058
-   ],
-   "metallic": 0.0,
-   "albedo": "ground_colour.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.05,
-   "ground": {
-    "shader": "CarcavelosCircuit/Ground",
-    "mask": "ground_mask_data.png",
-    "detail": "ground_detail_data.png",
-    "detail_normal": "ground_detail_normal_data.png"
-   }
   },
   {
    "name": "W_T_cut_wall",
    "colour": [
-    0.8469,
-    0.7832,
-    0.653
+    0.8509,
+    0.7594,
+    0.5945
    ],
    "metallic": 0.0,
-   "albedo": "concrete_sand_albedo.png",
+   "albedo": "render_ochre_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
-   "metallic_smoothness": "concrete_sand_metallic_smoothness.png",
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
    "smoothness": 0.1
   },
   {
@@ -1644,180 +1898,64 @@
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.1
   },
   {
-   "name": "W_tree_pine",
+   "name": "W_island_kerb",
    "colour": [
-    0.2941,
-    0.4745,
-    0.302
+    0.807,
+    0.7792,
+    0.7238
    ],
    "metallic": 0.0,
-   "albedo": "veg_ramp_pine_albedo.png",
+   "albedo": null,
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
-   "smoothness": 0.1,
-   "wind": {
-    "shader": "CarcavelosCircuit/Foliage",
-    "bend": 0.05,
-    "flutter": 0.04
-   }
+   "smoothness": 0.15
   },
   {
-   "name": "W_tree_pine_b",
+   "name": "W_island_planting",
    "colour": [
-    0.2667,
-    0.4392,
-    0.2824
+    0.2519,
+    0.2993,
+    0.216
    ],
    "metallic": 0.0,
-   "albedo": "veg_ramp_pine_b_albedo.png",
+   "albedo": null,
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
-   "smoothness": 0.1,
-   "wind": {
-    "shader": "CarcavelosCircuit/Foliage",
-    "bend": 0.05,
-    "flutter": 0.04
-   }
+   "smoothness": 0.05
   },
   {
-   "name": "W_tree_palm",
+   "name": "W_island_gravel",
    "colour": [
-    0.2902,
-    0.4314,
-    0.2
+    0.7119,
+    0.6569,
+    0.5442
    ],
    "metallic": 0.0,
-   "albedo": "veg_ramp_palm_albedo.png",
+   "albedo": null,
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
    "metallic_smoothness": null,
-   "smoothness": 0.1,
-   "wind": {
-    "shader": "CarcavelosCircuit/Foliage",
-    "bend": 0.22,
-    "flutter": 0.28
-   }
-  },
-  {
-   "name": "W_tree_palm_b",
-   "colour": [
-    0.3333,
-    0.4588,
-    0.2196
-   ],
-   "metallic": 0.0,
-   "albedo": "veg_ramp_palm_b_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.1,
-   "wind": {
-    "shader": "CarcavelosCircuit/Foliage",
-    "bend": 0.22,
-    "flutter": 0.28
-   }
-  },
-  {
-   "name": "W_tree_olive",
-   "colour": [
-    0.4078,
-    0.498,
-    0.3608
-   ],
-   "metallic": 0.0,
-   "albedo": "veg_ramp_olive_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.1,
-   "wind": {
-    "shader": "CarcavelosCircuit/Foliage",
-    "bend": 0.03,
-    "flutter": 0.035
-   }
-  },
-  {
-   "name": "W_tree_olive_b",
-   "colour": [
-    0.3882,
-    0.5098,
-    0.3333
-   ],
-   "metallic": 0.0,
-   "albedo": "veg_ramp_olive_b_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "metallic_smoothness": null,
-   "smoothness": 0.1,
-   "wind": {
-    "shader": "CarcavelosCircuit/Foliage",
-    "bend": 0.03,
-    "flutter": 0.035
-   }
-  },
-  {
-   "name": "W_palm_frond",
-   "colour": [
-    0.4196,
-    0.6039,
-    0.2588
-   ],
-   "metallic": 0.0,
-   "albedo": "palm_frond_cutout_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.5,
-   "double_sided": true,
-   "metallic_smoothness": null,
-   "smoothness": 0.15,
-   "wind": {
-    "shader": "CarcavelosCircuit/Foliage",
-    "bend": 0.22,
-    "flutter": 0.28
-   }
-  },
-  {
-   "name": "W_palm_frond_b",
-   "colour": [
-    0.4196,
-    0.6039,
-    0.2588
-   ],
-   "metallic": 0.0,
-   "albedo": "palm_frond_b_cutout_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.5,
-   "double_sided": true,
-   "metallic_smoothness": null,
-   "smoothness": 0.15,
-   "wind": {
-    "shader": "CarcavelosCircuit/Foliage",
-    "bend": 0.22,
-    "flutter": 0.28
-   }
+   "smoothness": 0.1
   },
   {
    "name": "W_grass_tuft",

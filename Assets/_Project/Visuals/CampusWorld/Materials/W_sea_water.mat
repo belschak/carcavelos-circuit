@@ -141,6 +141,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 0.1911, g: 0.5442, b: 0.835, a: 1}
+    - _CoastWest: {r: -860, g: 68, b: 0.522, a: 0}
     - _Color: {r: 0.19109997, g: 0.5442, b: 0.835, a: 1}
     - _DeepColor: {r: 0.07, g: 0.3, b: 0.62, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
@@ -148,7 +149,7 @@ Material:
     - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
     - _Glint: {r: 260, g: 2.4, b: 0, a: 0}
     - _ShallowColor: {r: 0.33, g: 0.8, b: 0.78, a: 1}
-    - _ShoreRect: {r: -720, g: -670, b: 0.00076923077, a: 0.0010989011}
+    - _ShoreRect: {r: -920, g: -670, b: 0.00066666666, a: 0.0010989011}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _WaveA: {r: 13, g: 1, b: 0.35, a: 0.9}
     - _WaveB: {r: 21, g: -0.45, b: 1, a: 0.6}

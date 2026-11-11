@@ -37,6 +37,16 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_B_roof_tiles
+    second: {fileID: 2100000, guid: c9a7e83b5e1ab44af9f9ec87d7e8b2c4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_solar
+    second: {fileID: 2100000, guid: 0de55bd9454b24de8b4177c3df7ac2a5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_B_steel
     second: {fileID: 2100000, guid: 58b47cd51ffc5445588795738d127b18, type: 2}
   - first:
@@ -87,6 +97,16 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_beach_roof
+    second: {fileID: 2100000, guid: c08f4a7bafee14b96b17a528e03c1869, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_concrete_sand
+    second: {fileID: 2100000, guid: 75f3cddc185974e5eb1b11e435f2ca32, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_far_cream
     second: {fileID: 2100000, guid: 1718ae3fe27af4729bedfb356ed23857, type: 2}
   - first:
@@ -107,6 +127,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_fort_rock
+    second: {fileID: 2100000, guid: 3f2b3d4787d4f47b69d5affc4b13e05a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_fort_stone
     second: {fileID: 2100000, guid: 631cb4a53982345c18181af4fdd4680c, type: 2}
   - first:
@@ -117,6 +142,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_granite_kerb
+    second: {fileID: 2100000, guid: fde569e6c20c8469698ff413deb4befb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_ground_map
     second: {fileID: 2100000, guid: ae4fb58be0c3e4049a95152f455dec8a, type: 2}
   - first:
@@ -124,6 +154,21 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_interior_light
     second: {fileID: 2100000, guid: 0fc098f5d0a6b49b5afed89454f359fe, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_island_gravel
+    second: {fileID: 2100000, guid: 57ba53f6cc6134ba585adf1bdadade00, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_island_kerb
+    second: {fileID: 2100000, guid: 42c7aa050df8a4132941f86b763d1d1f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_island_planting
+    second: {fileID: 2100000, guid: d2352e61730a146fcae226d8a73b05c6, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -149,6 +194,16 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_sea_water
     second: {fileID: 2100000, guid: f7ca4a071b3d14397a52632fa9ce310e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_steel
+    second: {fileID: 2100000, guid: ef1f319485b9b4726a6b67bfdf900cb2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_timber_deck
+    second: {fileID: 2100000, guid: fa28bf9015d6e4be3bacfde8f91f972f, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

@@ -7,6 +7,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_B_roof_tiles
+    second: {fileID: 2100000, guid: c9a7e83b5e1ab44af9f9ec87d7e8b2c4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_bark
     second: {fileID: 2100000, guid: 7f53831f45e604f978125ad33430631e, type: 2}
   - first:
@@ -87,6 +92,16 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_fort_rock
+    second: {fileID: 2100000, guid: 3f2b3d4787d4f47b69d5affc4b13e05a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_fort_top
+    second: {fileID: 2100000, guid: a836d9b1998854897a87021217493311, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_gloss_black
     second: {fileID: 2100000, guid: d5524e2b70b174b80b3ffc359a9e9c09, type: 2}
   - first:
@@ -114,6 +129,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_leaf_dark
     second: {fileID: 2100000, guid: 1a75760506f4f478eae847ce2e4a52bb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_lifeguard_flag
+    second: {fileID: 2100000, guid: 029d55a5aeb174da79ad1e7eae0ef785, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -289,6 +309,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_study_wood
     second: {fileID: 2100000, guid: 79ca30fa94abc4b648a9d195e3a1abb3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_thatch
+    second: {fileID: 2100000, guid: 0d221acdb6a3b4521b0351431902b100, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
