@@ -22,8 +22,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string FenceName = "WhiteGuardrails";
         // As in WhiteGuardrailBuilder (Role 2): where the fence stands and what a post looks like.
         private const float EdgeOffset = 0.3f, PostHeight = 0.75f, PostSize = 0.09f, PostBottom = -0.15f;
-        private const float Inner = 0.6f, Outer = 1.3f;   // a fence or wall triangle lies this far inside .. outside the fence line
-        private const float HeightReach = 2.5f;           // ... and this close to the road's height (not the road above the tunnel)
+        private const float HeightReach = 2.5f;           // a post is looked for this close to the road's height
 
         [System.Serializable] private class Free { public int from, to, side; public string why; }
         [System.Serializable] private class FreeList { public int points; public Free[] free = new Free[0]; }
@@ -83,6 +82,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 }
             }
 
+            candidates = null;
             MeshFilter mf = fence.GetComponent<MeshFilter>();
             MeshCollider mc = fence.GetComponent<MeshCollider>();
             int cutFence, cutWall = 0, posts;
@@ -163,42 +163,63 @@ namespace CarcavelosCircuit.Visuals.Editor
             return mesh;
         }
 
-        // True if the point lies on the fence line of a free piece (between route points k and k + 1, on that side).
+        // True if the point belongs to a free piece: the fence piece nearest to it (between the fence points of route
+        // points k and k + 1 on one side, exactly where WhiteGuardrailBuilder puts them) is a free one. Measured against
+        // the fence points themselves, not the centreline: in front of a hall door HallDoorApproach shifts and narrows
+        // the route from point to point, and there a test "so many metres beside the centreline" left pieces standing
+        // (a fence across the shortcut's exit at the atrium door: a boosted kart stopped dead on its invisible wall).
         private static bool OnFreePiece(Vector3 c)
         {
-            int n = centre.Length;
-            float best = float.MaxValue;
-            bool free = false;
-            for (int k = 0; k < n; k++)
+            if (candidates == null)
             {
-                if (!freeRight[k] && !freeLeft[k])
+                BuildCandidates();
+            }
+            float best = Reach * Reach;
+            bool free = false;
+            foreach (Piece piece in candidates)
+            {
+                float d = SegmentDistanceSquared(c, piece.a, piece.b);
+                // At a shared fence point (a post) a free piece wins over its kept neighbour: a new end post goes there.
+                if (d < best - 0.0004f || (d < best + 0.0004f && piece.free && !free))
                 {
-                    continue;
+                    best = Mathf.Min(best, d);
+                    free = piece.free;
                 }
-                Vector3 a = centre[k], b = centre[(k + 1) % n];
-                if (Mathf.Abs(c.y - (a.y + b.y) * 0.5f) > HeightReach + Mathf.Abs(a.y - b.y))
-                {
-                    continue;
-                }
-                Vector2 ab = new Vector2(b.x - a.x, b.z - a.z), ac = new Vector2(c.x - a.x, c.z - a.z);
-                float t = Vector2.Dot(ac, ab) / Mathf.Max(0.0001f, ab.sqrMagnitude);
-                // 0.3 m past both ends: Noah's posts stand on fence points made with a direction averaged over 4 route
-                // points, so the post at a piece's first point can lie a little before it (the post at the tunnel mouth did).
-                if (t < -0.15f || t > 1.15f)
-                {
-                    continue;
-                }
-                float across = (ab.x * ac.y - ab.y * ac.x) / Mathf.Max(0.0001f, ab.magnitude);   // > 0 = left of the driving direction
-                float line = Mathf.Lerp(width[k], width[(k + 1) % n], Mathf.Clamp01(t)) * 0.5f + EdgeOffset;
-                float off = Mathf.Abs(across) - line;
-                if (off < -Inner || off > Outer || Mathf.Abs(off) >= best)
-                {
-                    continue;
-                }
-                best = Mathf.Abs(off);
-                free = across > 0f ? freeLeft[k] : freeRight[k];
             }
             return free;
+        }
+
+        private struct Piece { public Vector3 a, b; public bool free; }
+        private static List<Piece> candidates;
+        private const float Reach = 0.55f;    // boards and posts lie on the fence line, the wall up to 0.3 m outside it (and up to 0.9 m up)
+
+        // The free pieces and the kept pieces right before and after each of them.
+        private static void BuildCandidates()
+        {
+            candidates = new List<Piece>();
+            int n = centre.Length;
+            foreach (float side in new[] { 1f, -1f })
+            {
+                bool[] free = side > 0 ? freeRight : freeLeft;
+                for (int k = 0; k < n; k++)
+                {
+                    if (free[k] || free[(k + 1) % n] || free[(k - 1 + n) % n])
+                    {
+                        candidates.Add(new Piece { a = FencePoint(k, side), b = FencePoint((k + 1) % n, side), free = free[k] });
+                    }
+                }
+            }
+        }
+
+        // Squared distance from p to the fence piece a-b; heights between the fence's foot and the wall's top count as on it.
+        private static float SegmentDistanceSquared(Vector3 p, Vector3 a, Vector3 b)
+        {
+            Vector3 ab = b - a;
+            float t = Mathf.Clamp01(Vector3.Dot(p - a, ab) / Mathf.Max(0.0001f, ab.sqrMagnitude));
+            Vector3 q = a + ab * t;
+            float up = p.y - q.y;
+            float dy = up < -0.2f ? up + 0.2f : up > 1.0f ? up - 1.0f : 0f;
+            return (p.x - q.x) * (p.x - q.x) + (p.z - q.z) * (p.z - q.z) + dy * dy;
         }
 
         // True if the untrimmed fence has a board on the piece from route point k to k + 1 on that side.
