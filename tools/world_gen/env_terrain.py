@@ -186,6 +186,8 @@ def apply():
 
     import env_streets                    # V10f: the sunken terrace of the two beach restaurants (survey 4.2)
     env_streets.lower_nodes(heights)
+    import env_campus                     # V10c2: the lower plaza east of the race line is level (Floor 0)
+    env_campus.lower_nodes(heights)
 
     E.set_heightfield(heights)
     print(f"  terrain: {changed} vertices reshaped along the route, tunnel covered by {cover} m")

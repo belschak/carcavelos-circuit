@@ -33,6 +33,7 @@ import env_corridor             # noqa: E402
 import env_covebank             # noqa: E402  V10d: the cove bank outside the corridor
 import env_streets              # noqa: E402  V10f: the street section rebuilt from the Street View survey
 import env_street_objects       # noqa: E402
+import env_campus               # noqa: E402  V10c2: campus buildings, courtyards, pools
 import env_vegetation           # noqa: E402
 import env_props                # noqa: E402
 
@@ -113,7 +114,7 @@ def build_ground(heights):
             a = j * COLS + i
             cx, cy = X0 + (i + 0.5) * STEP, Y0 + (j + 0.5) * STEP
             if env_terrain.in_portal_hole(cx, cy) or env_corridor.covers_cell(cx, cy) or env_covebank.covers_cell(cx, cy) \
-                    or env_streets.covers_cell(cx, cy):
+                    or env_streets.covers_cell(cx, cy) or env_campus.covers_cell(cx, cy):
                 continue                       # the tunnel portal / the cut walls close this gap; V10d: the cove bank;
                                                # V10f: the restaurant terrace
             faces.append((a, a + 1, a + 1 + COLS, a + COLS))
@@ -290,6 +291,7 @@ def build_dressing():
     veg = env_vegetation.place()
     props = env_props.place(avoid=veg)
     veg, props = env_street_objects.dress(veg, props)      # V10f: the street section's own trees, cars and furniture
+    veg, props = env_campus.dress(veg, props)              # V10c2: nothing in the pools, on the berms or the lower plaza
     env_vegetation.instance_for_preview(veg, protos)
     env_props.instance_for_preview(props, protos)
     print(f"  dressing: {len(protos)} prototypes, {len(veg)} plants, {len(props)} props")
@@ -573,10 +575,12 @@ def main():
     env_corridor.build_data()              # high-res corridor along the track; from now on E.ground_z uses it
     env_covebank.plan()                    # V10d: 0.5 m lattice where the cove kerb crosses the 5 m grid
     env_streets.plan_terrace()             # V10f: 1 m lattice along the retaining wall of the restaurant terrace
+    env_campus.plan_ground()               # V10c2: sunken courtyards and D's pool (trays in the 5 m grid)
     build_ground(heights)
     env_corridor.build_mesh()
     env_covebank.build_mesh()
     env_streets.build_terrace_mesh()
+    env_campus.build_ground_mesh()
     env_streets.build()                    # V10f: paving, markings, kerbs, walls (before the dressing stands on it)
     build_paths()
     env_buildings.build()

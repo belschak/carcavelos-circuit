@@ -1205,6 +1205,35 @@ BUILDERS = {
 BUILDERS.update({"timber_deck": make_timber_deck, "granite_kerb": make_granite_kerb, "thatch": make_thatch})   # V10b
 
 
+# ----------------------------------------------------------------------------------------------
+# V10c2. Bar railing as a cutout: one 3 m module of the campus railings (flat top rail, bottom rail, vertical flat
+# bars about 12 cm apart, a post at each end), 512 x 256 RGBA, alpha = steel / air. env_campus.py puts one module on
+# a single sheet per about 3 m of railing (roof terraces, decks, balconies), instead of 3D bars.
+# ----------------------------------------------------------------------------------------------
+def make_railing(W=512, H=256, seed=1616):
+    k = 4
+    steel, shade = np.array(rgb("#D4D7DA")) * 255, np.array(rgb("#9FA4AA")) * 255
+    img = Image.new("RGBA", (W * k, H * k), tuple(int(v) for v in steel) + (0,))
+    draw = ImageDraw.Draw(img)
+    px_m = W * k / 3.0                                   # pixels per metre (module 3 m wide, 1.1 m tall)
+    py_m = H * k / 1.1
+
+    def bar(x0, x1, y0, y1, col):                        # metres, y up from the foot
+        draw.rectangle([x0 * px_m, H * k - y1 * py_m, x1 * px_m - 1, H * k - y0 * py_m - 1],
+                       fill=tuple(int(v) for v in col) + (255,))
+    for i in range(1, 25):                               # 24 bars, 12 cm apart
+        x = i * 0.12
+        bar(x - 0.011, x + 0.011, 0.10, 1.03, lerp(steel, shade, 0.35))
+    bar(0.0, 3.0, 0.07, 0.115, shade)                    # bottom rail
+    bar(0.0, 3.0, 1.03, 1.10, steel)                     # flat top rail
+    bar(0.0, 0.03, 0.0, 1.10, steel)                     # posts (half a post at each end: neighbours complete it)
+    bar(2.97, 3.0, 0.0, 1.10, steel)
+    img.resize((W, H), Image.LANCZOS).save(os.path.join(TEX_DIR, "railing_cutout_albedo.png"))
+
+
+BUILDERS["railing"] = make_railing
+
+
 def main(argv):
     os.makedirs(TEX_DIR, exist_ok=True)
     os.makedirs(OUT_DIR, exist_ok=True)

@@ -16,6 +16,7 @@ import bpy
 
 import env_common as E
 import env_beachfront           # V10b: beachfront restaurants, cove pavilion, promenade edge
+import env_campus               # V10c2: the Nova SBE buildings on and west of the spine, each as itself
 
 STOREY = 3.5
 WALL, GLASS, ROOF, STEEL, GLASS_ROOF = range(5)
@@ -161,6 +162,8 @@ def build_canopy(b, index):
 def build_one(b, index):
     if env_beachfront.owns(b):
         return env_beachfront.build_one(b, index)
+    if env_campus.owns(b):                              # V10c2
+        return env_campus.build_one(b, index)
     if b.get("osm_building") == "roof":
         return build_canopy(b, index)
     pts = b["points"]
@@ -470,6 +473,7 @@ def build():
             det = E.new_object("BD_" + name[2:], details, col)
             det.parent = obj
     env_beachfront.build_promenade()
+    env_campus.build_extras()                           # V10c2: pools, courtyard walls, seat steps, berms
     # build_roundabout_island()   V10c: replaced in V10f by env_streets (radius 14.3 m, sett apron, steel wedges)
 
 

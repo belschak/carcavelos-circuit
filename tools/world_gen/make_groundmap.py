@@ -15,6 +15,7 @@ import os
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
+import campus_plan
 import coast
 import street_plan
 
@@ -70,6 +71,17 @@ def street_layers(scale, lawn_mask=False):
             c = (0, 0, 0) if lawn_mask else STREET_COLOURS.get(lay["mat"]) or tuple(
                 int(street_plan.PALETTE[lay["mat"][4:]][k:k + 2], 16) for k in (1, 3, 5))
         d.polygon([to_px(x, y, scale) for x, y in lay["ring"]], fill=c + (255,))
+    return img
+
+
+def campus_layers(scale, lawn_mask=False):
+    """V10c2: (colour RGB, coverage) of the campus plan's ground paint (campus_plan.GROUND_PAINT: entrance plaza,
+    courtyards, lower plaza, pads and paths), drawn in order at `scale` pixels per map pixel."""
+    img = Image.new("RGBA", (int(W * scale), int(H * scale)), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    for lay in campus_plan.GROUND_PAINT:
+        c = (lay["lawn"],) * 3 if lawn_mask else lay["colour"]
+        d.polygon([to_px(x, y, scale) for x, y in lay["ring"]], fill=tuple(c) + (255,))
     return img
 
 
@@ -200,6 +212,11 @@ def write_mask():
     path = np.asarray(paths.resize((MASK_W, mh), Image.LANCZOS), np.float32) / 255.0
     sea, beach, _cove, rock, metres = coast_masks(MASK_W, mh)
     land = 1.0 - sea
+    campus = np.asarray(campus_layers(SS, lawn_mask=True).resize((MASK_W, mh), Image.LANCZOS), np.float32) / 255.0
+    cover = campus[..., 3]                                                      # V10c2: campus paving is no lawn
+    mask[..., 0] = mask[..., 0] * (1.0 - cover) + campus[..., 0] * cover
+    mask[..., 1] = mask[..., 1] * (1.0 - cover)
+    path = path * (1.0 - cover)
     streets = np.asarray(street_layers(SS, lawn_mask=True).resize((MASK_W, mh), Image.LANCZOS), np.float32) / 255.0
     cover = streets[..., 3]
     mask[..., 0] = mask[..., 0] * (1.0 - cover) + streets[..., 0] * cover       # V10f: lawn as the street plan says
@@ -242,6 +259,8 @@ def main():
     path_rgb = layer[..., :3]                     # Pillow scales RGBA premultiplied and returns straight colour
     arr = paint_coast(arr, alpha)
     arr = arr + (path_rgb - arr) * alpha[..., None]
+    campus = np.asarray(campus_layers(SS).resize((W, H), Image.LANCZOS), np.float32)       # V10c2: campus paving
+    arr = arr + (campus[..., :3] - arr) * (campus[..., 3:4] / 255.0)
     streets = np.asarray(street_layers(SS).resize((W, H), Image.LANCZOS), np.float32)      # V10f: over everything
     arr = arr + (streets[..., :3] - arr) * (streets[..., 3:4] / 255.0)
     write_mask()
