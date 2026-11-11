@@ -35,6 +35,9 @@ namespace CarcavelosCircuit.Ambience
         private GameObject foamObject;
         private Mesh surferMesh;
         private SurferBrain[] surfers;
+        private SurferLook[] looks;
+        private SprayTrail[] sprays;
+        private ISurferVisual[] riders;          // null = the riders are built in code (no surfer model set)
         private Vector3[] surferVertices;
         private Vector3[] surferNormals;
         private Color32[] surferColours;
@@ -179,12 +182,12 @@ namespace CarcavelosCircuit.Ambience
                 surfers[i].Step(deltaTime, field);
             }
             waveWriter.Write(field, beach);
+            WriteSurfers(time);                  // also puts the surfers' spray into the foam layer
             waveMesh.vertices = waveWriter.Vertices;
             waveMesh.colors32 = waveWriter.Colours;
             foamMesh.vertices = waveWriter.Vertices;
             foamMesh.colors32 = waveWriter.FoamColours;
             foamMesh.uv = waveWriter.FoamUV;
-            WriteSurfers();
             surferMesh.vertices = surferVertices;
             surferMesh.normals = surferNormals;
             surferMesh.colors32 = surferColours;
@@ -243,19 +246,24 @@ namespace CarcavelosCircuit.Ambience
             beach = line;
             field = new WaveField(waveTuning);
             bool linear = QualitySettings.activeColorSpace == ColorSpace.Linear;
-            waveWriter = new WaveMeshWriter(field.Capacity, line.Samples, settings.DeepWater, settings.FaceWater, settings.CrestWater, settings.Foam, linear);
+            int count = Mathf.Clamp(settings.SurferCount, 2, 4);
+            waveWriter = new WaveMeshWriter(field.Capacity, line.Samples, settings.DeepWater, settings.FaceWater, settings.CrestWater, settings.Foam, linear, count);
 
             surferTuning = settings.MakeSurferTuning();
             surferTuning.BeachHalfLength = waveTuning.BeachLength * 0.5f - waveTuning.EndFade * 0.6f;
-            int count = Mathf.Clamp(settings.SurferCount, 2, 4);
             surfers = new SurferBrain[count];
+            looks = new SurferLook[count];
+            sprays = new SprayTrail[count];
             float usable = waveTuning.BeachLength * 0.5f - waveTuning.EndFade;
             for (int i = 0; i < count; i++)
             {
                 // Spread out along the beach, each one with its own repeatable "random" surfing.
                 float home = Mathf.Lerp(-usable, usable, (i + 0.5f) / count) * 0.8f;
                 surfers[i] = new SurferBrain(surferTuning, home, 1234 + i * 977);
+                looks[i] = MakeLook(i, linear);
+                sprays[i] = new SprayTrail();
             }
+            riders = SurferRiders.Spawn(settings.SurferModel, transform, count);
             surferVertices = new Vector3[count * SurferBody.VertsPerSurfer];
             surferNormals = new Vector3[surferVertices.Length];
             surferColours = new Color32[surferVertices.Length];
@@ -277,7 +285,7 @@ namespace CarcavelosCircuit.Ambience
             waveObject = NewChild("Waves", waveMesh, waveMaterial, false);
 
             // The foam lace: the same points and triangles again, drawn after the water with the foam picture.
-            foamMesh = NewMesh("Foam (R12)", waveWriter.Vertices, waveWriter.Indices, area);
+            foamMesh = NewMesh("Foam (R12)", waveWriter.Vertices, waveWriter.FoamIndices, area);
             foamMesh.colors32 = waveWriter.FoamColours;
             foamMesh.uv = waveWriter.FoamUV;
             foamObject = NewChild("Foam", foamMesh, foamMaterial, false);
@@ -292,27 +300,61 @@ namespace CarcavelosCircuit.Ambience
             surferObject = NewChild("Surfers", surferMesh, surferMaterial, true);
         }
 
-        private void WriteSurfers()
+        private void WriteSurfers(float time)
         {
-            Color[] suits = settings.WetsuitColours;
-            Color[] boards = settings.BoardColours;
-            Color[] skins = settings.SkinColours;
-            bool linear = QualitySettings.activeColorSpace == ColorSpace.Linear;
             for (int i = 0; i < surfers.Length; i++)
             {
                 SurferBrain s = surfers[i];
                 Vector3 position = beach.PointAt(s.Along, s.Distance, s.Height);
                 Quaternion rotation = beach.Rotation(s.Heading) * Quaternion.Euler(s.Pitch * Mathf.Rad2Deg, 0f, s.Lean * 28f);
                 Matrix4x4 world = Matrix4x4.TRS(position, rotation, Vector3.one * settings.SurferScale);
-                Color32 hair = Pick(settings.HairColours, i, linear);
-                SurferBody.Write(s, world, Pick(suits, i, linear), Pick(skins, i, linear), hair, Pick(boards, i, linear),
-                                 surferTuning.PopUpSeconds, joints, surferVertices, surferNormals, surferColours, i * SurferBody.VertsPerSurfer);
+                bool builtInCode = riders == null;
+                SurferBody.Write(s, world, looks[i], surferTuning.PopUpSeconds, joints, surferVertices, surferNormals, surferColours, i * SurferBody.VertsPerSurfer, builtInCode);
+                if (!builtInCode)
+                {
+                    // An imported model rides instead (swap seam, see ISurferVisual): it follows the same pose.
+                    SurferBody.PoseJoints(s.State, s.StateTime, s.PaddleCycle, surferTuning.PopUpSeconds, s.Lean, joints);
+                    riders[i].Show(s, world * SurferBody.RiderSpace(s), joints);
+                }
+
+                // Spray behind the board once the surfer is up and riding; what is in the air still fades after.
+                if (s.State == SurferState.Riding && s.StateTime > surferTuning.PopUpSeconds)
+                {
+                    sprays[i].Ride(world.MultiplyPoint3x4(SurferBody.TailPoint), rotation * Vector3.right, time);
+                }
+                else
+                {
+                    sprays[i].Rest();
+                }
+                waveWriter.WriteSpray(i, sprays[i], time);
             }
         }
 
-        private static Color32 Pick(Color[] colours, int i, bool linear)
+        // Surfer number i's own look: every one gets another wetsuit, accent, skin, hair and board (all made up).
+        private SurferLook MakeLook(int i, bool linear)
         {
-            Color c = colours != null && colours.Length > 0 ? colours[i % colours.Length] : Color.grey;
+            var look = new SurferLook();
+            Color suit = PickColour(settings.WetsuitColours, i);
+            look.Suit = ToShader(suit, linear);
+            Color accent = PickColour(settings.AccentColours, i);
+            look.SuitTop = ToShader(Color.Lerp(suit, accent, 0.6f), linear);      // second tone: a deeper version of the accent
+            look.Accent = ToShader(accent, linear);
+            look.Skin = ToShader(PickColour(settings.SkinColours, i), linear);
+            look.Hair = ToShader(PickColour(settings.HairColours, i), linear);
+            look.Deck = ToShader(PickColour(settings.BoardColours, i), linear);
+            look.HairStyle = i % 4;
+            look.SuitStyle = i % 3;
+            return look;
+        }
+
+        private static Color PickColour(Color[] colours, int i)
+        {
+            return colours != null && colours.Length > 0 ? colours[i % colours.Length] : Color.grey;
+        }
+
+        // Vertex colours are not converted by Unity, so in a linear-colour project we convert them ourselves.
+        private static Color32 ToShader(Color c, bool linear)
+        {
             return linear ? (Color32)c.linear : (Color32)c;
         }
 
@@ -372,6 +414,18 @@ namespace CarcavelosCircuit.Ambience
             foamMesh = null;
             foamTexture = null;
             Remove(surferObject);
+            if (riders != null)
+            {
+                for (int i = 0; i < riders.Length; i++)
+                {
+                    var model = riders[i] as Component;
+                    if (model != null)
+                    {
+                        Remove(model.gameObject);
+                    }
+                }
+                riders = null;
+            }
             Remove(waveMesh);
             Remove(surferMesh);
             waveObject = null;

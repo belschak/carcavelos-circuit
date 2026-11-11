@@ -20,8 +20,8 @@ namespace CarcavelosCircuit.Ambience
         // The thin foam sheet on the sand, per cross-section point: where it sits between the sheet's back (0) and
         // front (1) edge, how strong the soft layer is and how strong the lace. Bright lacy line near the front edge.
         private static readonly float[] SheetPlace = { 0f, 0f, 0.2f, 0.4f, 0.58f, 0.74f, 0.86f, 0.95f, 1f };
-        private static readonly float[] SheetSoft = { 0f, 0.08f, 0.2f, 0.22f, 0.25f, 0.3f, 0.55f, 0.7f, 0f };
-        private static readonly float[] SheetLace = { 0f, 0.4f, 0.5f, 0.55f, 0.6f, 0.7f, 1f, 1f, 0f };
+        private static readonly float[] SheetSoft = { 0f, 0.05f, 0.2f, 0.22f, 0.25f, 0.3f, 0.55f, 0.7f, 0f };
+        private static readonly float[] SheetLace = { 0f, 0.22f, 0.45f, 0.5f, 0.55f, 0.7f, 1f, 1f, 0f };
 
         // Strip p joins cross-section point p and p + 1 (see WaveProfile.Section). Painter's order for a camera on
         // the beach looking out to sea (where the race camera always is): per wave first the back, then the face
@@ -30,6 +30,8 @@ namespace CarcavelosCircuit.Ambience
 
         private readonly int slots;
         private readonly int samples;
+        private readonly int ribbons;            // spray ribbons (one per surfer), stored after the waves
+        private readonly int sprayStart;         // first spray point in the arrays
         private readonly Color deep, face, crest, softFoam;   // linear colour space values (what the shader expects)
         private readonly Color32 white = new Color32(255, 255, 255, 255);
 
@@ -37,19 +39,28 @@ namespace CarcavelosCircuit.Ambience
         public readonly Color32[] Colours;      // water layer
         public readonly Color32[] FoamColours;  // foam layer: white, alpha = how much lace
         public readonly Vector2[] FoamUV;       // foam layer: where in the foam picture
-        public readonly int[] Indices;          // shared by both layers
+        public readonly int[] Indices;          // water layer: the waves
+        public readonly int[] FoamIndices;      // foam layer: the waves, then the surfers' spray ribbons
 
         public WaveMeshWriter(int waveSlots, int beachSamples, Color deepWater, Color faceWater, Color crestWater, Color foamColour, bool linear)
+            : this(waveSlots, beachSamples, deepWater, faceWater, crestWater, foamColour, linear, 0)
+        {
+        }
+
+        // sprayRibbons = how many surfers may throw spray (SprayTrail), drawn in the foam layer.
+        public WaveMeshWriter(int waveSlots, int beachSamples, Color deepWater, Color faceWater, Color crestWater, Color foamColour, bool linear, int sprayRibbons)
         {
             slots = Mathf.Max(1, waveSlots);
             samples = Mathf.Max(2, beachSamples);
+            ribbons = Mathf.Max(0, sprayRibbons);
             deep = linear ? deepWater.linear : deepWater;
             face = linear ? faceWater.linear : faceWater;
             crest = linear ? crestWater.linear : crestWater;
             Color foam = linear ? foamColour.linear : foamColour;
             softFoam = Color.Lerp(crest, foam, 0.72f);
             int k = WaveProfile.SectionPoints;
-            Vertices = new Vector3[slots * samples * k];
+            sprayStart = slots * samples * k;
+            Vertices = new Vector3[sprayStart + ribbons * SprayTrail.Points * 2];
             Colours = new Color32[Vertices.Length];
             FoamColours = new Color32[Vertices.Length];
             FoamUV = new Vector2[Vertices.Length];
@@ -68,6 +79,43 @@ namespace CarcavelosCircuit.Ambience
                         Indices[n++] = b; Indices[n++] = b + 1; Indices[n++] = a + 1;
                     }
                 }
+            }
+            FoamIndices = new int[Indices.Length + ribbons * (SprayTrail.Points - 1) * 6];
+            System.Array.Copy(Indices, FoamIndices, Indices.Length);
+            for (int r = 0; r < ribbons; r++)
+            {
+                for (int p = 0; p < SprayTrail.Points - 1; p++)
+                {
+                    int a = sprayStart + (r * SprayTrail.Points + p) * 2;   // lower point; + 1 = upper point
+                    FoamIndices[n++] = a; FoamIndices[n++] = a + 1; FoamIndices[n++] = a + 2;
+                    FoamIndices[n++] = a + 2; FoamIndices[n++] = a + 1; FoamIndices[n++] = a + 3;
+                }
+            }
+        }
+
+        public int Ribbons { get { return ribbons; } }
+
+        // Writes surfer number 'ribbon's spray into the foam layer: a short strip from the board's tail back along
+        // its path, white at the water, fading upwards and with age. Points that are gone are folded away.
+        public void WriteSpray(int ribbon, SprayTrail trail, float time)
+        {
+            if (trail == null || ribbon < 0 || ribbon >= ribbons)
+            {
+                return;
+            }
+            Vector3 fold = Vertices[0];
+            for (int p = 0; p < SprayTrail.Points; p++)
+            {
+                Vector3 lower, upper;
+                float alpha;
+                bool there = trail.TryGet(p, time, out lower, out upper, out alpha);
+                if (there)
+                {
+                    fold = lower;
+                }
+                int index = sprayStart + (ribbon * SprayTrail.Points + p) * 2;
+                Set(index, there ? lower : fold, softFoam, 0f, there ? alpha : 0f, new Vector2(p * 0.23f, 0.1f));
+                Set(index + 1, there ? upper : fold, softFoam, 0f, there ? alpha * 0.15f : 0f, new Vector2(p * 0.23f, 0.3f));
             }
         }
 
@@ -170,7 +218,9 @@ namespace CarcavelosCircuit.Ambience
                     distance = Mathf.Lerp(distance, Mathf.Lerp(back, front, SheetPlace[p]), sheet);
                 }
                 float soft = Mathf.Lerp(alpha * (p <= 1 ? 0.45f : 0.8f), SheetSoft[p], sheet) * fadeOut;
-                float lace = Mathf.Lerp(alpha, SheetLace[p], sheet) * fadeOut;
+                // The foam left in the shallows (points 1 to 4) is patchy, not an even net.
+                float patch = p >= 1 && p <= 4 ? Mathf.Lerp(1f, 0.35f + 0.65f * WaveProfile.Lobe(along * 1.7f + 40f, w.Id + 3), sheet) : 1f;
+                float lace = Mathf.Lerp(alpha, SheetLace[p], sheet) * fadeOut * patch;
                 Vector3 position = beach.Point(sample, distance, distance < 0f ? SandLift : Lift);
                 Set(Index(s, i, p), position, softFoam, soft, lace, new Vector2(along / Tile, distance / Tile + v0));
             }
@@ -206,8 +256,8 @@ namespace CarcavelosCircuit.Ambience
         // 0..1: a slow moving bumpy pattern along the foam roll, different for every wave.
         public static float Billow(float along, int id, float age)
         {
-            float a = Mathf.Sin(along * 0.9f + id * 3.1f + age * 1.7f);
-            float b = Mathf.Sin(along * 0.41f - age * 0.9f + id);
+            float a = Mathf.Sin(along * 0.55f + id * 3.1f + age * 1.7f);
+            float b = Mathf.Sin(along * 0.23f - age * 0.9f + id);
             return Clamp01(0.5f + 0.5f * a * b);
         }
 

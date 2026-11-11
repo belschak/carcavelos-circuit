@@ -113,17 +113,23 @@ namespace CarcavelosCircuit.Ambience
         [SerializeField, Tooltip("Seconds for one carving turn (bottom turn + top turn)")]
         private float carveSeconds = 2.2f;
 
-        [SerializeField, Tooltip("Wetsuit colours (made-up surfers, no real people)")]
-        private Color[] wetsuitColours = { new Color(0.11f, 0.11f, 0.12f), new Color(0.12f, 0.16f, 0.24f), new Color(0.11f, 0.11f, 0.12f), new Color(0.16f, 0.20f, 0.20f) };
+        [SerializeField, Tooltip("Wetsuit base colours: dark slate / navy / teal, never pure black (black hides all shading). Art direction 2026-11-11: mid-dark slate (#404D5C) + a coloured panel")]
+        private Color[] wetsuitColours = { new Color(0.25f, 0.3f, 0.36f), new Color(0.2f, 0.27f, 0.42f), new Color(0.3f, 0.31f, 0.34f), new Color(0.17f, 0.35f, 0.38f) };
 
-        [SerializeField, Tooltip("Board colours")]
-        private Color[] boardColours = { new Color(0.92f, 0.92f, 0.93f), new Color(0.89f, 0.77f, 0.55f), new Color(0.92f, 0.92f, 0.93f), new Color(0.55f, 0.78f, 0.90f) };
+        [SerializeField, Tooltip("Board deck colours (cream, sand, Atlantic Blue, white)")]
+        private Color[] boardColours = { new Color(1f, 0.965f, 0.89f), new Color(0.914f, 0.784f, 0.58f), new Color(0.118f, 0.42f, 0.702f), new Color(0.95f, 0.96f, 0.97f) };
+
+        [SerializeField, Tooltip("Accent per surfer: the suit's stripe and chest panel (deeper tone), the stripe down the board and the fins (coral, Atlantic Blue, sun, mint)")]
+        private Color[] accentColours = { new Color(0.902f, 0.275f, 0.235f), new Color(0.271f, 0.659f, 0.949f), new Color(1f, 0.788f, 0.235f), new Color(0.247f, 0.839f, 0.549f) };
 
         [SerializeField, Tooltip("Skin tones")]
         private Color[] skinColours = { new Color(0.87f, 0.68f, 0.54f), new Color(0.60f, 0.42f, 0.30f), new Color(0.78f, 0.58f, 0.44f), new Color(0.43f, 0.29f, 0.21f) };
 
         [SerializeField, Tooltip("Hair colours")]
         private Color[] hairColours = { new Color(0.16f, 0.11f, 0.08f), new Color(0.62f, 0.48f, 0.28f), new Color(0.08f, 0.07f, 0.06f), new Color(0.35f, 0.22f, 0.12f) };
+
+        [SerializeField, Tooltip("Optional: a rigged human model that rides instead of the surfer built in code. It needs a SurferModelPuppet (ISurferVisual) on it. Empty = built in code (SurferBody). Only licence-clean models (e.g. CC0), credited in THIRD_PARTY.md")]
+        private GameObject surferModel;
 
         public string[] SeaNames { get { return seaNames; } }
         public string[] AnchorNames { get { return anchorNames; } }
@@ -139,8 +145,10 @@ namespace CarcavelosCircuit.Ambience
         public float SurferScale { get { return float.IsNaN(surferScale) ? 1f : Mathf.Clamp(surferScale, 0.5f, 3f); } }
         public Color[] WetsuitColours { get { return wetsuitColours; } }
         public Color[] BoardColours { get { return boardColours; } }
+        public Color[] AccentColours { get { return accentColours; } }
         public Color[] SkinColours { get { return skinColours; } }
         public Color[] HairColours { get { return hairColours; } }
+        public GameObject SurferModel { get { return surferModel; } }
 
         // The wave numbers as one plain object, so the wave rules can be tested without an asset.
         public WaveTuning MakeWaveTuning()

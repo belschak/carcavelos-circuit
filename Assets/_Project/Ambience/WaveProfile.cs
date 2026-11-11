@@ -138,11 +138,11 @@ namespace CarcavelosCircuit.Ambience
             {
                 case 0: // long gentle back, starts flat in the sea; behind foam: the end of the lacy trail
                     waterX = -(4f + 4.5f * h); waterY = 0f; waterFoam = 0f; waterAlpha = 0f;
-                    foamX = -(4f + Mathf.Max(0f, trail) + 3f * f); foamY = 0f; foamFoam = 1f; foamAlpha = 0f;
+                    foamX = -(4f + Mathf.Max(0f, trail)); foamY = 0f; foamFoam = 1f; foamAlpha = 0f;
                     break;
                 case 1:
                     waterX = -(1.8f + 2.2f * h); waterY = 0.28f * h; waterFoam = 0f; waterAlpha = 0.65f;
-                    foamX = -(3f + 2.5f * f); foamY = 0.12f * f; foamFoam = 1f; foamAlpha = 0.6f;
+                    foamX = -(3f + 1.2f * f); foamY = 0.12f * f; foamFoam = 1f; foamAlpha = 0.6f;
                     break;
                 case 2:
                     waterX = -(0.5f + 0.75f * h); waterY = 0.78f * h; waterFoam = 0f; waterAlpha = 0.92f;
