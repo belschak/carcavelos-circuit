@@ -431,22 +431,27 @@ namespace CarcavelosCircuit.Visuals.Editor
                 string n = mf.gameObject.name;
                 // V10f: "Street_NoCollide_*" = road markings and low kerbs of the street section: to look at, not to hit.
                 if (!n.StartsWith("Backdrop_", StringComparison.Ordinal) && !n.StartsWith("Tunnel_Lights", StringComparison.Ordinal)
-                    && !n.StartsWith("Street_NoCollide", StringComparison.Ordinal))
+                    && !n.StartsWith("Street_NoCollide", StringComparison.Ordinal) && !n.Contains("NoCollide"))
                 {
                     mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
                 }
                 MarkStatic(mf.gameObject);
+                HideIfColliderOnly(mf);
             }
             GameObject track = Instance("TrackSurface", root.transform);
             foreach (MeshFilter mf in track.GetComponentsInChildren<MeshFilter>(true))
             {
                 // Edge lines and kerbs are paint, not bumps: a collider on the kerbs' ramp faces launched karts.
+                // V10i: "...NoCollide" = to look at only (the stairs' visible steps); "...ColliderOnly" = to drive on or
+                // to stop a kart, never drawn (the stairs' smooth driving surface, the guard strip behind the railings).
                 if (!mf.gameObject.name.StartsWith("Track_EdgeLines", StringComparison.Ordinal)
-                    && !mf.gameObject.name.StartsWith("Track_Kerbs", StringComparison.Ordinal))
+                    && !mf.gameObject.name.StartsWith("Track_Kerbs", StringComparison.Ordinal)
+                    && !mf.gameObject.name.Contains("NoCollide"))
                 {
                     mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
                 }
                 MarkStatic(mf.gameObject);
+                HideIfColliderOnly(mf);
             }
             GameObject guide = Instance("RouteGuide", root.transform);
             guide.SetActive(false);                                   // data for Role 2, never visible in the race
@@ -1052,6 +1057,21 @@ namespace CarcavelosCircuit.Visuals.Editor
         {
             var go = (GameObject)PrefabUtility.InstantiatePrefab(Model(model), parent);
             return go;
+        }
+
+        // V10i: meshes named "...ColliderOnly" keep their collider but are not drawn.
+        private static void HideIfColliderOnly(MeshFilter mf)
+        {
+            if (!mf.gameObject.name.Contains("ColliderOnly"))
+            {
+                return;
+            }
+            MeshRenderer renderer = mf.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                renderer.enabled = false;
+            }
+            GameObjectUtility.SetStaticEditorFlags(mf.gameObject, 0);
         }
 
         private static void MarkStatic(GameObject go)

@@ -56,8 +56,8 @@ def build_lines(pts, fr, col):
     for side in (1, -1):
         for i in range(n):
             a, b = pts[i], pts[(i + 1) % n]
-            if a["tunnel"] or b["tunnel"] or T.is_drop(a, b):
-                continue
+            if a["tunnel"] or b["tunnel"] or T.is_drop(a, b) or a["zone"] in T.PLAZA_ZONES or b["zone"] in T.PLAZA_ZONES:
+                continue                           # V10i: no painted lines on the stairs and the plaza
             if side in kerbs[i] and side in kerbs[(i + 1) % n]:
                 continue
             (_, na), (_, nb) = fr[i], fr[(i + 1) % n]

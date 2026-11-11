@@ -44,7 +44,7 @@ def ground_level_passage(p):
 
 
 def eligible(p):
-    if p["tunnel"] or p["zone"] in SKIP_ZONES:
+    if p["tunnel"] or p["zone"] in SKIP_ZONES or p["zone"] in ("stairs", "plaza deck"):   # V10i: env_plaza builds those
         return False
     if p["building"]:
         return ground_level_passage(p)

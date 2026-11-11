@@ -17,6 +17,7 @@ import bpy
 import env_common as E
 import env_beachfront           # V10b: beachfront restaurants, cove pavilion, promenade edge
 import env_campus               # V10c2: the Nova SBE buildings on and west of the spine, each as itself
+import env_library              # V10i: the library with its loggia and the bridge over the passage
 
 STOREY = 3.5
 WALL, GLASS, ROOF, STEEL, GLASS_ROOF = range(5)
@@ -463,7 +464,10 @@ def build():
     for index, b in enumerate(E.DATA["buildings"]):
         if b["id"] in REDUNDANT:
             continue
-        volume, details = build_one(b, index)
+        if b["id"] == env_library.OSM_ID:              # V10i: the library as in the photos (plaza_plan.py)
+            volume, details = env_library.build(b, index)
+        else:
+            volume, details = build_one(b, index)
         name = "B_" + b["id"] + ("_" + ascii_name(b["name"]) if b["name"] else "")
         col = E.collection("World_Buildings_Campus" if b["campus"] else "World_Buildings_Other")
         obj = E.new_object(name, volume, col)

@@ -129,7 +129,9 @@ def apply():
     """Returns the edited height field and installs it in env_common (E.ground_z uses it from now on)."""
     original = E.DATA["grid"]["heights"]
     heights = [row[:] for row in original]
-    pts = [p for p in E.route_points() if not p["tunnel"] and not p["building"] and p["zone"] != "terrace deck"]
+    import plaza_plan                     # V10i: the stairs and the upper plaza shape their own ground (env_plaza)
+    pts = [p for p in E.route_points() if not p["tunnel"] and not p["building"] and p["zone"] != "terrace deck"
+           and not plaza_plan.owns_route_point(p)]
     cells = {}
     for p in pts:
         cells.setdefault((int(p["x"] // 20), int(p["y"] // 20)), []).append(p)
@@ -171,6 +173,9 @@ def apply():
             if math.hypot(near["x"] - x, near["y"] - y) >= 11.0 or outside_portal(x, y, tunnel, k):
                 continue
             heights[j][i] = max(heights[j][i], near["track_z"] + cover)
+
+    import env_plaza                      # V10i: nodes under and round the upper plaza, the courtyard, the stairs
+    env_plaza.shape_heights(heights)
 
     # coast (coast.py): seabed, beach and cove from the traced waterline; land never below LAND_MIN
     _SHAPED["h"] = [row[:] for row in heights]
