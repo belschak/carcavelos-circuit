@@ -261,6 +261,13 @@ def main():
     arr = arr + (path_rgb - arr) * alpha[..., None]
     campus = np.asarray(campus_layers(SS).resize((W, H), Image.LANCZOS), np.float32)       # V10c2: campus paving
     arr = arr + (campus[..., :3] - arr) * (campus[..., 3:4] / 255.0)
+    # V15a: the entrance plaza in its calcada colour (entrance_plan.py): seen only on the road's shoulders, the rest
+    # lies under the paving mesh of env_entrance.py
+    import entrance_plan
+    ent = Image.new("L", (W * SS, H * SS), 0)
+    ImageDraw.Draw(ent).polygon([to_px(x, y, SS) for x, y in entrance_plan.RING], fill=255)
+    ent = np.asarray(ent.resize((W, H), Image.LANCZOS), np.float32)[..., None] / 255.0
+    arr = arr + (np.array(entrance_plan.CALCADA_RGB, np.float32) - arr) * ent
     streets = np.asarray(street_layers(SS).resize((W, H), Image.LANCZOS), np.float32)      # V10f: over everything
     arr = arr + (streets[..., :3] - arr) * (streets[..., 3:4] / 255.0)
     write_mask()

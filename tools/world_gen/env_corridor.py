@@ -143,7 +143,50 @@ def widths(pts):
     sm = []
     for i in range(n):
         sm.append({s: sum(out[(i + k) % n][s] for k in range(-3, 4)) / 7 for s in (1, -1)})
-    return sm
+    return _hold_back(pts, sm)
+
+
+# V15b (start straight): the race line now turns back 7.4 m from the underground car-park ramp (entrance_plan), which
+# is cut into the 5 m terrain and must not lie under corridor faces. Rows whose side would reach the ramp end
+# RAMP_GAP before its outer walls (never less than the flat road bed); the rows before and after them widen again
+# by RAMP_TAPER per row, so the corridor's edge swings round the ramp instead of jumping. Rows further away keep
+# their width, so the corridor is unchanged everywhere else.
+RAMP_GAP = 1.8            # m between the corridor's edge and the ramp's outer walls
+RAMP_TAPER = 2.0          # m per row (2 m of route): how fast the edge returns to its full width
+HELD_BACK = {}            # (route index, side) -> width, for the build report
+
+
+def _hold_back(pts, width):
+    import entrance_plan as P
+    ring = P.ramp_outer()
+    n = len(pts)
+    fr = frames(pts)
+    cx, cy = sum(p[0] for p in ring) / len(ring), sum(p[1] for p in ring) / len(ring)
+    reach = max(math.hypot(p[0] - cx, p[1] - cy) for p in ring) + CORRIDOR + 6.0
+    cap = {}
+    for i, p in enumerate(pts):
+        if math.hypot(p["x"] - cx, p["y"] - cy) > reach:
+            continue
+        nrm = fr[i][1]
+        for side in (1, -1):
+            o = 0.0
+            while o <= width[i][side]:
+                x, y = p["x"] + nrm[0] * side * o, p["y"] + nrm[1] * side * o
+                if P.inside(x, y, ring) or P.ring_distance(x, y, ring) < RAMP_GAP:
+                    cap[(i, side)] = max(ROAD_HALF + 0.3, o - 0.25)
+                    break
+                o += 0.25
+    HELD_BACK.clear()
+    span = int(CORRIDOR / RAMP_TAPER) + 3
+    for (i, side), o in cap.items():                       # the two rows next to a held-back row end with it
+        for k in range(-span, span + 1):
+            j = (i + k) % n
+            w = min(o + RAMP_TAPER * max(0, abs(k) - 2), width[j][side])
+            if w < HELD_BACK.get((j, side), width[j][side]):
+                HELD_BACK[(j, side)] = w
+    for (j, side), w in HELD_BACK.items():
+        width[j][side] = w
+    return width
 
 
 def profile_height(p, offset, coarse):
@@ -153,6 +196,9 @@ def profile_height(p, offset, coarse):
     half = E.half_width(p)
     road_half = half + 1.0                  # flat part: the road plus 1 m
     shoulder = SHOULDER.get(p["zone"], DEFAULT_SHOULDER)
+    held = HELD_BACK.get((p["i"], 1 if offset > 0 else -1))
+    if held is not None:                    # V15b: a row held back at the car-park ramp is level with the terrain
+        shoulder = min(shoulder, max(0.5, held - road_half - 1.0))       # 1 m before its edge (no step there)
     x = p["x"] + _nrm(p)[0] * offset
     y = p["y"] + _nrm(p)[1] * offset
     outer = coarse(x, y)

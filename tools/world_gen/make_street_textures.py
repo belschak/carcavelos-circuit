@@ -199,3 +199,6 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
+    if not sys.argv[1:]:                     # V15a: the entrance plaza's textures (calcada cubes, drain grating)
+        import make_entrance_textures
+        make_entrance_textures.main()

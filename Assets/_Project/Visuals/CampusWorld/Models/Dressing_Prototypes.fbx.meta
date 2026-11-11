@@ -87,6 +87,21 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_entrance_dark
+    second: {fileID: 2100000, guid: 68e1f6944331c429a80e9c293fd4f53d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_lamp_light
+    second: {fileID: 2100000, guid: 234e134363c434f159c895f55a767f63, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_seat
+    second: {fileID: 2100000, guid: 099f9ce0660c844549c14c1d18326e8b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_event_violet
     second: {fileID: 2100000, guid: 7862560081fd44880be872dd2022e2e5, type: 2}
   - first:
@@ -349,6 +364,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_tree_pine_b
     second: {fileID: 2100000, guid: 0065438baabc64a58b962680eb89a948, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_tree_plaza
+    second: {fileID: 2100000, guid: 620aead0238ae4a38aa5edd5cfbf20be, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

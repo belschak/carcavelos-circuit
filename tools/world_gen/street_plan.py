@@ -748,6 +748,86 @@ def avenue():
 
 
 # =====================================================================================================
+# Section G (V15c): the beach promenade, route i321-i398 (photospheres S_p01..S_p05, survey notes_S 1.1-1.4)
+# The race road (8 m) IS the promenade here, so everything stands beside it: "land" = left of the driving direction.
+# Positions are given along the route (fractional point index, 2 m per point) and as an offset from the centreline.
+# =====================================================================================================
+PROM = (321, 398)                   # first and last route point of the dressing (the tunnel forecourt, x > -5, is V10j's)
+PROM_SETT = (KEEP_OUT - 0.35, 5.65)  # granite-sett border outside the road's shoulder (the paving is clipped at KEEP_OUT)
+PROM_SETT_SEA = ((321, 334), (373, 398))   # sea side: only where there is land beside the road (sand / kerb between)
+PROM_BOLLARD = dict(offset=6.75, step=2.75, size=0.25, height=0.85,   # pale limestone posts on the lawn edge (S_p01)
+                    land=(321.0, 398.0), sea=(321.0, 334.5),          # route index runs: land side, sea-side lawn
+                    gaps=((321.0, 326.4), (355.8, 357.6), (371.6, 373.6), (377.2, 381.0)))   # path mouths (land side)
+PROM_MAST = dict(offset=8.2, at=(325.0, 347.0, 370.5, 392.0), height=13.5)   # white flood masts, every 43-47 m
+PROM_SEAT = dict(offset=6.95, width=0.4, height=0.48,               # curved white seat-walls (S_p03 h080), centre line
+                 runs=((358.0, 364.0), (366.0, 371.0)))              # ... 6.75 m inner face; from/to route index
+PROM_DRAIN = dict(at=323.0, width=0.3, reach=6.35)                   # cast-iron slot drain at the entrance (S_p01 h135)
+PROM_STEPS = dict(run=(356.6, 359.0), start=4.9, rise=0.16, tread=0.34)   # white steps down to the cove sand (S_p03)
+PROM_FITNESS = (                    # outdoor fitness machines on gravel pads on the lawn (S_p01 h135): centre, bearing
+    dict(at=(-148.5, -136.5), bearing=40.0, size=(5.0, 3.2), protos=("Prop_FitnessTwist", "Prop_FitnessBars")),
+    dict(at=(-115.5, -147.0), bearing=100.0, size=(4.4, 3.0), protos=("Prop_FitnessBars", "Prop_FitnessWheel")),
+)
+OLD_OLIVE = dict(survey=(-64.6, 51.8), at=(-63.62, 56.55), scale=0.85)   # lawn path, i114: moved out from 4.9 m
+
+
+def route_at(t):
+    """((x, y), unit tangent) at the fractional route index t."""
+    i = int(math.floor(t))
+    a, b = ROUTE[i % len(ROUTE)], ROUTE[(i + 1) % len(ROUTE)]
+    f = t - i
+    return (a["x"] + (b["x"] - a["x"]) * f, a["y"] + (b["y"] - a["y"]) * f), unit(b["x"] - a["x"], b["y"] - a["y"])
+
+
+def route_side(t, d):
+    """Point d metres to the left (d < 0: right) of the centreline at the fractional route index t, moved out along
+    the local normal until it really is |d| from the whole centreline (inside a bend the plain normal comes closer)."""
+    (x, y), u = route_at(t)
+    n = left_of(u) if d >= 0 else (u[1], -u[0])
+    r = abs(d)
+    for _ in range(8):
+        q = (x + n[0] * r, y + n[1] * r)
+        short = abs(d) - route_distance(*q)
+        if short <= 0.005:
+            break
+        r += short + 0.01
+    return q
+
+
+def route_line(t0, t1, d, step=1.0):
+    """Polyline beside the route from index t0 to t1 at the offset d, a point about every `step` metres of route."""
+    n = max(1, int(round((t1 - t0) * 2.0 / step)))
+    return [route_side(t0 + (t1 - t0) * k / n, d) for k in range(n + 1)]
+
+
+def promenade():
+    sett_uv = None
+    i0, i1 = PROM
+    # land side: one border along the whole stretch; at the seat-walls the setts reach the wall's foot
+    for a, b in ((i0, i1),):
+        layer("G sett border land", "setts", route_line(a, b, PROM_SETT[0], 2.0) + route_line(a, b, PROM_SETT[1], 2.0)[::-1],
+              sett_uv)
+    for a, b in PROM_SEAT["runs"]:
+        foot = PROM_SEAT["offset"] - PROM_SEAT["width"] / 2 + 0.02
+        layer("G sett strip at seat-wall", "setts",
+              route_line(a - 0.4, b + 0.4, PROM_SETT[1] - 0.05) + route_line(a - 0.4, b + 0.4, foot)[::-1], sett_uv)
+    for a, b in PROM_SETT_SEA:
+        layer("G sett border sea", "setts",
+              route_line(a, b, -PROM_SETT[0], 2.0) + route_line(a, b, -PROM_SETT[1], 2.0)[::-1], sett_uv)
+    # the slot drain: the road itself is the race surface and stays as it is, so the grate shows only on both verges
+    t, w = PROM_DRAIN["at"], PROM_DRAIN["width"] / 4.0          # width in route-index units: 2 m per index
+    for side in (1, -1):
+        layer("G drain apron", "concrete", route_line(t - 1.6, t + 1.6, side * (KEEP_OUT - 0.35))
+              + route_line(t - 1.6, t + 1.6, side * (PROM_DRAIN["reach"] + 0.5))[::-1])
+        paint("roof_dark", [route_side(t - w, side * (KEEP_OUT + 0.02)), route_side(t + w, side * (KEEP_OUT + 0.02)),
+                            route_side(t + w, side * PROM_DRAIN["reach"]), route_side(t - w, side * PROM_DRAIN["reach"])])
+    # gravel pads under the fitness machines (ground paint only: no mesh)
+    for f in PROM_FITNESS:
+        u = bearing(f["bearing"])
+        layer("G fitness pad", None, rect(f["at"], u, -f["size"][0] / 2, f["size"][0] / 2, -f["size"][1] / 2, f["size"][1] / 2),
+              ground="gravel")
+
+
+# =====================================================================================================
 # Track surface (colour only): which material the road and its verges show. The route data are not touched.
 # =====================================================================================================
 SURFACE_RUNS = [            # first index, last index, surface
@@ -785,6 +865,7 @@ def build():
     carpark()
     roundabout()
     avenue()
+    promenade()            # V15c
 
 
 build()

@@ -319,6 +319,7 @@ def road_widths(route, beach_tunnel, tunnel_len):
 _WAYPOINTS = {"points": None}      # set by waypoint_route(); used for the passage rule in wall_blockers()
 KICKER = {}                        # wedge kicker facts from apply_profile(), written into route.json
 WALL_CUTS = []                     # index ranges with flat 45 degree cut walls, from apply_section_overrides()
+START_SECTION = {}                 # V15: the section override over the lap seam (points strictly between the two indices)
 
 
 def catmull_closed(pts, samples=16):
@@ -796,6 +797,14 @@ def apply_section_overrides(points, buildings, beach_tunnel, tunnel_len):
         n = len(points)
         near = lambda at: min(range(n), key=lambda i: (points[i]["x"] - at[0]) ** 2 + (points[i]["y"] - at[1]) ** 2)
         a, b = near(spec["from_at"]), near(spec["to_at"])
+        # V15: a section over the lap seam (end of the lap -> point 0) needs "start_at". The list is turned so that
+        # the section lies inside it, the block below runs as for any other section, then _restart() makes the new
+        # point nearest to start_at point 0 again. Sections without "start_at" never get here.
+        seam = (b, points[b]) if "start_at" in spec and a > b else None
+        if seam:
+            k = (a + b) // 2
+            points[:] = points[k:] + points[:k]
+            a, b = a - k, b + n - k
         if not a < b:
             raise ValueError("section override: from_at must come before to_at and must not span point 0")
         pa, pb = (points[a]["x"], points[a]["y"]), (points[b]["x"], points[b]["y"])
@@ -899,7 +908,29 @@ def apply_section_overrides(points, buildings, beach_tunnel, tunnel_len):
                      f"step {step:.3f} m, arc radius {radius:.2f} m); lap {(old_count - count) * SPACING:.0f} m shorter")
         notes.append(f"  steepest slope {slope * 100:.1f} %, tightest bend 1/{1 / curve:.0f} m, nearest wall {room:.1f} m "
                      f"from the centreline, even ramp slope {g * 100:.1f} %")
+        if seam:
+            first_kept, last_kept = seam[1], points[a]             # to_at and from_at (both stay)
+            notes.append(_restart(points, spec["start_at"], *seam))
+            # for env_props: the props of this section must not shift the random sequence of the rest of the lap
+            START_SECTION.update({"from_index": last_kept["i"], "to_index": first_kept["i"], "why": spec["name"]})
     return notes
+
+
+def _restart(points, start_at, old_index, kept):
+    """V15, after a section override over the lap seam: turns the list so that the point nearest to `start_at` is
+    point 0 (start/finish) and renumbers i and s. `kept` (the point at to_at, old index `old_index`) must get its
+    old index back: then every point after the section keeps its index, and the jump index, the wall cuts and the
+    checkpoints of the rest of the lap stay valid. If it does not, the build stops (move start_at or radius_m)."""
+    j = min(range(len(points)), key=lambda i: (points[i]["x"] - start_at[0]) ** 2 + (points[i]["y"] - start_at[1]) ** 2)
+    points[:] = points[j:] + points[:j]
+    for i, p in enumerate(points):
+        p["i"], p["s"] = i, round(i * SPACING, 1)
+    if kept["i"] != old_index:
+        raise ValueError(f"section override over the lap seam: the point after the section would move from index "
+                         f"{old_index} to {kept['i']}; start_at must lie {old_index} steps before to_at")
+    off = math.hypot(points[0]["x"] - start_at[0], points[0]["y"] - start_at[1])
+    return (f"  over the lap seam: point 0 (start/finish) = ({points[0]['x']}, {points[0]['y']}), {off:.2f} m from "
+            f"start_at; points {old_index}.. keep their index; lap now {len(points) * SPACING:.0f} m")
 
 
 def _catmull_open(ctrl, dense=0.25):
@@ -1075,6 +1106,8 @@ def main():
               "axes": "x = east, y = north (Unity: x = east, z = north), metres from the world origin",
               "wall_cuts": WALL_CUTS,
               "points": points}
+    if START_SECTION:                                   # V15: only with a section override over the lap seam
+        result = {**{k: v for k, v in result.items() if k != "points"}, "start_section": START_SECTION, "points": points}
     json.dump(result, open(os.path.join(HERE, "route.json"), "w"), indent=1)
 
     # ---------- report ----------

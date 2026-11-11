@@ -89,6 +89,7 @@ REPORT = {}                         # filled by place(): what could not be place
 # Design pass 2026-11-09 (design reference: busy cafe terraces, planters lining the track, a furnished atrium)
 CAFE_ZONES = {"upper plaza": 4, "promenade": 2, "lower plaza": 1}   # cafe groups per zone (at most)
 CAFE_STEP = 38.0                    # m of route between cafe groups
+START_CAFE_DRAWS = 266              # V15b: random values the cafe group at the start drew in the approved V15 build (14 x 19)
 CAFE_OFFSETS = (9.5, 10.5, 11.5, 12.5, 14.0)   # group centre from the route centreline
 TROUGH_ZONES = {"upper plaza", "lower plaza", "promenade"}
 TROUGH_STEP, TROUGH_OFFSET = 18.0, 6.6          # a pair of flower troughs every ~18 m on straights
@@ -883,6 +884,14 @@ def place(seed=SEED, write=True, avoid=()):
     n = len(pts)
     placed = []
     REPORT.clear()
+    # V15b (start straight): the random sequence below is shared by the whole lap, so props placed in the changed
+    # start section would shift the random turns of every later prop (the cafe groups and atrium chairs in the
+    # refresh zones of dressing_freeze). Props of that section (route.json "start_section") therefore leave the
+    # sequence exactly where the approved build (V15, old start loop) left it: see the two places marked V15b.
+    sec = (E.ROUTE or {}).get("start_section")
+
+    def in_start(i):
+        return bool(sec) and ((i % n) > sec["from_index"] or (i % n) < sec["to_index"])
 
     import env_vegetation as V                      # same reach as the overlap rule in test_env_assets.py
     plants = [(v["x"], v["y"], V.KIND[V._kind(v["proto"])]["space"] * v["scale"]) for v in avoid]
@@ -927,7 +936,10 @@ def place(seed=SEED, write=True, avoid=()):
             _p, (tx, ty), _nrm = site.frame(j)
             bx, by = x + tx * 1.3, y + ty * 1.3
             if fits(bx, by, "Prop_Bin"):
+                state = rng.getstate()
                 placed.append(_entry("Prop_Bin", bx, by, _prop_z(bx, by), rng.uniform(-math.pi, math.pi)))
+                if in_start(j):
+                    rng.setstate(state)                # V15b: the old start loop had no bin: no value drawn
         side = -1 if off > 0 else 1                    # alternate from the side actually used
     REPORT["campus_lamps_missed"] = missed
 
@@ -1094,6 +1106,7 @@ def place(seed=SEED, write=True, avoid=()):
                 break
             land = -_sea_side(site, range(i - 10, i + 11)) if zone == "promenade" else None
             spot = None
+            state = rng.getstate() if in_start(i) else None
             for sd in ((land,) if land else (side, -side)):
                 for di in (0, 2, -2, 4, -4, 6, -6):
                     for off in CAFE_OFFSETS:
@@ -1107,6 +1120,10 @@ def place(seed=SEED, write=True, avoid=()):
                         break
                 if spot:
                     break
+            if state is not None:                      # V15b: the group at the old start drew START_CAFE_DRAWS
+                rng.setstate(state)                    # values (it tried 14 spots) before it stood; the group
+                for _ in range(START_CAFE_DRAWS):      # at the new start tries others, the sequence goes on from
+                    rng.random()                       # the same place as before
             if not spot:
                 continue
             sd, items, j = spot
