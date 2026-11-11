@@ -478,22 +478,106 @@ def make_grass(S=512, seed=77):
 # ----------------------------------------------------------------------------------------------
 # 8. White render facade with very faint panel joints, 3 m x 3 m (512 px)
 # ----------------------------------------------------------------------------------------------
-def make_facade(S=512, seed=88):
+def make_facade(S=1024, seed=88):
+    """V16h: white render with real detail, 3 m x 3 m at 1024 px (3 mm per pixel): fine sand grain and float marks,
+    3.0 x 1.5 m panel joints, very subtle rain streaks that start under each horizontal joint and fade downwards,
+    and a matching normal map (grain, joints). Also the neutral texture that env_materials.TINTED multiplies by the
+    colour of the other rendered walls (cream, ochre, pink, umber)."""
     rng = np.random.default_rng(seed)
     X, Y = grid(S, S)
-    v = (0.010 * noise((S, S), 40, rng) + 0.006 * noise((S, S), 6, rng) + 0.009 * noise((S, S), 1.0, rng)
-         + 0.005 * noise((S, S), 2.2, rng))
+    k = S / 512.0
+    grain = 0.011 * noise((S, S), 0.8, rng) + 0.007 * noise((S, S), 2.2, rng)          # sand in the render
+    marks = 0.006 * warped(noise((S, S), 5.0 * k, rng, 18.0 * k), rng, 14.0 * k, 40.0 * k)   # float marks
+    v = 0.010 * noise((S, S), 40 * k, rng) + 0.006 * noise((S, S), 6 * k, rng) + grain + marks
     alb = rgb("kart_white") * (1.0 + v)[..., None]
-    alb += 0.004 * noise((S, S), 70, rng)[..., None] * np.array([1.0, 0.3, -0.8])
+    alb += 0.004 * noise((S, S), 70 * k, rng)[..., None] * np.array([1.0, 0.3, -0.8])
     # joints: vertical every 3 m (the tile edge), horizontal every 1.5 m -> 3.0 x 1.5 m panels
     d = np.minimum(np.minimum(X, S - X), np.minimum(np.abs(Y - S / 2), np.minimum(Y, S - Y)))
-    line = smoothstep(1.6, 0.4, d)
-    alb = alb * (1.0 - 0.065 * line - 0.012 * (1.0 - smoothstep(1.0, 5.0, d)))[..., None]
-    # a whisper of grime below each horizontal joint
-    streak = (1.0 - smoothstep(0.0, 40.0, np.mod(Y, S / 2))) * (0.5 + 0.5 * noise((S, S), 3.0, rng, 25.0))
-    alb = alb * (1.0 - 0.010 * np.clip(streak, 0, 1))[..., None]
+    line = smoothstep(1.6 * k, 0.4 * k, d)
+    alb = alb * (1.0 - 0.075 * line - 0.012 * (1.0 - smoothstep(1.0 * k, 5.0 * k, d)))[..., None]
+    # rain streaks: thin runs under each horizontal joint (image y grows downwards), strongest in the first 30 cm,
+    # gone after about 1.1 m; a few of them, not a curtain
+    below = np.mod(Y, S / 2) / (S / 2)
+    runs = np.clip(noise((S, S), 2.2 * k, rng, 110.0 * k) - 0.55, 0.0, None) * 0.9
+    streak = np.clip(runs, 0.0, 1.0) * (1.0 - smoothstep(0.0, 0.75, below)) * (0.6 + 0.4 * smoothstep(0.0, 0.03, below))
+    grime = (1.0 - smoothstep(0.0, 0.06, below)) * (0.5 + 0.5 * noise((S, S), 3.0 * k, rng, 25.0 * k))
+    alb = alb * (1.0 - np.clip(0.040 * streak + 0.012 * np.clip(grime, 0, 1), 0.0, 0.08)[..., None] * np.array([1.0, 0.97, 0.9]))
     alb = match_mean(alb, "kart_white", 0.7)
     save("facade_white_albedo.png", alb)
+    height = grain * 9.0 + marks * 14.0 - 0.9 * line
+    save("facade_white_normal.png", normal_map(height, 2.2), dither=False)
+    _tint_gain("facade_white_albedo.png", alb)
+
+
+def _tint_gain(name, alb):
+    """textures/tint_gain.json: 1 / the texture's mean (linear light), so a colour multiplied by the texture
+    (env_materials.TINTED, export_unity_bundle.py) keeps its brightness."""
+    import json
+    path = os.path.join(TEX_DIR, "tint_gain.json")
+    gains = json.load(open(path)) if os.path.exists(path) else {}
+    gains[name] = round(float(1.0 / (np.clip(alb, 0.0, 1.0) ** 2.2).mean()), 4)
+    json.dump(gains, open(path, "w"), indent=1, sort_keys=True)
+
+
+def make_concrete_panel(S=1024, seed=2323):
+    """V16h: fair-faced concrete, 2.4 m x 2.4 m at 1024 px: formwork panels 2.4 x 1.2 m (joint on the tile edge and
+    at mid height), form-tie holes (two rows per panel, 60 cm apart) with a faint run under each, pour clouds, pores.
+    Near-neutral light grey: env_materials.TINTED multiplies it by the material's own colour. With a normal map."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(S, S)
+    m = S / 2.4                                              # pixels per metre
+    clouds = 0.030 * noise((S, S), 60, rng) + 0.016 * noise((S, S), 16, rng) + 0.010 * noise((S, S), 150, rng, 7)   # pour bands
+    fine = 0.008 * noise((S, S), 1.0, rng)
+    alb = rgb("#CFCDC8") * (1.0 + clouds + fine)[..., None]
+    alb += 0.004 * noise((S, S), 70, rng)[..., None] * np.array([1.0, 0.3, -0.8])
+    pores = specks(S, 24, rng, 0.40, 0.8, 2.0, 0.08, 0.17, 1.0)
+    alb = alb * (1.0 + pores)[..., None]
+    d = np.minimum(np.minimum(X, S - X), np.minimum(np.abs(Y - S / 2), np.minimum(Y, S - Y)))
+    line = smoothstep(2.4, 0.9, d)
+    alb = alb * (1.0 - 0.22 * line - 0.04 * (1.0 - smoothstep(1.0, 10.0, d)))[..., None]
+    hole = np.zeros((S, S))
+    run = np.zeros((S, S))
+    for panel in range(2):
+        for row in (0.30, 0.90):
+            cy = (panel * 1.2 + row) * m
+            for cx in (0.3 * m, 0.9 * m, 1.5 * m, 2.1 * m):
+                r = np.hypot(X - cx, Y - cy)
+                hole = np.maximum(hole, smoothstep(0.016 * m, 0.010 * m, r))
+                run = np.maximum(run, np.exp(-((X - cx) / (0.008 * m)) ** 2) * smoothstep(0.0, 0.02 * m, Y - cy)
+                                 * (1.0 - smoothstep(0.0, 0.32 * m, Y - cy)))
+    rim = np.zeros((S, S)) + hole
+    alb = alb * (1.0 - 0.40 * hole - 0.030 * run)[..., None]
+    save("concrete_panel_albedo.png", alb)
+    save("concrete_panel_normal.png", normal_map(fine * 10.0 - 1.1 * line - 1.6 * rim + 5.0 * pores, 2.0), dither=False)
+    _tint_gain("concrete_panel_albedo.png", alb)
+
+
+def make_far_facade(S=512, seed=2424):
+    """V16h: a generic house front for the buildings beyond the map edge (no lettering, nothing from a real building):
+    12 m wide x 9 m high (4 bays, 3 storeys) of pale render with window openings, sills, a floor line per storey and a
+    darker plinth share. Near white, so env_materials.TINTED can multiply it by white, cream and ochre. The corner at
+    (0, 0) is plain wall: WorldLit.shader reads that texel for roofs (world-space UVs)."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(S, S)
+    u, v = X / S * 12.0, (S - Y) / S * 9.0                   # metres across, metres up
+    alb = rgb("#EDEAE4") * (1.0 + 0.012 * noise((S, S), 30, rng) + 0.006 * noise((S, S), 1.5, rng))[..., None]
+    bu, sv = np.mod(u, 3.0), np.mod(v, 3.0)                  # inside one bay, one storey
+    win = (np.abs(bu - 1.5) < 0.62) & (sv > 1.0) & (sv < 2.45)
+    edge = np.minimum(np.minimum(np.abs(bu - 1.5 + 0.62), np.abs(bu - 1.5 - 0.62)), np.minimum(np.abs(sv - 1.0), np.abs(sv - 2.45)))
+    pane = np.floor(u / 3.0).astype(int) * 3 + np.floor(v / 3.0).astype(int)
+    tone = np.array([0.0, 0.5, 0.25, 0.8, 0.1, 0.6, 0.35, 0.9, 0.2, 0.7, 0.45, 0.15])[pane % 12]
+    glass = lerp(rgb("#4E6478"), rgb("#93AEC4"), (tone * (0.5 + 0.5 * (sv - 1.0) / 1.45))[..., None])
+    alb = np.where(win[..., None], glass, alb)
+    alb = np.where((win & (edge < 0.06))[..., None], rgb("#F4F2EE"), alb)                      # frame
+    alb = np.where((win & (np.abs(bu - 1.5) < 0.03))[..., None], rgb("#F4F2EE"), alb)          # mullion
+    sill = (np.abs(bu - 1.5) < 0.70) & (sv > 0.90) & (sv <= 1.0)
+    alb = np.where(sill[..., None], rgb("#D9D5CC"), alb)
+    shade = (np.abs(bu - 1.5) < 0.62) & (sv >= 2.45) & (sv < 2.52)                             # lintel shadow
+    alb = alb * np.where(shade, 0.86, 1.0)[..., None]
+    alb = alb * (1.0 - 0.05 * smoothstep(0.05, 0.0, np.minimum(sv, 3.0 - sv)))[..., None]      # floor line
+    save("far_facade_albedo.png", alb)
+    wall = np.where(win, np.nan, 1.0)[..., None] * alb
+    _tint_gain("far_facade_albedo.png", wall[~np.isnan(wall[..., 0])])
 
 
 # ----------------------------------------------------------------------------------------------
@@ -533,6 +617,10 @@ def make_window_band(W=1024, H=256, seed=99):
     alb = lerp(alb, metal + 0.05 * smoothstep(frame - 2, frame, np.minimum(Y, H - Y))[..., None],
                frame_m[..., None])
     save("window_band_albedo.png", alb)
+    # V16h: the frame and the mullions stand proud of the glass and are matt; the glass is a mirror for the sky
+    metal_mask = np.maximum(mull, frame_m)
+    save("window_band_normal.png", normal_map(blur(metal_mask, 0.8) * 4.0, 1.6), dither=False)
+    save("window_band_rough.png", lerp(0.06, 0.55, metal_mask))
 
 
 # ----------------------------------------------------------------------------------------------
@@ -1203,6 +1291,7 @@ BUILDERS = {
     "solar_panel": make_solar_panel, "render_ochre": make_render_ochre,
 }
 BUILDERS.update({"timber_deck": make_timber_deck, "granite_kerb": make_granite_kerb, "thatch": make_thatch})   # V10b
+BUILDERS.update({"concrete_panel": make_concrete_panel, "far_facade": make_far_facade})                       # V16h
 
 
 # ----------------------------------------------------------------------------------------------
