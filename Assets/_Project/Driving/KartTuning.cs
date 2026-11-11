@@ -111,6 +111,13 @@ namespace CarcavelosCircuit.Driving
         [SerializeField, Tooltip("Flying animation: how many wobbles per second")]
         private float airWobbleHertz = 1.2f;
 
+        [Header("Trick (D11)")]
+        [SerializeField, Tooltip("How long one trick spin in the air takes, in seconds (finish it before landing to get the boost)")]
+        private float trickSeconds = 0.5f;
+
+        [SerializeField, Tooltip("Boost after a clean trick landing, in seconds (uses the same boost as a drift)")]
+        private float trickBoostSeconds = 0.6f;
+
         public float MaxSpeed { get { return maxSpeed; } }
         public float MaxReverseSpeed { get { return maxReverseSpeed; } }
         public float Acceleration { get { return acceleration; } }
@@ -145,5 +152,7 @@ namespace CarcavelosCircuit.Driving
         public float AirPitchFullSpeed { get { return airPitchFullSpeed; } }
         public float AirWobbleDegrees { get { return airWobbleDegrees; } }
         public float AirWobbleHertz { get { return airWobbleHertz; } }
+        public float TrickSeconds { get { return trickSeconds; } }
+        public float TrickBoostSeconds { get { return trickBoostSeconds; } }
     }
 }
