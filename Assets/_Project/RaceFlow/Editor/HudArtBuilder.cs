@@ -43,6 +43,12 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             BuildFont(UiFolder + "/Fonts/Unbounded/Unbounded-Black.ttf", UiFolder + "/Fonts/Unbounded/Unbounded-Black-SDF.asset", 56, 9, false);
             BuildFont(UiFolder + "/Fonts/BarlowCondensed/BarlowCondensed-ExtraBold.ttf", UiFolder + "/Fonts/BarlowCondensed/BarlowCondensed-ExtraBold-SDF.asset", 56, 8, true);
             BuildPlates();
+            // A style sheet only finds a picture or font that existed when it was imported: import them again.
+            string[] sheets = { "RaceHud.uss", "StartScreen.uss", "Leaderboard.uss", "HudArt.uss", "RaceHudTheme.tss" };
+            for (int i = 0; i < sheets.Length; i++)
+            {
+                AssetDatabase.ImportAsset(UiFolder + "/" + sheets[i], ImportAssetOptions.ForceUpdate);
+            }
             AssetDatabase.SaveAssets();
             Debug.Log("HudArtBuilder: fonts and plates built");
         }

@@ -35,8 +35,8 @@
 }
 
 .lb-title {
-    font-size: 24px;
-    letter-spacing: 1px;
+    font-size: 19px; /* Unbounded is wide: at 19 px LEADERBOARD leaves room for the source pill, also at 4:3 */
+    letter-spacing: 0;
     color: var(--cc-white);
     -unity-text-outline-width: 2px;
     text-shadow: 0 3px 0 rgba(14, 34, 56, 0.7);
@@ -51,6 +51,8 @@
 
 /* Where the times come from: a small pill with a coloured dot (online = mint, this device = sand, offline = coral). */
 .lb-source {
+    flex-shrink: 0;
+    margin-left: 6px;
     flex-direction: row;
     align-items: center;
     height: 26px;
@@ -171,8 +173,11 @@
 .lb-row--p1 .lb-rank-text,
 .lb-row--p2 .lb-rank-text,
 .lb-row--p3 .lb-rank-text {
-    font-size: 19px;
+    font-size: 15px;
     color: var(--ink);
+    -unity-text-outline-width: 0;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    -unity-text-align: middle-center;
 }
 
 /* A round avatar per racer, in a colour made from the name (LeaderboardAvatar), so it reads as people. */
@@ -281,8 +286,14 @@
 .lb-row--empty.lb-row--p1 .lb-rank,
 .lb-row--empty.lb-row--p2 .lb-rank,
 .lb-row--empty.lb-row--p3 .lb-rank {
+    width: 26px;
+    height: 26px;
+    margin-top: 0;
+    padding-bottom: 0;
     background-image: none;
     background-color: rgba(14, 34, 56, 0.4);
+    border-width: 2px;
+    border-color: rgba(255, 246, 227, 0.2);
     border-radius: 13px;
 }
 
@@ -580,7 +591,7 @@
 
 /* ---------- Narrow windows (4:3): the title and the source pill must share a 340 px plate ---------- */
 .hud--narrow .lb-title {
-    font-size: 19px;
+    font-size: 17px;
 }
 
 .hud--narrow .lb-gem {
