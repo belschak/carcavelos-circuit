@@ -41,6 +41,14 @@ namespace CarcavelosCircuit.Visuals
             baseMaterial = material;
         }
 
+        // The same, with its own strength (the jump pads are stronger than the tunnel pads, see BoostPadPlan).
+        public void Configure(Vector2 padSize, Material material, float seconds, float multiplier)
+        {
+            Configure(padSize, material);
+            boostSeconds = seconds;
+            speedMultiplier = multiplier;
+        }
+
         private void Awake()
         {
             gameObject.layer = 2; // "Ignore Raycast": the kart's ground ray and the camera never see the trigger

@@ -78,5 +78,22 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.IsTrue(rule.TryBoost(1, 10f));
             Assert.IsTrue(rule.TryBoost(2, 10.1f)); // a bot right behind the player still gets its boost
         }
+
+        [Test]
+        public void JumpPads_AreStrongerThanTheDriftBoost_TunnelPadsAreNot()
+        {
+            const float driftBoost = 1.35f; // KartTuning.boostSpeedMultiplier: the faster boost wins, so less adds nothing
+            Assert.Greater(BoostPadPlan.JumpSpeedMultiplier, driftBoost);
+            Assert.Greater(BoostPadPlan.JumpBoostSeconds, BoostPadPlan.TunnelBoostSeconds);
+            Assert.AreEqual(driftBoost, BoostPadPlan.TunnelSpeedMultiplier, 0.0001f);
+        }
+
+        [Test]
+        public void JumpPads_BoostLastsPastTheEdge()
+        {
+            // At the boosted top speed the kart covers the 6 m from the second pad to the edge well within its boost.
+            float boostedSpeed = 25f * BoostPadPlan.JumpSpeedMultiplier;
+            Assert.Less(BoostPadPlan.OnRampMetres / boostedSpeed, BoostPadPlan.JumpBoostSeconds);
+        }
     }
 }

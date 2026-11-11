@@ -369,6 +369,7 @@ namespace CarcavelosCircuit.Visuals.Editor
 
             float[] s = data.points.Select(p => p.s).ToArray();
             var distances = new List<float>(BoostPadPlan.JumpPads(data.points[data.jump_index].s));
+            int jumpPads = distances.Count;   // the first ones are the jump pads, they get the stronger boost
             bool[] covered = data.points.Select(p => p.tunnel).ToArray();
             foreach (int[] run in BoostPadPlan.CoveredRuns(covered))
             {
@@ -376,9 +377,10 @@ namespace CarcavelosCircuit.Visuals.Editor
             }
 
             Physics.SyncTransforms();
-            foreach (float d in distances)
+            for (int n = 0; n < distances.Count; n++)
             {
-                int i = BoostPadPlan.ClosestPoint(s, data.length_m, d);
+                int i = BoostPadPlan.ClosestPoint(s, data.length_m, distances[n]);
+                bool jump = n < jumpPads;
                 TrackPoint p = data.points[i];
                 Vector3 position = Pos(p);
                 Vector3 up = Vector3.up;
@@ -387,11 +389,13 @@ namespace CarcavelosCircuit.Visuals.Editor
                     position = hit.point;
                     up = hit.normal;
                 }
-                var go = new GameObject("BoostPad s=" + p.s.ToString("0"));
+                var go = new GameObject((jump ? "BoostPad jump s=" : "BoostPad s=") + p.s.ToString("0"));
                 go.transform.SetParent(group.transform, false);
                 go.transform.SetPositionAndRotation(position,
                     Quaternion.LookRotation(Vector3.ProjectOnPlane(Forward(data, i), up).normalized, up));
-                go.AddComponent<BoostPad>().Configure(new Vector2(Mathf.Min(4.5f, p.width - 1f), 3f), material);
+                go.AddComponent<BoostPad>().Configure(new Vector2(Mathf.Min(4.5f, p.width - 1f), 3f), material,
+                    jump ? BoostPadPlan.JumpBoostSeconds : BoostPadPlan.TunnelBoostSeconds,
+                    jump ? BoostPadPlan.JumpSpeedMultiplier : BoostPadPlan.TunnelSpeedMultiplier);
             }
             Debug.Log("CampusWorldBuilder: " + distances.Count + " boost pads.");
         }

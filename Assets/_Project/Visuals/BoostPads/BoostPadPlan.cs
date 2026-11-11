@@ -16,6 +16,16 @@ namespace CarcavelosCircuit.Visuals
         public const float TunnelEndGapMetres = 10f; // no pad closer than this to the tunnel exit
         public const float MinTunnelMetres = 30f;    // shorter covered bits (a bridge, a deck) get no pads
 
+        // How strong a pad is. The kart drives towards MaxSpeed * multiplier while boosting, and the faster of the
+        // drift boost (x1.35) and a pad wins, so a pad at x1.35 adds nothing a drift does not. The jump pads are
+        // stronger, so the kart takes off clearly faster: x1.6 = 40 m/s instead of 33.75 m/s at MaxSpeed 25
+        // (Luc's playtest 2026-11-11: "zu schwach"). Rough estimate for the terrace jump: about 61 m in the air
+        // instead of 47 m; the landing road runs straight for about 70 m. Tunnel pads stay at the drift boost.
+        public const float JumpBoostSeconds = 1.0f;
+        public const float JumpSpeedMultiplier = 1.6f;
+        public const float TunnelBoostSeconds = 0.8f;
+        public const float TunnelSpeedMultiplier = 1.35f;
+
         // The two jump pads, in driving order. Distances can go below 0 when the jump is right after the start line;
         // the caller wraps them around the lap.
         public static List<float> JumpPads(float takeOffDistance)
