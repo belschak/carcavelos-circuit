@@ -748,6 +748,40 @@ def avenue():
 
 
 # =====================================================================================================
+# V16 (photospheres ST01, ST02, N15; survey 3.9, item 29): the avenue's entrance side, y +100 .. +148. The street
+# section ended at y = 100; here the roadways run on to the campus entrance: the east lane becomes the red-brown bus
+# lay-by (3.5 m x 45 m), a calcada strip joins it to the entrance plaza (env_entrance), flush, no kerb.
+# The steel posts along the lay-by, the pylon and the flag poles are env_north's.
+# =====================================================================================================
+AV_ENTRANCE = (100.0, 148.0)        # y range of this piece (the avenue's axis is extended in its last direction)
+AV_LAYBY = (100.5, 145.5)           # y range of the bus lay-by
+AV_LAYBY_W = 3.5
+AV_PLAZA_X = -89.8                  # the calcada strip reaches 0.2 m into the entrance plaza's ring (west edge x = -90)
+
+
+def av_entrance_line(y0, y1):
+    (ax, ay), (bx, by) = AVENUE[-2], AVENUE[-1]
+    u = unit(bx - ax, by - ay)
+    return [(bx + u[0] * (y - by) / u[1], y) for y in (y0, y1)]
+
+
+def avenue_entrance():
+    y0, y1 = AV_ENTRANCE
+    line = av_entrance_line(y0, y1)
+    layer("B2 asphalt", "asphalt", ribbon(line, AV_SLIP[0], AV_WEST_ROAD[1]))
+    layer("B2 west sidewalk", "calcada", ribbon(line, AV_WEST_WALK[0], AV_WEST_WALK[1]))
+    layer("B2 lamp median", "calcada", ribbon(line, AV_MEDIAN[0], AV_MEDIAN[1]))
+    layer("B2 separator", "calcada", ribbon(line, AV_SEPARATOR[0], AV_SEPARATOR[1]))
+    east = offset(line, AV_SLIP[0])
+    layer("B2 plaza strip", "calcada", east + [(AV_PLAZA_X, y1), (AV_PLAZA_X, y0)])
+    lay = av_entrance_line(*AV_LAYBY)
+    layer("B2 bus lay-by", "pal:brick_red", ribbon(lay, AV_SLIP[0], AV_SLIP[0] + AV_LAYBY_W))
+    paint_ribbon("white", lay, AV_SLIP[0] + AV_LAYBY_W - 0.07, AV_SLIP[0] + AV_LAYBY_W + 0.07)     # outline, no word on it
+    dashes(line, (AV_WEST_ROAD[0] + AV_WEST_ROAD[1]) / 2, 0.14, 3.0, 4.0)
+    dashes(line, -7.2, 0.14, 3.0, 4.0, s1=AV_LAYBY[0] - y0 - 1.0)
+
+
+# =====================================================================================================
 # Section G (V15c): the beach promenade, route i321-i398 (photospheres S_p01..S_p05, survey notes_S 1.1-1.4)
 # The race road (8 m) IS the promenade here, so everything stands beside it: "land" = left of the driving direction.
 # Positions are given along the route (fractional point index, 2 m per point) and as an offset from the centreline.
@@ -865,6 +899,7 @@ def build():
     carpark()
     roundabout()
     avenue()
+    avenue_entrance()      # V16
     promenade()            # V15c
 
 
