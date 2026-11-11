@@ -506,12 +506,14 @@ def make_window_band(W=1024, H=256, seed=99):
     pane = np.floor(X / pane_w).astype(int) % 4
     v = (Y - frame) / (H - 2 * frame)                           # 0 = top of the glass, 1 = sill
     # sky reflection: light at the top, fading into the dark blue-grey glass below mid height
-    refl = 0.50 * (1.0 - smoothstep(0.0, 0.66, v)) ** 1.25
+    # design pass 2026-11-09: brighter glass (design reference: light sky reflections, warm rooms behind)
+    refl = 0.72 * (1.0 - smoothstep(0.0, 0.75, v)) ** 1.1
     wisps = np.clip(noise((H, W), 34, rng, 6), 0, None) * (1.0 - smoothstep(0.05, 0.5, v))
     refl = refl + 0.07 * wisps
     refl = refl * np.array([1.0, 0.92, 1.06, 0.97])[pane]       # every pane reflects a bit differently
-    alb = lerp(rgb("glass"), rgb("#86A8C6"), refl[..., None])
-    alb = alb * (1.0 - 0.08 * smoothstep(0.6, 1.0, v))[..., None]
+    alb = lerp(rgb("#4D677D"), rgb("#B4CDE2"), np.clip(refl, 0, 1)[..., None])
+    room = smoothstep(0.55, 0.85, v) * (1.0 - smoothstep(0.93, 1.0, v)) * np.array([0.9, 0.5, 1.0, 0.7])[pane]
+    alb = lerp(alb, rgb("#C9AE86"), 0.35 * room[..., None])       # warm interiors glimpsed in the lower glass
     # crisp diagonal glints, two per pane at different offsets (classic stylised glass)
     lx = X - pane * pane_w
     glint = np.zeros((H, W))
@@ -920,10 +922,183 @@ def seam_report():
         print(f"  {stem:26s} {a.shape[1]:4d}x{a.shape[0]:<4d} horizontal {seam_ratio(a, 1):5.2f}  vertical {vert}{note}")
 
 
+# Palm frond cutout (soft-look test 2026-11-10): the feathered outline of the palm fronds comes from this texture's
+# alpha, not from geometry (env_vegetation.add_frond maps u across the blade, v from base to tip).
+FROND_M = (1.6, 4.6)        # metres covered by the texture: across, along (env_vegetation.FROND_TEX_WIDTH)
+FROND_PALETTES = {          # shade at the leaflet base, leaflet tip, rachis
+    "palm_frond": ("#3A642C", "#86B349", "#A3B862"),
+    "palm_frond_b": ("#426B30", "#92BA50", "#ADBE6A"),
+}
+
+
+def make_palm_frond(W=256, H=512, seed=1212):
+    """textures/palm_frond_cutout_albedo.png (+ _b): RGBA, alpha = leaf / no leaf. A rachis down the middle and 34
+    narrow leaflets per side, angled towards the tip and bending slightly back (droop), each a little lighter
+    towards its tip; the whole frond is darker at the base. Drawn 4x larger and scaled down, so the alpha edge is
+    smooth; the colour under the cut-away parts is leaf green, so no dark fringe shows in the distance."""
+    from PIL import ImageDraw
+    k = 4
+    w, h = W * k, H * k
+    sx, sy = w / FROND_M[0], h / FROND_M[1]                 # pixels per metre across / along
+
+    def px(x, y):                                           # metres (x across from the rachis, y from the base)
+        return (w / 2 + x * sx, h - y * sy)                 # v = 0 (base) is the bottom row
+
+    for stem, (c_base, c_tip, c_rachis) in FROND_PALETTES.items():
+        rng = np.random.default_rng(seed)
+        base, tip, rachis = (np.array(rgb(c)) * 255 for c in (c_base, c_tip, c_rachis))
+        img = Image.new("RGBA", (w, h), tuple(int(v) for v in lerp(base, tip, 0.4)) + (0,))
+        draw = ImageDraw.Draw(img)
+        n = 34
+        for side in (-1, 1):
+            for i in range(n):
+                t = (i + 0.5 + rng.uniform(-0.15, 0.15)) / n
+                y0 = 0.2 + 4.15 * t                                         # where the leaflet leaves the rachis
+                ang = np.radians(62 - 34 * t + rng.uniform(-4, 4))          # angle to the rachis: wide at the base
+                length = (0.52 + 0.34 * np.sin(np.pi * t ** 0.8) ** 0.7) * rng.uniform(0.92, 1.06) * (1.0 - 0.45 * t ** 4)
+                width = 0.14 * rng.uniform(0.9, 1.1)
+                shade = (0.1 + 0.5 * t) + rng.uniform(-0.08, 0.08)           # frond: dark at the base, light at the tip
+                steps = 10
+                centre = []
+                for j in range(steps + 1):
+                    s = j / steps
+                    a = ang + 0.3 * s * s                                    # bends back a little: droop
+                    centre.append((s, np.sin(a), np.cos(a)))
+                pos, pts = np.array([0.0, y0]), []
+                for j, (s, dx, dy) in enumerate(centre):
+                    if j:
+                        pos = pos + np.array([dx, dy]) * length / steps
+                    pts.append((s, pos.copy(), np.array([dy, -dx])))
+                for (s0, p0, n0), (s1, p1, n1) in zip(pts, pts[1:]):         # tapering quads, lighter towards the tip
+                    h0 = width / 2 * (1.0 - s0 ** 1.6) * (0.55 + 0.45 * min(s0 / 0.15, 1.0))
+                    h1 = width / 2 * (1.0 - s1 ** 1.6) * (0.55 + 0.45 * min(s1 / 0.15, 1.0))
+                    col = lerp(base, tip, float(np.clip(shade + 0.35 * s0, 0.0, 1.0)))
+                    quad = [p0 + n0 * h0, p1 + n1 * h1, p1 - n1 * h1, p0 - n0 * h0]
+                    draw.polygon([px(side * q[0], q[1]) for q in quad], fill=tuple(int(v) for v in col) + (255,))
+        for j in range(40):                                                  # rachis, tapering
+            y0, y1 = 0.02 + 4.4 * j / 40, 0.02 + 4.4 * (j + 1) / 40
+            hw = 0.045 * (1.0 - 0.8 * j / 40)
+            draw.polygon([px(-hw, y0), px(hw, y0), px(hw, y1), px(-hw, y1)], fill=tuple(int(v) for v in rachis) + (255,))
+        img.resize((W, H), Image.LANCZOS).save(os.path.join(TEX_DIR, stem + "_cutout_albedo.png"))
+
+
+def make_sea_waves(S=512, seed=1313):
+    """textures/sea_waves_normal.png: soft, round ripples for the moving sea (Sea.shader scrolls it twice, in two
+    directions and at two sizes). Height = a sum of sine waves with whole wave numbers, so it tiles exactly, with
+    the crests sharpened a little so the sun glints sit on narrow lines."""
+    rng = np.random.default_rng(seed)
+    y, x = np.mgrid[0:S, 0:S] / S
+    h = np.zeros((S, S))
+    for _ in range(18):
+        kx, ky = rng.integers(-7, 8), rng.integers(1, 8)
+        amp = 1.0 / (1.0 + 0.35 * np.hypot(kx, ky))
+        h += amp * np.sin(TAU * (kx * x + ky * y) + rng.uniform(0, TAU))
+    h = (h - h.min()) / (h.max() - h.min())
+    h = 1.0 - np.abs(2.0 * h - 1.0) ** 1.4                    # round troughs, narrower crests
+    save("sea_waves_normal.png", normal_map(h * S / 64.0, 1.0), dither=False)
+
+
+def _tiling_noise(S, sigma, rng):
+    """Smooth noise that tiles: blurred random values with wrap-around, stretched to 0..1."""
+    from scipy.ndimage import gaussian_filter
+    n = gaussian_filter(rng.random((S, S)), sigma, mode="wrap")
+    return (n - n.min()) / (n.max() - n.min())
+
+
+def make_ground_detail(S=1024, seed=1414):
+    """Detail for the ground shader (Ground.shader), two tiling RGBA data textures (linear numbers, not colour):
+    ground_detail_data.png          R grass: small round tufts of short blades     G soft patches (read at a large scale)
+                                    B sand: wind ripples                           A sand: fine grain
+    ground_detail_normal_data.png   RG grass normal x, y                           BA sand normal x, y (0.5 = flat)
+    All four values average 0.5, so the detail changes the look of the ground colour map, not its colour."""
+    from scipy.ndimage import gaussian_filter
+    rng = np.random.default_rng(seed)
+    k = 2                                                  # drawn 2x larger, then scaled down: soft edges
+    img = Image.new("L", (S * k, S * k), 70)               # dark gaps between the tufts
+    draw = ImageDraw.Draw(img)
+    clump = _tiling_noise(S, 22.0, rng)
+    for _ in range(5200):                                  # a mown lawn from above: small round tufts of short blades
+        x, y = rng.uniform(0, S), rng.uniform(0, S)        # that fan out from their middle, light at the tips;
+        local = clump[int(y) % S, int(x) % S]              # the same in every direction, so nothing smears sideways
+        radius = rng.choice((9.0, 13.0, 18.0), p=(0.45, 0.4, 0.15)) * (0.8 + 0.5 * local) * rng.uniform(0.85, 1.15)
+        blades = int(rng.integers(7, 12))
+        turn = rng.uniform(0, TAU)
+        tone = 150 + rng.normal(0, 18) + (local - 0.5) * 40
+        for ox in (-S, 0, S):                              # wrap around the edges, so the texture tiles
+            for oy in (-S, 0, S):
+                if not (-30 < x + ox < S + 30 and -30 < y + oy < S + 30):
+                    continue
+                cx, cy = (x + ox) * k, (y + oy) * k
+                for j in range(blades):
+                    a = turn + TAU * j / blades + (j * 2.399) % 0.5
+                    r = radius * (0.7 + 0.3 * ((j * 0.618) % 1.0)) * k
+                    mx, my = cx + np.cos(a) * r * 0.5, cy + np.sin(a) * r * 0.5
+                    draw.line([(cx, cy), (mx, my)], fill=int(np.clip(tone - 30, 0, 255)), width=5)
+                    draw.line([(mx, my), (cx + np.cos(a) * r, cy + np.sin(a) * r)], fill=int(np.clip(tone + 55, 0, 255)), width=4)
+    grass = np.asarray(img.resize((S, S), Image.LANCZOS), np.float64) / 255.0
+    grass = gaussian_filter(grass, 0.8, mode="wrap")
+    grass = np.clip(0.5 + (grass - grass.mean()) * 1.1 + (clump - 0.5) * 0.15, 0.0, 1.0)
+
+    patches = 0.6 * _tiling_noise(S, 60.0, rng) + 0.4 * _tiling_noise(S, 18.0, rng)
+    patches = np.clip(0.5 + (patches - patches.mean()) * 1.6, 0.0, 1.0)
+
+    yy, xx = np.mgrid[0:S, 0:S] / S                        # ripples: wavy parallel ridges, a little lopsided
+    warp = (_tiling_noise(S, 40.0, rng) - 0.5) * 2.4 + (_tiling_noise(S, 12.0, rng) - 0.5) * 0.5
+    ph = TAU * (26 * yy + 3 * xx + warp)
+    ripples = 0.5 + 0.5 * np.sin(ph + 0.45 * np.sin(ph))
+    ripples = np.clip(0.5 + (ripples - ripples.mean()) * (0.55 + 0.45 * _tiling_noise(S, 30.0, rng)), 0.0, 1.0)
+    grain = gaussian_filter(rng.random((S, S)), 0.7, mode="wrap")
+    grain = np.clip(0.5 + (grain - grain.mean()) / grain.std() * 0.16, 0.0, 1.0)
+
+    def rgba(*channels):
+        return Image.fromarray(np.clip(np.round(np.stack(channels, axis=-1) * 255.0), 0, 255).astype(np.uint8), "RGBA")
+
+    rgba(grass, patches, ripples, grain).save(os.path.join(TEX_DIR, "ground_detail_data.png"))
+    n_grass = normal_map(gaussian_filter(grass, 1.0, mode="wrap") * 22.0, 1.0)
+    n_sand = normal_map(ripples * 16.0 + grain * 2.5, 1.0)
+    rgba(n_grass[..., 0], n_grass[..., 1], n_sand[..., 0], n_sand[..., 1]).save(
+        os.path.join(TEX_DIR, "ground_detail_normal_data.png"))
+
+
+def make_grass_tuft(W=256, H=128, seed=1515):
+    """textures/grass_tuft_cutout_albedo.png: two small tufts of grass side by side (RGBA, alpha = blade / no blade)
+    for the 3D grass tufts (crossed cards built by CampusWorldBuilder, Foliage shader). Each tuft is a fan of
+    curved, pointed blades from the bottom middle, dark green at the root and light, saturated green at the tip.
+    Every tuft is shifted a little towards the colour of the lawn under it (vertex colour, make_grass_tufts.py).
+    Drawn 4x larger and scaled down; the colour under the cut-away parts is grass green, so no dark fringe shows."""
+    rng = np.random.default_rng(seed)
+    k = 4
+    root, tip = np.array(rgb("#4A7A46")) * 255, np.array(rgb("#B0D684")) * 255
+    img = Image.new("RGBA", (W * k, H * k), tuple(int(v) for v in lerp(root, tip, 0.5)) + (0,))
+    draw = ImageDraw.Draw(img)
+    half = W * k / 2
+    for t in range(2):
+        cx = half * (t + 0.5)
+        order = rng.permutation(11)
+        for j in order:
+            lean = (j - 5) / 5.0 + rng.uniform(-0.12, 0.12)                 # -1 .. 1: left to right across the fan
+            height = H * k * (0.93 - 0.42 * abs(lean) ** 1.5) * rng.uniform(0.82, 1.0)
+            width = H * k * rng.uniform(0.075, 0.105)
+            x0 = cx + lean * half * 0.16
+            shade = rng.uniform(-0.08, 0.08)
+            pts = []
+            for i in range(9):
+                s = i / 8.0
+                x = x0 + lean * half * 0.27 * s ** 1.6
+                y = H * k - 1 - height * s
+                pts.append((s, x, y, width / 2 * (1.0 - s ** 1.8)))
+            for (s0, xa, ya, wa), (s1, xb, yb, wb) in zip(pts, pts[1:]):
+                col = lerp(root, tip, float(np.clip(s0 * 1.05 + shade, 0.0, 1.0)))
+                draw.polygon([(xa - wa, ya), (xb - wb, yb), (xb + wb, yb), (xa + wa, ya)], fill=tuple(int(v) for v in col) + (255,))
+    img.resize((W, H), Image.LANCZOS).save(os.path.join(TEX_DIR, "grass_tuft_cutout_albedo.png"))
+
+
 BUILDERS = {
     "calcada": make_calcada, "concrete_sand": make_concrete_sand, "concrete_polished": make_concrete_polished,
     "asphalt": make_asphalt, "terracotta": make_terracotta, "sand": make_sand, "grass": make_grass,
     "facade": make_facade, "window": make_window_band, "kerb": make_kerb, "mural": make_mural,
+    "palm_frond": make_palm_frond, "sea_waves": make_sea_waves,
+    "ground_detail": make_ground_detail, "grass_tuft": make_grass_tuft,
 }
 
 

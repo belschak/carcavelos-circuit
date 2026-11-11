@@ -47,7 +47,52 @@ def fbm(h, w, seed, octaves=5):
     return out / total
 
 
+MASK_W = 1024
+SHORE_FILE = os.path.join(HERE, "textures", "sea_shore_data.png")       # env_backdrop.write_shore_map
+SHORE_MARGIN = (300.0, 400.0)                                            # env_backdrop.shore_rect
+WET_RANGE = 20.0                                                         # metres of beach coded in the blue channel
+
+
+def write_mask(sea):
+    """textures/ground_mask_data.png (1024 px wide, same UVs as ground_colour.png; linear numbers, not colour) for
+    the ground shader: R = lawn (grass, wood, pitch), G = sand, both without the paths that cross them (open ground
+    counts as a bit of both, paved areas as neither), and
+    B = how far up the beach a point is, 0 at the waterline .. 1 at WET_RANGE metres or more (wet sand band, dry
+    sand further up). The waterline comes from the shore map of the sea (the real 3D shoreline) when it exists,
+    else from the 5 m sea mask."""
+    from scipy.ndimage import distance_transform_edt
+    big = Image.new("RGB", (W * SS, H * SS), (140, 90, 0))      # open ground: dry scrub, part lawn and part sand
+    draw = ImageDraw.Draw(big)
+    for kind in ("grass", "wood", "paved", "pitch", "sand", "water"):
+        fill = {"grass": (255, 0, 0), "wood": (255, 0, 0), "pitch": (255, 0, 0), "sand": (0, 255, 0)}.get(kind, (0, 0, 0))
+        for area in DATA["areas"]:
+            if area["kind"] == kind:
+                draw.polygon([to_px(x, y, SS) for x, y in area["ring"]], fill=fill)
+    for p in DATA["paths"]:
+        if not p["tunnel"]:
+            width = max(1, int(p["width"] / (X1 - X0) * W * SS))
+            draw.line([to_px(x, y, SS) for x, y in p["points"]], fill=(0, 0, 0), width=width, joint="curve")
+    mh = int(round(MASK_W * H / W))
+    mask = np.asarray(big.resize((MASK_W, mh), Image.LANCZOS), np.float32) / 255.0
+    if os.path.exists(SHORE_FILE):                         # sea = shore distance > 0, cut to the world bounds
+        shore = Image.open(SHORE_FILE).convert("L")
+        sx0, sy0, sx1, sy1 = X0 - SHORE_MARGIN[0], Y0 - SHORE_MARGIN[1], X1 + SHORE_MARGIN[0], Y1
+        box = ((X0 - sx0) / (sx1 - sx0) * shore.width, (sy1 - Y1) / (sy1 - sy0) * shore.height,
+               (X1 - sx0) / (sx1 - sx0) * shore.width, (sy1 - Y0) / (sy1 - sy0) * shore.height)
+        water = np.asarray(shore.resize((MASK_W, mh), Image.BILINEAR, box=box)) > 0
+        from scipy.ndimage import binary_dilation       # only the sea itself, not gaps in the ground further inland
+        open_sea = np.asarray(sea.resize((MASK_W, mh), Image.BILINEAR)) > 127
+        water &= binary_dilation(open_sea, iterations=int(20.0 / ((X1 - X0) / MASK_W)))
+    else:
+        water = np.asarray(sea.resize((MASK_W, mh), Image.BILINEAR)) > 127
+    metres = distance_transform_edt(~water) * (X1 - X0) / MASK_W
+    out = np.dstack([mask[..., 0], mask[..., 1], np.clip(metres / WET_RANGE, 0.0, 1.0)])
+    Image.fromarray(np.round(out * 255.0).astype(np.uint8), "RGB").save(os.path.join(HERE, "textures", "ground_mask_data.png"))
+    print(f"ground_mask_data.png {MASK_W}x{mh} px")
+
+
 def main():
+    os.makedirs(os.path.join(HERE, "textures"), exist_ok=True)
     big = Image.new("RGB", (W * SS, H * SS), COLOURS["ground"])
     draw = ImageDraw.Draw(big)
 
@@ -77,6 +122,7 @@ def main():
 
     img = big.resize((W, H), Image.LANCZOS)
     arr = np.asarray(img, np.float32)
+    write_mask(sea)
 
     # soft contact shadow around buildings (baked ambient occlusion on the ground)
     shadow = Image.new("L", (W, H), 0)
