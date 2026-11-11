@@ -543,6 +543,23 @@ def apply_profile(points, buildings):
                     wa, wb = wa / total, wb / total
                 z[i] = smooth[i] * (1 - wa - wb) + za * wa + zb * wb
 
+    # Round the kinks: where a ramp starts or ends the slope used to change within one 2 m step. At speed that
+    # edge throws a kart into the air. Around every such kink the height is averaged over 14 m, twice, which
+    # turns the kink into a smooth vertical curve. The jump (deck edge, wedge and its foot) keeps its sharp edge.
+    keep_sharp = set()
+    if edge is not None:
+        last = (KICKER.get("foot_index", edge) - edge) % n
+        for k in range(-8, last + 9):
+            keep_sharp.add((edge + k) % n)
+    slope = [(z[(i + 1) % n] - z[i]) / step for i in range(n)]
+    region = set()
+    for i in range(n):
+        if abs(slope[i] - slope[i - 1]) > 0.05 and i not in keep_sharp:
+            region.update((i + k) % n for k in range(-7, 8))
+    region -= keep_sharp
+    for _ in range(2):
+        z = [sum(z[(i + k) % n] for k in range(-3, 4)) / 7 if i in region else z[i] for i in range(n)]
+
     for i, p in enumerate(points):
         p["track_z"] = round(z[i], 2)
         if p["building"] and zone[i] == "upper plaza":

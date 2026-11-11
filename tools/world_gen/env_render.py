@@ -11,8 +11,8 @@ from mathutils import Vector
 
 import env_common as E
 
-SUN_AZIMUTH = 225.0      # degrees clockwise from north: south-west
-SUN_ELEVATION = 24.0
+SUN_AZIMUTH = 245.0      # degrees clockwise from north: west-south-west (golden hour, as in Unity)
+SUN_ELEVATION = 19.0
 RES = (1920, 1080)
 
 
@@ -46,7 +46,7 @@ def setup_world():
     sun_data = bpy.data.lights.new("Sun", type="SUN")
     sun_data.energy = 4.0
     sun_data.angle = math.radians(1.5)
-    sun_data.color = (1.0, 0.95, 0.86)
+    sun_data.color = (1.0, 0.878, 0.71)          # #FFE0B5, the Unity sun
     sun = bpy.data.objects.new("Sun", sun_data)
     scene.collection.objects.link(sun)
     az, el = math.radians(SUN_AZIMUTH), math.radians(SUN_ELEVATION)
@@ -171,24 +171,29 @@ def render_shots():
     jump = E.ROUTE["jump"]["s"]
     shots = {
         "aerial": (Vector((-310, -330, 150)), Vector((40, 40, 5)), 30),
-        "tunnel_inside": route_camera(30, ahead=30, height=2.2, lens=22),
-        "ramp_exit": route_camera(80, ahead=40, height=2.4, lens=24, look_up=2.0),
-        "steps": route_camera(118, ahead=40, height=2.4, lens=24, look_up=2.5),
-        "upper_plaza": route_camera(200, ahead=40, height=2.6, side=-1.5, lens=24),
-        "atrium": route_camera(372, ahead=36, height=2.4, lens=22),
+        # stations on Noah's route (2026-11-09, lap 1,344 m: atrium 30-122, deck 122-164, promenade 546-764,
+        # tunnel 814-904, lower plaza 942-996, upper plaza 1016-1130 and 1178-1344)
+        "upper_plaza": route_camera(1300, ahead=40, height=2.6, side=-1.5, lens=24),
+        "upper_plaza_cafe": route_camera(1032, ahead=40, height=2.6, side=-1.0, lens=24),
+        "atrium": route_camera(40, ahead=36, height=2.4, lens=22),
+        "atrium_bays": route_camera(72, ahead=26, height=2.6, side=-1.5, lens=20),
         "terrace_jump": route_camera(jump - 30, ahead=50, height=3.2, lens=24, look_up=-3.0),
-        "coastal_road": route_camera(640, ahead=50, height=2.6, lens=26),
-        "promenade_fort": route_camera(960, ahead=60, height=2.4, side=-2.0, lens=26),
+        "coastal_road": route_camera(330, ahead=50, height=2.6, lens=26),
+        "promenade_cafe": route_camera(548, ahead=40, height=2.6, side=-1.0, lens=24),
+        "promenade_fort": route_camera(700, ahead=60, height=2.4, side=-2.0, lens=26),
+        "tunnel_inside": route_camera(840, ahead=30, height=2.2, lens=22),
+        "ramp_exit": route_camera(900, ahead=40, height=2.4, lens=24, look_up=2.0),
+        "lower_plaza": route_camera(945, ahead=30, height=2.6, lens=24),
     }
     hero = load_hero_kart()
     if hero:
         jump = E.ROUTE["jump"]
         j = point_at(jump["s"])
         hero_shots = {
-            "hero_promenade": (980, 0.0, 0.0, route_camera(973, ahead=14, height=1.3, side=1.4, lens=32)),
+            "hero_promenade": (652, 0.0, 0.0, route_camera(645, ahead=14, height=1.3, side=1.4, lens=32)),
             "hero_jump": (jump["s"] + 5, 1.6, math.radians(-6), (Vector((j["x"] - 30, j["y"] - 9, j["track_z"] - 2.4)),
                                                                 Vector((j["x"] - 5, j["y"] - 0.5, j["track_z"] + 2.0)), 30)),
-            "hero_tunnel_exit": (92, 0.0, math.radians(-4), route_camera(78, ahead=16, height=1.4, side=-1.2, lens=28)),
+            "hero_tunnel_exit": (912, 0.0, math.radians(-4), route_camera(898, ahead=16, height=1.4, side=-1.2, lens=28)),
         }
     else:
         hero_shots = {}
