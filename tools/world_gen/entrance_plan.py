@@ -2,8 +2,9 @@
 dressing), make_groundmap.py (ground colour under the paving) and make_entrance_textures.py.
 
 Where: between Milestone J (north) and Cascais Hall B (south), from the avenue sidewalk to the white end wall of the
-main building. Race start/finish: route i0-i15 runs east into the main building, the run-in i640-i662 comes down from
-the north. World metres, x east, y north, origin lat 38.6780 / lon -9.3265.
+main building. Race start/finish: route i0-i15 runs east into the main building, the run-in comes down from the
+north (V15b: i640-i646 north of the pool, a loop out west to 7.4 m from the car-park ramp, i647-i666, and the start
+straight i667-i681). World metres, x east, y north, origin lat 38.6780 / lon -9.3265.
 
 Sources (survey V15a, atlas reports): DGT orthophoto with a 5 m grid (campus_sv/ortho_grid_entrance_plaza.jpg, 9 px
 per metre), the 2026 satellite tile (campus/gsat_c010_150...), Street View Jul 2020 (P_p00, P_p01, luc_1..5, N_r1,
@@ -18,6 +19,9 @@ import math
 RING = [(-90.0, 102.0), (-64.0, 98.0), (15.0, 128.1), (16.91, 128.83), (8.93, 149.17), (7.06, 148.43), (2.8, 159.8),
         (1.5, 163.5), (-30.0, 159.0), (-38.0, 147.5), (-90.0, 147.5)]
 TREE_PAD = 3.0             # m: trees this close outside the ring (the row along B's planted strip) are plaza trees too
+# V15b (start straight): inside this box (x0, y0, x1, y1: the changed section of the race line with its surroundings)
+# env_entrance moves or drops the frozen plants and props that the new line passes too closely
+SWEEP_BOX = (-64.0, 116.0, 12.0, 164.0)
 
 # calcada of small pale cubes: survey #d1c9a5 in the sun; a step warmer and paler for our golden-hour light
 CALCADA = "#D8CEAC"

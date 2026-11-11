@@ -265,6 +265,32 @@
       ],
       "ease_passes": 60,
       "surface": "plaza_ochre"
+    },
+    {
+      "name": "start straight and wider loop at the entrance plaza (V15, proposal for Noah)",
+      "why": "Luc's request 2026-11-11: a longer start straight like a Formula 1 start, and the loop before the start swung out west across the entrance plaza to just before the underground car-park ramp. Before, the run-in turned back in a tight loop (radius 9 m) right west of the entrance pool and only about 30 m of gently winding line led into the main building. Now the run-in goes straight on from from_at (same direction as the old line there, heading_deg), turns back in one arc of about radius_m and runs as one straight line into to_at, the last old point before the west entrance (the direction is the old line's there, so the line from the entrance on is untouched). The arc is as far west as the car-park ramp allows (walls and handrails at least 7 m from the centreline). The section runs over the lap seam: start_at (= Noah's start/finish, checkpoint 0) names the place of point 0; the new point nearest to it becomes point 0, 12 steps before to_at as before, so every other point keeps its index. Level at 14.5 m like the plaza before. Only the points strictly between from_at and to_at are replaced; delete this block to get the old line back.",
+      "from_at": [
+        -21.0,
+        155.79
+      ],
+      "to_at": [
+        7.45,
+        134.39
+      ],
+      "start_at": [
+        -16.26,
+        133.0
+      ],
+      "heading_deg": 255.48,
+      "radius_m": 10.45,
+      "ease_passes": 150,
+      "plateau_z": 14.5,
+      "ramp_m": 4.0,
+      "ease_in_m": 1.0,
+      "ease_out_m": 1.0,
+      "surface": "concrete_sand",
+      "ramp_zone": "upper plaza",
+      "plateau_zone": "upper plaza"
     }
   ]
 }

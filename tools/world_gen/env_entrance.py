@@ -231,7 +231,11 @@ def plan_ground():
             if not _touches_cell(ring, x0, y0, E.STEP, 0.15):
                 continue
             cx, cy = x0 + E.STEP / 2, y0 + E.STEP / 2
-            if env_corridor.covers_cell(cx, cy) or env_terrain.in_portal_hole(cx, cy):
+            # V15b: since the start loop comes within 7.4 m of the ramp, a cell at the ramp's east end may count as
+            # covered by the corridor (its centre and corners are); it is an apron cell all the same, sunk under the
+            # corridor like the cells of the outer band. The corridor itself is held back from the ramp
+            # (env_corridor._hold_back) and the check on the outline below still stops the build if it is not.
+            if env_terrain.in_portal_hole(cx, cy):
                 raise RuntimeError(f"entrance: the car-park ramp touches the track corridor at cell {i},{j} ({x0}, {y0})")
             cells.add((i, j))
     # The corridor's outermost band (22-26 m from the centreline) lies over some of these cells; the cells stay 5 m
@@ -573,10 +577,97 @@ def _hash01(x, y, salt=0):
     return v - math.floor(v)
 
 
+def _along_row(x, y, ok, reach=6.0, step=0.5):
+    """V15b: the nearest spot along the plaza's rows (bearing 69 deg, entrance_plan.SEAT_STEP) within `reach` m for
+    which ok(x, y) holds; None if there is none."""
+    ux, uy = P._unit((0.0, 0.0), P.SEAT_STEP)
+    k = 1
+    while k * step <= reach + 1e-9:
+        for sign in (1.0, -1.0):
+            qx, qy = x + ux * sign * k * step, y + uy * sign * k * step
+            if ok(qx, qy):
+                return qx, qy
+        k += 1
+    return None
+
+
+def _off_the_line(x, y, need, ok, reach=8.0, step=0.5):
+    """V15b: (x, y) moved straight away from the race centreline until it is `need` m from it and ok(x, y) holds;
+    None if that takes more than `reach` m."""
+    q = E.nearest_route_point(x, y)
+    d = math.hypot(x - q["x"], y - q["y"]) or 1.0
+    ux, uy = (x - q["x"]) / d, (y - q["y"]) / d
+    k = 1
+    while k * step <= reach + 1e-9:
+        qx, qy = x + ux * k * step, y + uy * k * step
+        if route_distance(qx, qy) >= need and ok(qx, qy):
+            return qx, qy
+        k += 1
+    return None
+
+
+TREE_MARGIN = 0.25           # m: a young tree's trunk and stakes keep ROUTE_CLEAR + this from the centreline
+_MOVES = []                  # V15b: report lines, what the start straight moved or dropped on the plaza
+
+
+def _clear_the_line(veg, props):
+    """V15b (start straight): the frozen dressing was approved for the old line. Whatever now stands within its
+    clearance of the changed line inside SWEEP_BOX (plants: KEEP_CLEAR + crown, as env_vegetation's rule; props:
+    ROUTE_CLEAR) moves straight away from the line to the nearest free spot, or is dropped. The plaza's own trees and
+    lamps (in the rows) are handled in dress(). Elsewhere nothing matches, so nothing changes."""
+    import env_vegetation
+    x0, y0, x1, y1 = P.SWEEP_BOX
+    crown = {name: k["crown"] for k in env_vegetation.KIND.values() for name in k["protos"]}
+    walls = [[tuple(q) for q in b["points"]] for b in E.DATA["buildings"]]
+
+    def off_walls(x, y, gap):
+        return all(not P.inside(x, y, w) and P.ring_distance(x, y, w) >= gap for w in walls
+                   if min(q[0] for q in w) - 12 < x < max(q[0] for q in w) + 12)
+    out_v = []
+    for p in veg:
+        x, y = p["x"], p["y"]
+        plaza_tree = p["proto"] in ("Veg_Olive", "Veg_Olive_B") and P.near_ring(x, y, P.RING, P.TREE_PAD)
+        if plaza_tree or not (x0 <= x <= x1 and y0 <= y <= y1):
+            out_v.append(p)
+            continue
+        reach = crown.get(p["proto"], 1.0) * p.get("scale", 1.0)
+        need = E.KEEP_CLEAR + reach
+        d = route_distance(x, y)
+        if d >= need:
+            out_v.append(p)
+            continue
+        spot = _off_the_line(x, y, need + 0.2, lambda qx, qy: off_walls(qx, qy, reach + 0.3)
+                             and all(math.hypot(o["x"] - qx, o["y"] - qy) >= 2.5 for o in veg if o is not p))
+        if spot:
+            _MOVES.append(f"{p['proto']} ({x:.1f}, {y:.1f}), {d:.1f} m from the new line (needs {need:.1f}): moved to "
+                          f"({spot[0]:.1f}, {spot[1]:.1f}), {route_distance(*spot):.1f} m")
+            out_v.append(dict(p, x=round(spot[0], 3), y=round(spot[1], 3), z=round(E.ground_z(*spot), 3)))
+        else:
+            _MOVES.append(f"{p['proto']} ({x:.1f}, {y:.1f}), {d:.1f} m from the new line (needs {need:.1f}): dropped, no free spot")
+    out_p = []
+    for p in props:
+        x, y = p["x"], p["y"]
+        if not (x0 <= x <= x1 and y0 <= y <= y1) or p["proto"] in ("Prop_LampCampus", "Prop_RailingSegment") \
+                or route_distance(x, y) >= ROUTE_CLEAR:
+            out_p.append(p)
+            continue
+        d = route_distance(x, y)
+        spot = _off_the_line(x, y, ROUTE_CLEAR + 0.5, lambda qx, qy: off_walls(qx, qy, 1.0)
+                             and all(math.hypot(o["x"] - qx, o["y"] - qy) >= 1.2 for o in props if o is not p))
+        if spot:
+            _MOVES.append(f"{p['proto']} ({x:.1f}, {y:.1f}), {d:.1f} m from the new line: moved to "
+                          f"({spot[0]:.1f}, {spot[1]:.1f}), {route_distance(*spot):.1f} m")
+            out_p.append(dict(p, x=round(spot[0], 3), y=round(spot[1], 3), z=round(E.ground_z(*spot) + 0.05, 3)))
+        else:
+            _MOVES.append(f"{p['proto']} ({x:.1f}, {y:.1f}), {d:.1f} m from the new line: dropped, no free spot")
+    return out_v, out_p
+
+
 def dress(veg, props, protos):
     """Edits the dressing lists after dressing_freeze.apply (everything outside the plaza stays as it is) and rewrites
     the two placement files. protos: build_world's prototype table, our prototypes are added to it."""
     protos.update(build_prototypes())
+    veg, props = _clear_the_line(veg, props)                    # V15b
     inner = _ramp()["outer"]
     veg2, trees, swapped = [], [], 0
     for p in veg:
@@ -588,18 +679,48 @@ def dress(veg, props, protos):
                      scale=round(0.86 + 0.3 * _hash01(x, y, 1), 3))
             swapped += 1
             trees.append((x, y))
-            _note("young trees (trunk and stakes)", x, y, 0.5 * p["scale"])
         veg2.append(p)
+    # V15b: a young tree whose trunk and stakes would stand within ROUTE_CLEAR (+ TREE_MARGIN) of the new line moves
+    # along its row to the nearest free spot (3.5 m from the other trees, on the plaza), or is dropped
+    for k, p in enumerate(veg2):
+        if not p["proto"].startswith("Veg_PlazaTree"):
+            continue
+        x, y, need = p["x"], p["y"], ROUTE_CLEAR + TREE_MARGIN + 0.5 * p["scale"]
+        d = route_distance(x, y)
+        if d >= need:
+            _note("young trees (trunk and stakes)", x, y, 0.5 * p["scale"])
+            continue
+        others = [t for t in trees if t != (x, y)]
+        spot = _along_row(x, y, lambda qx, qy: route_distance(qx, qy) >= need and P.near_ring(qx, qy, P.RING, P.TREE_PAD)
+                          and all(math.hypot(tx - qx, ty - qy) >= 3.5 for tx, ty in others))
+        trees.remove((x, y))
+        if spot:
+            _MOVES.append(f"young tree ({x:.1f}, {y:.1f}), {d:.1f} m from the new line (needs {need:.1f}): moved along its "
+                          f"row to ({spot[0]:.1f}, {spot[1]:.1f}), {route_distance(*spot):.1f} m")
+            veg2[k] = dict(p, x=round(spot[0], 3), y=round(spot[1], 3), z=round(E.ground_z(*spot), 3))
+            trees.append((veg2[k]["x"], veg2[k]["y"]))
+            _note("young trees (trunk and stakes)", veg2[k]["x"], veg2[k]["y"], 0.5 * p["scale"])
+        else:
+            _MOVES.append(f"young tree ({x:.1f}, {y:.1f}), {d:.1f} m from the new line (needs {need:.1f}): dropped, "
+                          f"no free spot within 6 m in its row")
+            veg2[k] = None
+    veg2 = [p for p in veg2 if p is not None]
     props2, lamps = [], 0
     for p in props:
         if P.inside(p["x"], p["y"], inner):
             continue
         if p["proto"] == "Prop_LampCampus" and P.inside(p["x"], p["y"], P.RING):
             # the frozen campus lamp stands 6.5 m from the centreline: the slim one 0.3 m further out, head away
+            # (V15b: a lamp the new line passes closer than that goes out to the same 6.8 m)
             q = E.nearest_route_point(p["x"], p["y"])
             d = math.hypot(p["x"] - q["x"], p["y"] - q["y"]) or 1.0
             ux, uy = (p["x"] - q["x"]) / d, (p["y"] - q["y"]) / d
-            p = dict(p, proto="Prop_LampPlaza", x=round(p["x"] + ux * 0.3, 3), y=round(p["y"] + uy * 0.3, 3),
+            near = route_distance(p["x"], p["y"])
+            out = 0.3 if near >= ROUTE_CLEAR - 0.05 else ROUTE_CLEAR + 0.3 - near
+            if out > 0.3:
+                _MOVES.append(f"campus lamp ({p['x']:.1f}, {p['y']:.1f}), {near:.1f} m from the new line: slim lamp "
+                              f"{out:.1f} m further out at ({p['x'] + ux * out:.1f}, {p['y'] + uy * out:.1f})")
+            p = dict(p, proto="Prop_LampPlaza", x=round(p["x"] + ux * out, 3), y=round(p["y"] + uy * out, 3),
                      rot_z=round(math.atan2(uy, ux), 4))
             lamps += 1
             _note("slim lamps (pole)", p["x"], p["y"], 0.07)
@@ -610,6 +731,18 @@ def dress(veg, props, protos):
             if all(math.hypot(tx - x, ty - y) >= 1.3 for tx, ty in trees):
                 break
             x, y = x + 0.35, y + 0.14
+        if route_distance(x, y) < ROUTE_CLEAR + 0.7 and P.inside(x, y, P.RING):
+            # V15b: too close to the new line: along its row to the nearest free spot, or dropped
+            d = route_distance(x, y)
+            spot = _along_row(x, y, lambda qx, qy: route_distance(qx, qy) >= ROUTE_CLEAR + 0.7 and P.inside(qx, qy, P.RING)
+                              and all(math.hypot(tx - qx, ty - qy) >= 1.3 for tx, ty in trees)
+                              and all(math.hypot(a["x"] - qx, a["y"] - qy) >= 8.0 for a in added)
+                              and all(math.hypot(lx - qx, ly - qy) >= 8.0 for lx, ly in P.LAMPS if (lx, ly) != (x, y)))
+            _MOVES.append(f"slim lamp of the tree rows ({x:.1f}, {y:.1f}), {d:.1f} m from the new line: "
+                          + (f"moved along its row to ({spot[0]:.1f}, {spot[1]:.1f}), {route_distance(*spot):.1f} m" if spot
+                             else "dropped, no free spot within 6 m in its row"))
+            if spot:
+                x, y = spot
         if route_distance(x, y) < ROUTE_CLEAR + 0.7 or not P.inside(x, y, P.RING):
             continue
         _note("slim lamps (pole)", x, y, 0.07)
@@ -618,8 +751,11 @@ def dress(veg, props, protos):
     n_lamps = len(added)
     blocks = P.seat_blocks(route_distance, trees + [(a["x"], a["y"]) for a in added])
     half = math.hypot(P.SEAT_SIZE[0], P.SEAT_SIZE[1]) / 2
-    for x, y, bearing, _moved in blocks:
+    for k, (x, y, bearing, pushed) in enumerate(blocks):
         _note("seat blocks (nearest corner)", x, y, half)
+        if pushed > 0:                                          # V15b: report each block the race line pushes
+            _MOVES.append(f"seat block: pushed {pushed:.2f} m across its row (south-south-east, entrance_plan.seat_blocks) "
+                          f"to ({x:.1f}, {y:.1f}), {route_distance(x, y):.1f} m from the line")
         added.append({"proto": "Prop_SeatBlockPlaza", "x": x, "y": y, "z": round(E.ground_z(x, y) + 0.06, 3),
                       "rot_z": round(math.radians(90.0 - bearing), 4), "scale": 1.0})
     sx, sy = P.RAMP_SW[0] - 1.2, P.RAMP_SW[1] - 1.6                 # a parking sign (no text) at the ramp mouth
@@ -643,6 +779,8 @@ def dress(veg, props, protos):
             counts[it["proto"]] = counts.get(it["proto"], 0) + 1
         data["counts"] = counts
         json.dump(data, open(path, "w"), indent=1)
+    for line in _MOVES:
+        print("  entrance, start straight (V15b): " + line)
     report()
     return veg2, props2
 
