@@ -12,6 +12,7 @@ $PY world_data.py          # OSM + elevation -> world_data.json, buildings.csv (
 $PY route_from_sketch.py   # sketch + route_profile.json -> route.json (driving heights, zones, surfaces)
 $PY make_textures.py       # procedural textures -> textures/*.png (no photos, original mural)
 $PY make_street_textures.py  # V10f: textures of the street section (concrete slabs, bays, brick, setts, rust, hedge, slats, palette)
+$PY make_west_textures.py    # V16c: terrace deck with saw cuts, perforated brick screen, tan terrace railing (env_campus_west.py)
 $PY make_sky.py            # painted golden-hour sky -> textures/sky_panorama.png (Unity skybox + reflections)
 $PY make_groundmap.py      # ground colour map from the OSM shapes and the traced coast -> textures/ground_colour.png, ground_mask_data.png
 $BL -b -P build_world.py   # -> out/CampusWorld.blend, CampusWorld.fbx, TrackSurface.fbx, RouteGuide.fbx, previews
