@@ -100,6 +100,7 @@ ROADS = [
 ]
 RAIL_OFFSET = 0.35           # guard rail distance outside the road edge (m)
 RAIL_STOP = 0.15             # rails stop this far inside a facade; at a door they then end exactly at the frame
+RAIL_WALL_GAP = 0.6          # rails never run closer than this to the glass facade (the posts went through it)
 RAIL_FLARE = 8.0             # within this many metres of a door the rails swing out (or in) to the door frame
 FRAME_REACH = 4.5            # a rail ending this close to a door frame is joined to it (with a curve beyond 2.5 m)
 FRAME_GAP = 0.35             # ... and that curve keeps this far into the opening, clear of the glass beside the door
@@ -164,6 +165,20 @@ board = guarded(K.board, 1.0)
 big_plant = guarded(K.big_plant, 0.9)
 info_stand = guarded(K.info_stand, 0.6)
 grand_piano = guarded(K.grand_piano, 1.4)
+
+
+def nearest_wall(x, y):
+    """Distance from (x, y) to the nearest outer wall line, and the nearest point on it."""
+    poly = footprint()
+    best = None
+    for a, b in zip(poly, poly[1:] + poly[:1]):
+        L2 = (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2 or 1.0
+        t = max(0.0, min(1.0, ((x - a[0]) * (b[0] - a[0]) + (y - a[1]) * (b[1] - a[1])) / L2))
+        qx, qy = a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
+        dist = math.hypot(qx - x, qy - y)
+        if best is None or dist < best[0]:
+            best = (dist, qx, qy)
+    return best
 
 
 def inside_footprint(x, y, margin):
@@ -241,6 +256,12 @@ def guard_rails(m, f, door_map):
                         off += (half - off) * x * x * (3 - 2 * x)
                 pu, po = u - do / d * off * side, o + du / d * off * side
                 x, y, _ = f.at(pu, po)
+                if E.inside_polygon(x, y, footprint()):
+                    gap, qx, qy = nearest_wall(x, y)
+                    if gap < RAIL_WALL_GAP:                              # too close to the glass: move it into the hall
+                        k = RAIL_WALL_GAP / max(gap, 0.001)
+                        x, y = qx + (x - qx) * k, qy + (y - qy) * k
+                        pu, po = f.uo(x, y)
                 pts.append((pu, po) if inside_footprint(x, y, RAIL_STOP) else None)
             runs, cur = [], []
             for p in pts:
