@@ -490,11 +490,10 @@ namespace CarcavelosCircuit.Visuals.Editor
                 {
                     continue;
                 }
-                // Inside the hall the karts drive Noah's own lanes; track.json still has the old line there (V12 follow-up).
+                // Inside the hall track.json follows Noah's lanes (tools/world_gen/hall_route.py), on the hall floor.
                 if (NovaHallInsert.HasHall() && NovaHallInsert.InsideHall(centre[i]))
                 {
                     inHall++;
-                    continue;
                 }
                 tested++;
                 Vector3 p = centre[i];
@@ -508,7 +507,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 }
             }
             report.AppendLine("road collider under the route: " + (tested - miss) + " of " + tested + " points" +
-                              (inHall > 0 ? " (" + inHall + " inside the Nova hall not checked: old line, hall has its own lanes)" : ""));
+                              (inHall > 0 ? " (" + inHall + " of them in the Nova hall)" : ""));
             if (miss > 0)
             {
                 failures++;
