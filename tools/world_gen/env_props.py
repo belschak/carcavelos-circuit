@@ -49,7 +49,7 @@ TRI_BUDGET = {"Prop_LampCampus": 120, "Prop_LampRoad": 150, "Prop_Bench": 60, "P
               # beach pass V10b 2026-11-10: straw parasols, loungers, lifeguard post, stone heaps
               "Prop_ParasolThatch": 80, "Prop_SunLounger": 64, "Prop_LifeguardTower": 260, "Prop_StonePile": 330,
               # V16f dressing pass: potted olive, tapered planter, picnic table
-              "Prop_PotOlive": 230, "Prop_PlanterTapered": 90, "Prop_PicnicTable": 110}
+              "Prop_PotOlive": 260, "Prop_PlanterTapered": 90, "Prop_PicnicTable": 110}
 FOOTPRINT = {"Prop_LampCampus": 0.3, "Prop_LampRoad": 0.3, "Prop_Bench": 1.0, "Prop_LoungeChair": 0.6,
              "Prop_Bollard": 0.15, "Prop_RailingSegment": 0.0, "Prop_Bin": 0.3, "Prop_Parasol": 1.6,
              "Prop_BistroTable": 0.4, "Prop_BistroChair": 0.3, "Prop_TroughBloom": 0.85, "Prop_PlanterRound": 0.45,
