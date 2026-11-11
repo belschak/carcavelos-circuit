@@ -53,6 +53,10 @@ Both were built apart and touch in five places; each is settled in the plan file
 - **Horizon Hall's undercroft**: `campus_plan.LOWER_PLAZA` reaches behind the set-back Floor-0 front and is level right up to V10i's stairs (`env_campus.lower_nodes`).
 - **Ground paint**: the Gallery arcade and Horizon Hall's undercroft are paving (`campus_plan.GROUND_PAINT`).
 
+### Courtyard shortcut, Luc's yellow route (V14b, 2026-11-11)
+
+No route file is touched; the shortcut is world geometry only (`plaza_plan.py` section "V14b", `env_plaza.py`). One straight axis, bearing 338 (parallel to the Gallery), from the top of the terracotta stairs: a painted boost-pad area without function (centre (84.3, 46.4); a pad of PR #72 belongs there) -> a kicker beside skylight S3 (6.5 m long, 4.4 m wide, 0.70 m high, 8 degrees at the lip, Boost Orange stripes) whose lip stands in a gap of the courtyard fence -> flight into the sunken courtyard (Floor 0) -> a stair-ramp back up (23.5 m, 6 m wide, 20 %, visible terracotta steps under a smooth collider with the stairs' ripple; it replaces V10i's S4 platform and the court's north strip) -> the plaza 9 m before checkpoint 10 (route point 551). Hedge boxes (`FUNNEL`) lead the exit so that it always passes through checkpoint 10's trigger. Kicker, courtyard floor and climb are faces of the ONE welded plaza collider (`env_plaza.shortcut_drive`): no collider border anywhere on the line; `Track_PlazaCourt_NoCollide`, `Track_ShortcutKicker_NoCollide`, `Track_ShortcutPaint_NoCollide` are to look at only. Upright collider faces must look outwards (a lip front that looked into the ramp kicked karts upwards). Driven test: local harness `Assets/_Local/ShortcutTest/` in the bots prototype (not in the repo), numbers in the atlas report V14b.
+
 ## What is in the world (modules)
 
 | Module | What it builds |
