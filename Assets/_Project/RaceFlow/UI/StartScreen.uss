@@ -1,10 +1,12 @@
-/* Start screen "Carcavelos Round 3" (task R11). Loaded after RaceHud.uss (see RaceHud.uxml), same tokens and
-   the same animation pattern: RaceHud adds "intro-in" to the start screen a moment after it shows, and every rule
+/* Start screen (task R11, restyled in R15 "Azulejo Arcade"). Loaded after RaceHud.uss (see RaceHud.uxml), same tokens
+   and the same animation pattern: RaceHud adds "intro-in" to the start screen a moment after it shows, and every rule
    ".intro-in .x" below is the end state that the transitions run to. UI/TitleScreen.cs makes the title letters
    (with a growing transition-delay each) and runs the light sweep.
-   Layout at the 1280x720 reference: the title lockup in the left part, the leaderboard card (Leaderboard.uss) on the
-   right, the key legend at the bottom. Narrow windows (RaceHud adds hud--narrow below 1230 px, e.g. 4:3) get smaller
-   type at the end of this file, reduced motion gets no animation at all (last block). */
+   Layout at the 1280x720 reference: one focal point on the left (the logo lockup: CARCAVELOS big, CIRCUIT on a tilted
+   orange plate, then the breathing start plate and your best time), the leaderboard plate on the right, and only
+   the two most needed keys at the bottom. The left side is darker (RaceHud's start gradient), the right side lets the
+   campus show. Narrow windows (RaceHud adds hud--narrow below 1230 px, e.g. 4:3) get smaller type at the end of this
+   file, reduced motion gets no animation at all (last block). */
 
 /* ---------- Layout ---------- */
 .ts-layout {
@@ -15,40 +17,18 @@
     right: 0;
     flex-direction: row;
     align-items: center;
-    padding: 36px 56px 76px 56px; /* bottom: room for the key legend */
+    padding: 30px 56px 84px 64px; /* bottom: room for the key legend */
 }
 
 .start-screen .ts-hero {
     flex-grow: 1;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
 }
 
-/* The kicker, the letters and the CIRCUIT row share one width: the width of the letters. */
+/* The letters and the CIRCUIT row share one width: the width of the letters. */
 .ts-lockup {
     align-items: stretch;
-}
-
-/* ---------- Kicker ---------- */
-.ts-kicker-row {
-    flex-direction: row;
-    align-items: center;
-    margin-left: 6px;
-}
-
-.ts-kicker-gem {
-    width: 11px;
-    height: 11px;
-    rotate: 45deg;
-    border-radius: 2px;
-    background-color: var(--cc-orange);
-    margin-right: 12px;
-}
-
-.start-screen .ts-kicker {
-    margin-bottom: 0;
-    font-size: 16px;
-    letter-spacing: 5px;
 }
 
 /* ---------- Logo: CARCAVELOS, one Label per letter (TitleScreen) ---------- */
@@ -60,11 +40,14 @@
     flex-direction: row;
 }
 
-/* Each letter drops in from above, a little too big, and settles (ease-out-back = a small overshoot). */
+/* Each letter drops in from above, a little too big, and settles (ease-out-back = a small overshoot).
+   Cream with a thick ink outline and a hard ink shadow: a sticker, not a web headline. */
 .ts-letter {
-    font-size: 108px;
+    font-size: 80px; /* Unbounded is a wide face: 10 letters at 80 px fill the left part next to the board */
     color: var(--cc-white);
-    text-shadow: 0 7px 0 rgba(18, 59, 94, 0.85);
+    -unity-text-outline-width: 5px;
+    -unity-text-outline-color: var(--ink);
+    text-shadow: 0 8px 0 rgba(14, 34, 56, 0.85);
     opacity: 0;
     translate: 0 -80px;
     scale: 1.4 1.4;
@@ -105,9 +88,10 @@
     left: 0;
 }
 
-/* Three classes: beats ".intro-in .ts-letter", the copy never drops in, it is always in place. */
+/* Three classes: beats ".intro-in .ts-letter", the copy never drops in, it is always in place. Same outline as
+   the real letters, so the copy lies exactly on them; no shadow (the real one is already there). */
 .ts-glint .ts-letters--glint .ts-letter {
-    color: #FFD27A;
+    color: #FFE08A;
     text-shadow: 0 0 0 rgba(0, 0, 0, 0);
     opacity: 1;
     translate: 0 0;
@@ -116,97 +100,78 @@
 }
 
 .ts-glint.ts-glint--soft .ts-letters--glint .ts-letter {
-    color: rgba(255, 196, 104, 0.55);
+    color: rgba(255, 214, 120, 0.6);
 }
 
-/* ---------- CIRCUIT row: a calcada wave that wipes open, then the word slides in ---------- */
+/* ---------- CIRCUIT on a tilted orange plate, ROUND 3 as a small cream stamp beside it ---------- */
 .ts-sub-row {
     flex-direction: row;
     align-items: center;
-    margin-top: -4px;
-}
-
-.start-screen .ts-wave {
-    flex-grow: 1;
-    width: auto;
-    height: 16px;
-    margin: 0 20px 0 8px;
-    transform-origin: 0% 50%;
-    scale: 0 1;
-    transition-property: scale;
-    transition-duration: 520ms;
-    transition-timing-function: ease-out-cubic;
-    transition-delay: 560ms;
-}
-
-.intro-in .ts-wave {
-    scale: 1 1;
+    justify-content: flex-end;
+    margin-top: 2px;
+    margin-right: 6px;
 }
 
 .start-screen .ts-circuit {
-    font-size: 42px;
-    letter-spacing: 16px;
-    padding-left: 0;
-    margin-right: -16px; /* letter-spacing also follows the last T: pull it back so T lines up with S above */
+    font-size: 40px;
+    letter-spacing: 4px;
+    padding: 2px 26px 12px 30px; /* bottom: the plate's lip */
+    color: var(--cc-white);
+    rotate: -3deg;
     opacity: 0;
-    translate: 50px 0;
-    transition-property: opacity, translate;
-    transition-duration: 300ms, 420ms;
-    transition-timing-function: ease-out, ease-out-cubic;
-    transition-delay: 640ms;
+    translate: 60px 0;
+    scale: 1.5 1.5;
+    transition-property: opacity, translate, scale;
+    transition-duration: 200ms, 360ms, 360ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back;
+    transition-delay: 620ms;
 }
 
 .intro-in .ts-circuit {
     opacity: 1;
     translate: 0 0;
+    scale: 1 1;
 }
 
-/* ---------- The slogan stamp: lands like NEW RECORD on the results card ---------- */
 .ts-slogan {
-    align-self: center;
-    margin-top: 20px;
-    padding: 5px 22px 6px 22px;
-    border-radius: 10px;
-    background-color: var(--cc-sand);
-    border-width: 4px;
-    border-color: var(--cc-white);
-    border-bottom-color: #B8975E;
-    color: var(--cc-black);
-    font-size: 28px;
-    letter-spacing: 4px;
+    margin-left: 14px;
+    padding: 2px 14px 10px 14px; /* bottom: the chip's shadow */
+    color: var(--ink);
+    font-size: 19px;
+    letter-spacing: 1px;
+    -unity-text-outline-width: 0;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
     opacity: 0;
-    scale: 2.3 2.3;
-    rotate: -14deg;
-    transition-property: opacity, scale, rotate;
-    transition-duration: 160ms, 300ms, 300ms;
-    transition-timing-function: ease-out, ease-out-back, ease-out-back;
-    transition-delay: 980ms;
+    scale: 1.8 1.8;
+    transition-property: opacity, scale;
+    transition-duration: 160ms, 260ms;
+    transition-timing-function: ease-out, ease-out-back;
+    transition-delay: 900ms;
 }
 
 .intro-in .ts-slogan {
     opacity: 1;
     scale: 1 1;
-    rotate: -3deg;
 }
 
-/* ---------- Prompt, best time, menu (RaceHud and HudMenus run them; only sizes and timing change here) ---------- */
+/* ---------- Start plate, best time, menu (RaceHud and HudMenus run them; only sizes and timing change here) ---------- */
 .start-screen .ts-prompt {
-    margin-top: 32px;
-    height: 54px;
-    border-radius: 27px; /* half the height = a true pill */
-    padding: 0 30px 0 30px;
-    font-size: 22px;
-    letter-spacing: 4px;
+    margin-top: 34px;
+    margin-left: 4px;
+    height: 70px;
+    padding: 0 40px 6px 40px;
+    font-size: 28px;
+    letter-spacing: 1px;
 }
 
-/* The best time sits on the bright sunset band, so it gets a dark chip (sand on sand would not be readable).
+/* Your best time: a clear cream chip with ink digits (readable on any background).
    No best yet: TitleScreen adds ts-best--empty and the chip is gone. */
 .start-screen .ts-best {
-    margin-top: 14px;
-    padding: 4px 16px 5px 16px;
-    border-radius: 15px;
-    background-color: rgba(18, 59, 94, 0.82);
-    font-size: 19px;
+    margin-top: 16px;
+    margin-left: 6px;
+    padding: 3px 18px 11px 18px;
+    font-size: 23px;
+    color: var(--ink);
 }
 
 .start-screen .ts-best--empty {
@@ -214,12 +179,13 @@
 }
 
 .start-screen .ts-menu {
-    margin-top: 16px;
+    margin-top: 18px;
+    justify-content: flex-start;
 }
 
-.intro-in .ts-prompt { transition-delay: 1150ms, 1150ms, 0ms; }
-.intro-in .ts-best { transition-delay: 1250ms, 1250ms, 0ms; }
-.intro-in .ts-menu { transition-delay: 1300ms, 1300ms, 0ms; }
+.intro-in .ts-prompt { transition-delay: 1100ms, 1100ms, 0ms; }
+.intro-in .ts-best { transition-delay: 1200ms, 1200ms, 0ms; }
+.intro-in .ts-menu { transition-delay: 1260ms, 1260ms, 0ms; }
 
 /* ---------- Key legend at the bottom ---------- */
 .ts-footer {
@@ -232,61 +198,19 @@
 
 .start-screen .ts-controls {
     margin-top: 0;
-    padding: 6px 16px;
-    border-radius: 12px;
 }
 
 .intro-in .ts-controls { transition-delay: 1400ms, 1400ms, 0ms; }
 
-/* ---------- Racing stripes at the left edge: slide in first, under everything ---------- */
-.ts-stripes {
-    position: absolute;
-    top: -240px;
-    bottom: -240px;
-    left: -40px;
-    flex-direction: row;
-    rotate: 14deg;
-    opacity: 0;
-    translate: -260px 0;
-    transition-property: opacity, translate;
-    transition-duration: 300ms, 700ms;
-    transition-timing-function: ease-out, ease-out-cubic;
-}
-
-.intro-in .ts-stripes {
-    opacity: 1;
-    translate: 0 0;
-}
-
-.ts-stripe {
-    height: 100%;
-    margin-right: 12px;
-}
-
-.ts-stripe--blue {
-    width: 46px;
-    background-color: rgba(45, 140, 214, 0.55);
-}
-
-.ts-stripe--orange {
-    width: 22px;
-    background-color: rgba(255, 138, 31, 0.80);
-}
-
-.ts-stripe--sand {
-    width: 9px;
-    background-color: rgba(227, 196, 141, 0.65);
-}
-
-/* ---------- The leaderboard card on the right slides in after the title ---------- */
+/* ---------- The leaderboard plate on the right slides in after the title ---------- */
 .lb-host--start {
-    width: 384px;
+    width: 400px;
     margin-left: 28px;
     opacity: 0;
-    translate: 70px 0;
+    translate: 80px 0;
     transition-property: opacity, translate;
-    transition-duration: 300ms, 520ms;
-    transition-timing-function: ease-out, ease-out-cubic;
+    transition-duration: 300ms, 420ms;
+    transition-timing-function: ease-out, ease-out-back;
     transition-delay: 700ms;
 }
 
@@ -301,13 +225,13 @@
 }
 
 .lb-host--results {
-    width: 372px;
-    margin-left: 20px;
+    width: 380px;
+    margin-left: 22px;
     opacity: 0;
-    translate: 50px 0;
+    translate: 60px 0;
     transition-property: opacity, translate;
-    transition-duration: 260ms, 420ms;
-    transition-timing-function: ease-out, ease-out-cubic;
+    transition-duration: 260ms, 380ms;
+    transition-timing-function: ease-out, ease-out-back;
     transition-delay: 450ms;
 }
 
@@ -318,42 +242,43 @@
 
 /* ---------- Narrow windows (4:3, 16:10) ---------- */
 .hud--narrow .ts-layout {
-    padding-left: 24px;
+    padding-left: 28px;
     padding-right: 24px;
 }
 
 .hud--narrow .ts-letter {
-    font-size: 74px;
-    text-shadow: 0 5px 0 rgba(18, 59, 94, 0.85);
+    font-size: 54px;
+    -unity-text-outline-width: 4px;
+    text-shadow: 0 6px 0 rgba(14, 34, 56, 0.85);
 }
 
 .hud--narrow .start-screen .ts-circuit {
-    font-size: 30px;
-    letter-spacing: 11px;
-    margin-right: -11px;
+    font-size: 28px;
+    letter-spacing: 2px;
 }
 
 .hud--narrow .ts-slogan {
-    font-size: 22px;
+    font-size: 16px;
 }
 
 .hud--narrow .start-screen .ts-prompt {
-    font-size: 18px;
-    letter-spacing: 3px;
+    font-size: 21px;
+    height: 60px;
+    padding: 0 26px 6px 26px;
 }
 
 .hud--narrow .lb-host--start {
-    width: 330px;
+    width: 340px;
     margin-left: 16px;
 }
 
 .hud--narrow .lb-host--results {
-    width: 318px;
+    width: 330px;
     margin-left: 12px;
 }
 
 .hud--narrow .start-screen .ts-controls {
-    scale: 0.82 0.82;
+    scale: 0.85 0.85;
 }
 
 /* ---------- Reduced motion: everything is simply there, nothing moves, nothing flashes ----------
@@ -366,22 +291,17 @@
     scale: 1 1;
 }
 
-.reduce-motion .ts-wave {
-    scale: 1 1;
-}
-
 .reduce-motion .ts-circuit,
-.reduce-motion .ts-stripes,
 .reduce-motion .lb-host--start,
 .reduce-motion .lb-host--results {
     opacity: 1;
     translate: 0 0;
+    scale: 1 1;
 }
 
 .reduce-motion .ts-slogan {
     opacity: 1;
     scale: 1 1;
-    rotate: -3deg;
 }
 
 .reduce-motion .ts-glint {
