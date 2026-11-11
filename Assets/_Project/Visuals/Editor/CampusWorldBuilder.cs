@@ -53,7 +53,19 @@ namespace CarcavelosCircuit.Visuals.Editor
             public Water water;           // the moving sea (Sea.shader); without it or its shader: plain URP Lit
             public Wind wind;             // swaying trees (Foliage.shader); without it or its shader: plain URP Lit
             public Ground ground;         // detailed lawn and sand (Ground.shader); without it or its shader: plain URP Lit
+            // V16h begin
+            public WorldLit world_lit;    // vertex ambient occlusion + baked sun shadow (WorldLit.shader); else plain URP Lit
+            public bool tint;             // the texture is multiplied by the colour (one neutral texture, walls of many colours)
+            // V16h end
         }
+        // V16h begin: the two ground colour maps whose alpha is the baked sun shadow, and the world rectangles they cover
+        [Serializable] private class WorldLit
+        {
+            public string shader; public bool ground_shadow; public bool always_shaded;
+            public float[] world_uv;      // meshes without UVs: tile metres across, up, roof scale (texture read by world position)
+        }
+        [Serializable] private class Shade { public string world_map; public string near_map; public float[] world_rect; public float[] near_rect; }
+        // V16h end
         [Serializable] private class Ground { public string shader; public string mask; public string detail; public string detail_normal; }
         [Serializable] private class Wind
         {
@@ -61,7 +73,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             public bool upright;          // grass cards: both faces lit like the lawn they stand on
             public float shrink_from, shrink_to;   // grass cards sink into the ground between these distances (m); 0 = never
         }
-        [Serializable] private class Tuft { public float x, z, yaw, s; public int r = 255, g = 255, b = 255, big; }
+        [Serializable] private class Tuft { public float x, z, yaw, s; public int r = 255, g = 255, b = 255, big, far; }
         [Serializable] private class TuftData { public Tuft[] tufts; }
         [Serializable] private class Water
         {
@@ -70,7 +82,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             public float shore_range; public float coast;
             public float[] coast_west;    // far coast west of the shore map: world x, its z there, metres north per metre west
         }
-        [Serializable] private class MatList { public MatInfo[] materials; }
+        [Serializable] private class MatList { public MatInfo[] materials; public Shade shade; }
         [Serializable] private class Item { public string name; public string proto; public float x, y, z, yaw, roll, scale; }
         [Serializable] private class Dressing { public Item[] items; }
         [Serializable] private class TrackPoint { public float x, y, z, width, s; public string zone; public bool tunnel; }
@@ -139,7 +151,8 @@ namespace CarcavelosCircuit.Visuals.Editor
                 bool data = file.EndsWith("_data.png", StringComparison.Ordinal);              // numbers, not colour
                 ti.textureType = normal ? TextureImporterType.NormalMap : TextureImporterType.Default;
                 ti.sRGBTexture = !(normal || mask || data);
-                ti.alphaSource = mask || cutout || data ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
+                bool shadeAlpha = file.StartsWith("ground_colour", StringComparison.Ordinal);   // V16h: alpha = baked sun shadow
+                ti.alphaSource = mask || cutout || data || shadeAlpha ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
                 ti.alphaIsTransparency = cutout;                                 // no dark fringe around the leaflets
                 ti.mipMapsPreserveCoverage = cutout;                             // thin leaflets do not vanish far away
                 ti.alphaTestReferenceValue = 0.5f;
@@ -219,7 +232,15 @@ namespace CarcavelosCircuit.Visuals.Editor
                 {
                     Debug.LogWarning("CampusWorldBuilder: shader " + m.ground.shader + " not found, " + m.name + " stays URP Lit without detail.");
                 }
-                Shader shader = water != null ? water : foliage != null ? foliage : ground != null ? ground : lit;
+                // V16h begin
+                bool wantsWorldLit = m.world_lit != null && !string.IsNullOrEmpty(m.world_lit.shader);
+                Shader worldLit = wantsWorldLit ? Shader.Find(m.world_lit.shader) : null;
+                if (wantsWorldLit && worldLit == null)
+                {
+                    Debug.LogWarning("CampusWorldBuilder: shader " + m.world_lit.shader + " not found, " + m.name + " stays URP Lit.");
+                }
+                // V16h end
+                Shader shader = water != null ? water : foliage != null ? foliage : ground != null ? ground : worldLit != null ? worldLit : lit;
                 if (mat == null)
                 {
                     mat = new Material(shader);
@@ -235,7 +256,8 @@ namespace CarcavelosCircuit.Visuals.Editor
                 }
                 Texture2D albedo = Tex(m.albedo), normal = Tex(m.normal), mask = Tex(m.metallic_smoothness);
                 // with a texture the tint stays white: the texture carries the colour (its average = the palette)
-                Color colour = albedo != null ? Color.white : new Color(m.colour[0], m.colour[1], m.colour[2], 1f);
+                // (V16h: unless the entry says "tint": then the neutral texture is multiplied by the colour)
+                Color colour = albedo != null && !m.tint ? Color.white : new Color(m.colour[0], m.colour[1], m.colour[2], 1f);
                 SetColor(mat, colour, "_BaseColor", "_Color");
                 SetTexture(mat, albedo, "_BaseMap", "_MainTex");
                 SetTexture(mat, normal, "_BumpMap");
@@ -291,7 +313,34 @@ namespace CarcavelosCircuit.Visuals.Editor
                     SetTexture(mat, Tex(m.ground.mask), "_GroundMask");
                     SetTexture(mat, Tex(m.ground.detail), "_DetailMap");
                     SetTexture(mat, Tex(m.ground.detail_normal), "_DetailNormal");
+                    // V16h: the fine colour map over the lap (alpha of both maps = baked sun shadow)
+                    if (list.shade != null && mat.HasProperty("_NearMap"))
+                    {
+                        SetTexture(mat, Tex(list.shade.near_map), "_NearMap");
+                        mat.SetVector("_NearRect", RectVector(Tex(list.shade.near_map) != null ? list.shade.near_rect : null));
+                    }
                 }
+                // V16h begin: WorldLit.shader reads the baked sun shadow from the ground maps by world position
+                if (worldLit != null && list.shade != null)
+                {
+                    SetTexture(mat, Tex(list.shade.world_map), "_GroundWorldMap");
+                    SetTexture(mat, Tex(list.shade.near_map), "_GroundNearMap");
+                    mat.SetVector("_WorldRect", RectVector(list.shade.world_rect));
+                    mat.SetVector("_NearRect", RectVector(Tex(list.shade.near_map) != null ? list.shade.near_rect : null));
+                    bool takes = m.world_lit.ground_shadow && Tex(list.shade.world_map) != null;
+                    mat.SetVector("_Shade", new Vector4(m.world_lit.always_shaded ? 1f : 0f, takes ? 1f : 0f, 0f, 0f));
+                }
+                if (worldLit != null)
+                {
+                    float[] wuv = m.world_lit.world_uv;
+                    bool byWorld = wuv != null && wuv.Length >= 3 && wuv[0] > 0f && wuv[1] > 0f;
+                    Keyword(mat, "_WORLD_UV", byWorld);
+                    if (byWorld)
+                    {
+                        mat.SetVector("_WorldUV", new Vector4(1f / wuv[0], 1f / wuv[1], wuv[2], 0f));
+                    }
+                }
+                // V16h end
                 if (water != null)
                 {
                     // Sea.shader: wave normal map, shore-distance map and the world rectangle that map covers.
@@ -316,6 +365,13 @@ namespace CarcavelosCircuit.Visuals.Editor
             }
             AssetDatabase.SaveAssets();
             return result;
+        }
+
+        // V16h: world rectangle (x0, z0, x1, z1) -> (x0, z0, 1 / width, 1 / depth) for the shaders; zero = no map
+        private static Vector4 RectVector(float[] r)
+        {
+            return r != null && r.Length >= 4 && r[2] > r[0] && r[3] > r[1]
+                ? new Vector4(r[0], r[1], 1f / (r[2] - r[0]), 1f / (r[3] - r[1])) : Vector4.zero;
         }
 
         // A saved material keeps its old numbers when a shader's defaults change. For our own shaders (sea, foliage,
@@ -598,7 +654,9 @@ namespace CarcavelosCircuit.Visuals.Editor
         // cutout, shifted 35 % towards the lawn colour under it (vertex colour; alpha = card height for the
         // shader's sink-away). All tufts of a 16 m cell are merged into one mesh, and a LODGroup hides the cell
         // beyond about 65 m (at LOD bias 1), so only the cells near the camera cost anything. No shadows cast.
-        private const float TuftCell = 16f, TuftCullDistance = 65f;
+        // V16h: tufts marked "far" are the far LOD: one cross of two cards (4 triangles), larger, in 32 m cells that stay
+        // visible to 150 m (material W_grass_tuft_far: sinks away just before), so lawns keep texture further out.
+        private const float TuftCell = 16f, TuftCullDistance = 65f, TuftFarCell = 32f, TuftFarCullDistance = 150f;
         private static readonly Color TuftLawn = new Color(143f / 255f, 179f / 255f, 122f / 255f).linear;   // the lawn the cutout was painted for
         private static readonly List<Vector3> tuftFeet = new List<Vector3>();
         private static int tuftsPlaced, tuftsLeftOut, tuftTriangles, tuftChunks;
@@ -609,6 +667,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             tuftFeet.Clear();
             string file = DataDir + "/grass_tufts.json", meshPath = ModelsDir + "/GrassTufts.asset";
             Material mat = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "/W_grass_tuft.mat");
+            Material farMat = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "/W_grass_tuft_far.mat");
             AssetDatabase.DeleteAsset(meshPath);
             if (!File.Exists(file) || mat == null)
             {
@@ -627,7 +686,15 @@ namespace CarcavelosCircuit.Visuals.Editor
                     tuftsLeftOut++;
                     continue;
                 }
-                var key = new Vector2Int(Mathf.FloorToInt(t.x / TuftCell), Mathf.FloorToInt(t.z / TuftCell));
+                bool farTuft = t.far > 0;
+                if (farTuft && farMat == null)
+                {
+                    tuftsLeftOut++;
+                    continue;
+                }
+                float cellSize = farTuft ? TuftFarCell : TuftCell;
+                // far cells get their own keys (x offset by 100000), so the two kinds never share a mesh
+                var key = new Vector2Int(Mathf.FloorToInt(t.x / cellSize) + (farTuft ? 100000 : 0), Mathf.FloorToInt(t.z / cellSize));
                 if (!cells.TryGetValue(key, out List<Vector4> list))
                 {
                     cells[key] = list = new List<Vector4>();
@@ -640,7 +707,9 @@ namespace CarcavelosCircuit.Visuals.Editor
             tuftRoot.transform.SetParent(root.transform, false);
             foreach (KeyValuePair<Vector2Int, List<Vector4>> cell in cells)
             {
-                var origin = new Vector3((cell.Key.x + 0.5f) * TuftCell, 0f, (cell.Key.y + 0.5f) * TuftCell);
+                bool farCell = cell.Key.x > 50000;
+                float size = farCell ? TuftFarCell : TuftCell;
+                var origin = new Vector3((cell.Key.x - (farCell ? 100000 : 0) + 0.5f) * size, 0f, (cell.Key.y + 0.5f) * size);
                 var verts = new List<Vector3>(); var normals = new List<Vector3>();
                 var uv = new List<Vector2>(); var sway = new List<Vector2>(); var tris = new List<int>();
                 var colours = new List<Color>();
@@ -653,7 +722,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                     var lawn = new Color(Mathf.Lerp(1f, Mathf.Clamp(here.r / TuftLawn.r, 0.6f, 1.5f), 0.35f),
                                          Mathf.Lerp(1f, Mathf.Clamp(here.g / TuftLawn.g, 0.6f, 1.5f), 0.35f),
                                          Mathf.Lerp(1f, Mathf.Clamp(here.b / TuftLawn.b, 0.6f, 1.5f), 0.35f));
-                    int crosses = t.big > 0 ? 4 : 3, cards = t.big > 0 ? 3 : 2;
+                    int crosses = farCell ? 1 : t.big > 0 ? 4 : 3, cards = t.big > 0 && !farCell ? 3 : 2;
                     for (int cross = 0; cross < crosses; cross++)
                     {
                         float away = cross == 0 ? 0f : (0.1f + 0.14f * R()) * t.s, around = (t.yaw + cross * 120f + 60f * R()) * Mathf.Deg2Rad;
@@ -677,7 +746,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                         }
                     }
                 }
-                var mesh = new Mesh { name = "GrassTufts_" + cell.Key.x + "_" + cell.Key.y };
+                var mesh = new Mesh { name = (farCell ? "GrassTuftsFar_" : "GrassTufts_") + (cell.Key.x - (farCell ? 100000 : 0)) + "_" + cell.Key.y };
                 mesh.SetVertices(verts); mesh.SetNormals(normals); mesh.SetUVs(0, uv); mesh.SetUVs(1, sway);
                 mesh.SetColors(colours);
                 mesh.SetTriangles(tris, 0);
@@ -695,13 +764,13 @@ namespace CarcavelosCircuit.Visuals.Editor
                 go.transform.position = origin;
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
                 MeshRenderer r = go.AddComponent<MeshRenderer>();
-                r.sharedMaterial = mat;
+                r.sharedMaterial = farCell ? farMat : mat;
                 r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 LODGroup lod = go.AddComponent<LODGroup>();
                 lod.SetLODs(new[] { new LOD(0.5f, new Renderer[] { r }) });
                 lod.RecalculateBounds();
                 // relative screen height of the cell at the cull distance, for a 60 degree camera
-                float shown = Mathf.Clamp(lod.size / (2f * TuftCullDistance * Mathf.Tan(30f * Mathf.Deg2Rad)), 0.01f, 0.9f);
+                float shown = Mathf.Clamp(lod.size / (2f * (farCell ? TuftFarCullDistance : TuftCullDistance) * Mathf.Tan(30f * Mathf.Deg2Rad)), 0.01f, 0.9f);
                 lod.SetLODs(new[] { new LOD(shown, new Renderer[] { r }) });
                 tuftChunks++;
                 tuftTriangles += tris.Count / 3;
