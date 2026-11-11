@@ -33,6 +33,8 @@ import env_corridor             # noqa: E402
 import env_covebank             # noqa: E402  V10d: the cove bank outside the corridor
 import env_streets              # noqa: E402  V10f: the street section rebuilt from the Street View survey
 import env_street_objects       # noqa: E402
+import env_plaza                # noqa: E402  V10i: upper plaza, stairs, sunken courtyard
+import dressing_freeze         # noqa: E402  V10i: dressing stays put outside changed route sections
 import env_vegetation           # noqa: E402
 import env_props                # noqa: E402
 
@@ -290,6 +292,8 @@ def build_dressing():
     veg = env_vegetation.place()
     props = env_props.place(avoid=veg)
     veg, props = env_street_objects.dress(veg, props)      # V10f: the street section's own trees, cars and furniture
+    veg, props = dressing_freeze.apply(veg, props)         # V10i: outside the changed route sections: as approved
+    veg, props = env_plaza.dress(veg, props)               # V10i: the upper plaza's own trees and furniture
     env_vegetation.instance_for_preview(veg, protos)
     env_props.instance_for_preview(props, protos)
     print(f"  dressing: {len(protos)} prototypes, {len(veg)} plants, {len(props)} props")
@@ -571,6 +575,7 @@ def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     heights = env_terrain.apply()          # shapes the 5 m terrain to the driving profile
     env_corridor.build_data()              # high-res corridor along the track; from now on E.ground_z uses it
+    env_plaza.install()                    # V10i: ... and the plaza's own surfaces (deck, courtyard, stairs)
     env_covebank.plan()                    # V10d: 0.5 m lattice where the cove kerb crosses the 5 m grid
     env_streets.plan_terrace()             # V10f: 1 m lattice along the retaining wall of the restaurant terrace
     build_ground(heights)
@@ -580,6 +585,7 @@ def main():
     env_streets.build()                    # V10f: paving, markings, kerbs, walls (before the dressing stands on it)
     build_paths()
     env_buildings.build()
+    env_plaza.build()                      # V10i: deck with skylights, stairs, courtyard, fences
     build_dressing()
     build_route_guide()
     env_track.build()

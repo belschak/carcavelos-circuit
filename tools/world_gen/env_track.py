@@ -72,6 +72,7 @@ def curvature(pts, i, span=3):
     return turn / (span * 2.0)
 
 
+PLAZA_ZONES = ("stairs", "plaza deck")   # V10i: env_plaza.py builds the driving surface, no road strip
 INDOOR = ("atrium", "terrace deck")   # the road lies on a building floor / roof at track_z
 
 
@@ -88,7 +89,7 @@ def is_drop(a, b):
 
 
 def build_road(pts, fr, col):
-    surfaces = sorted({visual_surface(p) for p in pts})
+    surfaces = sorted({visual_surface(p) for p in pts if p["zone"] not in PLAZA_ZONES})
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new("UVMap")
     n = len(pts)
@@ -96,6 +97,10 @@ def build_road(pts, fr, col):
         a, b = pts[i], pts[(i + 1) % n]
         if is_drop(a, b):
             continue                               # the jump: no road across the drop
+        if a["zone"] in PLAZA_ZONES:
+            continue                               # V10i: the stairs and the plaza deck are the road there (env_plaza)
+        if i in kicker_rows(pts):
+            continue                               # V10i: the kicker ramp is the road on its last metres (build_ramp)
         surf = visual_surface(a)
         tile = TILE_M.get(surf, 2.0)
         (_, na), (_, nb) = fr[i], fr[(i + 1) % n]
@@ -383,10 +388,67 @@ def build_wedge(pts, fr, col, wedge):
     return E.new_object("Track_JumpKicker", mesh, col)
 
 
+def kicker_rows(pts):
+    """Route segments (index of their first point) that lie under the kicker ramp (route.json jump.kicker type "ramp")."""
+    kick = E.ROUTE["jump"].get("kicker", {})
+    if kick.get("type") != "ramp":
+        return ()
+    j, n = E.ROUTE["jump"]["index"], len(pts)
+    return {(j - k) % n for k in range(1, int(math.ceil(kick["length_m"] / 2.0)) + 1)}
+
+
+def build_ramp(pts, fr, col, kick):
+    """V10i: the kicker ramp on the terrace deck. It rises kick["rise_m"] over its last kick["length_m"] up to the
+    terrace edge (z = rise * t ** power: no kink at its start, steepest at the lip), 0.25 m rows, Boost Orange
+    stripes across (kerb texture), solid sides, a front face at the lip. Beyond the lip: nothing, a free drop."""
+    j, n = E.ROUTE["jump"]["index"], len(pts)
+    length, rise, power = kick["length_m"], kick["rise_m"], kick.get("power", 1.5)
+    steps = int(round(length / 0.25))
+    base = road_z(dict(pts[j], track_z=pts[j]["track_z"] - rise))            # the deck road under the ramp
+    half = E.half_width(pts[j])
+
+    def row(k):
+        d = length * (1 - k / steps)                                         # metres before the lip
+        f = d / 2.0
+        i0 = int(math.floor(f))
+        t = f - i0
+        a, b = pts[(j - i0) % n], pts[(j - i0 - 1) % n]
+        (_, na), (_, nb) = fr[(j - i0) % n], fr[(j - i0 - 1) % n]
+        x, y = a["x"] + (b["x"] - a["x"]) * t, a["y"] + (b["y"] - a["y"]) * t
+        nx, ny = na[0] + (nb[0] - na[0]) * t, na[1] + (nb[1] - na[1]) * t
+        z = base + rise * (k / steps) ** power
+        return (x + nx * half, y + ny * half), (x - nx * half, y - ny * half), z, length - d
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    rows = [row(k) for k in range(steps + 1)]
+    for (l0, r0, z0, s0), (l1, r1, z1, s1) in zip(rows, rows[1:]):
+        top = bm.faces.new([bm.verts.new((*l0, z0)), bm.verts.new((*r0, z0)), bm.verts.new((*r1, z1)), bm.verts.new((*l1, z1))])
+        for loop, c in zip(top.loops, ((0.0, s0 / 2), (2 * half / 2, s0 / 2), (2 * half / 2, s1 / 2), (0.0, s1 / 2))):
+            loop[uv].uv = c
+        for p0, p1, flip in ((l0, l1, True), (r0, r1, False)):               # solid sides down to the deck
+            vs = [bm.verts.new((*p0, base - 0.05)), bm.verts.new((*p1, base - 0.05)), bm.verts.new((*p1, z1)), bm.verts.new((*p0, z0))]
+            side = bm.faces.new(vs[::-1] if flip else vs)
+            for loop in side.loops:
+                loop[uv].uv = (0.05, loop.vert.co.z)
+    l, r, z, _s = rows[-1]                                                   # front face at the lip
+    front = bm.faces.new([bm.verts.new((*l, base - 0.3)), bm.verts.new((*l, z)), bm.verts.new((*r, z)), bm.verts.new((*r, base - 0.3))])
+    for loop in front.loops:
+        loop[uv].uv = (0.05, loop.vert.co.z)
+    bm.normal_update()
+    mesh = bpy.data.meshes.new("Track_JumpKicker")
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(E.material("T_kerb", "#FF8A1F", roughness=0.7))
+    return E.new_object("Track_JumpKicker", mesh, col)
+
+
 def build_kicker(pts, fr, col):
     wedge = [i for i, p in enumerate(pts) if p["zone"] == "kicker"]
     if wedge:
         return build_wedge(pts, fr, col, wedge)
+    kick = E.ROUTE["jump"].get("kicker", {})
+    if kick.get("type") == "ramp":
+        return build_ramp(pts, fr, col, kick)
     j = E.ROUTE["jump"]["index"]
     p, (t, nrm) = pts[j], fr[j]
     z = road_z(p)

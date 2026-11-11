@@ -22,6 +22,8 @@ import json
 import math
 import os
 import random
+
+import plaza_plan
 import sys
 
 import numpy as np
@@ -126,6 +128,8 @@ def allowed(x, y):
         return "path"
     if in_building(x, y):
         return "building"
+    if plaza_plan.area(x, y, 1.0):
+        return "plaza"                                      # V10i: the paved upper plaza, its courtyard and stairs
     return None
 
 
@@ -157,6 +161,9 @@ def place(dressing):
     for i, p in enumerate(ROUTE):                           # along the track, denser close to the road edge
         if p["tunnel"] or p["building"]:
             continue
+        # V10i: random numbers keyed on the place, not on the order of the lap: a route change in one section
+        # leaves the tufts everywhere else exactly where they were
+        rng = random.Random(f"{SEED}|route|{p['x']}|{p['y']}")
         a, b = ROUTE[i - 1], ROUTE[(i + 1) % n]
         tx, ty = b["x"] - a["x"], b["y"] - a["y"]
         length = math.hypot(tx, ty) or 1.0
@@ -174,6 +181,7 @@ def place(dressing):
     for proto, x, y in dressing:                            # around the feet of trees, benches, lamps, bins
         rule = next((v for k, v in FEET.items() if proto.startswith(k)), None)
         if rule and route_clearance(x, y) < TREE_NEAR:
+            rng = random.Random(f"{SEED}|feet|{proto}|{x}|{y}")
             count, r0, r1 = rule
             for _ in range(count):
                 az, r = rng.uniform(0, 2 * math.pi), rng.uniform(r0, r1)
@@ -184,6 +192,7 @@ def place(dressing):
             length = math.hypot(x2 - x1, y2 - y1)
             if length < 1.0 or route_clearance((x1 + x2) / 2, (y1 + y2) / 2) > WALL_NEAR:
                 continue
+            rng = random.Random(f"{SEED}|wall|{x1}|{y1}|{x2}|{y2}")
             nx, ny = (y2 - y1) / length, -(x2 - x1) / length
             if inside((x1 + x2) / 2 + nx * 0.3, (y1 + y2) / 2 + ny * 0.3, poly):
                 nx, ny = -nx, -ny
