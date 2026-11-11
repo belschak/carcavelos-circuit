@@ -429,7 +429,9 @@ namespace CarcavelosCircuit.Visuals.Editor
             foreach (MeshFilter mf in world.GetComponentsInChildren<MeshFilter>(true))
             {
                 string n = mf.gameObject.name;
-                if (!n.StartsWith("Backdrop_", StringComparison.Ordinal) && !n.StartsWith("Tunnel_Lights", StringComparison.Ordinal))
+                // V10f: "Street_NoCollide_*" = road markings and low kerbs of the street section: to look at, not to hit.
+                if (!n.StartsWith("Backdrop_", StringComparison.Ordinal) && !n.StartsWith("Tunnel_Lights", StringComparison.Ordinal)
+                    && !n.StartsWith("Street_NoCollide", StringComparison.Ordinal))
                 {
                     mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
                 }

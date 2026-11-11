@@ -23,7 +23,7 @@ import env_track as T
 LINE_W = 0.18               # m, painted line width
 LINE_INSET = 0.25           # m, from the road edge to the outer side of the line
 LINE_LIFT = 0.04            # m above the road surface (2 cm still flickered at a distance)
-DARK_SURFACES = {"asphalt", "tunnel_floor", "terracotta"}
+DARK_SURFACES = {"asphalt", "tunnel_floor", "terracotta", "street_setts"}
 
 SIGN_ZONES = {"lawn and paths", "coastal road", "promenade", "lower plaza", "upper plaza", "tunnel plaza"}
 SIGNS_MAX = 6
@@ -67,7 +67,7 @@ def build_lines(pts, fr, col):
                 return bm.verts.new((p["x"] + side * nrm[0] * o, p["y"] + side * nrm[1] * o, z))
             oa, ob = E.half_width(a) - LINE_INSET, E.half_width(b) - LINE_INSET
             face = bm.faces.new((at(a, na, oa, za), at(b, nb, ob, zb), at(b, nb, ob - LINE_W, zb), at(a, na, oa - LINE_W, za)))
-            face.material_index = 0 if a["surface"] in DARK_SURFACES else 1
+            face.material_index = 0 if T.visual_surface(a) in DARK_SURFACES else 1
     bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=0.005)
     bm.normal_update()
     for f in bm.faces:

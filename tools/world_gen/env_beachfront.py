@@ -39,7 +39,7 @@ SEA_DIR = (-0.742, -0.670)            # towards the water at the restaurants (pe
 COLLECTION = "World_Promenade"
 
 # material slots of the building meshes (unused slots are dropped per mesh)
-WALL, GLASS, ROOF, STEEL, PLINTH, DECK, TILES, STONE = range(8)
+WALL, GLASS, ROOF, STEEL, PLINTH, DECK, TILES, STONE, ROOF_DARK = range(9)
 
 
 def building_materials():
@@ -51,7 +51,8 @@ def building_materials():
             m("concrete_sand", roughness=0.9),                          # same material as the bench plinths
             timber_material(),
             m("B_roof_tiles", "#C8664A", 0.85),
-            stone_material()]
+            stone_material(),
+            m("B_roof_dark", "#4A4744", 0.8)]
 
 
 def timber_material():
@@ -241,13 +242,18 @@ RESTAURANTS = {
 }
 SMALL = {
     "w482697584": dict(kind="pavilion", walls=3.1, eave=0.35, pitch=0.55),
-    "w213239659": dict(kind="pavilion", walls=3.4, eave=0.35, pitch=0.5),
+    # V10f (survey F): the beach bar stands on promenade level, one level below the car park: from the aisle only its
+    # dark low-pitched roof shows (eave 1.3 m, ridge 2.5 m above the car park), not a white house with a tiled roof
+    "w213239659": dict(kind="pavilion", walls=3.4, eave=0.5, pitch=0.27, low=1.3, dark_roof=True),
     "w482697583": dict(kind="kiosk", walls=2.7),
     # outworks of the Forte de Sao Juliao (OSM barrier=city_wall, a ravelin and a wall): low stone ramparts, not
     # 10.5 m blocks with windows (they stood in front of the fort in every view from the cove)
     "w155316895": dict(kind="rampart", rise=2.6, talus=1.2, max_top=11.0),
     "w228205972": dict(kind="rampart", rise=1.8, talus=0.4),
 }
+# V10f (survey E 40/41): from the forecourt the restaurants are plain white rendered walls and parapets behind the
+# hedge, no row of windows; the way in is the slatted portal with its stair (env_street_objects)
+V10F_PLAIN_LAND_WALLS = True
 DECK_DEPTH, DECK_DROP = 6.0, 0.12        # Capricciosa: timber deck depth (m) and how far below the floor its top is
 PERGOLA_TO = 15.5                         # ... the pergola covers the deck from its north-west end to here (m)
 CANOPY_DEPTH = 4.5                        # A Pastorinha: canopy / terrace depth
@@ -285,8 +291,12 @@ def restaurant_layout(bid):
         return _cache[bid]
     b = footprint(bid)
     pts = b["points"]
-    spec = RESTAURANTS[bid]
-    floor = floor_z(pts)
+    spec = dict(RESTAURANTS[bid])
+    # V10f (survey 4.2): the two restaurants stand 1.5-2 m below the forecourt on their own terrace; from the car
+    # park only low white roof edges show over the hedge. Floor and storey height come from the street plan.
+    import street_plan
+    floor = street_plan.RESTAURANT_FLOOR
+    spec["storey"] = street_plan.RESTAURANT_STOREY[spec["kind"]]
     a, length, u, n = sea_front(pts)
     lay = dict(points=pts, floor=floor, top=floor + spec["storey"], a=a, length=length, u=u, n=n, spec=spec)
     if spec["kind"] == "capricciosa":
@@ -358,7 +368,7 @@ def build_restaurant(b):
             for t in frange(t0 + 3.0, t1 - 0.5, 3.0):                  # slim white fins between the panes
                 c = (p[0] + u[0] * t + n[0] * 0.09, p[1] + u[1] * t + n[1] * 0.09)
                 det.obox(c, u, 0.06, 0.09, floor + 0.1, glass_top + 0.05, WALL)
-        else:
+        elif not V10F_PLAIN_LAND_WALLS:
             mid = length / 2
             for t in frange(1.8, length - 1.8, 4.5):
                 if k == door_edge and not door_done and abs(t - mid) < 2.3:
@@ -548,6 +558,10 @@ def build_pavilion(b, spec):
     floor = floor_z(pts)
     base = min(ground(x, y) for x, y in pts) - 0.8
     top = floor + spec["walls"]
+    tiles = ROOF_DARK if spec.get("dark_roof") else TILES
+    if spec.get("low"):                 # floor on the low (promenade) side, eave `low` m above the high (car park) side
+        top = max(ground(x, y) for x, y in pts) + spec["low"]
+        floor = min(min(ground(x, y) for x, y in pts) + 0.15, top - 2.4)
     mats = building_materials()
     vol = Geo()
     for _k, p, q, _l, _u, n in edges(pts):
@@ -569,10 +583,10 @@ def build_pavilion(b, spec):
     ze, zr = top + 0.05, top + 0.05 + rise
     c = [P(-L, -W, ze), P(L, -W, ze), P(L, W, ze), P(-L, W, ze)]
     r0, r1 = P(-ridge, 0, zr), P(ridge, 0, zr)
-    vol.face([c[0], c[1], r1, r0], TILES, out=(-v[0], -v[1], 1))
-    vol.face([c[2], c[3], r0, r1], TILES, out=(v[0], v[1], 1))
-    vol.face([c[1], c[2], r1], TILES, out=(u[0], u[1], 1))
-    vol.face([c[3], c[0], r0], TILES, out=(-u[0], -u[1], 1))
+    vol.face([c[0], c[1], r1, r0], tiles, out=(-v[0], -v[1], 1))
+    vol.face([c[2], c[3], r0, r1], tiles, out=(v[0], v[1], 1))
+    vol.face([c[1], c[2], r1], tiles, out=(u[0], u[1], 1))
+    vol.face([c[3], c[0], r0], tiles, out=(-u[0], -u[1], 1))
     vol.face(c, WALL, out=(0, 0, -1))                                  # soffit
     det = Geo()
     for k in range(4):                                                  # fascia under the tiles

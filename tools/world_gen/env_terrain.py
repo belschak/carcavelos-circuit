@@ -184,6 +184,9 @@ def apply():
             beach += coast.in_beach(x, y)
     print(f"  coast: {beach} terrain vertices on the beach (waterline from coast_trace.json)")
 
+    import env_streets                    # V10f: the sunken terrace of the two beach restaurants (survey 4.2)
+    env_streets.lower_nodes(heights)
+
     E.set_heightfield(heights)
     print(f"  terrain: {changed} vertices reshaped along the route, tunnel covered by {cover} m")
     return heights

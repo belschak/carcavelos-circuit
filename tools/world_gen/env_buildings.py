@@ -470,7 +470,7 @@ def build():
             det = E.new_object("BD_" + name[2:], details, col)
             det.parent = obj
     env_beachfront.build_promenade()
-    build_roundabout_island()   # V10c
+    # build_roundabout_island()   V10c: replaced in V10f by env_streets (radius 14.3 m, sett apron, steel wedges)
 
 
 # ----------------------------------------------------------------------------------------------

@@ -31,6 +31,8 @@ import env_materials            # noqa: E402
 import env_interior             # noqa: E402
 import env_corridor             # noqa: E402
 import env_covebank             # noqa: E402  V10d: the cove bank outside the corridor
+import env_streets              # noqa: E402  V10f: the street section rebuilt from the Street View survey
+import env_street_objects       # noqa: E402
 import env_vegetation           # noqa: E402
 import env_props                # noqa: E402
 
@@ -110,8 +112,10 @@ def build_ground(heights):
         for i in range(COLS - 1):
             a = j * COLS + i
             cx, cy = X0 + (i + 0.5) * STEP, Y0 + (j + 0.5) * STEP
-            if env_terrain.in_portal_hole(cx, cy) or env_corridor.covers_cell(cx, cy) or env_covebank.covers_cell(cx, cy):
-                continue                       # the tunnel portal / the cut walls close this gap; V10d: the cove bank
+            if env_terrain.in_portal_hole(cx, cy) or env_corridor.covers_cell(cx, cy) or env_covebank.covers_cell(cx, cy) \
+                    or env_streets.covers_cell(cx, cy):
+                continue                       # the tunnel portal / the cut walls close this gap; V10d: the cove bank;
+                                               # V10f: the restaurant terrace
             faces.append((a, a + 1, a + 1 + COLS, a + COLS))
             corner = [GRID["classes"][j][i], GRID["classes"][j][i + 1], GRID["classes"][j + 1][i], GRID["classes"][j + 1][i + 1]]
             mats.append(classes.index(max(set(corner), key=corner.count)))   # majority class of the 4 corners
@@ -282,9 +286,10 @@ def build_dressing():
     """Trees, shrubs, grass and props (env_vegetation.py, env_props.py). Each kind is built once as a prototype;
     the placements are data (out/placements_vegetation.json, out/placements_props.json) so Unity can instance them.
     In the .blend they appear as linked duplicates for the renders. Replaces the old cone trees."""
-    protos = {**env_vegetation.build_prototypes(), **env_props.build_prototypes()}
+    protos = {**env_vegetation.build_prototypes(), **env_props.build_prototypes(), **env_street_objects.build_prototypes()}
     veg = env_vegetation.place()
     props = env_props.place(avoid=veg)
+    veg, props = env_street_objects.dress(veg, props)      # V10f: the street section's own trees, cars and furniture
     env_vegetation.instance_for_preview(veg, protos)
     env_props.instance_for_preview(props, protos)
     print(f"  dressing: {len(protos)} prototypes, {len(veg)} plants, {len(props)} props")
@@ -567,9 +572,12 @@ def main():
     heights = env_terrain.apply()          # shapes the 5 m terrain to the driving profile
     env_corridor.build_data()              # high-res corridor along the track; from now on E.ground_z uses it
     env_covebank.plan()                    # V10d: 0.5 m lattice where the cove kerb crosses the 5 m grid
+    env_streets.plan_terrace()             # V10f: 1 m lattice along the retaining wall of the restaurant terrace
     build_ground(heights)
     env_corridor.build_mesh()
     env_covebank.build_mesh()
+    env_streets.build_terrace_mesh()
+    env_streets.build()                    # V10f: paving, markings, kerbs, walls (before the dressing stands on it)
     build_paths()
     env_buildings.build()
     build_dressing()

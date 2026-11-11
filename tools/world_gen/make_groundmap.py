@@ -16,6 +16,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 import coast
+import street_plan
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = json.load(open(os.path.join(HERE, "world_data.json")))
@@ -46,6 +47,30 @@ ROCK_PAD = 0.25                                        # m: rock colour reaches 
 FILL_AS_AREA = set(coast.C.get("fill_as_area", []))      # OSM ways painted as filled paved areas (the promenade)
 OPEN_TO_PAVED = coast.C.get("open_to_paved", [])         # V10d: open ground that is paved (round the beach restaurants)
 ROADS = {"primary", "primary_link", "secondary", "tertiary", "residential", "unclassified", "service", "living_street"}
+
+
+# V10f: the street section (street_plan.py). Under the paving the ground is not seen; the map carries the same shapes
+# so lawns, the dry meadow and the planted banks are right, the grass tufts keep off the paving, and nothing of the
+# old OSM road bands shows beside the new streets.
+STREET_COLOURS = {"concrete": (205, 196, 182), "bays": (205, 196, 182), "brick": (156, 127, 107), "setts": (142, 138, 132),
+                  "calcada": (230, 225, 214), "asphalt": (85, 88, 94), "kerb": (207, 201, 188)}
+STREET_GROUND = {"lawn": (143, 179, 122), "meadow": (178, 176, 126), "bank": (128, 134, 88), "soil": (138, 115, 85),
+                 "paved": (201, 197, 188), "dust": (190, 172, 138)}
+STREET_LAWN = {"lawn": 255, "meadow": 235, "bank": 150, "soil": 0, "paved": 0, "dust": 60}     # mask red: 255 = full lawn
+
+
+def street_layers(scale, lawn_mask=False):
+    """(colour RGB, coverage) of the street plan's layers, drawn in order at `scale` pixels per map pixel."""
+    img = Image.new("RGBA", (int(W * scale), int(H * scale)), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    for lay in street_plan.LAYERS:
+        if lay["mat"] is None or lay["mat"] == "lawn":
+            c = (STREET_LAWN[lay["ground"]],) * 3 if lawn_mask else STREET_GROUND[lay["ground"]]
+        else:
+            c = (0, 0, 0) if lawn_mask else STREET_COLOURS.get(lay["mat"]) or tuple(
+                int(street_plan.PALETTE[lay["mat"][4:]][k:k + 2], 16) for k in (1, 3, 5))
+        d.polygon([to_px(x, y, scale) for x, y in lay["ring"]], fill=c + (255,))
+    return img
 
 
 def to_px(x, y, scale=1):
@@ -175,6 +200,11 @@ def write_mask():
     path = np.asarray(paths.resize((MASK_W, mh), Image.LANCZOS), np.float32) / 255.0
     sea, beach, _cove, rock, metres = coast_masks(MASK_W, mh)
     land = 1.0 - sea
+    streets = np.asarray(street_layers(SS, lawn_mask=True).resize((MASK_W, mh), Image.LANCZOS), np.float32) / 255.0
+    cover = streets[..., 3]
+    mask[..., 0] = mask[..., 0] * (1.0 - cover) + streets[..., 0] * cover       # V10f: lawn as the street plan says
+    mask[..., 1] = mask[..., 1] * (1.0 - cover)
+    path = path * (1.0 - cover)
     lawn = mask[..., 0] * (1.0 - beach) * (1.0 - path) * land
     sand = np.clip(mask[..., 1] * land + beach, 0.0, 1.0) * (1.0 - rock) * (1.0 - path)
     out = np.dstack([lawn, sand, np.clip(metres / WET_RANGE, 0.0, 1.0), 1.0 - rock])
@@ -212,6 +242,8 @@ def main():
     path_rgb = layer[..., :3]                     # Pillow scales RGBA premultiplied and returns straight colour
     arr = paint_coast(arr, alpha)
     arr = arr + (path_rgb - arr) * alpha[..., None]
+    streets = np.asarray(street_layers(SS).resize((W, H), Image.LANCZOS), np.float32)      # V10f: over everything
+    arr = arr + (streets[..., :3] - arr) * (streets[..., 3:4] / 255.0)
     write_mask()
 
     # soft contact shadow around buildings (baked ambient occlusion on the ground)

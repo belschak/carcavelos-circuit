@@ -22,6 +22,7 @@ VERGE = 2.5                 # metres beside the road
 TILE_M = {                  # real-world size of one texture tile (m), so UVs are in tiles
     "asphalt": 2.0, "concrete_sand": 2.0, "concrete_polished": 2.0, "concrete_light": 2.0, "tunnel_floor": 2.0,
     "calcada": 1.0, "terracotta": 1.0, "lawn": 2.0, "kerb": 2.0, "cut_wall": 2.0, "sand": 4.0,
+    "street_concrete": 4.0, "street_setts": 2.0,
 }
 SURFACE_COLOUR = {          # used until textures exist (env_materials upgrades them)
     "asphalt": "asphalt", "concrete_sand": "concrete_sand", "concrete_polished": "#9A9C9E", "concrete_light": "concrete_light",
@@ -32,7 +33,17 @@ OUTDOOR_NO_VERGE = {"tunnel", "atrium", "terrace deck"}
 KERB_ZONES = {"lawn and paths", "coastal road", "promenade", "lower plaza", "upper plaza", "tunnel plaza"}
 
 
+def visual_surface(p):
+    """Surface shown at a route point: the street plan's (V10f: pale concrete in the car park, setts in the entry
+    throat) where it has one, else route.json's. Colour only: route.json and every driving value stay as they are."""
+    import street_plan
+    return street_plan.track_surface(p) or p["surface"]
+
+
 def surface_material(name):
+    if name.startswith("street_"):                     # V10f: the same material as the paving beside the road
+        import env_streets
+        return env_streets.mat(name[len("street_"):])
     colour = SURFACE_COLOUR.get(name, "asphalt")
     hexcol = colour if colour.startswith("#") else E.PALETTE[colour]
     rough = 0.35 if name == "concrete_polished" else 0.9
@@ -77,7 +88,7 @@ def is_drop(a, b):
 
 
 def build_road(pts, fr, col):
-    surfaces = sorted({p["surface"] for p in pts})
+    surfaces = sorted({visual_surface(p) for p in pts})
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new("UVMap")
     n = len(pts)
@@ -85,7 +96,8 @@ def build_road(pts, fr, col):
         a, b = pts[i], pts[(i + 1) % n]
         if is_drop(a, b):
             continue                               # the jump: no road across the drop
-        tile = TILE_M.get(a["surface"], 2.0)
+        surf = visual_surface(a)
+        tile = TILE_M.get(surf, 2.0)
         (_, na), (_, nb) = fr[i], fr[(i + 1) % n]
         za, zb = road_z(a), road_z(b)
         ha, hb = E.half_width(a), E.half_width(b)      # narrower in the alley (route.json 'width')
@@ -94,7 +106,7 @@ def build_road(pts, fr, col):
                 bm.verts.new((b["x"] - nb[0] * hb, b["y"] - nb[1] * hb, zb)),
                 bm.verts.new((b["x"] + nb[0] * hb, b["y"] + nb[1] * hb, zb))]
         face = bm.faces.new(quad)
-        face.material_index = surfaces.index(a["surface"])
+        face.material_index = surfaces.index(surf)
         sa, sb = a["s"] / tile, (a["s"] + 2.0) / tile
         ua0, ua1 = (HALF - ha) / tile, (HALF + ha) / tile    # u stays centred on the road axis
         ub0, ub1 = (HALF - hb) / tile, (HALF + hb) / tile
@@ -112,7 +124,7 @@ def build_road(pts, fr, col):
                 low_a, low_b = down(a, na, ha, side), down(b, nb, hb, side)
                 ring = (top_a, top_b, low_b, low_a) if side == 1 else (top_b, top_a, low_a, low_b)
                 shoulder = bm.faces.new(ring)
-                shoulder.material_index = surfaces.index(a["surface"])
+                shoulder.material_index = surfaces.index(surf)
                 for loop, (u, v) in zip(shoulder.loops, ((0.0, sa), (0.0, sb), (SHOULDER_M / tile, sb), (SHOULDER_M / tile, sa))
                                         if side == 1 else ((0.0, sb), (0.0, sa), (SHOULDER_M / tile, sa), (SHOULDER_M / tile, sb))):
                     loop[uv].uv = (u, v)
