@@ -35,7 +35,7 @@ namespace CarcavelosCircuit.RaceFlow
         private static readonly Color MedalSilver = new Color(0.773f, 0.800f, 0.839f, 1f); // --medal-silver #C5CCD6
         private static readonly Color MedalBronze = new Color(0.788f, 0.541f, 0.333f, 1f); // --medal-bronze #C98A55
         private static readonly Color Panel = new Color(29f / 255f, 29f / 255f, 31f / 255f, 0.82f); // --cc-panel
-        private static readonly Color MapPanel = new Color(29f / 255f, 29f / 255f, 31f / 255f, 0.64f);
+        private static readonly Color MapPanel = new Color(29f / 255f, 29f / 255f, 31f / 255f, 0.80f);
         private static readonly Color Lip = new Color(0f, 0f, 0f, 0.45f);                   // --cc-lip
 
         [SerializeField]
@@ -224,7 +224,8 @@ namespace CarcavelosCircuit.RaceFlow
                 if (racer.IsPlayer)
                 {
                     playerSeen = true;
-                    PlaceCentred(playerMarker, point, 34f);
+                    PlaceCentred(playerMarker, point, 26f);
+                    PlaceCentred(playerHalo, point, 22f);
                     playerMarker.style.rotate = new Rotate(Angle.Degrees(fit.ToMapAngle(racerRoot.forward)));
                     UpdateTrail(racer, point);
                 }
@@ -234,7 +235,7 @@ namespace CarcavelosCircuit.RaceFlow
                     botIndex++;
                     dot.style.backgroundColor = racer.MapColor;
                     dot.style.opacity = 1f;
-                    PlaceCentred(dot, point, 11f);
+                    PlaceCentred(dot, point, 10f);
                 }
             }
             for (int i = botIndex; i < botDots.Count; i++)
@@ -242,6 +243,7 @@ namespace CarcavelosCircuit.RaceFlow
                 botDots[i].style.opacity = 0f; // a bot that left
             }
             playerMarker.style.opacity = playerSeen ? 1f : 0f;
+            playerHalo.style.opacity = playerSeen ? 1f : 0f;
 
             // The player's halo breathes slowly so the eye finds "me" at once. Reduced motion: still.
             float halo = reduced ? 1f : 1f + 0.18f * Mathf.Sin(now * 3.4f);
@@ -315,12 +317,12 @@ namespace CarcavelosCircuit.RaceFlow
                 dot.style.position = Position.Absolute;
                 dot.style.left = 0f;
                 dot.style.top = 0f;
-                dot.style.width = 11f;
-                dot.style.height = 11f;
-                SetRadius(dot, 5.5f);
-                SetBorder(dot, 2f, new Color(0f, 0f, 0f, 0.7f));
+                dot.style.width = 10f;
+                dot.style.height = 10f;
+                SetRadius(dot, 5f);
+                SetBorder(dot, 1.5f, new Color(0f, 0f, 0f, 0.8f));
                 botDots.Add(dot);
-                dotLayer.Insert(0, dot); // under the player's marker
+                dotLayer.Insert(1, dot); // above the player's halo, under the player's dot (a bot right beside you stays visible)
             }
             return botDots[index];
         }
@@ -414,7 +416,7 @@ namespace CarcavelosCircuit.RaceFlow
             pattern.style.right = 0f;
             pattern.style.top = 0f;
             pattern.style.bottom = 0f;
-            pattern.style.opacity = 0.05f;
+            pattern.style.opacity = 0.04f;
             mapFrame.Add(pattern);
 
             mapArea = new VisualElement();
@@ -441,44 +443,47 @@ namespace CarcavelosCircuit.RaceFlow
             dotLayer.style.bottom = 0f;
             mapArea.Add(dotLayer);
 
-            // The player: a soft halo, an orange dot with a white ring and a white arrow in front, all turned with the kart.
+            // The player: a soft halo under everything (its own element, so bots beside you are drawn above it), then an
+            // orange dot with a white ring and a white arrow in front, turned with the kart. Small on purpose: on a
+            // 1.2 km lap one map pixel is about 3 m, so a big marker would hide every bot near you.
+            playerHalo = new VisualElement();
+            playerHalo.pickingMode = PickingMode.Ignore;
+            playerHalo.style.position = Position.Absolute;
+            playerHalo.style.left = 0f;
+            playerHalo.style.top = 0f;
+            playerHalo.style.width = 22f;
+            playerHalo.style.height = 22f;
+            SetRadius(playerHalo, 11f);
+            playerHalo.style.backgroundColor = HudColors.WithAlpha(PlayerRacer.PlayerColour, 0.3f);
+            playerHalo.style.opacity = 0f;
+            dotLayer.Add(playerHalo);
+
             playerMarker = new VisualElement();
             playerMarker.pickingMode = PickingMode.Ignore;
             playerMarker.style.position = Position.Absolute;
             playerMarker.style.left = 0f;
             playerMarker.style.top = 0f;
-            playerMarker.style.width = 34f;
-            playerMarker.style.height = 34f;
+            playerMarker.style.width = 26f;
+            playerMarker.style.height = 26f;
             playerMarker.style.alignItems = Align.Center;
             playerMarker.style.justifyContent = Justify.Center;
             playerMarker.style.opacity = 0f;
             dotLayer.Add(playerMarker);
 
-            playerHalo = new VisualElement();
-            playerHalo.pickingMode = PickingMode.Ignore;
-            playerHalo.style.position = Position.Absolute;
-            playerHalo.style.width = 26f;
-            playerHalo.style.height = 26f;
-            playerHalo.style.left = 4f;
-            playerHalo.style.top = 4f;
-            SetRadius(playerHalo, 13f);
-            playerHalo.style.backgroundColor = HudColors.WithAlpha(PlayerRacer.PlayerColour, 0.28f);
-            playerMarker.Add(playerHalo);
-
             VisualElement playerDot = new VisualElement();
             playerDot.pickingMode = PickingMode.Ignore;
-            playerDot.style.width = 15f;
-            playerDot.style.height = 15f;
-            SetRadius(playerDot, 7.5f);
-            SetBorder(playerDot, 2.5f, Color.white);
+            playerDot.style.width = 12f;
+            playerDot.style.height = 12f;
+            SetRadius(playerDot, 6f);
+            SetBorder(playerDot, 2f, Color.white);
             playerDot.style.backgroundColor = PlayerRacer.PlayerColour;
             playerMarker.Add(playerDot);
 
-            TriangleMark arrow = new TriangleMark(Color.white, new Color(0f, 0f, 0f, 0.6f), 1.5f);
+            TriangleMark arrow = new TriangleMark(Color.white, new Color(0f, 0f, 0f, 0.7f), 1.2f);
             arrow.style.position = Position.Absolute;
-            arrow.style.width = 11f;
-            arrow.style.height = 9f;
-            arrow.style.left = 11.5f;
+            arrow.style.width = 10f;
+            arrow.style.height = 8f;
+            arrow.style.left = 8f;
             arrow.style.top = 0f;
             playerMarker.Add(arrow);
         }
@@ -516,7 +521,7 @@ namespace CarcavelosCircuit.RaceFlow
 
             VisualElement side = new VisualElement();
             side.pickingMode = PickingMode.Ignore;
-            side.style.marginLeft = 4f;
+            side.style.marginLeft = 8f;
             side.style.justifyContent = Justify.Center;
             positionBox.Add(side);
 
