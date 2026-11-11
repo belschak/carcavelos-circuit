@@ -62,6 +62,13 @@ PLANT_ZONES = [
 CANARY_ROW = (20.0, -123.0, 400.0, -112.0)
 CANARY_X = (60.0, 170.0)
 CANARY_GAP = 13.0
+# Palms that stay but are too tall (Veg_Palm is 10 m at scale 1): the survey gives 5-7 m for the Canary palms at the
+# car park and 4-6 m for the palm groups on the Marginal's sea side west of the tunnel. Same place and rotation, new
+# scale; the diff lists them as removed + added by this module. (name, box, kinds, factor)
+RESIZE = [
+    ("resized: Canary palms at the roadside car park (5-7 m)", (60.0, -123.0, 170.0, -112.0), PALMS, 0.65),
+    ("resized: palm groups on the Marginal's sea side (4-6 m)", (-80.0, -112.0, -20.0, -86.0), PALMS, 0.5),
+]
 
 # ---------------------------------------------------------------------------------------------------------------
 # Furniture that does not exist. Kinds everywhere, then (zone, box, kinds).
@@ -89,7 +96,7 @@ PROP_ZONES = [
 PLANTS = [
     ("Veg_Olive", -69.0, 52.0, 0.8, 0.6, "west lawn: the old olive (App. B 2.9: (-69, 52) +-1.5, crown 3 m)"),
     ("Veg_PlazaTree", -27.0, 48.5, 0.55, 2.1, "west lawn: the young tree 3 m south of the pad (App. B 2.9)"),
-    ("Veg_Olive_B", -60.5, -31.0, 0.8, 4.0, "south-west lawn: the one old olive (App. C 2.1)"),
+    ("Veg_Olive_B", -60.5, -31.0, 0.62, 4.0, "south-west lawn: the one old olive (App. C 2.1)"),
     # a few small fan palms behind the shrub belt south of the ring (App. I 2.3: fan palms 4-6 m behind the belt)
     ("Veg_FanPalm", -119.0, -97.5, 0.45, 0.3, "ring: small fan palm behind the shrub belt"),
     ("Veg_FanPalm_B", -108.0, -99.5, 0.5, 1.9, "ring: small fan palm behind the shrub belt"),
@@ -106,8 +113,9 @@ PLANTS = [
 HEDGE_LINE = [(-51.0, -93.0), (-39.0, -97.0), (-25.0, -101.0), (-14.0, -103.0), (2.0, -105.0), (35.0, -107.0)]
 HEDGE_X = (-40.0, 10.0)
 HEDGE_OFFSET = 8.6
-HEDGE_STEP = 2.3
-HEDGE_SCALE = (2.3, 2.7)                 # Veg_Shrub is about 1.1 m high at scale 1
+HEDGE_STEP = 1.7
+HEDGE_SCALE = (1.7, 2.1)                 # Veg_Shrub is 1.1 m high at scale 1: a hedge of about 2-2.3 m (real 2.5-3 m; bigger
+                                         # copies of the low-poly shrub show their facets from the promenade)
 
 # Props: (proto, x, y, rot_z or None, what). z = the surface under them.
 POT = "Prop_PotOlive"
@@ -224,6 +232,12 @@ def apply(veg, props, stage=None):
             gone.setdefault(zone, {}).setdefault(p["proto"], []).append(p)
         else:
             veg2.append(p)
+    resized = []
+    for name, area, kinds, factor in RESIZE:
+        for p in [p for p in veg2 if mine_v(p) and p["proto"].startswith(kinds) and _inside(p["x"], p["y"], area)]:
+            veg2.remove(p)
+            gone.setdefault(name, {}).setdefault(p["proto"], []).append(p)
+            resized.append(dict(p, scale=round(p["scale"] * factor, 3)))
     for p in props:
         zone = prop_zone(p) if mine_p(p) else None
         if zone:
@@ -231,7 +245,7 @@ def apply(veg, props, stage=None):
         else:
             props2.append(p)
 
-    notes, new_v, new_p = [], [], []
+    notes, new_v, new_p = [], list(resized), []
 
     def clear_spot(x, y, need):
         """(x, y) moved straight away from the race line until it is `need` m from it."""
@@ -254,12 +268,15 @@ def apply(veg, props, stage=None):
     for proto, x, y, scale, rot, what in PLANTS:
         solid = not proto.startswith(SHRUBS)                       # shrubs have no collider (the kart drives through)
         x, y, gap, moved = clear_spot(x, y, ROUTE_CLEAR + (1.6 if solid else 1.0))
+        if solid and any(q["proto"].startswith(TREES) and math.hypot(q["x"] - x, q["y"] - y) < 8.0 for q in veg2):
+            notes.append((what + ": ALREADY THERE (a tree of another module stands within 8 m)", proto, x, y, gap, moved))
+            continue
         new_v.append({"proto": proto, "x": round(x, 3), "y": round(y, 3), "z": round(env_vegetation._ground_z(x, y), 3),
                       "rot_z": rot, "scale": scale})
         notes.append((what, proto, x, y, gap, moved))
     hedge = 0
     for k, (x, y) in enumerate(_hedge()):
-        if env_campus.route_gap(x, y) < ROUTE_CLEAR + 1.5 or near(x, y, veg2, 1.6):
+        if env_campus.route_gap(x, y) < ROUTE_CLEAR + 1.5 or near(x, y, veg2 + resized, 1.6):
             continue
         scale = HEDGE_SCALE[0] + (HEDGE_SCALE[1] - HEDGE_SCALE[0]) * ((k * 37) % 10) / 9.0
         new_v.append({"proto": "Veg_Shrub" if k % 2 else "Veg_Shrub_B", "x": round(x, 3), "y": round(y, 3),
@@ -295,7 +312,8 @@ def apply(veg, props, stage=None):
     for zone in sorted(gone):
         kinds = ", ".join(f"{len(v)} {k}" for k, v in sorted(gone[zone].items()))
         print(f"    {zone:<52s} {kinds}")
-    print(f"  dressing to reality: added {len(new_v)} plants ({hedge} of them the oleander hedge) and {len(new_p)} props")
+    print(f"  dressing to reality: added {len(new_v)} plants ({hedge} of them the oleander hedge, {len(resized)} resized "
+          f"palms) and {len(new_p)} props")
     for what, proto, x, y, gap, moved in notes:
         print(f"    {proto:<20s} ({x:7.1f}, {y:7.1f})  {gap:5.1f} m from the race line"
               + (f", moved {moved:.1f} m away from it" if moved else "") + f"  {what}")
