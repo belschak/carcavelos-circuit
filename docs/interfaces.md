@@ -2,10 +2,10 @@
 
 Each module only talks to another module through what is listed here. Build against this contract with placeholders, so nobody waits for anyone. Changing this file needs the whole team's OK (see `docs/team.md`).
 
-Namespace per module: `CarcavelosCircuit.Shared`, `.Driving`, `.Track`, `.Visuals`, `.RaceFlow`, `.Audio`. One class per file, file name = class name.
+Namespace per module: `CarcavelosCircuit.Shared`, `.Driving`, `.Track`, `.Visuals`, `.RaceFlow`, `.Audio`, `.Ambience` (Role 4, beach waves + surfers, R12). One class per file, file name = class name.
 
 Each module folder has its own assembly definition (`.asmdef`) with the same name as the namespace. Allowed references (nothing else, no cycles):
-`Driving -> Shared`, `Visuals -> Shared`, `Audio -> Shared`, `RaceFlow -> Shared, Track, Audio` (Audio added 2026-11-08, `docs/decisions.md`), `Tests.EditMode -> Shared, Track, RaceFlow, Audio`, `Tests.PlayMode -> Shared, RaceFlow`. Plus Unity packages (Input System, URP); Editor-only builder assemblies may reference their own module. Track and Shared reference no other module. Nobody references `Driving` directly: everyone talks to the kart through `IKartState`.
+`Driving -> Shared`, `Visuals -> Shared`, `Audio -> Shared`, `Ambience -> Shared` (2026-11-11, R12), `RaceFlow -> Shared, Track, Audio` (Audio added 2026-11-08, `docs/decisions.md`), `Tests.EditMode -> Shared, Track, RaceFlow, Audio, Ambience`, `Tests.PlayMode -> Shared, RaceFlow`. Plus Unity packages (Input System, URP); Editor-only builder assemblies may reference their own module; `RaceFlow.Editor` (the Role 4 scene builder) also references `Ambience` and `Ambience.Editor` to put the Ambience object into `Main.unity`. The runtime `RaceFlow` does not reference `Ambience`: the ambience finds the track scene itself when it loads. Track and Shared reference no other module. Nobody references `Driving` directly: everyone talks to the kart through `IKartState`.
 
 ## Shared (Role 4): `IKartState` in `Assets/_Project/Shared/IKartState.cs`
 

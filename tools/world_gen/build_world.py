@@ -404,9 +404,10 @@ def build_route_guide():
 
 
 PASSAGE_RUNS = []                   # route pieces inside drive-through buildings (for env_interior)
+PASSAGE_WIDTHS = []                 # per piece, per point (left, right) half-widths (env_interior.hall_widths)
 PASSAGE_WIDTH = ROUTE_WIDTH + 2.0   # metres, a bit wider than the road so the walls don't touch it
 PASSAGE_HEIGHT = 7.0                # metres of clear height above the road (the atrium roof stays on top)
-PASSAGE_EXTEND = 5                  # route points (2 m each) the cut reaches past each wall
+PASSAGE_EXTEND = env_interior.PASSAGE_EXTEND   # route points (2 m each) the cut reaches past each wall
 
 
 def inside_polygon(x, y, poly):
@@ -418,19 +419,22 @@ def inside_polygon(x, y, poly):
     return hit
 
 
-def passage_cutter(run):
-    """Closed box swept along route points: the space the kart drives through inside a building."""
+def passage_cutter(run, widths):
+    """Closed box swept along route points: the space the kart drives through inside a building.
+    widths: per point (left, right) half-widths (env_interior.hall_widths: wide bays in the atrium)."""
     bm = bmesh.new()
     rings = []
     for k, p in enumerate(run):
         a, b = run[max(k - 1, 0)], run[min(k + 1, len(run) - 1)]
         d = math.hypot(b["x"] - a["x"], b["y"] - a["y"]) or 1.0
-        sx, sy = -(b["y"] - a["y"]) / d * PASSAGE_WIDTH / 2, (b["x"] - a["x"]) / d * PASSAGE_WIDTH / 2
+        nx, ny = -(b["y"] - a["y"]) / d, (b["x"] - a["x"]) / d
+        left, right = widths[k]
         ground, drive = ground_z(p["x"], p["y"]), p.get("track_z", ground_z(p["x"], p["y"]))
         bottom = drive              # the building keeps a floor at driving height (no gap beside the road)
         top = max(drive, ground) + PASSAGE_HEIGHT
-        rings.append([bm.verts.new((p["x"] + sx, p["y"] + sy, bottom)), bm.verts.new((p["x"] - sx, p["y"] - sy, bottom)),
-                      bm.verts.new((p["x"] - sx, p["y"] - sy, top)), bm.verts.new((p["x"] + sx, p["y"] + sy, top))])
+        lx, ly, rx, ry = p["x"] + nx * left, p["y"] + ny * left, p["x"] - nx * right, p["y"] - ny * right
+        rings.append([bm.verts.new((lx, ly, bottom)), bm.verts.new((rx, ry, bottom)),
+                      bm.verts.new((rx, ry, top)), bm.verts.new((lx, ly, top))])
     for r0, r1 in zip(rings, rings[1:]):
         for i in range(4):
             bm.faces.new((r0[i], r0[(i + 1) % 4], r1[(i + 1) % 4], r1[i]))
@@ -444,46 +448,39 @@ def passage_cutter(run):
 
 
 def carve_drive_throughs():
-    """Cuts a covered passage along the route into every building marked drive_through in buildings.csv."""
+    """Cuts a covered passage along the route into every building marked drive_through in buildings.csv
+    (env_interior.passages(): in the atrium the passage opens into wide bays on both sides)."""
     if not os.path.exists(ROUTE_FILE):
         return
-    pts = json.load(open(ROUTE_FILE))["points"]
-    n = len(pts)
     objects = {o.get("osm_id"): o for o in bpy.data.objects if o.get("osm_id")}
     tmp = collection("Tmp_Cutters")
     for b in DATA["buildings"]:
-        if not b.get("drive_through") or b["id"] not in objects:
-            continue
-        hits = [i for i, p in enumerate(pts) if inside_polygon(p["x"], p["y"], b["points"])]
-        if not hits:
+        if b.get("drive_through") and b["id"] in objects and not any(
+                E.inside_polygon(p["x"], p["y"], b["points"]) for p in E.route_points()):
             print(f"  {b['name'] or b['id']}: marked drive_through, but the route does not pass through it")
+    for piece in env_interior.passages():
+        b = piece["building"]
+        if b["id"] not in objects:
             continue
-        runs = [[hits[0]]]                                 # group into continuous pieces
-        for i in hits[1:]:
-            if i == runs[-1][-1] + 1:
-                runs[-1].append(i)
-            else:
-                runs.append([i])
-        if len(runs) > 1 and runs[0][0] == 0 and runs[-1][-1] == n - 1:
-            runs[0] = runs.pop() + runs[0]                 # piece that wraps over the lap start
         obj = objects[b["id"]]
-        for run in runs:
-            idx = [(run[0] - k) % n for k in range(PASSAGE_EXTEND, 0, -1)] + run + [(run[-1] + k) % n for k in range(1, PASSAGE_EXTEND + 1)]
-            cutter_mesh = passage_cutter([pts[i] for i in idx])
-            cutter_mesh.materials.append(E.material("B_interior_wall", "#F1EFEA", 0.8))
-            cutter = new_object("Cutter_" + b["id"], cutter_mesh, tmp)
-            mod = obj.modifiers.new("passage", "BOOLEAN")
-            mod.operation, mod.solver, mod.object = "DIFFERENCE", "EXACT", cutter
-            if hasattr(mod, "material_mode"):
-                mod.material_mode = "TRANSFER"       # the cut faces get the interior wall material
-            PASSAGE_RUNS.append([pts[i] for i in idx])
-            carved = bpy.data.meshes.new_from_object(obj.evaluated_get(bpy.context.evaluated_depsgraph_get()))
-            obj.modifiers.remove(mod)
-            old = obj.data
-            obj.data = carved
-            bpy.data.meshes.remove(old)
-            bpy.data.objects.remove(cutter)
-            print(f"  passage through {b['name'] or b['id']}: {len(run) * 2} m inside")
+        cutter_mesh = passage_cutter(piece["points"], piece["widths"])
+        cutter_mesh.materials.append(E.material("B_interior_wall", "#F1EFEA", 0.8))
+        cutter = new_object("Cutter_" + b["id"], cutter_mesh, tmp)
+        mod = obj.modifiers.new("passage", "BOOLEAN")
+        mod.operation, mod.solver, mod.object = "DIFFERENCE", "EXACT", cutter
+        if hasattr(mod, "material_mode"):
+            mod.material_mode = "TRANSFER"       # the cut faces get the interior wall material
+        PASSAGE_RUNS.append(piece["points"])
+        PASSAGE_WIDTHS.append(piece["widths"])
+        carved = bpy.data.meshes.new_from_object(obj.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+        obj.modifiers.remove(mod)
+        old = obj.data
+        obj.data = carved
+        bpy.data.meshes.remove(old)
+        bpy.data.objects.remove(cutter)
+        widest = max(max(w) for w in piece["widths"])
+        print(f"  passage through {b['name'] or b['id']}: {len(piece['run']) * 2} m inside, "
+              f"up to {widest:.1f} m from the centreline")
         obj["drive_through"] = True
     bpy.data.collections.remove(tmp)
 
@@ -578,7 +575,7 @@ def main():
     env_trackside.build()                  # edge lines + corner signs (readability), exported with the track
     env_tunnel.build()
     carve_drive_throughs()
-    env_interior.dress(PASSAGE_RUNS, PASSAGE_WIDTH)
+    env_interior.dress(PASSAGE_RUNS, PASSAGE_WIDTH, PASSAGE_WIDTHS)
     env_backdrop.build(heights)
     add_origin_marker()
     env_materials.upgrade_all()

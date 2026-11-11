@@ -5873,7 +5873,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.52,
+   "track_z": 5.51,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -5888,7 +5888,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.59,
+   "track_z": 5.57,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -5903,7 +5903,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.65,
+   "track_z": 5.61,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -5918,7 +5918,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.72,
+   "track_z": 5.63,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -5933,7 +5933,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.78,
+   "track_z": 5.62,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -5948,7 +5948,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.85,
+   "track_z": 5.59,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -5963,7 +5963,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.7,
+   "track_z": 5.52,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -5978,7 +5978,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.55,
+   "track_z": 5.42,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -5993,7 +5993,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.38,
+   "track_z": 5.28,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -6008,7 +6008,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.19,
+   "track_z": 5.12,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -6023,7 +6023,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.0,
+   "track_z": 4.94,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -6038,7 +6038,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 4.79,
+   "track_z": 4.75,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -6068,7 +6068,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 4.32,
+   "track_z": 4.38,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -6083,7 +6083,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 4.07,
+   "track_z": 4.22,
    "zone": "lawn and paths",
    "level": "",
    "surface": "concrete_sand"
@@ -6098,7 +6098,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 3.8,
+   "track_z": 4.09,
    "zone": "tunnel plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -6113,7 +6113,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 3.8,
+   "track_z": 3.98,
    "zone": "tunnel plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -6128,7 +6128,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 3.8,
+   "track_z": 3.91,
    "zone": "tunnel plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -6143,7 +6143,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 3.8,
+   "track_z": 3.87,
    "zone": "tunnel",
    "level": "",
    "surface": "tunnel_floor"
@@ -6158,7 +6158,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 3.8,
+   "track_z": 3.84,
    "zone": "tunnel",
    "level": "",
    "surface": "tunnel_floor"
@@ -6173,7 +6173,7 @@
    "building": "",
    "tunnel": true,
    "main_road": false,
-   "track_z": 3.8,
+   "track_z": 3.84,
    "zone": "tunnel",
    "level": "",
    "surface": "tunnel_floor"
@@ -6188,7 +6188,7 @@
    "building": "",
    "tunnel": true,
    "main_road": false,
-   "track_z": 3.83,
+   "track_z": 3.85,
    "zone": "tunnel",
    "level": "",
    "surface": "tunnel_floor"
@@ -6203,7 +6203,7 @@
    "building": "",
    "tunnel": true,
    "main_road": false,
-   "track_z": 3.86,
+   "track_z": 3.87,
    "zone": "tunnel",
    "level": "",
    "surface": "tunnel_floor"
@@ -6743,7 +6743,7 @@
    "building": "",
    "tunnel": true,
    "main_road": false,
-   "track_z": 4.89,
+   "track_z": 4.91,
    "zone": "tunnel",
    "level": "",
    "surface": "tunnel_floor"
@@ -6758,7 +6758,7 @@
    "building": "",
    "tunnel": true,
    "main_road": false,
-   "track_z": 4.91,
+   "track_z": 4.97,
    "zone": "tunnel",
    "level": "",
    "surface": "tunnel_floor"
@@ -6773,7 +6773,7 @@
    "building": "",
    "tunnel": true,
    "main_road": false,
-   "track_z": 4.94,
+   "track_z": 5.06,
    "zone": "tunnel",
    "level": "",
    "surface": "tunnel_floor"
@@ -6788,7 +6788,7 @@
    "building": "",
    "tunnel": true,
    "main_road": false,
-   "track_z": 4.97,
+   "track_z": 5.17,
    "zone": "tunnel",
    "level": "",
    "surface": "tunnel_floor"
@@ -6803,7 +6803,7 @@
    "building": "",
    "tunnel": true,
    "main_road": false,
-   "track_z": 5.0,
+   "track_z": 5.32,
    "zone": "tunnel",
    "level": "",
    "surface": "tunnel_floor"
@@ -6818,7 +6818,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.31,
+   "track_z": 5.51,
    "zone": "ramp",
    "level": "",
    "surface": "concrete_sand"
@@ -6833,7 +6833,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.62,
+   "track_z": 5.73,
    "zone": "ramp",
    "level": "",
    "surface": "concrete_sand"
@@ -6848,7 +6848,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 5.93,
+   "track_z": 5.99,
    "zone": "ramp",
    "level": "",
    "surface": "concrete_sand"
@@ -6863,7 +6863,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 6.24,
+   "track_z": 6.26,
    "zone": "ramp",
    "level": "",
    "surface": "concrete_sand"
@@ -6878,7 +6878,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 6.55,
+   "track_z": 6.56,
    "zone": "ramp",
    "level": "",
    "surface": "concrete_sand"
@@ -7028,7 +7028,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 9.65,
+   "track_z": 9.64,
    "zone": "ramp",
    "level": "",
    "surface": "concrete_sand"
@@ -7043,7 +7043,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 9.96,
+   "track_z": 9.93,
    "zone": "ramp",
    "level": "",
    "surface": "concrete_sand"
@@ -7058,7 +7058,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 10.27,
+   "track_z": 10.21,
    "zone": "ramp",
    "level": "",
    "surface": "concrete_sand"
@@ -7073,7 +7073,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 10.58,
+   "track_z": 10.45,
    "zone": "ramp",
    "level": "",
    "surface": "concrete_sand"
@@ -7088,7 +7088,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 10.89,
+   "track_z": 10.67,
    "zone": "ramp",
    "level": "",
    "surface": "concrete_sand"
@@ -7103,7 +7103,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.2,
+   "track_z": 10.85,
    "zone": "lower plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7118,7 +7118,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.2,
+   "track_z": 10.98,
    "zone": "lower plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7133,7 +7133,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.2,
+   "track_z": 11.07,
    "zone": "lower plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7148,7 +7148,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.2,
+   "track_z": 11.14,
    "zone": "lower plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7163,7 +7163,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.2,
+   "track_z": 11.17,
    "zone": "lower plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7178,7 +7178,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.2,
+   "track_z": 11.19,
    "zone": "lower plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7418,7 +7418,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.2,
+   "track_z": 11.21,
    "zone": "lower plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7433,7 +7433,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.2,
+   "track_z": 11.22,
    "zone": "lower plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7448,7 +7448,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.2,
+   "track_z": 11.26,
    "zone": "lower plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7463,7 +7463,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.2,
+   "track_z": 11.32,
    "zone": "lower plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7478,7 +7478,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.2,
+   "track_z": 11.41,
    "zone": "lower plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7493,7 +7493,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.2,
+   "track_z": 11.54,
    "zone": "lower plaza",
    "level": "",
    "surface": "terracotta"
@@ -7508,7 +7508,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.5,
+   "track_z": 11.71,
    "zone": "ramp",
    "level": "",
    "surface": "terracotta"
@@ -7523,7 +7523,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 11.8,
+   "track_z": 11.92,
    "zone": "ramp",
    "level": "",
    "surface": "terracotta"
@@ -7538,7 +7538,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 12.1,
+   "track_z": 12.16,
    "zone": "ramp",
    "level": "",
    "surface": "terracotta"
@@ -7553,7 +7553,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 12.4,
+   "track_z": 12.42,
    "zone": "ramp",
    "level": "",
    "surface": "terracotta"
@@ -7568,7 +7568,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 12.7,
+   "track_z": 12.71,
    "zone": "ramp",
    "level": "",
    "surface": "terracotta"
@@ -7583,7 +7583,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 13.0,
+   "track_z": 12.99,
    "zone": "ramp",
    "level": "",
    "surface": "terracotta"
@@ -7598,7 +7598,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 13.3,
+   "track_z": 13.28,
    "zone": "ramp",
    "level": "",
    "surface": "terracotta"
@@ -7613,7 +7613,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 13.6,
+   "track_z": 13.54,
    "zone": "ramp",
    "level": "",
    "surface": "terracotta"
@@ -7628,7 +7628,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 13.9,
+   "track_z": 13.78,
    "zone": "ramp",
    "level": "",
    "surface": "terracotta"
@@ -7643,7 +7643,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 14.2,
+   "track_z": 13.99,
    "zone": "ramp",
    "level": "",
    "surface": "terracotta"
@@ -7658,7 +7658,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 14.5,
+   "track_z": 14.16,
    "zone": "upper plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7673,7 +7673,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 14.5,
+   "track_z": 14.29,
    "zone": "upper plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7688,7 +7688,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 14.5,
+   "track_z": 14.38,
    "zone": "upper plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7703,7 +7703,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 14.5,
+   "track_z": 14.44,
    "zone": "upper plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7718,7 +7718,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 14.5,
+   "track_z": 14.48,
    "zone": "upper plaza",
    "level": "",
    "surface": "concrete_sand"
@@ -7733,7 +7733,7 @@
    "building": "",
    "tunnel": false,
    "main_road": false,
-   "track_z": 14.5,
+   "track_z": 14.49,
    "zone": "upper plaza",
    "level": "",
    "surface": "concrete_sand"

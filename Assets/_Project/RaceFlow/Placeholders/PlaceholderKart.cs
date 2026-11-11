@@ -6,10 +6,11 @@ namespace CarcavelosCircuit.RaceFlow
 {
     // STAND-IN kart so the race flow, HUD and sound can be tested before Alessandro's KartController (Role 1) exists.
     // It is deliberately simple (a box that slides) and only implements the IKartState contract,
-    // plus IKartBoost so the item boxes (task R7) can be tested with it too.
+    // plus IKartBoost so the item boxes (task R7) can be tested with it too, and IKartDrivable so RaceFlow's dev test
+    // bots (task R8) can drive it before Role 1's KartController has D8.
     // Main.unity swaps it for the real Kart prefab: RaceBootstrap > Kart Prefab.
     [RequireComponent(typeof(Rigidbody))]
-    public class PlaceholderKart : MonoBehaviour, IKartState, IKartBoost
+    public class PlaceholderKart : MonoBehaviour, IKartState, IKartBoost, IKartDrivable
     {
         [SerializeField, Tooltip("Top speed in metres per second (20 m/s = 72 km/h)")]
         private float maxSpeed = 20f;
@@ -86,6 +87,9 @@ namespace CarcavelosCircuit.RaceFlow
 
         public bool InputEnabled { get; set; }
 
+        // IKartDrivable: null = the keyboard (as before). Set = a bot drives; InputEnabled still wins.
+        public IKartInputSource InputSource { get; set; }
+
         private void Awake()
         {
             body = GetComponent<Rigidbody>();
@@ -97,8 +101,16 @@ namespace CarcavelosCircuit.RaceFlow
             throttleInput = 0f;
             steerInput = 0f;
             driftHeld = false;
+            if (InputEnabled && InputSource != null)
+            {
+                KartInput input = InputSource.ReadInput().Clamped(); // a bot's maths error cannot make it faster
+                throttleInput = input.Throttle;
+                steerInput = input.Steer;
+                driftHeld = input.Drift;
+                return;
+            }
             Keyboard keyboard = Keyboard.current;
-            if (!InputEnabled || keyboard == null)
+            if (!InputEnabled || keyboard == null || InputSource != null)
             {
                 return;
             }

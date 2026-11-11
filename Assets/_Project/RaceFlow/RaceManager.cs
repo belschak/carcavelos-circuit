@@ -33,6 +33,7 @@ namespace CarcavelosCircuit.RaceFlow
         public bool IsSetUp { get { return kart != null; } }
         public int CountdownFrom { get { return settings.CountdownFrom; } }
         public Transform KartTransform { get { return kartTransform; } }
+        public TrackInfo Track { get { return track; } } // the raced track (RaceRoster: grid slots behind its SpawnPoint, task R8)
         public string TrackName { get; private set; } = ""; // the track scene we race on (save keys, ghost check)
         public Vector3[] TrackPoints { get; private set; } = new Vector3[0]; // checkpoint positions in driving order (fly-over camera)
         public Vector3[] TrackForwards { get; private set; } = new Vector3[0]; // road direction at each checkpoint (its respawn point), zero if unknown
@@ -307,7 +308,10 @@ namespace CarcavelosCircuit.RaceFlow
                     }
                 }
             }
-            return other.GetComponentInParent<IKartState>() != null;
+            // Only OUR kart (task R8): a bot's kart also has an IKartState, and it must never pass the player's
+            // checkpoints or take the player's item boxes.
+            IKartState owner = other.GetComponentInParent<IKartState>();
+            return owner != null && owner == kart;
         }
 
         // Time.timeScale is global and survives a scene load, so a slow motion that is cut off (scene unloaded,
