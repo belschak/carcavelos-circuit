@@ -271,6 +271,24 @@
    "smoothness": 0.1
   },
   {
+   "name": "W_B_roof_dark",
+   "colour": [
+    0.2956,
+    0.2846,
+    0.2737
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.2
+  },
+  {
    "name": "W_B_roof_tiles",
    "colour": [
     0.7792,
@@ -662,14 +680,14 @@
    "smoothness": 0.2
   },
   {
-   "name": "W_steel",
+   "name": "W_street_palette",
    "colour": [
-    0.6491,
-    0.6648,
-    0.6922
+    0.6844,
+    0.6844,
+    0.6844
    ],
-   "metallic": 0.85,
-   "albedo": null,
+   "metallic": 0.0,
+   "albedo": "street_palette_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
@@ -677,7 +695,7 @@
    "alpha_clip": 0.0,
    "double_sided": false,
    "metallic_smoothness": null,
-   "smoothness": 0.7
+   "smoothness": 0.2
   },
   {
    "name": "W_bench_wood",
@@ -714,6 +732,24 @@
    "double_sided": false,
    "metallic_smoothness": null,
    "smoothness": 0.4
+  },
+  {
+   "name": "W_steel",
+   "colour": [
+    0.6491,
+    0.6648,
+    0.6922
+   ],
+   "metallic": 0.85,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.7
   },
   {
    "name": "W_gloss_black",
@@ -1227,6 +1263,186 @@
    "smoothness": 0.1
   },
   {
+   "name": "W_T_lawn",
+   "colour": [
+    0.5558,
+    0.6962,
+    0.4752
+   ],
+   "metallic": 0.0,
+   "albedo": "grass_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.05
+  },
+  {
+   "name": "W_T_calcada",
+   "colour": [
+    0.8991,
+    0.879,
+    0.835
+   ],
+   "metallic": 0.0,
+   "albedo": "calcada_albedo.png",
+   "normal": "calcada_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.2
+  },
+  {
+   "name": "W_street_asphalt",
+   "colour": [
+    0.3361,
+    0.3472,
+    0.3696
+   ],
+   "metallic": 0.0,
+   "albedo": "asphalt_albedo.png",
+   "normal": "asphalt_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.12
+  },
+  {
+   "name": "W_street_concrete",
+   "colour": [
+    0.7991,
+    0.7633,
+    0.708
+   ],
+   "metallic": 0.0,
+   "albedo": "street_concrete_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_street_bays",
+   "colour": [
+    0.7991,
+    0.7633,
+    0.708
+   ],
+   "metallic": 0.0,
+   "albedo": "street_bays_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_street_brick",
+   "colour": [
+    0.6062,
+    0.4943,
+    0.4184
+   ],
+   "metallic": 0.0,
+   "albedo": "street_brick_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_street_setts",
+   "colour": [
+    0.5519,
+    0.5365,
+    0.5135
+   ],
+   "metallic": 0.0,
+   "albedo": "street_setts_albedo.png",
+   "normal": "street_setts_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
+   "name": "W_street_hedge",
+   "colour": [
+    0.2555,
+    0.3103,
+    0.2447
+   ],
+   "metallic": 0.0,
+   "albedo": "street_hedge_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.05
+  },
+  {
+   "name": "W_street_slats",
+   "colour": [
+    0.8991,
+    0.8589,
+    0.7792
+   ],
+   "metallic": 0.0,
+   "albedo": "street_slats_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
+   "name": "W_street_rust",
+   "colour": [
+    0.5519,
+    0.325,
+    0.2303
+   ],
+   "metallic": 0.0,
+   "albedo": "street_rust_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
    "name": "W_sign_white",
    "colour": [
     0.9555,
@@ -1369,24 +1585,6 @@
    "double_sided": false,
    "metallic_smoothness": "asphalt_metallic_smoothness.png",
    "smoothness": 0.1
-  },
-  {
-   "name": "W_T_calcada",
-   "colour": [
-    0.8991,
-    0.879,
-    0.835
-   ],
-   "metallic": 0.0,
-   "albedo": "calcada_albedo.png",
-   "normal": "calcada_normal.png",
-   "normal_strength": 0.6,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.2
   },
   {
    "name": "W_T_concrete_polished",
@@ -1576,88 +1774,6 @@
    "smoothness": 0.1
   },
   {
-   "name": "W_pampas_leaf",
-   "colour": [
-    0.5519,
-    0.6257,
-    0.4033
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_pampas_plume",
-   "colour": [
-    0.9272,
-    0.883,
-    0.7633
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_tree_olive",
-   "colour": [
-    0.4071,
-    0.4943,
-    0.3621
-   ],
-   "metallic": 0.0,
-   "albedo": "veg_ramp_olive_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "wind": {
-    "shader": "CarcavelosCircuit/Foliage",
-    "bend": 0.03,
-    "flutter": 0.035
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_tree_olive_b",
-   "colour": [
-    0.3883,
-    0.5058,
-    0.3361
-   ],
-   "metallic": 0.0,
-   "albedo": "veg_ramp_olive_b_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "wind": {
-    "shader": "CarcavelosCircuit/Foliage",
-    "bend": 0.03,
-    "flutter": 0.035
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
    "name": "W_tree_palm",
    "colour": [
     0.2956,
@@ -1748,6 +1864,88 @@
    },
    "metallic_smoothness": null,
    "smoothness": 0.15
+  },
+  {
+   "name": "W_pampas_leaf",
+   "colour": [
+    0.5519,
+    0.6257,
+    0.4033
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_pampas_plume",
+   "colour": [
+    0.9272,
+    0.883,
+    0.7633
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_tree_olive",
+   "colour": [
+    0.4071,
+    0.4943,
+    0.3621
+   ],
+   "metallic": 0.0,
+   "albedo": "veg_ramp_olive_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.03,
+    "flutter": 0.035
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_tree_olive_b",
+   "colour": [
+    0.3883,
+    0.5058,
+    0.3361
+   ],
+   "metallic": 0.0,
+   "albedo": "veg_ramp_olive_b_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.03,
+    "flutter": 0.035
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.1
   },
   {
    "name": "W_leaf",
@@ -1891,60 +2089,6 @@
     1.0,
     0.5365,
     0.1423
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_island_kerb",
-   "colour": [
-    0.807,
-    0.7792,
-    0.7238
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.15
-  },
-  {
-   "name": "W_island_planting",
-   "colour": [
-    0.2519,
-    0.2993,
-    0.216
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.05
-  },
-  {
-   "name": "W_island_gravel",
-   "colour": [
-    0.7119,
-    0.6569,
-    0.5442
    ],
    "metallic": 0.0,
    "albedo": null,

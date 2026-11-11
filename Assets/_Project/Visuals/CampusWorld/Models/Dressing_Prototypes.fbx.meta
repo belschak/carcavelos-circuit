@@ -307,6 +307,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_street_palette
+    second: {fileID: 2100000, guid: 45924e4bfe0e54c1c9a747a920268611, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_study_wood
     second: {fileID: 2100000, guid: 79ca30fa94abc4b648a9d195e3a1abb3, type: 2}
   - first:

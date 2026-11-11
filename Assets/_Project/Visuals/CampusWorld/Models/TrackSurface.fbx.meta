@@ -74,6 +74,16 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_sign_white
     second: {fileID: 2100000, guid: fafe7686088e445d0b4b1d74154e89e3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_concrete
+    second: {fileID: 2100000, guid: 010b1b53f318047e9bc19a1ff172eade, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_setts
+    second: {fileID: 2100000, guid: a32b502b2d12c413d88fc0fd4e5eeacf, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

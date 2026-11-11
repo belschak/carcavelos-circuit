@@ -32,6 +32,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_B_roof_dark
+    second: {fileID: 2100000, guid: 9db0aa7a8c71040948ec23db5cb0aa91, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_B_roof_other
     second: {fileID: 2100000, guid: fd7ae4c6075334500bbcf1dee86bd417, type: 2}
   - first:
@@ -82,8 +87,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_T_calcada
+    second: {fileID: 2100000, guid: 61443a07cfebc475892cd0093dfe146c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_T_cut_wall
     second: {fileID: 2100000, guid: a5bde0704442148c2ab45e28780bba27, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_lawn
+    second: {fileID: 2100000, guid: f583cdf6491524d3aa9788ad629592c1, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -199,6 +214,51 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_steel
     second: {fileID: 2100000, guid: ef1f319485b9b4726a6b67bfdf900cb2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_asphalt
+    second: {fileID: 2100000, guid: be625053a8a284096b76163f5d11b477, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_bays
+    second: {fileID: 2100000, guid: cfbcfe14778dc41149cd7570578e3087, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_brick
+    second: {fileID: 2100000, guid: dd6daa76547474ec3856d74411c9e481, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_concrete
+    second: {fileID: 2100000, guid: 010b1b53f318047e9bc19a1ff172eade, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_hedge
+    second: {fileID: 2100000, guid: 39df98f4bfba145a4ba16525325a983a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_palette
+    second: {fileID: 2100000, guid: 45924e4bfe0e54c1c9a747a920268611, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_rust
+    second: {fileID: 2100000, guid: ac11d948eea2841c5aeca0e876b5ec7e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_setts
+    second: {fileID: 2100000, guid: a32b502b2d12c413d88fc0fd4e5eeacf, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_slats
+    second: {fileID: 2100000, guid: 457f8ee0a13af46b9ac3deb48ca92a4a, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
