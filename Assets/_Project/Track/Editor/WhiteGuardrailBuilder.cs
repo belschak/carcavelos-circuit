@@ -424,7 +424,8 @@ namespace CarcavelosCircuit.Track.Editor
             return m;
         }
 
-        // Overwrites the mesh asset in place (same GUID) instead of deleting and recreating it.
+        // Overwrites the mesh asset in place (same GUID). The data is set again through the Mesh API, so Unity also
+        // redraws it: copying the serialized data only updated the collider, the old fence stayed on screen.
         private static Mesh SaveMesh(Mesh mesh, string path)
         {
             Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
@@ -433,7 +434,14 @@ namespace CarcavelosCircuit.Track.Editor
                 AssetDatabase.CreateAsset(mesh, path);
                 return mesh;
             }
-            EditorUtility.CopySerialized(mesh, existing);
+            existing.Clear();
+            existing.indexFormat = mesh.indexFormat;
+            existing.vertices = mesh.vertices;
+            existing.normals = mesh.normals;
+            existing.uv = mesh.uv;
+            existing.triangles = mesh.triangles;
+            existing.RecalculateBounds();
+            EditorUtility.SetDirty(existing);
             return existing;
         }
 
