@@ -39,6 +39,7 @@ import dressing_freeze         # noqa: E402  V10i: dressing stays put outside ch
 import env_vegetation           # noqa: E402
 import env_props                # noqa: E402
 import env_entrance             # noqa: E402  V15a: entrance plaza (calcada, drain channels, car-park ramp, young trees)
+import env_shade                # noqa: E402  V16h: ambient occlusion as vertex colours
 
 DATA = E.DATA
 
@@ -552,7 +553,7 @@ def export_for_unity():
     protos = set().union(*(members(n) for n in DRESSING_PROTOTYPES))
     settings = dict(object_types={"MESH", "EMPTY"}, apply_scale_options="FBX_SCALE_ALL", axis_forward="-Z", axis_up="Y",
                     bake_space_transform=True, mesh_smooth_type="FACE", use_mesh_modifiers=True, use_selection=True,
-                    use_triangles=True)
+                    use_triangles=True, colors_type="LINEAR")     # V16h: env_shade's vertex colours, as written
     for filename, wanted in (("CampusWorld.fbx", lambda o: o not in guide and o not in track and o not in protos),
                              ("TrackSurface.fbx", lambda o: o in track),
                              ("RouteGuide.fbx", lambda o: o in guide),
@@ -608,6 +609,7 @@ def main():
     env_backdrop.build(heights)
     add_origin_marker()
     env_materials.upgrade_all()
+    env_shade.bake()                         # V16h: after everything is built, before the .blend and the FBX files
     for obj in list(bpy.data.collections["Track_RouteGuide"].all_objects):
         obj.hide_render = True               # the guide is data for Role 2, not part of the look
     stats()
