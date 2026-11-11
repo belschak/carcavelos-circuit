@@ -382,8 +382,16 @@ def build_gap_patches():
 
     tunnel = [p for p in _state["pts"] if p["tunnel"]]
 
+    ends = env_terrain.portals() if tunnel else []
+
     def in_tunnel(x, y):
-        return any(math.hypot(p["x"] - x, p["y"] - y) < E.half_width(p) + 2.0 for p in tunnel)
+        """Inside the tunnel's shell in plan: behind both portal planes and within its width at the ceiling (the
+        walls lean out from 4.6 m at the floor to 8.5 m at the ceiling). Before 2026-11-11 only 6 m counted, so a
+        patch wall with a corner 6 to 8.5 m from the axis rose through the leaning wall beside the north mouth: a
+        pale wedge on the mural right where the tunnel wall ends (Luc: "you can see into nothing")."""
+        if not any(math.hypot(p["x"] - x, p["y"] - y) < E.half_width(p) + 4.9 for p in tunnel):
+            return False
+        return all((x - p["x"]) * dx + (y - p["y"]) * dy > -0.05 for p, (dx, dy) in ends)
 
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new("UVMap")

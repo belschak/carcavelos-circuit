@@ -22,7 +22,6 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string FenceName = "WhiteGuardrails";
         // As in WhiteGuardrailBuilder (Role 2): where the fence stands and what a post looks like.
         private const float EdgeOffset = 0.3f, PostHeight = 0.75f, PostSize = 0.09f, PostBottom = -0.15f;
-        private const float HeightReach = 2.5f;           // a post is looked for this close to the road's height
 
         [System.Serializable] private class Free { public int from, to, side; public string why; }
         [System.Serializable] private class FreeList { public int points; public Free[] free = new Free[0]; }
@@ -222,14 +221,18 @@ namespace CarcavelosCircuit.Visuals.Editor
             return (p.x - q.x) * (p.x - q.x) + (p.z - q.z) * (p.z - q.z) + dy * dy;
         }
 
-        // True if the untrimmed fence has a board on the piece from route point k to k + 1 on that side.
+        // True if the untrimmed fence has a board on the piece from route point k to k + 1 on that side: something of
+        // the fence lies on the piece's middle half (a post at one of its ends does not count: Noah's fence ends with
+        // a post at the tunnel mouth, and the piece inside the tunnel has no fence).
         private static bool HadFence(Transform owner, Vector3[] v, int[] tri, int k, float side)
         {
-            Vector3 p = (FencePoint(k, side) + FencePoint((k + 1) % centre.Length, side)) * 0.5f;
+            Vector3 a = FencePoint(k, side), b = FencePoint((k + 1) % centre.Length, side);
+            Vector3 ab = b - a;
             for (int i = 0; i < tri.Length; i += 3)
             {
                 Vector3 c = owner.TransformPoint((v[tri[i]] + v[tri[i + 1]] + v[tri[i + 2]]) / 3f);
-                if (new Vector2(c.x - p.x, c.z - p.z).sqrMagnitude < 0.6f * 0.6f && Mathf.Abs(c.y - p.y) < HeightReach)
+                float t = Vector3.Dot(c - a, ab) / Mathf.Max(0.0001f, ab.sqrMagnitude);
+                if (t > 0.25f && t < 0.75f && SegmentDistanceSquared(c, a, b) < 0.2f * 0.2f)
                 {
                     return true;
                 }
