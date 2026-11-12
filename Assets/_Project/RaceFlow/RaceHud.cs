@@ -118,6 +118,8 @@ namespace CarcavelosCircuit.RaceFlow
 
         // ---- Logic helpers (plain C#, tested in Edit Mode) ----
         private readonly WrongWayDetector wrongWayDetector = new WrongWayDetector();
+        private ITrackProgress wrongWayLine; // found once: the racing line the wrong-way check aims along
+        private bool wrongWayLineSearched;
         private readonly StuckDetector stuckDetector = new StuckDetector();
         private HudMenus menus; // settings, credits, mute, pause overlay, reduced motion (task P7, UI/HudMenus.cs)
 
@@ -848,7 +850,25 @@ namespace CarcavelosCircuit.RaceFlow
                 Vector3 nextCheckpoint;
                 if (raceManager.TryGetNextCheckpointPosition(out nextCheckpoint))
                 {
-                    isWrongWay = wrongWayDetector.Update(kartTransform.forward, kart.Speed, nextCheckpoint - kartTransform.position, Time.deltaTime);
+                    // Aim along the racing line, 15 m ahead of the kart, when the track has one. The bee-line to the next
+                    // checkpoint points backwards wherever the road bends away from it (Luc's playtest 12 Nov: WRONG WAY
+                    // showed almost all the time). The checkpoint bee-line stays as the fallback.
+                    Vector3 aim = nextCheckpoint - kartTransform.position;
+                    if (!wrongWayLineSearched)
+                    {
+                        wrongWayLineSearched = true;
+                        RaceRoster roster = FindAnyObjectByType<RaceRoster>();
+                        wrongWayLine = roster != null ? roster.Progress : null;
+                        if (wrongWayLine == null)
+                        {
+                            wrongWayLine = FindAnyObjectByType<CarcavelosCircuit.Track.TrackProgress>();
+                        }
+                    }
+                    if (wrongWayLine != null && wrongWayLine.LapLength > 0f)
+                    {
+                        aim = wrongWayLine.PointAt(wrongWayLine.DistanceAlongLap(kartTransform.position) + 15f) - kartTransform.position;
+                    }
+                    isWrongWay = wrongWayDetector.Update(kartTransform.forward, kart.Speed, aim, Time.deltaTime);
                 }
                 isStuck = stuckDetector.Update(kart.Speed, Time.deltaTime);
             }
