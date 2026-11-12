@@ -190,6 +190,30 @@ def is_drop(a, b):
     return abs(a["track_z"] - b["track_z"]) > 1.5
 
 
+def twist_steps(za, zb, na, nb, h, tol=0.002):
+    """V18k: grid steps for a road quad. A quad whose level cross edges are turned against each other on a slope is
+    twisted; its two triangles leave a wave of about |dz| * sin(turn) * h / 4. Cut until that is under tol (2 mm)."""
+    turn = abs(na[0] * nb[1] - na[1] * nb[0])            # sin of the angle between the two cross edges
+    dev = abs(zb - za) * turn * h / 4.0
+    return max(1, min(4, math.ceil(math.sqrt(dev / tol)))) if dev > tol else 1
+
+
+def smooth_height(pts, i):
+    """V18k: road height between route points i and i+1 as a function of t (0..1), and the largest grade change at
+    either end. Catmull-Rom through the neighbours' road heights; linear next to a drop, a kicker or the plaza deck."""
+    n = len(pts)
+    p0, p1, p2, p3 = (pts[(i + k) % n] for k in (-1, 0, 1, 2))
+    z0, z1, z2, z3 = (road_z(p) for p in (p0, p1, p2, p3))
+    plain = all(q["zone"] not in PLAZA_ZONES and q["zone"] != "kicker" for q in (p0, p1, p2, p3))
+    plain = plain and not any(is_drop(u, v) for u, v in ((p0, p1), (p1, p2), (p2, p3)))
+    if not plain:
+        return (lambda t: z1 + (z2 - z1) * t), 0.0
+    bend = max(abs((z2 - z1) - (z1 - z0)), abs((z3 - z2) - (z2 - z1))) / 2.0   # grade change at either end
+    def zf(t):
+        return 0.5 * (2 * z1 + (z2 - z0) * t + (2 * z0 - 5 * z1 + 4 * z2 - z3) * t * t + (3 * z1 - z0 - 3 * z2 + z3) * t ** 3)
+    return zf, bend
+
+
 def build_road(pts, fr, col):
     mats, slots = [], {}                           # material slots in order of first use; one slot per material
 
@@ -239,38 +263,64 @@ def build_road(pts, fr, col):
         tile = TILE_M.get(surf, 2.0)
         za, zb = road_z(a), road_z(b)
         ha, hb = E.half_width(a), E.half_width(b)      # narrower in the alley (route.json 'width')
-        quad = [bm.verts.new((a["x"] + na[0] * ha, a["y"] + na[1] * ha, za)),
-                bm.verts.new((a["x"] - na[0] * ha, a["y"] - na[1] * ha, za)),
-                bm.verts.new((b["x"] - nb[0] * hb, b["y"] - nb[1] * hb, zb)),
-                bm.verts.new((b["x"] + nb[0] * hb, b["y"] + nb[1] * hb, zb))]
-        face = bm.faces.new(quad)
-        face.material_index = slot(surf)
+        # Corners: a left, a right, b right, b left (left = +normal side). Each cross edge is level.
+        cA = ((a["x"] + na[0] * ha, a["y"] + na[1] * ha), (a["x"] - na[0] * ha, a["y"] - na[1] * ha))
+        cB = ((b["x"] + nb[0] * hb, b["y"] + nb[1] * hb), (b["x"] - nb[0] * hb, b["y"] - nb[1] * hb))
         sa, sb = a["s"] / tile, (a["s"] + 2.0) / tile
         ua0, ua1 = (HALF - ha) / tile, (HALF + ha) / tile    # u stays centred on the road axis
         ub0, ub1 = (HALF - hb) / tile, (HALF + hb) / tile
-        for loop, (u, v) in zip(face.loops, ((ua0, sa), (ua1, sa), (ub1, sb), (ub0, sb))):
-            loop[uv].uv = (u, v)
-        world_uv(face, surf)
+        # V18k (Luc, 12 Nov: "a few bumps that don't feel good"): in a tight bend on a slope the 2 m x 8 m quad is
+        # twisted (the inner edge is much shorter than the outer one) and its two triangles made a 1-3 cm wave
+        # between route points; at 14 m/s and more the kart went light every 2 m (coast hairpin, tunnel ramps).
+        # Such quads are now cut into a finer grid. Where the grade changes at a route point (the climb out of the
+        # tunnel after its boost pads: 13 % to 0 % in 12 m) the kink is shared out over the segment: the heights in
+        # between follow a smooth curve through the route points (Catmull-Rom), the route points keep their height.
+        nw = twist_steps(za, zb, na, nb, max(ha, hb))
+        zf, bend = smooth_height(pts, i)
+        nl = max(nw, 4 if bend > 0.01 else 1)
+        grid = []
+        for k in range(nl + 1):
+            t = k / nl
+            le = (cA[0][0] + (cB[0][0] - cA[0][0]) * t, cA[0][1] + (cB[0][1] - cA[0][1]) * t)
+            ri = (cA[1][0] + (cB[1][0] - cA[1][0]) * t, cA[1][1] + (cB[1][1] - cA[1][1]) * t)
+            z = zf(t)
+            grid.append([bm.verts.new((le[0] + (ri[0] - le[0]) * w / nw, le[1] + (ri[1] - le[1]) * w / nw, z))
+                         for w in range(nw + 1)])
+
+        def guv(k, w):
+            t, q = k / nl, w / nw
+            u0, u1 = ua0 + (ub0 - ua0) * t, ua1 + (ub1 - ua1) * t
+            return (u0 + (u1 - u0) * q, sa + (sb - sa) * t)
+        for k in range(nl):
+            for w in range(nw):
+                cell = ((k, w), (k, w + 1), (k + 1, w + 1), (k + 1, w))
+                face = bm.faces.new([grid[kk][ww] for kk, ww in cell])
+                face.material_index = slot(surf)
+                for loop, (kk, ww) in zip(face.loops, cell):
+                    loop[uv].uv = guv(kk, ww)
+                world_uv(face, surf)
         if not ((a["tunnel"] and b["tunnel"]) or "kicker" in (a["zone"], b["zone"])):
             # Shoulders: the road is 6 cm above its bed. A vertical edge there (or a free edge in mid air) threw
             # karts that came back onto the road. A 0.9 m wide strip now slopes down to just below the bed
-            # (about 5 degrees), on both sides, indoors and outdoors.
-            def down(p, nrm, h, side):
-                o = h + SHOULDER_M
-                return bm.verts.new((p["x"] + side * nrm[0] * o, p["y"] + side * nrm[1] * o, p["track_z"] - 0.02))
-            # quad = [a left, a right, b right, b left] (left = +normal side)
-            for side, top_a, top_b in ((1, quad[0], quad[3]), (-1, quad[1], quad[2])):
-                low_a, low_b = down(a, na, ha, side), down(b, nb, hb, side)
-                ring = (top_a, top_b, low_b, low_a) if side == 1 else (top_b, top_a, low_a, low_b)
-                shoulder = bm.faces.new(ring)
-                o = (ha + hb) / 2 + SHOULDER_M / 2     # V18g: the shoulder shows what lies under it
+            # (about 5 degrees), on both sides, indoors and outdoors. It follows the road's grid along its edge.
+            o = (ha + hb) / 2 + SHOULDER_M / 2     # V18g: the shoulder shows what lies under it
+            for side, col_i in ((1, 0), (-1, nw)):
                 ssurf = visual_surface(a, mid[0] + side * nm[0] * o, mid[1] + side * nm[1] * o)
                 stile = TILE_M.get(ssurf, 2.0)
-                shoulder.material_index = slot(ssurf)
-                for loop, (u, v) in zip(shoulder.loops, ((0.0, sa * tile / stile), (0.0, sb * tile / stile), (SHOULDER_M / stile, sb * tile / stile), (SHOULDER_M / stile, sa * tile / stile))
-                                        if side == 1 else ((0.0, sb * tile / stile), (0.0, sa * tile / stile), (SHOULDER_M / stile, sa * tile / stile), (SHOULDER_M / stile, sb * tile / stile))):
-                    loop[uv].uv = (u, v)
-                world_uv(shoulder, ssurf)
+                oa, ob = ha + SHOULDER_M, hb + SHOULDER_M
+                la = (a["x"] + side * na[0] * oa, a["y"] + side * na[1] * oa, a["track_z"] - 0.02)
+                lb = (b["x"] + side * nb[0] * ob, b["y"] + side * nb[1] * ob, b["track_z"] - 0.02)
+                low = [bm.verts.new(tuple(la[c] + (lb[c] - la[c]) * k / nl for c in range(3))) for k in range(nl + 1)]
+                for k in range(nl):
+                    v0, v1 = sa + (sb - sa) * k / nl, sa + (sb - sa) * (k + 1) / nl
+                    top_a, top_b, low_a, low_b = grid[k][col_i], grid[k + 1][col_i], low[k], low[k + 1]
+                    ring = (top_a, top_b, low_b, low_a) if side == 1 else (top_b, top_a, low_a, low_b)
+                    shoulder = bm.faces.new(ring)
+                    shoulder.material_index = slot(ssurf)
+                    for loop, (u, v) in zip(shoulder.loops, ((0.0, v0 * tile / stile), (0.0, v1 * tile / stile), (SHOULDER_M / stile, v1 * tile / stile), (SHOULDER_M / stile, v0 * tile / stile))
+                                            if side == 1 else ((0.0, v1 * tile / stile), (0.0, v0 * tile / stile), (SHOULDER_M / stile, v0 * tile / stile), (SHOULDER_M / stile, v1 * tile / stile))):
+                        loop[uv].uv = (u, v)
+                    world_uv(shoulder, ssurf)
     bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=0.01)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     mesh = bpy.data.meshes.new("Track_Road")
