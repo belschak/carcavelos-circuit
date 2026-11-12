@@ -6,6 +6,8 @@ from the chase camera. Two cheap aids, both in collection Track_Surface (TrackSu
                      surfaces (asphalt, tunnel floor, terracotta), graphite on the light ones (sand, light and
                      polished concrete, calcada). Left out in the tunnel (its footways mark the edge), across the
                      jump drop and on a side where a kerb already marks a tight corner (env_track.build_kerbs rule).
+                     V18r: none on the roundabout (street_plan.RB_NO_LINES); there the mesh carries the roundabout's
+                     own markings where they lie on the race road (env_streets.road_paint), like the coast's paint.
   Track_CornerSigns  white boards with Boost Orange chevrons on the outside of the sharpest outdoor corners,
                      facing the approaching kart. Orange on white is the one allowed use of the signal colour in
                      the scenery (route arrows); the boards keep at least 1.2 m from the road edge.
@@ -19,6 +21,7 @@ from mathutils import Vector
 
 import env_common as E
 import env_track as T
+import street_plan
 
 LINE_W = 0.18               # m, painted line width
 LINE_INSET = 0.25           # m, from the road edge to the outer side of the line
@@ -41,7 +44,7 @@ def kerb_sides(pts):
         k = T.curvature(pts, i)
         radius = 1 / abs(k) if abs(k) > 1e-6 else 1e9
         sides = set()
-        if p["zone"] in T.KERB_ZONES and radius < 35:
+        if p["zone"] in T.KERB_ZONES and radius < 35 and not street_plan.race_kerbs_off(i):   # V18r: the roundabout
             sides.add(1 if k > 0 else -1)
             if radius < 20:
                 sides.add(-1 if k > 0 else 1)
@@ -60,6 +63,8 @@ def build_lines(pts, fr, col):
                 continue                           # V10i: no painted lines on the stairs and the plaza
             if side in kerbs[i] and side in kerbs[(i + 1) % n]:
                 continue
+            if street_plan.race_lines_off(i) and street_plan.race_lines_off((i + 1) % n):
+                continue                           # V18r: on the roundabout the road carries the real markings
             (_, na), (_, nb) = fr[i], fr[(i + 1) % n]
             za, zb = T.road_z(a) + LINE_LIFT, T.road_z(b) + LINE_LIFT
 
@@ -70,6 +75,8 @@ def build_lines(pts, fr, col):
             face.material_index = 0 if T.visual_surface(a) in DARK_SURFACES else 1
     import env_coast                       # V16e: flush paint of the coast section (slot drains, step nosings)
     env_coast.road_paint(bm, pts, fr)
+    import env_streets                     # V18r: the roundabout's own markings where they lie on the race road
+    extra = env_streets.road_paint(bm, first_slot=2)
     bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=0.005)
     bm.normal_update()
     for f in bm.faces:
@@ -80,6 +87,8 @@ def build_lines(pts, fr, col):
     bm.free()
     mesh.materials.append(E.material("edge_line_white", "#EDEDE8", roughness=0.6))
     mesh.materials.append(E.material("edge_line_graphite", "#4A4D52", roughness=0.7))
+    for name, hexcol in extra:
+        mesh.materials.append(E.material(name, hexcol, roughness=0.8))
     return E.new_object("Track_EdgeLines", mesh, col)
 
 

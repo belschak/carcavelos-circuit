@@ -2,7 +2,7 @@
 
 Static meshes (collection World_Streets):
   Street_Structures       walls, hedges, the entrance portal with its stair, the planted bank, steel frames, the
-                          roundabout's steel wedges ... (mesh collider in Unity like every world mesh)
+                          roundabout's five corten beds ... (mesh collider in Unity like every world mesh)
   Street_NoCollide_Kerbs  low kerbs: the Marginal's median, island kerbs (no collider: see env_streets)
 Prototypes (Proto_Props / Proto_Vegetation) placed through the dressing files so Unity instances them: parked cars,
 bollards, lamps, masts, signs (generic pictograms, no text), bins, the tall fan palms and slim date palms, saplings.
@@ -698,20 +698,44 @@ def build_structures(col):
     ramp_e = [S.SERVICE_RAMP[1], S.SERVICE_RAMP[2]]
     g.wall(ramp_e, 0.25, lambda x, y: S.TERRACE_Z - 0.5, lambda x, y: ST.ground(*_out(x, y, ramp_e, -0.9)) + 0.95,
            "wall_white", step=4.0, side=-0.15)
-    # --- C: rust-coloured steel wedges in the roundabout's gravel bed (our own arrangement, see street_plan.BLADES) ---
-    au = S.BLADE_AXIS
-    an = S.left_of(au)
-    zb = surface(*S.RB) - 0.05
-    for off, width, a_low, a_high, height in S.BLADES:
-        lo = [(S.RB[0] + an[0] * (off + side * width / 2) + au[0] * a_low, S.RB[1] + an[1] * (off + side * width / 2) + au[1] * a_low)
-              for side in (-1, 1)]
-        hi = [(S.RB[0] + an[0] * (off + side * width / 2) + au[0] * a_high, S.RB[1] + an[1] * (off + side * width / 2) + au[1] * a_high)
-              for side in (-1, 1)]
-        d = S.unit(hi[0][0] - lo[0][0], hi[0][1] - lo[0][1])
-        g.face([(*lo[0], zb), (*lo[1], zb), (*hi[1], zb + height), (*hi[0], zb + height)], "rust", (0, 0, 1))
-        g.face([(*hi[0], zb), (*hi[1], zb), (*hi[1], zb + height), (*hi[0], zb + height)], "rust", (d[0], d[1], 0))
-        for k, sign in ((0, -1), (1, 1)):
-            g.face([(*lo[k], zb), (*hi[k], zb), (*hi[k], zb + height)], "rust", (an[0] * sign, an[1] * sign, 0))
+    # --- C: the five corten beds on the roundabout's island (V18r; street_plan.BLADES): long wedge-shaped boxes of
+    # weathering steel across the pale gravel, dark gravel inside the steel rim, each rising from 0.2 m at one end to
+    # about 1 m at the other. The island lies on a 6 % slope: the beds stand on the plane through its ground. ---
+    samples = [S.RB] + [S.rb_pt(a, S.RB_BED - 1.0) for a in range(0, 360, 45)] + [S.rb_pt(a, S.RB_BED / 2) for a in range(0, 360, 90)]
+    zs = [ST.ground(x, y) for x, y in samples]
+    n = len(samples)
+    mx, my, mz = sum(q[0] for q in samples) / n, sum(q[1] for q in samples) / n, sum(zs) / n
+    sxx = sum((q[0] - mx) ** 2 for q in samples)
+    syy = sum((q[1] - my) ** 2 for q in samples)
+    sxy = sum((q[0] - mx) * (q[1] - my) for q in samples)
+    sxz = sum((q[0] - mx) * (z - mz) for q, z in zip(samples, zs))
+    syz = sum((q[1] - my) * (z - mz) for q, z in zip(samples, zs))
+    det = sxx * syy - sxy * sxy
+    gx, gy = (sxz * syy - syz * sxy) / det, (syz * sxx - sxz * sxy) / det
+
+    def island_z(x, y):
+        return mz + gx * (x - mx) + gy * (y - my)
+    off = max(abs(island_z(x, y) - z) for (x, y), z in zip(samples, zs))
+    near = 1e9
+    for t0, t1, high_end, height in S.BLADES:
+        outer = S.blade_outline(t0, t1)
+        inner = S.blade_outline(t0, t1, S.BLADE_RIM)
+        near = min(near, min(S.route_distance(x, y) for x, y in outer))
+
+        def top(q):
+            return (q[0], q[1], island_z(*q) + S.blade_height(q[0], q[1], t0, t1, high_end, height))
+        m = len(outer)
+        cx, cy = sum(q[0] for q in outer) / m, sum(q[1] for q in outer) / m
+        for k in range(m):
+            a_, b_ = outer[k], outer[(k + 1) % m]
+            g.face([(a_[0], a_[1], island_z(*a_) - 0.35), (b_[0], b_[1], island_z(*b_) - 0.35), top(b_), top(a_)], "rust",
+                   ((a_[0] + b_[0]) / 2 - cx, (a_[1] + b_[1]) / 2 - cy, 0.0))
+            g.face([top(a_), top(b_), top(inner[(k + 1) % m]), top(inner[k])], "rust", (0, 0, 1))
+        g.face([top(q) for q in inner], "palette", (0, 0, 1), "gravel")
+    if near < S.PROP_CLEAR:
+        raise RuntimeError(f"env_street_objects: a corten bed of the roundabout stands {near:.2f} m from the centreline")
+    print(f"  streets: roundabout island: 5 corten beds on the ground's plane (slope {100 * math.hypot(gx, gy):.1f} %, the "
+          f"ground differs from it by at most {off * 100:.0f} cm), nearest {near:.2f} m from the centreline")
     # --- C: rust-coloured steel portal frames in the verges (posts 11 cm, 4.7 m high, some with a rail at 1.1 m) ---
 
     def frames(points, rail):
@@ -726,11 +750,11 @@ def build_structures(col):
             if rail:
                 g.beam((*a, za + 1.1), (*b, zb_ + 1.1), 0.06, 0.06, "rust", ends=False)
     frames([(-129.8, -42.6), (-126.6, -38.3)], False)
-    row = [S.at_s([(-124.0, -82.0), (-134.0, -72.0)], k * 14.14 / 5)[0] for k in range(6)]
-    frames(row, True)
-    frames([(-134.0, -72.0), (-137.2, -68.6), (-140.2, -65.4)], False)
+    row = [S.at_s([(-124.8, -82.9), (-135.0, -72.3)], k * 14.71 / 5)[0] for k in range(6)]   # V18r: behind the rebuilt
+    frames(row, True)                                                                        # south sidewalk
+    frames([(-135.0, -72.3), (-137.9, -69.3), (-140.9, -67.6)], False)
     # --- B: the old wire fence on timber posts along the west side of the avenue ---
-    fence = [S.av_pt(y, 17.2) for y in range(-26, 99, 4)]
+    fence = [S.av_pt(y, 17.2) for y in range(-10, 99, 4)]             # V18r: the north arm's sidewalk bends west south of it
     fz = [ST.ground(x, y) for x, y in fence]
     for (x, y), z in zip(fence, fz):
         g.post(x, y, z - 0.2, z + 1.4, 0.1, "palette", "timber")
@@ -913,21 +937,22 @@ def placements():
         px, py = S.med_pt(x, d)
         add(plants, "Veg_Sapling", px, py, rng.uniform(0, 360), rng.uniform(0.8, 1.25), clear=S.PROP_CLEAR + 1.0,
             z=ST.ground(px, py))
-    # ---------------- C: roundabout ----------------
+    # ---------------- C: roundabout (V18r: positions on the rebuilt layout) ----------------
     c = S.RB
-    for ang in (93.0, 150.0, 345.0, 200.0):                       # chevron boards on the apron, facing the entries
-        radial = (math.cos(math.radians(ang)), math.sin(math.radians(ang)))
-        add(props, "Prop_ChevronBoard", c[0] + radial[0] * 12.4, c[1] + radial[1] * 12.4, facing_rot(radial))
-    for x, y in ((-118.5, -41.0), (-92.0, -45.0), (-84.0, -62.0), (-97.0, -87.0), (-115.0, -88.0), (-131.0, -68.0)):
+    for ang in (94.5, 211.0, 5.0):                                # chevron boards on the island's paved band, one facing
+        radial = (math.cos(math.radians(ang)), math.sin(math.radians(ang)))          # each entry (north, west, east)
+        add(props, "Prop_ChevronBoard", c[0] + radial[0] * 11.9, c[1] + radial[1] * 11.9, facing_rot(radial))
+    for x, y in ((-118.6, -40.6), (-92.2, -46.6), (-83.6, -62.6), (-97.0, -87.2), (-115.2, -87.9), (-131.8, -73.6)):
         add(props, "Prop_LampMarginal", x, y, heading_rot(S.unit(c[0] - x, c[1] - y)), 0.88)
-    add(props, "Prop_SignRoundTriangle", -129.6, -59.6, facing_rot(S.bearing(270.0)))
-    add(props, "Prop_SignRound", -84.6, -72.6, facing_rot(S.bearing(110.0)))
-    add(props, "Prop_SignCrossing", -137.6, -66.4, facing_rot(S.bearing(290.0)))
-    add(props, "Prop_SignCrossing", -110.6, -39.4, facing_rot(S.bearing(0.0)))
+    add(props, "Prop_SignRoundTriangle", -131.4, -60.4, facing_rot(S.bearing(270.0)))       # on the west splitter
+    add(props, "Prop_SignRound", -84.9, -73.4, facing_rot(S.bearing(110.0)))                # on the east splitter
+    add(props, "Prop_SignCrossing", -138.4, -67.6, facing_rot(S.bearing(290.0)))            # zebra of the west arm
+    add(props, "Prop_SignCrossing", -114.8, -33.2, facing_rot(S.bearing(0.0)))              # zebra of the north arm
+    add(props, "Prop_SignCrossing", -86.6, -85.2, facing_rot(S.bearing(110.0)))             # zebra of the east arm
     add(props, "Prop_AdTotem", -110.0, -93.0, facing_rot(S.bearing(0.0)), 1.9)
     add(props, "Prop_CabinetGrey", -103.0, -90.0, 0.0)
     add(props, "Prop_CabinetGrey", -101.6, -90.2, 0.0, 0.75)
-    add(props, "Prop_Billboard", -120.6, -38.4, facing_rot(S.bearing(85.0)))
+    add(props, "Prop_Billboard", -121.6, -37.6, facing_rot(S.bearing(85.0)))
     for k in range(17):                                           # clipped round shrubs closing the ring's south side
         ang = math.radians(204.0 + k * 6.7)
         r = S.RB_OUT + 5.2 + rng.uniform(-0.6, 0.6)
@@ -945,7 +970,7 @@ def placements():
         for k in range(8):
             add(props, "Prop_BollardBanded", x, 20.0 - k * 3.0 - (1.5 if x > -88 else 0.0))
     add(props, "Prop_SignRound", -85.3, 33.3, facing_rot(S.bearing(180.0)))
-    add(props, "Prop_BoardDirectionTall", -105.4, -30.6, facing_rot(S.bearing(0.0)))
+    add(props, "Prop_BoardDirectionTall", -104.5, -27.5, facing_rot(S.bearing(0.0)))        # V18r: on the north splitter
     add(props, "Prop_SignCrossing", -85.2, -32.4, facing_rot(S.bearing(0.0)))
     for k in range(16):                                           # reeds along the fence
         x, y = S.av_pt(-22.0 + k * 7.4 + rng.uniform(-2, 2), 16.3 + rng.uniform(-0.3, 0.5))

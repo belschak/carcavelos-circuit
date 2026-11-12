@@ -217,7 +217,8 @@ def build_kerbs(pts, fr, col):
         k = curvature(pts, i)
         radius = 1 / abs(k) if abs(k) > 1e-6 else 1e9
         sides = []
-        if pts[i]["zone"] in KERB_ZONES and radius < 35:
+        import street_plan                         # V18r: no race kerb on the roundabout (colour only, like visual_surface)
+        if pts[i]["zone"] in KERB_ZONES and radius < 35 and not street_plan.race_kerbs_off(i):
             sides.append(1 if k > 0 else -1)
             if radius < 20:
                 sides.append(-1 if k > 0 else 1)

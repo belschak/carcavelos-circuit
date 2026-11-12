@@ -80,6 +80,8 @@ def street_layers(scale, lawn_mask=False):
     for lay in street_plan.LAYERS:
         if lay["mat"] is None or lay["mat"] == "lawn":
             c = (STREET_LAWN[lay["ground"]],) * 3 if lawn_mask else STREET_GROUND[lay["ground"]]
+        elif lay.get("ground") in STREET_COLOURS:       # V18r: a paved layer may name the colour the map shows under it
+            c = (0, 0, 0) if lawn_mask else STREET_COLOURS[lay["ground"]]
         else:
             c = (0, 0, 0) if lawn_mask else STREET_COLOURS.get(lay["mat"]) or tuple(
                 int(street_plan.PALETTE[lay["mat"][4:]][k:k + 2], 16) for k in (1, 3, 5))
