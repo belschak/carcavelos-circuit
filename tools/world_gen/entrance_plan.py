@@ -16,8 +16,13 @@ import math
 # The paved plaza. = campus_plan's "entrance plaza" ring, with the east edge taken into the recess of the glazed
 # west entrance (2 m under the roof edge) so the paving reaches the glass.
 # ----------------------------------------------------------------------------------------------------------------
-RING = [(-90.0, 102.0), (-64.0, 98.0), (15.0, 128.1), (16.91, 128.83), (8.93, 149.17), (7.06, 148.43), (2.8, 159.8),
-        (1.5, 163.5), (-30.0, 159.0), (-38.0, 147.5), (-90.0, 147.5)]
+# V18g (Google satellite 2026, 20z/21z, +-0.7 m): the north edge is not a straight line at y = 147.5 but the foot of
+# Milestone's lawn bank, (-88.5, 140.3) - (-58.6, 146.5) - (-41.2, 150.5); the east lawn's edge runs (-26, 152) -
+# (-2, 161.6); the south edge is the north edge of B's planted strip (PLANTED, s = 6.2) west of t = 42.5.
+RING = [(-90.0, 102.0), (-88.0, 97.0), (-85.36, 96.44), (-26.54, 119.02), (-24.32, 113.23), (15.0, 128.1),
+        (16.91, 128.83), (8.93, 149.17), (7.06, 148.43), (2.8, 159.8), (1.5, 163.5), (-2.0, 161.6), (-26.0, 152.0),
+        (-28.4, 160.5), (-30.4, 166.9), (-31.4, 169.6), (-38.9, 168.6), (-39.3, 161.3), (-39.3, 150.9), (-41.2, 150.5),
+        (-58.6, 146.5), (-88.5, 140.3), (-90.0, 140.0)]
 TREE_PAD = 3.0             # m: trees this close outside the ring (the row along B's planted strip) are plaza trees too
 # V15b (start straight): inside this box (x0, y0, x1, y1: the changed section of the race line with its surroundings)
 # env_entrance moves or drops the frozen plants and props that the new line passes too closely
@@ -41,9 +46,10 @@ ROW_DIR = BAND_U           # the stone rows run parallel to B's facade
 # Each: x where the line crosses y = 149.3, bearing in degrees. The last one in channel_lines() is the grating across
 # the mouth of the car-park ramp, which runs on along the sidewalk.
 # ----------------------------------------------------------------------------------------------------------------
-CHANNEL_Y = 149.3
-CHANNELS = [(-55.5, 165.0), (-40.5, 165.0), (-26.0, 165.0), (-10.7, 165.0)]
-CHANNEL_ACROSS_PLANKS = 2  # index of the channel that continues across the plank band
+# V18g (Google satellite 2026, rectified along B): the channels are square to B's facade (bearing 159, not 165),
+# 13.5-20.5 m apart, at t = -13, 22.5 (it passes the ramp's portal wall), 43 (the east end of B's planted strip), 56.5
+# and 73.5 m along B; every one runs from the plaza's north edge to B's planted strip or wall.
+CHANNEL_T = (-13.0, 22.5, 43.0, 56.5, 73.5)
 CHANNEL_W = 0.22           # m
 DRAIN = "#5E3B2B"          # rust-brown (survey #57382a, a hair lighter so the slots still read)
 
@@ -63,7 +69,7 @@ PIT_COLOUR = "timber"      # street palette cell (warm grey-brown gravel)
 BOLLARD_S = (0.9, 3.4, 5.9, 8.4, 10.9, 16.9, 19.4, 21.9)   # slim steel bollards on the apron line (those off the line stay)
 # tan path from the plaza to Milestone's glazed entrance link, 10 m wide (photospheres N06, N14, ortho)
 J_PATH = [(-38.4, 147.2), (-28.4, 147.2), (-28.4, 160.5), (-30.4, 166.9), (-31.4, 169.6), (-38.9, 168.6), (-39.2, 161.3)]
-J_PATH_COLOUR = "lamp_sand"
+J_PATH_COLOUR = None     # V18g: Google shows the plaza's own pale paving here (was the tan "lamp_sand")
 
 # ----------------------------------------------------------------------------------------------------------------
 # White concrete seat blocks: one long row on the ortho, 5.7 m apart, from (4.3, 137.5) to (-75.3, 107.1), i.e. on a
@@ -100,6 +106,94 @@ RAMP_FASCIA = 0.55         # m: dark fascia band over the whole portal (N15_z_ra
                            # edge; ours is 3.3 m deep, so 0.55 m under 0.25 m of slab and the white parapet)
 PORTAL_H = 2.5             # m: clear height of the black opening (V16: 2.5 m from the avenue, ST02; was 2.75)
 CONCRETE = "#D6CFBA"       # pale warm concrete (survey #8c8b6a in mixed light)
+
+
+# ----------------------------------------------------------------------------------------------------------------
+# V18g (2026-11-12): the plaza's surroundings as on Google Maps. Sources: satellite 2026 at 20z / 21z (atlas
+# google_survey/n/sat*.jpg, rectified mosaic 8 px per metre, +-0.7 m), Street View May 2026 at (-100.2, 126.7).
+# ----------------------------------------------------------------------------------------------------------------
+# B's planted strip (band frame, m): lawn with a row of clipped shrubs between the plaza and B's wall, t -20.5 .. 42.5;
+# east of it the paving reaches the wall
+PLANTED_T, PLANTED_S = (-20.5, 42.5), (-3.7, 6.2)
+SHRUB_ROW = dict(s=0.9, t0=5.0, t1=41.0, step=2.4)      # dark clipped shrubs, one row (21z: blobs of 1.5-2 m)
+TREE_ROW_S = 8.7           # the south tree row stands 2.5 m inside the paving (was 6.9: on the strip's edge)
+# Milestone J's south lawn: a raised lawn inside a flush pale concrete edging (0.5 m), a grass bank down to the plaza
+J_LAWN = [(-96.0, 166.3), (-86.1, 147.9), (-42.6, 154.9), (-41.6, 162.3)]
+J_LAWN_EDGING = 0.5
+J_BANK = [(-99.0, 168.0), (-96.1, 160.0), (-92.65, 150.0), (-90.65, 143.0), (-90.0, 140.0), (-88.5, 140.3),
+          (-58.6, 146.5), (-41.2, 150.5), (-39.3, 150.9), (-39.3, 163.0)]
+J_SAPLINGS = [(-87.5, 157.0), (-82.8, 158.0), (-78.0, 154.3), (-69.0, 155.3), (-63.3, 157.6), (-62.8, 153.8),
+              (-52.0, 157.3), (-48.0, 159.3)]
+J_TREE = (-56.8, 156.4)    # one larger dark tree on the lawn
+# The avenue's entrance side, east of the separator (the roadway west of it is the street section's). South -> north.
+AV_KERB = [(-91.1, 100.0), (-93.0, 110.0), (-93.6, 116.0), (-94.8, 121.0), (-95.95, 130.0), (-98.1, 140.0)]   # asphalt | setts
+AV_PLAZA_X = -89.8         # the setts of the sidewalk reach 0.2 m into the plaza's ring
+# red-brown bus bay: a lens between the separator and the lane, apex in the north, widest at y 117-121, closed in the
+# south by the pale arc of the car lay-by (no lettering on it)
+BUS_BAY = [(-102.0, 130.2), (-101.3, 127.5), (-100.2, 125.2), (-98.3, 122.6), (-96.5, 121.3), (-94.9, 120.6),
+           (-94.2, 118.0), (-93.7, 116.0), (-94.6, 114.3), (-96.0, 113.0), (-97.0, 111.2), (-97.5, 109.7), (-97.6, 105.0),
+           (-98.6, 105.0), (-99.5, 110.0), (-100.6, 115.0), (-101.3, 120.0), (-101.7, 125.0)]
+BUS_BAY_ARC = [(-93.7, 116.0), (-94.6, 114.3), (-96.0, 113.0), (-97.0, 111.2), (-97.5, 109.7)]   # the lay-by's pale kerb arc
+# two-way cycle track from the north along the avenue; it ends at the plaza's north-west corner. Centreline, 3.3 m wide
+# (0.5-1 m west of the satellite north of y = 160, so that it passes our outline of Milestone J)
+CYCLE = [(-91.6, 140.6), (-92.3, 143.0), (-94.3, 150.0), (-97.4, 160.0), (-99.9, 166.0), (-101.0, 172.0)]
+CYCLE_HALF, WALK_W = 1.65, 3.6          # the calcada sidewalk lies between the track and the roadway
+# timber-coloured round posts (Street View): along the kerb, and in two rows beside the car-park driveway
+POST_STEP = 2.6
+DRIVE_ROWS = [((-95.2, 131.4), (-83.6, 131.2)), ((-93.0, 114.6), (-80.6, 115.5))]
+SIGN_BOARD = dict(at=(-94.9, 130.7), bearing=350.0, width=2.4, top=3.3)   # two blank boards on two grey posts
+CYCLE_SIGN = (-90.6, 141.6)             # blue round sign on a post where the track ends
+KERB_LAMPS = [(-97.2, 137.6), (-102.6, 161.0)]
+
+
+def planted_ring():
+    (t0, t1), (s0, s1) = PLANTED_T, PLANTED_S
+    return [band_pt(t0, s0), band_pt(t1, s0), band_pt(t1, s1), band_pt(t0, s1)]
+
+
+def in_planted(x, y, pad=0.0):
+    t, s = band_ts(x, y)
+    return PLANTED_T[0] - pad <= t <= PLANTED_T[1] + pad and PLANTED_S[0] - pad <= s <= PLANTED_S[1] + pad
+
+
+def kerb_posts():
+    """[(x, y)] of the timber posts: 0.45 m behind the kerb from the track's end down to the driveway, along the car
+    lay-by south of it, and the two rows beside the driveway to the car-park ramp."""
+    def along(a, b, first=0.0):
+        d = math.hypot(b[0] - a[0], b[1] - a[1])
+        n = int((d - first) // POST_STEP)
+        return [(a[0] + (b[0] - a[0]) * (first + k * POST_STEP) / d, a[1] + (b[1] - a[1]) * (first + k * POST_STEP) / d)
+                for k in range(n + 1)]
+    out = along((-97.55, 139.6), (-95.6, 132.6))                  # kerb north of the driveway
+    out += along((-92.55, 110.0), (-90.7, 100.6))                 # kerb of the car lay-by
+    for a, b in DRIVE_ROWS:
+        out += along(a, b)
+    return out
+
+
+def avenue_side(S):
+    """The street plan's layers of the avenue's entrance side east of the separator (called from
+    street_plan.avenue_entrance with the module itself): lane asphalt up to the measured kerb, the red bus bay, the
+    sett sidewalk, the cycle track, and the lawns beside the plaza as ground colours (they also cut the plaza sheet)."""
+    y0, y1 = S.AV_ENTRANCE
+    sep = S.offset(S.av_entrance_line(y0, y1), S.AV_SEPARATOR[1])           # east edge of the separator, south -> north
+    walk_w = S.offset(CYCLE, CYCLE_HALF + WALK_W)
+    track_w, track_e = S.offset(CYCLE, CYCLE_HALF), S.offset(CYCLE, -CYCLE_HALF)
+    north = [p for p in walk_w if p[1] <= y1 + 0.5]
+    S.layer("B2 lane asphalt", "asphalt", sep + (AV_KERB + north)[::-1])
+    S.layer("B2 sett sidewalk", "calcada", AV_KERB + walk_w + track_w[::-1] + [(AV_PLAZA_X, 140.2), (AV_PLAZA_X, y0)])
+    S.layer("B2 cycle track", "asphalt", track_w + track_e[::-1])
+    S.layer("B2 bus bay", "pal:brick_red", list(BUS_BAY))
+    S.paint_ribbon("white", BUS_BAY[:8], -0.07, 0.07)                       # its outline towards the lane, no word on it
+    S.paint_ribbon("kerb", BUS_BAY_ARC, -0.12, 0.12)
+    S.paint_ribbon("kerb", AV_KERB, -0.14, 0.14)
+    for line, d in ((CYCLE, CYCLE_HALF), (CYCLE, -CYCLE_HALF)):
+        S.paint_ribbon("kerb", line, d - 0.06, d + 0.06)
+    S.dashes(CYCLE, 0.0, 0.1, 1.0, 2.0)
+    # lawns (ground colours, lawn mask): Milestone's bank and raised lawn with its pale edging, B's planted strip
+    S.layer("N Milestone bank", None, list(J_BANK), ground="lawn")
+    S.layer("N Milestone lawn", None, list(J_LAWN), ground="lawn")           # (its pale edging: env_north.build_structures)
+    S.layer("N planted strip at B", None, planted_ring(), ground="lawn")
 
 
 def inside(x, y, poly):
@@ -183,15 +277,9 @@ def in_band(x, y):
 
 
 def channel_lines():
-    """[(point on the line, unit direction)] of every drain channel."""
-    out = []
-    for x, bearing in CHANNELS:
-        a = math.radians(bearing)
-        out.append(((x, CHANNEL_Y), (math.sin(a), math.cos(a))))
-    mid, bearing = mouth_channel()
-    a = math.radians(bearing)
-    out.append((mid, (math.sin(a), math.cos(a))))
-    return out
+    """[(point on the line, unit direction)] of every drain channel (V18g: square to B's facade; the satellite shows
+    no line along the ramp mouth: the west channel passes 5 m west of it)."""
+    return [(band_pt(t, 0.0), (-BAND_N[0], -BAND_N[1])) for t in CHANNEL_T]
 
 
 def seat_blocks(route_distance, trees=()):

@@ -346,7 +346,7 @@ def build_ramp(col):
     o_sw, o_se, o_ne, o_nw = r["outer"]
     zg = E.coarse_ground_z
     zp = r["z_portal"]
-    # --- floor: setts like the plaza ---
+    # --- floor: V18g (Google satellite, Street View 2026): grey concrete in bands across the ramp, not setts ---
     for j in range(ALONG):
         t0, t1 = j / ALONG, (j + 1) / ALONG
         for k in range(ACROSS):
@@ -355,7 +355,8 @@ def build_ramp(col):
             for t, s in ((t0, s0), (t1, s0), (t1, s1), (t0, s1)):
                 x, y = _lerp(_lerp(sw, nw, s), _lerp(se, ne, s), t)
                 quad.append((x, y, _floor_z(t, s)))
-            m.face(quad, "calcada", (0, 0, 1), [calcada_uv(p[0], p[1]) for p in quad])
+            m.face(quad, "planks", (0, 0, 1), [((p[0] * ax[1] - p[1] * ax[0]) / P.PLANK_TILE,
+                                                (p[0] * ax[0] + p[1] * ax[1]) / P.PLANK_TILE) for p in quad])
     # --- portal wall top (one level) ---
     top_p = max(zg(*p) for p in (se, ne, o_se, o_ne, _lerp(se, ne, 0.5))) + P.RAMP_PARAPET
     # --- side walls: inner face from the floor, top, outer face of the parapet ---
@@ -406,9 +407,8 @@ def build_ramp(col):
 # Paving: calcada with the drain channels, draped like env_streets' paving
 # =====================================================================================================
 def _channel_quads():
-    """Each drain channel cut to the plaza ring: [(start, direction, length)]. V16: the channels stop at the edge of
-    the plank band, except the one that goes on across it (entrance_plan.CHANNEL_ACROSS_PLANKS) and the grating at
-    the ramp mouth."""
+    """Each drain channel cut to the plaza ring: [(start, direction, length)]. V18g (Google satellite): every channel
+    runs from the plaza's north edge across the slab band to B's planted strip or wall (V16: they stopped at the band)."""
     out = []
     for k, ((px, py), (dx, dy)) in enumerate(P.channel_lines()):
         run, step = None, 0.25
@@ -416,8 +416,6 @@ def _channel_quads():
         while t <= 160.0:
             x, y = px + dx * t, py + dy * t
             ok = P.inside(x, y, P.RING) and P.ring_distance(x, y, P.RING) > 0.2
-            if ok and k < len(P.CHANNELS) and k != P.CHANNEL_ACROSS_PLANKS and P.in_band(x, y):
-                ok = False
             if ok and run is None:
                 run = t
             if not ok and run is not None:
@@ -557,7 +555,6 @@ def build_paving(col, trees=()):
     pit under every young tree, the drain channels. trees: (x, y) of the young trees (dress() knows them)."""
     t = P.CALCADA_TILE
     layers = [{"name": "plaza", "ring": list(P.RING), "mat": "calcada", "uv": ((0.0, 0.0), P.ROW_DIR, t, t)},
-              {"name": "path to Milestone", "ring": list(P.J_PATH), "mat": "pal:" + P.J_PATH_COLOUR, "uv": None},
               {"name": "plank band", "ring": P.band_ring(), "mat": "planks", "clip": list(P.RING),
                "uv": (P.BAND_O, P.BAND_U, P.PLANK_TILE, P.PLANK_TILE)}]
     h = P.PIT / 2
@@ -576,7 +573,7 @@ def build_paving(col, trees=()):
                        "ring": [o, e, (e[0] + n[0] * w, e[1] + n[1] * w), (o[0] + n[0] * w, o[1] + n[1] * w)]})
     drape("Entrance_Paving", layers, _cutters(), col, soften=SEAM_BOX)
     print(f"  entrance: paving layers: plank band {P.BAND_S[1] - max(P.BAND_S[0], 0.0):.1f} m wide along B, {n_pits} tree pits, "
-          f"{len(quads)} drain channel pieces of {w} m, path to Milestone")
+          f"{len(quads)} drain channel pieces of {w} m")
 
 
 def _weld(mesh):
@@ -760,6 +757,12 @@ def dress(veg, props, protos):
             p = dict(p, proto="Veg_PlazaTree" if _hash01(x, y) < 0.5 else "Veg_PlazaTree_B",
                      scale=round(0.9 + 0.24 * _hash01(x, y, 1), 3))
             swapped += 1
+            ts = P.band_ts(x, y)
+            if 6.0 < ts[1] < 7.6:                               # V18g: the south row stands 2.5 m inside the paving
+                qx, qy = (round(v, 3) for v in P.band_pt(ts[0], P.TREE_ROW_S))
+                if route_distance(qx, qy) >= ROUTE_CLEAR + TREE_MARGIN + 0.7:       # (not where the race line is near)
+                    x, y = qx, qy
+                    p = dict(p, x=x, y=y, z=round(E.ground_z(x, y), 3))
             trees.append((x, y))
         veg2.append(p)
     # V15b: a young tree whose trunk and stakes would stand within ROUTE_CLEAR (+ TREE_MARGIN) of the new line moves
@@ -855,6 +858,19 @@ def dress(veg, props, protos):
         added.append({"proto": "Prop_SignParking", "x": round(sx, 3), "y": round(sy, 3), "z": round(E.ground_z(sx, sy) + 0.05, 3),
                       "rot_z": round(math.radians(90.0 - 256.0), 4), "scale": 1.0})
     props2 += added
+    n_shrubs = 0                                                    # V18g: the clipped shrubs of B's planted strip
+    if "Veg_Shrub" in protos:
+        row = P.SHRUB_ROW
+        k = 0
+        while row["t0"] + k * row["step"] <= row["t1"]:
+            x, y = P.band_pt(row["t0"] + k * row["step"], row["s"] + 0.5 * (_hash01(k, 3.0) - 0.5))
+            if route_distance(x, y) >= E.KEEP_CLEAR + 1.5:
+                veg2.append({"proto": "Veg_Shrub_B" if k % 2 and "Veg_Shrub_B" in protos else "Veg_Shrub", "x": round(x, 3),
+                             "y": round(y, 3), "z": round(E.ground_z(x, y), 3), "rot_z": round(1.7 * k, 4),
+                             "scale": round(0.85 + 0.3 * _hash01(k, 7.0), 3)})
+                n_shrubs += 1
+            k += 1
+    print(f"  entrance dressing (V18g): {n_shrubs} clipped shrubs on B's planted strip")
     moved = sum(1 for b in blocks if b[3] > 0)
     print(f"  entrance dressing: {swapped} olives became young staked trees, {lamps} campus lamps became slim lamps; "
           f"added {n_lamps} slim lamps, {len(blocks)} seat blocks ({moved} of them moved off the race line), "

@@ -1026,13 +1026,9 @@ def avenue_entrance():
     layer("B2 west sidewalk", "calcada", ribbon(line, AV_WEST_WALK[0], AV_WEST_WALK[1]))
     layer("B2 lamp median", "calcada", ribbon(line, AV_MEDIAN[0], AV_MEDIAN[1]))
     layer("B2 separator", "calcada", ribbon(line, AV_SEPARATOR[0], AV_SEPARATOR[1]))
-    east = offset(line, AV_SLIP[0])
-    layer("B2 plaza strip", "calcada", east + [(AV_PLAZA_X, y1), (AV_PLAZA_X, y0)])
-    lay = av_entrance_line(*AV_LAYBY)
-    layer("B2 bus lay-by", "pal:brick_red", ribbon(lay, AV_SLIP[0], AV_SLIP[0] + AV_LAYBY_W))
-    paint_ribbon("white", lay, AV_SLIP[0] + AV_LAYBY_W - 0.07, AV_SLIP[0] + AV_LAYBY_W + 0.07)     # outline, no word on it
+    import entrance_plan                # V18g: east of the separator as on Google (bus bay lens, sidewalk, cycle track)
+    entrance_plan.avenue_side(sys.modules[__name__])
     dashes(line, (AV_WEST_ROAD[0] + AV_WEST_ROAD[1]) / 2, 0.14, 3.0, 4.0)
-    dashes(line, -7.2, 0.14, 3.0, 4.0, s1=AV_LAYBY[0] - y0 - 1.0)
 
 
 # =====================================================================================================
