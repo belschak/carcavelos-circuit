@@ -130,6 +130,13 @@ def materials():
         "concrete": env_streets._textured("entrance_concrete", P.CONCRETE, "coast_boardmarked", 0.9),   # V18h: board-marked
         "edging": env_streets._textured("entrance_edging", P.EDGING, "entrance_edging", 0.85),   # V18h: the fan's rim stones
         "setts": env_streets.mat("setts"),                         # V18h: the dark ring round the loop's centre
+        # V18j (env_north: the street behind the hall): buff apron concrete, galvanised gratings and louvres, the
+        # steel strip at the lawn, R. da Holanda's asphalt, the terrain's own material for the sheet's hems
+        "buff": env_streets._textured("north_buff", "#B3AB95", "north_buff", 0.9),
+        "grating": env_streets._textured("north_grating", "#8C908C", "north_grating", 0.55),
+        "rust": env_streets.mat("rust"),
+        "asphalt": env_streets.mat("asphalt"),
+        "ground_map": env_streets.mat("ground_map"),
         "void": E.material("entrance_void", "#050505", 1.0),
         "seat": E.material("entrance_seat", P.SEAT_WHITE, 0.8),
         "dark": E.material("entrance_dark", P.LAMP_DARK, roughness=0.5, metallic=0.3),

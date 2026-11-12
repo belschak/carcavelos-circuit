@@ -89,8 +89,9 @@ ROAD_LOOK = [
     (373, 399, lambda x, y: __import__("env_coast").road_look("beige")),    # palm car park and the upper path: beige slabs
     (400, 411, lambda x, y: __import__("env_coast").road_look("ochre")),    # tunnel plaza and ramp: sand-ochre slabs
     (478, 490, _east_look),           # lower plaza: beige-grey concrete panels with saw-cut joints
-    (583, 599, "north_calcada"),      # drop-off forecourt north of the hall: pale setts in rows along the hall's face
-    (600, 639, "street_concrete"),    # the pale paved strip behind the hall
+    # V18j-n: forecourt and the street behind the hall: setts in the start plaza's frame where the road lies on real
+    # paving, the terrain's own lawn where it runs over the street's lawn (env_north.road_look, north_plan.LAWN)
+    (583, 639, lambda x, y: __import__("env_north").road_look(x, y)),
     (640, 684, _entrance_look),       # the run-in loop and the start straight on the entrance plaza
 ]
 

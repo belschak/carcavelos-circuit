@@ -200,6 +200,8 @@ def apply():
 
     import env_entrance                   # V18h: the curve plaza at the entrance is level (entrance_plan.level_weight)
     env_entrance.raise_nodes(heights)
+    import env_north                      # V18j: the north side on one level (north_plan.level_target)
+    env_north.level_nodes(heights)
     E.set_heightfield(heights)
     print(f"  terrain: {changed} vertices reshaped along the route, tunnel covered by {cover} m")
     return heights

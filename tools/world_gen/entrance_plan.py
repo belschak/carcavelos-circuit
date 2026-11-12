@@ -188,8 +188,10 @@ TREE_EDGE_S = 7.1          # trees the plaza pushes out go no closer to B's plan
 PLAZA_LEVEL = 14.5
 LEVEL_T = (1.0, 17.0, 62.0, 70.0)
 LEVEL_S = (3.0, 7.0, 40.0, 46.0)
-FILL_I = (646, 8)          # route points beside which the plaza sheet lies level with the road right up to the road's
+FILL_I = (634, 16)         # route points beside which the plaza sheet lies level with the road right up to the road's
 FILL_TAPER = 5             # edge (it covers the shoulder and its gutter); fades out over this many points
+                           # (V18j: was (646, 8). From 634: the join to the street behind the hall, whose sheet lies at
+                           # that level too; to 16: up to the west doors, where Unity lays its door road at road level)
 FILL_REACH = 6.0           # m beyond the shoulder's foot over which the sheet returns to its draped height
 
 
@@ -363,6 +365,10 @@ def avenue_side(S):
     S.layer("N Milestone bank", None, list(J_BANK), ground="lawn")
     S.layer("N Milestone lawn", None, list(J_LAWN), ground="lawn")           # (its pale edging: env_north.build_structures)
     S.layer("N planted strip at B", None, planted_ring(), ground="lawn")
+    import campus_plan                      # V18j: the north side's ground colours (paved under its sheet, the street's
+    import north_plan                       # lawn) go into the campus plan's ground paint, once
+    if not any(lay["name"].endswith("(V18j)") for lay in campus_plan.GROUND_PAINT):
+        north_plan.ground_paint(campus_plan.paint, campus_plan.SETTS, campus_plan.LAWN)
 
 
 def inside(x, y, poly):

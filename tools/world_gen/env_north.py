@@ -27,6 +27,24 @@ along B; saplings on Milestone's lawn; whatever stood on the new avenue paving, 
 bands goes. Everything else stays as frozen.
 The avenue's own paving (asphalt, bus lay-by, calcada strip) is street_plan.avenue_entrance().
 Nothing solid is closer than CLEAR (6.6 m) to the race centreline: the build stops otherwise.
+
+V18j-n (2026-11-12, Luc drove it: "the ground rises and the kart gets stuck; in reality it is one flat level and a
+flat street that simply continues west"; plan and sources: north_plan.py):
+  level_nodes()              one call at the end of env_terrain.apply: the 5 m terrain nodes of the forecourt, the
+                             street behind the hall, its lawn and the path north of it go to the road's bed
+                             (14.45 m); the east lawn lies 0.5 m below the forecourt
+  North_Forecourt            now ONE flat sheet at 14.564 m (4 mm over the road, from 4.02 m beside the centreline)
+                             from the start plaza's corner to the east rim: the street's setts in the start plaza's
+                             own UV frame, the buff concrete apron along the hall, steel drain gratings across the
+                             street, the rust-brown steel strip where the setts meet the lawn-look road, the path
+                             north of the lawn, the first metres of Rua da Holanda; a hem under the ground at its
+                             free edges
+  North_DoorApron_*          setts 3.2 cm under the road round the hall's open-air doors (D1, D5): Unity cuts the old
+                             road away there and lays a narrower door road; what lay bare beside it is now paved
+  North_Street               the louvre screen and the basement stair with its tube railing at the facade's east
+                             end, two grey utility boxes on the lawn, concrete bench blocks, the bus stop post
+  road_look()                env_track.ROAD_LOOK hook: the race road shows setts on the real street and the terrain's
+                             own lawn where it runs over the real lawn
 """
 import json
 import math
@@ -35,6 +53,7 @@ import os
 import campus_plan as C
 import entrance_plan as P
 import env_common as E
+import north_plan as NP
 
 COLLECTION = "World_North"
 CLEAR = 6.6                  # m from the race centreline: nothing solid of ours stands closer
@@ -46,13 +65,14 @@ CAR_CLEAR = 9.0              # m: parked cars (centre), as street_plan.CAR_CLEAR
 FACE_U = (-0.3654, 0.9309)   # along the hall's north-east face (76.7, 158.7) -> (66.6, 184.5): the sett rows
 # V18g (Google satellite 21z): the edge runs (100.8, 156.8) - (92.5, 177.3), then the lawn's north edge turns
 # east-north-east (bearing 69) towards (117, 187). Was (101.8, 153.5) - (94.5, 179.5).
-EDGE = [(102.1, 153.5), (92.5, 177.3)]          # east edge of the setts, south -> north
-# the sheet: from the hall's face (cut at its outline) to the east edge, north to the foot of the bank at y 193,
-# with the wedge north of the lawn's corner where the waste station stands
-FORECOURT = [(52.0, 176.0), (72.0, 156.5), (82.0, 153.0), (93.0, 149.5), (100.5, 148.0), EDGE[0], EDGE[1],
-             (112.0, 184.8), (110.0, 193.0), (52.0, 193.0)]
-BUFF = [(82.0, 153.0), (83.0, 163.5), (99.0, 163.5), EDGE[0], (100.5, 148.0), (93.0, 149.5)]   # in-situ concrete at SC
-BUFF_COLOUR, PINK_BUFF, OCHRE = "car_sand", "cream", "ochre"    # street palette cells (survey #998c61 shade, #e5d0b5, #ebd0a9)
+EDGE = list(NP.EDGE)                            # east edge of the setts, south -> north (V18j: on to y 147.6)
+# V18j: the sheet is north_plan.SHEET: street, path, forecourt, the band east of the waste station (was: from the
+# hall's face to the east edge, north to the foot of a bank at y 193 that is not there)
+FORECOURT = list(NP.SHEET)
+BUFF = [(82.0, 153.0), (83.0, 163.5), (98.1, 163.5), EDGE[0], (93.0, 149.5)]    # in-situ concrete at Student Central
+BUFF_TILE = 6.0                                 # m per tile of north_buff (make_entrance_textures.make_buff)
+GRATING_TILE = 0.4                              # m per tile of north_grating along a drain's run (8 bars)
+PINK_BUFF, OCHRE = "cream", "ochre"             # street palette cells (survey #e5d0b5, #ebd0a9)
 BAND_PINK, BAND_OCHRE = 1.3, 1.0                                # m: widths of the two edge bands east of the setts
 RING_C, RING_R, RING_BAND = (80.3, 176.1), 4.45, 0.25           # dark sett ring: outer radius, band width (V18g:
                                                                 # satellite 21z: centre (80.3, 176.0), 8.9 m across, a thin line)
@@ -65,7 +85,9 @@ RING_ROAD_REACH = 3.5        # m from the centreline: the ring's paint on the ro
 RING_LIFT = 0.05             # m over the road (the edge lines lie at 4 cm; 2 cm flickered there)
 MANHOLES = [(89.5, 178.2), (91.1, 176.8), (96.5, 163.2)]        # round rust-brown covers, 0.7 m (V18g: satellite 21z)
 GRATES = [(86.5, 179.7), (89.7, 161.9)]                         # square dark gratings, 1.0 m
-STAIR_Y, STAIR_W, STAIR_RISE, STAIR_TREAD = 174.0, 4.0, 0.13, 0.4   # 3 risers at (95, 174) (real: down to the lawn)
+STAIR_Y, STAIR_W, STAIR_TREAD = 174.0, 4.0, 0.4   # 3 risers at (95, 174), DOWN to the east lawn (V18j: 0.5 m in all)
+RIM_WALL = 0.3               # m: the pale kerb wall under the forecourt's east rim and along the lawn's north edge
+RIM_WALL_END = 121.0         # x: the wall ends where the lawn has come up to the paved band
 # V18g (satellite 21z): 12 units in two rows of six (bearing 65), each a square concrete lid with a steel post
 WASTE_C, WASTE_U, WASTE_HALF = (99.4, 183.3), (0.9063, 0.4226), (5.0, 1.75)
 WASTE_ROWS = ((-4.15, -2.49, -0.83, 0.83, 2.49, 4.15), (-0.85, 0.85))
@@ -86,14 +108,17 @@ SEAT_RING_C, SEAT_RING_R = (157.7, 147.0), 5.0   # cream concrete ring bench, ou
 _REPORT = []                 # (what, least distance to the centreline)
 
 
-# V18 (team walk 7 Nov 2026): the lawn strip north of the loop behind A, positions from the 2023 orthophoto
-# (the ortho places them 2-4 m closer to our road, which runs over the real lawn's edge: pushed out to 7.8 m / 6.9 m)
-NORTH_LOOP_TREES = [(20.7, 183.0), (27.2, 187.5), (35.7, 192.2), (41.9, 194.4), (48.5, 196.3)]
-NORTH_LOOP_CABINETS = [(54.6, 196.6), (57.2, 196.8)]
-# V18g (satellite 21z): the path north of the loop's lawn (y 189.7-194.1) has a low pale wall on its north side with
-# woodland behind it. Our road lies on that path east of x = 43, so the wall is built only west of it.
-NORTH_WALL = [(19.0, 194.7), (42.0, 194.7)]
-NORTH_WALL_SIZE = (0.35, 0.55)                  # thickness, height
+# V18 (team walk 7 Nov 2026): the lawn strip north of the loop behind A carries a row of young staked trees and two
+# grey galvanised boxes. V18j: the real row stands 2 m behind the street's edge, under our race road; the trees stand
+# in the free corner of the lawn north of the road (north_plan.TREES), the boxes are built there (build_street; the
+# two cabinet props that stood north of the path are gone)
+NORTH_LOOP_TREES = list(NP.TREES)
+NORTH_LOOP_CABINETS = []
+# V18g (satellite 21z): the path north of the loop's lawn (y 189.6-194.3) has a low pale wall on its north side with
+# woodland behind it. Our road lies on that path east of x = 47, so the wall is built only west of it (V18j: 1.05 m
+# high, survey 1.3: 1.0-1.1 m)
+NORTH_WALL = list(NP.NORTH_WALL)
+NORTH_WALL_SIZE = NP.NORTH_WALL_SIZE            # thickness, height
 NORTH_WOOD = [(41.6, 197.6, 1.25), (22.0, 200.5, 1.1), (31.0, 201.5, 1.3)]     # trees behind the wall: x, y, scale
 
 
@@ -119,12 +144,13 @@ def _edge_frame():
 
 
 def stair_ring():
-    """Footprint of the stair: STAIR_W along the edge at y = STAIR_Y, from the sett edge 3 treads and a landing east."""
+    """Footprint of the stair down to the east lawn: STAIR_W along the bands' outer rim at y = STAIR_Y, two treads
+    and a landing east of it (V18j: it started at the sett edge and went up)."""
     u, e = _edge_frame()
-    (ax, ay) = EDGE[0]
+    (ax, ay) = NP.RIM[0]
     t = (STAIR_Y - ay) / u[1]
     c = (ax + u[0] * t, ay + u[1] * t)
-    depth = 3 * STAIR_TREAD + 1.2
+    depth = 2 * STAIR_TREAD + 1.2
     h = STAIR_W / 2
     return [(c[0] - u[0] * h, c[1] - u[1] * h), (c[0] - u[0] * h + e[0] * depth, c[1] - u[1] * h + e[1] * depth),
             (c[0] + u[0] * h + e[0] * depth, c[1] + u[1] * h + e[1] * depth), (c[0] + u[0] * h, c[1] + u[1] * h)], c, u, e
@@ -140,30 +166,178 @@ def waste_ring(pad=0.0):
 # =====================================================================================================
 # The forecourt sheet
 # =====================================================================================================
-def build_forecourt(col):
+_BEFORE = {}                 # the height field before level_nodes (dress: how far the ground moved under an item)
+
+
+def level_nodes(heights):
+    """V18j (one call at the end of env_terrain.apply): the north side on one level. The 5 m terrain nodes of
+    north_plan.ZONE go to the road's bed (north_plan.GROUND), returning to the elevation model over BLEND metres
+    outside it; the east lawn (north_plan.EAST) is lowered to 0.5 m below the forecourt (never raised: south of it
+    the ground falls away anyway). Nothing changes west of x = -14 (the start plaza has its own level) and in the
+    pool. Before: the forecourt climbed 0.6-1.7 m to the north-east and dipped 0.3-0.6 m at Student Central."""
+    _BEFORE["h"] = [row[:] for row in heights]
+    n, up, down = 0, 0.0, 0.0
+    for j in range(E.ROWS):
+        for i in range(E.COLS):
+            x, y = E.X0 + i * E.STEP, E.Y0 + j * E.STEP
+            z, w = NP.level_target(x, y)
+            if w <= 0.0:
+                continue
+            h = heights[j][i]
+            if z < NP.GROUND - 1e-6:
+                z = min(z, h)                               # the east lawn: lowered only
+            new = h * (1.0 - w) + z * w
+            if abs(new - h) > 0.005:
+                heights[j][i] = new
+                n += 1
+                up, down = max(up, new - h), max(down, h - new)
+    _BEFORE["after"] = [row[:] for row in heights]
+    print(f"  north (V18j): {n} terrain nodes on one level ({NP.GROUND} m under the street and the forecourt, the east "
+          f"lawn {NP.LAWN_DROP} m below the paving): raised by up to {up:.2f} m, lowered by up to {down:.2f} m")
+
+
+def ground_shift(x, y):
+    """Metres the terrain moved at (x, y) in level_nodes (0 where it did not)."""
+    import env_terrain
+    if "h" not in _BEFORE:
+        return 0.0
+    return env_terrain._bilinear(_BEFORE["after"], x, y) - env_terrain._bilinear(_BEFORE["h"], x, y)
+
+
+def on_sheet(x, y):
+    """True on the flat paving: the sheet's outline and the edge bands, without the hall (the road counts: its bed is
+    level)."""
+    if "hall" not in _BEFORE:
+        _BEFORE["hall"] = next([tuple(p) for p in b["points"]] for b in E.DATA["buildings"] if b["id"] == C.MAIN_ID)
+    return (NP.inside(x, y, NP.SHEET) or any(NP.inside(x, y, r) for r in _band_rings())) and not NP.inside(x, y, _BEFORE["hall"])
+
+
+def _band_rings():
+    import street_plan as S
+    return [S.ribbon(EDGE, -BAND_PINK - BAND_OCHRE, 0.0)]
+
+
+def _world_uv(x, y):
+    """The terrain's own UVs (build_world.build_ground): the ground colour map covers the world once."""
+    return ((x - E.X0) / (E.X1 - E.X0), (y - E.Y0) / (E.Y1 - E.Y0))
+
+
+def _rect(c, u, hu, hv):
+    v = (-u[1], u[0])
+    return [(c[0] + u[0] * a + v[0] * b, c[1] + u[1] * a + v[1] * b) for a, b in ((-hu, -hv), (hu, -hv), (hu, hv), (-hu, hv))]
+
+
+def well_ring(pad=0.0):
+    """The basement stair's well at the facade (north_plan.STAIR_A, STAIR_O), with `pad` metres round it."""
+    (a0, a1), (o0, o1) = NP.STAIR_A, NP.STAIR_O
+    return [NP.pt(a0 - pad, o0 - pad), NP.pt(a1 + pad, o0 - pad), NP.pt(a1 + pad, o1 + pad), NP.pt(a0 - pad, o1 + pad)]
+
+
+def _cut_rings():
+    """What the north sheets leave free: the hall (8 cm inside its outline: the sheet ends under the hall's walls),
+    Student Central's own outline, the other buildings, the start plaza's sheet, env_campus' keep-out rings (pool)."""
     import env_campus
+    hall = next([tuple(p) for p in b["points"]] for b in E.DATA["buildings"] if b["id"] == C.MAIN_ID)
+    rings = [("hall", env_campus.grow(env_campus.ccw(hall), -0.08)),
+             ("Student Central", env_campus.grow(env_campus.ccw(list(C.SC_RING)), 0.1)),
+             ("start plaza", list(P.RING))]
+    for b in E.DATA["buildings"]:
+        pts = [tuple(p) for p in b["points"]]
+        if b["id"] != C.MAIN_ID and b.get("name") != "Student Central" and max(p[0] for p in pts) > -20.0 \
+                and min(p[0] for p in pts) < 130.0 and max(p[1] for p in pts) > 140.0 and min(p[1] for p in pts) < 205.0:
+            rings.append(("building " + b["id"], pts))
+    for r in env_campus.KEEP_OUT:
+        if max(p[0] for p in r) > -20.0 and min(p[0] for p in r) < 130.0 and max(p[1] for p in r) > 140.0 and min(p[1] for p in r) < 205.0:
+            rings.append(("campus keep-out", list(r)))
+    return rings
+
+
+def lawn_look_line():
+    """The race line's points beside which the road reads as lawn (plus one point either side)."""
+    pts = E.ROUTE["points"]
+    idx = [i for i in range(NP.LOOK_I[0], NP.LOOK_I[1] + 1)
+           if NP.on_lawn((pts[i]["x"] + pts[i + 1]["x"]) / 2, (pts[i]["y"] + pts[i + 1]["y"]) / 2)]
+    return [(pts[i]["x"], pts[i]["y"]) for i in range(idx[0], idx[-1] + 2)] if idx else []
+
+
+# =====================================================================================================
+# The sheet: forecourt, street, path (V18j: one flat level)
+# =====================================================================================================
+def build_forecourt(col):
     import env_entrance as EN
     import street_plan as S
     t = P.CALCADA_TILE
-    uv = ((0.0, 0.0), FACE_U, t, t)
-    layers = [{"name": "forecourt setts", "ring": list(FORECOURT), "mat": "calcada", "uv": uv},
-              {"name": "buff concrete at Student Central", "ring": list(BUFF), "mat": "pal:" + BUFF_COLOUR, "uv": None},
+    uv = ((0.0, 0.0), P.ROW_DIR, t, t)          # the start plaza's frame: one sett field from the plaza to the forecourt
+    buff_uv = (NP.NW, NP.U, BUFF_TILE, BUFF_TILE)
+    face_a, face_b = (76.70, 158.71), (66.58, 184.49)               # the hall's north-east face (its outline)
+    fu = FACE_U
+    fe = (fu[1], -fu[0])                                            # outwards (east) across that face
+    layers = [{"name": "north setts", "ring": list(NP.SHEET), "mat": "calcada", "uv": uv},
+              {"name": "apron along the hall's north face", "mat": "buff", "uv": buff_uv,
+               "ring": [NP.pt(0.0, -0.3), NP.pt(NP.FACE_LEN, -0.3), NP.pt(NP.FACE_LEN, NP.APRON), NP.pt(0.0, NP.APRON)]},
+              {"name": "drip-line strip at the north-east face", "mat": "buff", "uv": (face_a, fu, BUFF_TILE, BUFF_TILE),
+               "ring": [(face_a[0] - fe[0] * 0.3, face_a[1] - fe[1] * 0.3), (face_a[0] + fe[0] * 0.5, face_a[1] + fe[1] * 0.5),
+                        (face_b[0] + fe[0] * 0.5, face_b[1] + fe[1] * 0.5), (face_b[0] - fe[0] * 0.3, face_b[1] - fe[1] * 0.3)]},
+              {"name": "buff concrete at Student Central", "ring": list(BUFF), "mat": "buff", "uv": buff_uv},
               {"name": "pink-buff edge band", "ring": S.ribbon(EDGE, -BAND_PINK, 0.0), "mat": "pal:" + PINK_BUFF, "uv": None},
               {"name": "ochre edge band", "ring": S.ribbon(EDGE, -BAND_PINK - BAND_OCHRE, -BAND_PINK), "mat": "pal:" + OCHRE,
                "uv": None},
               {"name": "dark sett ring", "ring": _circle(RING_C, RING_R, 48), "mat": "pal:setts_dark", "uv": None},
-              {"name": "setts inside the ring", "ring": _circle(RING_C, RING_R - RING_BAND, 48), "mat": "calcada", "uv": uv}]
-    for c in MANHOLES:
-        layers.append({"name": "manhole cover", "ring": _circle(c, 0.35, 10), "mat": "pal:wood_dark", "uv": None})
-    for cx, cy in GRATES:
+              {"name": "setts inside the ring", "ring": _circle(RING_C, RING_R - RING_BAND, 48), "mat": "calcada", "uv": uv},
+              # Rua da Holanda's first metres: asphalt between two pale kerb lines
+              {"name": "R. da Holanda", "ring": list(NP.HOLANDA), "mat": "asphalt", "uv": ((0.0, 0.0), (0.0, 1.0), 2.0, 2.0)}]
+    (hx0, hy0), (hx1, _), (_, hy1) = NP.HOLANDA[0], NP.HOLANDA[1], NP.HOLANDA[2]
+    for ring in ([(hx0 - 0.15, hy0 - 0.15), (hx1 + 0.15, hy0 - 0.15), (hx1 + 0.15, hy0), (hx0 - 0.15, hy0)],
+                 [(hx0 - 0.15, hy0), (hx0, hy0), (hx0, hy1), (hx0 - 0.15, hy1)],
+                 [(hx1, hy0), (hx1 + 0.15, hy0), (hx1 + 0.15, hy1), (hx1, hy1)]):
+        layers.append({"name": "kerb line at R. da Holanda", "ring": ring, "mat": "pal:kerb", "uv": None})
+    # the steel grating strip in the apron and the drains across the setts (bars across the run)
+    for a0, a1 in NP.APRON_GRATE:
+        layers.append({"name": "grating strip in the apron", "mat": "grating", "uv": (NP.pt(a0, 0.55), NP.U, GRATING_TILE, 0.5),
+                       "ring": [NP.pt(a0, 0.55), NP.pt(a1, 0.55), NP.pt(a1, 1.05), NP.pt(a0, 1.05)]})
+    for a, o, length, width in NP.DRAINS:
+        rows = max(1, int(round(width / 0.45)))
+        layers.append({"name": "drain across the street", "mat": "grating", "ring": _rect(NP.pt(a, o), NP.N, length / 2, width / 2),
+                       "uv": (NP.pt(a + width / 2, o - length / 2), NP.N, GRATING_TILE, width / rows)})
+    for c in MANHOLES + list(NP.MANHOLES):
+        layers.append({"name": "manhole cover", "ring": _circle(c, 0.35, 10), "mat": "pal:iron", "uv": None})
+    for cx, cy in GRATES + list(NP.PATH_COVERS):
         layers.append({"name": "grating", "ring": [(cx - 0.5, cy - 0.5), (cx + 0.5, cy - 0.5), (cx + 0.5, cy + 0.5),
-                                                   (cx - 0.5, cy + 0.5)], "mat": "pal:setts_dark", "uv": None})
-    hall = next([tuple(p) for p in b["points"]] for b in E.DATA["buildings"] if b["id"] == C.MAIN_ID)
-    box = [(50.0, 146.0), (114.0, 146.0), (114.0, 195.0), (50.0, 195.0)]
-    cutters = EN._cutters(ring=box, main=env_campus.grow(env_campus.ccw(hall), 0.2))
-    cutters += [("Student Central", env_campus.grow(env_campus.ccw(list(C.SC_RING)), 0.1)),
-                ("stair", stair_ring()[0]), ("waste station", waste_ring(0.02))]
-    EN.drape("North_Forecourt", layers, cutters, col, soften=(50.0, 146.0, 114.0, 195.0))
+                                                   (cx - 0.5, cy + 0.5)], "mat": "grating", "uv": ((cx - 0.5, cy - 0.5), (1.0, 0.0), 0.5, 0.5)})
+    # the rust-brown steel strip between the setts and the lawn: along the south edge of the road where the road
+    # reads as lawn (the real strip, 2-4 m further north, lies under the race road)
+    strip = lawn_look_line()
+    if strip:
+        layers.append({"name": "steel strip at the lawn", "ring": S.ribbon(strip, NP.KEEP_OUT - 0.01, NP.KEEP_OUT + NP.STRIP),
+                       "mat": "rust", "uv": (strip[0], NP.U, 1.5, 1.5)})
+    for line in NP.HEM_LINES:                   # the hem: the terrain's own material, going down under the ground
+        layers.append({"name": "hem", "ring": NP.hem_ring(line), "mat": "ground_map", "uv": None, "uvf": _world_uv})
+    cutters = _cut_rings() + [("basement stair", well_ring())]
+    S.KEEP_OUT_STD = S.KEEP_OUT
+    EN.drape("North_Forecourt", layers, cutters, col, keep_out=NP.KEEP_OUT, level=lambda x, y, d, z: NP.LEVEL, sink=NP.hem_drop)
+    print(f"  north (V18j): the sheet lies flat at {NP.LEVEL} m from {NP.KEEP_OUT} m beside the centreline; "
+          f"{len(NP.DRAINS)} drains across the street, the steel strip along {max(len(strip) - 1, 0) * 2} m of the road's "
+          f"south edge, {len(NP.HEM_LINES)} hems")
+
+
+def build_door_aprons(col):
+    """V18j: setts under the road round the hall's open-air doors. In Unity NovaHallInsert cuts the old road away
+    in front of every hall door (5.5 m either side of the old line) and lays a straight, narrower door road along the
+    door's axis; between that road and our paving the terrain lay bare, 13 cm lower (Luc's dark strip at D5).
+    The apron is the hull of that cut and of the old road's last metres, north_plan.UNDER_ROAD under the road: in
+    the generator's world it is hidden under the road, in Unity it shows wherever nothing else is laid."""
+    import env_entrance as EN
+    import street_plan as S
+    t = P.CALCADA_TILE
+    S.KEEP_OUT_STD = S.KEEP_OUT
+    cutters = [c for c in _cut_rings() if c[0] != "start plaza"]
+    aprons = NP.door_aprons(E.ROUTE["points"])
+    for name, ring in aprons:
+        layers = [{"name": "door apron " + name, "ring": ring, "mat": "calcada", "uv": ((0.0, 0.0), P.ROW_DIR, t, t)}]
+        EN.drape("North_DoorApron_" + name.split("_")[0], layers, cutters, col, keep_out=0.001,
+                 level=lambda x, y, d, z: NP.ROAD_Z - NP.UNDER_ROAD)
+    if not aprons:
+        print("  north (V18j): track.json / HallDoors.json not found: no door aprons (the strips beside the door roads stay bare)")
 
 
 def build_ring_on_road(col):
@@ -195,26 +369,54 @@ def build_structures(col):
     import env_streets as ST
     import street_plan as S
     g = SO.Proto()
-    # --- the stair on the forecourt's east edge: 3 risers, pink-buff. The real one goes DOWN 0.5 m to the lawn;
-    # our terrain (DEM) rises to the east here, so it goes up to the lawn instead ---
+    # --- the stair on the forecourt's east rim: 3 risers DOWN to the lawn, 0.5 m in all, pink-buff (V18j: the
+    # terrain is level now and the east lawn lies 0.5 m lower, as in reality; it used to go up) ---
     ring, c, u, e = stair_ring()
-    gs = [ST.ground(*p) for p in ring]
-    z0 = min(gs) - 0.3
-    foot = ST.ground(*c) + 0.07                                   # the sett sheet's height at the edge
+    z0 = NP.EAST_LAWN - 0.45
+    rise = NP.LAWN_DROP / 3
     for k in range(3):
         d0 = k * STAIR_TREAD
-        d1 = 3 * STAIR_TREAD + 1.2 if k == 2 else d0 + STAIR_TREAD
+        d1 = 2 * STAIR_TREAD + 1.2 if k == 2 else d0 + STAIR_TREAD
         mid = (c[0] + e[0] * (d0 + d1) / 2, c[1] + e[1] * (d0 + d1) / 2)
-        g.obox(mid, e, (d1 - d0) / 2, STAIR_W / 2, z0, foot + (k + 1) * STAIR_RISE, "palette", colour=PINK_BUFF)
+        top = NP.EAST_LAWN + 0.02 if k == 2 else NP.LEVEL - (k + 1) * rise          # the third riser lands on a slab
+        g.obox(mid, e, (d1 - d0) / 2, STAIR_W / 2, z0, top, "palette", colour=PINK_BUFF)
     _clear("stair on the forecourt's east edge", ring)
+    # --- V18j: the pale kerb wall under the forecourt's east rim and along the lawn's north edge: the sheet ends on
+    # it, the lawn lies 0.5 m below (the 5 m terrain cannot make that step) ---
+    walls = []
+    (r0, r1) = NP.RIM
+    ts = ((c[0] - r0[0]) * u[0] + (c[1] - r0[1]) * u[1])
+    length = math.hypot(r1[0] - r0[0], r1[1] - r0[1])
+    for t0, t1 in ((-0.3, ts - STAIR_W / 2), (ts + STAIR_W / 2, length)):
+        walls.append(((r0[0] + u[0] * t0, r0[1] + u[1] * t0), (r0[0] + u[0] * t1, r0[1] + u[1] * t1), e))
+    line = [r1] + list(NP.LAWN_N[1:])
+    for pa, pb in zip(line, line[1:]):
+        if pb[0] > RIM_WALL_END:
+            f = (RIM_WALL_END - pa[0]) / (pb[0] - pa[0])
+            pb = (pa[0] + (pb[0] - pa[0]) * f, pa[1] + (pb[1] - pa[1]) * f)
+        d = math.hypot(pb[0] - pa[0], pb[1] - pa[1])
+        if d > 0.1:
+            walls.append((pa, pb, ((pb[1] - pa[1]) / d, -(pb[0] - pa[0]) / d)))          # the lawn lies to the right
+    for pa, pb in zip(NP.SOUTH_EDGE, NP.SOUTH_EDGE[1:]):          # ... and round the south end of the buff concrete
+        d = math.hypot(pb[0] - pa[0], pb[1] - pa[1])
+        out = ((pb[1] - pa[1]) / d, -(pb[0] - pa[0]) / d)
+        if out[0] * (95.0 - pa[0]) + out[1] * (160.0 - pa[1]) > 0:              # away from the forecourt
+            out = (-out[0], -out[1])
+        walls.append((pa, pb, out))
+    for pa, pb, out in walls:
+        d = math.hypot(pb[0] - pa[0], pb[1] - pa[1])
+        wu = ((pb[0] - pa[0]) / d, (pb[1] - pa[1]) / d)
+        mid = ((pa[0] + pb[0]) / 2 + out[0] * (RIM_WALL / 2 - 0.02), (pa[1] + pb[1]) / 2 + out[1] * (RIM_WALL / 2 - 0.02))
+        g.obox(mid, wu, d / 2 + 0.01, RIM_WALL / 2, NP.EAST_LAWN - 0.5, NP.LEVEL - 0.006, "palette", colour="kerb")
+    _clear("kerb wall under the forecourt's east rim", [p for w in walls for p in w[:2]])
     # --- waste station (V18g): 12 square concrete lids in two rows of six, a stainless post on each ---
     wr = waste_ring()
     v = (-WASTE_U[1], WASTE_U[0])
     for a in WASTE_ROWS[0]:
         for b in WASTE_ROWS[1]:
             x, y = WASTE_C[0] + WASTE_U[0] * a + v[0] * b, WASTE_C[1] + WASTE_U[1] * a + v[1] * b
-            top = ST.ground(x, y) + 0.16
-            g.obox((x, y), WASTE_U, 0.7, 0.7, top - 0.5, top, "palette", colour="kerb")
+            top = NP.LEVEL + 0.16                          # V18j: on the flat sheet (the terrain lay 1-1.4 m higher)
+            g.obox((x, y), WASTE_U, 0.7, 0.7, NP.LEVEL - 0.06, top, "palette", colour="kerb")
             g.cyl(0.3, 0.3, top, top + 1.0, 8, "steel_grey", x=x, y=y)
     _clear("waste station", wr)
     # --- pylon at the avenue (ST02 h090-h180): a slim dark post with a blank dark board of 2 x 2.5 m at its top
@@ -300,10 +502,141 @@ def build_structures(col):
           f"pylon, {len(FLAGPOLES)} flag poles, seat ring); park paint: {n + 1} sleepers and the disc")
 
 
+# =====================================================================================================
+# V18j: what stands along the street behind the hall and on the forecourt
+# =====================================================================================================
+def build_street(col):
+    """North_Street (solid): the grey metal louvre screen on the hall's north face and the basement stair beside it
+    (a well inside a white upstand with a galvanised tube railing; the survey saw no more than that: the well is a
+    dark void with three steps at its top), the two grey galvanised boxes on the lawn, the grey concrete bench
+    blocks on the forecourt, the bus stop's post with a blank plate."""
+    import env_entrance as EN
+    import env_streets as ST
+    m = EN.Faces()
+
+    def pal(pts, colour, towards):
+        m.face(pts, "palette", towards, [ST.pal_uv(colour)] * len(pts))
+
+    def pbox(c, u, hu, hv, z0, z1, colour, top=True):
+        ring = _rect(c, u, hu, hv)
+        for a, b in zip(ring, ring[1:] + ring[:1]):
+            pal([(*a, z0), (*b, z0), (*b, z1), (*a, z1)], colour, (b[1] - a[1], a[0] - b[0], 0.0))
+        if top:
+            pal([(*p, z1) for p in ring], colour, (0, 0, 1))
+        return ring
+
+    def bar(a, b, half, colour):
+        """Square bar between two 3D points."""
+        from mathutils import Vector
+        a, b = Vector(a), Vector(b)
+        d = (b - a).normalized()
+        side = d.cross(Vector((0, 0, 1)))
+        side = side.normalized() if side.length > 1e-6 else Vector((1, 0, 0))
+        up = side.cross(d).normalized()
+        for p, q in ((side, up), (up, -side), (-side, -up), (-up, side)):
+            pal([a + (p - q) * half, b + (p - q) * half, b + (p + q) * half, a + (p + q) * half], colour, p)
+
+    z = NP.LEVEL
+    # --- the louvre screen: horizontal galvanised blades, 12 cm proud of the wall ---
+    a0, a1 = NP.LOUVRE_A
+    front = [NP.pt(a0, 0.14), NP.pt(a1, 0.14)]
+    m.face([(*front[0], z + 0.1), (*front[1], z + 0.1), (*front[1], z + NP.LOUVRE_H), (*front[0], z + NP.LOUVRE_H)], "grating",
+           (NP.N[0], NP.N[1], 0.0), [(0.1, 0.0), (0.1, (a1 - a0) / 2.0), (NP.LOUVRE_H, (a1 - a0) / 2.0), (NP.LOUVRE_H, 0.0)])
+    for a in (a0, a1):                                       # its two ends, the top and the plinth under it
+        pal([(*NP.pt(a, -0.05), z), (*NP.pt(a, 0.14), z), (*NP.pt(a, 0.14), z + NP.LOUVRE_H), (*NP.pt(a, -0.05), z + NP.LOUVRE_H)],
+            "steel_grey", (NP.U[0] * (1 if a == a1 else -1), NP.U[1] * (1 if a == a1 else -1), 0.0))
+    pal([(*NP.pt(a0, -0.05), z + NP.LOUVRE_H), (*NP.pt(a1, -0.05), z + NP.LOUVRE_H), (*front[1], z + NP.LOUVRE_H),
+         (*front[0], z + NP.LOUVRE_H)], "steel_grey", (0, 0, 1))
+    pal([(*front[0], z - 0.05), (*front[1], z - 0.05), (*front[1], z + 0.1), (*front[0], z + 0.1)], "grey_back", (NP.N[0], NP.N[1], 0.0))
+    _clear("louvre screen on the hall's north face", front)
+    # --- the basement stair: the well (a dark void under three steps at its east end), a white upstand on its
+    # north side and its west end, the tube railing on the upstand ---
+    (s0, s1), (o0, o1) = NP.STAIR_A, NP.STAIR_O
+    ring = well_ring()
+    floor = NP.GROUND + 0.035
+    m.face([(*p, floor) for p in ring], "void", (0, 0, 1))
+    for a, b in zip(ring, ring[1:] + ring[:1]):               # the well's walls, seen from inside
+        mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+        cx, cy = NP.pt((s0 + s1) / 2, (o0 + o1) / 2)
+        m.face([(*a, floor), (*b, floor), (*b, z), (*a, z)], "white", (cx - mid[0], cy - mid[1], 0.0))
+    for k in range(3):                                        # the top three steps, each 3 cm lower (the rest is dark)
+        c = NP.pt(s1 - 0.15 - 0.3 * k, (o0 + o1) / 2)
+        pbox(c, NP.U, 0.15, (o1 - o0) / 2 - 0.01, floor, z - 0.03 * (k + 1), "concrete")
+    w = NP.WELL_WALL
+    up = [(NP.pt((s0 + s1) / 2 - w / 2, o1 + w / 2), NP.U, (s1 - s0) / 2 + w / 2, w / 2),          # north side
+          (NP.pt(s0 - w / 2, (o0 + o1) / 2), NP.N, (o1 - o0) / 2, w / 2)]                         # west end
+    for c, u, hu, hv in up:
+        for a, b in zip(*(lambda r: (r, r[1:] + r[:1]))(_rect(c, u, hu, hv))):
+            m.face([(*a, z - 0.05), (*b, z - 0.05), (*b, z + NP.WELL_H), (*a, z + NP.WELL_H)], "white", (b[1] - a[1], a[0] - b[0], 0.0))
+        m.face([(*p, z + NP.WELL_H) for p in _rect(c, u, hu, hv)], "white", (0, 0, 1))
+    rail = [NP.pt(s1, o1 + w / 2), NP.pt(s0 - w / 2, o1 + w / 2), NP.pt(s0 - w / 2, o0 + 0.05)]
+    top = z + NP.WELL_H + NP.RAIL_H
+    for pa, pb in zip(rail, rail[1:]):
+        d = math.hypot(pb[0] - pa[0], pb[1] - pa[1])
+        n = max(1, int(round(d / 1.2)))
+        for k in range(n + 1):
+            px, py = pa[0] + (pb[0] - pa[0]) * k / n, pa[1] + (pb[1] - pa[1]) * k / n
+            bar((px, py, z + NP.WELL_H), (px, py, top), 0.022, "steel_grey")
+        for h in (top, top - 0.5):
+            bar((*pa, h), (*pb, h), 0.022, "steel_grey")
+    _clear("basement stair at the hall's north face", well_ring(NP.WELL_WALL))
+    # --- two grey galvanised boxes on the lawn: plinth, body with a blade panel towards the street, a lid ---
+    bl, bw, bh = NP.BOX_SIZE
+    for x, y in NP.BOXES:
+        g = E.ground_z(x, y)
+        pbox((x, y), NP.U, bl / 2 - 0.04, bw / 2 - 0.04, g - 0.2, g + 0.1, "grey_back", top=False)
+        ring = pbox((x, y), NP.U, bl / 2, bw / 2, g + 0.1, g + bh, "steel_grey", top=False)
+        pbox((x, y), NP.U, bl / 2 + 0.05, bw / 2 + 0.05, g + bh, g + bh + 0.05, "steel_light" if "steel_light" in ST.PALETTE else "steel_grey")
+        fa, fb = ring[0], ring[1]                              # the long side towards the street
+        ins = (NP.N[0] * -0.012, NP.N[1] * -0.012)
+        qa = (fa[0] + NP.U[0] * 0.2 + ins[0], fa[1] + NP.U[1] * 0.2 + ins[1])
+        qb = (fb[0] - NP.U[0] * 0.2 + ins[0], fb[1] - NP.U[1] * 0.2 + ins[1])
+        m.face([(*qa, g + 0.25), (*qb, g + 0.25), (*qb, g + bh - 0.15), (*qa, g + bh - 0.15)], "grating", (-NP.N[0], -NP.N[1], 0.0),
+               [(0.0, 0.0), (0.0, (bl - 0.4) / 1.3), ((bh - 0.4) / 0.8, (bl - 0.4) / 1.3), ((bh - 0.4) / 0.8, 0.0)])
+        _clear("grey boxes on the street's lawn", _rect((x, y), NP.U, bl / 2 + 0.05, bw / 2 + 0.05))
+    # --- grey concrete bench blocks on the forecourt (2.5 x 0.5 x 0.45 m), with a shadow gap at the foot ---
+    sl, sw, sh = NP.BENCH_SIZE
+    for x, y, bearing in NP.BENCHES:
+        u = (math.sin(math.radians(bearing)), math.cos(math.radians(bearing)))
+        pbox((x, y), u, sl / 2 - 0.03, sw / 2 - 0.03, z - 0.02, z + 0.04, "grey_back", top=False)
+        pbox((x, y), u, sl / 2, sw / 2, z + 0.04, z + sh, "concrete")
+        _clear("bench blocks on the forecourt", _rect((x, y), u, sl / 2, sw / 2))
+    # --- the bus stop: a slim post with a blank plate (no lettering, no timetable) ---
+    bx, by = NP.BUS_STOP
+    bar((bx, by, z - 0.1), (bx, by, z + 2.7), 0.035, "steel_grey")
+    for side in (1, -1):
+        pal([(bx - 0.03 * side, by - 0.25, z + 2.1), (bx - 0.03 * side, by + 0.25, z + 2.1), (bx - 0.03 * side, by + 0.25, z + 2.7),
+             (bx - 0.03 * side, by - 0.25, z + 2.7)], "pay_blue", (-side, 0, 0))
+    pal([(bx - 0.03, by - 0.18, z + 1.2), (bx - 0.03, by + 0.18, z + 1.2), (bx - 0.03, by + 0.18, z + 1.7), (bx - 0.03, by - 0.18, z + 1.7)],
+        "grey_back", (-1, 0, 0))
+    pal([(bx + 0.03, by - 0.18, z + 1.2), (bx + 0.03, by + 0.18, z + 1.2), (bx + 0.03, by + 0.18, z + 1.7), (bx + 0.03, by - 0.18, z + 1.7)],
+        "grey_back", (1, 0, 0))
+    _clear("bus stop post", [NP.BUS_STOP])
+    obj = m.build("North_Street", col, EN.materials())
+    print(f"  north (V18j): street objects {sum(len(p.vertices) - 2 for p in obj.data.polygons)} triangles (louvre screen, "
+          f"basement stair and railing, {len(NP.BOXES)} boxes, {len(NP.BENCHES)} bench blocks, bus stop post)")
+
+
+def road_look(x, y):
+    """env_track.ROAD_LOOK hook for route points north_plan.LOOK_I: what the race road shows at (x, y) (the middle of a
+    road quad or of a shoulder). On the real lawn of the street (north_plan.LAWN) it is the terrain's own material
+    with the terrain's UVs: the ground colour map is lawn under these quads (north_plan.ground_paint), so the road
+    there IS the lawn, not a second street. Everywhere else: the setts, in the start plaza's UV frame like the sheet
+    beside the road."""
+    import env_streets as ST
+    import env_track as T
+    looks = T._looks()
+    if "north_lawn" not in looks:
+        looks["north_lawn"] = (ST.mat("ground_map"), _world_uv)
+    return "north_lawn" if NP.on_lawn(x, y) else "entrance_calcada"
+
+
 def build():
     """Call after env_entrance.build() (the terrain, the buildings and the street paving are built then)."""
     col = E.collection(COLLECTION)
     build_forecourt(col)
+    build_door_aprons(col)
+    build_street(col)
     if RING_ON_ROAD:
         build_ring_on_road(col)
     else:
@@ -328,11 +661,18 @@ def dress(veg, props, protos):
     avenue = [lay["ring"] for lay in S.LAYERS if lay["name"].startswith("B2 ")]
     solids = [waste_ring(0.8), stair_ring()[0], _circle(SEAT_RING_C, SEAT_RING_R + 0.6, 16),
               S.ribbon(PARK_PATH, -1.6, 1.6), S.ribbon(EDGE, -BAND_PINK - BAND_OCHRE - 1.1, 0.0)]
+    solids += [well_ring(0.6), _circle(NP.BUS_STOP, 0.8, 8)]                 # V18j: the street's and the forecourt's new solids
+    solids += [_rect(c, NP.U, NP.BOX_SIZE[0] / 2 + 0.6, NP.BOX_SIZE[1] / 2 + 0.6) for c in NP.BOXES]
+    solids += [_rect((x, y), (math.sin(math.radians(b)), math.cos(math.radians(b))), NP.BENCH_SIZE[0] / 2 + 0.5, NP.BENCH_SIZE[1] / 2 + 0.5)
+               for x, y, b in NP.BENCHES]
+    n_frozen = (len(veg), len(props))
 
     def gone(p):
         x, y = p["x"], p["y"]
-        if p["proto"] in CAFE and P.inside(x, y, FORECOURT):
+        if p["proto"] in CAFE and on_sheet(x, y):
             return "cafe furniture on the forecourt"
+        if p["proto"] in CAFE and NP.out_distance(x, y, NP.LAWN) < 3.0:
+            return "planters on the street's lawn"
         if any(P.inside(x, y, r) for r in solids):
             return "under a new solid or on the edge bands"
         if 99.0 <= y <= 173.0 and any(P.inside(x, y, r) for r in avenue):
@@ -356,7 +696,7 @@ def dress(veg, props, protos):
         if not cars or S.route_distance(x, y) < CAR_CLEAR:
             continue
         _REPORT.append(("parked cars on the forecourt (centre)", S.route_distance(x, y)))
-        added.append({"proto": cars[(k * 3 + 1) % len(cars)], "x": x, "y": y, "z": round(ST.ground(x, y) + 0.07, 3),
+        added.append({"proto": cars[(k * 3 + 1) % len(cars)], "x": x, "y": y, "z": round(NP.LEVEL, 3),      # V18j: on the flat sheet
                       "rot_z": round(math.atan2(u[1], u[0]) + (0.06 if k % 2 else -0.04), 4), "scale": 1.0})
     for k, (x, y, bearing) in enumerate(P.LAYBY_CARS):           # V18g (satellite): cars in the lay-by at the avenue
         if cars and S.route_distance(x, y) >= CAR_CLEAR:
@@ -393,6 +733,19 @@ def dress(veg, props, protos):
                     stands.append((x, y))
                     break
     n_racks = len(added) - n_cars - n_posts
+    # V18j: the ground moved under the dressing that was there before (level_nodes). What stands on the flat paving
+    # stands at the sheet's level; everything else moves with the ground under it
+    n_rez = 0
+    for items in (veg2, props2):
+        for k, p in enumerate(items):
+            if on_sheet(p["x"], p["y"]) and S.route_distance(p["x"], p["y"]) >= NP.KEEP_OUT:
+                z = NP.LEVEL
+            else:
+                dz = ground_shift(p["x"], p["y"])
+                z = p["z"] + dz if abs(dz) >= 0.01 else p["z"]
+            if abs(z - p["z"]) > 0.005:
+                items[k] = dict(p, z=round(z, 3))
+                n_rez += 1
     props2 += added
     n_saplings = 0
     if "Veg_PlazaTree" in protos:                         # Milestone's west lawn: a few staked saplings (N06, N14):
@@ -438,6 +791,8 @@ def dress(veg, props, protos):
             counts[it["proto"]] = counts.get(it["proto"], 0) + 1
         data["counts"] = counts
         json.dump(data, open(path, "w"), indent=1)
+    print(f"  north dressing (V18j): {n_rez} plants and props of the frozen dressing set on the levelled ground "
+          f"(of {n_frozen[0]} + {n_frozen[1]})")
     print(f"  north dressing: {n_cars} parked cars on the forecourt, {n_posts} posts, signs and lamps along the kerb "
           f"and across the plaza's south-west corner, {n_racks} bike racks on the plank band, {n_saplings} saplings on "
           f"Milestone's lawn")
