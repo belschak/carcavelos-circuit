@@ -33,6 +33,9 @@ TRACK = os.path.join(REPO, "Assets/_Project/Visuals/CampusWorld/Data/track.json"
 OUT = os.path.join(REPO, "Assets/_Project/Visuals/CampusWorld/Data/fence_free.json")
 EDGE = 0.3                  # WhiteGuardrailBuilder.EdgeOffset
 SEA_REACH = 12.0            # m: a promenade edge counts as the sea side when the beach's back edge is this close to it
+NO_FENCE = True             # Luc, 12 Nov 2026 (after his V18 drive): no white fence and no wall behind it from the terrace
+                            # ramp to the finish; up to the ramp it stays, the hall keeps its own rails. Markers
+                            # and run-off limits come next, place by place. False = the zones below.
 
 
 def zone_runs(pts, zone):
@@ -71,6 +74,8 @@ def main():
         free.append({"from": max(0, a), "to": min(n - 1, b), "side": side, "why": why})
 
     j = track["jump_index"]
+    if NO_FENCE:            # Luc: the fence up to the terrace ramp stays (start plaza, atrium, deck), all of it after goes
+        free.append({"from": j - 3, "to": n, "side": 0, "why": "Luc 12 Nov: no white fence after the terrace ramp (markers come place by place)"})
     add(j - 3, j + 3, 0, "terrace jump: the kicker ramp (the deck beside it stays 0.65 m lower), the drop behind the lip, the first landing metres")
     for a, b in zone_runs(pts, "stairs"):
         add(a - 1, b + 1, 0, "terracotta stairs: own railings and guard colliders")
@@ -102,7 +107,7 @@ def main():
     with open(OUT, "w") as fh:
         json.dump(out, fh, indent=1)
     for f in free:
-        a, b = pts[f["from"]], pts[f["to"]]
+        a, b = pts[f["from"]], pts[f["to"] % n]
         print(f"  {f['from']:4d}-{f['to']:4d} side {f['side']:+d}  ({a['x']:.0f}, {a['z']:.0f}) .. ({b['x']:.0f}, {b['z']:.0f})  {f['why']}")
     print("written:", os.path.relpath(OUT, REPO))
 
