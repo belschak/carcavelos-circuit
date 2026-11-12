@@ -60,7 +60,7 @@ def mat(key):
     if key == "glass":
         return _textured("T_skylight", "#9DBAC0", "skylight_glass", 0.35)
     if key == "terracotta":             # own material (the track's W_T_terracotta carries a roughness map)
-        return _textured("plaza_terracotta", "#C6AA93", "plaza_terracotta", 0.85)   # V18 walk: pale terracotta; V16 #B08A72; V10i: #C8664A
+        return _textured("plaza_terracotta", "#DBC3A6", "plaza_terracotta", 0.85)   # V18g: pale peach stone; V18 walk #C6AA93; V16 #B08A72; V10i: #C8664A
     if key == "floor":
         return env_track.surface_material("concrete_polished")
     if key == "white":
@@ -597,7 +597,34 @@ def build_stairs(col):
     # main stairs. V16 (survey V15, section 4 item 2): low steps over the full width, 21 risers of about 0.16 m
     # (V10i: steps on the east half, seating tiers of two steps each on the west half). The steps keep their place under
     # the driving surface: tread k lies STEP_UNDER below the profile at its own riser, as before.
-    build_steps(vis, P.stair_point, zmain, 0.0, length, treads, -half, half, P.LOW_Z, zmain(length), "terracotta")
+    # V18g (walk 7 Nov 2026, ANTWORT A10): the flight is two halves, offset lengthwise, with a joint down the middle.
+    # East half as before; the west half's risers stand half a tread further up (its treads still lie STEP_UNDER below
+    # the profile at their own riser, so the driving surface is never below a step). Visual only.
+    build_steps(vis, P.stair_point, zmain, 0.0, length, treads, 0.0, half, P.LOW_Z, zmain(length), "terracotta")
+    d = length / treads
+    ua, ub = -half / TILE_STEP, 0.0
+
+    def west_tread(a, b, z):
+        t = (b - a) / d
+        vis.face([(*P.stair_point(a, -half), z), (*P.stair_point(a, 0.0), z), (*P.stair_point(b, 0.0), z),
+                  (*P.stair_point(b, -half), z)], "terracotta", [(ua, 0.0), (ub, 0.0), (ub, t), (ua, t)])
+
+    def west_z(s):
+        return P.LOW_Z + 0.004 if s < d / 2 else zmain(d / 2 + int((s - d / 2) / d) * d) - STEP_UNDER
+    west_tread(0.0, d / 2, P.LOW_Z + 0.004)                             # the landing strip before the first riser
+    build_steps(vis, P.stair_point, zmain, d / 2, length - d / 2, treads - 1, -half, 0.0, P.LOW_Z + 0.004,
+                zmain(length - d / 2) - STEP_UNDER, "terracotta")
+    west_tread(length - d / 2, length, zmain(length - d / 2) - STEP_UNDER)
+    vis.face([(*P.stair_point(length, -half), zmain(length - d / 2) - STEP_UNDER), (*P.stair_point(length, 0.0), zmain(length - d / 2) - STEP_UNDER),
+              (*P.stair_point(length, 0.0), zmain(length)), (*P.stair_point(length, -half), zmain(length))], "terracotta",
+             [(ua, 0.42), (ub, 0.42), (ub, 0.58), (ua, 0.58)])
+    for j in range(2 * treads):                                         # the joint's cheeks (sawtooth between the halves)
+        a, b = j * d / 2, (j + 1) * d / 2
+        ze, zw = tread_z(zmain, 0.0, length, treads, (a + b) / 2), west_z((a + b) / 2)
+        if abs(ze - zw) < 0.005:
+            continue
+        face = P.STAIR_RIGHT if zw > ze else (-P.STAIR_RIGHT[0], -P.STAIR_RIGHT[1])
+        vis.wall(P.stair_point(a, 0.0), P.stair_point(b, 0.0), max(ze, zw), max(ze, zw), min(ze, zw), face, key="terracotta")
     # the stair in the slot
     build_steps(vis, P.slot_point, zslot, P.SLOT_LANDING, P.SLOT_LEN, P.SLOT_RISERS - 1, 0.0, P.SLOT_W, P.LOW_Z, zslot(P.SLOT_LEN),
                 "ochre", tile=TILE_OCHRE)

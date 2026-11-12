@@ -530,6 +530,107 @@ def build_paving(col):
           f"{len(low)} samples more than 2 cm under the ground {sorted(low)[:12]}")
 
 
+def _rect(c, bearing, length, width):
+    """(unit vector along the long axis, ring) of a rectangle given like campus_east_plan.COMPOUND."""
+    u = (math.sin(math.radians(bearing)), math.cos(math.radians(bearing)))
+    v = (-u[1], u[0])
+    return u, [(c[0] + u[0] * a + v[0] * b, c[1] + u[1] * a + v[1] * b)
+               for a, b in ((-length / 2, -width / 2), (length / 2, -width / 2), (length / 2, width / 2), (-length / 2, width / 2))]
+
+
+def build_court(m):
+    """V18g: the court east of G (orthophoto, Google 20z): the walled plant compound (open to the sky, dark inside,
+    two plant boxes), the dark shed beside it, the one tall lamp mast."""
+    c, bearing, length, width, h = P.COMPOUND
+    u, ring = _rect(c, bearing, length, width)
+    g = min(ground(x, y) for x, y in ring)
+    top = max(ground(x, y) for x, y in ring) + h
+    for a, e in zip(ring, ring[1:] + ring[:1]):
+        strip(m, a, e, g - 0.4, top, top, 0.25, CONC)
+    floor = max(ground(x, y) for x, y in ring) + 0.06
+    m.up([(x, y, floor) for x, y in ring], DARK)
+    v = (-u[1], u[0])
+    for along, across, hu, hv, hb in ((-2.6, 0.6, 2.2, 1.5, 1.9), (2.9, -0.5, 1.6, 2.0, 1.6)):
+        m.box((c[0] + u[0] * along + v[0] * across, c[1] + u[1] * along + v[1] * across), u, hu, hv, floor, floor + hb, SLAT, SLAT)
+    clear("plant compound in the court", ring)
+    K.keep_out(ring, 1.0)
+    c, bearing, length, width, h = P.SHED
+    u, ring = _rect(c, bearing, length, width)
+    g = min(ground(x, y) for x, y in ring)
+    m.box(c, u, length / 2, width / 2, g - 0.3, max(ground(x, y) for x, y in ring) + h, SLAT, DARK)
+    clear("shed in the court", ring)
+    K.keep_out(ring, 1.0)
+    x, y = P.COURT_MAST
+    g = ground(x, y)
+    m.box((x, y), (1.0, 0.0), 0.09, 0.09, g - 0.3, g + P.COURT_MAST_H, SLAT, SLAT)
+    m.box((x, y), (1.0, 0.0), 0.45, 0.16, g + P.COURT_MAST_H, g + P.COURT_MAST_H + 0.12, SLAT, SLAT, WALL)
+    clear("lamp mast in the court", [(x, y)])
+    K.keep_out([(x - 1.0, y - 1.0), (x + 1.0, y - 1.0), (x + 1.0, y + 1.0), (x - 1.0, y + 1.0)])
+
+
+def dress(veg, props):
+    """V18g: the east grounds' planting and the lower plaza's furniture as on Google Maps (an explicit edit of the
+    lists, after dressing_reality.apply; rewrites the dressing files). Only items inside this module's own rings
+    change: the court east of G (young trees in single pits instead of the two generated olive rows), the big lawn
+    (no shrub groups: it is a plain lawn), the scrub beyond the east path (scattered shrubs, the pine clump
+    south-east of F), G's arcade (timber picnic tables instead of the two parasol sets)."""
+    import json
+    import os
+    import random
+    import plaza_plan
+    rng = random.Random(20261112)
+    inside = plaza_plan.inside
+    lawn = next(lay["ring"] for lay in C.GROUND_PAINT if lay["name"] == "east lawn")
+    veg2, gone = [], {}
+    for p in veg:
+        x, y = p["x"], p["y"]
+        if (inside(x, y, P.COURT_RING) and p["proto"].startswith("Veg_Olive")) or \
+                (inside(x, y, lawn) and y < 132.0 and p["proto"].startswith("Veg_Shrub")):
+            gone[p["proto"]] = gone.get(p["proto"], 0) + 1
+            continue
+        veg2.append(p)
+
+    strip_ring = next(lay["ring"] for lay in C.GROUND_PAINT if lay["name"] == "sand strip with the two tree rows")
+    moved = 0
+    for k, p in enumerate(veg2):                            # the strip's two rows: to their real lines beside the lawn
+        if p["proto"].startswith("Veg_PlazaTree") and p["y"] > 58.0 and inside(p["x"], p["y"], strip_ring):
+            x, y = p["x"] + P.TREE_ROW_SHIFT[0], p["y"] + P.TREE_ROW_SHIFT[1]
+            z = plaza_plan.DECK_Z if plaza_plan.on_deck(x, y) else ground(x, y)
+            veg2[k] = dict(p, x=round(x, 3), y=round(y, 3), z=round(z, 3))
+            moved += 1
+
+    def plant(proto, x, y, scale):
+        veg2.append({"proto": proto, "x": round(x, 3), "y": round(y, 3), "z": round(ground(x, y), 3),
+                     "rot_z": round(rng.uniform(0, 2 * math.pi), 4), "scale": round(scale, 3)})
+    for k, (x, y) in enumerate(P.COURT_TREES):
+        plant("Veg_PlazaTree" if k % 2 else "Veg_PlazaTree_B", x, y, rng.uniform(0.85, 1.05))
+    for k, (x, y) in enumerate(P.SCRUB_SHRUBS):
+        plant("Veg_Shrub" if k % 3 else "Veg_Shrub_B", x, y, rng.uniform(1.25, 1.75))
+    for k, (x, y) in enumerate(P.PINES):
+        plant("Veg_UmbrellaPine" if k % 2 else "Veg_UmbrellaPine_B", x, y, rng.uniform(0.9, 1.1))
+    # G's arcade: the two parasol sets go, timber picnic tables stand at the slab's edge (Google 20z, walk 7 Nov)
+    sets = [(p["x"], p["y"]) for p in props if p["proto"] == "Prop_Parasol" and inside(p["x"], p["y"], C.LOWER_PLAZA)]
+    props2 = [p for p in props if not any(math.hypot(p["x"] - x, p["y"] - y) < 1.0 for x, y in sets)]
+    for x, y, rot in P.ARCADE_TABLES:
+        if K.route_gap(x, y) < P.PROP_CLEAR + 1.0:
+            raise RuntimeError(f"V18g: picnic table at ({x}, {y}) is too close to the race line")
+        props2.append({"proto": "Prop_PicnicTable", "x": x, "y": y, "z": round(max(ground(x, y) + 0.04, F0 + 0.03), 3), "rot_z": rot,
+                       "scale": 1.0})       # (the paving / the void's Floor-0 paving lies at 11.22 .. 11.26 here)
+    print(f"  campus east: dressing: removed {gone} and {len(props) - len(props2)} props of {len(sets)} parasol sets; "
+          f"{len(P.COURT_TREES)} court trees, {len(P.SCRUB_SHRUBS)} scrub shrubs, {len(P.PINES)} pines, "
+          f"{len(P.ARCADE_TABLES)} picnic tables at G's arcade; {moved} trees of the strip's rows moved by {P.TREE_ROW_SHIFT}")
+    for fname, items in (("placements_vegetation.json", veg2), ("placements_props.json", props2)):
+        path = os.path.join(E.OUT, fname)
+        data = json.load(open(path))
+        data["placements"] = items
+        counts = {}
+        for it in items:
+            counts[it["proto"]] = counts.get(it["proto"], 0) + 1
+        data["counts"] = counts
+        json.dump(data, open(path, "w"), indent=1)
+    return veg2, props2
+
+
 def build_grounds():
     """Called from env_campus.build_extras (before the dressing: the keep-out rings are read by env_campus.dress)."""
     col = E.collection("World_Buildings_Campus")
@@ -539,6 +640,7 @@ def build_grounds():
     build_lawn(m)
     build_objects(m)
     build_rim_wall(m)
+    build_court(m)
     K.keep_out(P.EAST_RING)
     mesh = finish_with_tiers(m, "World_CampusEast")
     E.new_object("World_CampusEast", mesh, col)

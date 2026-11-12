@@ -19,7 +19,9 @@ rgb, noise, blur, smoothstep, lerp, grid, save = T.rgb, T.noise, T.blur, T.smoot
 OCHRE = "#C9B388"            # survey V15: #bea372 (E2's set) .. #d2c29c (E1's set); V10i: #E2BF88
 GLASS = "#9FBDC2"            # unchanged (Luc: the skylights stay light blue)
 BAR = "#A7ABA8"              # glazing bars and steel edge (survey: #9a9e9a, E14_h000_t60; a little brighter)
-TERRACOTTA = "#C6AA93"       # V18: team walk 7 Nov 2026 (survey V15 section 4, item 2: #B08A72) (V10i: the track's brick red #C8664A)
+TERRACOTTA = "#DBC3A6"       # V18g: pale peach stone, lighter than the plaza (orthophoto 244/219/182 against the plaza's
+#                              216/198/149; walk 7 Nov, overcast: #c9bcaa against #b9b293). V18: #C6AA93 (team walk); survey V15
+#                              section 4, item 2: #B08A72; V10i: the track's brick red #C8664A
 
 
 def make_ochre(S=1024, seed=3101):
