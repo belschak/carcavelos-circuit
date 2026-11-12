@@ -88,8 +88,15 @@ ISLAND_BAND = 1.15              # dark granite-sett band along the island's edge
 BED_C = (-238.2, -31.9)         # V16g had a round planted bed with a palm here; V18 (team walk 7 Nov, Street View 2022/2026):
 BED_R = 2.9                     # the real tip is plain calcada with a kerb and a stop sign, so no bed and no palm
 STOP_SIGN = (-244.4, -31.9)     # V18: stop sign (round sign above) at the island's west tip, 6.8 m off the centreline
-BIKE_DOCK = ((-234.6, -36.6), (-222.9, -37.9))        # 12 m of generic racks (survey ST11: (-222..-236, -37))
-BIN_PAD = ((-226.9, -41.0), (-222.1, -41.3))          # four recycling bins on a sett pad (real: (-232..-243, -42), now road)
+BIKE_DOCK = ((-231.2, -37.0), (-223.4, -41.0))        # generic racks on the apron beside the lawn (V18h: east of the bins)
+BIN_PAD = ((-226.9, -41.0), (-222.1, -41.3))          # (V16g place of the bins; V18h: BIN_PADS)
+# V18h (satellite 2026, Street View Dec 2022): there is no island in reality. Inside the loop lie the tip of the lawn
+# between the Marginal and the car park (north-east of LAWN_EDGE) and the car park's concrete apron with the two pads
+# of the underground bins (steel plates about 4.4 m x 2.6 m, long side parallel to the lawn's edge).
+LAWN_EDGE = ((-245.3, -22.0), (-222.5, -39.1))        # the lawn lies to the left of this line (north-east)
+BIN_PADS = ((-240.7, -32.7), (-235.9, -36.3))         # centres (the second 0.5 m nearer the loop's middle: prop clearance)
+BIN_PAD_SIZE = (4.4, 2.6)
+APRON_END = (-229.0, -34.2)     # on LAWN_EDGE: from here the lawn's edge turns south to the head of the north-east kerb
 SCREEN_AT = (-212.0, -38.0)     # the advert screen's place: a blank dark screen box, nothing on it
 SIGN_AT = (-216.6, -36.4)       # round sign over a triangular one (blank symbols as before)
 
@@ -217,13 +224,25 @@ def extend(sp):
     global S
     S = sp
     hp = S.hedge_pt
-    # --- the island inside the hairpin: dark sett band, pale calcada inside (V18: no bed in the middle) ---
-    S.layer("H island band", "setts", island_ring(), S.frame_uv(LOOP_C, (1.0, 0.0), 2.0, 2.0))
-    S.layer("H island", "calcada", island_ring(inset=ISLAND_BAND))
-    (ax, ay), (bx, by) = BIN_PAD
-    u = unit(bx - ax, by - ay)
-    S.layer("H bin pad", "setts", S.rect((ax, ay), u, -0.6, math.hypot(bx - ax, by - ay) + 0.6, -0.75, 0.75),
-            S.frame_uv((ax, ay), u, 2.0, 2.0))
+    # --- inside the hairpin (V18h): the car park's concrete runs through; the lawn's tip with a row of flush kerb
+    #     stones along its edge; the two steel-plate pads of the underground bins ---
+    head = S.kerb_pt(1.5, 0.0)
+    S.layer("H apron", "slab", [(-241.5, -24.85), APRON_END, head, S.NE_KERB_A, (-232.0, -37.0), (-240.0, -31.0)], S.q_uv())
+    S.kerb_stones("H apron kerb", [APRON_END, head], 0.0, 0.22)
+    ring = island_ring()
+    S.layer("H island", "slab", ring, S.q_uv())
+    (ax, ay), (bx, by) = LAWN_EDGE
+    lawn = S.clip_half(ring, (ax, ay), (bx, by))
+    S.layer("H island lawn", None, lawn, ground="lawn")
+    eu = unit(bx - ax, by - ay)
+    on = sorted((q for q in lawn if abs((q[0] - ax) * eu[1] - (q[1] - ay) * eu[0]) < 1e-6),
+                key=lambda q: (q[0] - ax) * eu[0] + (q[1] - ay) * eu[1])
+    if len(on) >= 2:
+        S.kerb_stones("H lawn kerb", [on[0], on[-1]], -0.22, 0.0)
+    w, d = BIN_PAD_SIZE
+    for c in BIN_PADS:
+        S.frame_paint("gravel", S.rect(c, eu, -w / 2, w / 2, -d / 2, d / 2), 0.14)
+        S.paint("steel_plate", S.rect(c, eu, -w / 2 + 0.14, w / 2 - 0.14, -d / 2 + 0.14, d / 2 - 0.14))
     # --- hatched pedestrian zone in front of the portal: stripes straight across the walking direction ---
     (t0, t1), (s0, s1), w = HATCH["t"], HATCH["s"], HATCH["stripe"]
     s = s0
@@ -242,7 +261,8 @@ def extend(sp):
     # --- the west car park (west of A Pastorinha): concrete with two sett bands, a zebra to the beach stair ---
     wu = unit(-41.0, 21.0)
     west = [(-348.0, 16.5), (-389.0, 37.5), (-392.0, 31.5), (-372.0, 12.0), (-362.0, 8.5), (-348.0, 11.0)]
-    S.layer("H west car park", "concrete", west, S.frame_uv((-348.0, 16.5), wu, 4.0, 4.0))
+    # V18h (satellite 2026): west of x -350 the car park is old dark paving like the square at the far end, not slabs
+    S.layer("H west car park", "asphalt_worn", west, S.frame_uv((-348.0, 16.5), wu, 4.0, 4.0))
     for k in (10.0, 26.0):
         S.layer("H west sett band", "setts", S.ribbon([S.pt((-348.0, 16.5), wu, k, 0.3), S.pt((-348.0, 16.5), wu, k, 6.0)],
                                                       -0.3, 0.3))

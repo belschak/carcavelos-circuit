@@ -468,8 +468,9 @@ def dress(veg, props, protos):
     while 1.35 + k * 2.75 <= length:
         add(new_p, "Prop_BikeRack", ax + du[0] * (1.35 + k * 2.75), ay + du[1] * (1.35 + k * 2.75), heading_rot(du))
         k += 1
-    (ax, ay), (ex, ey) = CP.BIN_PAD
-    add(new_p, "Prop_BinsUnderground", (ax + ex) / 2, (ay + ey) / 2, heading_rot(S.unit(ex - ax, ey - ay)))
+    (ax, ay), (ex, ey) = CP.LAWN_EDGE                      # V18h: two pads of underground bins, parallel to the lawn's edge
+    for c in CP.BIN_PADS:
+        add(new_p, "Prop_BinsUnderground", c[0], c[1], heading_rot(S.unit(ex - ax, ey - ay)))
     add(new_p, "Prop_ScreenBox", *CP.SCREEN_AT, facing_rot(S.bearing(20.0)))
     add(new_p, "Prop_SignRoundTriangle", *CP.SIGN_AT, facing_rot(S.bearing(110.0)))
     # forecourt: the broad date-type palm, the olive in the court's planter

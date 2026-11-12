@@ -10,6 +10,15 @@ Output in textures/ (no photos; the colours are the survey's averages in sunligh
   street_hedge_albedo      clipped hedge, 2 m
   street_slats_albedo      white horizontal timber boards 12 cm with 3 cm shadow gaps, 0.6 m
   street_palette_albedo    flat colours (street_plan.PALETTE, 8 x 8 cells)
+V18h (builder Q, the Capricciosa forecourt and the coastal car park; Street View Dec 2022, satellite 2026):
+  street_slab_albedo/_normal      car-park concrete, 8 m x 8 m = four cast slabs of 4 m, each with its own tone: sawn
+                                  joints with dirt, broom finish, aggregate, hairline cracks, oil and tyre stains, dust
+  street_brick_albedo/_normal     red-brown concrete pavers 20 x 10 cm in herringbone, 2.4 m x 2.4 m, no lines (the bay
+                                  lines are paint; the plan lays the bond at 45 degrees to the band)
+  street_setts_albedo/_normal     now 1024 px (was 512), more depth between the stones
+  street_asphalt_worn_albedo/_normal   old sun-bleached asphalt of the square at the south-east end, 4 m: warm grey,
+                                  open aggregate, crazing, two darker repair patches
+  street_kerbstone_albedo         flush kerb stones, 2 m x 0.25 m strip (two stones of 1 m), tiles along u
 """
 import sys
 import time
@@ -56,6 +65,107 @@ def make_concrete(S_=1024, seed=2101):
     save("street_concrete_albedo.png", alb)
 
 
+
+SLAB = "#B1A796"            # V18h: the car park's concrete (Street View Dec 2022 #A09585 in low sun, satellite 2026
+                            # #D0C8BA at noon): nearer the darker one, so white lines, kerbs and calcada stand out
+
+
+def make_slab(S_=1024, seed=2111):
+    """Car-park concrete, 8 m x 8 m: four slabs of 4 m with sawn joints. 128 px per metre."""
+    rng = np.random.default_rng(seed)
+    px_m = S_ / 8.0
+    X, Y = grid(S_, S_)
+    half = S_ / 2
+    sx, sy = (X >= half).astype(int), (Y >= half).astype(int)
+    slab = sx + 2 * sy
+    tone = np.array([1.0, 0.962, 1.028, 0.985])[slab]                       # each pour has its own shade
+    warm = np.array([0.0, 0.5, -0.4, 0.9])[slab]
+    clouds = 0.55 * noise((S_, S_), 1.1 * px_m, rng) + 0.45 * noise((S_, S_), 0.32 * px_m, rng)
+    mott = noise((S_, S_), 0.09 * px_m, rng)
+    broom = noise((S_, S_), 0.5, rng, sy=0.09 * px_m)                         # broom finish: fine lines across the slab
+    grain = noise((S_, S_), 0.6, rng)
+    v = 0.030 * clouds + 0.016 * mott + 0.014 * broom + 0.016 * grain
+    alb = rgb(SLAB)[None, None, :] * (tone * (1.0 + v))[..., None]
+    alb += (0.010 * warm + 0.008 * noise((S_, S_), 0.6 * px_m, rng))[..., None] * np.array([1.0, 0.25, -1.0])
+    # aggregate: small pale and dark stones showing at the surface
+    sp = noise((S_, S_), 0.9, rng)
+    alb *= (1.0 + 0.07 * smoothstep(1.9, 2.6, sp) - 0.09 * smoothstep(1.9, 2.6, -sp))[..., None]
+    # oil drips and tyre scuffs (dark, soft), pale dust in the hollows
+    oil = smoothstep(1.55, 2.5, noise((S_, S_), 0.16 * px_m, rng)) * smoothstep(-0.2, 1.0, noise((S_, S_), 0.6 * px_m, rng))
+    alb *= (1.0 - 0.16 * oil)[..., None]
+    scuff = smoothstep(1.3, 2.4, noise((S_, S_), 0.05 * px_m, rng, sy=0.5 * px_m)) * smoothstep(0.3, 1.4, noise((S_, S_), 0.9 * px_m, rng))
+    alb *= (1.0 - 0.07 * scuff)[..., None]
+    dust = smoothstep(0.7, 2.0, noise((S_, S_), 0.4 * px_m, rng))
+    alb = lerp(alb, rgb("#D2C8B2")[None, None, :] * (1.0 + 0.02 * grain)[..., None], (0.22 * dust)[..., None])
+    # hairline cracks: a few wandering lines (random walks, drawn wrapped so the tile repeats)
+    from PIL import Image, ImageDraw, ImageFilter
+    cimg = Image.new("L", (S_, S_), 0)
+    cd = ImageDraw.Draw(cimg)
+    for _k in range(3):
+        x, y, a = rng.uniform(0, S_), rng.uniform(0, S_), rng.uniform(0, 6.283)
+        pts = [(x, y)]
+        for _j in range(int(rng.uniform(30, 60))):
+            a += rng.normal(0.0, 0.22)
+            x, y = x + 7.0 * np.cos(a), y + 7.0 * np.sin(a)
+            pts.append((x, y))
+        for ox in (-S_, 0, S_):
+            for oy in (-S_, 0, S_):
+                cd.line([(px + ox, py + oy) for px, py in pts], fill=255, width=1)
+    crack = np.asarray(cimg.filter(ImageFilter.GaussianBlur(0.6)), np.float64) / 255.0
+    crack = np.clip(crack * 1.6, 0.0, 1.0)
+    alb *= (1.0 - 0.30 * crack)[..., None]
+    # sawn joints on the slab edges: a dark slot, dirt beside it, chipped arrises
+    d = np.minimum(np.minimum(X % half, half - X % half), np.minimum(Y % half, half - Y % half))
+    d = d + 0.9 * noise((S_, S_), 3.0, rng) * smoothstep(1.0, 2.2, noise((S_, S_), 14.0, rng))
+    slot = smoothstep(2.1, 0.9, d)
+    halo = 1.0 - smoothstep(1.0, 0.11 * px_m, d)
+    alb *= (1.0 - 0.07 * halo)[..., None]
+    alb = lerp(alb, rgb("#5F5A52")[None, None, :], (0.85 * slot)[..., None])
+    alb = T.match_mean(alb, SLAB, 0.9)
+    save("street_slab_albedo.png", alb)
+    height = 0.5 + 0.05 * grain + 0.05 * broom + 0.06 * mott - 0.9 * slot - 0.35 * crack - 0.10 * halo
+    save("street_slab_normal.png", T.normal_map(height * 5.0, 1.0))
+
+
+def make_asphalt_worn(S_=1024, seed=2112):
+    """Old asphalt bleached by the sun (the square at the car park's south-east end), 4 m x 4 m."""
+    rng = np.random.default_rng(seed)
+    px_m = S_ / 4.0
+    base = rgb("#857E76")
+    clouds = 0.6 * noise((S_, S_), 0.5 * px_m, rng) + 0.4 * noise((S_, S_), 0.12 * px_m, rng)
+    alb = base[None, None, :] * (1.0 + 0.05 * clouds)[..., None]
+    sp = noise((S_, S_), 1.1, rng)
+    stones = smoothstep(0.9, 1.8, sp)                                           # open pale aggregate
+    alb = lerp(alb, rgb("#B3ABA0")[None, None, :], (0.55 * stones)[..., None])
+    alb *= (1.0 - 0.16 * smoothstep(1.0, 2.0, -sp))[..., None]
+    # crazing: edges of an irregular mosaic, only where a slow field says so
+    sid, lx, ly, d_edge = T.voronoi(S_, 20, rng, 0.45, 2.0)
+    craze = smoothstep(1.9, 0.6, d_edge) * smoothstep(0.5, 1.6, noise((S_, S_), 0.6 * px_m, rng))
+    alb *= (1.0 - 0.22 * craze)[..., None]
+    patch = smoothstep(0.9, 1.6, noise((S_, S_), 0.5 * px_m, rng))              # darker, less bleached areas
+    alb *= (1.0 - 0.07 * patch)[..., None]
+    alb += 0.012 * noise((S_, S_), 0.9 * px_m, rng)[..., None] * np.array([1.0, 0.2, -0.9])
+    save("street_asphalt_worn_albedo.png", T.match_mean(alb, "#857E76", 0.9))
+    save("street_asphalt_worn_normal.png", T.normal_map((0.5 + 0.25 * stones - 0.5 * craze + 0.05 * sp) * 4.0, 1.0))
+
+
+def make_kerbstone(W=512, H=64, seed=2113):
+    """Flush kerb stones seen from above: 2 m x 0.25 m, two stones of 1 m, a dark joint between them and a thin
+    shadow line on both long edges (so the row reads as stone against concrete and against lawn)."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(H, W)
+    stone = (X >= W / 2).astype(int)
+    tone = np.array([1.0, 0.955])[stone]
+    alb = rgb("#CFC9BC")[None, None, :] * (tone * (1.0 + 0.035 * noise((H, W), 9.0, rng) + 0.03 * noise((H, W), 0.8, rng)))[..., None]
+    alb += 0.012 * noise((H, W), 20.0, rng)[..., None] * np.array([1.0, 0.3, -0.9])
+    dj = np.minimum(np.minimum(X % (W / 2), W / 2 - X % (W / 2)), 1e9)
+    alb = lerp(alb, rgb("#6A655C")[None, None, :], (0.8 * smoothstep(2.4, 0.8, dj))[..., None])
+    de = np.minimum(Y, H - Y)
+    alb *= (1.0 - 0.30 * smoothstep(4.0, 0.5, de))[..., None]
+    alb *= (1.0 + 0.05 * smoothstep(5.0, 9.0, de) * smoothstep(16.0, 9.0, de))[..., None]      # worn arris catches light
+    save("street_kerbstone_albedo.png", alb)
+
+
 def bay_lines(alb, W, H, px_m):
     """White bay line: 6 cm on each long edge of the tile (12 cm when the tile repeats), slightly worn."""
     X, _Y = grid(H, W)
@@ -79,13 +189,15 @@ def make_bays(W=512, H=1024, seed=2102):
     save("street_bays_albedo.png", bay_lines(alb, W, H, px_m))
 
 
-def make_brick(W=512, H=1024, seed=2103):
-    """Herringbone of 2:1 pavers. In units of the paver width the cell (i, j) belongs to a lying paver when
-    (i + j) % 4 is 0 or 1 and to a standing one when it is 2 or 3; 6 periods of 4 cells across the 2.5 m bay."""
+def make_brick(S_=1024, seed=2103):
+    """Herringbone of 2:1 concrete pavers (20 x 10 cm), 2.4 m x 2.4 m (V18h: square tile, no bay lines; the plan turns
+    the bond 45 degrees to the band, as it lies). In units of the paver width the cell (i, j) belongs to a lying
+    paver when (i + j) % 4 is 0 or 1 and to a standing one when it is 2 or 3; 6 periods of 4 cells across the tile."""
     rng = np.random.default_rng(seed)
-    px_m = W / 2.5
-    X, Y = grid(H, W)
-    unit = W / 24.0                                         # pixels per paver width (10.4 cm)
+    n = 24
+    px_m = S_ / 2.4
+    X, Y = grid(S_, S_)
+    unit = S_ / float(n)                                    # pixels per paver width (10 cm)
     gx, gy = X / unit, Y / unit
     i, j = np.floor(gx).astype(np.int64), np.floor(gy).astype(np.int64)
     c = (i + j) % 4
@@ -95,20 +207,34 @@ def make_brick(W=512, H=1024, seed=2103):
     fx, fy = gx - ax, gy - ay                              # position inside the paver (0..2 x 0..1 or 0..1 x 0..2)
     d = np.where(lying, np.minimum(np.minimum(fx, 2 - fx), np.minimum(fy, 1 - fy)),
                  np.minimum(np.minimum(fx, 1 - fx), np.minimum(fy, 2 - fy))) * unit
-    pid = (ax % 24) * 131 + (ay % 48) * 17 + lying * 7
-    tone = np.random.default_rng(seed + 1).uniform(-1.0, 1.0, 131 * 24 + 17 * 48 + 8)[pid]
-    base = rgb("#9C7F6B")
-    brick = np.where(tone[..., None] >= 0, lerp(base, rgb("#B28E76"), tone[..., None] * 0.55),
-                     lerp(base, rgb("#6E564A"), -tone[..., None] * 0.6))
-    brick = brick * (1.0 + 0.03 * noise((H, W), 0.04 * px_m, rng) + 0.02 * noise((H, W), 1.2, rng))[..., None]
-    brick *= (1.0 - 0.07 * (1.0 - smoothstep(0.0, 5.0, d)))[..., None]             # chamfered edge
-    joint = rgb("#5A5048")[None, None, :] * (1.0 + 0.05 * noise((H, W), 1.5, rng))[..., None]
-    alb = lerp(joint, brick, smoothstep(0.8, 2.0, d)[..., None])
-    alb *= (1.0 + 0.03 * noise((H, W), 0.25 * px_m, rng))[..., None]
-    save("street_brick_albedo.png", bay_lines(alb, W, H, px_m))
+    pid = (ax % n) * 131 + (ay % n) * 17 + lying * 7
+    rs = np.random.default_rng(seed + 1)
+    size = 131 * n + 17 * n + 8
+    tone = rs.uniform(-1.0, 1.0, size)[pid]
+    grey = (rs.random(size) < 0.07)[pid]                    # the odd paver has lost its colour
+    base = rgb("#9C7C68")
+    brick = np.where(tone[..., None] >= 0, lerp(base, rgb("#B58D74"), tone[..., None] * 0.75),
+                     lerp(base, rgb("#6B5145"), -tone[..., None] * 0.75))
+    brick = np.where(grey[..., None], lerp(brick, rgb("#948C82")[None, None, :], 0.6), brick)
+    fine = noise((S_, S_), 0.7, rng)
+    brick = brick * (1.0 + 0.035 * noise((S_, S_), 0.035 * px_m, rng) + 0.03 * fine)[..., None]
+    brick *= (1.0 - 0.10 * (1.0 - smoothstep(0.0, 6.0, d)))[..., None]             # chamfered edge
+    worn = smoothstep(0.6, 1.8, noise((S_, S_), 0.5 * px_m, rng))                  # tyre-polished, paler patches
+    brick = lerp(brick, brick * 1.05, (0.4 * worn)[..., None])
+    joint = rgb("#5E5348")[None, None, :] * (1.0 + 0.06 * noise((S_, S_), 1.5, rng))[..., None]
+    sand = smoothstep(0.4, 1.6, noise((S_, S_), 0.3 * px_m, rng))                  # sand swept into some joints
+    joint = lerp(joint, rgb("#A89A84")[None, None, :], (0.35 * sand)[..., None])
+    cov = smoothstep(1.2, 2.8, d)
+    alb = lerp(joint, brick, cov[..., None])
+    stain = smoothstep(1.5, 2.5, noise((S_, S_), 0.2 * px_m, rng))
+    alb *= (1.0 - 0.10 * stain)[..., None]
+    save("street_brick_albedo.png", alb)
+    pillow = 1.0 - (1.0 - smoothstep(0.0, 6.0, np.maximum(d - 1.2, 0.0))) ** 2
+    lift = rs.normal(0.0, 0.05, size)[pid]
+    save("street_brick_normal.png", T.normal_map(lerp(0.1, 0.65 + 0.3 * pillow + lift + 0.03 * fine, cov) * 9.0, 1.0))
 
 
-def make_setts(S_=512, seed=2104):
+def make_setts(S_=1024, seed=2104):
     """Granite setts about 10 cm in rows that bow gently (one wave per metre), staggered, dark sandy joints."""
     rng = np.random.default_rng(seed)
     X, Y = grid(S_, S_)
@@ -121,7 +247,7 @@ def make_setts(S_=512, seed=2104):
     cx = X / (S_ / per_row) + shift
     k = np.floor(cx).astype(np.int64) % per_row
     fx, fy = cx - np.floor(cx), ry - np.floor(ry)
-    wob = 0.06 * noise((S_, S_), 5.0, rng)
+    wob = 0.035 * noise((S_, S_), 5.0 * S_ / 512, rng)
     d = np.minimum(np.minimum(fx, 1 - fx) * (S_ / per_row), np.minimum(fy, 1 - fy) * rh) + wob * rh
     sid = r * per_row + k
     rs = np.random.default_rng(seed + 2)
@@ -129,15 +255,16 @@ def make_setts(S_=512, seed=2104):
     warm = rs.uniform(-1, 1, rows * per_row)[sid][..., None]
     base = rgb("#A8A49B")                                  # pale grey granite (survey: #c9c5bb in the sun, #86837c in shade)
     stone = np.where(warm >= 0, lerp(base, rgb("#B4AC9C"), warm * 0.7), lerp(base, rgb("#989A9C"), -warm * 0.7))
-    stone = stone * (bright * (1.0 + 0.035 * noise((S_, S_), 2.0, rng) + 0.02 * noise((S_, S_), 0.8, rng)))[..., None]
-    cov = smoothstep(1.2, 2.6, d)
-    pillow = 1.0 - (1.0 - smoothstep(0.0, 7.0, np.maximum(d - 1.2, 0.0))) ** 2
-    stone *= (0.93 + 0.07 * pillow)[..., None]
-    joint = rgb("#6A665E")[None, None, :] * (1.0 + 0.06 * noise((S_, S_), 1.2, rng))[..., None]
+    k_ = S_ / 512.0                                          # V18h: 1024 px, the same stones
+    stone = stone * (bright * (1.0 + 0.04 * noise((S_, S_), 2.0 * k_, rng) + 0.03 * noise((S_, S_), 0.8, rng)))[..., None]
+    cov = smoothstep(0.8 * k_, 2.1 * k_, d)
+    pillow = 1.0 - (1.0 - smoothstep(0.0, 7.0 * k_, np.maximum(d - 1.2 * k_, 0.0))) ** 2
+    stone *= (0.88 + 0.12 * pillow)[..., None]
+    joint = rgb("#5F5B53")[None, None, :] * (1.0 + 0.06 * noise((S_, S_), 1.2, rng))[..., None]
     alb = lerp(joint, stone, cov[..., None])
     height = lerp(0.1, 0.6 + 0.4 * pillow + 0.05 * rs.normal(0, 1, rows * per_row)[sid], cov)
     save("street_setts_albedo.png", alb)
-    save("street_setts_normal.png", T.normal_map(height * 14.0, 1.0))
+    save("street_setts_normal.png", T.normal_map(height * 14.0 * k_, 1.0))
 
 
 def make_rust(S_=256, seed=2105):
@@ -186,6 +313,7 @@ def make_palette(S_=256):
 
 
 BUILDERS = {"street_concrete": make_concrete, "street_bays": make_bays, "street_brick": make_brick,
+            "street_slab": make_slab, "street_asphalt_worn": make_asphalt_worn, "street_kerbstone": make_kerbstone,
             "street_setts": make_setts, "street_rust": make_rust, "street_hedge": make_hedge,
             "street_slats": make_slats, "street_palette": make_palette}
 

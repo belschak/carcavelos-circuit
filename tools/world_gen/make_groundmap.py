@@ -68,6 +68,7 @@ ROADS = {"primary", "primary_link", "secondary", "tertiary", "residential", "unc
 # old OSM road bands shows beside the new streets.
 STREET_COLOURS = {"concrete": (205, 196, 182), "bays": (205, 196, 182), "brick": (156, 127, 107), "setts": (142, 138, 132),
                   "calcada": (230, 225, 214), "asphalt": (85, 88, 94), "kerb": (207, 201, 188)}
+STREET_COLOURS.update({"slab": (177, 167, 150), "asphalt_worn": (133, 126, 118), "kerbstone": (207, 201, 188)})   # V18h-q
 STREET_GROUND = {"lawn": (143, 179, 122), "meadow": (178, 176, 126), "bank": (128, 134, 88), "soil": (138, 115, 85), "scrub": (112, 116, 78),
                  "paved": (201, 197, 188), "dust": (190, 172, 138), "gravel": (208, 198, 174)}
 STREET_LAWN = {"lawn": 255, "meadow": 235, "bank": 150, "soil": 0, "paved": 0, "dust": 60, "gravel": 0, "scrub": 170}   # mask red: 255 = lawn
