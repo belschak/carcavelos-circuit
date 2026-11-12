@@ -80,9 +80,12 @@ ROAD_LOOK = [
     (0, 14, _entrance_look),          # start straight on the entrance plaza: calcada, slabs where the band lies under it
     (61, 81, "deck"),                 # CTT roof terrace: the deck's own pale sawn concrete
     (127, 135, "asphalt"),            # from the avenue's kerb on: the avenue's asphalt (the calcada ends with the sidewalk)
-    (336, 350, "street_concrete"),    # promenade: pale concrete slabs (route.json: asphalt / sand)
+    # V18h (builder K): the coast's own concrete, in the UV frame of the paving beside the road (env_coast.road_look)
+    (336, 350, lambda x, y: __import__("env_coast").road_look("pale")),     # promenade: pale slabs, 4 x 2 m
     (351, 366, "street_setts"),       # the curved grey sett band above the cove
-    (367, 399, "street_concrete"),    # the pale concrete path past the beach bar to the tunnel plaza
+    (367, 372, lambda x, y: __import__("env_coast").road_look("pale")),     # the cove ring
+    (373, 399, lambda x, y: __import__("env_coast").road_look("beige")),    # palm car park and the upper path: beige slabs
+    (400, 411, lambda x, y: __import__("env_coast").road_look("ochre")),    # tunnel plaza and ramp: sand-ochre slabs
     (478, 490, _east_look),           # lower plaza: beige-grey concrete panels with saw-cut joints
     (583, 599, "north_calcada"),      # drop-off forecourt north of the hall: pale setts in rows along the hall's face
     (600, 639, "street_concrete"),    # the pale paved strip behind the hall
