@@ -931,12 +931,9 @@ def placements():
             off += 0.25                                           # the road lies on the sidewalk here: further out
         q = S.pt(p, u, 0.0, off)
         add(props, "Prop_LampMarginal", q[0], q[1], heading_rot((u[1], -u[0])))
-    for k in range(38):                                           # staked young trees in the meadow (2026 state)
-        x = -322.0 + k * 4.7 + rng.uniform(-1.2, 1.2)
-        d = S.N_WALK[1] + 4.0 + rng.uniform(0.0, 30.0) + (6.0 if k % 3 == 0 else 0.0)
-        px, py = S.med_pt(x, d)
-        add(plants, "Veg_Sapling", px, py, rng.uniform(0, 360), rng.uniform(0.8, 1.25), clear=S.PROP_CLEAR + 1.0,
-            z=ST.ground(px, py))
+    for k in range(38):                                           # (V18g: no saplings, the ground north of the road is
+        rng.uniform(0, 1), rng.uniform(0, 1), rng.uniform(0, 1), rng.uniform(0, 1)   # the dusty car park: streets_v18g();
+                                                                  # the random sequence stays as it was)
     # ---------------- C: roundabout (V18r: positions on the rebuilt layout) ----------------
     c = S.RB
     for ang in (94.5, 211.0, 5.0):                                # chevron boards on the island's paved band, one facing
@@ -975,8 +972,8 @@ def placements():
     for k in range(16):                                           # reeds along the fence
         x, y = S.av_pt(-22.0 + k * 7.4 + rng.uniform(-2, 2), 16.3 + rng.uniform(-0.3, 0.5))
         add(plants, "Veg_Grass", x, y, rng.uniform(0, 360), rng.uniform(1.0, 1.4))
-    for k in range(9):                                            # a few cars on the dusty car park behind it
-        add(props, cars[rng.randrange(len(cars))], -131.0 + rng.uniform(-0.3, 0.3), -8.0 - k * 2.7, rng.choice((0.0, 180.0)))
+    for k in range(9):                                            # (V18g: the car park's cars are streets_v18g()'s)
+        rng.randrange(len(cars)), rng.uniform(-0.3, 0.3), rng.choice((0.0, 180.0))
     # the belt between the Marginal and the car park (survey D 6, F 4): a shrub hedge at its east end, dark round
     # trees in the middle, open lawn with a few palms towards the hairpin, dense shrubs on the bank in the south-east
     for k in range(12):
@@ -1233,11 +1230,118 @@ def upper_path_seats(props):
     return out
 
 
+# =====================================================================================================
+# V18g: the dusty car park north-west of the roundabout and the N6 east of it. An explicit edit of the dressing
+# lists after dressing_freeze.apply (called from dress_promenade), like the promenade's: nothing else moves.
+# =====================================================================================================
+def streets_v18g(veg, props):
+    """(veg, props) without the older items that stand in the car park (saplings, reeds, cars) or on the N6's new
+    paving, plus the parked cars, the scrub's bushes, the verges' bushes, the N6's lamps, palms and shrub row."""
+    rng = random.Random(SEED + 18)
+    lot = S.dust_outline()
+    cars = [c[0] for c in CAR_KINDS]
+
+    def goes(it):
+        x, y = it["x"], it["y"]
+        if S.inside(x, y, lot) and S.ring_distance(x, y, lot) > 0.6:
+            return it["proto"].startswith(("Veg_", "Prop_Car"))
+        top = S.layer_at(x, y)
+        return top is not None and top["name"].startswith("N ") and (top["mat"] is not None or it["proto"].startswith("Veg_"))
+    veg2, props2 = [p for p in veg if not goes(p)], [p for p in props if not goes(p)]
+    removed = len(veg) - len(veg2) + len(props) - len(props2)
+    plants, ours = [], []
+
+    def car(x, y, nose):
+        if S.route_distance(x, y) < S.CAR_CLEAR + 1.0:
+            return
+        rot = heading_rot(nose) + rng.uniform(-4.0, 4.0) + (180.0 if rng.random() < 0.35 else 0.0)
+        ours.append(_entry(cars[rng.randrange(len(cars))], x, y, rot))
+
+    # ---- the car park: loose rows on the dust (no bays, no lines) ----
+    for row in S.DUST_ROWS:
+        total = S.line_length(row["line"])
+        t = 1.2
+        while t < total:
+            (x, y), u = S.at_s(row["line"], t)
+            n = S.left_of(u)
+            for side in ((-1, 1) if row["double"] else (1,)):
+                if rng.random() < row["share"]:
+                    off = side * 2.55 if row["double"] else rng.uniform(-0.3, 0.3)
+                    car(x + n[0] * off + u[0] * rng.uniform(-0.15, 0.15), y + n[1] * off + u[1] * rng.uniform(-0.15, 0.15),
+                        (n[0] * side, n[1] * side))
+            t += 2.7
+    r = S.DUST_ROAD_ROW
+    x = r["x"][0]
+    while x <= r["x"][1]:                                 # the row along the Marginal, noses to the road
+        p, u = S.at_s(S.MEDIAN, S.med_s(x))
+        off = r["offset"]
+        while S.route_distance(*S.pt(p, u, 0.0, off)) < S.CAR_CLEAR + 2.0 and off < r["offset"] + 9.0:
+            off += 0.5
+        if rng.random() < r["share"]:
+            q = S.pt(p, u, rng.uniform(-0.2, 0.2), off + rng.uniform(-0.4, 0.4))
+            car(q[0], q[1], (u[1], -u[0]))
+        x += 2.55
+
+    # ---- bushes: in the scrub patches, on the two verges ----
+    def bush(x, y, lo, hi, reeds=0.0):
+        if S.route_distance(x, y) < S.PROP_CLEAR + 2.5:
+            return
+        proto = "Veg_Grass" if rng.random() < reeds else ("Veg_Shrub" if rng.random() < 0.5 else "Veg_Shrub_B")
+        plants.append(_entry(proto, x, y, rng.uniform(0, 360), rng.uniform(lo, hi), z=ST.ground(x, y) - 0.15))
+    for ring, n in zip(S.DUST_SCRUB, (20, 4, 7)):                 # dry clumps and a few low bushes in the scrub
+        x0, x1 = min(q[0] for q in ring), max(q[0] for q in ring)
+        y0, y1 = min(q[1] for q in ring), max(q[1] for q in ring)
+        done = 0
+        while done < n:
+            x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
+            if S.inside(x, y, ring) and S.ring_distance(x, y, ring) > 2.0:
+                bush(x, y, 1.5, 2.3, reeds=0.6)
+                done += 1
+    for y in (-4.0, 9.0, 24.0, 40.0, 52.0, 71.0, 84.0, 101.0, 116.0, 131.0, 146.0):     # dark bushes west of the avenue
+        x, yy = S.av_pt(y + rng.uniform(-2.0, 2.0), S.AV_WEST_WALK[1] + rng.uniform(3.0, 8.5))
+        bush(x, yy, 1.8, 2.7)
+    for x in (-284.0, -262.0, -247.0, -224.0, -203.0, -188.0, -166.0):                # low bushes on the Marginal's verge
+        q = S.med_pt(x + rng.uniform(-3.0, 3.0), S.N_WALK[1] + rng.uniform(1.5, 4.5))
+        bush(q[0], q[1], 1.2, 1.9)
+
+    # ---- the N6 east of the roundabout ----
+    walk_n, kerb_s = S.n6e_line(lambda row: row[3] + S.N6E_WALK[0] - 0.45, 1.0), S.n6e_line(4, 1.0)
+
+    def at_x(line, x):
+        return min(line, key=lambda q: abs(q[0] - x))
+    for x in (-12.0, 24.0, 60.0, 96.0, 132.0, 166.0):             # lamps on the north sidewalk, arm to the road
+        q = at_x(walk_n, x)
+        ours.append(_entry("Prop_LampMarginal", q[0], q[1], heading_rot((0.0, -1.0))))
+    for y in (113.0, 146.0):                                      # the avenue's median lamps go on north of y 100
+        ours.append(_entry("Prop_LampAvenue", *S.av_pt(y, 6.95)))
+    for x in (78.0, 108.0, 152.0):                                # lower lamps in the grass strip south of the road
+        q = at_x(kerb_s, x)
+        ours.append(_entry("Prop_LampSidewalk", q[0], q[1] - S.N6E_WALK[1] - 0.8, heading_rot((0.0, 1.0))))
+    for k, (x, y) in enumerate(S.N6E_PALMS):                      # date palms in the grass strip
+        plants.append(_entry("Veg_Palm" if k % 2 else "Veg_Palm_B", x, y, rng.uniform(0, 360), rng.uniform(0.8, 0.95),
+                             z=ST.ground(x, y) - 0.1))
+    for k in range(12):                                           # the row of clipped round shrubs south of the road
+        x = -82.0 + k * 6.2 + rng.uniform(-0.6, 0.6)
+        q = at_x(S.n6e_line(lambda row: row[4] - 7.4, 1.0), x) if x > -29.0 else S.east_pt((x + 78.5) / S.EAST_U[0], S.EAST["exit"] - 7.4)
+        if S.route_distance(*q) >= S.PROP_CLEAR + 2.0:
+            plants.append(_entry("Veg_Shrub" if k % 2 else "Veg_Shrub_B", q[0], q[1], rng.uniform(0, 360), rng.uniform(2.0, 2.5)))
+    x0, x1 = S.N6E_BAYS
+    n = int((x1 - x0) / S.BAY[0])
+    for k in range(n):                                            # parked cars in the bay row, noses to the road
+        if rng.random() < 0.42:
+            x = x0 + (k + 0.5) * (x1 - x0) / n
+            car(x, S.n6e_lot_edge(x) - 2.5 + rng.uniform(-0.2, 0.2), (0.0, 1.0))
+    print(f"  streets (V18g): car park and N6: {removed} older items removed; {len(ours)} props "
+          f"({sum(1 for it in ours if it['proto'].startswith('Prop_Car'))} parked cars) and {len(plants)} plants added")
+    return veg2 + plants, props2 + ours
+
+
 def dress_promenade(veg, props):
     """V15c, called after dressing_freeze.apply: an explicit edit of the dressing lists. Removes the dark road lamps
     along the promenade (the real ones are white flood masts) and the few older props that stand where a seat-wall,
     mast, machine or the beach steps now are; adds the limestone bollards, flood masts, fitness machines and the old
     olive on the lawn path. Everything else stays exactly as it was. Rewrites the dressing files."""
+    veg, props = streets_v18g(veg, props)         # V18g: the dusty car park and the N6 east of the roundabout
     plants, ours, removed = promenade_placements(veg, props)
     gone = {id(p) for p in removed}
     veg2, props2 = list(veg) + plants, [p for p in props if id(p) not in gone] + ours

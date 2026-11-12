@@ -169,6 +169,8 @@ def route_distance(x, y):
             q = ROUTE[(i + 1) % n]
             if abs(q["track_z"] - p["track_z"]) > 1.5:
                 continue
+            if p.get("tunnel") and q.get("tunnel"):      # V18g: the beach tunnel runs 4 m under the N6; what lies on
+                continue                                 # the ground above it (the N6's paving) is not near the road
             for cx in range(int((min(p["x"], q["x"]) - 30) // 30), int((max(p["x"], q["x"]) + 30) // 30) + 1):
                 for cy in range(int((min(p["y"], q["y"]) - 30) // 30), int((max(p["y"], q["y"]) + 30) // 30) + 1):
                     _route_cells.setdefault((cx, cy), []).append((p["x"], p["y"], q["x"], q["y"]))
@@ -359,7 +361,8 @@ def med_pt(x, d=0.0):
     return pt(p, u, 0.0, d)
 
 
-MEDIAN_SHIFT = 2.8
+MEDIAN_SHIFT = 0.0                 # V18g: the median stays on its real line (it was bent up to 2.8 m south to keep
+                                   # clear of the race road); where the road lies on it, it goes on as flush paint
 MEDIAN_CLEAR = KEEP_OUT + 0.45     # the median's near edge keeps this from the centreline (raised kerb: PROP_CLEAR + 0.4)
 
 
@@ -401,14 +404,7 @@ def marginal():
     asphalt_uv = None
     west, east = med_s(-418.0), med_s(-148.4)
     whole = cut(MEDIAN, west, east)
-    # meadow north of the road (2026 state: a landscaped dry meadow with young trees, not the dusty car park)
-    layer("D meadow", None, ribbon(cut(MEDIAN, med_s(-330.0), med_s(-150.0)), N_WALK[1], N_WALK[1] + 62.0), ground="meadow")
-    # pale gravel paths through it (ground colour only)
-    path = [med_pt(-158.0 - 14.0 * k, N_WALK[1] + 17.0 + 7.0 * math.sin(k * 1.1)) for k in range(12)]
-    layer("D meadow path", None, ribbon(path, -1.1, 1.1), ground="gravel")
-    layer("D meadow path", None, ribbon([med_pt(-226.0, N_WALK[1]), med_pt(-229.0, N_WALK[1] + 12.0),
-                                         med_pt(-238.0, N_WALK[1] + 34.0), med_pt(-252.0, N_WALK[1] + 60.0)], -1.0, 1.0),
-          ground="gravel")
+    # north of the road: the dusty car park (V18g, dustlot(): drawn before this section)
     # belt between the road and the car park (lawn, shrubs, trees), down to the car park's north-east kerb
     # (its west end is the lawn island inside the hairpin)
     belt = (offset(cut(MEDIAN, med_s(-243.5), med_s(-148.4)), S_WALK[0]) + [(-138.0, -62.0), (-139.0, -108.5),
@@ -427,16 +423,20 @@ def marginal():
     # The median. The race line runs 6 m north of it from the roundabout on, drifts onto it and crosses it at
     # x -234..-239 (survey 4.4). Scenery gives way: where the road's verge reaches the median, the median moves south,
     # at most MEDIAN_SHIFT (the eastbound carriageway keeps one lane); where that is not enough there is no median.
+    # V18g: the raised median stands only where it is clear of the race road on its real line; the pale band and the
+    # solid lines beside it run the whole way, also across the race road (flush paint, road=True), and stop only at
+    # the real gap in the median (GAP_X).
     for run in median_runs():
-        paint_ribbon("kerb", run, -MED_HALF, MED_HALF, seg=5.0)
         RAISED.append({"kind": "median", "line": run, "half": MED_HALF, "height": 0.2})
-    # markings: dashed lane lines (5 m dash, 2 m gap), solid edge lines 0.3 m off the median
+    for x0, x1 in ((-418.0, GAP_X[0]), (GAP_X[1], -148.4)):
+        piece = cut(MEDIAN, med_s(x0), med_s(x1), step=2.5)
+        paint_ribbon("kerb", piece, -MED_HALF, MED_HALF, seg=2.5, road=True)
+        for d in (MED_HALF + 0.3, -MED_HALF - 0.3):      # solid edge lines 0.3 m off the median, both sides
+            paint_ribbon("white", piece, d - 0.07, d + 0.07, seg=2.5, road=True)
+    # markings: dashed lane lines (5 m dash, 2 m gap); the westbound one runs on across the race road
     lane = cut(MEDIAN, med_s(-400.0), med_s(-150.0))
-    dashes(lane, WB[0] + 3.35, 0.14, 5.0, 2.0)
-    dashes(lane, EB[1] - 3.2, 0.14, 5.0, 2.0)
-    for run in median_runs():                            # solid edge lines 0.3 m off the median, both sides
-        for d in (MED_HALF + 0.3, -MED_HALF - 0.3):
-            paint_ribbon("white", run, d - 0.07, d + 0.07, seg=5.0)
+    dashes(lane, WB[0] + 3.35, 0.14, 5.0, 2.0, road=True)
+    dashes(lane, EB[1] - 3.2, 0.14, 5.0, 2.0, road=True)
     # the pedestrian crossing west of the restaurants: zebra bands across both carriageways
     p, u = at_s(MEDIAN, med_s(-303.0))
     stripes(p, u, -2.0, 2.0, WB[0] + 0.3, WB[1] - 0.2, 0.5, 0.5)
@@ -445,7 +445,7 @@ def marginal():
     for bx in (-242.5, -231.7, -217.5, -205.4, -195.0, -185.2, -177.5, -171.7, -167.9, -164.6, -160.4, -156.3):
         p, u = at_s(MEDIAN, med_s(bx))
         for t in (-0.7, 0.25):
-            paint("white", rect(p, u, t, t + 0.45, EB[0] + 0.25, EB[1] - 0.45))
+            paint("white", rect(p, u, t, t + 0.45, EB[0] + 0.25, EB[1] - 0.45), road=True)
 
 
 # =====================================================================================================
@@ -562,9 +562,9 @@ def forecourt():
     # the sett zebra across the throat: pale bands 0.5 m wide and 3 m long, 0.5 m apart
     zu = unit(6.0, -3.2)
     for k in range(11):
-        paint("sett_pale", rect((-258.8, -18.4), zu, k * 1.0, k * 1.0 + 0.5, -1.5, 1.5))
+        paint("sett_pale", rect((-258.8, -18.4), zu, k * 1.0, k * 1.0 + 0.5, -1.5, 1.5), road=True)
     # yield bar of dashes at the road edge (V16g: the yellow line of the old apron is gone with it)
-    dashes([med_pt(MOUTH_X[0] + 0.5, EB[0] - 0.25), med_pt(MOUTH_X[1] - 0.5, EB[0] - 0.25)], 0.0, 0.4, 0.5, 0.5)
+    dashes([med_pt(MOUTH_X[0] + 0.5, EB[0] - 0.25), med_pt(MOUTH_X[1] - 0.5, EB[0] - 0.25)], 0.0, 0.4, 0.5, 0.5, road=True)
     # disabled bays: the four western brick bays get a blue square with a pale symbol block
     for k in range(4):
         c = brick_pt(k * BAY[0] + 1.25, 2.6)
@@ -646,7 +646,18 @@ def carpark():
     paint_ribbon("yellow", [box[0], box[2]], -0.06, 0.06)
     paint_ribbon("yellow", [box[1], box[3]], -0.06, 0.06)
     for (ax, ay), heading in (((-215.0, -64.0), 308.0), ((-178.0, -95.0), 308.0), ((-176.0, -91.5), 128.0)):
-        arrow((ax, ay), bearing(heading))
+        arrow((ax, ay), bearing(heading), road=True)
+    # V18g: the race road (8 m and its shoulders) is wider than the aisle (7.5 m) and takes the front metre of both bay
+    # rows: the bay lines and the dark sett band go on there as flush paint (only inside the road's keep-out)
+    for k in range(39):
+        paint("white", [kerb_pt(k * BAY[0] - 0.05, 2.6), kerb_pt(k * BAY[0] + 0.05, 2.6), kerb_pt(k * BAY[0] + 0.05, 5.0),
+                        kerb_pt(k * BAY[0] - 0.05, 5.0)], road="fill")
+    for k in range(42):
+        t = SW_ROW_T0 + k * BAY[0]
+        paint("white", [kerb_pt(t - 0.05, 12.5), kerb_pt(t + 0.05, 12.5), kerb_pt(t + 0.05, 14.9), kerb_pt(t - 0.05, 14.9)],
+              road="fill")
+    paint("setts_dark", ribbon([(-243.0, -46.0), (-243.0, -76.5)], -0.28, 0.28), road="fill")
+    paint("setts_dark", ribbon([(-262.0, -30.0), (-252.0, -40.0)], -0.18, 0.18), road="fill")
     # the asphalt square at the south-east end, a sett band on its north-west edge
     square = [(-160.0, -112.0), (-151.0, -106.0), (-139.0, -108.5), (-139.0, -131.0), (-146.0, -131.0), (-160.0, -118.0)]
     layer("F asphalt square", "asphalt", square)
@@ -672,10 +683,10 @@ def s_kerb(x, y):
     return (x - NE_KERB_A[0]) * NE_KERB_U[0] + (y - NE_KERB_A[1]) * NE_KERB_U[1]
 
 
-def arrow(at, u, colour="white"):
+def arrow(at, u, colour="white", road=False):
     """A straight lane arrow, 3.6 m long, pointing along u."""
-    paint(colour, rect(at, u, -1.8, 0.6, -0.09, 0.09))
-    paint(colour, [pt(at, u, 0.6, -0.42), pt(at, u, 1.8, 0.0), pt(at, u, 0.6, 0.42)])
+    paint(colour, rect(at, u, -1.8, 0.6, -0.09, 0.09), road)
+    paint(colour, [pt(at, u, 0.6, -0.42), pt(at, u, 1.8, 0.0), pt(at, u, 0.6, 0.42)], road)
 
 
 # =====================================================================================================
@@ -710,14 +721,25 @@ BLADES = [   # across the island (m from its centre towards north-north-east): f
 ]
 
 
+# V18g: the same on every public street the race road lies on. Route points (2 m apart):
+#   122-157  the avenue N6-7: from the east sidewalk (where the lawn path meets it) down the middle roadway
+#   158-192  the roundabout (V18r, unchanged)
+#   193-246  the Avenida Marginal's westbound carriageway, the median gap and the car park's entry throat
+#   247-320  the hairpin on the forecourt, the car park's main aisle and the asphalt square at its south-east end
+# (321 on is the path down to the promenade and the promenade itself: the coast's.)
+# env_track.build_kerbs and env_trackside.kerb_sides / build_lines ask the two functions below, nothing else.
+STREET_NO_KERBS = [(122, 157), RB_NO_KERBS, (193, 320)]
+STREET_NO_LINES = [(122, 163), RB_NO_LINES, (188, 320)]
+
+
 def race_kerbs_off(i):
-    """env_track / env_trackside: no orange kerb at route point i (the roundabout)."""
-    return RB_NO_KERBS[0] <= i <= RB_NO_KERBS[1]
+    """env_track / env_trackside: no orange kerb at route point i (the race road is a real street there)."""
+    return any(a <= i <= b for a, b in STREET_NO_KERBS)
 
 
 def race_lines_off(i):
-    """env_trackside: no race edge line at route point i (the roundabout)."""
-    return RB_NO_LINES[0] <= i <= RB_NO_LINES[1]
+    """env_trackside: no race edge line at route point i (the real street's own markings run across the road)."""
+    return any(a <= i <= b for a, b in STREET_NO_LINES)
 
 
 def rb_pt(angle, r=RB_OUT):
@@ -946,7 +968,9 @@ def roundabout():
 # Sections A + B: avenue N6-7. Three parallel roadways; the route runs in the middle one (x = -96).
 # AVENUE = axis at x = -96, south to north; offsets to the left = west. North of y = 37 the avenue leans north-north-west.
 # =====================================================================================================
-AVENUE = [(-96.0, -46.0), (-96.0, 37.0), (-101.9, 100.0)]
+# V18g: north of y = 100 the avenue bends on to the north-north-west (median centre on the orthophoto: x -110.7 at
+# y 116, -113.8 at y 132, -118 at y 148); it ran straight on before and lay 6 m too far east at the campus entrance.
+AVENUE = [(-96.0, -46.0), (-96.0, 37.0), (-101.9, 100.0), (-105.4, 116.0), (-108.5, 132.0), (-112.7, 148.0), (-116.4, 160.0)]
 AV_WEST_WALK = (13.2, 15.5)
 AV_WEST_ROAD = (6.2, 13.2)
 AV_MEDIAN = (4.3, 6.2)
@@ -954,10 +978,21 @@ AV_MID_ROAD = (-2.5, 4.2)
 AV_SEPARATOR = (-4.2, -2.6)        # only north of y = +19
 AV_SLIP = (-10.0, -4.4)
 AV_EAST_WALK = (-13.3, -10.0)
+# V18g: centre line of the second path east of the avenue (orthophoto), north to south, then south-east along the
+# campus embankment to where the ground map's own path goes on
+AV_EAST_PATH = [(-84.2, 99.0), (-82.9, 88.0), (-82.3, 78.0), (-80.2, 66.0), (-79.2, 58.0), (-78.4, 48.0), (-77.3, 42.0),
+                (-76.6, 34.0), (-75.5, 24.0), (-74.3, 14.0), (-73.3, 6.0), (-72.7, -2.0), (-71.5, -12.0), (-70.2, -24.0),
+                (-69.0, -34.0), (-65.5, -40.0), (-58.0, -45.2), (-50.0, -50.5), (-40.0, -56.3), (-30.0, -62.0)]
 
 
 def av_s(y):
-    return y + 46.0 if y <= 37.0 else 83.0 + (y - 37.0) * math.hypot(5.9, 63.0) / 63.0
+    """Arc length along AVENUE at a given y (the axis runs steadily north)."""
+    acc = 0.0
+    for a, b in zip(AVENUE, AVENUE[1:]):
+        seg = math.hypot(b[0] - a[0], b[1] - a[1])
+        if y <= b[1] or b is AVENUE[-1]:
+            return acc + seg * (y - a[1]) / (b[1] - a[1])
+        acc += seg
 
 
 def av_pt(y, d):
@@ -971,8 +1006,6 @@ def avenue():
     south = AV_SOUTH                                  # V18r: south of it the roundabout section draws the north arm
     whole = cut(AVENUE, av_s(south), av_s(north))
     # the dusty car park west of the avenue (2023 state) and the embankment lawn east of it: ground colours only
-    layer("B dusty car park", None, ribbon(cut(AVENUE, av_s(-30.0), av_s(north)), AV_WEST_WALK[1], AV_WEST_WALK[1] + 60.0),
-          ground="dust")
     layer("B east verge", None, ribbon(cut(AVENUE, av_s(-20.0), av_s(north)), AV_EAST_WALK[0] - 9.0, AV_EAST_WALK[0]),
           ground="lawn")
     layer("B asphalt", "asphalt", ribbon(whole, AV_SLIP[0], AV_WEST_ROAD[1]))
@@ -985,20 +1018,28 @@ def avenue():
     layer("B lamp median beside the road", "calcada", route_ribbon(133, 152, -1, KEEP_OUT - 0.1, KEEP_OUT + 1.8))
     layer("B separator", "calcada", ribbon(cut(AVENUE, av_s(19.0), av_s(north)), AV_SEPARATOR[0], AV_SEPARATOR[1]))
     # east sidewalk, widening southwards
+    # (V18g, orthophoto: 6 m wide at y -2, 3.3 m at y 34, 2.3 m north of y 42; a lawn strip and a second, 4.4 m path
+    # lie east of it, the path bending off south-east along the campus embankment at y -38)
     walk = ([av_pt(north, AV_EAST_WALK[1]), av_pt(37.0, AV_EAST_WALK[1]), av_pt(south, AV_EAST_WALK[1]), (-79.2, south),
-             (-80.1, -3.0), (-81.8, 15.0), (-82.6, 33.0), av_pt(north, AV_EAST_WALK[0])])
+             (-80.5, -3.0), (-81.3, 14.0), (-82.3, 24.0), (-82.8, 34.0), (-83.7, 42.0), av_pt(66.0, AV_EAST_WALK[1] - 2.3),
+             av_pt(north, AV_EAST_WALK[1] - 2.3)])
     layer("B east sidewalk", "calcada", walk)
+    layer("B east path", "calcada", ribbon(smooth(AV_EAST_PATH, 4.0), -2.2, 2.2))
     paint_ribbon("kerb", cut(AVENUE, av_s(south), av_s(north)), AV_EAST_WALK[1] - 0.14, AV_SLIP[0] + 0.02)
     # markings: dashed lane lines, transverse double bars on the west roadway, the chevron gore at the bollards
     dashes(cut(AVENUE, av_s(south), av_s(north)), (AV_WEST_ROAD[0] + AV_WEST_ROAD[1]) / 2, 0.14, 3.0, 4.0)
     dashes(cut(AVENUE, av_s(20.0), av_s(north)), -7.2, 0.14, 3.0, 4.0)
-    for y in (27.0, 17.4, 9.9, 3.7, 1.2, -1.3, -3.8, -6.3, -8.8, -10.9, -12.6):
-        for dy in (0.0, 0.75):
-            paint("white", rect((-109.0, y + dy), (1.0, 0.0), 0.0, 6.6, 0.0, 0.4))
+    # V18g: the middle roadway's own lane line (two lanes, satellite view): the race road lies on this roadway from
+    # y 34 south, so the line runs on across it (flush paint in Track_EdgeLines)
+    dashes(cut(AVENUE, av_s(south + 0.5), av_s(north)), (AV_MID_ROAD[0] + AV_MID_ROAD[1]) / 2, 0.14, 3.0, 4.0, road=True)
+    for y in (91.0, 73.0, 54.6, 38.2, 27.0, 17.4, 9.9, 3.7, 1.2, -1.3, -3.8, -6.3, -8.8, -10.9, -12.6):
+        for dy in (0.0, 0.75):                                     # (V18g: also the four pairs north of y 30)
+            a, b = av_pt(y + dy, AV_WEST_ROAD[1] - 0.2), av_pt(y + dy, AV_WEST_ROAD[0] + 0.2)
+            paint("white", [a, b, (b[0], b[1] + 0.4), (a[0], a[1] + 0.4)])
     for k in range(7):                                             # chevron hatching on the gore, y +20 .. 0
         y = 18.0 - k * 2.8
         w = 0.5 + 1.5 * k / 6
-        paint("white", [(-92.9, y), (-92.9 + w, y - 1.4), (-92.9 + w, y - 1.9), (-92.9, y - 0.5)])
+        paint("white", [(-92.9, y), (-92.9 + w, y - 1.4), (-92.9 + w, y - 1.9), (-92.9, y - 0.5)], road=True)
 
 
 # =====================================================================================================
@@ -1008,30 +1049,43 @@ def avenue():
 # The steel posts along the lay-by, the pylon and the flag poles are env_north's.
 # =====================================================================================================
 AV_ENTRANCE = (100.0, 148.0)        # y range of this piece (the avenue's axis is extended in its last direction)
-AV_LAYBY = (100.5, 145.5)           # y range of the bus lay-by
-AV_LAYBY_W = 3.5
+AV_LAYBY = (107.5, 129.0)           # y range of the bus bay (V18g: it was a 45 m strip, y 100.5 .. 145.5)
+AV_LAYBY_W = 3.5                    # (the old strip's width; the bay is a lens now, see avenue_entrance)
+AV_LAYBY_BULGE = 3.2                # m: how far the bay's round rim reaches east of the lane's own edge
 AV_PLAZA_X = -89.8                  # the calcada strip reaches 0.2 m into the entrance plaza's ring (west edge x = -90)
 
 
 def av_entrance_line(y0, y1):
-    (ax, ay), (bx, by) = AVENUE[-2], AVENUE[-1]
-    u = unit(bx - ax, by - ay)
-    return [(bx + u[0] * (y - by) / u[1], y) for y in (y0, y1)]
+    """The avenue's axis at y0 and y1 as a two-point line (env_north puts the lay-by's posts beside it)."""
+    return [av_pt(y, 0.0) for y in (y0, y1)]
+
+
+def av_layby_rim(n=14):
+    """The bus bay's round east rim, south to north (V18g: env_north's posts belong 0.4 m outside this line)."""
+    y0, y1 = AV_LAYBY
+    return [av_pt(y0 + (y1 - y0) * k / n,
+                  AV_SLIP[1] + (AV_SLIP[0] - AV_SLIP[1] - AV_LAYBY_BULGE) * math.sin(math.pi * k / n) ** 0.6)
+            for k in range(n + 1)]
 
 
 def avenue_entrance():
     y0, y1 = AV_ENTRANCE
-    line = av_entrance_line(y0, y1)
+    line = cut(AVENUE, av_s(y0), av_s(y1))
     layer("B2 asphalt", "asphalt", ribbon(line, AV_SLIP[0], AV_WEST_ROAD[1]))
     layer("B2 west sidewalk", "calcada", ribbon(line, AV_WEST_WALK[0], AV_WEST_WALK[1]))
+    paint_ribbon("kerb", line, AV_WEST_ROAD[1] - 0.02, AV_WEST_WALK[0] + 0.14)
     layer("B2 lamp median", "calcada", ribbon(line, AV_MEDIAN[0], AV_MEDIAN[1]))
     layer("B2 separator", "calcada", ribbon(line, AV_SEPARATOR[0], AV_SEPARATOR[1]))
     east = offset(line, AV_SLIP[0])
     layer("B2 plaza strip", "calcada", east + [(AV_PLAZA_X, y1), (AV_PLAZA_X, y0)])
-    lay = av_entrance_line(*AV_LAYBY)
-    layer("B2 bus lay-by", "pal:brick_red", ribbon(lay, AV_SLIP[0], AV_SLIP[0] + AV_LAYBY_W))
-    paint_ribbon("white", lay, AV_SLIP[0] + AV_LAYBY_W - 0.07, AV_SLIP[0] + AV_LAYBY_W + 0.07)     # outline, no word on it
+    # V18g (satellite view): the bus bay is a red-brown lens, 21 m long: the whole east lane from the separator's
+    # kerb, bulging 4 m into the plaza with a round pale kerb. No word on it.
+    rim = av_layby_rim()
+    west = [av_pt(AV_LAYBY[0] + (AV_LAYBY[1] - AV_LAYBY[0]) * k / 4, AV_SLIP[1]) for k in range(5)]
+    layer("B2 bus lay-by", "pal:brick_red", west + rim[::-1])
+    paint_ribbon("kerb", rim[1:-1], -0.2, 0.0, seg=3.0)
     dashes(line, (AV_WEST_ROAD[0] + AV_WEST_ROAD[1]) / 2, 0.14, 3.0, 4.0)
+    dashes(line, (AV_MID_ROAD[0] + AV_MID_ROAD[1]) / 2, 0.14, 3.0, 4.0)
     dashes(line, -7.2, 0.14, 3.0, 4.0, s1=AV_LAYBY[0] - y0 - 1.0)
 
 
@@ -1116,6 +1170,144 @@ def promenade():
 
 
 # =====================================================================================================
+# V18g: the dusty car park north-west of the roundabout (between the avenue and the Avenida Marginal). Satellite view
+# (2026): bare pale dust, parked cars in loose rows, dark scrub in large patches, a dry grass verge with bushes along
+# both streets. It was a meadow with paths and saplings here before. Ground colours only (the terrain shows them);
+# the cars and bushes are env_street_objects.dustlot_placements(). Drawn first: the streets' own layers lie on top.
+# =====================================================================================================
+DUST_SCRUB = [      # outlines of the scrub patches (satellite view, +-2 m)
+    [(-215.3, 120.9), (-212.0, 150.0), (-172.0, 150.0), (-169.5, 114.0), (-162.0, 90.0), (-157.5, 62.0), (-161.0, 38.0),
+     (-171.7, 24.8), (-182.6, 27.0), (-191.0, 38.0), (-200.0, 46.6), (-208.8, 57.5), (-213.0, 79.4), (-217.5, 101.0)],
+    [(-241.5 + 9.0 * math.cos(math.radians(a)), 84.0 + 7.0 * math.sin(math.radians(a))) for a in range(0, 360, 30)],
+    [(-278.0, 98.0), (-282.0, 150.0), (-238.0, 150.0), (-226.0, 122.0), (-228.0, 100.0), (-244.0, 96.0)],
+]
+DUST_ROWS = [       # parked cars: polyline of a row's middle, cars square to it; double = two rows nose to nose
+    dict(line=[(-170.6, -10.0), (-170.6, -31.0)], double=False, share=0.7),      # the grid at the roundabout's corner
+    dict(line=[(-153.0, -9.0), (-153.0, -33.0)], double=True, share=0.6),
+    dict(line=[(-142.0, -9.0), (-142.0, -34.0)], double=False, share=0.7),
+    dict(line=[(-133.0, -15.0), (-134.0, 20.0), (-135.0, 58.0)], double=False, share=0.62),   # columns beside the avenue
+    dict(line=[(-144.0, -4.0), (-144.5, 30.0)], double=False, share=0.45),
+    dict(line=[(-265.5, 34.0), (-268.0, 50.0), (-271.0, 70.0), (-273.0, 95.0)], double=True, share=0.3),   # rows further west
+    dict(line=[(-252.0, 30.0), (-250.5, 50.0), (-249.0, 66.0)], double=False, share=0.45),
+    dict(line=[(-287.0, 48.0), (-292.0, 62.0), (-297.0, 82.0), (-302.0, 99.0)], double=False, share=0.4),
+]
+DUST_ROAD_ROW = dict(x=(-296.0, -176.0), offset=17.6, share=0.7)   # the row along the Marginal: m north of the median
+
+
+def dust_outline():
+    south = [med_pt(x, N_WALK[1]) for x in (-335.0, -300.0, -270.0, -240.0, -216.6, -195.1, -172.3, -150.0)]
+    corner = [(-126.0, -46.5), (-118.5, -41.5), (-114.6, -34.0), (-113.3, -22.0), (-111.8, -10.0)]
+    east = [av_pt(y, AV_WEST_WALK[1]) for y in (0.0, 37.0, 100.0, 116.0, 132.0, 148.0, 160.0)]
+    return south + corner + east + [(-335.0, 160.0)]
+
+
+def dustlot():
+    layer("L dust lot", None, dust_outline(), ground="dust")
+    for ring in DUST_SCRUB:
+        layer("L scrub", None, smooth(ring + ring[:1], 3.0)[:-1], ground="scrub")
+    # dry grass verges between the sidewalks and the parked cars (a wire fence on timber posts stood here in 2022)
+    layer("L verge at the Marginal", None, ribbon(cut(MEDIAN, med_s(-300.0), med_s(-150.0), step=6.0), N_WALK[1],
+                                                  N_WALK[1] + 6.0), ground="meadow")
+    layer("L verge at the avenue", None, ribbon(cut(AVENUE, av_s(-12.0), av_s(150.0)), AV_WEST_WALK[1],
+                                                AV_WEST_WALK[1] + 11.0), ground="meadow")
+
+
+# =====================================================================================================
+# V18g: the N6 (Avenida Marginal) east of the roundabout, from where the roundabout section ends (52 m along its east
+# arm, x -30) to the junction at x 180. Orthophoto: kerb lines by brightness profiles across the road every 15-20 m
+# (+-0.7 m); satellite view and Street View (May 2026) for the markings and what the surfaces are. Two carriageways
+# either side of a median paved in grey calcada between pale kerbs, which widens from 1 m to 4 m; the westbound
+# carriageway gains a third lane towards the roundabout; calcada sidewalks; south of the road a grass strip with date
+# palms and, from x 40, a pale concrete car park with one row of bays, noses to the road.
+# The beach tunnel passes 4 m under the road at x 15-40 (route_distance leaves the tunnel's points out).
+# Each row: x, y of the median's centre, its half width, north kerb, south kerb (m from the centre; south negative).
+# =====================================================================================================
+N6E = [(-29.64, -94.38, 0.5, 9.2, -5.85), (-15.0, -98.2, 0.5, 9.7, -6.3), (0.0, -100.3, 0.5, 9.3, -5.9),
+       (15.0, -101.2, 0.85, 9.7, -6.1), (30.0, -101.7, 1.35, 10.4, -6.8), (45.0, -102.2, 1.5, 10.9, -6.4),
+       (60.0, -102.5, 1.8, 11.3, -7.0), (80.0, -102.7, 2.0, 10.2, -7.7), (100.0, -102.4, 1.65, 8.2, -8.1),
+       (120.0, -102.3, 1.65, 7.9, -8.2), (140.0, -102.2, 1.85, 7.7, -8.3), (160.0, -102.4, 1.9, 7.3, -9.0),
+       (180.0, -102.7, 2.0, 7.2, -11.3)]
+N6E_WALK = (3.6, 2.0)               # widths of the north and the south sidewalk
+N6E_LOT = [(40.0, -115.6), (60.0, -116.4), (100.0, -115.8), (140.0, -117.0), (169.0, -117.6), (170.0, -130.0),
+           (40.0, -129.0)]          # the concrete car park south of the road
+N6E_BAYS = (58.0, 168.0)            # x range of its bay row (along the north edge, 5 m deep)
+N6E_PORTAL_CUT = ((2.6, -104.5), (11.0, -112.0))       # box round the terrain's cut under the portal deck (x, y corners)
+N6E_PALMS = [(47.0, -113.2), (118.0, -113.5), (127.0, -113.5), (137.0, -113.4), (166.0, -113.6)]
+
+
+def n6e_lot_edge(x):
+    """y of the car park's north edge (the front of its bay row) at a given x."""
+    for a, b in zip(N6E_LOT[:5], N6E_LOT[1:5]):
+        if a[0] <= x <= b[0]:
+            return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0])
+    return N6E_LOT[4][1]
+
+
+def n6e_rows(step=5.0):
+    rows = []
+    for a, b in zip(N6E, N6E[1:]):
+        n = max(1, int(round((b[0] - a[0]) / step)))
+        rows += [tuple(a[k] + (b[k] - a[k]) * j / n for k in range(5)) for j in range(n)]
+    return rows + [N6E[-1]]
+
+
+def n6e_line(col, step=5.0):
+    """Polyline at an offset from the median's centre line (north positive): col = a column of N6E or a function of
+    its row."""
+    rows = n6e_rows(step)
+    centre = [(r[0], r[1]) for r in rows]
+    out = []
+    for k, r in enumerate(rows):
+        a, b = centre[max(k - 1, 0)], centre[min(k + 1, len(rows) - 1)]
+        nrm = left_of(unit(b[0] - a[0], b[1] - a[1]))
+        d = col(r) if callable(col) else r[col]
+        out.append((r[0] + nrm[0] * d, r[1] + nrm[1] * d))
+    return out
+
+
+def n6_east():
+    wn, ws = N6E_WALK
+    med_n, med_s_ = n6e_line(lambda r: r[2]), n6e_line(lambda r: -r[2])
+    kerb_n, kerb_s = n6e_line(3), n6e_line(4)
+    walk_n, walk_s = n6e_line(lambda r: r[3] + wn), n6e_line(lambda r: r[4] - ws)
+    # grass south of the road (the palms' strip), the car park, the road, the sidewalks, the median
+    layer("N grass strip", None, kerb_s + n6e_line(lambda r: r[4] - 9.0)[::-1], ground="lawn")
+    conc_uv = frame_uv(N6E_LOT[0], (1.0, 0.0), 4.0, 4.0)
+    layer("N car park", "concrete", N6E_LOT, conc_uv)
+    x0, x1 = N6E_BAYS
+    n = int((x1 - x0) / BAY[0])
+    top = [(x0 + (x1 - x0) * k / 8, n6e_lot_edge(x0 + (x1 - x0) * k / 8)) for k in range(9)]
+    layer("N bays", "bays", top + [(x, y - BAY[1]) for x, y in top][::-1], frame_uv(top[0], (1.0, 0.0), (x1 - x0) / n, -BAY[1]))
+    layer("N asphalt", "asphalt", kerb_n + kerb_s[::-1], hull=1.2)     # (hull: the terrain has sharp creases here)
+    layer("N north sidewalk", "calcada", walk_n + kerb_n[::-1])
+    layer("N south sidewalk", "calcada", kerb_s + walk_s[::-1])
+    # the beach tunnel's south portal: the terrain is cut down to the tunnel's floor under the portal's deck, which
+    # reaches 3 m under the road's south edge. There the paving lies on the hull of the ground round the cut.
+    for name, mat_, ring in (("N asphalt over the portal", "asphalt", kerb_n + kerb_s[::-1]),
+                             ("N south sidewalk over the portal", "calcada", kerb_s + walk_s[::-1])):
+        (ax, ay), (bx, by) = N6E_PORTAL_CUT
+        for a, b in (((ax, ay), (bx, ay)), ((bx, ay), (bx, by)), ((bx, by), (ax, by)), ((ax, by), (ax, ay))):
+            ring = clip_half(ring, b, a)
+        if len(ring) >= 3:
+            layer(name, mat_, ring, hull=4.6)
+    layer("N median", "calcada", med_n + med_s_[::-1])
+    RAISED.append({"kind": "island", "ring": med_n + med_s_[::-1], "height": 0.13, "top": "calcada", "side": "kerb", "rim": 0.0})
+    for line, d0, d1 in ((kerb_n, 0.0, 0.2), (kerb_s, -0.2, 0.0)):
+        paint_ribbon("kerb", line, d0, d1, seg=5.0)
+    # markings: solid lines beside the median, dashed lane lines (the westbound carriageway has three lanes where it
+    # is wider than 9 m), a zebra across both carriageways before the junction
+    paint_ribbon("white", n6e_line(lambda r: r[2] + 0.3), -0.06, 0.06, seg=5.0)
+    paint_ribbon("white", n6e_line(lambda r: -r[2] - 0.3), -0.06, 0.06, seg=5.0)
+    dashes(n6e_line(lambda r: r[2] + min(3.3, (r[3] - r[2]) / 2.0)), 0.0, 0.14, 3.0, 4.0)
+    third = [q for q, r in zip(n6e_line(lambda r: r[2] + 6.6), n6e_rows()) if r[3] - r[2] > 8.6]
+    dashes(third, 0.0, 0.14, 3.0, 4.0)
+    dashes(n6e_line(lambda r: (r[4] - r[2]) / 2.0), 0.0, 0.14, 3.0, 4.0)
+    for a, b in ((n6e_line(lambda r: r[2] + 0.4)[-2], n6e_line(lambda r: r[3] - 0.3)[-2]),
+                 (n6e_line(lambda r: -r[2] - 0.4)[-2], n6e_line(lambda r: r[4] + 0.3)[-2])):
+        zebra(a, b, 2.0, along=(1.0, 0.0))
+
+
+# =====================================================================================================
 # Track surface (colour only): which material the road and its verges show. The route data are not touched.
 # =====================================================================================================
 SURFACE_RUNS = [            # first index, last index, surface
@@ -1148,12 +1340,14 @@ def layer_at(x, y):
 def build():
     if LAYERS:
         return
+    dustlot()              # V18g: under everything else
     marginal()
     forecourt()
     carpark()
     avenue()
     avenue_entrance()      # V16
     roundabout()           # V18r: after the avenue, its north arm lies on top of the avenue's south end
+    n6_east()              # V18g: the N6 from the roundabout's east arm to the junction at x 180
     promenade()            # V15c
 
 
