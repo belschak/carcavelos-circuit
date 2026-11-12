@@ -492,14 +492,16 @@ def disc(c, r, colour, n=10, road=False):
 
 
 def manhole(c, r=0.33, road=False):
-    """A round cast-iron cover in its concrete collar."""
+    """A round cast-iron cover in its concrete collar. On the race road it uses two colours the road's paint has
+    anyway (each colour there is a material of Track_EdgeLines)."""
+    collar, cover = ("kerb", "setts_dark") if road else ("gravel", "iron")
     n = 12
     pts = [(math.cos(2 * math.pi * k / n), math.sin(2 * math.pi * k / n)) for k in range(n)]
     for k in range(n):
         (ax, ay), (bx, by) = pts[k], pts[(k + 1) % n]
-        paint("gravel", [(c[0] + ax * r, c[1] + ay * r), (c[0] + bx * r, c[1] + by * r),
-                         (c[0] + bx * (r + 0.09), c[1] + by * (r + 0.09)), (c[0] + ax * (r + 0.09), c[1] + ay * (r + 0.09))], road)
-    disc(c, r, "iron", n, road)
+        paint(collar, [(c[0] + ax * r, c[1] + ay * r), (c[0] + bx * r, c[1] + by * r),
+                       (c[0] + bx * (r + 0.09), c[1] + by * (r + 0.09)), (c[0] + ax * (r + 0.09), c[1] + ay * (r + 0.09))], road)
+    disc(c, r, cover, n, road)
 
 
 def frame_paint(colour, ring, w, road=False):
@@ -671,7 +673,7 @@ def forecourt():
     # V18h: the race road leaves the Marginal over its south sidewalk at the lawn's tip: the sidewalk and its kerb
     # run on across the road as flush paint (only where the road has cut the paving away)
     side = cut(MEDIAN, med_s(MOUTH_X[1]), med_s(-226.0), step=2.0)
-    paint_ribbon("bollard_pale", side, S_WALK[0], S_WALK[1] - 0.17, seg=2.0, road="fill")
+    paint_ribbon("white", side, S_WALK[0], S_WALK[1] - 0.17, seg=2.0, road="fill")
     paint_ribbon("kerb", side, S_WALK[1] - 0.17, S_WALK[1] + 0.02, seg=2.0, road="fill")
     # the brick bays' lines (from the sett border to the wall), and the four disabled bays at the west end: a yellow
     # outlined square with a small block in it (Street View Dec 2022: yellow symbols painted on the pavers)
