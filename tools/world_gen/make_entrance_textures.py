@@ -11,6 +11,9 @@ Output in textures/ (no photos; colours from the survey's sunlit averages, a ste
   entrance_drain_albedo     rust-brown slot grating: slots across the run, 0.5 m long x 0.22 m wide, 128 px
   entrance_planks_albedo    V16: the plank band along wing B: large pale concrete planks laid lengthwise, 16 rows of
                             0.375 m on a 6 m tile, random lengths 0.6-1.5 m, 1024 px
+  north_buff_albedo/normal  V18j: buff brushed concrete (apron along the hall's north face, floor at Student Central),
+                            panels of 3 x 3 m on a 6 m tile, saw cuts, rain stains, 1024 px
+  north_grating_albedo/normal  V18j: galvanised steel bars (drain gratings in the north street, the louvre screen), 256 px
 """
 import sys
 import time
@@ -182,8 +185,89 @@ def make_planks(S_=1024, seed=1403):
     save("entrance_planks_normal.png", T.normal_map(height * 7.0, 1.0), dither=False)
 
 
+BUFF = "#B3AB95"             # V18j: buff brushed concrete of the apron along the hall's north face (survey: #b3b0a4 overcast)
+GALV = "#8C908C"             # V18j: galvanised steel of the drain gratings and the louvre screen (survey: #8c908c)
+
+
+def make_buff(S_=1024, seed=1405):
+    """V18j: the buff in-situ concrete of the apron along the hall's north face, of the drip-line strip at the
+    north-east face and of the floor at Student Central. A tile of 6 x 6 m (u along the facade): four panels of
+    3.0 x 1.5 m per row would be too busy, so two rows of 3 m with saw cuts every 3 m along u, offset by half a
+    panel from row to row; brushed across the facade (fine streaks along v), a tone per panel, darker rain stains
+    along the saw cuts, a few rust-brown runs, sand specks. Normal map: 3 mm saw cuts and the brushing."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(S_, S_)
+    rows, cols = 2, 2
+    rh, cw = S_ / rows, S_ / cols
+    r = np.minimum((Y / rh).astype(np.int64), rows - 1)
+    xo = (X + (r % 2) * cw / 2) % S_
+    c = np.minimum((xo / cw).astype(np.int64), cols - 1)
+    fy, fx = Y / rh - r, xo / cw - c
+    d = np.minimum(np.minimum(fy, 1 - fy) * rh, np.minimum(fx, 1 - fx) * cw)          # px to the nearest saw cut
+    pid = r * cols + c
+    tone = rng.normal(1.0, 0.022, rows * cols)[pid]
+    warm = rng.uniform(-1, 1, rows * cols)[pid]
+    base = rgb(BUFF)
+    panel = np.where(warm[..., None] >= 0, lerp(base, rgb("#BDB096"), warm[..., None] * 0.6),
+                     lerp(base, rgb("#ACA89A"), -warm[..., None] * 0.6))
+    brush = noise((S_, S_), 0.8, rng, 30.0)                              # brushed across the facade: streaks along v
+    cloud = noise((S_, S_), 0.10 * S_, rng)
+    mott = noise((S_, S_), 9.0, rng)
+    panel = panel * (tone * (1.0 + 0.030 * brush + 0.035 * cloud + 0.022 * mott + 0.012 * noise((S_, S_), 0.7, rng)))[..., None]
+    stain = smoothstep(0.35, 1.3, noise((S_, S_), 22.0, rng, 60.0))       # rain runs, long across the strip
+    panel = lerp(panel, panel * rgb("#8F8674")[None, None, :] / base[None, None, :], (0.22 * stain)[..., None])
+    edge = 1.0 - smoothstep(2.0, 26.0, d)                                 # dirt gathered along the saw cuts
+    panel = panel * (1.0 - 0.07 * edge * (0.6 + 0.4 * mott))[..., None]
+    spk = smoothstep(1.5, 2.4, noise((S_, S_), 0.6, rng))                  # dark sand specks
+    panel = lerp(panel, rgb("#7E7868")[None, None, :], (0.35 * spk)[..., None])
+    cov = smoothstep(0.6, 1.7, d)
+    joint = rgb("#6F6A5E")[None, None, :] * (1.0 + 0.08 * noise((S_, S_), 1.0, rng))[..., None]
+    alb = lerp(joint, panel, cov[..., None])
+    alb = T.match_mean(alb, BUFF, 1.0)
+    save("north_buff_albedo.png", alb)
+    height = cov * (0.6 + (tone - 1.0) * 1.5) + 0.030 * brush + 0.010 * mott
+    save("north_buff_normal.png", T.normal_map(height * 6.0, 1.0), dither=False)
+
+
+def make_grating(W=256, H=256, seed=1406):
+    """V18j: galvanised steel grating / louvre blades. u (x) runs along the bars' pitch: 8 flat bars per tile with
+    dark gaps between them; v (y) along the bars, with one cross bar per tile and a frame line at both v edges of a
+    drain (the mesh maps v 0..1 across the drain's width). Zinc spangle, a little white rust and dirt in the gaps.
+    Used across the north street's setts (tile 0.4 m along the run), on the apron's grating strip and, with the
+    bars lying horizontally (tile 1.0 m), as the grey louvre screen on the hall's north face."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(H, W)
+    bars = 8
+    f = (X / W * bars) % 1.0
+    k = np.floor(X / W * bars).astype(np.int64) % bars
+    gap = 1.0 - smoothstep(0.16, 0.24, f) * (1.0 - smoothstep(0.76, 0.84, f))          # 1 in the slot between two bars
+    v = Y / H
+    cross = 1.0 - smoothstep(0.035, 0.06, np.abs(v - 0.5))                              # the cross bar in the middle
+    frame = 1.0 - smoothstep(0.045, 0.075, np.minimum(v, 1 - v))                        # the frame along the run
+    steel = np.maximum(np.maximum(1.0 - gap, cross), frame)
+    spangle = noise((H, W), 2.2, rng)
+    tone = rng.normal(1.0, 0.03, bars)[k]
+    zinc = rgb(GALV)[None, None, :] * (tone * (1.0 + 0.07 * spangle + 0.03 * noise((H, W), 0.7, rng)))[..., None]
+    shine = smoothstep(0.42, 0.5, f) * (1.0 - smoothstep(0.5, 0.58, f)) * (1.0 - np.maximum(cross, frame))   # bar crown
+    zinc = zinc * (1.0 + 0.10 * shine)[..., None]
+    white = smoothstep(0.9, 1.8, noise((H, W), 5.0, rng))                                # white rust blooms
+    zinc = lerp(zinc, rgb("#B9BDB8")[None, None, :], (0.35 * white)[..., None])
+    rust = smoothstep(1.3, 2.2, noise((H, W), 3.0, rng, 9.0))
+    zinc = lerp(zinc, rgb("#7A5A44")[None, None, :], (0.30 * rust)[..., None])
+    dark = rgb("#1E2120")[None, None, :] * (1.0 + 0.25 * noise((H, W), 4.0, rng))[..., None]
+    alb = lerp(dark, zinc, steel[..., None])
+    alb = lerp(alb, alb * 0.8, (0.6 * frame * (1.0 - smoothstep(0.0, 0.03, np.minimum(v, 1 - v))))[..., None])
+    save("north_grating_albedo.png", alb)
+    save("north_grating_normal.png", T.normal_map(blur_safe(steel) * 9.0, 1.0), dither=False)
+
+
+def blur_safe(a):
+    """A slightly softened copy (wrapping), so the bars' edges give a clean bevel in the normal map."""
+    return (a + np.roll(a, 1, 0) + np.roll(a, -1, 0) + np.roll(a, 1, 1) + np.roll(a, -1, 1)) / 5.0
+
+
 BUILDERS = {"entrance_calcada": make_calcada, "entrance_drain": make_drain, "entrance_planks": make_planks,
-            "entrance_edging": make_edging}
+            "entrance_edging": make_edging, "north_buff": make_buff, "north_grating": make_grating}
 
 
 def main(argv=()):
