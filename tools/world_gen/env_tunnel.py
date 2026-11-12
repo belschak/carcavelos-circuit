@@ -119,12 +119,14 @@ def build_lights(pts, col):
     return E.new_object("Tunnel_Lights", mesh, col)
 
 
-def build_portal(p, inward, cover, name, col, beige=False, closed=False):
+def build_portal(p, inward, cover, name, col, beige=False, closed=False, cap_lift=0.0):
     """Headwall with the trapezoid opening, plus a cap over the terrain hole behind it. V16e: `beige` = the north
     portal, sand-beige render like the ramp's walls (survey 3.6); the south one stays white concrete.
     V18h: `closed` = the structure is a closed abutment: the parapet has a back, the headwall has ends, and a wall
     hangs from both side edges of the cap down into the ground. The terrain is open under the cap (in_portal_hole)
-    and lies up to 2 m lower beside it, so one looked under the cap into the hole and at the tunnel's back."""
+    and lies up to 2 m lower beside it, so one looked under the cap into the hole and at the tunnel's back.
+    `cap_lift` (north portal): the ground round the hole lies up to 0.6 m ABOVE the cap there, so the cap is raised
+    over it and gets an end wall as well (1.2 m deep: it stays above the tunnel's ceiling)."""
     dx, dy = inward
     nrm = (-dy, dx)
     top = cover + 1.0
@@ -136,6 +138,7 @@ def build_portal(p, inward, cover, name, col, beige=False, closed=False):
     # V18h: the terrain's hole reaches to 12 m behind the south mouth (cells are dropped whole); the cap ended at
     # 9.5 m, so from the N6's sidewalk one looked through a 5 x 2.5 m gap onto the tunnel's ceiling from behind
     far = 13.0 if closed else 9.5
+    capz = cover + 0.02 + cap_lift
     bm = bmesh.new()
     V = lambda c: bm.verts.new(c)
     faces = [
@@ -144,17 +147,19 @@ def build_portal(p, inward, cover, name, col, beige=False, closed=False):
         [pt(FLOOR_HALF, -0.5), pt(HEADWALL_HALF, -0.5), pt(HEADWALL_HALF, CEILING), pt(CEIL_HALF, CEILING)],
         # top of the headwall (0.6 m thick) and the cap over the hole behind it
         [pt(-HEADWALL_HALF, top), pt(HEADWALL_HALF, top), pt(HEADWALL_HALF, top, 0.6), pt(-HEADWALL_HALF, top, 0.6)],
-        [pt(-HEADWALL_HALF, cover + 0.02, 0.6), pt(HEADWALL_HALF, cover + 0.02, 0.6),
-         pt(HEADWALL_HALF, cover + 0.02, far), pt(-HEADWALL_HALF, cover + 0.02, far)],
+        [pt(-HEADWALL_HALF, capz, 0.6), pt(HEADWALL_HALF, capz, 0.6),
+         pt(HEADWALL_HALF, capz, far), pt(-HEADWALL_HALF, capz, far)],
     ]
     extra = []                                           # (corners, outward direction in plan)
     if closed:
         low, H = -1.6, HEADWALL_HALF                     # 1.6 m under the road: under every ground beside the portal
-        extra.append(([pt(-H, cover + 0.02, 0.6), pt(H, cover + 0.02, 0.6), pt(H, top, 0.6), pt(-H, top, 0.6)], (dx, dy)))
+        extra.append(([pt(-H, capz, 0.6), pt(H, capz, 0.6), pt(H, top, 0.6), pt(-H, top, 0.6)], (dx, dy)))
         for s in (-1, 1):
             out = (nrm[0] * s, nrm[1] * s)
             extra.append(([pt(s * H, low, 0.0), pt(s * H, low, 0.6), pt(s * H, top, 0.6), pt(s * H, top, 0.0)], out))
-            extra.append(([pt(s * H, low, 0.6), pt(s * H, low, far), pt(s * H, cover + 0.02, far), pt(s * H, cover + 0.02, 0.6)], out))
+            extra.append(([pt(s * H, low, 0.6), pt(s * H, low, far), pt(s * H, capz, far), pt(s * H, capz, 0.6)], out))
+        if cap_lift > 0.0:
+            extra.append(([pt(-H, capz - 1.2, far), pt(H, capz - 1.2, far), pt(H, capz, far), pt(-H, capz, far)], (dx, dy)))
     for k, f in enumerate(faces):
         face = bm.faces.new([V(c) for c in f])
         face.material_index = 1 if k == 4 else 0
@@ -296,6 +301,7 @@ def build_wing_facet(p, inward, cover, name, col):
 
 
 WING_FOOT = 1.6        # m under the road level at the mouth: the wing's walls end here, under the ground
+NORTH_CAP_LIFT = 0.62  # m: the north cap lies this much higher, over the ground round the terrain's hole (10.2-10.7 m)
 
 
 def build_portal_jambs(p, inward, name, col):
@@ -341,7 +347,8 @@ def build():
     cover = env_terrain.PROFILE.get("tunnel_cover_m", 4.8)
     for (p, inward), name in zip(env_terrain.portals(), ("Tunnel_PortalSouth", "Tunnel_PortalNorth")):
         north = name.endswith("North")
-        build_portal(p, inward, cover, name, col, beige=north, closed=not north)   # V18h: the south abutment is closed
+        build_portal(p, inward, cover, name, col, beige=north, closed=True,
+                     cap_lift=NORTH_CAP_LIFT if north else 0.0)        # V18h: both abutments are closed bodies
         build_portal_beam(p, inward, name.replace("Portal", "PortalBeam"), col, beige=north)
         if not north:
             build_wing_facet(p, inward, cover, "Tunnel_PortalWingSouth", col)
