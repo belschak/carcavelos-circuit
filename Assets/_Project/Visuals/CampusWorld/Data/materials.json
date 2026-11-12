@@ -19,9 +19,9 @@
   {
    "name": "W_B_wall_2",
    "colour": [
-    0.9647,
-    0.8475,
-    0.6129
+    0.9658,
+    0.8484,
+    0.6136
    ],
    "metallic": 0.0,
    "albedo": "facade_white_albedo.png",
@@ -169,9 +169,9 @@
   {
    "name": "W_B_wall_umber",
    "colour": [
-    0.3817,
-    0.2233,
-    0.1812
+    0.3822,
+    0.2235,
+    0.1814
    ],
    "metallic": 0.0,
    "albedo": "facade_white_albedo.png",
@@ -295,8 +295,8 @@
    "name": "W_B_wall_0",
    "colour": [
     1.0,
-    0.9779,
-    0.8907
+    0.979,
+    0.8918
    ],
    "metallic": 0.0,
    "albedo": "facade_white_albedo.png",
@@ -396,7 +396,7 @@
    "colour": [
     1.0,
     1.0,
-    0.9954
+    0.9965
    ],
    "metallic": 0.0,
    "albedo": "facade_white_albedo.png",
@@ -419,9 +419,9 @@
   {
    "name": "W_B_wall_3",
    "colour": [
-    0.9909,
-    0.8518,
-    0.8044
+    0.9921,
+    0.8528,
+    0.8053
    ],
    "metallic": 0.0,
    "albedo": "facade_white_albedo.png",
@@ -444,9 +444,9 @@
   {
    "name": "W_B_wall_4",
    "colour": [
-    0.9341,
-    0.9081,
-    0.856
+    0.9352,
+    0.9092,
+    0.857
    ],
    "metallic": 0.0,
    "albedo": "facade_white_albedo.png",
@@ -469,9 +469,9 @@
   {
    "name": "W_B_wall_cream",
    "colour": [
-    0.9603,
-    0.9254,
-    0.856
+    0.9615,
+    0.9265,
+    0.857
    ],
    "metallic": 0.0,
    "albedo": "facade_white_albedo.png",
@@ -1489,9 +1489,9 @@
   {
    "name": "W_street_asphalt",
    "colour": [
-    0.3361,
-    0.3472,
-    0.3696
+    0.4071,
+    0.4033,
+    0.392
    ],
    "metallic": 0.0,
    "albedo": "asphalt_albedo.png",
@@ -3471,9 +3471,9 @@
   {
    "name": "W_T_asphalt",
    "colour": [
-    0.3361,
-    0.3472,
-    0.3696
+    0.4071,
+    0.4033,
+    0.392
    ],
    "metallic": 0.0,
    "albedo": "asphalt_albedo.png",
@@ -3517,31 +3517,6 @@
    },
    "metallic_smoothness": null,
    "smoothness": 0.2
-  },
-  {
-   "name": "W_T_concrete_sand",
-   "colour": [
-    0.8469,
-    0.7832,
-    0.653
-   ],
-   "metallic": 0.0,
-   "albedo": "concrete_sand_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": true,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": "concrete_sand_metallic_smoothness.png",
-   "smoothness": 0.1
   },
   {
    "name": "W_campus_east_concrete",
