@@ -215,8 +215,33 @@ def east_lawn_z(x, y):
     return EAST_LAWN + (GROUND - EAST_LAWN) * _ss((x - xa) / (xb - xa)) * _ss((y - ya) / (yb - ya))
 
 
+# Luc, 12 Nov 2026 (after driving V18j, screenshot from the ring looking north): the ground north of the forecourt
+# rose as a grass hill (the elevation model climbs 3 m to the world's edge, the 14 m BLEND squeezed the first 1.5 m
+# into one bank). He wants the view to run on level ("weiter geradeaus, nicht ueber einen Huegel"), as the survey's
+# Rua da Holanda continues level: from NORTH_OPEN_Y to the world's edge the terrain is the street's level, fading
+# back to the elevation model over the west and east x bands.
+NORTH_OPEN_Y = 190.0
+NORTH_OPEN_X = ((-14.0, 8.0), (140.0, 165.0))     # (west fade from .. to), (east fade from .. to)
+
+
+def north_open_weight(x, y):
+    """Weight 0..1 with which the terrain north of the forecourt takes the street's level (Luc, 12 Nov)."""
+    (wa, wb), (ea, eb) = NORTH_OPEN_X
+    if y < NORTH_OPEN_Y - 6.0 or x <= wa or x >= eb:
+        return 0.0
+    return _ss((x - wa) / (wb - wa)) * (1.0 - _ss((x - ea) / (eb - ea))) * _ss((y - NORTH_OPEN_Y + 6.0) / 6.0)
+
+
 def level_target(x, y):
     """(height, weight 0..1) the terrain takes at (x, y); weight 0 = the elevation model stays."""
+    z, w = _level_target(x, y)
+    wn = north_open_weight(x, y)
+    if wn > w and z >= GROUND - 1e-6:
+        return GROUND, wn
+    return z, w
+
+
+def _level_target(x, y):
     if not (WEST_FADE[0] < x < 152.0 and 122.0 < y < 216.0) or out_distance(x, y, POOL) < 2.5:
         return GROUND, 0.0
     fade = _ss((x - WEST_FADE[0]) / (WEST_FADE[1] - WEST_FADE[0]))
