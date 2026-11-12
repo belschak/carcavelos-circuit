@@ -34,7 +34,8 @@ SKIP_COLLECTIONS = ("Track_RouteGuide", "World_TunnelGuides")
 GROUND_PREFIX = ("World_Ground",)                       # occluders that count as "the ground" (weight AO_GROUND)
 NO_OCCLUDER = ("ColliderOnly", "Backdrop_", "WorldOrigin", "RouteGuide", "Marker_", "World_Paths_tunnel", "NoCollide_Paint")
 NO_TARGET = ("ColliderOnly", "Backdrop_Sea", "Backdrop_Land", "Backdrop_FarBeach", "Backdrop_FarTown", "Backdrop_Horizon",
-             "WorldOrigin", "World_Ground", "Coast_Rocks", "Track_Road", "Track_Kerbs", "Track_EdgeLines", "NoCollide_Paint")
+             "WorldOrigin", "World_Ground", "Coast_Rocks", "Track_Road", "Track_Kerbs", "Track_EdgeLines", "NoCollide_Paint",
+             "Track_PlazaStairs")   # V18: the steps occlude each other (mean 0.50), the drivable stairs stay unshaded like the road
 
 
 def _directions():

@@ -60,7 +60,7 @@ def mat(key):
     if key == "glass":
         return _textured("T_skylight", "#9DBAC0", "skylight_glass", 0.35)
     if key == "terracotta":             # own material (the track's W_T_terracotta carries a roughness map)
-        return _textured("plaza_terracotta", "#B08A72", "plaza_terracotta", 0.85)   # V16: pale salmon; V10i: #C8664A
+        return _textured("plaza_terracotta", "#C6AA93", "plaza_terracotta", 0.85)   # V18 walk: pale terracotta; V16 #B08A72; V10i: #C8664A
     if key == "floor":
         return env_track.surface_material("concrete_polished")
     if key == "white":
