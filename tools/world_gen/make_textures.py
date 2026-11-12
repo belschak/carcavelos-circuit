@@ -34,7 +34,7 @@ TAU = 2.0 * np.pi
 
 # docs/art-style.md palette, env_common.PALETTE additions, and the mural's bright extras (sRGB)
 HEX = {
-    "kart_white": "#EAEAEC", "gloss_black": "#1D1D1F", "asphalt": "#55585E", "sand": "#E3C48D",
+    "kart_white": "#EAEAEC", "gloss_black": "#1D1D1F", "asphalt": "#686764", "sand": "#E3C48D",
     "atlantic_blue": "#2D8CD6", "boost_orange": "#FF8A1F",
     "calcada": "#E6E1D6", "concrete_sand": "#D9C9A8", "concrete_light": "#C9C5BC",
     "terracotta": "#C8664A", "lawn": "#8FB37A", "glass": "#2E3A46", "wet_sand": "#C9A877",

@@ -89,7 +89,8 @@ ROAD_LOOK = [
     (367, 372, lambda x, y: __import__("env_coast").road_look("pale")),     # the cove ring
     (373, 399, lambda x, y: __import__("env_coast").road_look("beige")),    # palm car park and the upper path: beige slabs
     (400, 411, lambda x, y: __import__("env_coast").road_look("ochre")),    # tunnel plaza and ramp: sand-ochre slabs
-    (478, 490, _east_look),           # lower plaza: beige-grey concrete panels with saw-cut joints
+    (455, 490, _east_look),           # lower plaza: beige-grey concrete panels with saw-cut joints; V18k: from the
+                                      # tunnel's north portal, the ramp is the same pale floor (road survey item 8)
     # V18j-n: forecourt and the street behind the hall: setts in the start plaza's frame where the road lies on real
     # paving, the terrain's own lawn where it runs over the street's lawn (env_north.road_look, north_plan.LAWN)
     (583, 639, lambda x, y: __import__("env_north").road_look(x, y)),
@@ -237,6 +238,7 @@ def build_road(pts, fr, col):
             slot(visual_surface(p))
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new("UVMap")
+    is_shoulder = bm.faces.layers.int.new("shoulder")
     n = len(pts)
     for i in range(n):
         a, b = pts[i], pts[(i + 1) % n]
@@ -321,6 +323,7 @@ def build_road(pts, fr, col):
                     top_a, top_b, low_a, low_b = grid[k][col_i], grid[k + 1][col_i], low[k], low[k + 1]
                     ring = (top_a, top_b, low_b, low_a) if side == 1 else (top_b, top_a, low_a, low_b)
                     shoulder = bm.faces.new(ring)
+                    shoulder[is_shoulder] = 1
                     shoulder.material_index = slot(ssurf)
                     for loop, (u, v) in zip(shoulder.loops, ((0.0, v0 * tile / stile), (0.0, v1 * tile / stile), (SHOULDER_M / stile, v1 * tile / stile), (SHOULDER_M / stile, v0 * tile / stile))
                                             if side == 1 else ((0.0, v1 * tile / stile), (0.0, v0 * tile / stile), (SHOULDER_M / stile, v0 * tile / stile), (SHOULDER_M / stile, v1 * tile / stile))):
@@ -328,12 +331,40 @@ def build_road(pts, fr, col):
                     world_uv(shoulder, ssurf)
     bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=0.01)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    loops = road_shading_normals(bm, is_shoulder)
     mesh = bpy.data.meshes.new("Track_Road")
     bm.to_mesh(mesh)
     bm.free()
+    mesh.normals_split_custom_set(loops)
     for mat in mats:
         mesh.materials.append(mat)
     return E.new_object("Track_Road", mesh, col)
+
+
+def road_shading_normals(bm, is_shoulder):
+    """V18k (road survey item 1): the road is 6 cm above its bed and its 0.9 m shoulders slope down about 5 degrees;
+    lit by the sun, each shoulder showed as a light or dark band with a line along the road: the race line drawn on
+    every plaza. Shading only, no vertex moves: the road gets smooth normals (area-weighted over road faces), and
+    every shoulder corner takes the normal of the road it hangs from, so road and shoulders shade as one surface."""
+    from mathutils import Vector
+    bm.verts.index_update()
+    road_n = {}
+    for f in bm.faces:
+        if not f[is_shoulder]:
+            w = f.normal * f.calc_area()
+            for v in f.verts:
+                road_n[v.index] = road_n.get(v.index, Vector()) + w
+    road_n = {k: (v.normalized() if v.length > 1e-9 else Vector((0, 0, 1))) for k, v in road_n.items()}
+    out = []
+    for f in bm.faces:
+        f.smooth = True
+        if f[is_shoulder]:
+            top = [road_n[v.index] for v in f.verts if v.index in road_n]
+            hang = sum(top, Vector()).normalized() if top else Vector((0, 0, 1))
+            out.extend(tuple(road_n.get(l.vert.index, hang)) for l in f.loops)
+        else:
+            out.extend(tuple(road_n.get(l.vert.index, f.normal)) for l in f.loops)
+    return out
 
 
 def verge_material(p):
