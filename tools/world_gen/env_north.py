@@ -358,6 +358,11 @@ def dress(veg, props, protos):
         _REPORT.append(("parked cars on the forecourt (centre)", S.route_distance(x, y)))
         added.append({"proto": cars[(k * 3 + 1) % len(cars)], "x": x, "y": y, "z": round(ST.ground(x, y) + 0.07, 3),
                       "rot_z": round(math.atan2(u[1], u[0]) + (0.06 if k % 2 else -0.04), 4), "scale": 1.0})
+    for k, (x, y, bearing) in enumerate(P.LAYBY_CARS):           # V18g (satellite): cars in the lay-by at the avenue
+        if cars and S.route_distance(x, y) >= CAR_CLEAR:
+            cu = (math.sin(math.radians(bearing)), math.cos(math.radians(bearing)))
+            added.append({"proto": cars[(k * 2 + 4) % len(cars)], "x": x, "y": y, "z": round(SO.surface(x, y), 3),
+                          "rot_z": round(math.atan2(cu[1], cu[0]), 4), "scale": 1.0})
     n_cars = len(added)
     post = "Prop_TimberPost" if "Prop_TimberPost" in protos else "Prop_BollardSlim"
     if post in protos:

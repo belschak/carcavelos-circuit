@@ -144,6 +144,7 @@ DRIVE_ROWS = [((-95.2, 131.4), (-83.6, 131.2)), ((-93.0, 114.6), (-80.6, 115.5))
 SIGN_BOARD = dict(at=(-94.9, 130.7), bearing=350.0, width=2.4, top=3.3)   # two blank boards on two grey posts
 CYCLE_SIGN = (-90.6, 141.6)             # blue round sign on a post where the track ends
 KERB_LAMPS = [(-97.2, 137.6), (-102.6, 161.0)]
+LAYBY_CARS = [(-95.3, 107.6, 349.0), (-93.4, 101.8, 349.0)]     # two cars parked in the lay-by south of the bus bay: x, y, bearing
 
 
 def planted_ring():
