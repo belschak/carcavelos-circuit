@@ -931,6 +931,7 @@ def dress(veg, props):
     print(f"  campus dressing: {len(veg) - len(veg2)} plants and {len(props) - len(props2)} props removed "
           f"(pools, berms, steps, lower plaza): {', '.join(gone)}")
     props2 = props2 + court_furniture(veg2)
+    props2 = props2 + W.props(props2)                      # V18g: picnic tables on the court between D and E
     for fname, items in (("placements_vegetation.json", veg2), ("placements_props.json", props2)):
         path = os.path.join(E.OUT, fname)
         data = json.load(open(path))

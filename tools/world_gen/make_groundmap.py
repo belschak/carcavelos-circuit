@@ -86,6 +86,7 @@ def street_layers(scale, lawn_mask=False):
             c = (0, 0, 0) if lawn_mask else STREET_COLOURS.get(lay["mat"]) or tuple(
                 int(street_plan.PALETTE[lay["mat"][4:]][k:k + 2], 16) for k in (1, 3, 5))
         d.polygon([to_px(x, y, scale) for x, y in lay["ring"]], fill=c + (255,))
+    campus_plan.WEST.over_streets(d, lambda x, y: to_px(x, y, scale), lawn_mask)   # V18g-w: perimeter path on the verge
     return img
 
 
