@@ -80,6 +80,8 @@ ROAD_LOOK = [
     (0, 14, _entrance_look),          # start straight on the entrance plaza: calcada, slabs where the band lies under it
     (61, 81, "deck"),                 # CTT roof terrace: the deck's own pale sawn concrete
     (127, 135, "asphalt"),            # from the avenue's kerb on: the avenue's asphalt (the calcada ends with the sidewalk)
+    (242, 310, lambda x, y: __import__("env_streets").road_look("slab")),           # V18h-q: car-park concrete slabs
+    (311, 320, lambda x, y: __import__("env_streets").road_look("slab_dark")),      # V18h-q: the dark concrete square
     # V18h (builder K): the coast's own concrete, in the UV frame of the paving beside the road (env_coast.road_look)
     (336, 350, lambda x, y: __import__("env_coast").road_look("pale")),     # promenade: pale slabs, 4 x 2 m
     (351, 366, "street_setts"),       # the curved grey sett band above the cove

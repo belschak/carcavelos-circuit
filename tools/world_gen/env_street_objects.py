@@ -370,6 +370,16 @@ def chevron_board(name, col, width=3.0):
     return g.build(name, col)
 
 
+def bollard_round(name, col, colour, height, radius, collar=True):
+    """V18h: a round post: peeled timber bollards along the car park's edges (coast-walk survey: 1.0 m, d 15 cm,
+    grey-brown, a small concrete collar), white round bollards on the island at the throat (0.8 m)."""
+    g = Proto()
+    if collar:
+        g.cyl(radius + 0.07, radius + 0.05, -0.1, 0.04, 8, "concrete", cap=True)
+    g.cyl(radius, radius * 0.94, -0.1, height, 8, colour)
+    return g.build(name, col)
+
+
 def ad_totem(name, col):
     """Advert totem: dark case with a blank pale lit face on both sides; faces +-y."""
     g = Proto()
@@ -527,6 +537,8 @@ def build_prototypes():
         "Prop_BollardSquare": bollard_square("Prop_BollardSquare", pc),
         "Prop_BollardBanded": bollard_banded("Prop_BollardBanded", pc),
         "Prop_TimberPost": timber_post("Prop_TimberPost", pc),
+        "Prop_TimberBollard": bollard_round("Prop_TimberBollard", pc, "timber_grey", 1.0, 0.075),          # V18h
+        "Prop_BollardWhite": bollard_round("Prop_BollardWhite", pc, "render_white", 0.8, 0.09, collar=False),   # V18h
         "Prop_LampMarginal": lamp_arm("Prop_LampMarginal", pc, 11.5, 1),
         "Prop_LampAvenue": lamp_arm("Prop_LampAvenue", pc, 10.5, 2, colour="steel_grey"),
         "Prop_LampSidewalk": lamp_arm("Prop_LampSidewalk", pc, 9.0, 1, colour="steel_grey", reach=1.5),
@@ -1336,12 +1348,107 @@ def streets_v18g(veg, props):
     return veg2 + plants, props2 + ours
 
 
+def carpark_v18h(veg, props):
+    """V18h (builder Q): the parked cars of the Capricciosa forecourt, the coastal car park and the west car park,
+    bay by bay as on the satellite view of 2026 (nearly full), aligned with the painted bays. The older cars in
+    these places go. A car is left out where any of its corners would stand closer than PROP_CLEAR to the race
+    centreline: the race road is wider than the real aisle, so both bay rows of the aisle stay empty where it runs
+    between them. Own random sequence: nothing outside these car parks moves."""
+    rng = random.Random(SEED + 26)
+    names = ("E concrete", "F aisle concrete", "F asphalt square", "E brick bays", "H west car park", "H island")
+    rings = [lay["ring"] for lay in S.LAYERS if lay["name"] in names]
+
+    def mine(it):
+        x, y = it["x"], it["y"]
+        if it["proto"] == "Prop_BollardSquare":                   # the pale square posts along both kerbs of the car park
+            t = S.s_kerb(x, y)
+            d = (x - S.NE_KERB_A[0]) * -S.left_of(S.NE_KERB_U)[0] + (y - S.NE_KERB_A[1]) * -S.left_of(S.NE_KERB_U)[1]
+            return -6.0 < t < 112.0 and -3.0 < d < 21.0
+        if it["proto"] == "Prop_TimberPost":                      # the posts on the grass island at the throat
+            return S.inside(x, y, S.GRASS_ISLAND)
+        return it["proto"].startswith("Prop_Car") and x < -135.0 and any(S.inside(x, y, r) for r in rings)
+    props2 = [p for p in props if not mine(p)]
+    apron = next(lay["ring"] for lay in S.LAYERS if lay["name"] == "H apron")     # lawn until V18h: its plants go
+    veg2 = [p for p in veg if not S.inside(p["x"], p["y"], apron)]
+    cars = [c[0] for c in CAR_KINDS]
+    ours, left = [], 0
+
+    def fits(x, y, nose):
+        side = S.left_of(nose)
+        return all(S.route_distance(x + nose[0] * a + side[0] * b, y + nose[1] * a + side[1] * b) >= S.PROP_CLEAR + 0.2
+                   for a in (-2.3, 0.0, 2.3) for b in (-1.0, 1.0))
+
+    def row(frame, t0, n, s_mid, nose, share, skip=(), nudge=None):
+        nonlocal left
+        for k in range(n):
+            if k in skip or rng.random() > share:
+                continue
+            t = t0 + (k + 0.5) * S.BAY[0] + rng.uniform(-0.1, 0.1) + (nudge or {}).get(k, 0.0)
+            x, y = frame(t, s_mid + rng.uniform(-0.2, 0.25))
+            if not fits(x, y, nose):
+                left += 1
+                continue
+            rot = heading_rot(nose) + rng.uniform(-2.5, 2.5) + (180.0 if rng.random() < 0.25 else 0.0)
+            ours.append(_entry(cars[rng.randrange(len(cars))], x, y, rot))
+
+    hp, bp, kp = S.hedge_pt, S.brick_pt, S.kerb_pt
+    hu, bu, ku = S.HEDGE_U, S.BRICK_U, S.NE_KERB_U
+    back = (-S.left_of(hu)[0], -S.left_of(hu)[1])                 # from the bay front towards the hedge
+    row(hp, 0.0, 7, 2.5, back, 0.94)
+    row(hp, S.PORTAL_T[1], 9, 2.5, back, 0.94)
+    row(bp, 0.0, int(S.BRICK_LEN / S.BAY[0]), 2.5, S.left_of(bu), 0.9, skip={1, 3})
+    ne = S.left_of(ku)
+    sw = (-ne[0], -ne[1])
+    nudge = {}
+    for t in S.PIT_T:                                             # a palm's pit stands on the line between two bays:
+        k = int(round(t / S.BAY[0]))                              # the cars beside it keep 0.3 m more to their far side
+        nudge[k - 1], nudge[k] = -0.3, 0.3
+    # bay 37 holds the coast section's first slim palm (env_coast WASHINGTONIAS, placed only if nothing stands within
+    # 2.5 m: a car there would drop it and shift that module's random sequence): no car in it, its neighbours keep off
+    nudge[36], nudge[38] = -0.4, 0.3
+    row(kp, 0.0, S.NE_BAYS, 2.6, ne, 0.95, skip={37}, nudge=nudge)
+    z1 = int((S.s_kerb(-198.0, -82.0) - S.SW_ROW_T0) / S.BAY[0])
+    yb = int((S.s_kerb(-177.0, -102.0) - S.SW_ROW_T0) / S.BAY[0])
+    row(lambda t, s: kp(t, s), S.SW_ROW_T0, 41, 15.0, sw, 0.95, skip={z1 - 1, z1, yb})
+    row(kp, S.CENTRAL_T0, 11, 20.0, ne, 0.95)
+    sa, su = (-241.0, -72.6), S.unit(39.0, -8.9)
+    row(lambda t, s: S.pt(sa, su, t, -s), 0.0, 16, 2.5, (su[1], -su[0]), 0.95)
+    wa, wu = (-348.0, 16.5), S.unit(-41.0, 21.0)                  # the west car park: the row along its north edge
+    row(lambda t, s: S.pt(wa, wu, t, s), 2.0, 15, 2.8, (-S.left_of(wu)[0], -S.left_of(wu)[1]), 0.85)
+    row(lambda t, s: S.pt(wa, wu, t, s), 9.5, 9, 10.3, S.left_of(wu), 0.8)
+    n_cars = len(ours)
+    # peeled timber bollards (1 m, every 2.5 m) instead of the pale square posts: behind the calcada strip in the
+    # west half of the north-east edge, at the kerb further east, and on the grass strip of the south-west edge
+    def post(proto, x, y):
+        if S.route_distance(x, y) >= S.PROP_CLEAR:
+            ours.append(_entry(proto, x, y, rng.uniform(0.0, 360.0)))
+    t = 2.5
+    while t <= 103.0:
+        post("Prop_TimberBollard", *kp(t, -4.55 if t <= 33.0 else -0.75))
+        t += 2.5
+    t = 28.5
+    while t <= 91.0:
+        post("Prop_TimberBollard", *kp(t, 18.15))
+        t += 2.7
+    isl = S.GRASS_ISLAND                                          # white round bollards on the island at the throat
+    cx, cy = sum(q[0] for q in isl) / len(isl), sum(q[1] for q in isl) / len(isl)
+    for k in (3, 4, 5, 6):
+        x, y = isl[k]
+        d = math.hypot(cx - x, cy - y)
+        ours.append(_entry("Prop_BollardWhite", x + (cx - x) * 0.7 / d, y + (cy - y) * 0.7 / d, 0.0, z=surface(x, y) + 0.25))
+    print(f"  streets (V18h): car parks at the Capricciosa: {len(props) - len(props2)} older cars and posts removed, {n_cars} "
+          f"cars parked in the bays, {len(ours) - n_cars} bollards; {left} bays stay empty because the race road is too near; {len(veg) - len(veg2)} plants removed "
+          f"from the concrete apron at the lawn's tip")
+    return veg2, props2 + ours
+
+
 def dress_promenade(veg, props):
     """V15c, called after dressing_freeze.apply: an explicit edit of the dressing lists. Removes the dark road lamps
     along the promenade (the real ones are white flood masts) and the few older props that stand where a seat-wall,
     mast, machine or the beach steps now are; adds the limestone bollards, flood masts, fitness machines and the old
     olive on the lawn path. Everything else stays exactly as it was. Rewrites the dressing files."""
     veg, props = streets_v18g(veg, props)         # V18g: the dusty car park and the N6 east of the roundabout
+    veg, props = carpark_v18h(veg, props)         # V18h: the cars of the Capricciosa forecourt and the coastal car park
     plants, ours, removed = promenade_placements(veg, props)
     gone = {id(p) for p in removed}
     veg2, props2 = list(veg) + plants, [p for p in props if id(p) not in gone] + ours
