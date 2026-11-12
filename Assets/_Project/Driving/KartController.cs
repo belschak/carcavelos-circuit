@@ -15,9 +15,10 @@ namespace CarcavelosCircuit.Driving
     // heading can change. The model (Visual) tilts to the slope and levels out in the air, only for looks.
     // Item boosts (Role 4's item boxes, IKartBoost): RaceFlow adds boost time from outside; the faster multiplier
     // of the drift boost and the item boost wins while the boost runs.
+    // Bots (IKartDrivable, D8): a bot sets InputSource and the kart reads its input instead of the keyboard.
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(SphereCollider))]
-    public class KartController : MonoBehaviour, IKartState, IKartBoost
+    public class KartController : MonoBehaviour, IKartState, IKartBoost, IKartDrivable
     {
         [SerializeField, Tooltip("All the driving numbers (Driving/Settings/KartTuning.asset)")]
         private KartTuning tuning;
@@ -65,6 +66,10 @@ namespace CarcavelosCircuit.Driving
         // RaceFlow writes this every frame. The kart never switches it on by itself.
         public bool InputEnabled { get; set; }
 
+        // IKartDrivable: null (the default) = the keyboard and the phone buttons drive. Set = this source drives,
+        // for example a bot. InputEnabled still wins: when it is off, nobody drives.
+        public IKartInputSource InputSource { get; set; }
+
         // True when the keys may be read (the test-bed switch counts as "on").
         private bool InputActive { get { return InputEnabled || driveWithoutRaceFlow; } }
 
@@ -100,23 +105,31 @@ namespace CarcavelosCircuit.Driving
             }
         }
 
-        // Keys are read every frame; physics runs in FixedUpdate.
+        // The input is read every frame; physics runs in FixedUpdate.
+        // InputPicker decides who drives: nobody (input off), the bot (InputSource) or the keyboard.
         private void Update()
         {
-            throttleInput = 0f;
-            steerInput = 0f;
-            driftHeld = false;
+            KartInput input = InputPicker.Pick(InputActive, InputSource, ReadKeyboard());
+            throttleInput = input.Throttle;
+            steerInput = input.Steer;
+            driftHeld = input.Drift;
+        }
 
+        // What the keyboard says this frame (nothing when there is no keyboard).
+        private static KartInput ReadKeyboard()
+        {
             Keyboard keyboard = Keyboard.current;
-            if (keyboard == null || !InputActive)
+            if (keyboard == null)
             {
-                return;
+                return KartInput.None;
             }
-            if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) throttleInput += 1f;
-            if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) throttleInput -= 1f;
-            if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) steerInput += 1f;
-            if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) steerInput -= 1f;
-            driftHeld = keyboard.spaceKey.isPressed;
+            float throttle = 0f;
+            float steer = 0f;
+            if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) throttle += 1f;
+            if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) throttle -= 1f;
+            if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) steer += 1f;
+            if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) steer -= 1f;
+            return new KartInput(throttle, steer, keyboard.spaceKey.isPressed);
         }
 
         private void FixedUpdate()
