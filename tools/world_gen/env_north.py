@@ -256,7 +256,7 @@ def lawn_look_line():
     """The race line's points beside which the road reads as lawn (plus one point either side)."""
     pts = E.ROUTE["points"]
     idx = [i for i in range(NP.LOOK_I[0], NP.LOOK_I[1] + 1)
-           if NP.on_lawn((pts[i]["x"] + pts[i + 1]["x"]) / 2, (pts[i]["y"] + pts[i + 1]["y"]) / 2)]
+           if NP.road_on_lawn((pts[i]["x"] + pts[i + 1]["x"]) / 2, (pts[i]["y"] + pts[i + 1]["y"]) / 2)]
     return [(pts[i]["x"], pts[i]["y"]) for i in range(idx[0], idx[-1] + 2)] if idx else []
 
 
@@ -628,7 +628,7 @@ def road_look(x, y):
     looks = T._looks()
     if "north_lawn" not in looks:
         looks["north_lawn"] = (ST.mat("ground_map"), _world_uv)
-    return "north_lawn" if NP.on_lawn(x, y) else "entrance_calcada"
+    return "north_lawn" if NP.road_on_lawn(x, y) else "entrance_calcada"
 
 
 def build():

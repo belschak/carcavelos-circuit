@@ -379,11 +379,18 @@ def door_aprons(route):
 # The race road's look and the ground colour map
 # ---------------------------------------------------------------------------------------------------------------
 LOOK_I = (583, 639)        # route points whose road shows the north side's real ground (env_track.ROAD_LOOK)
+ROAD_ON_LAWN = False       # Luc, 12 Nov 2026 (after driving V18j): the race road stays paved where it crosses the street's
+                           # lawn ("grass in the middle of the road"); True = the road reads as the lawn it runs over
 
 
 def on_lawn(x, y):
-    """True where the real ground is the street's lawn (the race road reads as lawn there)."""
+    """True where the real ground is the street's lawn."""
     return inside(x, y, LAWN)
+
+
+def road_on_lawn(x, y):
+    """True where the race road reads as lawn (only with ROAD_ON_LAWN; otherwise the road is setts everywhere)."""
+    return ROAD_ON_LAWN and on_lawn(x, y)
 
 
 def lawn_road_quads(route):
@@ -394,7 +401,7 @@ def lawn_road_quads(route):
     out = []
     for i in range(LOOK_I[0], LOOK_I[1] + 1):
         a, b = route[i], route[(i + 1) % n]
-        if not on_lawn((a["x"] + b["x"]) / 2, (a["y"] + b["y"]) / 2):
+        if not road_on_lawn((a["x"] + b["x"]) / 2, (a["y"] + b["y"]) / 2):
             continue
         d = math.hypot(b["x"] - a["x"], b["y"] - a["y"]) or 1.0
         tx, ty = (b["x"] - a["x"]) / d, (b["y"] - a["y"]) / d
