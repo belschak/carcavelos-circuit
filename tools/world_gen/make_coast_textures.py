@@ -341,7 +341,7 @@ def trim_precast(h, w, rng, top=False):
     holes = (rng.random((h, w)) < 0.004).astype(np.float32)
     down = (np.arange(h) / h)[:, None]
     lum = 1.0 + tone + 0.05 * n1 + 0.012 * grain - 0.2 * holes - 0.45 * joint
-    col = rgb("#E6E2D8")[None, None] * lum[..., None]
+    col = rgb("#DCDAD3")[None, None] * lum[..., None]
     if top:
         edge = np.minimum(np.arange(h), h - 1 - np.arange(h))[:, None]
         col *= (1.0 - 0.10 * np.clip(1.0 - edge / 5.0, 0, 1))[..., None]            # the two arrises, a little darker
@@ -365,7 +365,7 @@ def trim_kerb(h, w, rng):
     lum = 1.0 + tone + 0.06 * strip_noise(h, w, rng, (16, 64)) + 0.03 * grain - 0.4 * joint
     edge = np.minimum(np.arange(h), h - 1 - np.arange(h))[:, None]
     lum = lum * (1.0 - 0.16 * np.clip(1.0 - edge / 6.0, 0, 1))
-    return rgb("#C4BCAC")[None, None] * lum[..., None]
+    return rgb("#B9B5A6")[None, None] * lum[..., None]
 
 
 def trim_wall(h, w, rng):
@@ -381,7 +381,7 @@ def trim_wall(h, w, rng):
     for _ in range(3):
         streak = (streak + np.roll(streak, 1, 1) + np.roll(streak, -1, 1)) / 3.0
     lum = 1.0 + tone + 0.035 * n1 + 0.008 * grain - 0.22 * joint - 0.16 * streak * np.clip(1.2 - down * 1.4, 0, 1)
-    col = rgb("#ECE8DF")[None, None] * lum[..., None]
+    col = rgb("#E8E6DF")[None, None] * lum[..., None]
     for k in range(4):                                                               # form-tie holes, two rows
         for fy in (0.3, 0.7):
             for fx in (0.25, 0.75):
@@ -401,7 +401,7 @@ def trim_timber(h, w, rng):
     for _ in range(18):
         check = np.maximum(check, np.roll(check, 1, 1) * 0.92)                       # short drying cracks along the grain
     lum = 1.0 + 0.10 * grain + 0.12 * n1 - 0.3 * check
-    return rgb("#8C7A62")[None, None] * lum[..., None]
+    return rgb("#7A6A52")[None, None] * lum[..., None]
 
 
 def trim_iron(h, w, rng):
@@ -430,7 +430,27 @@ def trim_iron(h, w, rng):
     return out
 
 
-TRIM_FN = {"precast": trim_precast, "precast_top": lambda h, w, rng: trim_precast(h, w, rng, top=True), "kerb": trim_kerb,
+def trim_setts(h, w, rng):
+    """Two rows of dark basalt / granite setts, 12 cm cubes with worn round tops and dark joints (survey: #5f5c56)."""
+    cube = h // 2
+    ys, xs = np.mgrid[0:h, 0:w]
+    row = ys // cube
+    shift = (row * cube) // 2                                   # the second row is laid half a stone on
+    col = (xs + shift) // cube
+    ids = row * (w // cube + 2) + col
+    tone = rng.uniform(-0.16, 0.16, ids.max() + 1).astype(np.float32)[ids]
+    fx = ((xs + shift) % cube) / cube - 0.5
+    fy = (ys % cube) / cube - 0.5
+    edge = np.maximum(np.abs(fx), np.abs(fy))
+    dome = 1.0 - 0.9 * np.clip((edge - 0.34) / 0.16, 0, 1) ** 1.5         # round tops falling into the joint
+    grain = rng.normal(0, 1, (h, w)).astype(np.float32)
+    lum = (1.0 + tone + 0.05 * grain) * (0.45 + 0.55 * dome)
+    out = rgb("#6A6660")[None, None] * lum[..., None]
+    out[..., 2] *= 1.0 + 0.04 * tone * 4
+    return out
+
+
+TRIM_FN = {"setts": trim_setts, "precast": trim_precast, "precast_top": lambda h, w, rng: trim_precast(h, w, rng, top=True), "kerb": trim_kerb,
            "wall": trim_wall, "timber": trim_timber, "iron": trim_iron}
 
 

@@ -591,28 +591,41 @@ def build_details():
         p0 = (corners[0][0] + (corners[1][0] - corners[0][0]) * f, corners[0][1] + (corners[1][1] - corners[0][1]) * f)
         p1 = (corners[3][0] + (corners[2][0] - corners[3][0]) * f, corners[3][1] + (corners[2][1] - corners[3][1]) * f)
         pbeam(g, (*p0, pz + 0.08), (*p1, pz + 0.08), 0.07, 0.12, "galv")
-    hd = P.HEDGE                                                                    # tamarisk hedge
-    st = P.polyline_points(hd["line"], 4.0)
-    half = hd["depth"] / 2
-    sections = []
-    for x, y, tu, s in st:
-        n = (-tu[1], tu[0])
-        k = hd["height"] * rng.uniform(0.86, 1.08)
-        gz = min(E.ground_z(x + n[0] * half, y + n[1] * half), E.ground_z(x - n[0] * half, y - n[1] * half))
-        prof = [(-half, gz - 0.2, 0.0), (-half * rng.uniform(0.9, 1.05), gz + 0.62 * k, 1.9), (-half * 0.5, gz + 0.95 * k, 2.7),
-                (half * 0.45, gz + k, 3.0), (half * rng.uniform(0.9, 1.05), gz + 0.6 * k, 1.9), (half, gz - 0.2, 0.0)]
-        sections.append(([(x + n[0] * o, y + n[1] * o, zz, vv) for o, zz, vv in prof], s, n))
-    for (pa, sa, na), (pb, sb, _nb) in zip(sections, sections[1:]):
-        for k in range(5):
-            a0, a1, b0, b1 = pa[k], pa[k + 1], pb[k], pb[k + 1]
-            side = -1.0 if k < 2 else (1.0 if k > 2 else 0.0)
-            g.face([a0[:3], b0[:3], b1[:3], a1[:3]], 0, out=(na[0] * side, na[1] * side, 1.0 if k in (1, 2, 3) else 0.2),
-                   uvs=[P.band_uv("hedge", sa, a0[3]), P.band_uv("hedge", sb, b0[3]), P.band_uv("hedge", sb, b1[3]),
-                        P.band_uv("hedge", sa, a1[3])])
-    for (prof, s, n), sgn in ((sections[0], -1), (sections[-1], 1)):
-        tu = (n[1], -n[0])
-        g.face([q[:3] for q in prof], 0, out=(tu[0] * sgn, tu[1] * sgn, 0),
-               uvs=[P.band_uv("hedge", s + q[3] * 0.0 + k * 0.6, q[3]) for k, q in enumerate(prof)])
+    flowers = 0
+    for hd, red in [(P.HEDGE, False)] + [(q, True) for q in P.RED_HEDGES]:           # tamarisk mass; red-flowering hedges
+        st = P.polyline_points(hd["line"], 4.0 if not red else 2.0)
+        half = hd["depth"] / 2
+        sections = []
+        for x, y, tu, s in st:
+            n = (-tu[1], tu[0])
+            k = hd["height"] * rng.uniform(0.86, 1.08)
+            gz = min(E.ground_z(x + n[0] * half, y + n[1] * half), E.ground_z(x - n[0] * half, y - n[1] * half))
+            prof = [(-half, gz - 0.2, 0.0), (-half * rng.uniform(0.9, 1.05), gz + 0.62 * k, 1.9), (-half * 0.5, gz + 0.95 * k, 2.7),
+                    (half * 0.45, gz + k, 3.0), (half * rng.uniform(0.9, 1.05), gz + 0.6 * k, 1.9), (half, gz - 0.2, 0.0)]
+            sections.append(([(x + n[0] * o, y + n[1] * o, zz, vv) for o, zz, vv in prof], s, n))
+        for (pa, sa, na), (pb, sb, _nb) in zip(sections, sections[1:]):
+            for k in range(5):
+                a0, a1, b0, b1 = pa[k], pa[k + 1], pb[k], pb[k + 1]
+                side = -1.0 if k < 2 else (1.0 if k > 2 else 0.0)
+                g.face([a0[:3], b0[:3], b1[:3], a1[:3]], 0, out=(na[0] * side, na[1] * side, 1.0 if k in (1, 2, 3) else 0.2),
+                       uvs=[P.band_uv("hedge", sa, a0[3]), P.band_uv("hedge", sb, b0[3]), P.band_uv("hedge", sb, b1[3]),
+                            P.band_uv("hedge", sa, a1[3])])
+        for (prof, s, n), sgn in ((sections[0], -1), (sections[-1], 1)):
+            tu = (n[1], -n[0])
+            g.face([q[:3] for q in prof], 0, out=(tu[0] * sgn, tu[1] * sgn, 0),
+                   uvs=[P.band_uv("hedge", s + q[3] * 0.0 + k * 0.6, q[3]) for k, q in enumerate(prof)])
+        if red:                                                                     # red blossoms on the top and the south face
+            for (prof, s0, n) in sections:
+                for _k in range(9):
+                    q = prof[rng.choice((2, 3, 4))]
+                    fx, fy, fz = q[0] + rng.uniform(-0.8, 0.8) * n[1] + rng.uniform(-0.2, 0.2) * n[0], \
+                        q[1] - rng.uniform(-0.8, 0.8) * n[0] + rng.uniform(-0.2, 0.2) * n[1], q[2] + 0.04
+                    d = rng.uniform(0.08, 0.14)
+                    for quad in ([(fx - d, fy, fz), (fx + d, fy, fz), (fx + d, fy, fz + 2 * d), (fx - d, fy, fz + 2 * d)],
+                                 [(fx - d, fy - d, fz + d), (fx + d, fy - d, fz + d), (fx + d, fy + d, fz + d), (fx - d, fy + d, fz + d)]):
+                        pal(g, quad, "terracotta", None)
+                        pal(g, quad[::-1], "terracotta", None)
+                    flowers += 1
     guard("Coast_Details", g)
     finish("Coast_Details", g)
     print(f"  coast details: totem, fountain, twin bins, {stones} rip-rap stones, hedge {st[-1][3]:.0f} m; {tris(g)} triangles")
@@ -828,14 +841,28 @@ def dress(veg, props):
         if free(x, y, 1.6) and all(math.hypot(x - a, y - b) > 2.6 for a, b in P.PATH_POST_SKIP):
             add(new_p, "Prop_TimberPost", x, y)
         t += step
-    posts = 0
-    for line, off, step in P.POST_LINES:                  # V18h: low timber posts on both edges of the upper road (2009)
+    posts = []                                            # V18h: 1 m timber bollards (built by build_trim, not props)
+    wx, wy = P.WASTE["at"]
+    for line, off, step in P.POST_LINES:
         for x0, y0, u, _s in P.polyline_points(line, step):
             x, y = x0 - u[1] * off, y0 + u[0] * off
-            if P.route_distance(x, y) >= P.ROUTE_CLEAR and free(x, y, 1.2) and \
-                    all(math.hypot(x - bx, y - by) > 1.5 for bx, by in P.BINS):
-                add(new_p, "Prop_TimberPost", x, y)
-                posts += 1
+            if P.route_distance(x, y) >= P.ROUTE_CLEAR + 0.1 and free(x, y, 1.0) and \
+                    not (abs(x - wx) < 3.2 and abs(y - wy) < 1.6) and math.hypot(x - P.PERGOLA["at"][0], y - P.PERGOLA["at"][1]) > 3.6:
+                posts.append((x, y))
+    _state["posts"] = posts
+    for x, y, sc in P.EXTRA_PALMS:                        # second round: the palm plaza's loose grid
+        if free(x, y, 2.6):
+            add(new_v, rng.choice(("Veg_Palm", "Veg_Palm_B")), x, y, rng.uniform(-math.pi, math.pi), sc, clear=P.TREE_CLEAR)
+    bl = P.BELT                                           # the shrub belt on the mulch bed at the north bank's foot
+    x = bl["first"]
+    belt = 0
+    while x <= bl["last"]:
+        bx, by = x + rng.uniform(-0.5, 0.5), P.north_kerb_y(x) + bl["back"] + rng.uniform(-0.3, 0.5)
+        if free(bx, by, 1.7) and not (abs(bx - wx) < 3.4 and abs(by - wy) < 1.8) and P.route_distance(bx, by) >= P.TREE_CLEAR \
+                and math.hypot(bx - P.PERGOLA["at"][0], by - P.PERGOLA["at"][1]) > 4.5:
+            add(new_v, rng.choice(("Veg_Shrub", "Veg_Shrub_B")), bx, by, rng.uniform(-math.pi, math.pi), rng.uniform(*bl["scale"]))
+            belt += 1
+        x += bl["step"]
     for x, y in P.PLAZA_SAPLINGS:                         # V18g: young trees along the east road's south kerb
         if free(x, y, 2.0):
             add(new_v, "Veg_Sapling", x, y, rng.uniform(-math.pi, math.pi), rng.uniform(1.0, 1.25), clear=P.TREE_CLEAR)
@@ -869,7 +896,8 @@ def dress(veg, props):
             it["z"] = z
             lifted_paving += 1
     _state["veg"] = veg + new_v
-    print(f"  coast dressing (V18h): {posts} timber posts along the upper road, {lifted_paving} items stand on the paving")
+    _state["items"] = veg + props + new_v + new_p
+    print(f"  coast dressing (V18h): {len(posts)} spots for timber bollards, {belt} belt shrubs, {lifted_paving} items stand on the paving")
     print(f"  coast dressing: removed {', '.join(sorted(it['proto'] + '@' + str(round(it['x'])) + ',' + str(round(it['y'])) for it in gone)) or 'nothing'}; "
           f"{seated} items seated on the new ground or deck, {lifted} ramp railings lifted onto the upstand; added "
           f"{len(new_v)} plants, {len(new_p)} props ({k} fence segments on the south portal's deck)")
@@ -1033,6 +1061,40 @@ def build_edges():
                 g.face([(*q0, z0 - 0.06), (*q1, z1 - 0.06), (*q1, z1 + kh), (*q0, z0 + kh)], 0, out=(n0[0] * sgn, n0[1] * sgn, 0),
                        uvs=[P.trim_uv("kerb", s0, 0.0), P.trim_uv("kerb", s1, 0.0), P.trim_uv("kerb", s1, 0.03), P.trim_uv("kerb", s0, 0.03)])
             total += s1 - s0
+    def sett_band(a, b, width):
+        """Flush band of dark setts from a to b; left out where the race road or a street layer lies."""
+        n = max(1, int(round(math.hypot(b[0] - a[0], b[1] - a[1]) / 0.8)))
+        u = P.unit(b[0] - a[0], b[1] - a[1])
+        nv = (-u[1] * width / 2, u[0] * width / 2)
+        made, prev = 0.0, None
+        for k in range(n + 1):
+            x, y = a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n
+            ok = S.route_distance(x, y) >= S.KEEP_OUT + 0.15 and P.paved(x, y) and not (S.layer_at(x, y) or {}).get("mat")
+            cur = (x, y, paving_z(x, y) + 0.014, k * math.hypot(b[0] - a[0], b[1] - a[1]) / n) if ok else None
+            if cur and prev:
+                (x0, y0, z0, s0), (x1, y1, z1, s1) = prev, cur
+                g.face([(x0 - nv[0], y0 - nv[1], z0), (x1 - nv[0], y1 - nv[1], z1), (x1 + nv[0], y1 + nv[1], z1), (x0 + nv[0], y0 + nv[1], z0)],
+                       0, out=(0, 0, 1), uvs=[P.trim_uv("setts", s0, 0.25 * (0.5 - width / 0.5)), P.trim_uv("setts", s1, 0.25 * (0.5 - width / 0.5)),
+                                              P.trim_uv("setts", s1, 0.25 * (0.5 + width / 0.5)), P.trim_uv("setts", s0, 0.25 * (0.5 + width / 0.5))])
+                made += s1 - s0
+            prev = cur
+        return made
+    setts = 0.0
+    for (sx, sy), deg in P.SETT_BANDS:                    # the diagonal bands across the upper road, the single one
+        a = math.radians(deg)
+        d = (P.UPPER_U[0] * math.cos(a) + P.UPPER_U[1] * math.sin(a), P.UPPER_U[1] * math.cos(a) - P.UPPER_U[0] * math.sin(a))
+        reach = 0.0
+        while reach < 30.0 and P.inside(sx + d[0] * (reach + 0.5), sy + d[1] * (reach + 0.5), P.UPPER):
+            reach += 0.5
+        setts += sett_band((sx + d[0] * 0.15, sy + d[1] * 0.15), (sx + d[0] * reach, sy + d[1] * reach), P.SETT_W)
+    rp = P.RAMP                                           # the stepped ramp: a sett band on every nosing, the slot drain
+    for y in rp["nosings"]:
+        setts += sett_band((rp["x"][0], y), (rp["x"][1], y - 0.06), 0.3)
+    dz = [(x, rp["drain"]) for x in (rp["x"][0], rp["x"][1])]
+    if all(S.route_distance(*q) >= S.KEEP_OUT + 0.2 for q in dz):
+        za, zb = paving_z(*dz[0]) + 0.014, paving_z(*dz[1]) + 0.014
+        tpal(g, [(dz[0][0], dz[0][1] - 0.075, za), (dz[1][0], dz[1][1] - 0.075, zb), (dz[1][0], dz[1][1] + 0.075, zb),
+                 (dz[0][0], dz[0][1] + 0.075, za)], "iron", (0, 0, 1))
     covers = 0
     for cell, spots, half, sides in ((0, P.MANHOLES, 0.42, 12), (1, P.GULLIES, 0.27, 4)):
         for x, y in spots:
@@ -1049,39 +1111,63 @@ def build_edges():
                        uvs=[P.iron_uv(cell, 0.5 + 0.485 * c, 0.5 + 0.485 * sn) for c, sn in ring])
             covers += 1
     finish("Coast_Edges_NoCollide", g, [trim_material()])
-    print(f"  coast edges (V18h, no collider): kerb stones {total:.0f} m, {covers} covers and gullies; {tris(g)} triangles")
+    print(f"  coast edges (V18h, no collider): kerb stones {total:.0f} m, sett bands {setts:.0f} m, {covers} covers and gullies; "
+          f"{tris(g)} triangles")
 
 
 def build_trim(veg):
-    """Seat blocks, the kerb-bench east of the portal with its lamp posts, palm pits, bins. Everything keeps
-    ROUTE_CLEAR from the race centreline (guard)."""
+    """Seat and barrier blocks, the kerb-bench east of the portal with its lamp posts, timber bollards, palm pits, the
+    waste station, the ramp's bollards and hydrant. Everything keeps ROUTE_CLEAR from the race centreline (guard)."""
     g = B.Geo()
-    bl = P.BLOCK
     blocks = 0
+
+    def block(c, u, size, s0):
+        half = size[0] / 2
+        zs = [paving_z(c[0] + u[0] * k * half, c[1] + u[1] * k * half) for k in (-1, 0, 1)]
+        ends = [(c[0] + u[0] * k * half, c[1] + u[1] * k * half) for k in (-1, 1)]
+        if all(P.route_distance(*q) >= P.ROUTE_CLEAR + size[1] / 2 + 0.1 for q in ends + [c]):
+            tbox(g, c, u, half, size[1] / 2, min(zs) - 0.25, max(zs) + size[2], s0=s0)
+            return 1
+        return 0
+    bl = P.BLOCK
     for row in P.BLOCK_ROWS:
+        size = row.get("size", (bl["length"], bl["width"], bl["height"]))
         pts = P.polyline_points(row["line"], 0.2)
         total = pts[-1][3]
         s = 0.0
-        while s + bl["length"] <= total + 1e-6:
+        while s + size[0] <= total + 1e-6:
             a = min(pts, key=lambda q: abs(q[3] - s))
-            b = min(pts, key=lambda q: abs(q[3] - (s + bl["length"] - bl["gap"])))
+            b = min(pts, key=lambda q: abs(q[3] - (s + size[0] - 0.06)))
             u = P.unit(b[0] - a[0], b[1] - a[1])
-            c = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
-            half = math.hypot(b[0] - a[0], b[1] - a[1]) / 2
-            zs = [paving_z(c[0] + u[0] * k * half, c[1] + u[1] * k * half) for k in (-1, 0, 1)]
-            if P.route_distance(*a[:2]) >= P.ROUTE_CLEAR + 0.4 and P.route_distance(*b[:2]) >= P.ROUTE_CLEAR + 0.4:
-                tbox(g, c, u, half, bl["width"] / 2, min(zs) - 0.25, max(zs) + bl["height"], s0=2.4 * (blocks % 4))
-                blocks += 1
+            blocks += block(((a[0] + b[0]) / 2, (a[1] + b[1]) / 2), u, (math.hypot(b[0] - a[0], b[1] - a[1]), size[1], size[2]), 2.4 * (blocks % 4))
             s += row["pitch"]
+    others = _state.get("items", [])
+    for t, off in P.GAP_BLOCKS:                             # barrier blocks on both edges of the gap section
+        c = P.route_side(t, off)
+        if all(math.hypot(c[0] - q["x"], c[1] - q["y"]) > 2.2 for q in others):
+            blocks += block(c, P.route_at(t)[1], P.GAP_BLOCK, 2.4 * (blocks % 4) + 0.5)
     for x, y in P.BENCH_LAMPS:                              # slim dark posts with a flat head (Dec 2022)
         z = paving_z(x, y)
         pbox_t(g, (x, y), (1.0, 0.0), 0.06, 0.06, z, z + 5.2, "anthracite")
         pbox_t(g, (x, y - 0.35), (1.0, 0.0), 0.16, 0.5, z + 5.2, z + 5.28, "anthracite", skip=())
         tpal(g, [(x - 0.12, y - 0.75, z + 5.195), (x + 0.12, y - 0.75, z + 5.195), (x + 0.12, y - 0.15, z + 5.195),
                  (x - 0.12, y - 0.15, z + 5.195)], "lamp", (0, 0, -1))
+    r, ph = P.POST["radius"], P.POST["height"]
+    posts = 0
+    for x, y in _state.get("posts", []):                    # round timber bollards, 1 m, on a small concrete collar
+        z = E.ground_z(x, y)
+        ring = [(x + r * math.cos(2 * math.pi * k / 8), y + r * math.sin(2 * math.pi * k / 8)) for k in range(8)]
+        for k in range(8):
+            a, b = ring[k], ring[(k + 1) % 8]
+            g.face([(*a, z - 0.15), (*b, z - 0.15), (*b, z + ph), (*a, z + ph)], 0, out=(a[0] + b[0] - 2 * x, a[1] + b[1] - 2 * y, 0),
+                   uvs=[P.trim_uv("timber", 0.0, 0.03 * k + 0.02), P.trim_uv("timber", 0.0, 0.03 * k + 0.05),
+                        P.trim_uv("timber", ph + 0.15, 0.03 * k + 0.05), P.trim_uv("timber", ph + 0.15, 0.03 * k + 0.02)])
+        tpal(g, [(*q, z + ph) for q in ring], "timber", (0, 0, 1))
+        pbox_t(g, (x, y), (1.0, 0.0), 0.17, 0.17, z - 0.1, z + 0.04, "kerb")
+        posts += 1
     pits = 0
     h = P.PALM_PIT / 2
-    for it in veg:                                          # square timber frame and mulch round each palm on the paving
+    for it in veg:                                          # square pit with a dark edging and mulch round each palm
         if not it["proto"].startswith("Veg_Palm") or not P.inside(it["x"], it["y"], P.UPPER):
             continue
         x, y = it["x"], it["y"]
@@ -1092,33 +1178,36 @@ def build_trim(veg):
         v = (-u[1], u[0])
         for (ca, cb), axis in (((0, 1), u), ((0, -1), u), ((1, 0), v), ((-1, 0), v)):
             c = (x + u[0] * ca * h + v[0] * cb * h, y + u[1] * ca * h + v[1] * cb * h)
-            tbox(g, c, axis, h + 0.07, 0.07, z - 0.2, z + 0.16, s0=0.3 * pits, side="timber", top="timber")
-        corners = [(x + u[0] * a * h + v[0] * b * h, y + u[1] * a * h + v[1] * b * h, z + 0.09) for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+            pbox_t(g, c, axis, h + 0.06, 0.06, z - 0.2, z + 0.06, "sett")
+        corners = [(x + u[0] * a * h + v[0] * b * h, y + u[1] * a * h + v[1] * b * h, z + 0.03) for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
         g.face(corners, 0, out=(0, 0, 1), uvs=[P.iron_uv(2, a, b) for a, b in ((0, 0), (1, 0), (1, 1), (0, 1))])
-        for k in range(3):                                  # three raking timber stakes tied to the trunk (2009)
-            ang = math.radians(90.0 + 120.0 * k + 17.0 * pits)
-            foot = (x + math.cos(ang) * h * 0.9, y + math.sin(ang) * h * 0.9, z + 0.05)
-            head = (x + math.cos(ang) * 0.28, y + math.sin(ang) * 0.28, z + 1.75)
-            d = (head[0] - foot[0], head[1] - foot[1], head[2] - foot[2])
-            ln = math.sqrt(sum(c * c for c in d))
-            side = (-math.sin(ang) * 0.045, math.cos(ang) * 0.045, 0.0)
-            for sgn in (1, -1):                             # two crossed strips read as a round pole from every side
-                o = side if sgn == 1 else (math.cos(ang) * 0.045 * d[2] / ln, math.sin(ang) * 0.045 * d[2] / ln, -0.045 * math.hypot(d[0], d[1]) / ln)
-                quad = [tuple(foot[j] - o[j] for j in range(3)), tuple(foot[j] + o[j] for j in range(3)),
-                        tuple(head[j] + o[j] for j in range(3)), tuple(head[j] - o[j] for j in range(3))]
-                uvs = [P.trim_uv("timber", 0.0, 0.05), P.trim_uv("timber", 0.0, 0.2), P.trim_uv("timber", ln, 0.2), P.trim_uv("timber", ln, 0.05)]
-                g.face(quad, 0, uvs=uvs)
-                g.face(quad[::-1], 0, uvs=uvs[::-1])
         pits += 1
-    for x, y in P.BINS:                                     # round bins: a galvanised drum, a green band, a dark lid
+    ws = P.WASTE                                            # underground-waste station: platform, four inlets with a stripe
+    (wx, wy), (wl, ww, wh) = ws["at"], ws["size"]
+    wz = max(E.ground_z(wx + P.UPPER_U[0] * k, wy + P.UPPER_U[1] * k) for k in (-wl / 2, 0, wl / 2))
+    tbox(g, (wx, wy), P.UPPER_U, wl / 2, ww / 2, wz - 0.5, wz + wh, s0=0.0)
+    for k, colour in enumerate(ws["stripes"]):
+        a = -wl / 2 + wl * (k + 0.5) / len(ws["stripes"])
+        cx, cy = wx + P.UPPER_U[0] * a, wy + P.UPPER_U[1] * a
+        tcyl(g, cx, cy, 0.25, wz + wh, wz + wh + 1.1, "galv")
+        pbox_t(g, (cx, cy - 0.245), (1.0, 0.0), 0.07, 0.02, wz + wh + 0.25, wz + wh + 0.95, colour)
+        tpal(g, [(cx - 0.3, cy - 0.68, wz + wh + 0.006), (cx + 0.3, cy - 0.68, wz + wh + 0.006),
+                 (cx + 0.3, cy - 0.32, wz + wh + 0.006), (cx - 0.3, cy - 0.32, wz + wh + 0.006)], "galv", (0, 0, 1))   # steel lid plate
+    (ux, uy), (ul, uw, uh) = P.UTILITY_BOX["at"], P.UTILITY_BOX["size"]
+    uz = E.ground_z(ux, uy)
+    pbox_t(g, (ux, uy), P.UPPER_U, ul / 2, uw / 2, uz - 0.1, uz + uh, "terracotta")
+    for x, y in P.RAMP["bollards"]:                         # slim black steel bollards at the top of the stepped ramp
         z = paving_z(x, y)
-        tcyl(g, x, y, 0.30, z - 0.05, z + 0.62, "galv")
-        tcyl(g, x, y, 0.305, z + 0.62, z + 0.80, "green")
-        tcyl(g, x, y, 0.32, z + 0.80, z + 0.98, "anthracite")
+        tcyl(g, x, y, 0.05, z - 0.1, z + 0.9, "black", n=6)
+    hx, hy = P.RAMP["hydrant"]                              # the red hydrant on the grass corner
+    hz = E.ground_z(hx, hy)
+    tcyl(g, hx, hy, 0.09, hz - 0.1, hz + 0.6, "red", n=8)
+    tcyl(g, hx, hy, 0.12, hz + 0.6, hz + 0.72, "red", n=8)
+    pbox_t(g, (hx, hy), (1.0, 0.0), 0.2, 0.045, hz + 0.38, hz + 0.47, "red", skip=())
     guard("Coast_Trim", g)
     finish("Coast_Trim", g, [trim_material()])
-    print(f"  coast trim (V18h): {blocks} precast seat blocks, {len(P.BENCH_LAMPS)} lamp posts, {pits} palm pits, "
-          f"{len(P.BINS)} bins; {tris(g)} triangles")
+    print(f"  coast trim (V18h): {blocks} white blocks, {len(P.BENCH_LAMPS)} lamp posts, {posts} timber bollards, {pits} palm pits, "
+          f"the waste station, a utility box, {len(P.RAMP['bollards'])} ramp bollards, a hydrant; {tris(g)} triangles")
 
 
 def pbox_t(g, c, u, hu, hv, z0, z1, colour, skip=("bottom",)):

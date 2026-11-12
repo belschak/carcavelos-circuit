@@ -242,9 +242,12 @@ assert _row == ATLAS_SIZE
 
 # V18h: a second atlas for what the kart passes closely (W_coast_trim): precast blocks, kerb stones, the white wall
 TRIM_BANDS = [("pal", 64, 1.0, 1.0), ("precast", 224, 9.6, 0.55), ("precast_top", 128, 9.6, 0.5), ("kerb", 96, 8.0, 0.25),
-              ("wall", 288, 9.6, 3.2), ("timber", 96, 2.4, 0.3), ("iron", 128, 8.0, 1.0)]
-TRIM_PALETTE = {"white": "#E6E2D8", "anthracite": "#33363B", "galv": "#A9A69B", "green": "#5E9A46", "soil": "#5A4A3A",
-                "timber": "#8C7A62", "lamp": "#FFF4D6", "kerb": "#C4BCAC", "iron": "#4E4B48"}
+              ("wall", 224, 9.6, 3.2), ("timber", 96, 2.4, 0.3), ("iron", 128, 8.0, 1.0), ("setts", 64, 3.84, 0.25)]
+# colours: the coast-walk survey's corrected albedo values (reports/coastwalk-survey.md, MATERIALS)
+TRIM_PALETTE = {"white": "#DCDAD3", "anthracite": "#33363B", "galv": "#A9A69B", "green": "#5E9A46", "soil": "#4A3E30",
+                "timber": "#7A6A52", "lamp": "#FFF4D6", "kerb": "#B9B5A6", "iron": "#4E4B48", "blue": "#3E6FA8",
+                "yellow": "#D8B63A", "grey": "#7E8084", "terracotta": "#B8705C", "red": "#C8483C", "black": "#1E1F22",
+                "sett": "#5F5C56"}
 TRIM = {}
 _row = 0
 for _name, _h, _um, _vm in TRIM_BANDS:
@@ -291,7 +294,7 @@ def pal_uv(colour):
 PORTAL_S = next(i for i, p in enumerate(ROUTE) if p["tunnel"])
 PORTAL_N = max(i for i, p in enumerate(ROUTE) if p["tunnel"])
 FORE = dict(first=392.0, wall=(398.0, PORTAL_S + 0.0), wall_offset=6.85, wall_h=(0.55, 3.0), wall_thick=0.3,
-            bench=(396.5, PORTAL_S - 6.5), bench_offset=-7.1, bench_size=(0.5, 0.5), bench_len=3.0, bench_gap=0.06,
+            bench=(396.5, PORTAL_S - 6.5), bench_offset=-7.1, bench_size=(0.4, 0.45), bench_len=3.0, bench_gap=0.06,
             bollards=[(402.0, -7.4), (403.0, -8.6), (404.0, -9.8)],
             paint_half=12.0)                              # concrete up to the wall (left) and over the upper walkway (right)
 # V18g: the old wall follows the field's kerb (orthophoto, walk video 12:10-12:50): up the lane's east side, round the
@@ -379,9 +382,10 @@ DROP = [  # frozen dressing that stands where something of this plan now is: (x0
 # CONCRETE: name -> colour, tile (m), slab (m along the road, m across), seed (make_coast_textures.make_concrete)
 # =====================================================================================================
 CONCRETE = {
-    "beige": dict(colour="#CBBD9F", tile=8.0, slab=(4.0, 4.0), seed=1821, stains=16, cracks=5),     # upper road, path
-    "ochre": dict(colour="#CDB590", tile=10.0, slab=(5.0, 5.0), seed=1822, stains=10, cracks=4),    # tunnel plaza, ramp
-    "pale": dict(colour="#D6CFC0", tile=8.0, slab=(4.0, 2.0), seed=1823, stains=12, cracks=6, stain=0.08),   # promenade
+    # second round: the coast-walk survey's corrected albedo values and panel sizes (about 5 m; forecourt 5-6 m)
+    "beige": dict(colour="#AAA696", tile=10.0, slab=(5.0, 5.0), seed=1821, stains=12, cracks=3, stain=0.09),   # upper / lower road
+    "ochre": dict(colour="#A39276", tile=11.0, slab=(5.5, 5.5), seed=1822, stains=12, cracks=4),    # tunnel forecourt, ramp
+    "pale": dict(colour="#B4B0A2", tile=8.0, slab=(4.0, 2.0), seed=1823, stains=12, cracks=6, stain=0.08),   # promenade
 }
 UPPER_U = unit(82.5, -6.6)                       # the upper road's axis (west to east), its slab joints follow it
 PROM_U = unit(113.5, -65.2)                      # the promenade's axis
@@ -439,6 +443,7 @@ def paving_layers():
         return dict(name=name, mat=mat, ring=[(float(x), float(y)) for x, y in ring], uv=uv)
     return [lay("promenade", "pale", promenade_ring(KERB_INSET)), lay("cove ring", "pale", cove_ring(KERB_INSET)),
             lay("upper road and palm car park", "beige", UPPER), lay("lower road", "beige", LOWER),
+            lay("stepped ramp", "beige", RAMP["ring"]),
             lay("sett paving at the cove", "setts", SETTS), lay("upper path", "beige", PATH_WEST),
             lay("tunnel plaza and east road", "ochre", PLAZA), lay("lane", "asphalt", LANE),
             lay("forecourt and ramp", "ochre", forecourt_ring())]
@@ -465,19 +470,57 @@ KERBS = [
     [(-55.5, -124.5), (-25.0, -126.3), (-13.0, -126.1), (-12.5, -129.5), (-9.0, -140.0), (-9.0, -146.0)],       # path, plaza
 ]
 KERB_W, KERB_H = 0.22, 0.05
-# White precast seat blocks (2.4 x 0.5 x 0.45 m): the palm car park's south edge (2009), and the kerb-bench that
-# parts the east road from the tunnel ramp (2019, 2022: along y -122, lamp posts standing in it)
-BLOCK = dict(length=2.4, width=0.5, height=0.45, gap=0.06)
-BLOCK_ROWS = [dict(line=[(-86.3, -133.8), (-84.4, -134.8), (-66.5, -133.7)], pitch=4.8),
-              dict(line=[(17.0, -122.1), (46.2, -122.0)], pitch=2.46)]
+# White seat blocks (survey: 2.0 x 0.6 x 0.5 m at the palm plaza's seaward edge; the kerb-bench that parts the east
+# road from the tunnel ramp: 0.4 m wide, 0.45 m high, lamp posts standing in it)
+BLOCK = dict(length=2.0, width=0.6, height=0.5, gap=0.0)
+BLOCK_ROWS = [dict(line=[(-86.3, -133.8), (-84.4, -134.8), (-66.5, -133.7)], pitch=4.0),
+              dict(line=[(17.0, -122.1), (46.2, -122.0)], pitch=2.46, size=(2.4, 0.4, 0.45))]
+# barrier blocks of the gap section (survey 3d: about 1.3 x 0.5 x 0.4 m on both edges): (route index, offset)
+GAP_BLOCKS = [(385.5, -7.0), (387.6, -7.0), (398.0, -7.0), (388.5, 7.0), (392.5, 7.0), (396.5, 7.0)]
+GAP_BLOCK = (1.3, 0.5, 0.4)
 BENCH_LAMPS = [(24.4, -122.1), (39.2, -122.0)]             # slim dark posts with a flat head, standing in the kerb-bench
-PALM_PIT = 2.0                                             # m: square timber frame round each palm of the car park
-BINS = [(-75.7, -113.6), (-73.5, -113.75), (-71.3, -113.9)]     # round bins on the north edge (orthophoto: pale dots)
+PALM_PIT = 1.5                                             # m: square pit with a dark edging round each palm (survey 3c)
+EXTRA_PALMS = [(-92.5, -128.0, 0.9), (-83.0, -130.6, 0.86)]   # the plaza's palms stand on a loose 6-8 m grid
+# underground-waste station on the north kerb at x -80: four steel inlets with a colour stripe on a raised platform
+WASTE = dict(at=(-80.0, -112.25), size=(5.0, 1.5, 0.15), stripes=("blue", "yellow", "green", "grey"))
+UTILITY_BOX = dict(at=(-64.0, -113.6), size=(1.0, 0.6, 0.9))            # terracotta box on the north verge
 MANHOLES = [(-3.0, -131.5), (3.6, -135.2), (-1.5, -139.5), (30.0, -126.0), (-40.0, -117.6)]   # round cast-iron covers
-GULLIES = [(-126.0, -116.4), (-104.0, -118.0), (-76.0, -119.5), (-118.0, -131.0)]            # square gully grates
-# low timber posts (existing prototype) along the upper road: (line, offset to the left of the line, step)
-POST_LINES = [([(-137.5, -108.6), (-99.5, -111.8), (-72.3, -113.6), (-60.0, -114.7)], 0.4, 2.5),
-              ([(-137.0, -120.5), (-101.5, -121.4)], -0.4, 2.5)]
+GULLIES = [(-130.0, -110.0), (-104.0, -112.2), (-116.0, -119.5), (-76.0, -114.2), (-118.0, -131.0)]   # small square drain plates near the kerbs
+# round timber bollards, 1.0 m, d 15 cm, on a small concrete collar (survey: every 2.0-2.5 m on both edges of the
+# upper road and on the gap section's north verge): (line, offset to the left of the line, step)
+POST_LINES = [([(-137.5, -108.6), (-99.5, -111.8), (-72.3, -113.6), (-58.0, -114.9), (-25.0, -117.3), (-14.0, -117.9)], 0.45, 2.25),
+              ([(-137.0, -120.5), (-101.5, -121.4)], -0.45, 2.25)]
+POST = dict(height=1.0, radius=0.075)
+# dark sett bands, flush (survey 3b): three parallel diagonals across the upper road at x about -112 (2 rows = 0.25 m,
+# 1.1 m apart, about 35 degrees to the axis) and a single transverse band; (start on the north kerb, angle to the axis)
+SETT_W = 0.25
+SETT_BANDS = [((-121.0 + 1.92 * k, -109.9 - 0.163 * k), 35.0) for k in range(3)] + [((-128.5, -109.3), 90.0)]
+# the stepped ramp from the square down to the lower road (survey 3a): landings 1.35 m deep, a 0.3 m sett band on
+# every nosing, a slot drain across the top, slim black bollards, a hydrant. Our ground there is one slope (the race
+# road passes 6 m away), so the steps are bands on the paving, not risers.
+RAMP = dict(ring=[(-139.5, -120.3), (-134.0, -120.6), (-133.0, -126.9), (-139.5, -126.5)],
+            nosings=[-121.5, -122.85, -124.2, -125.55, -126.6], x=(-139.3, -133.4), drain=-120.75,
+            bollards=[(-138.4, -120.0), (-136.3, -120.1), (-134.2, -120.2)], hydrant=(-132.6, -121.0))
+# mulch bed and shrub belt at the foot of the north bank (survey 3b: 2-3 m bed, today a dense 3-5 m shrub belt)
+MULCH_W = 2.6
+BELT = dict(first=-136.0, last=-60.0, step=3.3, back=1.7, scale=(2.0, 2.7))
+# the red-flowering hedge on the gap section's north side (survey 3d, about 2 m)
+RED_HEDGES = [dict(line=[(-54.0, -113.4), (-45.0, -114.0), (-36.5, -114.7)], height=2.0, depth=1.5),
+              dict(line=[(-29.5, -115.3), (-21.5, -115.9)], height=2.0, depth=1.5)]
+
+
+def north_kerb_y(x):
+    """y of the upper road's north kerb at x (KERBS[0])."""
+    line = KERBS[0]
+    for a, b in zip(line, line[1:]):
+        if a[0] <= x <= b[0]:
+            return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0])
+    return line[0][1] if x < line[0][0] else line[-1][1]
+
+
+def mulch_ring():
+    xs = [-139.0 + 4.0 * k for k in range(21)]                           # x -139 .. -59
+    return [(x, north_kerb_y(x)) for x in xs] + [(x, north_kerb_y(x) + MULCH_W) for x in xs][::-1]
 
 
 # =====================================================================================================
@@ -489,21 +532,23 @@ def ground_paint():
     field_e = [(100.0, -130.2), (172.0, -129.0), (172.0, -143.0), (135.0, -143.0), (135.0, -150.0), (100.0, -150.0)]
     field = [(22.0, -130.6), (60.0, -130.4), (100.0, -130.2), (100.0, -262.0), (2.0, -262.0), (-5.0, -220.0),
              (4.8, -150.0), (6.3, -142.6), (8.9, -137.1), (14.4, -132.6)]
-    conc, dry, grass = (203, 189, 159), (163, 163, 116), (143, 179, 122)
-    ochre = (207, 181, 140)
+    conc, dry, grass = (170, 166, 150), (163, 163, 116), (143, 179, 122)      # survey albedo #aaa696
+    ochre = (163, 146, 118)                                                    # #a39276
     # V18g, traced on the orthophoto (3 px/m) and checked on the Google satellite view; drawn in this order.
     # V18h: the same outlines are real paving now (paving_layers); the paint stays under it in the same colours, so
     # the far ground map and the seams read the same.
     slope, wedge, lower, setts = SLOPE, WEDGE, LOWER, SETTS
-    pale = (214, 207, 192)                                             # beside the sand: paler and greyer, so it reads
+    pale = (180, 176, 162)                                             # the promenade's slabs (#b4b0a2)
     prom_ring, ring = promenade_ring(), cove_ring()
     import coast
     out = [dict(name="promenade concrete", ring=prom_ring, colour=pale, lawn=0, alpha=1.0),
            dict(name="cove ring concrete", ring=ring, colour=pale, lawn=0, alpha=1.0),
            dict(name="dry slope below the Marginal", ring=slope, colour=dry, lawn=120, alpha=0.85),
+           dict(name="mulch bed at the north bank's foot", ring=mulch_ring(), colour=(74, 62, 48), lawn=0, alpha=1.0),
            dict(name="upper road and palm car park", ring=UPPER, colour=conc, lawn=0, alpha=1.0),
            dict(name="lawn wedge", ring=wedge, colour=grass, lawn=255, alpha=1.0),
            dict(name="lower road", ring=lower, colour=conc, lawn=0, alpha=1.0),
+           dict(name="stepped ramp", ring=RAMP["ring"], colour=conc, lawn=0, alpha=1.0),
            dict(name="sett paving at the cove", ring=setts, colour=(128, 118, 116), lawn=0, alpha=1.0),
            dict(name="upper path", ring=PATH_WEST, colour=conc, lawn=0, alpha=1.0),
            dict(name="tunnel plaza, east road", ring=PLAZA, colour=ochre, lawn=0, alpha=1.0),
