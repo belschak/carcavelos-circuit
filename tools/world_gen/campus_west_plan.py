@@ -128,7 +128,8 @@ COURT_HEADING = 0.3695           # rad: the tables stand along D (heading 69)
 # the real trees of the two lawns (survey: W08, W27, orthophoto), moved out of the road's clearance where needed:
 # (x, y, prototype, scale)
 TREES = [(-69.3, 53.6, "Veg_Olive", 0.62),          # old olive, real (-69, 52): 5.6 m from the centreline there
-         (-27.0, 45.0, "Veg_PlazaTree", 0.62),      # young tree, real (-27, 48.5): 4 m from the centreline there
+         (-26.5, 42.6, "Veg_PlazaTree", 0.62),      # young tree, real (-27, 48.5): 4 m from the centreline there (V18i:
+                                                    # 2.5 m further south, 8.2 m left of the higher jump's flight line)
          (-60.5, -31.0, "Veg_Olive_B", 0.66),       # the one old olive of the south-west lawn
          (32.5, -73.5, "Veg_PlazaTree", 0.7)]       # V18g: small tree where the branch path leaves (Google 2026)
 
