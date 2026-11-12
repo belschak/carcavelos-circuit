@@ -7,6 +7,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_B_railing
+    second: {fileID: 2100000, guid: 128bfc8c94c2345a3a83ce714aedd223, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_B_roof_tiles
     second: {fileID: 2100000, guid: c9a7e83b5e1ab44af9f9ec87d7e8b2c4, type: 2}
   - first:

@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 8900000, guid: 791f5fc4090594dd7b1571da2a870b28, type: 3}
-  m_Sun: {fileID: 4412398991270033795}
+  m_Sun: {fileID: 92889605832094582}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &38961268
+--- !u!1 &28959199
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,53 +127,53 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 38961269}
-  - component: {fileID: 38961271}
-  - component: {fileID: 38961270}
+  - component: {fileID: 28959200}
+  - component: {fileID: 28959202}
+  - component: {fileID: 28959201}
   m_Layer: 0
-  m_Name: Checkpoint 1
+  m_Name: Checkpoint 6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &38961269
+--- !u!4 &28959200
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 38961268}
+  m_GameObject: {fileID: 28959199}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.9669937, z: -0, w: -0.2548005}
-  m_LocalPosition: {x: 47.755, y: 16.560001, z: 68.489}
+  m_LocalRotation: {x: -0, y: 0.9411706, z: -0, w: 0.33793205}
+  m_LocalPosition: {x: -123.16, y: 4.42, z: -150.58}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 121816976}
-  m_Father: {fileID: 1930870791}
+  - {fileID: 1089166075}
+  m_Father: {fileID: 1497649996}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &38961270
+--- !u!114 &28959201
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 38961268}
+  m_GameObject: {fileID: 28959199}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 1
-  respawnPoint: {fileID: 121816976}
---- !u!65 &38961271
+  index: 6
+  respawnPoint: {fileID: 1089166075}
+--- !u!65 &28959202
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 38961268}
+  m_GameObject: {fileID: 28959199}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -186,9 +186,9 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 11, y: 6, z: 1}
+  m_Size: {x: 12, y: 6, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &83370785
+--- !u!1 &74926283
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -196,7 +196,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 83370786}
+  - component: {fileID: 74926284}
   m_Layer: 0
   m_Name: RespawnPoint
   m_TagString: Untagged
@@ -204,53 +204,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &83370786
+--- !u!4 &74926284
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 83370785}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.104649544, z: -0, w: 0.9945092}
-  m_LocalPosition: {x: 0.43660557, y: -1.6700001, z: 3.9647415}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 457431746}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &121816975
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 121816976}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &121816976
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 121816975}
+  m_GameObject: {fileID: 74926283}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.21027741, z: -0, w: 0.9776418}
   m_LocalPosition: {x: 0.87389576, y: -1.500001, z: 3.8690147}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 38961269}
+  m_Father: {fileID: 1608662136}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &281217653
+--- !u!1 &121865108
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -258,340 +227,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 281217654}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &281217654
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 281217653}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.10815328, z: -0, w: 0.9941343}
-  m_LocalPosition: {x: -0.531463, y: -1.500001, z: 3.9595528}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1652104570}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &378882213
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 378882214}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &378882214
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 378882213}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.003983587, z: -0, w: 0.9999921}
-  m_LocalPosition: {x: 0.017747402, y: -1.5700002, z: 4.0028124}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1900928307}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &456489911
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 456489912}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &456489912
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 456489911}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.016757444, z: -0, w: 0.99985963}
-  m_LocalPosition: {x: 0.051479936, y: -0.9200001, z: 4.003792}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1517572136}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &457431745
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 457431746}
-  - component: {fileID: 457431748}
-  - component: {fileID: 457431747}
-  m_Layer: 0
-  m_Name: Checkpoint 3
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &457431746
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 457431745}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.9404911, z: -0, w: -0.3398185}
-  m_LocalPosition: {x: -101.79, y: 10.26, z: -39.9}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 83370786}
-  m_Father: {fileID: 1930870791}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &457431747
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 457431745}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 3
-  respawnPoint: {fileID: 83370786}
---- !u!65 &457431748
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 457431745}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &510761773
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 510761774}
-  - component: {fileID: 510761776}
-  - component: {fileID: 510761775}
-  m_Layer: 0
-  m_Name: Checkpoint 10
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &510761774
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 510761773}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.40407735, z: -0, w: 0.9147248}
-  m_LocalPosition: {x: 65.466, y: 16.560001, z: 102.747}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1217245546}
-  m_Father: {fileID: 1930870791}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &510761775
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 510761773}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 10
-  respawnPoint: {fileID: 1217245546}
---- !u!65 &510761776
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 510761773}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &632836349
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 632836350}
-  - component: {fileID: 632836352}
-  - component: {fileID: 632836351}
-  m_Layer: 0
-  m_Name: Checkpoint 7
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &632836350
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 632836349}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.7249987, z: -0, w: 0.6887502}
-  m_LocalPosition: {x: -27.26, y: 7.69, z: -123.06}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1572197893}
-  m_Father: {fileID: 1930870791}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &632836351
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 632836349}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 7
-  respawnPoint: {fileID: 1572197893}
---- !u!65 &632836352
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 632836349}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &827753190
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 827753191}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &827753191
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 827753190}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.01879835, z: -0, w: 0.99982333}
-  m_LocalPosition: {x: -0.1442895, y: -1.500001, z: 4.002124}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1472383055}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &940868838
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 940868839}
-  - component: {fileID: 940868841}
-  - component: {fileID: 940868840}
+  - component: {fileID: 121865109}
+  - component: {fileID: 121865111}
+  - component: {fileID: 121865110}
   m_Layer: 0
   m_Name: Checkpoint 4
   m_TagString: Untagged
@@ -599,43 +237,43 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &940868839
+--- !u!4 &121865109
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 940868838}
+  m_GameObject: {fileID: 121865108}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.5389902, z: -0, w: 0.84231204}
   m_LocalPosition: {x: -208.15, y: 9.75, z: -29.26}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1076932597}
-  m_Father: {fileID: 1930870791}
+  - {fileID: 1236935782}
+  m_Father: {fileID: 1497649996}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &940868840
+--- !u!114 &121865110
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 940868838}
+  m_GameObject: {fileID: 121865108}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
   index: 4
-  respawnPoint: {fileID: 1076932597}
---- !u!65 &940868841
+  respawnPoint: {fileID: 1236935782}
+--- !u!65 &121865111
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 940868838}
+  m_GameObject: {fileID: 121865108}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -650,7 +288,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 12, y: 6, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1076932596
+--- !u!1 &222693263
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -658,7 +296,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1076932597}
+  - component: {fileID: 222693264}
   m_Layer: 0
   m_Name: RespawnPoint
   m_TagString: Untagged
@@ -666,22 +304,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1076932597
+--- !u!4 &222693264
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1076932596}
+  m_GameObject: {fileID: 222693263}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.00056713825, z: -0, w: 0.9999999}
-  m_LocalPosition: {x: 0.0045371056, y: -1.5, z: 3.9999146}
+  m_LocalRotation: {x: -0, y: 0.0073209703, z: -0, w: 0.99997324}
+  m_LocalPosition: {x: -0.007045269, y: -1.3000002, z: 3.9986033}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 940868839}
+  m_Father: {fileID: 2123886729}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1122371033
+--- !u!1 &274829699
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -689,9 +327,140 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1122371034}
-  - component: {fileID: 1122371036}
-  - component: {fileID: 1122371035}
+  - component: {fileID: 274829700}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &274829700
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 274829699}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.0000009536743, z: -0, w: 1}
+  m_LocalPosition: {x: -0.00000008940697, y: -1.500001, z: 3.9981008}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1741385322}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &536223416
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 536223417}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &536223417
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 536223416}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.104649544, z: -0, w: 0.9945092}
+  m_LocalPosition: {x: 0.43660557, y: -1.6700001, z: 3.9647415}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 681474569}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &681474568
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 681474569}
+  - component: {fileID: 681474571}
+  - component: {fileID: 681474570}
+  m_Layer: 0
+  m_Name: Checkpoint 3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &681474569
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 681474568}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.9404911, z: -0, w: -0.3398185}
+  m_LocalPosition: {x: -101.79, y: 10.26, z: -39.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 536223417}
+  m_Father: {fileID: 1497649996}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &681474570
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 681474568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 3
+  respawnPoint: {fileID: 536223417}
+--- !u!65 &681474571
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 681474568}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &735805654
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 735805655}
+  - component: {fileID: 735805657}
+  - component: {fileID: 735805656}
   m_Layer: 0
   m_Name: Checkpoint 2
   m_TagString: Untagged
@@ -699,43 +468,43 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1122371034
+--- !u!4 &735805655
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1122371033}
+  m_GameObject: {fileID: 735805654}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7632192, z: -0, w: 0.6461397}
   m_LocalPosition: {x: -61.64, y: 12.95, z: 47.74}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1590266195}
-  m_Father: {fileID: 1930870791}
+  - {fileID: 815786611}
+  m_Father: {fileID: 1497649996}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1122371035
+--- !u!114 &735805656
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1122371033}
+  m_GameObject: {fileID: 735805654}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
   index: 2
-  respawnPoint: {fileID: 1590266195}
---- !u!65 &1122371036
+  respawnPoint: {fileID: 815786611}
+--- !u!65 &735805657
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1122371033}
+  m_GameObject: {fileID: 735805654}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -750,7 +519,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 12, y: 6, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1217245545
+--- !u!1 &772821561
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -758,308 +527,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1217245546}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1217245546
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1217245545}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.14666168, z: -0, w: 0.98918676}
-  m_LocalPosition: {x: 0.5946789, y: -1.500001, z: 3.7707515}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 510761774}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1472383054
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1472383055}
-  - component: {fileID: 1472383057}
-  - component: {fileID: 1472383056}
-  m_Layer: 0
-  m_Name: Checkpoint 11
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1472383055
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1472383054}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.7929398, z: -0, w: 0.6093001}
-  m_LocalPosition: {x: 49.27, y: 16.560001, z: 188.47}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 827753191}
-  m_Father: {fileID: 1930870791}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1472383056
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1472383054}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 11
-  respawnPoint: {fileID: 827753191}
---- !u!65 &1472383057
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1472383054}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1517572135
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1517572136}
-  - component: {fileID: 1517572138}
-  - component: {fileID: 1517572137}
-  m_Layer: 0
-  m_Name: Checkpoint 9
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1517572136
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1517572135}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.2495496, z: -0, w: 0.96836203}
-  m_LocalPosition: {x: 103.96, y: 15.5, z: 1.52}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 456489912}
-  m_Father: {fileID: 1930870791}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1517572137
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1517572135}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 9
-  respawnPoint: {fileID: 456489912}
---- !u!65 &1517572138
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1517572135}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1572197892
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1572197893}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1572197893
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1572197892}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.0012483598, z: -0, w: 0.9999992}
-  m_LocalPosition: {x: 0.004738003, y: -1.54, z: 4.0055056}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 632836350}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1590266194
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1590266195}
-  m_Layer: 0
-  m_Name: RespawnPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1590266195
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1590266194}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.0068766773, z: -0, w: 0.9999764}
-  m_LocalPosition: {x: -0.03041631, y: -1.4799995, z: 3.9998498}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1122371034}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1652104569
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1652104570}
-  - component: {fileID: 1652104572}
-  - component: {fileID: 1652104571}
-  m_Layer: 0
-  m_Name: Checkpoint 0 (start-finish)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1652104570
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1652104569}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.816587, z: -0, w: 0.5772224}
-  m_LocalPosition: {x: -16.26, y: 16.560001, z: 133}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 281217654}
-  m_Father: {fileID: 1930870791}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1652104571
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1652104569}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 0
-  respawnPoint: {fileID: 281217654}
---- !u!65 &1652104572
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1652104569}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1708086252
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1708086253}
-  - component: {fileID: 1708086254}
+  - component: {fileID: 772821562}
+  - component: {fileID: 772821563}
   m_Layer: 0
   m_Name: Preview Camera
   m_TagString: Untagged
@@ -1067,28 +536,28 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1708086253
+--- !u!4 &772821562
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1708086252}
+  m_GameObject: {fileID: 772821561}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.016383987, y: 0.9082649, z: -0.035724793, w: 0.4165455}
-  m_LocalPosition: {x: -28.425945, y: 16.86, z: 141.60088}
+  m_LocalRotation: {x: 0.029080298, y: 0.6721888, z: -0.026439205, w: 0.73933583}
+  m_LocalPosition: {x: -30.880648, y: 16.86, z: 130.73299}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2021903917}
+  m_Father: {fileID: 978497338}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!20 &1708086254
+--- !u!20 &772821563
 Camera:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1708086252}
+  m_GameObject: {fileID: 772821561}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
@@ -1133,7 +602,7 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!1 &1709418475
+--- !u!1 &815786610
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1141,76 +610,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1709418476}
-  - component: {fileID: 1709418478}
-  - component: {fileID: 1709418477}
-  m_Layer: 0
-  m_Name: Checkpoint 6
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1709418476
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1709418475}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.9411706, z: -0, w: 0.33793205}
-  m_LocalPosition: {x: -123.16, y: 4.42, z: -150.58}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1728760032}
-  m_Father: {fileID: 1930870791}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1709418477
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1709418475}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 6
-  respawnPoint: {fileID: 1728760032}
---- !u!65 &1709418478
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1709418475}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1728760031
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1728760032}
+  - component: {fileID: 815786611}
   m_Layer: 0
   m_Name: RespawnPoint
   m_TagString: Untagged
@@ -1218,22 +618,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1728760032
+--- !u!4 &815786611
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1728760031}
+  m_GameObject: {fileID: 815786610}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.09156885, z: -0, w: 0.99579877}
-  m_LocalPosition: {x: -0.29129028, y: -1.54, z: 3.9855819}
+  m_LocalRotation: {x: -0, y: -0.0068766773, z: -0, w: 0.9999764}
+  m_LocalPosition: {x: -0.03041631, y: -1.4799995, z: 3.9998498}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1709418476}
+  m_Father: {fileID: 735805655}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1835917533
+--- !u!1 &840427343
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1241,145 +641,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1835917534}
-  - component: {fileID: 1835917536}
-  - component: {fileID: 1835917535}
-  m_Layer: 0
-  m_Name: Checkpoint 8
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1835917534
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835917533}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.42640108, z: -0, w: 0.9045342}
-  m_LocalPosition: {x: 65.91, y: 7.03, z: -68.55}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 2144838906}
-  m_Father: {fileID: 1930870791}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1835917535
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835917533}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 8
-  respawnPoint: {fileID: 2144838906}
---- !u!65 &1835917536
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835917533}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1900928306
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1900928307}
-  - component: {fileID: 1900928309}
-  - component: {fileID: 1900928308}
-  m_Layer: 0
-  m_Name: Checkpoint 5
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1900928307
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1900928306}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.9195944, z: -0, w: 0.39286909}
-  m_LocalPosition: {x: -203.21, y: 6.78, z: -72.97}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 378882214}
-  m_Father: {fileID: 1930870791}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1900928308
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1900928306}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
-  index: 5
-  respawnPoint: {fileID: 378882214}
---- !u!65 &1900928309
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1900928306}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 6, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &1902442956
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1902442957}
+  - component: {fileID: 840427344}
   m_Layer: 0
   m_Name: SpawnPoint
   m_TagString: Untagged
@@ -1387,22 +649,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1902442957
+--- !u!4 &840427344
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1902442956}
+  m_GameObject: {fileID: 840427343}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.90896726, z: -0, w: 0.41686752}
-  m_LocalPosition: {x: -23.5, y: 14.860001, z: 137.36}
+  m_LocalRotation: {x: -0, y: 0.6727086, z: -0, w: 0.73990756}
+  m_LocalPosition: {x: -24.41, y: 14.860001, z: 131.35}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1930870791}
+  m_Father: {fileID: 1497649996}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1930870790
+--- !u!1 &978497337
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1410,9 +672,235 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1930870791}
-  - component: {fileID: 1930870793}
-  - component: {fileID: 1930870792}
+  - component: {fileID: 978497338}
+  m_Layer: 0
+  m_Name: Preview (Role 3)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &978497338
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 978497337}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1497649996}
+  - {fileID: 772821562}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1089166074
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1089166075}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1089166075
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1089166074}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.09156885, z: -0, w: 0.99579877}
+  m_LocalPosition: {x: -0.29129028, y: -1.54, z: 3.9855819}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 28959200}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1235774027
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1235774028}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1235774028
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1235774027}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.016757444, z: -0, w: 0.99985963}
+  m_LocalPosition: {x: 0.051479936, y: -0.9200001, z: 4.003792}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1994384300}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1236935781
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1236935782}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1236935782
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1236935781}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.00056713825, z: -0, w: 0.9999999}
+  m_LocalPosition: {x: 0.0045371056, y: -1.5, z: 3.9999146}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 121865109}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1277858036
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1277858037}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1277858037
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1277858036}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.003983587, z: -0, w: 0.9999921}
+  m_LocalPosition: {x: 0.017747402, y: -1.5700002, z: 4.0028124}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1394378871}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1394378870
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1394378871}
+  - component: {fileID: 1394378873}
+  - component: {fileID: 1394378872}
+  m_Layer: 0
+  m_Name: Checkpoint 5
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1394378871
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1394378870}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.9195944, z: -0, w: 0.39286909}
+  m_LocalPosition: {x: -203.21, y: 6.78, z: -72.97}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1277858037}
+  m_Father: {fileID: 1497649996}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1394378872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1394378870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 5
+  respawnPoint: {fileID: 1277858037}
+--- !u!65 &1394378873
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1394378870}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &1497649995
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1497649996}
+  - component: {fileID: 1497649998}
+  - component: {fileID: 1497649997}
   m_Layer: 0
   m_Name: Race
   m_TagString: Untagged
@@ -1420,59 +908,59 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1930870791
+--- !u!4 &1497649996
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1930870790}
+  m_GameObject: {fileID: 1497649995}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1652104570}
-  - {fileID: 38961269}
-  - {fileID: 1122371034}
-  - {fileID: 457431746}
-  - {fileID: 940868839}
-  - {fileID: 1900928307}
-  - {fileID: 1709418476}
-  - {fileID: 632836350}
-  - {fileID: 1835917534}
-  - {fileID: 1517572136}
-  - {fileID: 510761774}
-  - {fileID: 1472383055}
-  - {fileID: 1902442957}
-  m_Father: {fileID: 2021903917}
+  - {fileID: 1741385322}
+  - {fileID: 1608662136}
+  - {fileID: 735805655}
+  - {fileID: 681474569}
+  - {fileID: 121865109}
+  - {fileID: 1394378871}
+  - {fileID: 28959200}
+  - {fileID: 2108440768}
+  - {fileID: 2123886729}
+  - {fileID: 1994384300}
+  - {fileID: 2067860604}
+  - {fileID: 1523359902}
+  - {fileID: 840427344}
+  m_Father: {fileID: 978497338}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1930870792
+--- !u!114 &1497649997
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1930870790}
+  m_GameObject: {fileID: 1497649995}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 401241f58550b462aa5ba5b33ef10f51, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.TrackProgress
   roadPoints:
-  - {x: -16.26, y: 14.56, z: 133}
-  - {x: -14.33, y: 14.56, z: 132.49}
-  - {x: -12.35, y: 14.56, z: 132.18}
-  - {x: -10.36, y: 14.56, z: 132.02}
-  - {x: -8.36, y: 14.56, z: 132.02}
-  - {x: -6.36, y: 14.56, z: 132.16}
-  - {x: -4.38, y: 14.56, z: 132.39}
-  - {x: -2.4, y: 14.56, z: 132.7}
-  - {x: -0.43, y: 14.56, z: 133.05}
-  - {x: 1.53, y: 14.56, z: 133.42}
-  - {x: 3.5, y: 14.56, z: 133.79}
-  - {x: 5.47, y: 14.56, z: 134.12}
+  - {x: -16.44, y: 14.56, z: 132.11}
+  - {x: -14.45, y: 14.56, z: 132.3}
+  - {x: -12.46, y: 14.56, z: 132.49}
+  - {x: -10.47, y: 14.56, z: 132.68}
+  - {x: -8.48, y: 14.56, z: 132.87}
+  - {x: -6.49, y: 14.56, z: 133.06}
+  - {x: -4.5, y: 14.56, z: 133.25}
+  - {x: -2.5, y: 14.56, z: 133.44}
+  - {x: -0.51, y: 14.56, z: 133.63}
+  - {x: 1.48, y: 14.56, z: 133.82}
+  - {x: 3.47, y: 14.56, z: 134.01}
+  - {x: 5.46, y: 14.56, z: 134.2}
   - {x: 7.45, y: 14.56, z: 134.39}
   - {x: 9.44, y: 14.56, z: 134.58}
   - {x: 11.44, y: 14.56, z: 134.65}
@@ -2133,51 +1621,70 @@ MonoBehaviour:
   - {x: -17.13, y: 14.56, z: 156.79}
   - {x: -19.07, y: 14.56, z: 156.29}
   - {x: -21, y: 14.56, z: 155.79}
-  - {x: -22.93, y: 14.56, z: 155.25}
-  - {x: -24.82, y: 14.56, z: 154.6}
-  - {x: -26.62, y: 14.56, z: 153.74}
-  - {x: -28.21, y: 14.56, z: 152.56}
-  - {x: -29.43, y: 14.56, z: 151}
-  - {x: -30.08, y: 14.56, z: 149.13}
-  - {x: -30.06, y: 14.56, z: 147.15}
-  - {x: -29.53, y: 14.56, z: 145.23}
-  - {x: -28.66, y: 14.56, z: 143.43}
-  - {x: -27.57, y: 14.56, z: 141.75}
-  - {x: -26.33, y: 14.56, z: 140.19}
-  - {x: -24.97, y: 14.56, z: 138.72}
-  - {x: -23.5, y: 14.56, z: 137.36}
-  - {x: -21.94, y: 14.56, z: 136.11}
-  - {x: -20.29, y: 14.56, z: 134.99}
-  - {x: -18.55, y: 14.56, z: 134}
+  - {x: -22.94, y: 14.56, z: 155.29}
+  - {x: -24.87, y: 14.56, z: 154.79}
+  - {x: -26.81, y: 14.56, z: 154.29}
+  - {x: -28.74, y: 14.56, z: 153.78}
+  - {x: -30.68, y: 14.56, z: 153.28}
+  - {x: -32.62, y: 14.56, z: 152.78}
+  - {x: -34.55, y: 14.56, z: 152.28}
+  - {x: -36.49, y: 14.56, z: 151.78}
+  - {x: -38.42, y: 14.56, z: 151.26}
+  - {x: -40.34, y: 14.56, z: 150.69}
+  - {x: -42.2, y: 14.56, z: 149.96}
+  - {x: -43.95, y: 14.56, z: 148.99}
+  - {x: -45.49, y: 14.56, z: 147.73}
+  - {x: -46.77, y: 14.56, z: 146.19}
+  - {x: -47.72, y: 14.56, z: 144.44}
+  - {x: -48.31, y: 14.56, z: 142.53}
+  - {x: -48.52, y: 14.56, z: 140.55}
+  - {x: -48.33, y: 14.56, z: 138.56}
+  - {x: -47.75, y: 14.56, z: 136.64}
+  - {x: -46.81, y: 14.56, z: 134.88}
+  - {x: -45.55, y: 14.56, z: 133.34}
+  - {x: -44.01, y: 14.56, z: 132.07}
+  - {x: -42.25, y: 14.56, z: 131.13}
+  - {x: -40.34, y: 14.56, z: 130.54}
+  - {x: -38.36, y: 14.56, z: 130.29}
+  - {x: -36.36, y: 14.56, z: 130.28}
+  - {x: -34.36, y: 14.56, z: 130.41}
+  - {x: -32.37, y: 14.56, z: 130.59}
+  - {x: -30.38, y: 14.56, z: 130.78}
+  - {x: -28.39, y: 14.56, z: 130.97}
+  - {x: -26.4, y: 14.56, z: 131.16}
+  - {x: -24.41, y: 14.56, z: 131.35}
+  - {x: -22.41, y: 14.56, z: 131.54}
+  - {x: -20.42, y: 14.56, z: 131.73}
+  - {x: -18.43, y: 14.56, z: 131.92}
   spacing: 6
   keepTurnDegrees: 4
---- !u!114 &1930870793
+--- !u!114 &1497649998
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1930870790}
+  m_GameObject: {fileID: 1497649995}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b05bdc890823d4f5c809d396e3d92011, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.TrackInfo
   checkpoints:
-  - {fileID: 1652104571}
-  - {fileID: 38961270}
-  - {fileID: 1122371035}
-  - {fileID: 457431747}
-  - {fileID: 940868840}
-  - {fileID: 1900928308}
-  - {fileID: 1709418477}
-  - {fileID: 632836351}
-  - {fileID: 1835917535}
-  - {fileID: 1517572137}
-  - {fileID: 510761775}
-  - {fileID: 1472383056}
-  spawnPoint: {fileID: 1902442957}
---- !u!1 &2021903916
+  - {fileID: 1741385323}
+  - {fileID: 1608662137}
+  - {fileID: 735805656}
+  - {fileID: 681474570}
+  - {fileID: 121865110}
+  - {fileID: 1394378872}
+  - {fileID: 28959201}
+  - {fileID: 2108440769}
+  - {fileID: 2123886730}
+  - {fileID: 1994384301}
+  - {fileID: 2067860605}
+  - {fileID: 1523359903}
+  spawnPoint: {fileID: 840427344}
+--- !u!1 &1523359901
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2185,32 +1692,68 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2021903917}
+  - component: {fileID: 1523359902}
+  - component: {fileID: 1523359904}
+  - component: {fileID: 1523359903}
   m_Layer: 0
-  m_Name: Preview (Role 3)
+  m_Name: Checkpoint 11
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2021903917
+--- !u!4 &1523359902
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2021903916}
+  m_GameObject: {fileID: 1523359901}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0.7929398, z: -0, w: 0.6093001}
+  m_LocalPosition: {x: 49.27, y: 16.560001, z: 188.47}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1930870791}
-  - {fileID: 1708086253}
-  m_Father: {fileID: 0}
+  - {fileID: 1976103547}
+  m_Father: {fileID: 1497649996}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2144838905
+--- !u!114 &1523359903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1523359901}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 11
+  respawnPoint: {fileID: 1976103547}
+--- !u!65 &1523359904
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1523359901}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &1608662135
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2218,7 +1761,145 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2144838906}
+  - component: {fileID: 1608662136}
+  - component: {fileID: 1608662138}
+  - component: {fileID: 1608662137}
+  m_Layer: 0
+  m_Name: Checkpoint 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1608662136
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608662135}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.9669937, z: -0, w: -0.2548005}
+  m_LocalPosition: {x: 47.755, y: 16.560001, z: 68.489}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 74926284}
+  m_Father: {fileID: 1497649996}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1608662137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608662135}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 1
+  respawnPoint: {fileID: 74926284}
+--- !u!65 &1608662138
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608662135}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 11, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &1741385321
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1741385322}
+  - component: {fileID: 1741385324}
+  - component: {fileID: 1741385323}
+  m_Layer: 0
+  m_Name: Checkpoint 0 (start-finish)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1741385322
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1741385321}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.672664, z: -0, w: 0.7399481}
+  m_LocalPosition: {x: -16.44, y: 16.560001, z: 132.11}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 274829700}
+  m_Father: {fileID: 1497649996}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1741385323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1741385321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 0
+  respawnPoint: {fileID: 274829700}
+--- !u!65 &1741385324
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1741385321}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &1952917283
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1952917284}
   m_Layer: 0
   m_Name: RespawnPoint
   m_TagString: Untagged
@@ -2226,22 +1907,360 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2144838906
+--- !u!4 &1952917284
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2144838905}
+  m_GameObject: {fileID: 1952917283}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.0073209703, z: -0, w: 0.99997324}
-  m_LocalPosition: {x: -0.007045269, y: -1.3000002, z: 3.9986033}
+  m_LocalRotation: {x: -0, y: 0.0012483598, z: -0, w: 0.9999992}
+  m_LocalPosition: {x: 0.004738003, y: -1.54, z: 4.0055056}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1835917534}
+  m_Father: {fileID: 2108440768}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &4412398991270033794
+--- !u!1 &1976103546
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1976103547}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1976103547
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1976103546}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.01879835, z: -0, w: 0.99982333}
+  m_LocalPosition: {x: -0.1442895, y: -1.500001, z: 4.002124}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1523359902}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1986109543
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1986109544}
+  m_Layer: 0
+  m_Name: RespawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1986109544
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1986109543}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.14666168, z: -0, w: 0.98918676}
+  m_LocalPosition: {x: 0.5946789, y: -1.500001, z: 3.7707515}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2067860604}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1994384299
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1994384300}
+  - component: {fileID: 1994384302}
+  - component: {fileID: 1994384301}
+  m_Layer: 0
+  m_Name: Checkpoint 9
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1994384300
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994384299}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.2495496, z: -0, w: 0.96836203}
+  m_LocalPosition: {x: 103.96, y: 15.5, z: 1.52}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1235774028}
+  m_Father: {fileID: 1497649996}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1994384301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994384299}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 9
+  respawnPoint: {fileID: 1235774028}
+--- !u!65 &1994384302
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994384299}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &2067860603
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2067860604}
+  - component: {fileID: 2067860606}
+  - component: {fileID: 2067860605}
+  m_Layer: 0
+  m_Name: Checkpoint 10
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2067860604
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2067860603}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.40407735, z: -0, w: 0.9147248}
+  m_LocalPosition: {x: 65.466, y: 16.560001, z: 102.747}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1986109544}
+  m_Father: {fileID: 1497649996}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2067860605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2067860603}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 10
+  respawnPoint: {fileID: 1986109544}
+--- !u!65 &2067860606
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2067860603}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &2108440767
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2108440768}
+  - component: {fileID: 2108440770}
+  - component: {fileID: 2108440769}
+  m_Layer: 0
+  m_Name: Checkpoint 7
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2108440768
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2108440767}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.7249987, z: -0, w: 0.6887502}
+  m_LocalPosition: {x: -27.26, y: 7.69, z: -123.06}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1952917284}
+  m_Father: {fileID: 1497649996}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2108440769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2108440767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 7
+  respawnPoint: {fileID: 1952917284}
+--- !u!65 &2108440770
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2108440767}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &2123886728
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2123886729}
+  - component: {fileID: 2123886731}
+  - component: {fileID: 2123886730}
+  m_Layer: 0
+  m_Name: Checkpoint 8
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2123886729
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2123886728}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.42640108, z: -0, w: 0.9045342}
+  m_LocalPosition: {x: 65.91, y: 7.03, z: -68.55}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 222693264}
+  m_Father: {fileID: 1497649996}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2123886730
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2123886728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07768678ac9a841bd860c0710e15ef9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Track::CarcavelosCircuit.Track.Checkpoint
+  index: 8
+  respawnPoint: {fileID: 222693264}
+--- !u!65 &2123886731
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2123886728}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 6, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!1001 &92889605832094581
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -2298,14 +2317,14 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4f4c24bec6ad34ddcaa1f392c78dffc3, type: 3}
---- !u!108 &4412398991270033795 stripped
+--- !u!108 &92889605832094582 stripped
 Light:
   m_CorrespondingSourceObject: {fileID: 3870158246098212228, guid: 4f4c24bec6ad34ddcaa1f392c78dffc3, type: 3}
-  m_PrefabInstance: {fileID: 4412398991270033794}
+  m_PrefabInstance: {fileID: 92889605832094581}
   m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 4412398991270033794}
-  - {fileID: 2021903917}
+  - {fileID: 92889605832094581}
+  - {fileID: 978497338}

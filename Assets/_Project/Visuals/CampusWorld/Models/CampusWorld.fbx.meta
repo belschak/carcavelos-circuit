@@ -12,8 +12,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_B_brick_screen
+    second: {fileID: 2100000, guid: 59ffedb133f924fb88b684534ada6e47, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_B_deck_paving
     second: {fileID: 2100000, guid: 4fe6a76745c4e4442ba29ea0e1f94318, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_deck_white
+    second: {fileID: 2100000, guid: 5a42edaefe504480b80032f7a05ba35e, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -52,8 +62,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_B_pool_water_olive
+    second: {fileID: 2100000, guid: a0fbd39cbeeda431c9dbd980b02fc566, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_B_railing
     second: {fileID: 2100000, guid: 128bfc8c94c2345a3a83ce714aedd223, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_railing_tan
+    second: {fileID: 2100000, guid: 1ed34277faedc47da9f87646f233222b, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -104,6 +124,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_B_steel
     second: {fileID: 2100000, guid: 58b47cd51ffc5445588795738d127b18, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_tier_terracotta
+    second: {fileID: 2100000, guid: cb98bcc1ff95246b997d7bfa9ef52b0a, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -187,6 +212,21 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_campus_east_concrete
+    second: {fileID: 2100000, guid: 35cf648256f974023b2f57f4f740cab0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_cap_rubble
+    second: {fileID: 2100000, guid: 605c09733b99b4d54837d8ae2f10b0a2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_coast_atlas
+    second: {fileID: 2100000, guid: ae428a3ca2bc0449f9420fbe03ad2e11, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_concrete_sand
     second: {fileID: 2100000, guid: 75f3cddc185974e5eb1b11e435f2ca32, type: 2}
   - first:
@@ -212,6 +252,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_entrance_planks
+    second: {fileID: 2100000, guid: 293399d8a519d4cbc8a4604c668b9c57, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_entrance_steel
     second: {fileID: 2100000, guid: 30a8c85a998d94e428eada4b7b76b2e1, type: 2}
   - first:
@@ -227,13 +272,33 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_far_hill
+    second: {fileID: 2100000, guid: 1f1cee0556397497287591fb9e814dd6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_far_hill_near
+    second: {fileID: 2100000, guid: 654888ecea9fd4d9886b54ed4ba1c040, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_far_ochre
     second: {fileID: 2100000, guid: ce279a3f75ab347d3959b985a05647ee, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_far_rail
+    second: {fileID: 2100000, guid: 29cee2c145a5947ad965b664e6df376a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_far_roof
     second: {fileID: 2100000, guid: dde009d0aecfc48d5abbc4d69fc9d6cb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_far_train
+    second: {fileID: 2100000, guid: 8947dd0e255d2472fa23b9fbfb2c0a73, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
