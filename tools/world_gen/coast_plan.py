@@ -331,7 +331,8 @@ ROAD_ACROSS = [(323.0, 0.35, "graphite"),                       # cast-iron slot
                (PORTAL_S + 0.15, 0.24, "graphite")]             # slot drain across the tunnel's south mouth
 ROAD_ARCS = None        # the concentric white kerb arcs: left out (on this road they run almost along the driving
                         # direction and read as lane lines; dict(centre=(x, y), radii=(...), width=0.3) draws them)
-TUNNEL_DRAIN = dict(offset=-1.35, width=0.16)                                       # one lengthwise slot drain
+TUNNEL_DRAIN = None    # Luc, 12 Nov 2026 (after driving): the lengthwise slot drain read as an odd line: left out
+                       # (dict(offset=-1.35, width=0.16) draws it)
 PAINT_HALF = 3.5                                                # m: paint stays inside the road's edge lines
 
 # dressing added by env_coast.dress (prototype, x, y, bearing or None, scale)

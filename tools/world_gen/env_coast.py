@@ -734,8 +734,8 @@ def road_paint(bm, pts, fr):
             elif not cur:
                 prev = None
 
-    d = P.TUNNEL_DRAIN                                    # the tunnel's lengthwise slot drain
-    for i in range(P.PORTAL_S, P.PORTAL_N):
+    d = P.TUNNEL_DRAIN                                    # the tunnel's lengthwise slot drain (None: left out)
+    for i in (range(P.PORTAL_S, P.PORTAL_N) if d else ()):
         a, b = pts[i], pts[i + 1]
         (_ta, na), (_tb, nb) = fr[i], fr[i + 1]
         o0, o1 = d["offset"] - d["width"] / 2, d["offset"] + d["width"] / 2
