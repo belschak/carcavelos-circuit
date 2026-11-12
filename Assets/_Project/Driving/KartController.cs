@@ -78,6 +78,51 @@ namespace CarcavelosCircuit.Driving
         // True when the keys may be read (the test-bed switch counts as "on").
         private bool InputActive { get { return InputEnabled || driveWithoutRaceFlow; } }
 
+        // PLAYTEST BRANCH ONLY (bots prototype): the hook the local BotDriver calls, built on D8's InputSource.
+        // ExternalInput = true plugs in a source that returns what SetInput last set; InputPicker still decides
+        // (input off = nobody drives, values kept inside -1..1).
+        private sealed class SetInputSource : IKartInputSource
+        {
+            public KartInput Value = KartInput.None;
+            public KartInput ReadInput() { return Value; }
+        }
+        private SetInputSource setInputSource;
+
+        public bool ExternalInput
+        {
+            get { return setInputSource != null && InputSource == setInputSource; }
+            set
+            {
+                if (value)
+                {
+                    if (setInputSource == null) setInputSource = new SetInputSource();
+                    InputSource = setInputSource;
+                }
+                else if (ExternalInput)
+                {
+                    InputSource = null;
+                }
+            }
+        }
+
+        // Bots only: top speed on the gas as a share of KartTuning.MaxSpeed (1 = the player's top speed).
+        public float ExternalTopSpeedFactor { get; set; } = 1f;
+
+        // Lets a race give this kart its own copy of the tuning; the KartTuning asset itself is never changed.
+        public void SetTuning(KartTuning runtimeTuning)
+        {
+            tuning = runtimeTuning;
+        }
+
+        // Same three inputs the keyboard gives. Ignored unless ExternalInput is on.
+        public void SetInput(float throttle, float steer, bool drift)
+        {
+            if (ExternalInput)
+            {
+                setInputSource.Value = new KartInput(throttle, steer, drift);
+            }
+        }
+
         private void Awake()
         {
             body = GetComponent<Rigidbody>();
@@ -241,7 +286,8 @@ namespace CarcavelosCircuit.Driving
             {
                 // Pressing gas while rolling backwards is braking, so use the strong brake first.
                 float rate = forwardSpeed < 0f ? tuning.BrakeDeceleration : tuning.Acceleration;
-                return Mathf.MoveTowards(forwardSpeed, tuning.MaxSpeed, rate * dt);
+                float topSpeed = InputSource != null ? tuning.MaxSpeed * ExternalTopSpeedFactor : tuning.MaxSpeed;
+                return Mathf.MoveTowards(forwardSpeed, topSpeed, rate * dt);
             }
             if (throttleInput < 0f)
             {
@@ -386,13 +432,24 @@ namespace CarcavelosCircuit.Driving
             groundNormal = grounded ? hit.normal : Vector3.up;
         }
 
+        // Another kart must hit this hard (speed between the two karts, in m/s) to end a drift. Measured in bot
+        // races: side rubs while passing are 0.4 to 2.3 m/s, running into a standing kart is about 18 m/s.
+        private const float KartHitCancelsDriftSpeed = 6f;
+
         // Hitting a wall (a surface that is steep, not a road or a ramp) cancels the drift, no boost.
+        // A light rub against another kart does not: only a hard kart hit ends the drift.
         private void OnCollisionEnter(Collision collision)
         {
-            if (IsDrifting && collision.GetContact(0).normal.y < 0.5f)
+            if (!IsDrifting || collision.GetContact(0).normal.y >= 0.5f)
             {
-                drift.Cancel();
+                return;
             }
+            bool otherIsKart = collision.collider.GetComponentInParent<IKartState>() != null;
+            if (otherIsKart && collision.relativeVelocity.magnitude < KartHitCancelsDriftSpeed)
+            {
+                return; // kart rub: keep drifting
+            }
+            drift.Cancel();
         }
 
         // Teleport + stop everything (used by Retry and Recovery): no velocity, no drift, no boost.
