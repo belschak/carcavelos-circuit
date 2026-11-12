@@ -215,7 +215,9 @@ def add_sign(bm, pts, fr, i, turn):
 
 def build_signs(pts, fr, col):
     bm = bmesh.new()
-    placed = [add_sign(bm, pts, fr, i, turn) for i, turn in corners(pts)]
+    import entrance_plan                # V18h: no board in the curve plaza's drift zone (entrance_plan.FAN_NO_SIGN)
+    placed = [add_sign(bm, pts, fr, i, turn) for i, turn in corners(pts)
+              if not entrance_plan.FAN_NO_SIGN[0] <= i <= entrance_plan.FAN_NO_SIGN[1]]
     mesh = bpy.data.meshes.new("Track_CornerSigns")
     bm.to_mesh(mesh)
     bm.free()
