@@ -141,34 +141,46 @@ def polyline_points(line, step):
 # TERRAIN_NEAR metres from the centreline, and the corridor's own shoulder blends the rest (env_corridor).
 # =====================================================================================================
 TERRAIN_NEAR, TERRAIN_FAR = 10.0, 16.0
-# Survey 2.3: grass berm 2.5-3 m between the car park and the promenade, crest about y -128..-135 for x -125..-65.
-# Cross-section (v = metres north of the crest line): foot at v = -11, full height from -3 to +3 (room for parked
-# cars), back down to the car-park side by v = +13.
-BERM = dict(line=[(-119.0, -127.5), (-103.0, -128.8), (-86.0, -129.2), (-73.0, -127.6)], height=2.7,
-            south=(-11.0, -3.0), north=(3.0, 13.0), end=7.0)
+# V18g (Google satellite 2026, DGT orthophoto, team walk 7 Nov): there is no ridge between the car park and the
+# promenade. The upper road and its palm car park (UPPER, traced on the orthophoto) are one level that climbs from the
+# asphalt square to the tunnel plaza; a grass bank falls from its south edge to the lower road and the lawn. V16e had
+# a 2.7 m ridge along y -128, on top of the real lower road. BERM["line"] is now the bank's top edge (west to east).
+UPPER = [(-139.5, -108.4), (-99.5, -111.8), (-72.3, -113.6), (-57.0, -115.0), (-57.0, -124.6), (-58.6, -130.0),
+         (-59.5, -134.1), (-84.5, -135.5), (-86.8, -134.5), (-97.7, -122.7), (-100.5, -121.4), (-138.2, -120.5),
+         (-139.5, -114.0)]
+UPPER_LEVEL = ((-138.0, 4.3), (-60.0, 4.8))               # (x, height): the level climbs eastwards
+BANK = 5.0                                                # m: the bank's width in plan (one terrain cell)
+BERM = dict(line=[(-138.2, -120.5), (-100.5, -121.4), (-97.7, -122.7), (-86.8, -134.5), (-84.5, -135.5), (-59.5, -134.1)])
 # Survey 2.7: beige concrete terrace about 25 x 20 m west of the cove, level with the promenade (the road beside it)
 TERRACE_LEVEL = 2.36
 TERRACE = [route_side(t, -7.3) for t in (341.0, 343.0, 345.0, 347.0, 349.0, 351.0)] + \
           [(-103.6, -166.5), (-105.2, -172.0), (-107.2, -180.3), (-117.0, -182.0), (-129.5, -179.0), (-131.0, -166.0)]
 
 
-def berm_rise(x, y):
-    b = BERM
-    d, side, arc = line_frame(x, y, b["line"])
-    total = sum(math.hypot(q[0] - p[0], q[1] - p[1]) for p, q in zip(b["line"], b["line"][1:]))
-    if d > 14.0:
+def ring_distance(x, y, ring):
+    return min(seg_distance(x, y, p, q) for p, q in zip(ring, ring[1:] + ring[:1]))
+
+
+def upper_level(x):
+    (xa, za), (xb, zb) = UPPER_LEVEL
+    return za + (zb - za) * min(max((x - xa) / (xb - xa), 0.0), 1.0)
+
+
+def upper_share(x, y):
+    """1 on the upper level, falling to 0 over BANK metres outside its outline."""
+    if not (-146.0 <= x <= -50.0 and -142.0 <= y <= -102.0):
         return 0.0
-    v = d * side                                          # the line runs west to east: left = north
-    ends = 1.0
-    if arc <= 0.0 or arc >= total:                        # beyond an end: a rounded nose
-        a = b["line"][0] if arc <= 0.0 else b["line"][-1]
-        ends = smooth(1.0 - math.hypot(x - a[0], y - a[1]) / b["end"])
-        v = 0.0
-    if v < 0:
-        prof = smooth((v - b["south"][0]) / (b["south"][1] - b["south"][0]))
-    else:
-        prof = smooth((b["north"][1] - v) / (b["north"][1] - b["north"][0]))
-    return b["height"] * prof * ends
+    if inside(x, y, UPPER):
+        return 1.0
+    return smooth(1.0 - ring_distance(x, y, UPPER) / BANK)
+
+
+def berm_rise(x, y):
+    """> 0 on the grass bank south of the upper level (0 on the level itself and away from it)."""
+    if inside(x, y, UPPER):
+        return 0.0
+    d, side, _arc = line_frame(x, y, BERM["line"])
+    return upper_share(x, y) if side < 0 and d < BANK else 0.0
 
 
 def terrain_weight(x, y):
@@ -176,22 +188,22 @@ def terrain_weight(x, y):
 
 
 def shape_heights(heights, x0, y0, step):
-    """Raises the 5 m terrain nodes of the berm and levels those under the terrace. Returns the number changed."""
+    """Moves the 5 m terrain nodes of the upper level (V18g) and levels those under the terrace. Returns the number changed."""
     changed = 0
     for j, row in enumerate(heights):
         y = y0 + j * step
-        if not -190.0 <= y <= -108.0:
+        if not -190.0 <= y <= -102.0:
             continue
         for i in range(len(row)):
             x = x0 + i * step
-            if not -140.0 <= x <= -55.0:
+            if not -145.0 <= x <= -55.0:
                 continue
             w = terrain_weight(x, y)
             if w <= 0.0:
                 continue
-            rise = berm_rise(x, y) * w
-            if rise > 0.01:
-                row[i] += rise
+            share = upper_share(x, y) * w
+            if share > 0.01:
+                row[i] += (upper_level(x) - row[i]) * share
                 changed += 1
             elif inside(x, y, TERRACE):
                 row[i] = row[i] + (TERRACE_LEVEL - row[i]) * smooth((route_distance(x, y) - 7.0) / 4.0)
@@ -201,7 +213,7 @@ def shape_heights(heights, x0, y0, step):
 
 def in_changed_terrain(x, y):
     """True where this plan moves the ground (the dressing there is seated again on the new ground)."""
-    return (-142.0 <= x <= -52.0 and -146.0 <= y <= -108.0 and berm_rise(x, y) > 0.02) or inside(x, y, TERRACE)
+    return upper_share(x, y) > 0.02 or inside(x, y, TERRACE)
 
 
 # =====================================================================================================
@@ -250,8 +262,11 @@ FORE = dict(first=392.0, wall=(398.0, PORTAL_S + 0.0), wall_offset=6.85, wall_h=
             bench=(396.5, PORTAL_S - 6.5), bench_offset=-7.1, bench_size=(0.5, 0.5), bench_len=3.0, bench_gap=0.06,
             bollards=[(402.0, -7.4), (403.0, -8.6), (404.0, -9.8)],
             paint_half=12.0)                              # concrete up to the wall (left) and over the upper walkway (right)
-FIELD_WALL = [(-3.4, -141.5), (-3.2, -135.5), (-0.5, -132.2), (6.0, -131.2), (20.0, -131.0), (38.0, -131.3)]   # 1.2 m
-FIELD_WALL_SIZE = (1.2, 0.5)
+# V18g: the old wall follows the field's kerb (orthophoto, walk video 12:10-12:50): up the lane's east side, round the
+# plaza's south-east corner and along the east road
+FIELD_WALL = [(4.9, -186.0), (4.9, -150.0), (6.4, -142.6), (9.0, -137.2), (14.5, -132.7), (22.0, -130.9), (38.0, -130.9),
+              (132.0, -130.7)]
+FIELD_WALL_SIZE = (1.5, 0.45)
 
 # =====================================================================================================
 # Cove (survey 2.6, item 12): the wall itself follows coast.COVE_KERB (env_beachfront), heights from coast.cove_drop
@@ -273,8 +288,8 @@ TOTEM = dict(at=(-99.0, -146.9), bearing=100.0, size=(0.9, 0.25, 2.3))
 FOUNTAIN = (-97.2, -147.3)
 TWIN_BINS = (-95.6, -147.6)
 RIPRAP = [(-85.6, -137.6), (-86.6, -133.8), (-88.2, -130.4), (-90.3, -127.6)]       # white boulder chute up the berm
-HEDGE = dict(line=[(-31.0, -152.6), (-17.0, -152.4), (-14.2, -158.0), (-14.6, -176.0), (-16.6, -198.0)],
-             height=3.0, depth=3.0)                                                  # tamarisk along the east lawn
+HEDGE = dict(line=[(-12.5, -145.5), (-12.0, -153.0), (-12.8, -161.0)],
+             height=3.4, depth=7.0)      # V18g: one dense bush mass west of the lane's parking (was a 60 m L-shaped hedge)
 # flush paint on the road (into Track_EdgeLines, no collider): (fractional route index, length along the road, colour)
 ROAD_ACROSS = [(323.0, 0.35, "graphite"),                       # cast-iron slot drain at the promenade entrance
                (364.3, 0.14, "white"), (364.95, 0.14, "white"), (365.6, 0.14, "white"),   # three white-nosed steps
@@ -290,7 +305,35 @@ PALM_CLUSTER = [(-86.5, -121.8, 0.92), (-80.4, -124.6, 1.02), (-74.6, -121.0, 0.
 UMBRELLA_TREES = [(-109.0, -134.6, 0.56), (-96.6, -139.6, 0.60)]
 WASHINGTONIAS = [(312.0, 11.0), (316.0, 10.4), (320.0, 11.2)]      # route index, offset (north side of the lane)
 BERM_SHRUBS = 14
-CREST_CARS = [(-106.0, -128.2, "Prop_CarA"), (-99.6, -128.7, "Prop_CarG"), (-91.0, -128.9, "Prop_CarE")]
+# V18g (orthophoto / Google satellite): parked cars. (x, y, bearing of the car's long axis in degrees, prototype)
+CREST_CARS = [  # the upper road's north edge and the palm car park
+    (-124.0, -112.4, 5, "Prop_CarB"), (-118.0, -112.9, 5, "Prop_CarA"), (-112.0, -113.4, 5, "Prop_CarH"),
+    (-106.0, -113.9, 5, "Prop_CarD"), (-91.8, -115.2, 4, "Prop_CarG"), (-85.0, -115.8, 4, "Prop_CarC"),
+    (-79.5, -116.3, 4, "Prop_CarE"), (-88.8, -126.2, 0, "Prop_CarA"), (-77.0, -128.2, 0, "Prop_CarF"),
+    (-70.0, -128.6, 0, "Prop_CarG"),
+    # the plaza's south-west edge and the lane's west side
+    (-9.2, -133.4, 56, "Prop_CarC"), (-7.4, -136.4, 56, "Prop_CarA"), (-6.0, -139.6, 64, "Prop_CarH"),
+    (-5.4, -142.9, 78, "Prop_CarB"),
+    (-6.4, -146.4, 90, "Prop_CarD"), (-6.4, -149.1, 90, "Prop_CarG"), (-6.4, -151.8, 90, "Prop_CarA"),
+    (-6.4, -154.5, 90, "Prop_CarE"), (-6.4, -159.9, 90, "Prop_CarF"), (-6.4, -162.6, 90, "Prop_CarC"),
+    (-6.4, -165.3, 90, "Prop_CarB"), (-6.4, -170.7, 90, "Prop_CarH"), (-6.4, -173.4, 90, "Prop_CarA"),
+    (-6.4, -178.8, 90, "Prop_CarD"),
+] + [(x, -119.7, 0, p) for x, p in zip(      # the bay row along the east road
+    (52.8, 55.5, 61.0, 63.7, 66.4, 69.1, 71.8, 74.5, 82.8, 88.9, 91.6, 105.6, 113.3, 118.9, 121.6),
+    ("Prop_CarA", "Prop_CarD", "Prop_CarG", "Prop_CarB", "Prop_CarH", "Prop_CarC", "Prop_CarA", "Prop_CarE", "Prop_CarF",
+     "Prop_CarG", "Prop_CarD", "Prop_CarA", "Prop_CarC", "Prop_CarH", "Prop_CarB"))]
+# V18g (walk video 7:36, orthophoto): open frame (pergola) on the upper path's north side; low timber posts along the
+# path's north edge between the seat blocks: (first route index, last, step in indices, offset)
+PERGOLA = dict(at=(-57.5, -112.2), bearing=96.0, size=(4.6, 3.0, 2.5), post=0.14)
+PATH_POSTS = (386.5, 402.5, 1.5, 6.9)
+PATH_POST_SKIP = [(-18.9, -116.6), (-11.8, -116.9)]         # V18's seat blocks on the north side stand here
+# young trees in the paving along the east road's south kerb (orthophoto: blobs with a 2 m shadow, about 10 m apart)
+PLAZA_SAPLINGS = [(27.8, -127.4), (38.9, -127.4), (59.8, -127.6), (69.4, -127.6), (79.4, -127.7), (94.2, -127.8),
+                  (105.0, -127.8), (114.4, -127.8)]
+# the dense round trees on the lawn between the bar and the plaza (Google satellite, walk video 7:15)
+LAWN_TREES = [(-27.0, -132.8, "Veg_Shrub", 3.4), (-22.0, -133.4, "Veg_Shrub_B", 3.0), (-18.2, -135.0, "Veg_Olive_B", 1.25),
+              (-25.5, -137.4, "Veg_Shrub_B", 3.6), (-20.5, -140.6, "Veg_Shrub", 3.2), (-26.0, -143.0, "Veg_Olive", 1.3),
+              (-14.0, -138.6, "Veg_Shrub_B", 3.3)]
 DROP = [  # frozen dressing that stands where something of this plan now is: (x0, y0, x1, y1, prototype prefixes)
     (-101.5, -150.5, -97.0, -148.0, ("Prop_TroughBloom",)),
 ]
@@ -301,14 +344,44 @@ DROP = [  # frozen dressing that stands where something of this plan now is: (x0
 def ground_paint():
     f = FORE
     fore = route_line(f["first"], PORTAL_S + 1.0, f["wall_offset"]) + route_line(f["first"], PORTAL_S + 1.0, -f["paint_half"])[::-1]
-    field = [(6.5, -131.6), (60.0, -130.4), (100.0, -130.2), (100.0, -262.0), (2.0, -262.0), (-5.0, -220.0),
-             (5.0, -150.0)]                               # east of the road that runs south along its west edge
-    field_e = [(100.0, -130.2), (172.0, -129.0), (172.0, -143.0), (100.0, -143.0)]
-    out = [dict(name="forecourt concrete", ring=fore, colour=(204, 187, 152), lawn=0, alpha=1.0),
-           dict(name="dry field", ring=field, colour=(181, 166, 122), lawn=70, alpha=1.0),
-           dict(name="dry field east", ring=field_e, colour=(181, 166, 122), lawn=70, alpha=1.0),
-           dict(name="terrace concrete", ring=TERRACE, colour=(208, 192, 162), lawn=0, alpha=1.0)]
+    field_e = [(100.0, -130.2), (172.0, -129.0), (172.0, -143.0), (135.0, -143.0), (135.0, -150.0), (100.0, -150.0)]
+    field = [(22.0, -130.6), (60.0, -130.4), (100.0, -130.2), (100.0, -262.0), (2.0, -262.0), (-5.0, -220.0),
+             (4.8, -150.0), (6.3, -142.6), (8.9, -137.1), (14.4, -132.6)]
+    conc, dry, grass = (206, 190, 158), (163, 163, 116), (143, 179, 122)
+    # V18g, traced on the orthophoto (3 px/m) and checked on the Google satellite view; drawn in this order
+    slope = [(-139.5, -106.0), (-120.0, -99.0), (-100.0, -97.0), (-66.0, -96.0), (-39.0, -101.5), (-8.0, -112.5), (-3.9, -116.7),
+             (-7.8, -118.3), (-25.0, -117.3), (-57.0, -115.0), (-72.3, -113.6), (-99.5, -111.8), (-139.5, -108.4)]
+    path = [(-57.0, -115.0), (-25.0, -117.3), (-7.8, -118.3), (-3.9, -116.7), (0.0, -122.2), (46.4, -122.0), (46.4, -117.2),
+            (135.0, -117.2), (135.0, -130.2), (22.0, -130.2), (14.4, -132.2), (8.9, -136.7), (6.1, -142.2), (5.0, -146.0),
+            (-9.0, -146.0), (-9.0, -140.0), (-12.5, -129.5), (-13.0, -126.1), (-25.0, -126.3), (-55.5, -124.5)]
+    wedge = [(-139.0, -121.2), (-100.5, -121.6), (-97.7, -122.9), (-85.2, -135.6), (-86.6, -142.5), (-101.0, -129.6),
+             (-138.2, -126.5), (-139.6, -124.0)]
+    lower = [(-139.5, -126.5), (-101.0, -129.6), (-86.8, -142.8), (-90.5, -147.3), (-102.3, -135.9), (-135.9, -133.6),
+             (-139.5, -132.3)]
+    setts = [(-86.8, -142.9), (-69.5, -142.6), (-71.0, -147.5), (-80.0, -152.0), (-94.5, -160.0), (-100.5, -154.5)]
     import coast
+    ring_in = [tuple(p) for p in coast.C["cove_kerb"]]                 # the cove ring: 8.5 m of concrete behind the sea wall
+    cc = (-68.0, -188.0)
+    ring_out = [(p[0] + unit(p[0] - cc[0], p[1] - cc[1])[0] * 8.5, p[1] + unit(p[0] - cc[0], p[1] - cc[1])[1] * 8.5)
+                for p in ring_in]
+    prom = [(-126.4, -156.6), (-147.7, -150.0), (-167.7, -133.3), (-177.4, -127.7), (-184.1, -125.4), (-220.4, -102.1),
+            (-239.9, -91.4)]                                           # the promenade's sea edge (env_beachfront's kerb line)
+    prom_in = [(x + 0.742 * 5.6, y + 0.670 * 5.6) for x, y in prom]
+    pale = (214, 207, 192)                                             # beside the sand: paler and greyer, so it reads
+    out = [dict(name="promenade concrete", ring=prom + prom_in[::-1], colour=pale, lawn=0, alpha=1.0),
+           dict(name="cove ring concrete", ring=ring_in + ring_out[::-1], colour=pale, lawn=0, alpha=1.0),
+           dict(name="dry slope below the Marginal", ring=slope, colour=dry, lawn=120, alpha=0.85),
+           dict(name="upper road and palm car park", ring=UPPER, colour=conc, lawn=0, alpha=1.0),
+           dict(name="lawn wedge", ring=wedge, colour=grass, lawn=255, alpha=1.0),
+           dict(name="lower road", ring=lower, colour=conc, lawn=0, alpha=1.0),
+           dict(name="sett paving at the cove", ring=setts, colour=(128, 118, 116), lawn=0, alpha=1.0),
+           dict(name="upper path, tunnel plaza, east road", ring=path, colour=conc, lawn=0, alpha=1.0),
+           dict(name="lane with its parking strip", ring=[(-9.0, -146.0), (5.0, -146.0), (4.8, -186.0), (-9.0, -186.0)],
+                colour=(85, 88, 94), lawn=0, alpha=1.0),
+           dict(name="forecourt concrete", ring=fore, colour=(204, 187, 152), lawn=0, alpha=1.0),
+           dict(name="dry field", ring=field, colour=(154, 150, 106), lawn=70, alpha=1.0),
+           dict(name="dry field east", ring=field_e, colour=(154, 150, 106), lawn=70, alpha=1.0),
+           dict(name="terrace concrete", ring=TERRACE, colour=(208, 192, 162), lawn=0, alpha=1.0)]
     for r in coast.ROCKS:                                  # rock tints: the ground map paints every shelf ochre
         if r.get("tint"):
             c = tuple(int(r["tint"][k:k + 2], 16) for k in (1, 3, 5))

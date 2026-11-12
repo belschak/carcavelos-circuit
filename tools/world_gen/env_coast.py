@@ -570,6 +570,22 @@ def build_details():
                 p, q = base[k], base[(k + 1) % 4]
                 pal(g, [p, q, tip], colour, (p[0] + q[0] - 2 * px, p[1] + q[1] - 2 * py, 0.8))
             stones += 1
+    pg = P.PERGOLA                                                                  # V18g: open frame beside the upper path
+    a = math.radians(pg["bearing"])
+    pu, (pl, pw, ph), pp = (math.sin(a), math.cos(a)), pg["size"], pg["post"]
+    pv = (-pu[1], pu[0])
+    corners = [(pg["at"][0] + pu[0] * sa * pl / 2 + pv[0] * sb * pw / 2, pg["at"][1] + pu[1] * sa * pl / 2 + pv[1] * sb * pw / 2)
+               for sa, sb in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+    pz = max(E.ground_z(*c) for c in corners) + ph
+    for c in corners:
+        pbox(g, c, pu, pp / 2, pp / 2, E.ground_z(*c) - 0.15, pz, "galv")
+    for c0, c1 in zip(corners, corners[1:] + corners[:1]):
+        pbeam(g, (*c0, pz), (*c1, pz), pp, pp * 1.3, "galv")
+    for k in range(1, 6):                                                           # slats across
+        f = k / 6.0
+        p0 = (corners[0][0] + (corners[1][0] - corners[0][0]) * f, corners[0][1] + (corners[1][1] - corners[0][1]) * f)
+        p1 = (corners[3][0] + (corners[2][0] - corners[3][0]) * f, corners[3][1] + (corners[2][1] - corners[3][1]) * f)
+        pbeam(g, (*p0, pz + 0.08), (*p1, pz + 0.08), 0.07, 0.12, "galv")
     hd = P.HEDGE                                                                    # tamarisk hedge
     st = P.polyline_points(hd["line"], 4.0)
     half = hd["depth"] / 2
@@ -779,15 +795,15 @@ def dress(veg, props):
     line = P.BERM["line"]
     total = sum(math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(line, line[1:]))
     placed = 0
-    for k in range(P.BERM_SHRUBS * 3):                    # grey-green shrubs on the berm's slopes
+    for k in range(P.BERM_SHRUBS * 6):                    # grey-green shrubs on the bank
         if placed >= P.BERM_SHRUBS:
             break
         s = rng.uniform(2.0, total - 2.0)
-        v = rng.choice((rng.uniform(-9.5, -4.0), rng.uniform(4.0, 10.0)))
+        v = rng.uniform(-4.0, -0.8)                       # V18g: on the bank, south of the upper level's edge
         pts = P.polyline_points(line, 1.0)
         x0, y0, u, _s = min(pts, key=lambda q: abs(q[3] - s))
         x, y = x0 - u[1] * v, y0 + u[0] * v
-        if P.berm_rise(x, y) < 0.3 or P.route_distance(x, y) < 12.0:
+        if P.berm_rise(x, y) < 0.1 or P.route_distance(x, y) < 12.0:
             continue
         if any(math.hypot(x - q["x"], y - q["y"]) < 2.0 for q in others + new_v + new_p):
             continue
@@ -795,10 +811,24 @@ def dress(veg, props):
             continue
         add(new_v, rng.choice(("Veg_Shrub", "Veg_Shrub_B")), x, y, rng.uniform(-math.pi, math.pi), rng.uniform(1.25, 1.9))
         placed += 1
-    for x, y, proto in P.CREST_CARS:                      # parked cars on the crest
-        _d, _side, s = P.line_frame(x, y, line)
-        _x, _y, u, _s = min(P.polyline_points(line, 1.0), key=lambda q: abs(q[3] - s))
-        add(new_p, proto, x, y, math.atan2(u[0], -u[1]) + rng.uniform(-0.06, 0.06), clear=P.TREE_CLEAR)
+    def free(x, y, gap):
+        return all(math.hypot(x - q["x"], y - q["y"]) > gap for q in others + new_v + new_p)
+    for x, y, deg, proto in P.CREST_CARS:                 # V18g: parked cars where the satellite view has them
+        if free(x, y, 2.0):
+            add(new_p, proto, x, y, math.radians(90.0 - deg) + rng.choice((0.0, math.pi)) + rng.uniform(-0.05, 0.05),
+                clear=P.TREE_CLEAR)
+    t, t1, step, off = P.PATH_POSTS                       # V18g: low timber posts on the upper path's north edge
+    while t <= t1:
+        x, y = P.route_side(t, off)
+        if free(x, y, 1.6) and all(math.hypot(x - a, y - b) > 2.6 for a, b in P.PATH_POST_SKIP):
+            add(new_p, "Prop_TimberPost", x, y)
+        t += step
+    for x, y in P.PLAZA_SAPLINGS:                         # V18g: young trees along the east road's south kerb
+        if free(x, y, 2.0):
+            add(new_v, "Veg_Sapling", x, y, rng.uniform(-math.pi, math.pi), rng.uniform(1.0, 1.25), clear=P.TREE_CLEAR)
+    for x, y, proto, scale in P.LAWN_TREES:               # V18g: the dense trees between the bar and the plaza
+        if free(x, y, 2.5):
+            add(new_v, proto, x, y, rng.uniform(-math.pi, math.pi), scale, clear=P.TREE_CLEAR)
     for t, off in P.FORE["bollards"]:                     # steel bollards at the forecourt's west end, off the line
         x, y = P.route_side(t, off)
         add(new_p, "Prop_Bollard", x, y)
