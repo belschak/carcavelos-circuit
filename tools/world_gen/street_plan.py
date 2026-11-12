@@ -197,7 +197,7 @@ PALETTE = {
     "concrete": "#CDC4B6", "pay_blue": "#2B3F66", "grey_back": "#8F9396",
     "roof_dark": "#4A4744", "wood_dark": "#6B5744", "render_white": "#E9E4D8", "bank_green": "#7C7A46",
     # V18h (builder Q): worn line paint, cast-iron covers, steel plates of the underground bins, faded yellow
-    "line_worn": "#D3CFC2", "iron": "#4B4946", "steel_plate": "#83868A", "yellow_worn": "#CFA640",
+    "line_worn": "#D3CFC2", "iron": "#4B4946", "steel_plate": "#83868A", "yellow_worn": "#CFA640", "timber_grey": "#8C7C64",
 }
 
 
@@ -474,7 +474,7 @@ def worn_line(a, b, width=0.12, colour="white", road=False):
         t += piece + _WEAR.uniform(0.03, 0.13)
 
 
-def kerb_stones(name, line, d0, d1):
+def kerb_stones(name, line, d0, d1, hull=0.0):
     """Flush kerb stones (the textured strip street_kerbstone, a stone per metre) between the offsets d0 < d1 to the
     left of a polyline: paving, so they lie level with the concrete beside them."""
     lo, hi = offset(line, d0), offset(line, d1)
@@ -483,7 +483,7 @@ def kerb_stones(name, line, d0, d1):
         a, b = line[k], line[k + 1]
         u = unit(b[0] - a[0], b[1] - a[1])
         layer(name, "kerbstone", [lo[k], lo[k + 1], hi[k + 1], hi[k]],
-              frame_uv((lo[k][0] - u[0] * acc, lo[k][1] - u[1] * acc), u, 2.0, d1 - d0))
+              frame_uv((lo[k][0] - u[0] * acc, lo[k][1] - u[1] * acc), u, 2.0, d1 - d0), hull=hull)
         acc += math.hypot(b[0] - a[0], b[1] - a[1])
 
 
@@ -583,7 +583,8 @@ def kerb_pt(t, s):
     return pt(NE_KERB_A, NE_KERB_U, t, -s)
 
 
-Q_TILE = 8.0                                   # V18h: one tile of the car park's concrete = four cast slabs of 4 m
+Q_TILE = 10.0                                  # V18h: one tile of the car park's concrete = four cast panels of 5 m:
+                                               # a saw-cut joint on every second bay line (coast-walk survey, part 2)
 SQUARE_A = (-164.4, -114.8)                    # the worn-asphalt square at the south-east end (satellite 2026): its west
 SQUARE_B = (-144.4, -107.9)                    # corner on the south-west kerb (t 92.3), its north corner on the north-east kerb
 DRAIN_NS = [(-241.0, -34.0), (-247.0, -76.0)]      # dark sett bands (slot-drain lines): from the bins to the south row,
@@ -628,7 +629,7 @@ def forecourt():
     diag = unit(BRICK_U[0] - left_of(BRICK_U)[0], BRICK_U[1] - left_of(BRICK_U)[1])
     layer("E brick bays", "brick", [brick_pt(0.0, 0.0), brick_pt(BRICK_LEN, 0.0), brick_pt(BRICK_LEN, BAY[1]),
                                     brick_pt(0.0, BAY[1])], frame_uv(BRICK_A, diag, 2.4, 2.4))
-    layer("E brick border", "setts", [brick_pt(-0.2, BAY[1]), brick_pt(BRICK_LEN + 0.2, BAY[1]),
+    layer("E brick border", "setts_dark", [brick_pt(-0.2, BAY[1]), brick_pt(BRICK_LEN + 0.2, BAY[1]),
                                       brick_pt(BRICK_LEN + 0.2, BAY[1] + 0.21), brick_pt(-0.2, BAY[1] + 0.21)],
           frame_uv(brick_pt(0.0, BAY[1] + 0.21), BRICK_U, 2.0, 2.0))
     # planted bank between the wall and the Marginal's sidewalk
@@ -646,10 +647,10 @@ def forecourt():
     RAISED.append({"kind": "island", "ring": GRASS_ISLAND, "height": 0.35, "top": None, "side": "wall_white", "rim": 0.25})
     RAISED.append({"kind": "island", "ring": SPLITTER, "height": 0.12, "top": "calcada", "side": "kerb", "rim": 0.0})
     # dark sett bands (V18h: on their lines in the satellite view; the rows of setts run along each band)
-    layer("E sett band", "setts", ribbon(DRAIN_DIAG, -0.18, 0.18), _band_uv(DRAIN_DIAG))
-    layer("F sett band", "setts", ribbon(DRAIN_NS, -0.25, 0.25), _band_uv(DRAIN_NS))
+    layer("E sett band", "setts_dark", ribbon(DRAIN_DIAG, -0.13, 0.13), _band_uv(DRAIN_DIAG))     # two rows of setts
+    layer("F sett band", "setts_dark", ribbon(DRAIN_NS, -0.13, 0.13), _band_uv(DRAIN_NS))
     ramp_band = [(-286.6, -12.6), (-280.4, -19.4)]
-    layer("E sett band at the ramp", "setts", ribbon(ramp_band, -0.18, 0.18), _band_uv(ramp_band))
+    layer("E sett band at the ramp", "setts_dark", ribbon(ramp_band, -0.13, 0.13), _band_uv(ramp_band))
     # markings
     zebra = (-283.0, -17.0)                                    # zebra across the aisle at the top of the service ramp
     stripes(zebra, left_of(HEDGE_U), -3.0, 3.0, -2.75, 2.75, 0.5, 0.5)
@@ -739,16 +740,16 @@ def carpark():
     worn_line(kerb_pt(CENTRAL_T0, 17.5), kerb_pt(CENTRAL_T0 + 27.5, 17.5), 0.13)       # between the two halves of the double row
     sa, su = (-241.0, -72.6), unit(39.0, -8.9)                 # south row: front line along the second aisle
     bay_row(lambda t, s: pt(sa, su, t, -s), 0.0, 16, 0.0, BAY[1], road=False)
-    # tree pits in the north-east bay row (square, bare soil, a pale kerb frame): every fifth bay in the north-west,
+    # tree pits in the north-east bay row (square, bare soil, a dark stone frame): every fifth bay in the north-west,
     # every third further on
     for t in PIT_T:
         layer("F tree pit", None, [kerb_pt(t - 0.75, 0.6), kerb_pt(t + 0.75, 0.6), kerb_pt(t + 0.75, 2.1),
                                    kerb_pt(t - 0.75, 2.1)], ground="soil")
-        frame_paint("kerb", [kerb_pt(t - 0.92, 0.43), kerb_pt(t + 0.92, 0.43), kerb_pt(t + 0.92, 2.27),
-                             kerb_pt(t - 0.92, 2.27)], 0.17)
+        frame_paint("gravel", [kerb_pt(t - 0.87, 0.48), kerb_pt(t + 0.87, 0.48), kerb_pt(t + 0.87, 2.22),
+                               kerb_pt(t - 0.87, 2.22)], 0.12)
     pit = [kerb_pt(92.85, 2.05), kerb_pt(94.35, 2.05), kerb_pt(94.35, 3.55), kerb_pt(92.85, 3.55)]   # the coast section's palm
     layer("F tree pit", None, pit, ground="soil")
-    frame_paint("kerb", [kerb_pt(92.68, 1.88), kerb_pt(94.52, 1.88), kerb_pt(94.52, 3.72), kerb_pt(92.68, 3.72)], 0.17)
+    frame_paint("gravel", [kerb_pt(92.73, 1.93), kerb_pt(94.47, 1.93), kerb_pt(94.47, 3.67), kerb_pt(92.73, 3.67)], 0.12)
     # zebra Z1 in the south-west row (replaces two bays), the footpath to the beach behind it
     z1 = s_kerb(-198.0, -82.0)
     stripes(kerb_pt(z1 - 2.5, 17.3), NE_KERB_U, 0.0, 5.0, 0.3, 4.6, 0.45, 0.45, along=True)
@@ -762,16 +763,16 @@ def carpark():
     for (ax, ay), heading in (((-215.0, -64.0), 308.0), ((-178.0, -95.0), 308.0), ((-176.0, -91.5), 128.0)):
         arrow((ax, ay), bearing(heading), road=True)
     # the dark sett bands where the race road has cut the paving away (flush paint, only inside the keep-out)
-    paint("setts_dark", ribbon(DRAIN_NS, -0.25, 0.25), road="fill")
-    paint("setts_dark", ribbon(DRAIN_DIAG, -0.18, 0.18), road="fill")
+    paint("setts_dark", ribbon(DRAIN_NS, -0.13, 0.13), road="fill")
+    paint("setts_dark", ribbon(DRAIN_DIAG, -0.13, 0.13), road="fill")
     manhole((-173.1, -99.3), road=True)
     manhole((-222.5, -57.0), road=True)
-    # the square at the south-east end (V18h: old sun-bleached asphalt, not fresh; its outline from the satellite
-    # view), a sett band on its north-west edge
+    # the square at the south-east end (V18h: dark tinted concrete in panels, not asphalt: coast-walk survey 3a; its
+    # outline from the satellite view), two rows of dark setts on its north-west edge
     square = [SQUARE_A, SQUARE_B, (-139.0, -109.7), (-139.0, -131.0), (-141.0, -131.0)]
-    layer("F asphalt square", "asphalt_worn", square, frame_uv(NE_KERB_A, NE_KERB_U, 4.0, 4.0))
+    layer("F asphalt square", "slab_dark", square, conc_uv)
     edge = [SQUARE_A, SQUARE_B]
-    layer("F square sett band", "setts", ribbon(edge, -0.3, 0.0), _band_uv(edge))
+    layer("F square sett band", "setts_dark", ribbon(edge, -0.3, 0.0), _band_uv(edge))
     # ... its markings: the south-west row's lines run on, two bays hatched yellow, a yellow box with a cross
     # (keep clear), three iron covers
     bay_row(kerb_pt, 97.5, 3, 12.3, 16.6)
@@ -796,6 +797,11 @@ def carpark():
                               kerb_pt(27.0, 34.0)], ground="lawn")
     # flush kerb stones (a stone per metre) between the concrete and the lawns: along the north-east kerb up to the
     # square, along the south-west kerb, behind the south row
+    # behind the north-east row, west half (x < -200): a strip of limestone calcada 3.7 m wide between kerbs
+    # (coast-walk survey, part 2), then the timber bollards and the bank; further east the lawn begins at the kerb
+    strip = [kerb_pt(1.5, 0.0), kerb_pt(33.0, 0.0)]
+    layer("F calcada strip", "calcada", ribbon(strip, 0.2, 3.9), hull=0.7)      # (hull: the bank begins under it)
+    kerb_stones("F calcada strip kerb", strip, 3.9, 4.1, hull=0.7)
     kerb_stones("F NE kerb", [kerb_pt(-2.0, 0.0), kerb_pt(52.0, -0.1), kerb_pt(104.0, -0.4)], 0.0, 0.25)
     kerb_stones("F SW kerb", [kerb_pt(27.2, 17.5), kerb_pt(60.0, 17.5), kerb_pt(92.0, 17.5)], -0.25, 0.0)
     kerb_stones("F south kerb", [pt(sa, su, -0.5, -BAY[1]), pt(sa, su, 20.0, -BAY[1]), pt(sa, su, 40.5, -BAY[1])], -0.25, 0.0)

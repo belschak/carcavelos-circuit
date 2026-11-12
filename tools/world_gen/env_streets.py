@@ -42,7 +42,7 @@ LIFT_NEAR = 0.035          # ... 1.2 m further out
 TAPER = (1.2, 3.2)         # m from the edge at which the paving has reached LIFT_NEAR and LIFT
 PAINT_LIFT = 0.04          # m: markings above the paving (2 cm flickered at a distance on the track's edge lines)
 GRID = 10.0                # m: the paving is cut along every second terrain grid line, then refined where the ground bends
-TILE = {"concrete": 4.0, "setts": 2.0, "calcada": 1.0, "asphalt": 2.0, "slab": 8.0, "asphalt_worn": 4.0}
+TILE = {"concrete": 4.0, "setts": 2.0, "calcada": 1.0, "asphalt": 2.0, "slab": 10.0, "slab_dark": 10.0, "setts_dark": 2.0}
 
 # one small palette texture carries every flat colour (markings, kerbs, signs, cars, bollards): one material
 PALETTE = S.PALETTE
@@ -66,10 +66,12 @@ def mat(key):
         return _textured("street_concrete", "#CDC4B6", "street_concrete", 0.9)
     if key == "bays":
         return _textured("street_bays", "#CDC4B6", "street_bays", 0.9)
-    if key == "slab":                 # V18h: the car park's concrete, four slabs of 4 m per tile (albedo + normal)
-        return _textured("street_slab", "#B1A796", "street_slab", 0.9)
-    if key == "asphalt_worn":         # V18h: old bleached asphalt (the square at the car park's south-east end)
-        return _textured("street_asphalt_worn", "#857E76", "street_asphalt_worn", 0.92)
+    if key == "slab":                 # V18h: the car park's concrete, four panels of 5 m per tile (albedo + normal)
+        return _textured("street_slab", "#A59B8C", "street_slab", 0.9)
+    if key == "slab_dark":            # V18h: dark tinted concrete (the square at the car park's south-east end)
+        return _textured("street_slab_dark", "#84786F", "street_slab_dark", 0.9)
+    if key == "setts_dark":           # V18h: dark granite setts of gutters and borders
+        return _textured("street_setts_dark", "#615E58", "street_setts_dark", 0.85)
     if key == "kerbstone":            # V18h: flush kerb stones, a strip texture along the kerb line
         return _textured("street_kerbstone", "#CFC9BC", "street_kerbstone", 0.85)
     if key == "brick":

@@ -81,7 +81,7 @@ ROAD_LOOK = [
     (61, 81, "deck"),                 # CTT roof terrace: the deck's own pale sawn concrete
     (127, 135, "asphalt"),            # from the avenue's kerb on: the avenue's asphalt (the calcada ends with the sidewalk)
     (242, 310, lambda x, y: __import__("env_streets").road_look("slab")),           # V18h-q: car-park concrete slabs
-    (311, 320, lambda x, y: __import__("env_streets").road_look("asphalt_worn")),   # V18h-q: the old asphalt square
+    (311, 320, lambda x, y: __import__("env_streets").road_look("slab_dark")),      # V18h-q: the dark concrete square
     (336, 350, "street_concrete"),    # promenade: pale concrete slabs (route.json: asphalt / sand)
     (351, 366, "street_setts"),       # the curved grey sett band above the cove
     (367, 399, "street_concrete"),    # the pale concrete path past the beach bar to the tunnel plaza

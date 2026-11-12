@@ -370,6 +370,16 @@ def chevron_board(name, col, width=3.0):
     return g.build(name, col)
 
 
+def bollard_round(name, col, colour, height, radius, collar=True):
+    """V18h: a round post: peeled timber bollards along the car park's edges (coast-walk survey: 1.0 m, d 15 cm,
+    grey-brown, a small concrete collar), white round bollards on the island at the throat (0.8 m)."""
+    g = Proto()
+    if collar:
+        g.cyl(radius + 0.07, radius + 0.05, -0.1, 0.04, 8, "concrete", cap=True)
+    g.cyl(radius, radius * 0.94, -0.1, height, 8, colour)
+    return g.build(name, col)
+
+
 def ad_totem(name, col):
     """Advert totem: dark case with a blank pale lit face on both sides; faces +-y."""
     g = Proto()
@@ -527,6 +537,8 @@ def build_prototypes():
         "Prop_BollardSquare": bollard_square("Prop_BollardSquare", pc),
         "Prop_BollardBanded": bollard_banded("Prop_BollardBanded", pc),
         "Prop_TimberPost": timber_post("Prop_TimberPost", pc),
+        "Prop_TimberBollard": bollard_round("Prop_TimberBollard", pc, "timber_grey", 1.0, 0.075),          # V18h
+        "Prop_BollardWhite": bollard_round("Prop_BollardWhite", pc, "render_white", 0.8, 0.09, collar=False),   # V18h
         "Prop_LampMarginal": lamp_arm("Prop_LampMarginal", pc, 11.5, 1),
         "Prop_LampAvenue": lamp_arm("Prop_LampAvenue", pc, 10.5, 2, colour="steel_grey"),
         "Prop_LampSidewalk": lamp_arm("Prop_LampSidewalk", pc, 9.0, 1, colour="steel_grey", reach=1.5),
@@ -1347,7 +1359,14 @@ def carpark_v18h(veg, props):
     rings = [lay["ring"] for lay in S.LAYERS if lay["name"] in names]
 
     def mine(it):
-        return it["proto"].startswith("Prop_Car") and it["x"] < -135.0 and any(S.inside(it["x"], it["y"], r) for r in rings)
+        x, y = it["x"], it["y"]
+        if it["proto"] == "Prop_BollardSquare":                   # the pale square posts along both kerbs of the car park
+            t = S.s_kerb(x, y)
+            d = (x - S.NE_KERB_A[0]) * -S.left_of(S.NE_KERB_U)[0] + (y - S.NE_KERB_A[1]) * -S.left_of(S.NE_KERB_U)[1]
+            return -6.0 < t < 112.0 and -3.0 < d < 21.0
+        if it["proto"] == "Prop_TimberPost":                      # the posts on the grass island at the throat
+            return S.inside(x, y, S.GRASS_ISLAND)
+        return it["proto"].startswith("Prop_Car") and x < -135.0 and any(S.inside(x, y, r) for r in rings)
     props2 = [p for p in props if not mine(p)]
     apron = next(lay["ring"] for lay in S.LAYERS if lay["name"] == "H apron")     # lawn until V18h: its plants go
     veg2 = [p for p in veg if not S.inside(p["x"], p["y"], apron)]
@@ -1397,8 +1416,28 @@ def carpark_v18h(veg, props):
     wa, wu = (-348.0, 16.5), S.unit(-41.0, 21.0)                  # the west car park: the row along its north edge
     row(lambda t, s: S.pt(wa, wu, t, s), 2.0, 15, 2.8, (-S.left_of(wu)[0], -S.left_of(wu)[1]), 0.85)
     row(lambda t, s: S.pt(wa, wu, t, s), 9.5, 9, 10.3, S.left_of(wu), 0.8)
-    print(f"  streets (V18h): car parks at the Capricciosa: {len(props) - len(props2)} older cars removed, {len(ours)} parked "
-          f"in the bays; {left} bays stay empty because the race road is too near; {len(veg) - len(veg2)} plants removed "
+    n_cars = len(ours)
+    # peeled timber bollards (1 m, every 2.5 m) instead of the pale square posts: behind the calcada strip in the
+    # west half of the north-east edge, at the kerb further east, and on the grass strip of the south-west edge
+    def post(proto, x, y):
+        if S.route_distance(x, y) >= S.PROP_CLEAR:
+            ours.append(_entry(proto, x, y, rng.uniform(0.0, 360.0)))
+    t = 2.5
+    while t <= 103.0:
+        post("Prop_TimberBollard", *kp(t, -4.55 if t <= 33.0 else -0.75))
+        t += 2.5
+    t = 28.5
+    while t <= 91.0:
+        post("Prop_TimberBollard", *kp(t, 18.15))
+        t += 2.7
+    isl = S.GRASS_ISLAND                                          # white round bollards on the island at the throat
+    cx, cy = sum(q[0] for q in isl) / len(isl), sum(q[1] for q in isl) / len(isl)
+    for k in (3, 4, 5, 6):
+        x, y = isl[k]
+        d = math.hypot(cx - x, cy - y)
+        ours.append(_entry("Prop_BollardWhite", x + (cx - x) * 0.7 / d, y + (cy - y) * 0.7 / d, 0.0, z=surface(x, y) + 0.25))
+    print(f"  streets (V18h): car parks at the Capricciosa: {len(props) - len(props2)} older cars and posts removed, {n_cars} "
+          f"cars parked in the bays, {len(ours) - n_cars} bollards; {left} bays stay empty because the race road is too near; {len(veg) - len(veg2)} plants removed "
           f"from the concrete apron at the lawn's tip")
     return veg2, props2 + ours
 
