@@ -486,26 +486,28 @@ def make_facade(S=1024, seed=88):
     rng = np.random.default_rng(seed)
     X, Y = grid(S, S)
     k = S / 512.0
-    grain = 0.011 * noise((S, S), 0.8, rng) + 0.007 * noise((S, S), 2.2, rng)          # sand in the render
-    marks = 0.006 * warped(noise((S, S), 5.0 * k, rng, 18.0 * k), rng, 14.0 * k, 40.0 * k)   # float marks
-    v = 0.010 * noise((S, S), 40 * k, rng) + 0.006 * noise((S, S), 6 * k, rng) + grain + marks
+    # V18l (Luc, 12 Nov: the walls read like a blank canvas): about three times the detail of V16h, so the render
+    # reads as a real wall in the hard summer sun: sand grain, trowel marks, cloudy patches of the render
+    grain = 0.026 * noise((S, S), 0.8, rng) + 0.016 * noise((S, S), 2.2, rng)          # sand in the render
+    marks = 0.018 * warped(noise((S, S), 5.0 * k, rng, 18.0 * k), rng, 14.0 * k, 40.0 * k)   # float marks
+    v = 0.034 * noise((S, S), 40 * k, rng) + 0.016 * noise((S, S), 6 * k, rng) + grain + marks
     alb = rgb("kart_white") * (1.0 + v)[..., None]
     alb += 0.004 * noise((S, S), 70 * k, rng)[..., None] * np.array([1.0, 0.3, -0.8])
     # joints: vertical every 3 m (the tile edge), horizontal every 1.5 m -> 3.0 x 1.5 m panels
     d = np.minimum(np.minimum(X, S - X), np.minimum(np.abs(Y - S / 2), np.minimum(Y, S - Y)))
     line = smoothstep(1.6 * k, 0.4 * k, d)
-    alb = alb * (1.0 - 0.075 * line - 0.012 * (1.0 - smoothstep(1.0 * k, 5.0 * k, d)))[..., None]
+    alb = alb * (1.0 - 0.17 * line - 0.035 * (1.0 - smoothstep(1.0 * k, 6.0 * k, d)))[..., None]
     # rain streaks: thin runs under each horizontal joint (image y grows downwards), strongest in the first 30 cm,
     # gone after about 1.1 m; a few of them, not a curtain
     below = np.mod(Y, S / 2) / (S / 2)
     runs = np.clip(noise((S, S), 2.2 * k, rng, 110.0 * k) - 0.55, 0.0, None) * 0.9
     streak = np.clip(runs, 0.0, 1.0) * (1.0 - smoothstep(0.0, 0.75, below)) * (0.6 + 0.4 * smoothstep(0.0, 0.03, below))
     grime = (1.0 - smoothstep(0.0, 0.06, below)) * (0.5 + 0.5 * noise((S, S), 3.0 * k, rng, 25.0 * k))
-    alb = alb * (1.0 - np.clip(0.040 * streak + 0.012 * np.clip(grime, 0, 1), 0.0, 0.08)[..., None] * np.array([1.0, 0.97, 0.9]))
+    alb = alb * (1.0 - np.clip(0.10 * streak + 0.035 * np.clip(grime, 0, 1), 0.0, 0.16)[..., None] * np.array([1.0, 0.96, 0.88]))
     alb = match_mean(alb, "kart_white", 0.7)
     save("facade_white_albedo.png", alb)
-    height = grain * 9.0 + marks * 14.0 - 0.9 * line
-    save("facade_white_normal.png", normal_map(height, 2.2), dither=False)
+    height = grain * 7.0 + marks * 9.0 - 1.4 * line
+    save("facade_white_normal.png", normal_map(height, 2.6), dither=False)
     _tint_gain("facade_white_albedo.png", alb)
 
 
