@@ -147,9 +147,13 @@ def build_forecourt():
         n = (u[1], -u[0])                                 # towards the road (the wall is on the left of the route)
         a0, a1 = (x0 + n[0] * half, y0 + n[1] * half), (x1 + n[0] * half, y1 + n[1] * half)
         b0, b1 = (x0 - n[0] * half, y0 - n[1] * half), (x1 - n[0] * half, y1 - n[1] * half)
-        wall_quad(g, a0, a1, f0, f1, t0, t1, "render", s0, s1, (n[0], n[1], 0))
-        wall_quad(g, b0, b1, f0, f1, t0, t1, "render", s0, s1, (-n[0], -n[1], 0))
-        pal(g, [(*a0, t0), (*a1, t1), (*b1, t1), (*b0, t0)], "white", (0, 0, 1))
+        for q0, q1, sgn in ((a0, a1, 1), (b0, b1, -1)):   # V18h: white wall panels of the trim atlas (80 px per metre)
+            g.face([(*q0, f0), (*q1, f1), (*q1, t1), (*q0, t0)], 1, out=(n[0] * sgn, n[1] * sgn, 0),
+                   uvs=[P.trim_uv("wall", s0, 3.2 - (t0 - f0)), P.trim_uv("wall", s1, 3.2 - (t1 - f1)),
+                        P.trim_uv("wall", s1, 3.2), P.trim_uv("wall", s0, 3.2)])
+        g.face([(*a0, t0), (*a1, t1), (*b1, t1), (*b0, t0)], 1, out=(0, 0, 1),
+               uvs=[P.trim_uv("precast_top", s0, 0.1), P.trim_uv("precast_top", s1, 0.1), P.trim_uv("precast_top", s1, 0.4),
+                    P.trim_uv("precast_top", s0, 0.4)])
     (x0, y0, f0, t0, _s), (x1, y1, *_r) = line[0], line[1]
     u = P.unit(x1 - x0, y1 - y0)
     pal(g, [(x0 + u[1] * half, y0 - u[0] * half, f0), (x0 - u[1] * half, y0 + u[0] * half, f0),
@@ -169,7 +173,8 @@ def build_forecourt():
             length = math.hypot(b[0] - start[0], b[1] - start[1]) - f["bench_gap"]
             c = (start[0] + u[0] * length / 2, start[1] + u[1] * length / 2)
             za, zb = E.ground_z(*start), E.ground_z(*b)
-            pbox(g, c, u, length / 2, w / 2, min(za, zb) - 0.25, max(za, zb) + h - 0.5 * abs(za - zb), "white")
+            tbox(g, c, u, length / 2, w / 2, min(za, zb) - 0.25, max(za, zb) + h - 0.5 * abs(za - zb),
+                 s0=2.4 * (count % 4), slot=1)                                    # V18h: precast blocks with joints
             start, acc = b, 0.0
             count += 1
     # the old grey wall at the field's north-west corner
@@ -193,7 +198,7 @@ def build_forecourt():
             "shade", (u[0] * sgn, u[1] * sgn, 0))
     guard("Coast_Forecourt", g)
     guard("Coast_Rails (forecourt)", rails)
-    finish("Coast_Forecourt", g)
+    finish("Coast_Forecourt", g, [atlas_material(), trim_material()])
     print(f"  coast forecourt: wall {line[-1][4]:.0f} m ({line[0][3] - P.route_at(f['wall'][0])[2]:.2f} m to "
           f"{line[-1][3] - P.route_at(f['wall'][1])[2]:.2f} m above the road), {count} kerb-bench blocks, field wall "
           f"{st[-1][3]:.0f} m; {tris(g)} triangles")
@@ -823,6 +828,14 @@ def dress(veg, props):
         if free(x, y, 1.6) and all(math.hypot(x - a, y - b) > 2.6 for a, b in P.PATH_POST_SKIP):
             add(new_p, "Prop_TimberPost", x, y)
         t += step
+    posts = 0
+    for line, off, step in P.POST_LINES:                  # V18h: low timber posts on both edges of the upper road (2009)
+        for x0, y0, u, _s in P.polyline_points(line, step):
+            x, y = x0 - u[1] * off, y0 + u[0] * off
+            if P.route_distance(x, y) >= P.ROUTE_CLEAR and free(x, y, 1.2) and \
+                    all(math.hypot(x - bx, y - by) > 1.5 for bx, by in P.BINS):
+                add(new_p, "Prop_TimberPost", x, y)
+                posts += 1
     for x, y in P.PLAZA_SAPLINGS:                         # V18g: young trees along the east road's south kerb
         if free(x, y, 2.0):
             add(new_v, "Veg_Sapling", x, y, rng.uniform(-math.pi, math.pi), rng.uniform(1.0, 1.25), clear=P.TREE_CLEAR)
@@ -844,6 +857,19 @@ def dress(veg, props):
         new_p.append(_entry("Prop_RailingSegment", p["x"] + nrm[0] * s + dx * 0.3, p["y"] + nrm[1] * s + dy * 0.3, topz,
                             math.atan2(nrm[1], nrm[0]), rot_y=0.0))
         k += 1
+    lifted_paving = 0
+    import street_plan as S
+    for it in veg + props + new_v + new_p:                # V18h: what stands on the new paving stands on its surface
+        if it["proto"].startswith("Prop_RailingSegment") or not P.paved(it["x"], it["y"]):
+            continue
+        if (S.layer_at(it["x"], it["y"]) or {}).get("mat") or P.route_distance(it["x"], it["y"]) < 5.0:
+            continue
+        z = round(E.ground_z(it["x"], it["y"]) + P.PAVING_LIFT, 3)
+        if abs(z - it["z"]) < 0.3 and abs(z - it["z"]) > 0.005:
+            it["z"] = z
+            lifted_paving += 1
+    _state["veg"] = veg + new_v
+    print(f"  coast dressing (V18h): {posts} timber posts along the upper road, {lifted_paving} items stand on the paving")
     print(f"  coast dressing: removed {', '.join(sorted(it['proto'] + '@' + str(round(it['x'])) + ',' + str(round(it['y'])) for it in gone)) or 'nothing'}; "
           f"{seated} items seated on the new ground or deck, {lifted} ramp railings lifted onto the upstand; added "
           f"{len(new_v)} plants, {len(new_p)} props ({k} fence segments on the south portal's deck)")
@@ -851,7 +877,271 @@ def dress(veg, props):
 
 
 # =====================================================================================================
+# V18h: the paved ground (coast_plan.paving_layers) as one sheet of real paving with tiling textures, kerb stones
+# along its edges, covers and gullies, the white precast seat blocks, palm pits and bins. Street View Oct 2009 /
+# Oct 2019 / Dec 2022 for what is there, the orthophoto for where.
+#   Coast_Paving            the sheet, 7 cm over the terrain, cut at the road's keep-out (4.95 m): W_coast_concrete_beige
+#                           / _ochre / _pale, the streets' setts and asphalt
+#   Coast_Edges_NoCollide   kerb stones (5 cm), manhole covers and gully grates (flush): W_coast_trim
+#   Coast_Trim              seat blocks, the kerb-bench east of the portal with two lamp posts, palm pits, bins
+# =====================================================================================================
+def concrete_material(key):
+    import env_streets as ST
+    name = "coast_concrete_" + key
+    return ST._textured(name, P.CONCRETE[key]["colour"], name, 0.9)
+
+
+def paving_material(key):
+    import env_streets as ST
+    return concrete_material(key) if key in P.CONCRETE else ST.mat(key)
+
+
+def trim_material():
+    return B.textured(E.material("coast_trim", "#E6E2D8", 0.9), "coast_trim", 0.9)
+
+
+def road_look(key):
+    """env_track.ROAD_LOOK hook: registers the coast's concrete `key` as a road surface (material and UV frame of the
+    paving beside the road) and returns the surface's name."""
+    import env_track as T
+    name = "coast_" + key
+    looks = T._looks()
+    if name not in looks:
+        o, u = P.FRAMES[key]
+        tile = P.CONCRETE[key]["tile"]
+        looks[name] = (concrete_material(key), T._frame(o, u, tile, tile))
+    return name
+
+
+def paving_z(x, y):
+    import env_streets as ST
+    import street_plan as S
+    return ST.ground(x, y) + ST.lift_at(S.route_distance(x, y))
+
+
+def build_paving():
+    import bpy
+    import env_streets as ST
+    import street_plan as S
+    layers = P.paving_layers()
+    xs = [q[0] for la in layers for q in la["ring"]]
+    ys = [q[1] for la in layers for q in la["ring"]]
+    box = (min(xs), min(ys), max(xs), max(ys))
+    mine = len(layers)
+    for la in S.LAYERS:                                   # the streets' own layers (paving or a hole) win: cut along them
+        b = (min(q[0] for q in la["ring"]), min(q[1] for q in la["ring"]), max(q[0] for q in la["ring"]), max(q[1] for q in la["ring"]))
+        if b[2] > box[0] and b[0] < box[2] and b[3] > box[1] and b[1] < box[3]:
+            layers.append(dict(name="street: " + la["name"], mat=None, ring=la["ring"], uv=None))
+    soup = ST.overlay(layers)
+    soup.tris = [t for t in soup.tris if t[3] < mine]
+    soup.refine_near_route(3.0)
+    soup.clip_route()
+    soup.follow_ground(paving_z)
+    keys = []
+    for la in layers[:mine]:
+        if la["mat"] not in keys:
+            keys.append(la["mat"])
+    z = [paving_z(x, y) for x, y in soup.xy]
+    used, verts, faces, slots, uvs = {}, [], [], [], []
+    area = {}
+    for a, b, c, tag in soup.tris:
+        (xa, ya), (xb, yb), (xc, yc) = soup.xy[a], soup.xy[b], soup.xy[c]
+        if (xb - xa) * (yc - ya) - (xc - xa) * (yb - ya) < 0:
+            a, b, c = c, b, a
+        tri = []
+        for v in (a, b, c):
+            if v not in used:
+                used[v] = len(verts)
+                verts.append((soup.xy[v][0], soup.xy[v][1], z[v]))
+            tri.append(used[v])
+        la = layers[tag]
+        faces.append(tri)
+        slots.append(keys.index(la["mat"]))
+        uvs.append([ST._layer_uv(la, soup.xy[v]) for v in (a, b, c)])
+        area[la["mat"]] = area.get(la["mat"], 0.0) + abs((xb - xa) * (yc - ya) - (xc - xa) * (yb - ya)) / 2
+    mesh = bpy.data.meshes.new("Coast_Paving")
+    mesh.from_pydata(verts, [], faces)
+    for k in keys:
+        mesh.materials.append(paving_material(k))
+    mesh.polygons.foreach_set("material_index", slots)
+    uv = mesh.uv_layers.new(name="UVMap")
+    for poly, tri_uv in zip(mesh.polygons, uvs):
+        for li, t in zip(poly.loop_indices, tri_uv):
+            uv.data[li].uv = t
+    mesh.validate()
+    mesh.update()
+    E.new_object("Coast_Paving", mesh, E.collection(COLLECTION))
+    print(f"  coast paving (V18h): {len(faces)} triangles; " + ", ".join(f"{k} {v:.0f} m2" for k, v in area.items()))
+
+
+def tpal(g, corners, colour, out):
+    g.face(corners, 0, out=out, uvs=[P.trim_pal_uv(colour)] * len(corners))
+
+
+def tbox(g, c, u, hu, hv, z0, z1, s0=0.0, side="precast", top="precast_top", slot=0):
+    """Box in the trim atlas, centred at c, long axis u: its long faces take the band `side` (u along the box, v up
+    from the foot), the top takes `top`; the two ends take the side band across."""
+    ux, uy = u
+    vx, vy = -uy, ux
+
+    def p(a, b, z):
+        return (c[0] + ux * a + vx * b, c[1] + uy * a + vy * b, z)
+    h = z1 - z0
+    vm = P.TRIM[side]["v_m"]
+    for sgn in (1, -1):
+        g.face([p(-hu, sgn * hv, z0), p(hu, sgn * hv, z0), p(hu, sgn * hv, z1), p(-hu, sgn * hv, z1)], slot, out=(vx * sgn, vy * sgn, 0),
+               uvs=[P.trim_uv(side, s0, vm - h), P.trim_uv(side, s0 + 2 * hu, vm - h), P.trim_uv(side, s0 + 2 * hu, vm),
+                    P.trim_uv(side, s0, vm)])
+        g.face([p(sgn * hu, -hv, z0), p(sgn * hu, hv, z0), p(sgn * hu, hv, z1), p(sgn * hu, -hv, z1)], slot, out=(ux * sgn, uy * sgn, 0),
+               uvs=[P.trim_uv(side, s0 + 0.1, vm - h), P.trim_uv(side, s0 + 0.1 + 2 * hv, vm - h),
+                    P.trim_uv(side, s0 + 0.1 + 2 * hv, vm), P.trim_uv(side, s0 + 0.1, vm)])
+    g.face([p(-hu, -hv, z1), p(hu, -hv, z1), p(hu, hv, z1), p(-hu, hv, z1)], slot, out=(0, 0, 1),
+           uvs=[P.trim_uv(top, s0, 0.0), P.trim_uv(top, s0 + 2 * hu, 0.0), P.trim_uv(top, s0 + 2 * hu, 2 * hv),
+                P.trim_uv(top, s0, 2 * hv)])
+
+
+def tcyl(g, x, y, r, z0, z1, colour, n=10):
+    ring = [(x + r * math.cos(2 * math.pi * k / n), y + r * math.sin(2 * math.pi * k / n)) for k in range(n)]
+    for k in range(n):
+        a, b = ring[k], ring[(k + 1) % n]
+        tpal(g, [(*a, z0), (*b, z0), (*b, z1), (*a, z1)], colour, (a[0] + b[0] - 2 * x, a[1] + b[1] - 2 * y, 0))
+    tpal(g, [(*q, z1) for q in ring], colour, (0, 0, 1))
+
+
+def build_edges():
+    """Kerb stones along the paving's edges, covers and gullies: low and without a collider."""
+    import street_plan as S
+    g = B.Geo()
+    hw, kh = P.KERB_W / 2, P.KERB_H
+    total = 0.0
+    for line in P.KERBS:
+        run = []
+        for x, y, u, s in P.polyline_points(line, 1.0):
+            if S.route_distance(x, y) < S.KEEP_OUT + 0.2 or (S.layer_at(x, y) or {}).get("mat"):
+                run = []
+                continue
+            n = (-u[1], u[0])
+            run.append(((x + n[0] * hw, y + n[1] * hw), (x - n[0] * hw, y - n[1] * hw), paving_z(x, y), s, n))
+            if len(run) < 2:
+                continue
+            (a0, b0, z0, s0, n0), (a1, b1, z1, s1, n1) = run[-2], run[-1]
+            if s1 - s0 > 1.6:                             # the line was interrupted: no stone across the gap
+                continue
+            g.face([(*a0, z0 + kh), (*a1, z1 + kh), (*b1, z1 + kh), (*b0, z0 + kh)], 0, out=(0, 0, 1),
+                   uvs=[P.trim_uv("kerb", s0, 0.03), P.trim_uv("kerb", s1, 0.03), P.trim_uv("kerb", s1, 0.22), P.trim_uv("kerb", s0, 0.22)])
+            for (q0, q1), sgn in (((a0, a1), 1), ((b0, b1), -1)):
+                g.face([(*q0, z0 - 0.06), (*q1, z1 - 0.06), (*q1, z1 + kh), (*q0, z0 + kh)], 0, out=(n0[0] * sgn, n0[1] * sgn, 0),
+                       uvs=[P.trim_uv("kerb", s0, 0.0), P.trim_uv("kerb", s1, 0.0), P.trim_uv("kerb", s1, 0.03), P.trim_uv("kerb", s0, 0.03)])
+            total += s1 - s0
+    covers = 0
+    for cell, spots, half, sides in ((0, P.MANHOLES, 0.42, 12), (1, P.GULLIES, 0.27, 4)):
+        for x, y in spots:
+            if S.route_distance(x, y) < S.KEEP_OUT + half + 0.1 or not P.paved(x, y):
+                continue
+            z = max(paving_z(x + dx, y + dy) for dx in (-half, 0, half) for dy in (-half, 0, half)) + 0.012
+            if sides == 4:
+                quad = ((-1, -1), (1, -1), (1, 1), (-1, 1))
+                g.face([(x + half * a, y + half * b, z) for a, b in quad], 0, out=(0, 0, 1),
+                       uvs=[P.iron_uv(cell, 0.5 + 0.5 * a, 0.5 + 0.5 * b) for a, b in quad])
+            else:
+                ring = [(math.cos(2 * math.pi * k / sides), math.sin(2 * math.pi * k / sides)) for k in range(sides)]
+                g.face([(x + half * c, y + half * sn, z) for c, sn in ring], 0, out=(0, 0, 1),
+                       uvs=[P.iron_uv(cell, 0.5 + 0.485 * c, 0.5 + 0.485 * sn) for c, sn in ring])
+            covers += 1
+    finish("Coast_Edges_NoCollide", g, [trim_material()])
+    print(f"  coast edges (V18h, no collider): kerb stones {total:.0f} m, {covers} covers and gullies; {tris(g)} triangles")
+
+
+def build_trim(veg):
+    """Seat blocks, the kerb-bench east of the portal with its lamp posts, palm pits, bins. Everything keeps
+    ROUTE_CLEAR from the race centreline (guard)."""
+    g = B.Geo()
+    bl = P.BLOCK
+    blocks = 0
+    for row in P.BLOCK_ROWS:
+        pts = P.polyline_points(row["line"], 0.2)
+        total = pts[-1][3]
+        s = 0.0
+        while s + bl["length"] <= total + 1e-6:
+            a = min(pts, key=lambda q: abs(q[3] - s))
+            b = min(pts, key=lambda q: abs(q[3] - (s + bl["length"] - bl["gap"])))
+            u = P.unit(b[0] - a[0], b[1] - a[1])
+            c = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+            half = math.hypot(b[0] - a[0], b[1] - a[1]) / 2
+            zs = [paving_z(c[0] + u[0] * k * half, c[1] + u[1] * k * half) for k in (-1, 0, 1)]
+            if P.route_distance(*a[:2]) >= P.ROUTE_CLEAR + 0.4 and P.route_distance(*b[:2]) >= P.ROUTE_CLEAR + 0.4:
+                tbox(g, c, u, half, bl["width"] / 2, min(zs) - 0.25, max(zs) + bl["height"], s0=2.4 * (blocks % 4))
+                blocks += 1
+            s += row["pitch"]
+    for x, y in P.BENCH_LAMPS:                              # slim dark posts with a flat head (Dec 2022)
+        z = paving_z(x, y)
+        pbox_t(g, (x, y), (1.0, 0.0), 0.06, 0.06, z, z + 5.2, "anthracite")
+        pbox_t(g, (x, y - 0.35), (1.0, 0.0), 0.16, 0.5, z + 5.2, z + 5.28, "anthracite", skip=())
+        tpal(g, [(x - 0.12, y - 0.75, z + 5.195), (x + 0.12, y - 0.75, z + 5.195), (x + 0.12, y - 0.15, z + 5.195),
+                 (x - 0.12, y - 0.15, z + 5.195)], "lamp", (0, 0, -1))
+    pits = 0
+    h = P.PALM_PIT / 2
+    for it in veg:                                          # square timber frame and mulch round each palm on the paving
+        if not it["proto"].startswith("Veg_Palm") or not P.inside(it["x"], it["y"], P.UPPER):
+            continue
+        x, y = it["x"], it["y"]
+        if P.route_distance(x, y) < P.ROUTE_CLEAR + h * 1.5:
+            continue
+        z = max(paving_z(x + dx, y + dy) for dx in (-h, h) for dy in (-h, h))
+        u = P.UPPER_U
+        v = (-u[1], u[0])
+        for (ca, cb), axis in (((0, 1), u), ((0, -1), u), ((1, 0), v), ((-1, 0), v)):
+            c = (x + u[0] * ca * h + v[0] * cb * h, y + u[1] * ca * h + v[1] * cb * h)
+            tbox(g, c, axis, h + 0.07, 0.07, z - 0.2, z + 0.16, s0=0.3 * pits, side="timber", top="timber")
+        corners = [(x + u[0] * a * h + v[0] * b * h, y + u[1] * a * h + v[1] * b * h, z + 0.09) for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+        g.face(corners, 0, out=(0, 0, 1), uvs=[P.iron_uv(2, a, b) for a, b in ((0, 0), (1, 0), (1, 1), (0, 1))])
+        for k in range(3):                                  # three raking timber stakes tied to the trunk (2009)
+            ang = math.radians(90.0 + 120.0 * k + 17.0 * pits)
+            foot = (x + math.cos(ang) * h * 0.9, y + math.sin(ang) * h * 0.9, z + 0.05)
+            head = (x + math.cos(ang) * 0.28, y + math.sin(ang) * 0.28, z + 1.75)
+            d = (head[0] - foot[0], head[1] - foot[1], head[2] - foot[2])
+            ln = math.sqrt(sum(c * c for c in d))
+            side = (-math.sin(ang) * 0.045, math.cos(ang) * 0.045, 0.0)
+            for sgn in (1, -1):                             # two crossed strips read as a round pole from every side
+                o = side if sgn == 1 else (math.cos(ang) * 0.045 * d[2] / ln, math.sin(ang) * 0.045 * d[2] / ln, -0.045 * math.hypot(d[0], d[1]) / ln)
+                quad = [tuple(foot[j] - o[j] for j in range(3)), tuple(foot[j] + o[j] for j in range(3)),
+                        tuple(head[j] + o[j] for j in range(3)), tuple(head[j] - o[j] for j in range(3))]
+                uvs = [P.trim_uv("timber", 0.0, 0.05), P.trim_uv("timber", 0.0, 0.2), P.trim_uv("timber", ln, 0.2), P.trim_uv("timber", ln, 0.05)]
+                g.face(quad, 0, uvs=uvs)
+                g.face(quad[::-1], 0, uvs=uvs[::-1])
+        pits += 1
+    for x, y in P.BINS:                                     # round bins: a galvanised drum, a green band, a dark lid
+        z = paving_z(x, y)
+        tcyl(g, x, y, 0.30, z - 0.05, z + 0.62, "galv")
+        tcyl(g, x, y, 0.305, z + 0.62, z + 0.80, "green")
+        tcyl(g, x, y, 0.32, z + 0.80, z + 0.98, "anthracite")
+    guard("Coast_Trim", g)
+    finish("Coast_Trim", g, [trim_material()])
+    print(f"  coast trim (V18h): {blocks} precast seat blocks, {len(P.BENCH_LAMPS)} lamp posts, {pits} palm pits, "
+          f"{len(P.BINS)} bins; {tris(g)} triangles")
+
+
+def pbox_t(g, c, u, hu, hv, z0, z1, colour, skip=("bottom",)):
+    """pbox in the trim atlas' flat colours."""
+    ux, uy = u
+    vx, vy = -uy, ux
+
+    def p(a, b, z):
+        return (c[0] + ux * a + vx * b, c[1] + uy * a + vy * b, z)
+    for key, (k0, k1, out) in {"+u": ((hu, -hv), (hu, hv), (ux, uy)), "-u": ((-hu, hv), (-hu, -hv), (-ux, -uy)),
+                               "+v": ((hu, hv), (-hu, hv), (vx, vy)), "-v": ((-hu, -hv), (hu, -hv), (-vx, -vy))}.items():
+        tpal(g, [p(*k0, z0), p(*k1, z0), p(*k1, z1), p(*k0, z1)], colour, (out[0], out[1], 0.0))
+    ring = [(-hu, -hv), (hu, -hv), (hu, hv), (-hu, hv)]
+    tpal(g, [p(a, b, z1) for a, b in ring], colour, (0, 0, 1))
+    if "bottom" not in skip:
+        tpal(g, [p(a, b, z0) for a, b in ring], colour, (0, 0, -1))
+
+
+# =====================================================================================================
 def build():
+    build_paving()
+    build_edges()
+    build_trim(_state.get("veg", []))
     rails = build_forecourt()
     build_terrace()
     build_details()

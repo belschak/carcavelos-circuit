@@ -240,6 +240,38 @@ for _name, _h, _um, _vm in BANDS:
 assert _row == ATLAS_SIZE
 
 
+# V18h: a second atlas for what the kart passes closely (W_coast_trim): precast blocks, kerb stones, the white wall
+TRIM_BANDS = [("pal", 64, 1.0, 1.0), ("precast", 224, 9.6, 0.55), ("precast_top", 128, 9.6, 0.5), ("kerb", 96, 8.0, 0.25),
+              ("wall", 288, 9.6, 3.2), ("timber", 96, 2.4, 0.3), ("iron", 128, 8.0, 1.0)]
+TRIM_PALETTE = {"white": "#E6E2D8", "anthracite": "#33363B", "galv": "#A9A69B", "green": "#5E9A46", "soil": "#5A4A3A",
+                "timber": "#8C7A62", "lamp": "#FFF4D6", "kerb": "#C4BCAC", "iron": "#4E4B48"}
+TRIM = {}
+_row = 0
+for _name, _h, _um, _vm in TRIM_BANDS:
+    TRIM[_name] = dict(row=_row, px=_h, u_m=_um, v_m=_vm,
+                       v0=1.0 - (_row + _h - 3) / ATLAS_SIZE, v1=1.0 - (_row + 3) / ATLAS_SIZE)
+    _row += _h
+assert _row == ATLAS_SIZE
+
+
+def trim_uv(band, u_m, v_m):
+    """Trim atlas UV: u_m metres along the band, v_m metres up from the band's foot (v clamped into the band)."""
+    b = TRIM[band]
+    return (u_m / b["u_m"], b["v0"] + (b["v1"] - b["v0"]) * min(max(v_m / b["v_m"], 0.0), 1.0))
+
+
+def trim_pal_uv(colour):
+    k = list(TRIM_PALETTE).index(colour)
+    b = TRIM["pal"]
+    return ((k + 0.5) / 16.0, (b["v0"] + b["v1"]) / 2)
+
+
+def iron_uv(cell, a, b):
+    """UV inside square cell `cell` of the iron band (a, b in 0..1)."""
+    t = TRIM["iron"]
+    return ((cell + 0.04 + 0.92 * a) / 8.0, t["v0"] + (t["v1"] - t["v0"]) * (0.04 + 0.92 * b))
+
+
 def band_uv(band, u_m, v_m):
     """Atlas UV for a point u_m metres along and v_m metres up a band (v clamped into the band)."""
     b = ATLAS[band]
@@ -339,6 +371,116 @@ DROP = [  # frozen dressing that stands where something of this plan now is: (x0
 ]
 
 # =====================================================================================================
+# V18h (2026-11-12): the paved ground as real paving, not ground-map paint. Street View (Google car Oct 2009 on the
+# upper road and the palm car park, Oct 2019 and Dec 2022 on the tunnel plaza), the orthophoto for every outline.
+# env_coast.build_paving lays these layers as one sheet 7 cm over the terrain (env_streets' way: cut at the road's
+# keep-out, refined where the ground bends); the race road between them takes the same material and UV frame
+# (env_track.ROAD_LOOK -> env_coast.road_look), so the slab joints run on across it.
+# CONCRETE: name -> colour, tile (m), slab (m along the road, m across), seed (make_coast_textures.make_concrete)
+# =====================================================================================================
+CONCRETE = {
+    "beige": dict(colour="#CBBD9F", tile=8.0, slab=(4.0, 4.0), seed=1821, stains=16, cracks=5),     # upper road, path
+    "ochre": dict(colour="#CDB590", tile=10.0, slab=(5.0, 5.0), seed=1822, stains=10, cracks=4),    # tunnel plaza, ramp
+    "pale": dict(colour="#D6CFC0", tile=8.0, slab=(4.0, 2.0), seed=1823, stains=12, cracks=6, stain=0.08),   # promenade
+}
+UPPER_U = unit(82.5, -6.6)                       # the upper road's axis (west to east), its slab joints follow it
+PROM_U = unit(113.5, -65.2)                      # the promenade's axis
+FRAMES = {"beige": ((-139.5, -108.4), UPPER_U), "ochre": ((0.0, -122.1), (1.0, 0.0)), "pale": ((-126.4, -156.6), PROM_U)}
+PAVING_LIFT = 0.07
+
+SLOPE = [(-139.5, -106.0), (-120.0, -99.0), (-100.0, -97.0), (-66.0, -96.0), (-39.0, -101.5), (-8.0, -112.5), (-3.9, -116.7),
+         (-7.8, -118.3), (-25.0, -117.3), (-57.0, -115.0), (-72.3, -113.6), (-99.5, -111.8), (-139.5, -108.4)]
+PATH_WEST = [(-57.0, -115.0), (-25.0, -117.3), (-13.0, -118.0), (-13.0, -126.1), (-25.0, -126.3), (-55.5, -124.5)]
+PLAZA = [(-13.0, -118.0), (-7.8, -118.3), (-3.9, -116.7), (0.0, -122.2), (46.4, -122.0), (46.4, -117.2),
+         (135.0, -117.2), (135.0, -130.2), (22.0, -130.2), (14.4, -132.2), (8.9, -136.7), (6.1, -142.2), (5.0, -146.0),
+         (-9.0, -146.0), (-9.0, -140.0), (-12.5, -129.5), (-13.0, -126.1)]
+WEDGE = [(-139.0, -121.2), (-100.5, -121.6), (-97.7, -122.9), (-85.2, -135.6), (-86.6, -142.5), (-101.0, -129.6),
+         (-138.2, -126.5), (-139.6, -124.0)]
+LOWER = [(-139.5, -126.5), (-101.0, -129.6), (-86.8, -142.8), (-90.5, -147.3), (-102.3, -135.9), (-135.9, -133.6),
+         (-139.5, -132.3)]
+SETTS = [(-86.8, -142.9), (-69.5, -142.6), (-71.0, -147.5), (-80.0, -152.0), (-94.5, -160.0), (-100.5, -154.5)]
+LANE = [(-9.0, -146.0), (5.0, -146.0), (4.8, -186.0), (-9.0, -186.0)]
+PROM_EDGE = [(-126.4, -156.6), (-147.7, -150.0), (-167.7, -133.3), (-177.4, -127.7), (-184.1, -125.4), (-220.4, -102.1),
+             (-239.9, -91.4)]                    # the promenade's sea edge (env_beachfront's kerb line)
+PROM_W = 5.6
+
+
+KERB_INSET = 0.3                                # m: the paving ends behind the kerb blocks of the sea edge
+
+
+def promenade_ring(inset=0.0):
+    return [(x + 0.742 * inset, y + 0.670 * inset) for x, y in PROM_EDGE] + \
+        [(x + 0.742 * PROM_W, y + 0.670 * PROM_W) for x, y in PROM_EDGE][::-1]
+
+
+def cove_ring(inset=0.0):
+    import coast
+    kerb = [tuple(q) for q in coast.C["cove_kerb"]]                    # 8.5 m of concrete behind the sea wall
+    cc = (-68.0, -188.0)
+
+    def out(q, d):
+        u = unit(q[0] - cc[0], q[1] - cc[1])
+        return (q[0] + u[0] * d, q[1] + u[1] * d)
+    return [out(q, inset) for q in kerb] + [out(q, 8.5) for q in kerb][::-1]
+
+
+def forecourt_ring():
+    f = FORE
+    return route_line(f["first"], PORTAL_S - 0.1, f["wall_offset"]) + route_line(f["first"], PORTAL_S - 0.1, -f["paint_half"])[::-1]
+
+
+def paving_layers():
+    """Drawing order: a later layer covers an earlier one. mat: a CONCRETE name, 'setts' or 'asphalt' (env_streets')."""
+    def lay(name, mat, ring):
+        uv = None
+        if mat in CONCRETE:
+            o, u = FRAMES[mat]
+            uv = (o, u, CONCRETE[mat]["tile"], CONCRETE[mat]["tile"])
+        return dict(name=name, mat=mat, ring=[(float(x), float(y)) for x, y in ring], uv=uv)
+    return [lay("promenade", "pale", promenade_ring(KERB_INSET)), lay("cove ring", "pale", cove_ring(KERB_INSET)),
+            lay("upper road and palm car park", "beige", UPPER), lay("lower road", "beige", LOWER),
+            lay("sett paving at the cove", "setts", SETTS), lay("upper path", "beige", PATH_WEST),
+            lay("tunnel plaza and east road", "ochre", PLAZA), lay("lane", "asphalt", LANE),
+            lay("forecourt and ramp", "ochre", forecourt_ring())]
+
+
+_paved = []
+
+
+def paved(x, y):
+    """True on this plan's paving (the dressing there stands PAVING_LIFT higher)."""
+    if not _paved:
+        for la in paving_layers():
+            xs, ys = [q[0] for q in la["ring"]], [q[1] for q in la["ring"]]
+            _paved.append((min(xs), min(ys), max(xs), max(ys), la["ring"]))
+    return any(b[0] <= x <= b[2] and b[1] <= y <= b[3] and inside(x, y, b[4]) for b in _paved)
+
+
+# Kerb stones (pale concrete, 0.22 m wide, 5 cm proud of the paving, no collider), along the edges the photos show:
+KERBS = [
+    [(-139.5, -108.4), (-99.5, -111.8), (-72.3, -113.6), (-57.0, -115.0), (-25.0, -117.3), (-13.0, -118.0)],     # north edge
+    [(-138.2, -120.5), (-100.5, -121.4), (-97.7, -122.7), (-86.8, -134.5), (-84.5, -135.5), (-59.5, -134.1)],   # bank top
+    [(-139.5, -126.5), (-101.0, -129.6), (-86.8, -142.8)],                                                       # lower road
+    [(-139.5, -132.3), (-135.9, -133.6), (-102.3, -135.9), (-90.5, -147.3)],
+    [(-55.5, -124.5), (-25.0, -126.3), (-13.0, -126.1), (-12.5, -129.5), (-9.0, -140.0), (-9.0, -146.0)],       # path, plaza
+]
+KERB_W, KERB_H = 0.22, 0.05
+# White precast seat blocks (2.4 x 0.5 x 0.45 m): the palm car park's south edge (2009), and the kerb-bench that
+# parts the east road from the tunnel ramp (2019, 2022: along y -122, lamp posts standing in it)
+BLOCK = dict(length=2.4, width=0.5, height=0.45, gap=0.06)
+BLOCK_ROWS = [dict(line=[(-86.3, -133.8), (-84.4, -134.8), (-66.5, -133.7)], pitch=4.8),
+              dict(line=[(17.0, -122.1), (46.2, -122.0)], pitch=2.46)]
+BENCH_LAMPS = [(24.4, -122.1), (39.2, -122.0)]             # slim dark posts with a flat head, standing in the kerb-bench
+PALM_PIT = 2.0                                             # m: square timber frame round each palm of the car park
+BINS = [(-75.7, -113.6), (-73.5, -113.75), (-71.3, -113.9)]     # round bins on the north edge (orthophoto: pale dots)
+MANHOLES = [(-3.0, -131.5), (3.6, -135.2), (-1.5, -139.5), (30.0, -126.0), (-40.0, -117.6)]   # round cast-iron covers
+GULLIES = [(-126.0, -116.4), (-104.0, -118.0), (-76.0, -119.5), (-118.0, -131.0)]            # square gully grates
+# low timber posts (existing prototype) along the upper road: (line, offset to the left of the line, step)
+POST_LINES = [([(-137.5, -108.6), (-99.5, -111.8), (-72.3, -113.6), (-60.0, -114.7)], 0.4, 2.5),
+              ([(-137.0, -120.5), (-101.5, -121.4)], -0.4, 2.5)]
+
+
+# =====================================================================================================
 # Ground paint (make_groundmap.py hook): colour RGB, lawn mask value (255 = lawn with grass tufts), opacity
 # =====================================================================================================
 def ground_paint():
@@ -347,38 +489,26 @@ def ground_paint():
     field_e = [(100.0, -130.2), (172.0, -129.0), (172.0, -143.0), (135.0, -143.0), (135.0, -150.0), (100.0, -150.0)]
     field = [(22.0, -130.6), (60.0, -130.4), (100.0, -130.2), (100.0, -262.0), (2.0, -262.0), (-5.0, -220.0),
              (4.8, -150.0), (6.3, -142.6), (8.9, -137.1), (14.4, -132.6)]
-    conc, dry, grass = (206, 190, 158), (163, 163, 116), (143, 179, 122)
-    # V18g, traced on the orthophoto (3 px/m) and checked on the Google satellite view; drawn in this order
-    slope = [(-139.5, -106.0), (-120.0, -99.0), (-100.0, -97.0), (-66.0, -96.0), (-39.0, -101.5), (-8.0, -112.5), (-3.9, -116.7),
-             (-7.8, -118.3), (-25.0, -117.3), (-57.0, -115.0), (-72.3, -113.6), (-99.5, -111.8), (-139.5, -108.4)]
-    path = [(-57.0, -115.0), (-25.0, -117.3), (-7.8, -118.3), (-3.9, -116.7), (0.0, -122.2), (46.4, -122.0), (46.4, -117.2),
-            (135.0, -117.2), (135.0, -130.2), (22.0, -130.2), (14.4, -132.2), (8.9, -136.7), (6.1, -142.2), (5.0, -146.0),
-            (-9.0, -146.0), (-9.0, -140.0), (-12.5, -129.5), (-13.0, -126.1), (-25.0, -126.3), (-55.5, -124.5)]
-    wedge = [(-139.0, -121.2), (-100.5, -121.6), (-97.7, -122.9), (-85.2, -135.6), (-86.6, -142.5), (-101.0, -129.6),
-             (-138.2, -126.5), (-139.6, -124.0)]
-    lower = [(-139.5, -126.5), (-101.0, -129.6), (-86.8, -142.8), (-90.5, -147.3), (-102.3, -135.9), (-135.9, -133.6),
-             (-139.5, -132.3)]
-    setts = [(-86.8, -142.9), (-69.5, -142.6), (-71.0, -147.5), (-80.0, -152.0), (-94.5, -160.0), (-100.5, -154.5)]
-    import coast
-    ring_in = [tuple(p) for p in coast.C["cove_kerb"]]                 # the cove ring: 8.5 m of concrete behind the sea wall
-    cc = (-68.0, -188.0)
-    ring_out = [(p[0] + unit(p[0] - cc[0], p[1] - cc[1])[0] * 8.5, p[1] + unit(p[0] - cc[0], p[1] - cc[1])[1] * 8.5)
-                for p in ring_in]
-    prom = [(-126.4, -156.6), (-147.7, -150.0), (-167.7, -133.3), (-177.4, -127.7), (-184.1, -125.4), (-220.4, -102.1),
-            (-239.9, -91.4)]                                           # the promenade's sea edge (env_beachfront's kerb line)
-    prom_in = [(x + 0.742 * 5.6, y + 0.670 * 5.6) for x, y in prom]
+    conc, dry, grass = (203, 189, 159), (163, 163, 116), (143, 179, 122)
+    ochre = (207, 181, 140)
+    # V18g, traced on the orthophoto (3 px/m) and checked on the Google satellite view; drawn in this order.
+    # V18h: the same outlines are real paving now (paving_layers); the paint stays under it in the same colours, so
+    # the far ground map and the seams read the same.
+    slope, wedge, lower, setts = SLOPE, WEDGE, LOWER, SETTS
     pale = (214, 207, 192)                                             # beside the sand: paler and greyer, so it reads
-    out = [dict(name="promenade concrete", ring=prom + prom_in[::-1], colour=pale, lawn=0, alpha=1.0),
-           dict(name="cove ring concrete", ring=ring_in + ring_out[::-1], colour=pale, lawn=0, alpha=1.0),
+    prom_ring, ring = promenade_ring(), cove_ring()
+    import coast
+    out = [dict(name="promenade concrete", ring=prom_ring, colour=pale, lawn=0, alpha=1.0),
+           dict(name="cove ring concrete", ring=ring, colour=pale, lawn=0, alpha=1.0),
            dict(name="dry slope below the Marginal", ring=slope, colour=dry, lawn=120, alpha=0.85),
            dict(name="upper road and palm car park", ring=UPPER, colour=conc, lawn=0, alpha=1.0),
            dict(name="lawn wedge", ring=wedge, colour=grass, lawn=255, alpha=1.0),
            dict(name="lower road", ring=lower, colour=conc, lawn=0, alpha=1.0),
            dict(name="sett paving at the cove", ring=setts, colour=(128, 118, 116), lawn=0, alpha=1.0),
-           dict(name="upper path, tunnel plaza, east road", ring=path, colour=conc, lawn=0, alpha=1.0),
-           dict(name="lane with its parking strip", ring=[(-9.0, -146.0), (5.0, -146.0), (4.8, -186.0), (-9.0, -186.0)],
-                colour=(85, 88, 94), lawn=0, alpha=1.0),
-           dict(name="forecourt concrete", ring=fore, colour=(204, 187, 152), lawn=0, alpha=1.0),
+           dict(name="upper path", ring=PATH_WEST, colour=conc, lawn=0, alpha=1.0),
+           dict(name="tunnel plaza, east road", ring=PLAZA, colour=ochre, lawn=0, alpha=1.0),
+           dict(name="lane with its parking strip", ring=LANE, colour=(85, 88, 94), lawn=0, alpha=1.0),
+           dict(name="forecourt concrete", ring=fore, colour=ochre, lawn=0, alpha=1.0),
            dict(name="dry field", ring=field, colour=(154, 150, 106), lawn=70, alpha=1.0),
            dict(name="dry field east", ring=field_e, colour=(154, 150, 106), lawn=70, alpha=1.0),
            dict(name="terrace concrete", ring=TERRACE, colour=(208, 192, 162), lawn=0, alpha=1.0)]
