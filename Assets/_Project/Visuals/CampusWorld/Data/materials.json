@@ -1888,31 +1888,6 @@
    "smoothness": 0.45
   },
   {
-   "name": "W_street_rust",
-   "colour": [
-    0.5519,
-    0.325,
-    0.2303
-   ],
-   "metallic": 0.0,
-   "albedo": "street_rust_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": false,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.15
-  },
-  {
    "name": "W_north_buff",
    "colour": [
     0.6962,
@@ -3042,6 +3017,31 @@
    },
    "metallic_smoothness": null,
    "smoothness": 0.05
+  },
+  {
+   "name": "W_street_rust",
+   "colour": [
+    0.5519,
+    0.325,
+    0.2303
+   ],
+   "metallic": 0.0,
+   "albedo": "street_rust_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.15
   },
   {
    "name": "W_sign_white",
