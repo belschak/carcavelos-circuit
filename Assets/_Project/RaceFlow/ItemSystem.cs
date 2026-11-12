@@ -76,9 +76,11 @@ namespace CarcavelosCircuit.RaceFlow
 
         private readonly ItemSlot slot = new ItemSlot();
         private readonly List<ItemBox> boxes = new List<ItemBox>();
+        private static readonly Color WaveTurquoise = new Color(0.08f, 0.80f, 0.86f, 1f); // Luc's wave (UI/ItemIcon.cs)
         private readonly List<SeagullRing> rings = new List<SeagullRing>();
         private readonly BumpShield shield = new BumpShield();
         private Material liveMaterial;    // copy of boxMaterial with the tile texture
+        private Material waveMaterial;    // the same, tinted turquoise: the wave boxes (WaveBoxSpot)
         private Texture2D tileTexture;
         private Material ringRed;
         private Material ringWhite;
@@ -176,7 +178,7 @@ namespace CarcavelosCircuit.RaceFlow
             Play(boxBreak, 1f);
             int[] weights = ItemOdds.WeightsFor(raceManager.HasSplitDelta, raceManager.LastSplitDelta,
                 settings.LevelSeconds, settings.FarBehindSeconds);
-            ItemKind item = ItemOdds.Pick(weights, UnityEngine.Random.value);
+            ItemKind item = ItemOdds.PickForBox(box.GivesWave, weights, UnityEngine.Random.value);
             slot.TryStartRoll(item, settings.RollSeconds); // false while the slot is busy: the box still breaks, no item
         }
 
@@ -251,6 +253,7 @@ namespace CarcavelosCircuit.RaceFlow
         {
             // Runtime-made textures and materials are not cleaned up by Unity on their own.
             if (liveMaterial != null) Destroy(liveMaterial);
+            if (waveMaterial != null) Destroy(waveMaterial);
             if (tileTexture != null) Destroy(tileTexture);
             if (ringRed != null) Destroy(ringRed);
             if (ringWhite != null) Destroy(ringWhite);
@@ -453,7 +456,21 @@ namespace CarcavelosCircuit.RaceFlow
                     rows++;
                 }
             }
-            Debug.Log("ItemSystem: " + boxes.Count + " item boxes in " + rows + " rows.");
+            // V19: one box on every WaveBoxSpot the track scene has (none = only the rows). Same placement rules.
+            waveMaterial = new Material(liveMaterial);
+            waveMaterial.name = "ItemBox wave (live)";
+            waveMaterial.SetColor("_BaseColor", WaveTurquoise);
+            waveMaterial.SetColor("_EmissionColor", WaveTurquoise * 0.45f);
+            WaveBoxSpot[] waveSpots = FindObjectsByType<WaveBoxSpot>(FindObjectsSortMode.None);
+            int waves = 0;
+            for (int k = 0; k < waveSpots.Length; k++)
+            {
+                if (TryPlaceBox(waveSpots[k].transform.position, 900 + k, true))
+                {
+                    waves++;
+                }
+            }
+            Debug.Log("ItemSystem: " + boxes.Count + " item boxes in " + rows + " rows, " + waves + " wave boxes.");
         }
 
         // A one-colour copy of the box material (same shader, so the Web build already has it), glowing a little.
@@ -469,27 +486,29 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // A box only goes where there is ground below it and no wall or building inside it.
-        private void TryPlaceBox(Vector3 spot, int number)
+        // givesWave: a wave box (always the Carcavelos Wave, turquoise). Returns false when the spot was skipped.
+        private bool TryPlaceBox(Vector3 spot, int number, bool givesWave = false)
         {
             RaycastHit hit;
             Vector3 rayStart = spot + Vector3.up * 3f;
             if (!Physics.Raycast(rayStart, Vector3.down, out hit, 12f, ~0, QueryTriggerInteraction.Ignore))
             {
-                return; // off the edge of the world
+                return false; // off the edge of the world
             }
             Vector3 position = hit.point + Vector3.up * settings.HoverHeight;
             int notBoxes = ~(1 << 2); // everything except the Ignore Raycast layer (other boxes)
             if (Physics.CheckSphere(position, settings.BoxSize * 0.6f, notBoxes, QueryTriggerInteraction.Ignore))
             {
-                return; // inside a wall, a tree or a building
+                return false; // inside a wall, a tree or a building
             }
 
             GameObject go = new GameObject("ItemBox " + number);
             go.transform.SetParent(transform, false);
             go.transform.position = position;
             ItemBox box = go.AddComponent<ItemBox>();
-            box.SetUp(this, liveMaterial, settings.BoxSize, number * 0.7f);
+            box.SetUp(this, givesWave ? waveMaterial : liveMaterial, settings.BoxSize, number * 0.7f, givesWave);
             boxes.Add(box);
+            return true;
         }
     }
 }
