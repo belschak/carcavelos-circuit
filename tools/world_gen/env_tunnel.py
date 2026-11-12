@@ -119,9 +119,12 @@ def build_lights(pts, col):
     return E.new_object("Tunnel_Lights", mesh, col)
 
 
-def build_portal(p, inward, cover, name, col, beige=False):
+def build_portal(p, inward, cover, name, col, beige=False, closed=False):
     """Headwall with the trapezoid opening, plus a cap over the terrain hole behind it. V16e: `beige` = the north
-    portal, sand-beige render like the ramp's walls (survey 3.6); the south one stays white concrete."""
+    portal, sand-beige render like the ramp's walls (survey 3.6); the south one stays white concrete.
+    V18h: `closed` = the structure is a closed abutment: the parapet has a back, the headwall has ends, and a wall
+    hangs from both side edges of the cap down into the ground. The terrain is open under the cap (in_portal_hole)
+    and lies up to 2 m lower beside it, so one looked under the cap into the hole and at the tunnel's back."""
     dx, dy = inward
     nrm = (-dy, dx)
     top = cover + 1.0
@@ -130,6 +133,9 @@ def build_portal(p, inward, cover, name, col, beige=False):
     def pt(side, z, along=0.0):
         return (p["x"] + nrm[0] * side + dx * along, p["y"] + nrm[1] * side + dy * along, z0 + z)
 
+    # V18h: the terrain's hole reaches to 12 m behind the south mouth (cells are dropped whole); the cap ended at
+    # 9.5 m, so from the N6's sidewalk one looked through a 5 x 2.5 m gap onto the tunnel's ceiling from behind
+    far = 13.0 if closed else 9.5
     bm = bmesh.new()
     V = lambda c: bm.verts.new(c)
     faces = [
@@ -139,11 +145,25 @@ def build_portal(p, inward, cover, name, col, beige=False):
         # top of the headwall (0.6 m thick) and the cap over the hole behind it
         [pt(-HEADWALL_HALF, top), pt(HEADWALL_HALF, top), pt(HEADWALL_HALF, top, 0.6), pt(-HEADWALL_HALF, top, 0.6)],
         [pt(-HEADWALL_HALF, cover + 0.02, 0.6), pt(HEADWALL_HALF, cover + 0.02, 0.6),
-         pt(HEADWALL_HALF, cover + 0.02, 9.5), pt(-HEADWALL_HALF, cover + 0.02, 9.5)],
+         pt(HEADWALL_HALF, cover + 0.02, far), pt(-HEADWALL_HALF, cover + 0.02, far)],
     ]
+    extra = []                                           # (corners, outward direction in plan)
+    if closed:
+        low, H = -1.6, HEADWALL_HALF                     # 1.6 m under the road: under every ground beside the portal
+        extra.append(([pt(-H, cover + 0.02, 0.6), pt(H, cover + 0.02, 0.6), pt(H, top, 0.6), pt(-H, top, 0.6)], (dx, dy)))
+        for s in (-1, 1):
+            out = (nrm[0] * s, nrm[1] * s)
+            extra.append(([pt(s * H, low, 0.0), pt(s * H, low, 0.6), pt(s * H, top, 0.6), pt(s * H, top, 0.0)], out))
+            extra.append(([pt(s * H, low, 0.6), pt(s * H, low, far), pt(s * H, cover + 0.02, far), pt(s * H, cover + 0.02, 0.6)], out))
     for k, f in enumerate(faces):
         face = bm.faces.new([V(c) for c in f])
         face.material_index = 1 if k == 4 else 0
+    for f, out in extra:
+        face = bm.faces.new([V(c) for c in f])
+        face.material_index = 0
+        face.normal_update()
+        if face.normal.x * out[0] + face.normal.y * out[1] < 0:
+            face.normal_flip()
     # the front faces must face out of the tunnel (against `inward`)
     bm.normal_update()
     bm.faces.ensure_lookup_table()
@@ -151,7 +171,7 @@ def build_portal(p, inward, cover, name, col, beige=False):
         n = face.normal
         if n.x * dx + n.y * dy > 0:
             face.normal_flip()
-    for face in bm.faces[3:]:
+    for face in bm.faces[3:5]:
         if face.normal.z < 0:
             face.normal_flip()
     mesh = bpy.data.meshes.new(name)
@@ -223,7 +243,12 @@ WING = dict(inner=6.75, reach=12.0, out=9.6)   # V16e: the south portal's east w
 def build_wing_facet(p, inward, cover, name, col):
     """One folded white wing wall on the east side of the south portal (right of the driving direction): two
     triangular facets from the deck's corner down to the ground WING['reach'] metres in front of the mouth. It stands
-    on the cutting's bank, WING['inner'] m and more from the centreline (the opening and the bank are untouched)."""
+    on the cutting's bank, WING['inner'] m and more from the centreline (the opening and the bank are untouched).
+
+    V18h: a closed body. The facets were three loose triangles: their lower edge hung up to 1.2 m over the bank and
+    from the road one looked under them into a dark hollow (Luc, 12 Nov: "you look into the void"). Now a wall hangs
+    from every free edge down to WING_FOOT under the road level (below any ground there), the side against the
+    headwall is closed too, and every face looks outwards."""
     dx, dy = inward
     nrm = (-dy, dx)
     z0 = p["track_z"]
@@ -237,17 +262,40 @@ def build_wing_facet(p, inward, cover, name, col):
     back = pt(-HEADWALL_HALF, z0 + BEAM_Z1, -0.05)
     hx, hy, _z = pt(-HEADWALL_HALF, 0.0, -0.05)
     back_foot = (hx, hy, E.ground_z(hx, hy) - 0.3)
+    low = z0 - WING_FOOT
+    centre = [sum(c[k] for c in (foot_near, foot_far, back_foot)) / 3.0 for k in range(2)]
     bm = bmesh.new()
     for tri in ((foot_near, foot_far, top), (top, foot_far, back), (back, foot_far, back_foot)):
         f = bm.faces.new([bm.verts.new(c) for c in tri])
         f.normal_update()
         if f.normal.z < 0:
             f.normal_flip()
+
+    def skirt(a, b, steps):
+        """Upright wall under the edge a-b, down to `low`; it looks away from the wing's middle."""
+        for k in range(steps):
+            q0 = [a[j] + (b[j] - a[j]) * k / steps for j in range(3)]
+            q1 = [a[j] + (b[j] - a[j]) * (k + 1) / steps for j in range(3)]
+            f = bm.faces.new([bm.verts.new(c) for c in ((q0[0], q0[1], low), (q1[0], q1[1], low), q1, q0)])
+            f.normal_update()
+            mid = ((q0[0] + q1[0]) / 2 - centre[0], (q0[1] + q1[1]) / 2 - centre[1])
+            if f.normal.x * mid[0] + f.normal.y * mid[1] < 0:
+                f.normal_flip()
+    skirt(foot_near, foot_far, 6)                        # the side towards the road: was open underneath
+    skirt(foot_far, back_foot, 6)                        # the outer side, towards the plaza
+    f = bm.faces.new([bm.verts.new(c) for c in ((foot_near[0], foot_near[1], low), foot_near, top, back,
+                                                (back_foot[0], back_foot[1], low))])   # against the headwall
+    f.normal_update()
+    if f.normal.x * dx + f.normal.y * dy < 0:
+        f.normal_flip()
     mesh = bpy.data.meshes.new(name)
     bm.to_mesh(mesh)
     bm.free()
     mesh.materials.append(portal_material(False))
     return E.new_object(name, mesh, col)
+
+
+WING_FOOT = 1.6        # m under the road level at the mouth: the wing's walls end here, under the ground
 
 
 def build_portal_jambs(p, inward, name, col):
@@ -293,7 +341,7 @@ def build():
     cover = env_terrain.PROFILE.get("tunnel_cover_m", 4.8)
     for (p, inward), name in zip(env_terrain.portals(), ("Tunnel_PortalSouth", "Tunnel_PortalNorth")):
         north = name.endswith("North")
-        build_portal(p, inward, cover, name, col, beige=north)
+        build_portal(p, inward, cover, name, col, beige=north, closed=not north)   # V18h: the south abutment is closed
         build_portal_beam(p, inward, name.replace("Portal", "PortalBeam"), col, beige=north)
         if not north:
             build_wing_facet(p, inward, cover, "Tunnel_PortalWingSouth", col)
