@@ -1,9 +1,11 @@
 """Track surface along the route (a proposal for Role 2's drivable road, built from route.json).
 
 Objects in collection Track_Surface:
-  Track_Road      8 m road, one material per surface type (route_profile.json "surfaces"), UVs in real metres
+  Track_Road      8 m road, one material per surface type (route_profile.json "surfaces"), UVs in real metres.
+                  V18g: outside the hall it shows the real ground under it (ROAD_LOOK: the material and the UV frame
+                  of the paving beside it), so the race line is a hidden path through the map
   Track_Verges    2.5 m strips beside the road that blend into the terrain (outdoors only)
-  Track_Kerbs     striped kerbs on the inside of tight corners
+  Track_Kerbs     striped kerbs on the inside of tight corners (V18g: off, RACE_KERBS; the object is not built)
   Track_CutWalls  sloped concrete walls where the road runs in a cutting deeper than 1 m
   Track_JumpKicker small kicker ending at the terrace edge
 """
@@ -33,14 +35,108 @@ OUTDOOR_NO_VERGE = {"tunnel", "atrium", "terrace deck"}
 KERB_ZONES = {"lawn and paths", "coastal road", "promenade", "lower plaza", "upper plaza", "tunnel plaza"}
 
 
-def visual_surface(p):
-    """Surface shown at a route point: the street plan's (V10f: pale concrete in the car park, setts in the entry
-    throat) where it has one, else route.json's. Colour only: route.json and every driving value stay as they are."""
+# =====================================================================================================
+# V18g (2026-11-12): the map comes first. Outside the hall the race road shows what is really under it and carries
+# no race paint (no orange kerbs, no race edge lines): the race line is a hidden path through the real place;
+# checkpoints, markers and run-off limits are drawn on top later. Colour, material slot and UVs only: every
+# vertex of Track_Road stays where it was.
+# =====================================================================================================
+RACE_KERBS = False                 # the orange/white kerb paint on the inside of tight corners (Track_Kerbs)
+RACE_LINE_ZONES = ("atrium",)      # zones that keep the race edge lines: only the hall's interior (Noah's lanes)
+
+
+def race_kerb_sides(pts, i):
+    """Sides (+1 left, -1 right) of route point i that carry a race kerb. One rule for build_kerbs and
+    env_trackside.kerb_sides. V18r: none on the roundabout; V18g: none at all while RACE_KERBS is off."""
     import street_plan
+    if not RACE_KERBS or pts[i]["zone"] not in KERB_ZONES or street_plan.race_kerbs_off(i):
+        return ()
+    k = curvature(pts, i)
+    radius = 1 / abs(k) if abs(k) > 1e-6 else 1e9
+    if radius >= 35:
+        return ()
+    return (1 if k > 0 else -1,) + ((-1 if k > 0 else 1,) if radius < 20 else ())
+
+
+def _entrance_look(x, y):
+    """Entrance plaza: the big slabs of the band along wing B, else the plaza's calcada."""
+    import entrance_plan as P
+    return "entrance_planks" if P.in_band(x, y) else "entrance_calcada"
+
+
+def _east_look(x, y):
+    """Lower plaza: the concrete panels in the grid of the ramp's axis, north of the split in the stairs' grid."""
+    import campus_east_plan as P
+    import campus_plan as C
+    north = P.GRID_SPLIT + [(P.GRID_SPLIT[-1][0], 25.0), (P.GRID_SPLIT[0][0], 25.0)]
+    return "east_concrete_stair" if C.inside(x, y, north) else "east_concrete_ramp"
+
+
+# What the road shows, stretch by stretch (first route index, last, surface name or f(x, y) -> name, asked at the
+# middle of the road quad and of each shoulder). Stretches not listed: street_plan.SURFACE_RUNS (V10f: car park,
+# forecourt, asphalt square), then route.json's "surface". Sources: Google satellite 20z/21z of 12 Nov 2026
+# (google_survey/r/), the DGT orthophoto, reports/V18g-r.md.
+ROAD_LOOK = [
+    (0, 14, _entrance_look),          # start straight on the entrance plaza: calcada, slabs where the band lies under it
+    (61, 81, "deck"),                 # CTT roof terrace: the deck's own pale sawn concrete
+    (127, 135, "asphalt"),            # from the avenue's kerb on: the avenue's asphalt (the calcada ends with the sidewalk)
+    (336, 350, "street_concrete"),    # promenade: pale concrete slabs (route.json: asphalt / sand)
+    (351, 366, "street_setts"),       # the curved grey sett band above the cove
+    (367, 399, "street_concrete"),    # the pale concrete path past the beach bar to the tunnel plaza
+    (478, 490, _east_look),           # lower plaza: beige-grey concrete panels with saw-cut joints
+    (583, 599, "north_calcada"),      # drop-off forecourt north of the hall: pale setts in rows along the hall's face
+    (600, 639, "street_concrete"),    # the pale paved strip behind the hall
+    (640, 684, _entrance_look),       # the run-in loop and the start straight on the entrance plaza
+]
+
+
+def _frame(origin, u, su, sv):
+    """UVs in a world frame (the neighbouring paving's own: env_streets._layer_uv), so the pattern runs on."""
+    (ox, oy), (ux, uy) = origin, u
+    return lambda x, y: (((x - ox) * ux + (y - oy) * uy) / su, (-(x - ox) * uy + (y - oy) * ux) / sv)
+
+
+def _looks():
+    """name -> (material, uv(x, y)): surfaces that share the material and the UV frame of the paving beside the road."""
+    if _LOOKS:
+        return _LOOKS
+    import campus_east_plan as CE
+    import campus_west_plan as CW
+    import entrance_plan as EP
+    import env_north
+    import env_streets as ST
+    import plaza_plan
+    calcada = ST._textured("entrance_calcada", EP.CALCADA, "entrance_calcada", 0.9)
+    east = ST._textured("campus_east_concrete", CE.PLAZA_CONCRETE, "campus_east_concrete", 0.9)
+    _LOOKS.update({
+        "entrance_calcada": (calcada, _frame((0.0, 0.0), EP.ROW_DIR, EP.CALCADA_TILE, EP.CALCADA_TILE)),
+        "entrance_planks": (ST._textured("entrance_planks", EP.PLANK, "entrance_planks", 0.9),
+                            _frame(EP.BAND_O, EP.BAND_U, EP.PLANK_TILE, EP.PLANK_TILE)),
+        "north_calcada": (calcada, _frame((0.0, 0.0), env_north.FACE_U, EP.CALCADA_TILE, EP.CALCADA_TILE)),
+        "deck": (E.material("B_deck_white", "#E9E7D4", 0.9), _frame((0.0, 0.0), CW.DECK_U, 6.0, 6.0)),   # env_campus_west
+        "east_concrete_ramp": (east, _frame((104.5, -37.0), CE.RAMP_DIR, CE.PANEL, CE.PANEL)),      # env_campus_east
+        "east_concrete_stair": (east, _frame(plaza_plan.STAIR_FOOT, CE.STAIR_DIR, CE.PANEL, CE.PANEL)),
+    })
+    return _LOOKS
+
+
+_LOOKS = {}
+
+
+def visual_surface(p, x=None, y=None):
+    """Surface shown at a route point (or at the point (x, y) beside it): ROAD_LOOK, else the street plan's (V10f:
+    pale concrete in the car park, setts in the entry throat), else route.json's. Colour only: route.json and
+    every driving value stay as they are."""
+    import street_plan
+    for i0, i1, look in ROAD_LOOK:
+        if i0 <= p["i"] <= i1:
+            return look if isinstance(look, str) else look(p["x"] if x is None else x, p["y"] if y is None else y)
     return street_plan.track_surface(p) or p["surface"]
 
 
 def surface_material(name):
+    if name in _looks():
+        return _looks()[name][0]
     if name.startswith("street_"):                     # V10f: the same material as the paving beside the road
         import env_streets
         return env_streets.mat(name[len("street_"):])
@@ -89,7 +185,24 @@ def is_drop(a, b):
 
 
 def build_road(pts, fr, col):
-    surfaces = sorted({visual_surface(p) for p in pts if p["zone"] not in PLAZA_ZONES})
+    mats, slots = [], {}                           # material slots in order of first use; one slot per material
+
+    def slot(surf):
+        name = surface_material(surf).name
+        if name not in slots:
+            slots[name] = len(mats)
+            mats.append(surface_material(surf))
+        return slots[name]
+
+    def world_uv(face, surf):
+        """V18g: surfaces that continue the paving beside the road take its UV frame (the pattern runs on)."""
+        fn = _looks().get(surf, (None, None))[1]
+        if fn:
+            for loop in face.loops:
+                loop[uv].uv = fn(loop.vert.co.x, loop.vert.co.y)
+    for p in pts:                                  # the slots of route.json's surfaces first, in the old order
+        if p["zone"] not in PLAZA_ZONES:
+            slot(visual_surface(p))
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new("UVMap")
     n = len(pts)
@@ -104,17 +217,20 @@ def build_road(pts, fr, col):
                 q = [bm.verts.new((a["x"] + na[0] * h, a["y"] + na[1] * h, zb)), bm.verts.new((a["x"] - na[0] * h, a["y"] - na[1] * h, zb)),
                      bm.verts.new((b["x"] - nb[0] * h, b["y"] - nb[1] * h, zb)), bm.verts.new((b["x"] + nb[0] * h, b["y"] + nb[1] * h, zb))]
                 f = bm.faces.new(q)
-                f.material_index = surfaces.index(visual_surface(b))
+                f.material_index = slot(visual_surface(b))
                 for loop, c in zip(f.loops, ((0, 0), (4, 0), (4, 1), (0, 1))):
                     loop[uv].uv = c
+                world_uv(f, visual_surface(b))
             continue                               # the jump: no road across the drop
         if a["zone"] in PLAZA_ZONES:
             continue                               # V10i: the stairs and the plaza deck are the road there (env_plaza)
         if i in kicker_rows(pts):
             continue                               # V10i: the kicker ramp is the road on its last metres (build_ramp)
-        surf = visual_surface(a)
-        tile = TILE_M.get(surf, 2.0)
         (_, na), (_, nb) = fr[i], fr[(i + 1) % n]
+        mid = ((a["x"] + b["x"]) / 2, (a["y"] + b["y"]) / 2)
+        nm = ((na[0] + nb[0]) / 2, (na[1] + nb[1]) / 2)
+        surf = visual_surface(a, *mid)
+        tile = TILE_M.get(surf, 2.0)
         za, zb = road_z(a), road_z(b)
         ha, hb = E.half_width(a), E.half_width(b)      # narrower in the alley (route.json 'width')
         quad = [bm.verts.new((a["x"] + na[0] * ha, a["y"] + na[1] * ha, za)),
@@ -122,12 +238,13 @@ def build_road(pts, fr, col):
                 bm.verts.new((b["x"] - nb[0] * hb, b["y"] - nb[1] * hb, zb)),
                 bm.verts.new((b["x"] + nb[0] * hb, b["y"] + nb[1] * hb, zb))]
         face = bm.faces.new(quad)
-        face.material_index = surfaces.index(surf)
+        face.material_index = slot(surf)
         sa, sb = a["s"] / tile, (a["s"] + 2.0) / tile
         ua0, ua1 = (HALF - ha) / tile, (HALF + ha) / tile    # u stays centred on the road axis
         ub0, ub1 = (HALF - hb) / tile, (HALF + hb) / tile
         for loop, (u, v) in zip(face.loops, ((ua0, sa), (ua1, sa), (ub1, sb), (ub0, sb))):
             loop[uv].uv = (u, v)
+        world_uv(face, surf)
         if not ((a["tunnel"] and b["tunnel"]) or "kicker" in (a["zone"], b["zone"])):
             # Shoulders: the road is 6 cm above its bed. A vertical edge there (or a free edge in mid air) threw
             # karts that came back onto the road. A 0.9 m wide strip now slopes down to just below the bed
@@ -140,17 +257,21 @@ def build_road(pts, fr, col):
                 low_a, low_b = down(a, na, ha, side), down(b, nb, hb, side)
                 ring = (top_a, top_b, low_b, low_a) if side == 1 else (top_b, top_a, low_a, low_b)
                 shoulder = bm.faces.new(ring)
-                shoulder.material_index = surfaces.index(surf)
-                for loop, (u, v) in zip(shoulder.loops, ((0.0, sa), (0.0, sb), (SHOULDER_M / tile, sb), (SHOULDER_M / tile, sa))
-                                        if side == 1 else ((0.0, sb), (0.0, sa), (SHOULDER_M / tile, sa), (SHOULDER_M / tile, sb))):
+                o = (ha + hb) / 2 + SHOULDER_M / 2     # V18g: the shoulder shows what lies under it
+                ssurf = visual_surface(a, mid[0] + side * nm[0] * o, mid[1] + side * nm[1] * o)
+                stile = TILE_M.get(ssurf, 2.0)
+                shoulder.material_index = slot(ssurf)
+                for loop, (u, v) in zip(shoulder.loops, ((0.0, sa * tile / stile), (0.0, sb * tile / stile), (SHOULDER_M / stile, sb * tile / stile), (SHOULDER_M / stile, sa * tile / stile))
+                                        if side == 1 else ((0.0, sb * tile / stile), (0.0, sa * tile / stile), (SHOULDER_M / stile, sa * tile / stile), (SHOULDER_M / stile, sb * tile / stile))):
                     loop[uv].uv = (u, v)
+                world_uv(shoulder, ssurf)
     bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=0.01)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     mesh = bpy.data.meshes.new("Track_Road")
     bm.to_mesh(mesh)
     bm.free()
-    for name in surfaces:
-        mesh.materials.append(surface_material(name))
+    for mat in mats:
+        mesh.materials.append(mat)
     return E.new_object("Track_Road", mesh, col)
 
 
@@ -210,19 +331,12 @@ def build_verges(pts, fr, col):
 
 
 def build_kerbs(pts, fr, col):
-    """Kerbs on the inside of corners tighter than 35 m radius (both sides below 20 m)."""
+    """Kerbs on the inside of corners tighter than 35 m radius (both sides below 20 m). V18g: off (RACE_KERBS)."""
     n = len(pts)
-    flags = []
-    for i in range(n):
-        k = curvature(pts, i)
-        radius = 1 / abs(k) if abs(k) > 1e-6 else 1e9
-        sides = []
-        import street_plan                         # V18r: no race kerb on the roundabout (colour only, like visual_surface)
-        if pts[i]["zone"] in KERB_ZONES and radius < 35 and not street_plan.race_kerbs_off(i):
-            sides.append(1 if k > 0 else -1)
-            if radius < 20:
-                sides.append(-1 if k > 0 else 1)
-        flags.append(sides)
+    flags = [list(race_kerb_sides(pts, i)) for i in range(n)]      # V18g: one rule (RACE_KERBS, the roundabout)
+    if not any(flags):
+        print("  track: no race kerbs (env_track.RACE_KERBS is off): Track_Kerbs is not built")
+        return None
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new("UVMap")
     for side in (1, -1):
