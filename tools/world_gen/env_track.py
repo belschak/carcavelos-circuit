@@ -19,6 +19,7 @@ import env_common as E
 HALF = E.ROUTE_WIDTH / 2
 ROAD_LIFT = 0.06            # road surface above the terrain bed
 KERB_HEIGHT = 0.012         # painted kerb: flush with the road, it is paint and not a bump
+ROAD_STRIPS = 3             # V18k: the road is cut into 3 strips across (twisted quads in sloped bends made bumps)
 SHOULDER_M = 0.9            # width of the gentle shoulder that takes the road down to its bed (no step at the edge)
 VERGE = 2.5                 # metres beside the road
 TILE_M = {                  # real-world size of one texture tile (m), so UVs are in tiles
@@ -192,7 +193,8 @@ def is_drop(a, b):
 
 def twist_steps(za, zb, na, nb, h, tol=0.002):
     """V18k: grid steps for a road quad. A quad whose level cross edges are turned against each other on a slope is
-    twisted; its two triangles leave a wave of about |dz| * sin(turn) * h / 4. Cut until that is under tol (2 mm)."""
+    twisted; its two triangles leave a wave of about |dz| * sin(turn) * h / 4. Rows along the segment until that,
+    divided by the rows squared and the 3 strips across, is far under a millimetre."""
     turn = abs(na[0] * nb[1] - na[1] * nb[0])            # sin of the angle between the two cross edges
     dev = abs(zb - za) * turn * h / 4.0
     return max(1, min(4, math.ceil(math.sqrt(dev / tol)))) if dev > tol else 1
@@ -275,9 +277,12 @@ def build_road(pts, fr, col):
         # Such quads are now cut into a finer grid. Where the grade changes at a route point (the climb out of the
         # tunnel after its boost pads: 13 % to 0 % in 12 m) the kink is shared out over the segment: the heights in
         # between follow a smooth curve through the route points (Catmull-Rom), the route points keep their height.
-        nw = twist_steps(za, zb, na, nb, max(ha, hb))
+        # Across: three strips on every segment, so neighbouring segments share all edge vertices (a finer grid on
+        # one side only left hairline cracks that rays slipped through). Along: as many rows as the twist needs.
+        steps = twist_steps(za, zb, na, nb, max(ha, hb))
+        nw = ROAD_STRIPS
         zf, bend = smooth_height(pts, i)
-        nl = max(nw, 4 if bend > 0.01 else 1)
+        nl = max(steps, 4 if bend > 0.01 else 1)
         grid = []
         for k in range(nl + 1):
             t = k / nl
