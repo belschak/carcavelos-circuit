@@ -397,6 +397,16 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_north_buff
+    second: {fileID: 2100000, guid: 7cba8d2eee6eb47c692d5100429d1f03, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_north_grating
+    second: {fileID: 2100000, guid: 24b3f3aa695e140d6a23c565b27c4904, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_plaza_dark
     second: {fileID: 2100000, guid: 576e1364abea64d84b359ccf375b042e, type: 2}
   - first:

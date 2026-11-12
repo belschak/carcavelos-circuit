@@ -112,6 +112,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_ground_map
+    second: {fileID: 2100000, guid: ae4fb58be0c3e4049a95152f455dec8a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_plaza_terracotta
     second: {fileID: 2100000, guid: 70e713d00742e4df1b6d751b136449ef, type: 2}
   - first:
