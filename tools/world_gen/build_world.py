@@ -37,6 +37,7 @@ import env_street_objects       # noqa: E402
 import env_capricciosa          # noqa: E402  V16g: Capricciosa forecourt, sea wall, car-park corner
 import env_campus               # noqa: E402  V10c2: campus buildings, courtyards, pools
 import env_plaza                # noqa: E402  V10i: upper plaza, stairs, sunken courtyard
+import env_campus_east          # noqa: E402  V18g: its dress() hook (east grounds as on Google Maps)
 import dressing_freeze         # noqa: E402  V10i: dressing stays put outside changed route sections
 import dressing_reality        # noqa: E402  V16f: what does not exist goes, what does is added (survey V15)
 import env_vegetation           # noqa: E402
@@ -308,6 +309,7 @@ def build_dressing():
     veg, props = env_north.dress(veg, props, protos)       # V16: forecourt cars instead of cafe tables, lay-by posts
     veg, props = env_street_objects.dress_promenade(veg, props)   # V15c: promenade bollards, flood masts, machines
     veg, props = dressing_reality.apply(veg, props)        # V16f: planting and furniture to reality
+    veg, props = env_campus_east.dress(veg, props)         # V18g: east grounds and G's arcade as on Google Maps
     veg, props = env_capricciosa.dress(veg, props, protos)        # V16g: builds its statics, then its own dressing
     env_vegetation.instance_for_preview(veg, protos)
     env_props.instance_for_preview(props, protos)
