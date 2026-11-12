@@ -617,6 +617,16 @@ def build_street(col):
           f"basement stair and railing, {len(NP.BOXES)} boxes, {len(NP.BENCHES)} bench blocks, bus stop post)")
 
 
+def road_look_lawn():
+    """The road surface 'north_lawn': the terrain's own material with the terrain's UVs (lawn_road.py uses it too)."""
+    import env_streets as ST
+    import env_track as T
+    looks = T._looks()
+    if "north_lawn" not in looks:
+        looks["north_lawn"] = (ST.mat("ground_map"), _world_uv)
+    return "north_lawn"
+
+
 def road_look(x, y):
     """env_track.ROAD_LOOK hook for route points north_plan.LOOK_I: what the race road shows at (x, y) (the middle of a
     road quad or of a shoulder). On the real lawn of the street (north_plan.LAWN) it is the terrain's own material

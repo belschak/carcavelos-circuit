@@ -80,6 +80,7 @@ def _east_look(x, y):
 ROAD_LOOK = [
     (0, 14, _entrance_look),          # start straight on the entrance plaza: calcada, slabs where the band lies under it
     (61, 81, "deck"),                 # CTT roof terrace: the deck's own pale sawn concrete
+    (82, 124, lambda x, y: __import__("lawn_road").road_look(x, y)),   # V18k: the west lawn, as on Google (lawn_road.py)
     (127, 135, "asphalt"),            # from the avenue's kerb on: the avenue's asphalt (the calcada ends with the sidewalk)
     (242, 310, lambda x, y: __import__("env_streets").road_look("slab")),           # V18h-q: car-park concrete slabs
     (311, 320, lambda x, y: __import__("env_streets").road_look("slab_dark")),      # V18h-q: the dark concrete square
