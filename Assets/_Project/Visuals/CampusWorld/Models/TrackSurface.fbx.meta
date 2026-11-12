@@ -77,6 +77,21 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_road_paint_kerb
+    second: {fileID: 2100000, guid: e3ee13faeb52640bdae21152510cd5c2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_road_paint_render_white
+    second: {fileID: 2100000, guid: 37021dc0e0fbf45579eaa65c0ee87cbe, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_road_paint_white
+    second: {fileID: 2100000, guid: aad4e11effb464530991e631f5e35b45, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_sign_chevron
     second: {fileID: 2100000, guid: e2aee4a441815488bae4fb746da72cae, type: 2}
   - first:
