@@ -864,10 +864,10 @@ def roundabout():
     layer("C east splitter", "calcada", split_e)
     RAISED.append({"kind": "island", "ring": split_e, "height": 0.13, "top": "calcada", "side": "kerb", "rim": 0.0})
     # the island: pale kerb ring, paved band, pale gravel bed with the corten beds (env_street_objects)
-    # (the outer 0.8 m of the band tells the ground colour map "asphalt": beside the island the terrain shows in a
+    # (the outer metre of the band tells the ground colour map "asphalt": beside the island the terrain shows in a
     # hand-wide strip at the foot of the race road's shoulder, and a pale rim would bleed into it)
     layer("C island band", "calcada", circle(c, RB_KERB, RB_SEG), ground="asphalt")
-    layer("C island band", "calcada", circle(c, RB_KERB - 0.8, RB_SEG))
+    layer("C island band", "calcada", circle(c, RB_KERB - 1.0, RB_SEG))
     layer("C island bed", None, circle(c, RB_BED, 72), ground="gravel")
 
     # ---------------- kerb stones (flush pale bands) ----------------
@@ -894,12 +894,12 @@ def roundabout():
                 run = []
             t += 0.125
     ko, ki = circle(c, RB_KERB, RB_SEG), circle(c, RB_KERB - RB_APRON_KERB, RB_SEG)
-    band = circle(c, RB_KERB - 0.8, RB_SEG)
+    band = circle(c, RB_KERB - 1.0, RB_SEG)
     for k in range(RB_SEG):
         k1 = (k + 1) % RB_SEG
         paint("kerb", [ki[k], ko[k], ko[k1], ki[k1]], road=True)
         if min(route_distance(*q) for q in (band[k], band[k1], ki[k], ki[k1])) < KEEP_OUT:
-            # the race road's shoulder reaches 0.65 m into the island here: its paved band goes on as flush paint
+            # the race road's shoulder reaches 0.8 m into the island here: its paved band goes on as flush paint
             paint("render_white", [band[k], ki[k], ki[k1], band[k1]], road="fill")
 
     # ---------------- markings ----------------
