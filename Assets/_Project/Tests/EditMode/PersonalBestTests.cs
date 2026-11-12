@@ -138,6 +138,44 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(Medal.None, loaded.BestMedal);
         }
 
+        [Test]
+        public void LayoutStamp_SurvivesTheSaveString_SameRoadKeepsTheRecord()
+        {
+            PersonalBest best = new PersonalBest(3, 1408);
+            best.FinishRun(52.5f);
+            StringAssert.EndsWith("|1408", best.ToSaveString());
+            PersonalBest loaded = PersonalBest.FromSaveString(best.ToSaveString(), 3, 1408);
+            Assert.AreEqual(52.5f, loaded.BestSeconds, 0.0001f);
+            Assert.AreEqual(1408, loaded.LayoutStamp);
+            Assert.IsTrue(PersonalBest.FromSaveString(best.ToSaveString(), 3, 1406).HasRecord, "2 m off: same road");
+        }
+
+        [Test]
+        public void RecordFromAnotherRoad_IsDropped_SoTheNextLapIsARecordAgain()
+        {
+            PersonalBest onV14 = new PersonalBest(3, 1364);
+            onV14.FinishRun(51.03f);
+            PersonalBest loaded = PersonalBest.FromSaveString(onV14.ToSaveString(), 3, 1408);
+            Assert.IsFalse(loaded.HasRecord);
+            Assert.AreEqual(1408, loaded.LayoutStamp, "the next save belongs to the road we race on now");
+            Assert.IsTrue(loaded.FinishRun(53f), "a slower lap on the longer road is still a new record");
+            Assert.IsFalse(PersonalBest.FromSaveString(onV14.ToSaveString(), 3, 1367).HasRecord, "3 m off: another road");
+        }
+
+        [Test]
+        public void SaveWithoutStamp_KeptWhileTheTrackHasNoLine_DroppedOnceItHasOne()
+        {
+            Assert.IsTrue(PersonalBest.FromSaveString("41.25|10.5;22.25;-1|2", 3, TrackLayout.Unknown).HasRecord);
+            Assert.IsFalse(PersonalBest.FromSaveString("41.25|10.5;22.25;-1|2", 3, 1408).HasRecord);
+        }
+
+        [TestCase("41.25|10.5;22.25;-1|2|long")]
+        [TestCase("41.25|10.5;22.25;-1|2|")]
+        public void BrokenLayoutStamp_MeansNoRecord(string text)
+        {
+            Assert.IsFalse(PersonalBest.FromSaveString(text, 3, TrackLayout.Unknown).HasRecord);
+        }
+
         [TestCase("41.25|10.5;22.25;-1|9")]
         [TestCase("41.25|10.5;22.25;-1|-3")]
         [TestCase("41.25|10.5;22.25;-1|gold")]

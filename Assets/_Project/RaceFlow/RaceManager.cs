@@ -35,6 +35,7 @@ namespace CarcavelosCircuit.RaceFlow
         public Transform KartTransform { get { return kartTransform; } }
         public TrackInfo Track { get { return track; } } // the raced track (RaceRoster: grid slots behind its SpawnPoint, task R8)
         public string TrackName { get; private set; } = ""; // the track scene we race on (save keys, ghost check)
+        public int LayoutStamp { get; private set; } = TrackLayout.Unknown; // the road we race on (TrackLayout): best time + ghost check
         public Vector3[] TrackPoints { get; private set; } = new Vector3[0]; // checkpoint positions in driving order (fly-over camera)
         public Vector3[] TrackForwards { get; private set; } = new Vector3[0]; // road direction at each checkpoint (its respawn point), zero if unknown
         public float LapMetres { get; private set; } // lap length checkpoint to checkpoint (medal times scale with it)
@@ -119,8 +120,10 @@ namespace CarcavelosCircuit.RaceFlow
 
             // The best time is saved per track in PlayerPrefs (in the browser Unity keeps them in the site's IndexedDB storage).
             TrackName = trackName;
+            // A best time from another road (same name, same checkpoints, but the road between them moved) is dropped.
             saveKey = "CarcavelosCircuit.Best." + trackName;
-            personalBest = PersonalBest.FromSaveString(PlayerPrefs.GetString(saveKey, ""), checkpointCount);
+            LayoutStamp = TrackLayout.StampOf(TrackProgressSource.OwnOf(track));
+            personalBest = PersonalBest.FromSaveString(PlayerPrefs.GetString(saveKey, ""), checkpointCount, LayoutStamp);
 
             // Medal times, stretched to this track's length (MedalScaling). A save from before medals existed gets the
             // medal its best time is worth.
