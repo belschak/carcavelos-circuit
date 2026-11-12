@@ -1270,6 +1270,12 @@ def n6_east():
     med_n, med_s_ = n6e_line(lambda r: r[2]), n6e_line(lambda r: -r[2])
     kerb_n, kerb_s = n6e_line(3), n6e_line(4)
     walk_n, walk_s = n6e_line(lambda r: r[3] + wn), n6e_line(lambda r: r[4] - ws)
+    # the paved triangle north-east of the ring reaches further north-east than the roundabout section drew it
+    # (orthophoto: its edge runs from (-79, -48) through (-45, -67) and (-30, -76) to the sidewalk at x -17)
+    E = EAST
+    layer("N plaza north-east of the ring", "calcada",
+          [(-79.3, -47.5), (-45.0, -67.3), (-30.0, -75.7), (-17.5, -83.0), east_pt(E["end"], E["walk_n"]),
+           east_pt(34.0, E["walk_n"]), (-48.0, -71.5), (-55.5, -66.0), (-66.0, -58.0)])
     # grass south of the road (the palms' strip), the car park, the road, the sidewalks, the median
     layer("N grass strip", None, kerb_s + n6e_line(lambda r: r[4] - 9.0)[::-1], ground="lawn")
     conc_uv = frame_uv(N6E_LOT[0], (1.0, 0.0), 4.0, 4.0)
