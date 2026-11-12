@@ -48,7 +48,8 @@ PAD_RING = [Q(8.8, -3.9), Q(27.0, -3.9), Q(27.0, -15.4), Q(15.6, -15.4), Q(15.6,
 LAWN_PATH = [(-76.0, 39.5), (-20.0, 60.0)]
 LAWN_PATH_W = 2.8
 # stepping slabs across the south lawn toward D (0.6 x 1.2 m, pitch 1.1 m)
-SLABS = {"from": (-56.5, 32.5), "to": (-41.0, 20.5), "pitch": 1.1, "size": (0.6, 1.2)}
+# (V18g: re-measured on the Google satellite view of 2026: 16 m long, bearing 141, ending at the head's north-west tip)
+SLABS = {"from": (-54.0, 31.5), "to": (-44.3, 19.3), "pitch": 1.1, "size": (0.6, 1.2)}
 
 # ----------------------------------------------------------------------------------------------------------------
 # D's pool (survey Appendix C 2.2): five-sided basin, flush pale kerb, a 4 m arm east along D's south facade.
@@ -96,14 +97,40 @@ BERM_TOP = [(10.0, -45.0), (-5.0, -53.0), (0.0, -71.0), (20.0, -70.0), (29.0, -6
             (30.0, -48.0), (24.0, -41.0)]
 BERM_Z = F0 - 0.05               # flat top = Floor 0 of hall E (the lawn lies at 9.2-9.9 m: about 1.5-2 m higher)
 BERM_KERB = [(20.0, -30.0), (-14.0, -51.0), (-4.0, -75.0), (24.0, -75.0)]     # pale edging line at its foot (paint)
-PATH = [(-72.0, -38.0), (-8.0, -80.0), (30.0, -78.0)]       # centre line of the stone-paved perimeter path
-PATH_W = 4.5
+# centre line of the stone-paved perimeter path. V18g: measured on the orthophoto (pale band, +-0.7 m): it comes down
+# the avenue side from the entrance plaza (4.4-4.7 m wide, 3 m behind the avenue's pavement), turns at (-68.9, -38.6)
+# and runs along the Marginal. Before V18g only the part south of y -38 was built, 1.5-3 m too far south.
+PATH = [(-84.0, 96.0), (-80.0, 65.0), (-76.5, 30.0), (-68.9, -38.6), (-5.8, -78.0), (30.0, -79.2)]
+PATH_W = 4.4
+PATH_PAINT = [(-84.7, 101.5)] + PATH   # the paving runs on into the entrance plaza; the wall starts at y 96
 WALL_H, WALL_T = 0.45, 0.4       # the continuous low wall on its outer side
+WALL_GAP = 7.6                   # m from the race centreline: the wall stops this far from the lawn road that crosses it
+# the paler branch from the path's south-east end up to hall E's lower door (Google 2026; paint)
+PATH_BRANCH = [(29.0, -78.5), (45.5, -66.5)]
+PATH_BRANCH_W = 2.6
+# V18g, hall E's raised lawn (Google 2026 and the orthophoto): a thick pale kerb runs along the crest of the platform
+# (north-west, west and south side); the thin line at the foot of its slope is BERM_KERB above
+CREST_KERB = [(14.4, -49.2), (10.6, -45.5), (-5.6, -54.5), (0.6, -70.1), (29.9, -71.7)]
+CREST_KERB_W, CREST_KERB_H = 0.5, 0.14
+# the ochre terrace at E's west end (orthophoto: 14..37, -40..-66), larger than the V10c2 outline
+E_TERRACE = [(14.4, -49.2), (23.8, -40.1), (29.4, -46.4), (31.5, -55.8), (36.9, -59.5), (31.2, -66.4)]
+# lawn where the map still showed 5 m wide paved bands (stroked outlines of the terrace and of the court)
+E_LAWN_FIX = [[(8.0, -49.0), (22.5, -34.5), (37.0, -42.0), (42.0, -60.0), (29.0, -72.5)],
+              [(27.5, -31.5), (18.5, -36.0), (22.5, -41.5), (36.0, -29.5), (34.0, -27.5), (30.2, -30.5)],
+              [(15.2, -1.0), (18.6, -2.4), (29.6, -30.4), (26.6, -32.0)]]
+# the court between D and E (Google 2026: flat pale gravel with timber picnic tables, no steps, no red structure):
+# its south-west part down to the kerb on its west edge, and the tables west of x 45 (the east part: builder E)
+COURT_SW = [(19.0, -2.0), (30.2, -30.0), (34.5, -27.0), (34.6, -22.7), (28.0, -19.0), (21.0, -4.5)]
+COURT_KERB = [(19.0, -2.0), (30.2, -30.0)]
+COURT_TABLES = [(28.8, -7.5), (32.9, -0.8), (36.9, 1.4), (39.6, -3.9), (42.8, 2.9), (44.0, -0.8), (42.2, -10.1),
+                (39.0, -13.7), (33.8, -14.3), (35.6, -16.8), (43.4, -16.8)]
+COURT_HEADING = 0.3695           # rad: the tables stand along D (heading 69)
 # the real trees of the two lawns (survey: W08, W27, orthophoto), moved out of the road's clearance where needed:
 # (x, y, prototype, scale)
 TREES = [(-69.3, 53.6, "Veg_Olive", 0.62),          # old olive, real (-69, 52): 5.6 m from the centreline there
          (-27.0, 45.0, "Veg_PlazaTree", 0.62),      # young tree, real (-27, 48.5): 4 m from the centreline there
-         (-60.5, -31.0, "Veg_Olive_B", 0.66)]       # the one old olive of the south-west lawn
+         (-60.5, -31.0, "Veg_Olive_B", 0.66),       # the one old olive of the south-west lawn
+         (32.5, -73.5, "Veg_PlazaTree", 0.7)]       # V18g: small tree where the branch path leaves (Google 2026)
 
 # the two planted strips with low grasses along B's foot (B's frame: s along the bar, t = metres south of the facade
 # line): clumps every 4 m, left out where they would stand on the stair, the pad or within 8 m of the race line
@@ -121,6 +148,8 @@ COURT_N_ROWS = {"origin": (5.5, 70.5), "rows": (0.0, 6.0, 12.0), "count": 5, "pi
 GRAVEL = (182, 156, 122)         # ochre stabilised gravel of the courtyards (survey #a2896b, a step paler)
 PAD = (206, 194, 162)            # pale buff concrete of the pad (survey #ccbd98)
 PALE_PATH = (214, 207, 184)      # the plain pale lawn path
+COURT = (214, 205, 182)          # = campus_plan.BEIGE (the court between D and E)
+OCHRE = (222, 194, 146)          # = campus_plan.OCHRE
 STONE_PATH = (190, 178, 164)     # stone paving of the perimeter path (survey #a89a8e, a step paler)
 KERB_LINE = (198, 186, 134)      # edging at the berm's foot (survey #c3b479)
 LAWN = (143, 179, 122)           # = campus_plan.LAWN
@@ -154,5 +183,17 @@ def add_paint(paint, old_pool):
     paint("lawn over the former pool outline", old_pool, LAWN, lawn=255)
     paint("pale lawn path", strip(LAWN_PATH, LAWN_PATH_W), PALE_PATH)
     paint("pad at the terrace stair (V16c)", PAD_RING, PAD)
-    paint("perimeter path", strip(PATH, PATH_W), STONE_PATH)
+    for k, ring in enumerate(E_LAWN_FIX):                           # V18g
+        paint(f"lawn instead of a stroked outline {k}", ring, LAWN, lawn=255)
+    paint("court between D and E, south-west part", COURT_SW, COURT)
+    paint("terrace of E (V18g outline)", E_TERRACE, OCHRE)
+    paint("branch path to hall E", strip(PATH_BRANCH, PATH_BRANCH_W), PALE_PATH)
+    paint("perimeter path", strip(PATH_PAINT, PATH_W), STONE_PATH)
     paint("edging at the berm's foot", strip(BERM_KERB, 0.8), KERB_LINE)
+
+
+def over_streets(draw, to_px, lawn_mask):
+    """V18g: the perimeter path once more, over the street plan's layers (the avenue's east verge is a lawn layer of
+    street_plan and would hide the path north of y 8). Called by make_groundmap.street_layers with its ImageDraw."""
+    colour = (0, 0, 0) if lawn_mask else STONE_PATH
+    draw.polygon([to_px(x, y) for x, y in strip(PATH_PAINT, PATH_W)], fill=tuple(colour) + (255,))

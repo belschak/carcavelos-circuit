@@ -49,7 +49,7 @@ def extra_materials():
     return {DECK: E.material("B_deck_white", "#E9E7D4", 0.9),
             RAIL_TAN: K.railing_material("tan"),
             SCREEN: E.material("B_brick_screen", "#755B41", 0.92),
-            OLIVE: E.material("B_pool_water_olive", "#7A7862", roughness=0.06, metallic=0.25)}
+            OLIVE: E.material("B_pool_water_olive", "#86A68E", roughness=0.06, metallic=0.25)}
 
 
 class _Slots:
@@ -395,6 +395,7 @@ def build_grounds():
     pool(m)
     head_deck(m)
     path_wall(m)
+    kerbs(m)
     mesh = m.finish("World_CampusWest")
     E.new_object("World_CampusWest", mesh, E.collection("World_Buildings_Campus"))
     tris = sum(len(p.vertices) - 2 for p in mesh.polygons)
@@ -558,23 +559,16 @@ def head_deck(m):
     K.keep_out(K.ccw(row(0.0) + row(prev_d)[::-1]))
 
 
-def path_wall(m):
-    """The continuous low wall on the outer side of the stone-paved perimeter path (pale concrete, 0.45 m high,
-    0.4 m thick), following the ground."""
-    half = P.PATH_W / 2
-    outer = P.strip(P.PATH, 2 * half + P.WALL_T)                     # outer side = the right of the path's direction
-    k = len(P.PATH)
-    line = outer[k:][::-1]                                           # the right-hand offsets, in path order
-    pts = K.densify(line, 4.0)
-    clear("perimeter wall", pts)
+def low_wall(m, pts, thick, high, sink=0.3):
+    """A low pale concrete wall or kerb along the centre line pts (already densified), following the ground."""
     rows = []
     for i, p in enumerate(pts):
         a, b = pts[max(i - 1, 0)], pts[min(i + 1, len(pts) - 1)]
         nx, ny = K.right_normal(a, b)
-        t = P.WALL_T / 2
+        t = thick / 2
         gi, go = (p[0] - nx * t, p[1] - ny * t), (p[0] + nx * t, p[1] + ny * t)
         z = max(E.ground_z(*gi), E.ground_z(*go))
-        rows.append((gi, go, z + P.WALL_H, min(E.ground_z(*gi), E.ground_z(*go)) - 0.3))
+        rows.append((gi, go, z + high, min(E.ground_z(*gi), E.ground_z(*go)) - sink))
     for (i0, o0, z0, b0), (i1, o1, z1, b1) in zip(rows, rows[1:]):
         m.up([(*i0, z0), (*i1, z1), (*o1, z1), (*o0, z0)], K.CONC)
         m.face([(*i1, b1), (*i0, b0), (*i0, z0), (*i1, z1)], K.CONC)             # towards the path
@@ -582,6 +576,39 @@ def path_wall(m):
     for (i_, o_, z, b), flip in ((rows[0], False), (rows[-1], True)):
         pts4 = [(*i_, b), (*o_, b), (*o_, z), (*i_, z)]
         m.face(pts4[::-1] if flip else pts4, K.CONC)
+
+
+def path_wall(m):
+    """The continuous low wall on the outer side of the stone-paved perimeter path (pale concrete, 0.45 m high,
+    0.4 m thick), following the ground. V18g: along the whole path (avenue side and Marginal side); it stops
+    P.WALL_GAP from the centreline where the race road crosses the path on the west lawn."""
+    half = P.PATH_W / 2
+    outer = P.strip(P.PATH, 2 * half + P.WALL_T)                     # outer side = the right of the path's direction
+    k = len(P.PATH)
+    line = outer[k:][::-1]                                           # the right-hand offsets, in path order
+    runs, run = [], []
+    for p in K.densify(line, 4.0):
+        if K.route_gap(*p) >= P.WALL_GAP:
+            run.append(p)
+            continue
+        if len(run) > 1:
+            runs.append(run)
+        run = []
+    if len(run) > 1:
+        runs.append(run)
+    for n, pts in enumerate(runs):
+        clear(f"perimeter wall {n}", pts)
+        low_wall(m, pts, P.WALL_T, P.WALL_H)
+    print(f"  campus west: perimeter wall in {len(runs)} runs, {sum(len(r) for r in runs)} stations")
+
+
+def kerbs(m):
+    """V18g: the pale kerb along the crest of hall E's raised lawn and the kerb on the west edge of the court
+    between D and E (low, following the ground)."""
+    for name, line in (("crest kerb of E's lawn", P.CREST_KERB), ("court kerb", P.COURT_KERB)):
+        pts = K.densify(line, 2.5)
+        clear(name, pts)
+        low_wall(m, pts, P.CREST_KERB_W, P.CREST_KERB_H, sink=0.2)
 
 
 def slabs(m):
@@ -678,6 +705,18 @@ def plants(veg):
         if K.route_gap(x, y) < 7.0:
             raise RuntimeError(f"V16c: tree at ({x}, {y}) stands {K.route_gap(x, y):.1f} m from the race line")
         out.append({"proto": proto, "x": x, "y": y, "z": round(E.ground_z(x, y) - 0.05, 3), "rot_z": 0.6, "scale": scale})
+    return out
+
+
+def props(old):
+    """V18g: timber picnic tables on the court between D and E (west of x 45), where no prop stands within 2.2 m."""
+    out = []
+    for x, y in P.COURT_TABLES:
+        if any(math.hypot(q["x"] - x, q["y"] - y) < 2.2 for q in old + out) or K.route_gap(x, y) < 8.0:
+            continue
+        h = (math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1.0
+        out.append({"proto": "Prop_PicnicTable", "x": x, "y": y, "z": round(E.ground_z(x, y), 3),
+                    "rot_z": round(P.COURT_HEADING + (1.5708 if h > 0.6 else 0.0) + (h - 0.5) * 0.3, 4), "scale": 1.0})
     return out
 
 
