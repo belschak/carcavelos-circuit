@@ -38,6 +38,7 @@ import env_capricciosa          # noqa: E402  V16g: Capricciosa forecourt, sea w
 import env_campus               # noqa: E402  V10c2: campus buildings, courtyards, pools
 import env_plaza                # noqa: E402  V10i: upper plaza, stairs, sunken courtyard
 import env_campus_east          # noqa: E402  V18g: its dress() hook (east grounds as on Google Maps)
+import hairpin_flush           # noqa: E402  V18i: smooth ground inside the Capricciosa hairpin
 import dressing_freeze         # noqa: E402  V10i: dressing stays put outside changed route sections
 import dressing_reality        # noqa: E402  V16f: what does not exist goes, what does is added (survey V15)
 import env_vegetation           # noqa: E402
@@ -603,6 +604,7 @@ def main():
     env_streets.build_terrace_mesh()
     env_campus.build_ground_mesh()
     env_entrance.build_ground_mesh()       # V15a
+    hairpin_flush.apply()                  # V18i: one smooth ground inside the Capricciosa hairpin (after all ground meshes)
     env_streets.build()                    # V10f: paving, markings, kerbs, walls (before the dressing stands on it)
     build_paths()
     env_buildings.build()
