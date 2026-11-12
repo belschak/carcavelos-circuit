@@ -127,7 +127,7 @@ PROPS = [
     (POT, 61.8, 98.85, None, "upper plaza: row of four potted olives"),
     (POT, 63.0, 97.4, None, "upper plaza: row of four potted olives"),
     (POT, 64.2, 95.95, None, "upper plaza: row of four potted olives"),
-    (POT, 80.0, 59.6, None, "upper plaza: potted olive at the passage's south mouth"),
+    (POT, 74.95, 60.15, None, "upper plaza: potted olive at the passage's south mouth"),   # V18i: (80.0, 59.6) stood ON the shortcut's kicker
     # survey 3.5 + App. E 2.5 / 2.6: dark conical pots in twos and threes at the stair top ((104, 8), (110, 5)) and
     # beside G's corner on the upper plaza. The stair top itself is the road here (the stairs are driven over their
     # full width), so one group of three stands beside it at the foot of G's west wall
