@@ -825,7 +825,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             sunObject.transform.SetParent(root.transform, false);
             Light sun = sunObject.AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.intensity = 2.35f;                                                   // V18l: hot summer sun (V17: 1.9)
+            sun.intensity = 2.1f;                                                    // V18l: hot summer sun (V17: 1.9)
             sun.color = new Color(1f, 0.95f, 0.86f);                                 // #FFF2DB, nearly white, a little warm
             sun.shadows = LightShadows.Soft;
             sun.shadowStrength = 1f;                                                 // V18l: full shadows, the fill lights the shade
@@ -887,7 +887,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         // instead of clipping, mid-tones get more contrast. ACES darkens the mid-tones, so the exposure goes up.
         // Shadows a little cooler and highlights a little warmer (golden hour), blue and orange stay clean.
         // V18l summer: more contrast and colour, no golden cast; shade pushed towards blue, light towards warm white.
-        private const float LookExposure = 0.5f, LookContrast = 24f, LookSaturation = 16f;
+        private const float LookExposure = 0.1f, LookContrast = 30f, LookSaturation = 22f;
 
         private static VolumeProfile BuildLookProfile()
         {

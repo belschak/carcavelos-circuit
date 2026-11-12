@@ -140,7 +140,7 @@ Shader "CarcavelosCircuit/WorldLit"
                 // Two such reads compared with each other: their mean is 1 whatever the texture's brightness.
                 half m1 = dot(SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, float2(uv.y, -uv.x) * 0.159 + 0.37).rgb, half3(0.3, 0.59, 0.11));
                 half m2 = dot(SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, float2(-uv.y, uv.x) * 0.113 + 0.71).rgb, half3(0.3, 0.59, 0.11));
-                base.rgb *= 1.0 + 1.6 * step(absN.y, 0.7) * (m1 - m2) / max(m1 + m2, 0.02);
+                base.rgb *= 1.0 + 0.7 * step(absN.y, 0.7) * (m1 - m2) / max(m1 + m2, 0.02);
                 #endif
                 #if defined(_NORMALMAP)
                 half3 nt = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uv), _BumpScale);
