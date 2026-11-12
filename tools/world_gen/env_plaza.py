@@ -478,32 +478,72 @@ def build_low(col):
 
 
 def build_kicker(col):
-    """V14b: what you see of the shortcut's kicker: Boost Orange stripes across (the kerb texture, like the terrace
-    kicker), solid sides, a front under the lip. No collider (the welded drive mesh carries it)."""
+    """V14b: what you see of the shortcut's kicker. No collider (the welded drive mesh carries it, 2 mm higher).
+    V18i (Luc: "the ramp is transparent"): ONE closed, welded solid with every face looking outwards by construction.
+    Before, each face had its own vertices and recalc_face_normals() turned every island on its own, so about half
+    the top strips and side pieces looked inwards and vanished in the game (Unity draws front faces only); the cheeks
+    and the front also overlapped the pier's walls by 5 cm in the same plane. Now: striped top between two white edge
+    lines, Boost Orange cheeks and lip face that start exactly at the deck / the pier's top (no overlap), a bottom."""
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new("UVMap")
     grid = kick_grid()
     w = P.KICK_U[1] - P.KICK_U[0]
+    line = 0.16                                                  # white edge line on both sides of the top
+    cache = {}
+
+    def vert(p):
+        key = (round(p[0], 4), round(p[1], 4), round(p[2], 4))
+        if key not in cache:
+            cache[key] = bm.verts.new(p)
+        return cache[key]
+
+    def face(pts, uvs, slot, want):
+        """want: the direction the face must look (its normal's dot product with it > 0); turned if it does not."""
+        ring = []
+        for p, t in zip(pts, uvs):                               # a cheek's first piece is a triangle (height 0)
+            v = vert(p)
+            if not ring or (v is not ring[-1][0] and v is not ring[0][0]):
+                ring.append((v, t))
+        if len(ring) < 3:
+            return
+        a, b, c = (Vector(v.co) for v, _t in ring[:3])
+        if (b - a).cross(c - a).dot(Vector(want)) < 0:
+            ring.reverse()
+        f = bm.faces.new([v for v, _t in ring])
+        f.material_index = slot
+        for loop, (_v, t) in zip(f.loops, ring):
+            loop[uv].uv = t
+
+    def across(row, u):                                          # point of a row at u metres from its west end
+        t = u / w
+        return tuple(row[0][k] + (row[-1][k] - row[0][k]) * t for k in range(3))
+    right, fwd, up = P.SC_RIGHT, P.SC_DIR, (0.0, 0.0, 1.0)
     for k, (r0, r1) in enumerate(zip(grid, grid[1:])):
         s0, s1 = P.KICK_LEN * k / KICK_ROWS, P.KICK_LEN * (k + 1) / KICK_ROWS
-        top = bm.faces.new([bm.verts.new(p) for p in (r0[0], r0[-1], r1[-1], r1[0])])
-        for loop, c in zip(top.loops, ((0.0, s0 / 2), (w / 2, s0 / 2), (w / 2, s1 / 2), (0.0, s1 / 2))):
-            loop[uv].uv = c
-        for a, b, flip in ((r0[0], r1[0], True), (r0[-1], r1[-1], False)):
-            vs = [bm.verts.new((a[0], a[1], P.DECK_Z - 0.05)), bm.verts.new((b[0], b[1], P.DECK_Z - 0.05)), bm.verts.new(b), bm.verts.new(a)]
-            side = bm.faces.new(vs[::-1] if flip else vs)
-            for loop in side.loops:
-                loop[uv].uv = (0.05, loop.vert.co.z)
-    a, b = grid[-1][0], grid[-1][-1]
-    front = bm.faces.new([bm.verts.new((a[0], a[1], P.DECK_Z - 0.05)), bm.verts.new(a), bm.verts.new(b), bm.verts.new((b[0], b[1], P.DECK_Z - 0.05))])
-    for loop in front.loops:
-        loop[uv].uv = (0.05, loop.vert.co.z)
+        for u0, u1, slot in ((0.0, line, 1), (line, w - line, 0), (w - line, w, 1)):
+            face([across(r0, u0), across(r0, u1), across(r1, u1), across(r1, u0)],
+                 [(u0 / 2, s0 / 2), (u1 / 2, s0 / 2), (u1 / 2, s1 / 2), (u0 / 2, s1 / 2)], slot, up)
+        for a, b, out in ((r0[0], r1[0], (-right[0], -right[1], 0.0)), (r0[-1], r1[-1], (right[0], right[1], 0.0))):
+            pts = [(a[0], a[1], P.DECK_Z), (b[0], b[1], P.DECK_Z), b, a]
+            face(pts, [(0.05, p[2]) for p in pts], 0, out)
+    a, b = grid[-1][0], grid[-1][-1]                             # the lip's face, looking into the courtyard
+    pts = [(a[0], a[1], P.DECK_Z), a] + [across(grid[-1], u) for u in (line, w - line)] + [b, (b[0], b[1], P.DECK_Z)]
+    face(pts, [(0.05, p[2]) for p in pts], 0, (fwd[0], fwd[1], 0.0))
+    ring = [(r[0][0], r[0][1], P.DECK_Z) for r in grid] + [(r[-1][0], r[-1][1], P.DECK_Z) for r in reversed(grid)] \
+        + [across(grid[0], u) for u in (w - line, line)]        # (the first row lies on the deck's level)
+    face(ring, [(0.05, 0.0)] * len(ring), 0, (0.0, 0.0, -1.0))  # the bottom (on the deck's level, never seen)
     bm.normal_update()
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    open_edges = sum(1 for e in bm.edges if len(e.link_faces) != 2)
+    inward = sum(1 for e in bm.edges if not e.is_contiguous) + (bm.calc_volume(signed=True) <= 0)
+    print(f"  plaza: shortcut kicker {len(bm.faces)} faces, edges not shared by exactly two faces: {open_edges}, "
+          f"edges whose two faces disagree about the outside (+1 if the whole solid is inside out): {inward}")
+    if open_edges or inward:
+        raise RuntimeError("V18i: the shortcut kicker is not a closed solid with outward faces")
     mesh = bpy.data.meshes.new("Track_ShortcutKicker")
     bm.to_mesh(mesh)
     bm.free()
     mesh.materials.append(E.material("T_kerb", "#FF8A1F", roughness=0.7))
+    mesh.materials.append(E.material("edge_line_white", "#EDEDE8", roughness=0.6))
     E.new_object("Track_ShortcutKicker_NoCollide", mesh, col)
 
 

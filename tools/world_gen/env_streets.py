@@ -33,6 +33,7 @@ from mathutils.geometry import delaunay_2d_cdt, tessellate_polygon
 import env_common as E
 import env_corridor
 import env_terrain
+import hairpin_flush           # V18i: one smooth ground inside the Capricciosa hairpin
 import street_plan as S
 
 COLLECTION = "World_Streets"
@@ -88,6 +89,8 @@ def mat(key):
     if key == "lawn":
         import env_track
         return env_track.surface_material("lawn")
+    if key == "ground_map":           # V18i: the terrain's own material (hairpin_flush.layers: lawn as part of the paving)
+        return E.material("ground_map", "#A6AA82", roughness=0.95)
     if key == "rust":
         return _textured("street_rust", "#8E5238", "street_rust", 0.85)
     if key == "hedge":
@@ -155,6 +158,9 @@ def _ground_tree():
 
 def ground(x, y):
     """Height of the built terrain at (x, y) (the highest surface under the point)."""
+    h = hairpin_flush.height(x, y)                 # V18i: inside the hairpin the ground is hairpin_flush's smooth field
+    if h is not None:
+        return h
     if _bvh["tree"] is None:
         _bvh["tree"] = _ground_tree()
     hit = _bvh["tree"].ray_cast(Vector((x, y, 200.0)), Vector((0.0, 0.0, -1.0)), 400.0)
@@ -403,7 +409,7 @@ def _hull_radius(x, y):
 
 def _paving_z(d, x, y):
     z = ground(x, y)
-    r = _hull_radius(x, y)
+    r = 0.0 if hairpin_flush.in_zone(x, y) else _hull_radius(x, y)
     if r:
         for k in range(8):
             a = math.pi * k / 4
@@ -411,17 +417,19 @@ def _paving_z(d, x, y):
                 px, py = x + math.cos(a) * r * f, y + math.sin(a) * r * f
                 if S.route_distance(px, py) >= S.ROAD_HALF + 2.0:          # not the road itself
                     z = max(z, ground(px, py))
-    return z + lift_at(d)
+    return z + hairpin_flush.lift(x, y, lift_at(d), LIFT_EDGE)
 
 
 def build_paving(col):
-    layers = S.LAYERS
+    layers = hairpin_flush.layers(S.LAYERS)        # V18i: + the hairpin's inside as one layer under all others
     soup = overlay(layers)
+    hairpin_flush.retag(soup, layers)
     soup.tris = [t for t in soup.tris if layers[t[3]]["mat"] is not None]
     counts = [len(soup.tris)]
     soup.refine_near_route(3.0)
     counts.append(len(soup.tris))
     soup.clip_route()
+    hairpin_flush.refine(soup)
     counts.append(len(soup.tris))
     soup.follow_ground(lambda x, y: _paving_z(S.route_distance(x, y), x, y))
     counts.append(len(soup.tris))
@@ -540,6 +548,7 @@ def build_paint(col):
     lane.xy, lane._d = soup.xy, soup._d
     lane.tris = [t for t in soup.tris if t[3] in on_road]
     soup.tris = [t for t in soup.tris if t[3] not in on_road]
+    hairpin_flush.refine(soup)                     # V18i: the paving inside the hairpin is curved (not the road's paint)
     lane.limit_edges(1.2)
     lane.cut_level(S.ROAD_HALF)
     lane.cut_level(S.KEEP_OUT - 0.05)
