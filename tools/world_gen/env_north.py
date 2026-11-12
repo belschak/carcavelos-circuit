@@ -397,6 +397,11 @@ def dress(veg, props, protos):
     n_saplings = 0
     if "Veg_PlazaTree" in protos:                         # Milestone's west lawn: a few staked saplings (N06, N14):
         for k, (x, y) in enumerate(SAPLINGS):             # the plaza's young tree at 0.56-0.68 (3.1-3.8 m tall)
+            b, r = P.loop_polar(x, y)                     # V18h: none on the grass ring behind the curve plaza's rim:
+            if r < P.FAN_R + P.FAN_LAWN_GAP + 1.0:        # out onto the raised lawn, or dropped at Milestone's wall
+                x, y = (round(v, 2) for v in P.loop_pt(b, P.FAN_R + P.FAN_LAWN_GAP + 1.0))
+                if y > 161.5 - 0.0464 * (x + 40.8) - 2.0:
+                    continue
             if S.route_distance(x, y) < E.KEEP_CLEAR + 1.5:
                 continue
             _REPORT.append(("saplings on Milestone's lawn", S.route_distance(x, y) - 0.8))

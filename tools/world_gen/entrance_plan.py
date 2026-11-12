@@ -19,10 +19,12 @@ import math
 # V18g (Google satellite 2026, 20z/21z, +-0.7 m): the north edge is not a straight line at y = 147.5 but the foot of
 # Milestone's lawn bank, (-88.5, 140.3) - (-58.6, 146.5) - (-41.2, 150.5); the east lawn's edge runs (-26, 152) -
 # (-2, 161.6); the south edge is the north edge of B's planted strip (PLANTED, s = 6.2) west of t = 42.5.
-RING = [(-90.0, 102.0), (-88.0, 97.0), (-85.36, 96.44), (-26.54, 119.02), (-24.32, 113.23), (15.0, 128.1),
-        (16.91, 128.83), (8.93, 149.17), (7.06, 148.43), (2.8, 159.8), (1.5, 163.5), (-2.0, 161.6), (-26.0, 152.0),
-        (-28.4, 160.5), (-30.4, 166.9), (-31.4, 169.6), (-38.9, 168.6), (-39.3, 161.3), (-39.3, 150.9), (-41.2, 150.5),
-        (-58.6, 146.5), (-88.5, 140.3), (-90.0, 140.0)]
+RING_V18G = [(-90.0, 102.0), (-88.0, 97.0), (-85.36, 96.44), (-26.54, 119.02), (-24.32, 113.23), (15.0, 128.1),
+             (16.91, 128.83), (8.93, 149.17), (7.06, 148.43), (2.8, 159.8), (1.5, 163.5), (-2.0, 161.6), (-26.0, 152.0),
+             (-28.4, 160.5), (-30.4, 166.9), (-31.4, 169.6), (-38.9, 168.6), (-39.3, 161.3), (-39.3, 150.9), (-41.2, 150.5),
+             (-58.6, 146.5), (-88.5, 140.3), (-90.0, 140.0)]
+# V18h: RING = RING_V18G plus the curve plaza's fan (the paving takes a round bite out of Milestone's lawn bank), see
+# the section "V18h" below, where RING, J_LAWN and J_BANK get their final shape.
 TREE_PAD = 3.0             # m: trees this close outside the ring (the row along B's planted strip) are plaza trees too
 # V15b (start straight): inside this box (x0, y0, x1, y1: the changed section of the race line with its surroundings)
 # env_entrance moves or drops the frozen plants and props that the new line passes too closely
@@ -96,8 +98,21 @@ LAMP_DARK = "#2F3134"
 # Survey corners: north edge (-81.4, 130.6)-(-54.5, 135.4), south edge (-78.2, 117.1)-(-51.7, 126.3). Here the whole
 # ramp lies 1.0 m further west along its own axis: its portal corner then keeps 1.3 m from the outer edge of the
 # track corridor (26 m from the centreline), which must stay as it is.
-RAMP_NW, RAMP_NE = (-82.37, 130.36), (-55.47, 135.16)  # north edge: mouth -> portal
-RAMP_SW, RAMP_SE = (-79.17, 116.86), (-52.67, 126.06)  # south edge: mouth -> portal
+RAMP_NW, RAMP_NE_V15 = (-82.37, 130.36), (-55.47, 135.16)  # north edge: mouth -> portal
+RAMP_SW, RAMP_SE_V15 = (-79.17, 116.86), (-52.67, 126.06)  # south edge: mouth -> portal
+# V18h (curve plaza): the portal wall stood 7.4 m from the race line, exactly where a kart swings out of the loop. The
+# ramp is RAMP_SHORTEN m shorter at its portal end (the mouth at the avenue stays where Google shows it; the portal is
+# then 6 m west of the real one, the ramp 21.6 m long instead of 27.6). 0.0 restores the V15b ramp.
+RAMP_SHORTEN = 6.0
+
+
+def _towards(a, b, d):
+    ln = math.hypot(b[0] - a[0], b[1] - a[1])
+    return (round(a[0] + (b[0] - a[0]) * d / ln, 2), round(a[1] + (b[1] - a[1]) * d / ln, 2))
+
+
+RAMP_NE = _towards(RAMP_NE_V15, RAMP_NW, RAMP_SHORTEN)
+RAMP_SE = _towards(RAMP_SE_V15, RAMP_SW, RAMP_SHORTEN)
 RAMP_DROP = 3.3            # m: floor at the portal below the plaza beside it (survey 3.2 +-0.5)
 RAMP_WALL = 0.35           # m: thickness of the concrete side walls
 RAMP_PARAPET = 1.1         # m: V16 (N06_z_ramp_h100, N14_h270): solid concrete parapets 1.1 m over the plaza, no railing
@@ -118,10 +133,10 @@ PLANTED_T, PLANTED_S = (-20.5, 42.5), (-3.7, 6.2)
 SHRUB_ROW = dict(s=0.9, t0=5.0, t1=41.0, step=2.4)      # dark clipped shrubs, one row (21z: blobs of 1.5-2 m)
 TREE_ROW_S = 8.7           # the south tree row stands 2.5 m inside the paving (was 6.9: on the strip's edge)
 # Milestone J's south lawn: a raised lawn inside a flush pale concrete edging (0.5 m), a grass bank down to the plaza
-J_LAWN = [(-96.0, 166.3), (-86.1, 147.9), (-42.6, 154.9), (-41.6, 162.3)]
+J_LAWN_V18G = [(-96.0, 166.3), (-86.1, 147.9), (-42.6, 154.9), (-41.6, 162.3)]
 J_LAWN_EDGING = 0.5
-J_BANK = [(-99.0, 168.0), (-96.1, 160.0), (-92.65, 150.0), (-90.65, 143.0), (-90.0, 140.0), (-88.5, 140.3),
-          (-58.6, 146.5), (-41.2, 150.5), (-39.3, 150.9), (-39.3, 163.0)]
+J_BANK_V18G = [(-99.0, 168.0), (-96.1, 160.0), (-92.65, 150.0), (-90.65, 143.0), (-90.0, 140.0), (-88.5, 140.3),
+               (-58.6, 146.5), (-41.2, 150.5), (-39.3, 150.9), (-39.3, 163.0)]
 J_SAPLINGS = [(-87.5, 157.0), (-82.8, 158.0), (-78.0, 154.3), (-69.0, 155.3), (-63.3, 157.6), (-62.8, 153.8),
               (-52.0, 157.3), (-48.0, 159.3)]
 J_TREE = (-56.8, 156.4)    # one larger dark tree on the lawn
@@ -145,6 +160,159 @@ SIGN_BOARD = dict(at=(-94.9, 130.7), bearing=350.0, width=2.4, top=3.3)   # two 
 CYCLE_SIGN = (-90.6, 141.6)             # blue round sign on a post where the track ends
 KERB_LAMPS = [(-97.2, 137.6), (-102.6, 161.0)]
 LAYBY_CARS = [(-95.3, 107.6, 349.0), (-93.4, 101.8, 349.0)]     # two cars parked in the lay-by south of the bus bay: x, y, bearing
+
+
+# ----------------------------------------------------------------------------------------------------------------
+# V18h (2026-11-12, Luc after driving): the loop before the finish becomes a curve plaza: one wide, flat, paved area
+# with nothing standing on it, where a kart can swing out wide or cut tight on the inside. The race line stays.
+# Read by env_entrance (paving, dressing, terrain), env_north (lawn edging), env_trackside (no chevron board here).
+# ----------------------------------------------------------------------------------------------------------------
+LOOP_C, LOOP_R = (-38.36, 140.51), 10.15   # the race line's loop: circle through route points 660-673 (fit, +-1 cm)
+FAN_R = 20.3               # m from LOOP_C: the paving's rim on the north side (twice the loop: 10.15 m outside the line)
+FAN_EDGE = 0.45            # flush pale edging stones along that rim (inside FAN_R)
+EDGING = "#D9D3C4"         # pale precast concrete kerb stones (as the edging of Milestone's lawn)
+EDGING_TILE = (3.0, 0.45)  # m per texture tile: along the rim (three stones of 1.0 m), across it
+FAN_HEM = 0.7              # beyond the rim the sheet dips under the lawn over this width (no lip to hit coming back)
+FAN_LAWN_GAP = 2.6         # Milestone's raised lawn (its 0.15 m edging) starts this far behind the rim; grass between
+FAN_CLEAR = 10.0           # m from the race centreline: nothing solid stands closer beside route points FAN_I
+FAN_I = (650, 678)         # route points with the full FAN_CLEAR ...
+FAN_TAPER = 7              # ... back to the usual 6.6 m over this many points before and after (the start line: 685 = 0)
+FAN_NO_SIGN = (655, 676)   # no chevron board beside these route points (it stood 1.2 m outside the road, in the drift zone)
+CENTRE_RING = dict(r=3.4, band=0.4)        # flush ring of dark setts round LOOP_C (the campus' forecourt has the same
+                                           # motif): it marks the middle to go round; None = no ring
+RIM_LAMP = (322.0, FAN_R + 1.3)            # bearing from LOOP_C, radius: the loop's lamp and bin stand on the lawn bank
+RIM_BIN = (314.5, FAN_R + 1.2)             # behind the rim (they stood inside the loop)
+TREE_EDGE_S = 7.1          # trees the plaza pushes out go no closer to B's planted strip than this (band frame, m)
+# the ground (5 m terrain nodes) is raised to the plaza's level south and south-west of the loop, where it fell away
+# to B by up to 1.0 m from 7 m beside the line: full effect inside t LEVEL_T[1..2] and s LEVEL_S[1..2] (band frame)
+PLAZA_LEVEL = 14.5
+LEVEL_T = (1.0, 17.0, 62.0, 70.0)
+LEVEL_S = (3.0, 7.0, 40.0, 46.0)
+FILL_I = (646, 8)          # route points beside which the plaza sheet lies level with the road right up to the road's
+FILL_TAPER = 5             # edge (it covers the shoulder and its gutter); fades out over this many points
+FILL_REACH = 6.0           # m beyond the shoulder's foot over which the sheet returns to its draped height
+
+
+def _ss(v):
+    v = min(max(v, 0.0), 1.0)
+    return v * v * (3 - 2 * v)
+
+
+def level_weight(x, y):
+    """0..1: how far the terrain at (x, y) is raised to PLAZA_LEVEL (never lowered)."""
+    if not (-75.0 < x < 15.0 and 95.0 < y < 165.0):
+        return 0.0
+    t, s = band_ts(x, y)
+    return (_ss((t - LEVEL_T[0]) / (LEVEL_T[1] - LEVEL_T[0])) * (1.0 - _ss((t - LEVEL_T[2]) / (LEVEL_T[3] - LEVEL_T[2])))
+            * _ss((s - LEVEL_S[0]) / (LEVEL_S[1] - LEVEL_S[0])) * (1.0 - _ss((s - LEVEL_S[2]) / (LEVEL_S[3] - LEVEL_S[2]))))
+
+
+def fan_weight(i, n=685):
+    """0..1 for route index i: 1 beside the curve plaza (FAN_I), fading over FAN_TAPER points on both sides."""
+    a, b = FAN_I
+    d = 0 if a <= i <= b else min((a - i) % n, (i - b) % n)
+    return max(0.0, 1.0 - d / FAN_TAPER)
+
+
+def fill_weight(i, n=685):
+    """0..1 for route index i: how far the plaza sheet is filled up to road level beside it."""
+    a, b = FILL_I
+    inside_ = (a <= i or i <= b) if a > b else a <= i <= b
+    d = 0 if inside_ else min((a - i) % n, (i - b) % n)
+    return max(0.0, 1.0 - d / FILL_TAPER)
+
+
+def in_hem(x, y):
+    """Metres beyond the fan's rim where the rim borders the lawn (0 inside the rim or elsewhere)."""
+    b, r = loop_polar(x, y)
+    return max(0.0, r - FAN_R) if FAN_ARC[0] - 0.01 <= b <= FAN_ARC[1] + 0.01 and r <= FAN_R + FAN_HEM + 0.05 else 0.0
+
+
+def arc_band(b0, b1, r0, r1, step=4.0):
+    """Ring sector round LOOP_C from bearing b0 to b1 (b1 > b0), radii r0 < r1, as one polygon."""
+    m = max(1, int(math.ceil((b1 - b0) / step)))
+    inner = [loop_pt(b0 + (b1 - b0) * k / m, r0) for k in range(m + 1)]
+    outer = [loop_pt(b0 + (b1 - b0) * k / m, r1) for k in range(m + 1)]
+    return inner + outer[::-1]
+
+
+def polar_uv(b0, r0, r_mid, su, sv):
+    """uv function for an arc band: u along the arc (m at radius r_mid / su), v across it ((r - r0) / sv)."""
+    def uv(x, y):
+        b, r = loop_polar(x, y)
+        rel = (b - b0) % 360.0
+        if rel > 350.0:
+            rel -= 360.0
+        return (math.radians(rel) * r_mid / su, (r - r0) / sv)
+    return uv
+
+
+def loop_polar(x, y):
+    """(bearing in degrees clockwise from north, radius) of (x, y) seen from LOOP_C."""
+    dx, dy = x - LOOP_C[0], y - LOOP_C[1]
+    return math.degrees(math.atan2(dx, dy)) % 360.0, math.hypot(dx, dy)
+
+
+def loop_pt(bearing, r):
+    a = math.radians(bearing)
+    return (LOOP_C[0] + r * math.sin(a), LOOP_C[1] + r * math.cos(a))
+
+
+def bite(poly, r, step=4.0):
+    """poly without the disc of radius r round LOOP_C: where the outline enters the disc it follows the circle to the
+    point where it leaves again (one bite; the polygon's corners inside the disc are dropped)."""
+    def cross(a, b):                                   # the point of a -> b on the circle (a and b on different sides)
+        lo, hi = 0.0, 1.0
+        ins = loop_polar(*a)[1] < r
+        for _ in range(40):
+            m = (lo + hi) / 2
+            q = (a[0] + (b[0] - a[0]) * m, a[1] + (b[1] - a[1]) * m)
+            if (loop_polar(*q)[1] < r) == ins:
+                lo = m
+            else:
+                hi = m
+        return (a[0] + (b[0] - a[0]) * hi, a[1] + (b[1] - a[1]) * hi)
+    n = len(poly)
+    inside_ = [loop_polar(*p)[1] < r for p in poly]
+    if not any(inside_) and all(seg_distance(LOOP_C[0], LOOP_C[1], a[0], a[1], b[0], b[1]) >= r
+                                for a, b in zip(poly, poly[1:] + poly[:1])):
+        return list(poly)
+    start = next(k for k in range(n) if not inside_[k])
+    out, entry = [], None
+    for k in range(n):
+        a, b = poly[(start + k) % n], poly[(start + k + 1) % n]
+        ia, ib = inside_[(start + k) % n], inside_[(start + k + 1) % n]
+        if not ia:
+            out.append(a)
+        if ia == ib and not ia:                        # both outside: does the edge dip into the disc?
+            if seg_distance(LOOP_C[0], LOOP_C[1], a[0], a[1], b[0], b[1]) < r:
+                dx, dy = b[0] - a[0], b[1] - a[1]
+                tm = ((LOOP_C[0] - a[0]) * dx + (LOOP_C[1] - a[1]) * dy) / (dx * dx + dy * dy)
+                mid = (a[0] + dx * tm, a[1] + dy * tm)
+                out += _arc(cross(a, mid), cross(mid, b), r, step)
+        elif not ia and ib:
+            entry = cross(a, b)
+        elif ia and not ib:
+            out += _arc(entry, cross(a, b), r, step)
+    return [(round(x, 2), round(y, 2)) for x, y in out]
+
+
+def _arc(p, q, r, step):
+    """Points on the circle from p to q, the short way round (both included)."""
+    b0, b1 = loop_polar(*p)[0], loop_polar(*q)[0]
+    d = (b1 - b0 + 180.0) % 360.0 - 180.0
+    m = max(1, int(math.ceil(abs(d) / step)))
+    return [loop_pt(b0 + d * k / m, r) for k in range(m + 1)]
+
+
+def _fan_ring(base):
+    """base (the V18g plaza ring) with the fan added: its north edge between the bank's foot and Milestone's entrance
+    path follows the circle FAN_R round LOOP_C instead of the foot of the grass bank."""
+    lawn = bite(J_BANK_V18G, FAN_R)
+    arc = [p for p in lawn if abs(loop_polar(*p)[1] - FAN_R) < 0.02]          # runs from the bank's foot to the path
+    k0 = base.index((-39.3, 161.3))
+    k1 = base.index((-58.6, 146.5))
+    return base[:k0 + 1] + arc[::-1] + base[k1:]
 
 
 def planted_ring():
@@ -283,7 +451,7 @@ def channel_lines():
     return [(band_pt(t, 0.0), (-BAND_N[0], -BAND_N[1])) for t in CHANNEL_T]
 
 
-def seat_blocks(route_distance, trees=()):
+def seat_blocks(route_distance, trees=(), clear_at=None):
     """[(x, y, bearing of the long side in degrees, moved)] of the seat blocks. A block of the real row that would
     stand within SEAT_CLEAR of the race centreline (the race line crosses the real row) is pushed straight
     south-south-east, across the row, until it is clear (V15b). V16 (3.0 m blocks): at each step across it may also
@@ -296,7 +464,8 @@ def seat_blocks(route_distance, trees=()):
     out = []
 
     def ok(x, y):
-        return (route_distance(x, y) >= SEAT_CLEAR and inside(x, y, RING) and ring_distance(x, y, RING) >= 1.0
+        need = SEAT_CLEAR if clear_at is None else clear_at(x, y) + SEAT_CLEAR - 6.6       # V18h: the curve plaza
+        return (route_distance(x, y) >= need and inside(x, y, RING) and ring_distance(x, y, RING) >= 1.0
                 and all(math.hypot(tx - x, ty - y) >= 2.0 for tx, ty in trees)
                 and all(math.hypot(o[0] - x, o[1] - y) >= 3.6 for o in out))
     slides = [0.0] + [sign * 0.4 * j for j in range(1, 8) for sign in (1.0, -1.0)]
@@ -314,3 +483,11 @@ def seat_blocks(route_distance, trees=()):
         if spot:
             out.append(spot)
     return out
+
+
+# V18h: the final shapes (the helpers above are defined now)
+J_BANK = bite(J_BANK_V18G, FAN_R)
+J_LAWN = bite(J_LAWN_V18G, FAN_R + FAN_LAWN_GAP)
+RING = _fan_ring(RING_V18G)
+FAN_ARC = sorted(loop_polar(*p)[0] for p in J_BANK if abs(loop_polar(*p)[1] - FAN_R) < 0.02)
+FAN_ARC = (FAN_ARC[0], FAN_ARC[-1])        # bearings between which the rim borders the lawn (about 288 .. 357)
