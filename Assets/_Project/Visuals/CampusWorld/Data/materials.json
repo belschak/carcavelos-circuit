@@ -2923,11 +2923,11 @@
    "smoothness": 0.2
   },
   {
-   "name": "W_road_paint_render_white",
+   "name": "W_road_paint_white",
    "colour": [
-    0.9111,
-    0.891,
-    0.8429
+    0.9071,
+    0.895,
+    0.8549
    ],
    "metallic": 0.0,
    "albedo": null,
@@ -2948,11 +2948,61 @@
    "smoothness": 0.2
   },
   {
-   "name": "W_road_paint_white",
+   "name": "W_road_paint_sett_pale",
    "colour": [
-    0.9071,
-    0.895,
-    0.8549
+    0.7356,
+    0.7198,
+    0.6765
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": true,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.2
+  },
+  {
+   "name": "W_road_paint_setts_dark",
+   "colour": [
+    0.4184,
+    0.4108,
+    0.392
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": true,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.2
+  },
+  {
+   "name": "W_road_paint_render_white",
+   "colour": [
+    0.9111,
+    0.891,
+    0.8429
    ],
    "metallic": 0.0,
    "albedo": null,
@@ -3075,9 +3125,9 @@
   {
    "name": "W_plaza_terracotta",
    "colour": [
-    0.7712,
-    0.6608,
-    0.5713
+    0.8549,
+    0.7594,
+    0.6452
    ],
    "metallic": 0.0,
    "albedo": "plaza_terracotta_albedo.png",
@@ -3148,31 +3198,6 @@
    "smoothness": 0.1
   },
   {
-   "name": "W_T_sand",
-   "colour": [
-    0.887,
-    0.7633,
-    0.5481
-   ],
-   "metallic": 0.0,
-   "albedo": "sand_albedo.png",
-   "normal": "sand_normal.png",
-   "normal_strength": 0.6,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": true,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.05
-  },
-  {
    "name": "W_T_tunnel_floor",
    "colour": [
     0.5519,
@@ -3196,6 +3221,31 @@
    },
    "metallic_smoothness": null,
    "smoothness": 0.2
+  },
+  {
+   "name": "W_campus_east_concrete",
+   "colour": [
+    0.7911,
+    0.7475,
+    0.653
+   ],
+   "metallic": 0.0,
+   "albedo": "campus_east_concrete_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": true,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.1
   },
   {
    "name": "W_tunnel_light",
@@ -3721,37 +3771,12 @@
   {
    "name": "W_B_tier_terracotta",
    "colour": [
-    0.5984,
-    0.4071,
-    0.3176
+    0.7633,
+    0.6218,
+    0.4829
    ],
    "metallic": 0.0,
    "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": true,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_campus_east_concrete",
-   "colour": [
-    0.7911,
-    0.7475,
-    0.653
-   ],
-   "metallic": 0.0,
-   "albedo": "campus_east_concrete_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
@@ -3821,9 +3846,9 @@
   {
    "name": "W_B_pool_water_olive",
    "colour": [
-    0.4752,
-    0.4676,
-    0.3845
+    0.5211,
+    0.6452,
+    0.5519
    ],
    "metallic": 0.25,
    "albedo": null,

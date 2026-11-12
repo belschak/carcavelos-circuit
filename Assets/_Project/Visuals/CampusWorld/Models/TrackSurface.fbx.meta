@@ -7,6 +7,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_B_deck_white
+    second: {fileID: 2100000, guid: 5a42edaefe504480b80032f7a05ba35e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_T_asphalt
     second: {fileID: 2100000, guid: 9e282c72958bf43f0865323dbe7a4f4a, type: 2}
   - first:
@@ -62,6 +67,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_campus_east_concrete
+    second: {fileID: 2100000, guid: 35cf648256f974023b2f57f4f740cab0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_edge_line_graphite
     second: {fileID: 2100000, guid: 5e533bae82ee84c94b375233d845a8f4, type: 2}
   - first:
@@ -69,6 +79,21 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_edge_line_white
     second: {fileID: 2100000, guid: cb80ba6a17cc04414914b48dcada5d72, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_calcada
+    second: {fileID: 2100000, guid: a111e9648630f488192f47d433289e6a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_drain
+    second: {fileID: 2100000, guid: 3c312f9c365b64fd1936fc4f3a6383f7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_planks
+    second: {fileID: 2100000, guid: 293399d8a519d4cbc8a4604c668b9c57, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -84,6 +109,16 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_road_paint_render_white
     second: {fileID: 2100000, guid: 37021dc0e0fbf45579eaa65c0ee87cbe, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_road_paint_sett_pale
+    second: {fileID: 2100000, guid: 523be66c049f044b6b99e00f6d766c7d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_road_paint_setts_dark
+    second: {fileID: 2100000, guid: b96de452125924c6fa9c902ec7da43de, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -109,6 +144,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_street_concrete
     second: {fileID: 2100000, guid: 010b1b53f318047e9bc19a1ff172eade, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_palette
+    second: {fileID: 2100000, guid: 45924e4bfe0e54c1c9a747a920268611, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
