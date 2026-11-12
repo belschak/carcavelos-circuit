@@ -17,7 +17,7 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "textures", "sky_panorama.png")
 W, H = 2048, 1024
-SUN_AZIMUTH, SUN_ELEVATION = 245.0, 19.0
+SUN_AZIMUTH, SUN_ELEVATION = 225.0, 42.0   # V18l: high summer-afternoon sun (Luc, 12 Nov: "summer at the beach")
 SEED = 20261109
 
 
@@ -44,9 +44,10 @@ def main():
 
     # sky gradient: warm haze at the horizon, soft blue, deep blue at the zenith
     t = np.clip(el / 90.0, 0, 1)[..., None]
-    sky = lerp(rgb("#F0DCC0"), rgb("#9CC2E4"), smoothstep(0.0, 0.10, t))
-    sky = lerp(sky, rgb("#5A93D2"), smoothstep(0.08, 0.45, t))
-    sky = lerp(sky, rgb("#3A6FB8"), smoothstep(0.4, 1.0, t))
+    # V18l summer: a pale clear horizon (no warm haze) into a saturated deep blue
+    sky = lerp(rgb("#DCEAF3"), rgb("#8CC4EE"), smoothstep(0.0, 0.10, t))
+    sky = lerp(sky, rgb("#3E95E2"), smoothstep(0.08, 0.45, t))
+    sky = lerp(sky, rgb("#1F62C4"), smoothstep(0.4, 1.0, t))
     below = lerp(rgb("#D9CDB6"), rgb("#A7A496"), smoothstep(0.0, 0.25, np.clip(-el / 90.0, 0, 1)[..., None]))
     img = np.where((el >= 0)[..., None], sky, below)
 
@@ -57,10 +58,10 @@ def main():
     d = np.stack([np.sin(a) * np.cos(e), np.sin(e), np.cos(a) * np.cos(e)], axis=-1)
     ang = np.degrees(np.arccos(np.clip(d @ sun, -1, 1)))
     glow = 0.55 * np.exp(-ang / 9.0) + 0.25 * np.exp(-ang / 35.0)
-    img = lerp(img, rgb("#FFE2B0"), np.clip(glow, 0, 1)[..., None])
+    img = lerp(img, rgb("#FFF7E8"), np.clip(glow * 0.8, 0, 1)[..., None])                # V18l: white summer glare
     img = lerp(img, rgb("#FFF6E6"), smoothstep(2.2, 1.2, ang)[..., None])          # small soft sun disc
     side = np.exp(-(((az - SUN_AZIMUTH + 180) % 360 - 180) / 70.0) ** 2) * np.exp(-np.clip(el, 0, None) / 8.0)
-    img = lerp(img, rgb("#F7CF9A"), (0.35 * side * (el > -2))[..., None])
+    img = lerp(img, rgb("#F4EBD8"), (0.12 * side * (el > -2))[..., None])                 # V18l: hardly any warm halo
 
     # cumulus: clusters of overlapping round puffs (a row along the flat base, smaller ones stacked on top),
     # each puff shaded from a lit top to a cool underside, the cluster warmer on the sun side
@@ -119,8 +120,8 @@ def main():
         dens[box] = np.maximum(cur, c_d)
         tone[box] = np.where(take, c_t, tone[box])
         sunside[box] = np.where(take, lit, sunside[box])
-    shade = lerp(rgb("#C2C9DA"), rgb("#F8F3EA"), smoothstep(0.1, 0.65, tone)[..., None])
-    shade = lerp(shade, rgb("#FFE2B2"), (0.5 * sunside * smoothstep(0.45, 1.0, tone))[..., None])
+    shade = lerp(rgb("#B4C3DC"), rgb("#FFFFFF"), smoothstep(0.1, 0.65, tone)[..., None])   # V18l: bright white cumulus
+    shade = lerp(shade, rgb("#FFF6E4"), (0.4 * sunside * smoothstep(0.45, 1.0, tone))[..., None])
     img = lerp(img, shade, (dens * 0.97)[..., None])
 
     img = np.clip(img, 0, 1)

@@ -15,9 +15,9 @@ Shader "CarcavelosCircuit/Sea"
 {
     Properties
     {
-        _BaseColor ("Sea colour", Color) = (0.19, 0.54, 0.83, 1)
-        _ShallowColor ("Shallow water (near the shore)", Color) = (0.33, 0.80, 0.78, 1)
-        _DeepColor ("Deep water (open sea)", Color) = (0.07, 0.30, 0.62, 1)
+        _BaseColor ("Sea colour", Color) = (0.08, 0.56, 0.86, 1)
+        _ShallowColor ("Shallow water (near the shore)", Color) = (0.16, 0.86, 0.80, 1)
+        _DeepColor ("Deep water (open sea)", Color) = (0.03, 0.27, 0.62, 1)
         _FoamColor ("Foam", Color) = (1, 1, 1, 1)
         [NoScaleOffset] [Normal] _WaveNormal ("Wave normal map (tiling)", 2D) = "bump" {}
         [NoScaleOffset] _ShoreMap ("Shore distance map (R, linear)", 2D) = "white" {}
@@ -31,7 +31,7 @@ Shader "CarcavelosCircuit/Sea"
         _Glint ("Sun glint: sharpness, strength", Vector) = (260, 2.4, 0, 0)
         _Reflection ("Sky reflection", Range(0, 1)) = 0.45
         _Foam ("Foam: width m, slide m, speed, breakup", Vector) = (2.2, 1.6, 0.7, 2.5)
-        _ScatterColor ("Light through the waves (sea green)", Color) = (0.10, 0.55, 0.50, 1)
+        _ScatterColor ("Light through the waves (sea green)", Color) = (0.05, 0.68, 0.58, 1)
         _Sheen ("Sun sheen: sharpness, strength; ripples near the camera: size m, strength", Vector) = (18, 0.35, 3.2, 0.5)
     }
     SubShader

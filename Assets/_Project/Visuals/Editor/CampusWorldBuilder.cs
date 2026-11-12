@@ -36,10 +36,12 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string SkyTexture = TexDir + "/sky_panorama.png";       // world-gen/make_sky.py
         private const string LookProfile = SettingsDir + "/CampusWorld_Look.asset";
         // Golden hour (design pass 2026-11-09): low warm sun from the west-south-west. Must match make_sky.py.
-        private const float SunAzimuth = 245f, SunElevation = 19f;
+        // V18l (Luc, 12 Nov: "summer at the beach", much harder shadows with contrast): a high summer-afternoon sun
+        // from the south-west instead of golden hour. Must match make_sky.py (and so make_shadowmap.py).
+        private const float SunAzimuth = 225f, SunElevation = 42f;
         // V17: warm sea haze = the painted sky's colour just above the horizon (sky_panorama.png, about #E0D3BC),
         // a little darker so far walls do not glow. 0.0008 per metre: 21 % at 300 m, 55 % at 1 km.
-        private static readonly Color HazeColour = new Color(0.86f, 0.81f, 0.73f);
+        private static readonly Color HazeColour = new Color(0.80f, 0.86f, 0.92f);   // V18l: the summer sky's pale blue horizon
         private const float HazeDensity = 0.0008f;
         private const string ScenePath = "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity";
         private const string WorldPrefabPath = Root + "/CampusWorld.prefab";
@@ -823,10 +825,10 @@ namespace CarcavelosCircuit.Visuals.Editor
             sunObject.transform.SetParent(root.transform, false);
             Light sun = sunObject.AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.intensity = 1.9f;                                                    // V17: was 1.25; the filmic curve rolls it off
-            sun.color = new Color(1f, 0.855f, 0.67f);                                // #FFDAAB, a touch warmer than V8's #FFE0B5
+            sun.intensity = 2.35f;                                                   // V18l: hot summer sun (V17: 1.9)
+            sun.color = new Color(1f, 0.95f, 0.86f);                                 // #FFF2DB, nearly white, a little warm
             sun.shadows = LightShadows.Soft;
-            sun.shadowStrength = 0.92f;                                              // shade stays readable (the fill lights it)
+            sun.shadowStrength = 1f;                                                 // V18l: full shadows, the fill lights the shade
             sun.shadowBias = 0.04f;                                                  // V17: no shadow acne on the long, flat paving
             sun.shadowNormalBias = 0.35f;
             float az = SunAzimuth * Mathf.Deg2Rad, el = SunElevation * Mathf.Deg2Rad;
@@ -860,9 +862,11 @@ namespace CarcavelosCircuit.Visuals.Editor
             so.FindProperty("sun").objectReferenceValue = sun;
             // V17: the fill is darker than V8's (#B3C2DE / grey / #9E8C75), so shade reads as shade and the sun as sun;
             // only a little bluer (bluer still turned the tunnel and the hall cold); the ground bounce stays warm.
-            so.FindProperty("skyColour").colorValue = new Color(0.56f, 0.62f, 0.76f);       // #8F9EC2 sky fill
-            so.FindProperty("horizonColour").colorValue = new Color(0.60f, 0.59f, 0.57f);
-            so.FindProperty("groundColour").colorValue = new Color(0.56f, 0.46f, 0.35f);    // warm bounce from the paving
+            // V18l: the shade is lit by a clear blue summer sky: darker and bluer than V17, so sun and shade stand
+            // apart hard (cool blue shadows against hot, nearly white sunlight); the ground bounce stays warm.
+            so.FindProperty("skyColour").colorValue = new Color(0.40f, 0.55f, 0.80f);       // #668CCC sky fill
+            so.FindProperty("horizonColour").colorValue = new Color(0.52f, 0.58f, 0.66f);
+            so.FindProperty("groundColour").colorValue = new Color(0.55f, 0.45f, 0.33f);    // warm bounce from the paving
             so.FindProperty("hazeColour").colorValue = HazeColour;                          // the sky's horizon colour
             so.FindProperty("hazeDensity").floatValue = HazeDensity;
             so.FindProperty("skybox").objectReferenceValue = skybox;
@@ -882,7 +886,8 @@ namespace CarcavelosCircuit.Visuals.Editor
         // V17: ACES (the filmic curve of film and most console games) instead of Neutral: highlights roll off softly
         // instead of clipping, mid-tones get more contrast. ACES darkens the mid-tones, so the exposure goes up.
         // Shadows a little cooler and highlights a little warmer (golden hour), blue and orange stay clean.
-        private const float LookExposure = 0.45f, LookContrast = 12f, LookSaturation = 6f;
+        // V18l summer: more contrast and colour, no golden cast; shade pushed towards blue, light towards warm white.
+        private const float LookExposure = 0.5f, LookContrast = 24f, LookSaturation = 16f;
 
         private static VolumeProfile BuildLookProfile()
         {
@@ -900,10 +905,10 @@ namespace CarcavelosCircuit.Visuals.Editor
             grade.contrast.Override(LookContrast);
             grade.saturation.Override(LookSaturation);
             WhiteBalance warm = profile.Add<WhiteBalance>(true);
-            warm.temperature.Override(6f);
+            warm.temperature.Override(2f);
             ShadowsMidtonesHighlights split = profile.Add<ShadowsMidtonesHighlights>(true);
-            split.shadows.Override(new Vector4(0.98f, 0.99f, 1.03f, -0.02f));       // a hint cooler, slightly deeper shade
-            split.highlights.Override(new Vector4(1.04f, 1.0f, 0.95f, 0f));          // warm sunlit tops
+            split.shadows.Override(new Vector4(0.93f, 0.98f, 1.10f, -0.07f));       // V18l: blue, deeper shade
+            split.highlights.Override(new Vector4(1.03f, 1.0f, 0.96f, 0.02f));       // warm, bright sunlit tops
             foreach (VolumeComponent c in profile.components)
             {
                 c.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
