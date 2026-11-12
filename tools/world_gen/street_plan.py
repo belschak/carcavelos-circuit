@@ -1076,17 +1076,10 @@ def avenue_entrance():
     paint_ribbon("kerb", line, AV_WEST_ROAD[1] - 0.02, AV_WEST_WALK[0] + 0.14)
     layer("B2 lamp median", "calcada", ribbon(line, AV_MEDIAN[0], AV_MEDIAN[1]))
     layer("B2 separator", "calcada", ribbon(line, AV_SEPARATOR[0], AV_SEPARATOR[1]))
-    east = offset(line, AV_SLIP[0])
-    layer("B2 plaza strip", "calcada", east + [(AV_PLAZA_X, y1), (AV_PLAZA_X, y0)])
-    # V18g (satellite view): the bus bay is a red-brown lens, 21 m long: the whole east lane from the separator's
-    # kerb, bulging 4 m into the plaza with a round pale kerb. No word on it.
-    rim = av_layby_rim()
-    west = [av_pt(AV_LAYBY[0] + (AV_LAYBY[1] - AV_LAYBY[0]) * k / 4, AV_SLIP[1]) for k in range(5)]
-    layer("B2 bus lay-by", "pal:brick_red", west + rim[::-1])
-    paint_ribbon("kerb", rim[1:-1], -0.2, 0.0, seg=3.0)
+    import entrance_plan                # V18g: east of the separator as on Google (bus bay lens, sidewalk, cycle track)
+    entrance_plan.avenue_side(sys.modules[__name__])
     dashes(line, (AV_WEST_ROAD[0] + AV_WEST_ROAD[1]) / 2, 0.14, 3.0, 4.0)
-    dashes(line, (AV_MID_ROAD[0] + AV_MID_ROAD[1]) / 2, 0.14, 3.0, 4.0)
-    dashes(line, -7.2, 0.14, 3.0, 4.0, s1=AV_LAYBY[0] - y0 - 1.0)
+    dashes(line, (AV_MID_ROAD[0] + AV_MID_ROAD[1]) / 2, 0.14, 3.0, 4.0)      # V18g-s: the middle roadway's lane line
 
 
 # =====================================================================================================

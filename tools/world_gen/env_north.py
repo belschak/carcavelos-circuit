@@ -44,15 +44,18 @@ CAR_CLEAR = 9.0              # m: parked cars (centre), as street_plan.CAR_CLEAR
 # Plan (world metres, x east, y north). Sources: ortho_campus.jpg (3 px per metre), N02, N03 (2019/2020).
 # ----------------------------------------------------------------------------------------------------------------
 FACE_U = (-0.3654, 0.9309)   # along the hall's north-east face (76.7, 158.7) -> (66.6, 184.5): the sett rows
-EDGE = [(101.8, 153.5), (94.5, 179.5)]          # east edge of the setts, south -> north (survey: x 95-97 at y 174)
+# V18g (Google satellite 21z): the edge runs (100.8, 156.8) - (92.5, 177.3), then the lawn's north edge turns
+# east-north-east (bearing 69) towards (117, 187). Was (101.8, 153.5) - (94.5, 179.5).
+EDGE = [(102.1, 153.5), (92.5, 177.3)]          # east edge of the setts, south -> north
 # the sheet: from the hall's face (cut at its outline) to the east edge, north to the foot of the bank at y 193,
 # with the wedge north of the lawn's corner where the waste station stands
 FORECOURT = [(52.0, 176.0), (72.0, 156.5), (82.0, 153.0), (93.0, 149.5), (100.5, 148.0), EDGE[0], EDGE[1],
-             (112.0, 186.7), (110.0, 193.0), (52.0, 193.0)]
+             (112.0, 184.8), (110.0, 193.0), (52.0, 193.0)]
 BUFF = [(82.0, 153.0), (83.0, 163.5), (99.0, 163.5), EDGE[0], (100.5, 148.0), (93.0, 149.5)]   # in-situ concrete at SC
 BUFF_COLOUR, PINK_BUFF, OCHRE = "car_sand", "cream", "ochre"    # street palette cells (survey #998c61 shade, #e5d0b5, #ebd0a9)
 BAND_PINK, BAND_OCHRE = 1.3, 1.0                                # m: widths of the two edge bands east of the setts
-RING_C, RING_R, RING_BAND = (80.7, 177.0), 4.65, 0.35           # dark sett ring: outer radius, band width
+RING_C, RING_R, RING_BAND = (80.3, 176.1), 4.45, 0.25           # dark sett ring: outer radius, band width (V18g:
+                                                                # satellite 21z: centre (80.3, 176.0), 8.9 m across, a thin line)
 # The ring crosses the race road (the centreline passes 1 m from its centre). Painting it on the road needs one line
 # in qa_geometry.py: its 'covered' check allows only ALLOWED_ON_ROAD = {Track_Kerbs, Track_EdgeLines} over the road
 # and reports this paint as two new 'covered' runs (s 1180, 1186). So it is OFF until the lead / Luc decide:
@@ -60,9 +63,12 @@ RING_C, RING_R, RING_BAND = (80.7, 177.0), 4.65, 0.35           # dark sett ring
 RING_ON_ROAD = False
 RING_ROAD_REACH = 3.5        # m from the centreline: the ring's paint on the road keeps inside the edge lines and kerbs
 RING_LIFT = 0.05             # m over the road (the edge lines lie at 4 cm; 2 cm flickered there)
-MANHOLES = [(86.2, 176.6), (88.0, 174.4)]                       # round rust-brown covers, 0.7 m
+MANHOLES = [(89.5, 178.2), (91.1, 176.8), (96.5, 163.2)]        # round rust-brown covers, 0.7 m (V18g: satellite 21z)
+GRATES = [(86.5, 179.7), (89.7, 161.9)]                         # square dark gratings, 1.0 m
 STAIR_Y, STAIR_W, STAIR_RISE, STAIR_TREAD = 174.0, 4.0, 0.13, 0.4   # 3 risers at (95, 174) (real: down to the lawn)
-WASTE_C, WASTE_U, WASTE_HALF = (100.5, 184.6), (0.9205, 0.3907), (4.3, 2.1)   # platform at (96..104, 181..187)
+# V18g (satellite 21z): 12 units in two rows of six (bearing 65), each a square concrete lid with a steel post
+WASTE_C, WASTE_U, WASTE_HALF = (99.4, 183.3), (0.9063, 0.4226), (5.0, 1.75)
+WASTE_ROWS = ((-4.15, -2.49, -0.83, 0.83, 2.49, 4.15), (-0.85, 0.85))
 CARS = [(89.2, 164.6), (89.6, 167.3), (89.9, 170.0), (90.1, 172.7)]           # centres; nose towards the colonnade
 CAR_BEARING = 255.0
 CAFE = ("Prop_BistroTable", "Prop_BistroChair", "Prop_Parasol", "Prop_TroughBloom", "Prop_PlanterRound")
@@ -71,8 +77,8 @@ POST_STEP, POST_OFF = 2.75, 0.6            # steel posts on the calcada, 0.6 m e
 PYLON = (-86.0, 102.9)                     # survey: about (-86, 102), on the calcada
 FLAGPOLES = [(-84.5, 99.5), (-82.0, 99.1), (-79.5, 98.7), (-77.0, 98.3)]      # behind it on the lawn, 8 m, no flags
 # start plaza and Milestone's lawn (N10, N06, N14): bike racks on the planks along B, a few saplings on the lawn
-BIKE_RACK_T, BIKE_RACK_S = (36.0, 42.0, 48.0, 54.0, 60.0), 4.6      # in entrance_plan's band frame (m along B, across)
-SAPLINGS = [(-88.0, 152.5), (-78.0, 156.5), (-68.0, 152.0), (-58.5, 157.0), (-51.0, 159.0)]
+BIKE_RACK_T, BIKE_RACK_S = (47.0, 51.5, 53.5, 55.5, 60.0), 6.8      # V18g: east of B's planted strip (satellite: t 51-55, s 7)
+SAPLINGS = list(P.J_SAPLINGS)                                       # V18g: as on the satellite view
 # east park (low priority, 60-80 m from the race line)
 PARK_PATH = [(117.0, 131.0), (153.0, 145.1)]     # timber sleepers 2.0 x 0.25 m laid across, every 0.75 m
 SEAT_RING_C, SEAT_RING_R = (157.7, 147.0), 5.0   # cream concrete ring bench, outer diameter 10 m, four gaps
@@ -84,6 +90,11 @@ _REPORT = []                 # (what, least distance to the centreline)
 # (the ortho places them 2-4 m closer to our road, which runs over the real lawn's edge: pushed out to 7.8 m / 6.9 m)
 NORTH_LOOP_TREES = [(20.7, 183.0), (27.2, 187.5), (35.7, 192.2), (41.9, 194.4), (48.5, 196.3)]
 NORTH_LOOP_CABINETS = [(54.6, 196.6), (57.2, 196.8)]
+# V18g (satellite 21z): the path north of the loop's lawn (y 189.7-194.1) has a low pale wall on its north side with
+# woodland behind it. Our road lies on that path east of x = 43, so the wall is built only west of it.
+NORTH_WALL = [(19.0, 194.7), (42.0, 194.7)]
+NORTH_WALL_SIZE = (0.35, 0.55)                  # thickness, height
+NORTH_WOOD = [(41.6, 197.6, 1.25), (22.0, 200.5, 1.1), (31.0, 201.5, 1.3)]     # trees behind the wall: x, y, scale
 
 
 def _clear(what, pts, limit=CLEAR):
@@ -144,6 +155,9 @@ def build_forecourt(col):
               {"name": "setts inside the ring", "ring": _circle(RING_C, RING_R - RING_BAND, 48), "mat": "calcada", "uv": uv}]
     for c in MANHOLES:
         layers.append({"name": "manhole cover", "ring": _circle(c, 0.35, 10), "mat": "pal:wood_dark", "uv": None})
+    for cx, cy in GRATES:
+        layers.append({"name": "grating", "ring": [(cx - 0.5, cy - 0.5), (cx + 0.5, cy - 0.5), (cx + 0.5, cy + 0.5),
+                                                   (cx - 0.5, cy + 0.5)], "mat": "pal:setts_dark", "uv": None})
     hall = next([tuple(p) for p in b["points"]] for b in E.DATA["buildings"] if b["id"] == C.MAIN_ID)
     box = [(50.0, 146.0), (114.0, 146.0), (114.0, 195.0), (50.0, 195.0)]
     cutters = EN._cutters(ring=box, main=env_campus.grow(env_campus.ccw(hall), 0.2))
@@ -179,6 +193,7 @@ def build_ring_on_road(col):
 def build_structures(col):
     import env_street_objects as SO
     import env_streets as ST
+    import street_plan as S
     g = SO.Proto()
     # --- the stair on the forecourt's east edge: 3 risers, pink-buff. The real one goes DOWN 0.5 m to the lawn;
     # our terrain (DEM) rises to the east here, so it goes up to the lawn instead ---
@@ -192,15 +207,15 @@ def build_structures(col):
         mid = (c[0] + e[0] * (d0 + d1) / 2, c[1] + e[1] * (d0 + d1) / 2)
         g.obox(mid, e, (d1 - d0) / 2, STAIR_W / 2, z0, foot + (k + 1) * STAIR_RISE, "palette", colour=PINK_BUFF)
     _clear("stair on the forecourt's east edge", ring)
-    # --- waste station: low platform with a pale kerb, 8 stainless cylinders in two rows of four ---
+    # --- waste station (V18g): 12 square concrete lids in two rows of six, a stainless post on each ---
     wr = waste_ring()
-    top = max(ST.ground(*p) for p in wr) + 0.14
-    g.obox(WASTE_C, WASTE_U, WASTE_HALF[0], WASTE_HALF[1], min(ST.ground(*p) for p in wr) - 0.3, top, "palette", colour="kerb")
     v = (-WASTE_U[1], WASTE_U[0])
-    for a in (-2.85, -0.95, 0.95, 2.85):
-        for b in (-0.85, 0.85):
+    for a in WASTE_ROWS[0]:
+        for b in WASTE_ROWS[1]:
             x, y = WASTE_C[0] + WASTE_U[0] * a + v[0] * b, WASTE_C[1] + WASTE_U[1] * a + v[1] * b
-            g.cyl(0.35, 0.35, top, top + 1.1, 8, "steel_grey", x=x, y=y)
+            top = ST.ground(x, y) + 0.16
+            g.obox((x, y), WASTE_U, 0.7, 0.7, top - 0.5, top, "palette", colour="kerb")
+            g.cyl(0.3, 0.3, top, top + 1.0, 8, "steel_grey", x=x, y=y)
     _clear("waste station", wr)
     # --- pylon at the avenue (ST02 h090-h180): a slim dark post with a blank dark board of 2 x 2.5 m at its top
     # (shape only: no screen content), facing the avenue ---
@@ -209,6 +224,47 @@ def build_structures(col):
     g.obox(PYLON, (0.0, 1.0), 0.13, 0.13, pz - 0.2, pz + 2.5, "palette", colour="black")
     g.obox(PYLON, (0.0, 1.0), 1.0, 0.16, pz + 2.5, pz + 5.0, "palette", skip=(), colour="roof_dark")
     _clear("pylon at the avenue", [PYLON])
+    # --- V18g (Street View May 2026): the road sign at the driveway: two blank boards on two grey posts ---
+    sb = P.SIGN_BOARD
+    a = math.radians(sb["bearing"])
+    along = (math.cos(a), -math.sin(a))
+    sz = ST.ground(*sb["at"])
+    for side in (-0.8, 0.8):
+        g.cyl(0.05, 0.05, sz - 0.2, sz + sb["top"], 6, "steel_grey", x=sb["at"][0] + along[0] * side, y=sb["at"][1] + along[1] * side)
+    for z0, z1 in ((sb["top"] - 2.05, sb["top"] - 1.1), (sb["top"] - 1.0, sb["top"] - 0.05)):
+        g.obox(sb["at"], along, sb["width"] / 2, 0.035, sz + z0, sz + z1, "palette", skip=(), colour="grey_back")
+    _clear("sign boards at the driveway", [sb["at"]])
+    # --- V18g: the low pale wall north of the path behind the north loop ---
+    (wx0, wy0), (wx1, wy1) = NORTH_WALL
+    n = max(1, int(math.hypot(wx1 - wx0, wy1 - wy0) // 4.0))
+    wu = ((wx1 - wx0) / math.hypot(wx1 - wx0, wy1 - wy0), (wy1 - wy0) / math.hypot(wx1 - wx0, wy1 - wy0))
+    for k in range(n):
+        pa = (wx0 + (wx1 - wx0) * k / n, wy0 + (wy1 - wy0) * k / n)
+        pb = (wx0 + (wx1 - wx0) * (k + 1) / n, wy0 + (wy1 - wy0) * (k + 1) / n)
+        mid = ((pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2)
+        zs = [ST.ground(*pa), ST.ground(*pb)]
+        g.obox(mid, wu, math.hypot(pb[0] - pa[0], pb[1] - pa[1]) / 2 + 0.01, NORTH_WALL_SIZE[0] / 2, min(zs) - 0.3,
+               max(zs) + NORTH_WALL_SIZE[1], "palette", colour="render_white")
+    _clear("low wall north of the loop", list(NORTH_WALL))
+    # --- V18g: the pale concrete edging of Milestone's raised lawn (0.5 m wide, a low kerb of 0.15 m), in pieces of
+    # about 3 m; pieces closer than CLEAR to the race line are left out (the line cuts the lawn's south-east corner) ---
+    lawn = list(P.J_LAWN)
+    n_edge = 0
+    for pa, pb in zip(lawn, lawn[1:]):
+        d = math.hypot(pb[0] - pa[0], pb[1] - pa[1])
+        u = ((pb[0] - pa[0]) / d, (pb[1] - pa[1]) / d)
+        out = (u[1], -u[0])                                           # the lawn lies to the left of pa -> pb
+        m = max(1, int(round(d / 3.0)))
+        for k in range(m):
+            a0, a1 = d * k / m - (0.25 if k == 0 else 0.0), d * (k + 1) / m + (0.25 if k == m - 1 else 0.0)
+            c = (pa[0] + u[0] * (a0 + a1) / 2 + out[0] * P.J_LAWN_EDGING / 2, pa[1] + u[1] * (a0 + a1) / 2 + out[1] * P.J_LAWN_EDGING / 2)
+            ends = [(pa[0] + u[0] * a, pa[1] + u[1] * a) for a in (a0, a1)]
+            if min(S.route_distance(*q) for q in ends + [c]) < CLEAR + 0.4:
+                continue
+            zs = [ST.ground(*q) for q in ends]
+            g.obox(c, u, (a1 - a0) / 2, P.J_LAWN_EDGING / 2, min(zs) - 0.25, max(zs) + 0.15, "palette", colour="kerb")
+            _REPORT.append(("edging of Milestone's lawn", min(S.route_distance(*q) for q in ends)))
+            n_edge += 1
     # --- flag poles on the lawn behind it: plain, no flags ---
     for x, y in FLAGPOLES:
         z = ST.ground(x, y)
@@ -259,19 +315,9 @@ def build():
 # Dressing
 # =====================================================================================================
 def _posts():
-    """Steel posts on the calcada along the bus lay-by: [(x, y)]."""
-    import street_plan as S
-    y0, y1 = S.AV_LAYBY
-    a, b = S.offset(S.av_entrance_line(y0 + 1.0, y1 - 1.0), S.AV_SLIP[0] - POST_OFF)
-    length = math.hypot(b[0] - a[0], b[1] - a[1])
-    n = int(length // POST_STEP)
-    row = [(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n) for k in range(n + 1)]
-    # a second, short row across the plaza's south-west corner (ST02 h090), 0.7 m inside the ring's edge
-    (x0, y0), (x1, y1) = P.RING[0], P.RING[1]
-    for k in range(5):
-        x = x0 + 1.0 + k * POST_STEP
-        row.append((x, y0 + (y1 - y0) * (x - x0) / (x1 - x0) + 0.7))
-    return row
+    """V18g (Street View May 2026): timber-coloured posts along the kerb of the slip lane and in two rows beside the
+    driveway to the car-park ramp: [(x, y)] (entrance_plan.kerb_posts)."""
+    return P.kerb_posts()
 
 
 def dress(veg, props, protos):
@@ -289,8 +335,10 @@ def dress(veg, props, protos):
             return "cafe furniture on the forecourt"
         if any(P.inside(x, y, r) for r in solids):
             return "under a new solid or on the edge bands"
-        if 99.0 <= y <= 149.5 and any(P.inside(x, y, r) for r in avenue):
+        if 99.0 <= y <= 173.0 and any(P.inside(x, y, r) for r in avenue):
             return "on the avenue's new paving"
+        if p["proto"] in ("Prop_BollardSlim", "Prop_BikeRack") and x < -20.0 and y > 95.0 and (P.in_planted(x, y, 0.3) or x < -75.0):
+            return "V16 posts and racks where Google shows lawn or the new kerb"
         return None
     removed = {}
     veg2, props2 = [], []
@@ -310,12 +358,27 @@ def dress(veg, props, protos):
         _REPORT.append(("parked cars on the forecourt (centre)", S.route_distance(x, y)))
         added.append({"proto": cars[(k * 3 + 1) % len(cars)], "x": x, "y": y, "z": round(ST.ground(x, y) + 0.07, 3),
                       "rot_z": round(math.atan2(u[1], u[0]) + (0.06 if k % 2 else -0.04), 4), "scale": 1.0})
+    for k, (x, y, bearing) in enumerate(P.LAYBY_CARS):           # V18g (satellite): cars in the lay-by at the avenue
+        if cars and S.route_distance(x, y) >= CAR_CLEAR:
+            cu = (math.sin(math.radians(bearing)), math.cos(math.radians(bearing)))
+            added.append({"proto": cars[(k * 2 + 4) % len(cars)], "x": x, "y": y, "z": round(SO.surface(x, y), 3),
+                          "rot_z": round(math.atan2(cu[1], cu[0]), 4), "scale": 1.0})
     n_cars = len(added)
-    if "Prop_BollardSlim" in protos:
+    post = "Prop_TimberPost" if "Prop_TimberPost" in protos else "Prop_BollardSlim"
+    if post in protos:
         for x, y in _posts():
-            _clear("steel posts along the bus lay-by", [(x, y)])
-            added.append({"proto": "Prop_BollardSlim", "x": round(x, 3), "y": round(y, 3), "z": round(SO.surface(x, y), 3),
-                          "rot_z": 0.0, "scale": 1.05})
+            _clear("posts along the kerb and the driveway", [(x, y)])
+            added.append({"proto": post, "x": round(x, 3), "y": round(y, 3), "z": round(SO.surface(x, y) + 0.15, 3),
+                          "rot_z": 0.0, "scale": 1.3 if post == "Prop_TimberPost" else 1.05})
+    n_posts = len(added) - n_cars
+    if "Prop_SignRound" in protos:                        # V18g: the blue round sign where the cycle track ends
+        x, y = P.CYCLE_SIGN
+        added.append({"proto": "Prop_SignRound", "x": x, "y": y, "z": round(SO.surface(x, y), 3),
+                      "rot_z": round(math.radians(170.0), 4), "scale": 1.0})
+    if "Prop_LampSidewalk" in protos:                     # V18g: tall grey lamps with one arm on the sidewalk
+        for x, y in P.KERB_LAMPS:
+            added.append({"proto": "Prop_LampSidewalk", "x": x, "y": y, "z": round(SO.surface(x, y), 3),
+                          "rot_z": round(math.radians(180.0), 4), "scale": 1.0})
     n_posts = len(added) - n_cars
     # bike racks on the planks along B (three steel hoops each; the real ones are timber post-and-rail racks)
     stands = [(p["x"], p["y"]) for p in veg2 + props2 if -100.0 < p["x"] < 20.0 and 95.0 < p["y"] < 150.0]
@@ -353,6 +416,12 @@ def dress(veg, props, protos):
             _REPORT.append(("grey cabinets on the north loop's lawn", S.route_distance(x, y) - 0.5))
             props2.append({"proto": "Prop_CabinetGrey", "x": x, "y": y, "z": round(ST.ground(x, y), 3),
                            "rot_z": round(math.radians(-25.0), 4), "scale": 1.0})
+    if "Veg_Olive" in protos:                             # V18g: the larger tree on Milestone's lawn, the wood behind the wall
+        for k, (x, y, sc) in enumerate([(P.J_TREE[0], P.J_TREE[1], 0.8)] + list(NORTH_WOOD)):
+            if S.route_distance(x, y) >= E.KEEP_CLEAR + 3.5:
+                _REPORT.append(("trees on Milestone's lawn and behind the north wall", S.route_distance(x, y) - 2.5))
+                veg2.append({"proto": "Veg_Olive_B" if k % 2 and "Veg_Olive_B" in protos else "Veg_Olive", "x": x, "y": y,
+                             "z": round(ST.ground(x, y), 3), "rot_z": round(1.1 * k, 4), "scale": sc})
     for fname, items in (("placements_vegetation.json", veg2), ("placements_props.json", props2)):
         path = os.path.join(E.OUT, fname)
         if not os.path.exists(path):
@@ -364,7 +433,7 @@ def dress(veg, props, protos):
             counts[it["proto"]] = counts.get(it["proto"], 0) + 1
         data["counts"] = counts
         json.dump(data, open(path, "w"), indent=1)
-    print(f"  north dressing: {n_cars} parked cars on the forecourt, {n_posts} steel posts along the bus lay-by "
+    print(f"  north dressing: {n_cars} parked cars on the forecourt, {n_posts} posts, signs and lamps along the kerb "
           f"and across the plaza's south-west corner, {n_racks} bike racks on the plank band, {n_saplings} saplings on "
           f"Milestone's lawn")
     for why, names in sorted(removed.items()):
