@@ -227,6 +227,26 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_coast_concrete_beige
+    second: {fileID: 2100000, guid: 20a830b2c80774d4384987ed12feca8e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_coast_concrete_ochre
+    second: {fileID: 2100000, guid: 6a117b48e2ad145278a77f8efdfb871e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_coast_concrete_pale
+    second: {fileID: 2100000, guid: d6314627c56ad4ef8949dd58a09183e5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_coast_trim
+    second: {fileID: 2100000, guid: 0d7ddb87f1307415196bd77a9e32a1d2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_concrete_sand
     second: {fileID: 2100000, guid: 75f3cddc185974e5eb1b11e435f2ca32, type: 2}
   - first:
@@ -249,6 +269,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_entrance_drain
     second: {fileID: 2100000, guid: 3c312f9c365b64fd1936fc4f3a6383f7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_edging
+    second: {fileID: 2100000, guid: 3a7cedb4530534b60a60cddfd58ded2f, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -427,6 +452,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_street_kerbstone
+    second: {fileID: 2100000, guid: 11484f22a7d154cf5a75c63bf6308d27, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_street_palette
     second: {fileID: 2100000, guid: 45924e4bfe0e54c1c9a747a920268611, type: 2}
   - first:
@@ -439,6 +469,21 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_street_setts
     second: {fileID: 2100000, guid: a32b502b2d12c413d88fc0fd4e5eeacf, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_setts_dark
+    second: {fileID: 2100000, guid: 2aa24a4150b12485fb91f140f2d62197, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_slab
+    second: {fileID: 2100000, guid: fbf398ad1abf346efae3ab01831138ed, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_slab_dark
+    second: {fileID: 2100000, guid: b98565456136b4178afff13d810cbdef, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

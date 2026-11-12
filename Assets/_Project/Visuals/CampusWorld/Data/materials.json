@@ -1362,6 +1362,156 @@
    "smoothness": 0.7
   },
   {
+   "name": "W_coast_trim",
+   "colour": [
+    0.8991,
+    0.883,
+    0.8429
+   ],
+   "metallic": 0.0,
+   "albedo": "coast_trim_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_coast_concrete_pale",
+   "colour": [
+    0.7001,
+    0.6844,
+    0.6296
+   ],
+   "metallic": 0.0,
+   "albedo": "coast_concrete_pale_albedo.png",
+   "normal": "coast_concrete_pale_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_coast_concrete_beige",
+   "colour": [
+    0.6608,
+    0.6452,
+    0.5829
+   ],
+   "metallic": 0.0,
+   "albedo": "coast_concrete_beige_albedo.png",
+   "normal": "coast_concrete_beige_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_street_setts",
+   "colour": [
+    0.5519,
+    0.5365,
+    0.5135
+   ],
+   "metallic": 0.0,
+   "albedo": "street_setts_albedo.png",
+   "normal": "street_setts_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
+   "name": "W_coast_concrete_ochre",
+   "colour": [
+    0.6335,
+    0.5674,
+    0.46
+   ],
+   "metallic": 0.0,
+   "albedo": "coast_concrete_ochre_albedo.png",
+   "normal": "coast_concrete_ochre_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_street_asphalt",
+   "colour": [
+    0.3361,
+    0.3472,
+    0.3696
+   ],
+   "metallic": 0.0,
+   "albedo": "asphalt_albedo.png",
+   "normal": "asphalt_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.12
+  },
+  {
    "name": "W_entrance_planks",
    "colour": [
     0.7633,
@@ -1370,8 +1520,8 @@
    ],
    "metallic": 0.0,
    "albedo": "entrance_planks_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
+   "normal": "entrance_planks_normal.png",
+   "normal_strength": 0.6,
    "emission": null,
    "alpha": 1.0,
    "alpha_clip": 0.0,
@@ -1395,8 +1545,8 @@
    ],
    "metallic": 0.0,
    "albedo": "entrance_calcada_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
+   "normal": "entrance_calcada_normal.png",
+   "normal_strength": 0.6,
    "emission": null,
    "alpha": 1.0,
    "alpha_clip": 0.0,
@@ -1410,6 +1560,31 @@
    },
    "metallic_smoothness": null,
    "smoothness": 0.1
+  },
+  {
+   "name": "W_entrance_edging",
+   "colour": [
+    0.8469,
+    0.823,
+    0.7633
+   ],
+   "metallic": 0.0,
+   "albedo": "entrance_edging_albedo.png",
+   "normal": "entrance_edging_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": true,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.15
   },
   {
    "name": "W_entrance_drain",
@@ -1439,28 +1614,24 @@
   {
    "name": "W_entrance_concrete",
    "colour": [
-    1.0,
-    1.0,
-    0.9077
+    0.835,
+    0.807,
+    0.7238
    ],
    "metallic": 0.0,
-   "albedo": "concrete_panel_albedo.png",
-   "normal": "concrete_panel_normal.png",
-   "normal_strength": 0.8,
+   "albedo": "coast_boardmarked_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
    "alpha_clip": 0.0,
    "double_sided": false,
-   "tint": true,
+   "tint": false,
    "world_lit": {
     "shader": "CarcavelosCircuit/WorldLit",
     "ground_shadow": true,
     "always_shaded": false,
-    "world_uv": [
-     2.4,
-     2.4,
-     0.4166666666666667
-    ]
+    "world_uv": []
    },
    "metallic_smoothness": null,
    "smoothness": 0.1
@@ -2623,15 +2794,15 @@
    "smoothness": 0.2
   },
   {
-   "name": "W_street_asphalt",
+   "name": "W_street_slab",
    "colour": [
-    0.3361,
-    0.3472,
-    0.3696
+    0.6413,
+    0.6023,
+    0.5442
    ],
    "metallic": 0.0,
-   "albedo": "asphalt_albedo.png",
-   "normal": "asphalt_normal.png",
+   "albedo": "street_slab_albedo.png",
+   "normal": "street_slab_normal.png",
    "normal_strength": 0.6,
    "emission": null,
    "alpha": 1.0,
@@ -2645,7 +2816,107 @@
     "world_uv": []
    },
    "metallic_smoothness": null,
-   "smoothness": 0.12
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_street_brick",
+   "colour": [
+    0.6062,
+    0.4943,
+    0.4184
+   ],
+   "metallic": 0.0,
+   "albedo": "street_brick_albedo.png",
+   "normal": "street_brick_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": true,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_street_setts_dark",
+   "colour": [
+    0.3808,
+    0.3696,
+    0.3472
+   ],
+   "metallic": 0.0,
+   "albedo": "street_setts_dark_albedo.png",
+   "normal": "street_setts_dark_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": true,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.15
+  },
+  {
+   "name": "W_street_slab_dark",
+   "colour": [
+    0.5135,
+    0.4676,
+    0.4335
+   ],
+   "metallic": 0.0,
+   "albedo": "street_slab_dark_albedo.png",
+   "normal": "street_slab_dark_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": true,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
+   "name": "W_street_kerbstone",
+   "colour": [
+    0.807,
+    0.7832,
+    0.7317
+   ],
+   "metallic": 0.0,
+   "albedo": "street_kerbstone_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": true,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.15
   },
   {
    "name": "W_street_bays",
@@ -2671,56 +2942,6 @@
    },
    "metallic_smoothness": null,
    "smoothness": 0.1
-  },
-  {
-   "name": "W_street_brick",
-   "colour": [
-    0.6062,
-    0.4943,
-    0.4184
-   ],
-   "metallic": 0.0,
-   "albedo": "street_brick_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": true,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_street_setts",
-   "colour": [
-    0.5519,
-    0.5365,
-    0.5135
-   ],
-   "metallic": 0.0,
-   "albedo": "street_setts_albedo.png",
-   "normal": "street_setts_normal.png",
-   "normal_strength": 0.6,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": true,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.15
   },
   {
    "name": "W_street_hedge",
@@ -2973,6 +3194,56 @@
    "smoothness": 0.2
   },
   {
+   "name": "W_road_paint_line_worn",
+   "colour": [
+    0.823,
+    0.807,
+    0.7554
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": true,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.2
+  },
+  {
+   "name": "W_road_paint_yellow",
+   "colour": [
+    0.863,
+    0.6922,
+    0.2375
+   ],
+   "metallic": 0.0,
+   "albedo": null,
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": true,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.2
+  },
+  {
    "name": "W_road_paint_setts_dark",
    "colour": [
     0.4184,
@@ -3173,31 +3444,6 @@
    "smoothness": 0.1
   },
   {
-   "name": "W_T_concrete_sand",
-   "colour": [
-    0.8469,
-    0.7832,
-    0.653
-   ],
-   "metallic": 0.0,
-   "albedo": "concrete_sand_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": true,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": "concrete_sand_metallic_smoothness.png",
-   "smoothness": 0.1
-  },
-  {
    "name": "W_T_tunnel_floor",
    "colour": [
     0.5519,
@@ -3221,6 +3467,31 @@
    },
    "metallic_smoothness": null,
    "smoothness": 0.2
+  },
+  {
+   "name": "W_T_concrete_sand",
+   "colour": [
+    0.8469,
+    0.7832,
+    0.653
+   ],
+   "metallic": 0.0,
+   "albedo": "concrete_sand_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": true,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": "concrete_sand_metallic_smoothness.png",
+   "smoothness": 0.1
   },
   {
    "name": "W_campus_east_concrete",
