@@ -17,6 +17,11 @@ o = metres east from it, z = metres above the floor (nova_context.py lifts the o
 Everything is a number in the constants below. The big white NOVA letters of the real hall stand in front of the
 stair (the name may be used, Noah 2026-11-10). hall_kit.py has the parts.
 
+V18j (Luc's request, 2026-11-12): the Hovione atrium follows the survey reports/north-atrium-survey.md (part 2): the
+stair 6 m further east behind the portable stage, the landing gallery, one glazed roof field, the entrance bridge with
+timber joists, the white block, the beige floor with joints, the north exit colonnade. Every change is marked
+"V18j (Luc's request)". The lanes (ROADS, rounded_line, the corners) are untouched.
+
 Run:  /Applications/Blender.app/Contents/MacOS/Blender -b -P nova_hall.py   ->  out/NovaHall.blend, out/NovaHall.fbx
       ... -b -P nova_hall.py -- world   ->  out/NovaHallWorld.fbx (at its place in Luc's campus world, for Unity)
 """
@@ -45,8 +50,28 @@ LOW_CEILING_END = 80.0       # first part of the long room has a flat ceiling at
 LOW_Z = 4.6
 GALLERY_Z = 5.2              # first floor
 GALLERY_DEPTH = 7.0          # depth of the galleries along the walls
-BRIDGE_U = (7.0, 27.0)       # north-south gallery in the middle of the atrium (seen from the main entrance), u from .. to
-BRIDGE_O = (30.0, 40.5)      # .. and o from .. to; the wide staircase arrives at its south end
+# V18j (Luc's request): the gallery the stair lands on moved east with the stair and now reaches the east gallery
+# (IMG_7725 276-296 s: its edge runs on east from the stair top, the exit doors are under it). Was (7.0, 27.0), (30.0, 40.5).
+BRIDGE_U = (7.0, 27.5)       # landing gallery in the north-east of the atrium, u from .. to
+BRIDGE_O = (30.0, 60.8)      # .. and o from .. to; the wide staircase arrives at its south edge
+# V18j (Luc's request): the Hovione atrium as surveyed (reports/north-atrium-survey.md part 2; u, o in metres)
+STAIR_U = (37.0, 27.5)       # the big stair: foot and top (rises north), was 38.0 -> 27.0
+STAIR_O = (40.3, 45.0)       # .. 4.7 m wide, 6 m further east than before (was 34.0 .. 39.5)
+STAIR_STEPS = 30
+STAGE_U = (51.0, 55.7)       # portable stage (was a 6 x 6 m block at u 47..53, o 41..47)
+STAGE_O = (38.6, 44.6)
+STAGE_H = 0.45
+SEAT_ARC = ((51.3, 44.2), 7.6, (51.5, 36.6), (44.0, 42.0), 15)   # centre, radius, first seat, last seat, seats
+GLASS_ROOF_U = (22.0, 54.0)  # the one glazed roof field (was four skylight bands over the whole block)
+GLASS_ROOF_O = (31.0, 50.0)
+FLOOR_PANEL = 5.6            # saw-cut joints of the polished concrete floor
+ENTRANCE_BRIDGE_U = (7.0, 37.5)   # timber-joist gallery across the entrance zone (IMG_7722 28-41 s, N07, N11)
+ENTRANCE_BRIDGE_O = (12.5, 17.5)
+WHITE_BLOCK_U = (35.5, 44.0)      # white two-storey block south of the main entrance; its first 2 m are the balcony
+WHITE_BLOCK_O = (1.0, 8.6)        # (real: o 5..14; ours ends 0.5 m before the west lane's rail)
+WHITE_BLOCK_H = 8.4
+COLONNADE_STEP = 7.5         # white square pillars of the north-east exit colonnade, outside door D5
+COLONNADE_PILLAR = 0.75
 WALL = 0.35                  # wall thickness (outer face offset)
 PLINTH = 5.0                 # outer walls go this far below the hall floor (the ground falls away to the south)
 SOLID_NORTH_U = 3.0          # facade pieces of the atrium closer than this to the north side are closed white walls
@@ -159,6 +184,18 @@ def guarded(fn, radius):
         if free(u, o, radius):
             fn(m, f, u, o, *args, **kwargs)
     return place
+
+
+# V18j (Luc's request): the rebuilt atrium parts are fixed pieces, so instead of being dropped they are checked: the
+# build stops when one of them would stand on a lane (same clearance as free(): lane half width + 0.3 m).
+def must_be_free(name, u0, u1, o0, o1, step=0.25):
+    """Raises when the floor rectangle u0..u1 x o0..o1 (hall coordinates) touches a lane."""
+    nu, no = max(1, int((u1 - u0) / step)), max(1, int((o1 - o0) / step))
+    for i in range(nu + 1):
+        for j in range(no + 1):
+            u, o = u0 + (u1 - u0) * i / nu, o0 + (o1 - o0) * j / no
+            if not free(u, o, 0.0):
+                raise RuntimeError(f"V18j: {name} at u {u:.1f}, o {o:.1f} stands on a race lane")
 
 
 round_table = guarded(K.round_table, 1.6)
@@ -360,7 +397,7 @@ def in_no_mullion_zone(p):
     return False
 
 
-def facade(m, a, b, inside, H, openings, style):
+def facade(m, a, b, inside, H, openings, style, posts=True):
     """One straight piece of outer wall from a to b. inside = unit normal pointing into the building.
     style 'glass': glazed ground floor, white band, glazed upper floor, white fascia; 'solid': white wall.
     openings: [(distance along the edge, width, name)] for doors."""
@@ -390,7 +427,7 @@ def facade(m, a, b, inside, H, openings, style):
     glazed_ground = style in ("glass", "glass_low")                      # glass_low: glass on the ground floor only
     for s0, s1 in pieces:
         band(s0, s1, 0.0, top, "glass" if glazed_ground else "wall")
-        if glazed_ground:
+        if glazed_ground and posts:                                  # V18j (Luc's request): posts=False = no dark posts
             for k in range(int((s1 - s0) / 1.6) + 1):                # mullions
                 p = P(s0 + k * 1.6, top / 2, False)
                 if in_no_mullion_zone(p):
@@ -443,10 +480,47 @@ def rest_of_wing(m, f, poly):
     K.polygon_face(m, poly, 0.0, "floor", up=True)
 
 
+def exit_colonnade(m, a, b, inside, openings):
+    """V18j (Luc's request): white square pillars 0.75 m about every 7.5 m along the facade a-b, on its outer side,
+    starting beside the door (IMG_7725 299-310 s). They stand clear of the door, its open leaves and the door road."""
+    L = math.hypot(b[0] - a[0], b[1] - a[1])
+    tx, ty = (b[0] - a[0]) / L, (b[1] - a[1]) / L
+    s_door, width = [(s, w) for s, w, name in openings if name == "D5_out_north_east"][0]
+    half = COLONNADE_PILLAR / 2
+    spots = []
+    for sgn in (-1, 1):
+        s = s_door + sgn * (width / 2 + 1.1 + half + 0.45)             # past the open glass leaf (1.1 m) of the door
+        while half + 0.2 <= s <= L - half - 0.2:
+            spots.append(s)
+            s += sgn * COLONNADE_STEP
+    f = building_frame()
+    for s in spots:
+        x, y = a[0] + tx * s - inside[0] * (half - 0.1), a[1] + ty * s - inside[1] * (half - 0.1)
+        u, o = f.uo(x, y)
+        if not free(u, o, half * 1.42):
+            raise RuntimeError(f"V18j: colonnade pillar at u {u:.1f}, o {o:.1f} stands on a race lane")
+        m.box((x, y, (4.4 - 0.5) / 2), half, half, (4.4 + 0.5) / 2, "wall", math.atan2(ty, tx))
+    print(f"  colonnade: {len(spots)} pillars along the {L:.1f} m facade of door D5")
+
+
+def floor_joints(m, f, poly):
+    """V18j (Luc's request): saw-cut joints of the polished concrete floor, a FLOOR_PANEL grid over the atrium. Thin
+    strips 4 mm over the floor (under the 4 cm lane collider of NovaHallInsert, so no kart feels them)."""
+    half, z = 0.0175, 0.004
+    for axis in (0, 1):
+        for k in range(1, int(SPLIT_U / FLOOR_PANEL) + 1):
+            c = k * FLOOR_PANEL
+            strip = K.clip_polygon(poly, lambda p: f.uo(*p)[axis] - (c - half))
+            strip = K.clip_polygon(strip, lambda p: (c + half) - f.uo(*p)[axis])
+            if len(strip) >= 3 and abs(K.signed_area(strip)) > 0.01:
+                K.polygon_face(m, strip, z, "floor_joint", up=True)
+
+
 def shell(m, f, polys, door_map):
     """Floors and outer walls. The wall between atrium and long room and the end wall are built separately."""
     atrium, long_room = polys[0], polys[1]
     K.polygon_face(m, atrium, 0.0, "floor", up=True)
+    floor_joints(m, f, atrium)                                          # V18j (Luc's request)
     K.polygon_face(m, long_room, 0.0, "floor", up=True)
     for poly, H in ((atrium, ATRIUM_H), (long_room, LONG_H)):
         ccw = K.signed_area(poly) > 0
@@ -465,52 +539,116 @@ def shell(m, f, polys, door_map):
                 style = "glass_low"                                    # glass at table level, white wall above (Noah)
             if poly is atrium and mid_u < SOLID_NORTH_U:               # atrium north facade: closed white wall (Noah)
                 style = "solid"
-            facade(m, a, b, inside, H, door_map.get(edge_key(a, b), []), style)
+            # V18j (Luc's request): the facade with door D5 is the north exit colonnade: white square pillars
+            # instead of the slim dark glass posts (survey part 1, finding 7)
+            colonnade = any(name == "D5_out_north_east" for _s, _w, name in door_map.get(edge_key(a, b), []))
+            facade(m, a, b, inside, H, door_map.get(edge_key(a, b), []), style, posts=not colonnade)
+            if colonnade:
+                exit_colonnade(m, a, b, inside, door_map[edge_key(a, b)])
 
 
 # ---------- atrium ----------
 def atrium_roof(m, f, poly):
-    K.polygon_face(m, poly, ATRIUM_H, "deck", up=False)
-    K.polygon_face(m, poly, ATRIUM_H + 0.8, "concrete", up=True)
-    for u in K.Frame().samples(3.0, SPLIT_U - 3.0, 6.0):                # trusses across the whole block
+    # V18j (Luc's request): ONE glazed field (GLASS_ROOF_U x GLASS_ROOF_O) instead of the four skylight bands; the
+    # roof is opaque everywhere else: a dark steel deck over the entrance zone (west of the field), white round it.
+    (gu0, gu1), (go0, go1) = GLASS_ROOF_U, GLASS_ROOF_O
+
+    def cut(part, axis, limit, keep_below):
+        return K.clip_polygon(part, lambda p: (limit - f.uo(*p)[axis]) if keep_below else (f.uo(*p)[axis] - limit))
+
+    east = cut(poly, 1, go0, False)                                      # everything east of the field's west edge
+    middle = cut(cut(east, 0, gu0, False), 0, gu1, True)
+    for part, material in ((cut(poly, 1, go0, True), "deck_dark"), (cut(east, 0, gu0, True), "soffit"),
+                           (cut(east, 0, gu1, False), "soffit"), (cut(middle, 1, go1, False), "soffit")):
+        if len(part) >= 3 and abs(K.signed_area(part)) > 0.01:
+            K.polygon_face(m, part, ATRIUM_H, material, up=False)
+            K.polygon_face(m, part, ATRIUM_H + 0.8, "concrete", up=True)
+    top = ATRIUM_H + 0.8                                                 # the glass lies in the roof surface
+    K.floor_rect(m, f, gu0, gu1, go0, go1, top - 0.04, "skylight", up=False)
+    K.floor_rect(m, f, gu0, gu1, go0, go1, top, "skylight", up=True)
+    K.wall_u(m, f, gu0, go0, go1, ATRIUM_H, top, "steel_white", facing=1)      # white reveal of the opening
+    K.wall_u(m, f, gu1, go0, go1, ATRIUM_H, top, "steel_white", facing=-1)
+    K.wall_o(m, f, go0, gu0, gu1, ATRIUM_H, top, "steel_white", facing=1)
+    K.wall_o(m, f, go1, gu0, gu1, ATRIUM_H, top, "steel_white", facing=-1)
+    trusses = K.Frame().samples(3.0, SPLIT_U - 3.0, 6.0)
+    for u in trusses:                                                    # trusses across the whole block
         K.truss(m, f, u, 0.5, 67.8, ATRIUM_H - 1.6, ATRIUM_H - 0.15, bays=16)
     for o in (10.0, 22.0, 34.0, 46.0, 58.0):
         K.rod(m, f, (0.5, o, ATRIUM_H - 0.4), (SPLIT_U - 0.5, o, ATRIUM_H - 0.4), 0.2, "steel_white", 0.36)
-    for o in (16.0, 28.0, 40.0, 52.0):                                   # skylight bands between the beams
-        K.floor_rect(m, f, GALLERY_DEPTH + 1.0, SPLIT_U - 3.0, o - 2.2, o + 2.2, ATRIUM_H - 0.03, "skylight", up=False)
+    for a, b in zip(trusses, trusses[1:]):                               # under the glass: a truss every ~2.8 m ..
+        if gu0 < (a + b) / 2 < gu1:
+            K.truss(m, f, (a + b) / 2, go0, go1, ATRIUM_H - 1.1, ATRIUM_H - 0.15, bays=6)
+    for k in range(7):                                                   # .. and white glazing bars on a ~3 m grid
+        o = go0 + (go1 - go0) * k / 6
+        K.rod(m, f, (gu0, o, top - 0.12), (gu1, o, top - 0.12), 0.1, "steel_white", 0.16)
+    for k in range(11):
+        u = gu0 + (gu1 - gu0) * k / 10
+        K.rod(m, f, (u, go0, top - 0.12), (u, go1, top - 0.12), 0.1, "steel_white", 0.16)
 
 
-def gallery_slab(m, f, u0, u1, o0, o1, open_sides, timber=False):
+def gallery_slab(m, f, u0, u1, o0, o1, open_sides, timber=False, joists="o"):
     """First-floor slab: floor, underside (timber joists or white), white edge beam and glass balustrade on the open
     sides ('u0', 'u1', 'o0', 'o1')."""
     z = GALLERY_Z
     K.floor_rect(m, f, u0, u1, o0, o1, z, "stair", up=True)
-    K.floor_rect(m, f, u0, u1, o0, o1, z - 0.45, "timber" if timber else "soffit", up=False)
-    if timber:
-        for u in K.Frame().samples(u0, u1, 1.2):
-            K.block(m, f, u - 0.08, u + 0.08, o0, o1, z - 0.45, z - 0.05, "timber")
+    # V18j (Luc's request): the joists hang visibly under the timber deck (tour slide 2, N07), every 1.2 m across the
+    # short side (joists = the direction they run in, "o" or "u"). Before they sat inside the slab, above the
+    # underside face at z - 0.45, where nobody saw them.
+    K.floor_rect(m, f, u0, u1, o0, o1, z - (0.18 if timber else 0.45), "timber" if timber else "soffit", up=False)
+    if timber and joists == "o":
+        for u in K.Frame().samples(u0 + 0.3, u1 - 0.3, 1.2):
+            K.block(m, f, u - 0.08, u + 0.08, o0, o1, z - 0.5, z - 0.18, "timber")
+    elif timber:
+        for o in K.Frame().samples(o0 + 0.3, o1 - 0.3, 1.2):
+            K.block(m, f, u0, u1, o - 0.08, o + 0.08, z - 0.5, z - 0.18, "timber")
     for side in open_sides:
         if side in ("u0", "u1"):
-            u = u0 if side == "u0" else u1
-            K.block(m, f, u - 0.12, u + 0.12, o0, o1, z - 0.55, z + 0.02, "wall")
-            K.wall_u(m, f, u, o0, o1, z + 0.05, z + 1.12, "glass", facing=1)
-            K.wall_u(m, f, u, o0, o1, z + 0.05, z + 1.12, "glass", facing=-1)
-            K.block(m, f, u - 0.04, u + 0.04, o0, o1, z + 1.1, z + 1.16, "rail")
+            gallery_edge(m, f, "u", u0 if side == "u0" else u1, o0, o1)
         else:
-            o = o0 if side == "o0" else o1
-            K.block(m, f, u0, u1, o - 0.12, o + 0.12, z - 0.55, z + 0.02, "wall")
-            K.wall_o(m, f, o, u0, u1, z + 0.05, z + 1.12, "glass", facing=1)
-            K.wall_o(m, f, o, u0, u1, z + 0.05, z + 1.12, "glass", facing=-1)
-            K.block(m, f, u0, u1, o - 0.04, o + 0.04, z + 1.1, z + 1.16, "rail")
+            gallery_edge(m, f, "o", o0 if side == "o0" else o1, u0, u1)
+
+
+def gallery_edge(m, f, across, at, a, b, balustrade=True):
+    """White edge beam and glass balustrade of a gallery: across 'u' = an edge at u = `at` running from o = a to b,
+    across 'o' = an edge at o = `at` running from u = a to b. (V18j, Luc's request: taken out of gallery_slab so an
+    edge can cover part of a side; balustrade=False leaves the beam only, where the stair arrives.)"""
+    z = GALLERY_Z
+    if across == "u":
+        K.block(m, f, at - 0.12, at + 0.12, a, b, z - 0.55, z + 0.02, "wall")
+        if balustrade:
+            K.wall_u(m, f, at, a, b, z + 0.05, z + 1.12, "glass", facing=1)
+            K.wall_u(m, f, at, a, b, z + 0.05, z + 1.12, "glass", facing=-1)
+            K.block(m, f, at - 0.04, at + 0.04, a, b, z + 1.1, z + 1.16, "rail")
+    else:
+        K.block(m, f, a, b, at - 0.12, at + 0.12, z - 0.55, z + 0.02, "wall")
+        if balustrade:
+            K.wall_o(m, f, at, a, b, z + 0.05, z + 1.12, "glass", facing=1)
+            K.wall_o(m, f, at, a, b, z + 0.05, z + 1.12, "glass", facing=-1)
+            K.block(m, f, a, b, at - 0.04, at + 0.04, z + 1.1, z + 1.16, "rail")
 
 
 def atrium_structure(m, f):
     G = GALLERY_DEPTH
-    # north gallery (timber joists underneath, IMG_7722), east gallery, bridge across the east half, west balcony
-    gallery_slab(m, f, 0.3, G, 0.6, 67.8, ("u1",), timber=True)
-    gallery_slab(m, f, G, SPLIT_U - 0.4, 67.8 - G, 67.8, ("o0",))
-    gallery_slab(m, f, BRIDGE_U[0], BRIDGE_U[1], BRIDGE_O[0], BRIDGE_O[1], ("o0", "u1"), timber=True)
+    # V18j (Luc's request): the galleries as in the survey. North gallery with timber joists in the west part (its
+    # balustrade stops where the entrance bridge and the landing gallery join it), the landing gallery in the
+    # north-east from the stair to the east gallery (white underneath; the exit doors D5 are under it), the east
+    # gallery, the timber-joist bridge across the entrance zone, the west balcony.
+    # Before: gallery_slab(0.3, G, 0.6, 67.8, ("u1",), timber) / (G, SPLIT_U - 0.4, 67.8 - G, 67.8, ("o0",)) /
+    #         (BRIDGE_U, BRIDGE_O, ("o0", "u1"), timber) / (44.0, SPLIT_U - 0.4, 0.6, 5.0, ("o1",), timber).
+    eb_o0, eb_o1 = ENTRANCE_BRIDGE_O
+    gallery_slab(m, f, 0.3, G, 0.6, BRIDGE_O[0], (), timber=True, joists="u")
+    gallery_slab(m, f, 0.3, G, BRIDGE_O[0], 67.8, ())
+    K.wall_o(m, f, BRIDGE_O[0], 0.3, G, GALLERY_Z - 0.45, GALLERY_Z - 0.18, "soffit", facing=-1)   # step timber / white underside
+    gallery_edge(m, f, "u", G, 0.6, eb_o0)
+    gallery_edge(m, f, "u", G, eb_o1, BRIDGE_O[0])
+    gallery_slab(m, f, G, BRIDGE_U[1], 67.8 - G, 67.8, ())
+    gallery_slab(m, f, BRIDGE_U[1], SPLIT_U - 0.4, 67.8 - G, 67.8, ("o0",))
+    gallery_slab(m, f, BRIDGE_U[0], BRIDGE_U[1], BRIDGE_O[0], BRIDGE_O[1], ("o0",))
+    gallery_edge(m, f, "u", BRIDGE_U[1], BRIDGE_O[0], STAIR_O[0] - 0.19)
+    gallery_edge(m, f, "u", BRIDGE_U[1], STAIR_O[0] - 0.19, STAIR_O[1] + 0.19, balustrade=False)   # the stair arrives here
+    gallery_edge(m, f, "u", BRIDGE_U[1], STAIR_O[1] + 0.19, BRIDGE_O[1])
     gallery_slab(m, f, 44.0, SPLIT_U - 0.4, 0.6, 5.0, ("o1",), timber=True)
+    entrance_bridge(m, f)
     for u in K.Frame().samples(G + 1.0, SPLIT_U - 2.0, 8.0):                                   # slim round columns
         if free(u, 67.8 - G - 0.3, 0.3):                                                       # (one gives way to the track)
             K.round_column(m, f, u, 67.8 - G - 0.3, 0, GALLERY_Z - 0.45, 0.22)
@@ -518,8 +656,15 @@ def atrium_structure(m, f):
         K.round_column(m, f, G + 0.3, o, 0, GALLERY_Z - 0.45, 0.22)
     for u in (12.0, 19.5):
         K.round_column(m, f, u, BRIDGE_O[0] + 0.3, 0, GALLERY_Z - 0.45, 0.22)
-    for o in (BRIDGE_O[0] + 0.3, BRIDGE_O[1] - 0.3):
-        K.round_column(m, f, BRIDGE_U[1] + 0.3, o, 0, GALLERY_Z - 0.45, 0.22)
+    # V18j (Luc's request): columns of the landing gallery: along its south edge (clear of the stair) and one row
+    # under its middle. Was: two columns at u BRIDGE_U[1] + 0.3, o BRIDGE_O[0] + 0.3 and BRIDGE_O[1] - 0.3.
+    for u, o in ((BRIDGE_U[1] + 0.3, BRIDGE_O[0] + 0.3), (BRIDGE_U[1] + 0.3, 38.6), (BRIDGE_U[1] + 0.3, 46.7),
+                 (BRIDGE_U[1] + 0.3, 53.8), (16.5, 38.6), (16.5, 46.7), (16.5, 53.8)):
+        must_be_free("landing gallery column", u - 0.22, u + 0.22, o - 0.22, o + 0.22)
+        K.round_column(m, f, u, o, 0, GALLERY_Z - 0.45, 0.22)
+    for u in (11.5, 21.5):                                               # round ceiling lights under the landing gallery
+        for o in (34.5, 42.5, 50.5, 57.5, 64.3):
+            K.downlight(m, f, u, o, GALLERY_Z - 0.45)
     K.block(m, f, 14.0, 18.5, BRIDGE_O[0] - 0.12, BRIDGE_O[0] - 0.05, GALLERY_Z + 0.3, GALLERY_Z + 2.8, "piano")   # big screen
     # north wall, ground floor (seen left of the main entrance): white square pillars, doors, red exit signs
     for o in (4.0, 10.0, 16.0, 22.0):
@@ -527,20 +672,27 @@ def atrium_structure(m, f):
     for o0 in (6.0, 18.0):
         K.block(m, f, 0.2, 0.3, o0, o0 + 2.0, 0.0, 2.4, "table")
         K.block(m, f, 0.3, 0.42, o0 + 0.6, o0 + 1.4, 2.6, 2.85, "red")
-    for u, o in ((36.0, 46.0), (36.0, 54.0), (46.0, 54.0), (56.0, 54.0), (46.0, 22.0), (56.0, 22.0)):
+    # V18j (Luc's request): the free column at (36.0, 46.0) would stand 1 m beside the moved stair's foot; it is now
+    # at (39.0, 48.5), right of and in front of the foot as in IMG_7725 278-284 s. The other five are unchanged.
+    for u, o in ((39.0, 48.5), (36.0, 54.0), (46.0, 54.0), (56.0, 54.0), (46.0, 22.0), (56.0, 22.0)):
         K.round_column(m, f, u, o, 0, ATRIUM_H - 1.6, 0.24)                                    # free columns up to the roof
         m.cylinder(f.at(u, o, 0), 0.44, 0.5, "wall", 14, top_radius=0.25)                      # flared foot (IMG_7725)
 
-    # (the white "Hovione" wall block south of the entrance is left out: it stood in the way of the track, Noah)
-    # the wide white staircase: from the floor at u 38 up to the bridge at u 27, o 34-39.5
-    stair(m, f, 38.0, BRIDGE_U[1], 34.0, 39.5, GALLERY_Z)
+    # V18j (Luc's request): the white block south of the entrance is back, as far as the west lane leaves room
+    # (Noah had left it out: it stood in the way of the track). No lettering on it.
+    white_block(m, f)
+    # V18j (Luc's request): the wide white staircase stands 6 m further east, behind the stage (IMG_7725 268 s):
+    # foot at u 37, top at the landing gallery at u 27.5, o 40.3-45. Was: stair(m, f, 38.0, BRIDGE_U[1], 34.0, 39.5, GALLERY_Z)
+    grand_stair(m, f, STAIR_U[0], STAIR_U[1], STAIR_O[0], STAIR_O[1], GALLERY_Z)
+    leaning_columns(m, f)
     # "With great power ..." wall on the east side: light panel with a dark band (no text in the model)
     K.block(m, f, 40.0, 50.0, 67.3, 67.6, 3.0, 4.6, "table")
     K.block(m, f, 42.0, 48.0, 67.25, 67.3, 3.6, 4.0, "steel_dark")
 
 
 def stair(m, f, u_bottom, u_top, o0, o1, z_top):
-    """Straight wide flight rising towards smaller u: white steps on a solid base, side stringers, glass balustrades."""
+    """Straight wide flight rising towards smaller u: white steps on a solid base, side stringers, glass balustrades.
+    (V18j, Luc's request: no longer called; the atrium's stair is grand_stair() below.)"""
     n = int(round(z_top / 0.17))
     run = (u_bottom - u_top) / n
     for i in range(n):
@@ -553,6 +705,103 @@ def stair(m, f, u_bottom, u_top, o0, o1, z_top):
         a, b = f.at(u_bottom, o, 0.15), f.at(u_top, o, z_top + 0.15)
         for sgn in (1, -1):
             m.face([a, b, (b[0], b[1], b[2] + 0.9), (a[0], a[1], a[2] + 0.9)], "glass", (nrm[0] * sgn, nrm[1] * sgn, 0))
+
+
+def grand_stair(m, f, u_foot, u_top, o0, o1, z_top):
+    """V18j (Luc's request): the big stair as it is (IMG_7725 268-296 s, N09): one straight flight rising towards
+    smaller u, white steps between two deep white stringers, a glass balustrade with a steel handrail on each
+    stringer, open underneath (white sloping underside, two slim columns), palms in troughs under the high end."""
+    must_be_free("grand stair", u_top, u_foot + 0.4, o0 - 0.2, o1 + 0.2)
+    n = STAIR_STEPS
+    run, rise = (u_foot - u_top) / n, z_top / n
+    slope = z_top / (u_foot - u_top)
+    waist = 0.42                                                         # underside this far below the step edges
+
+    def edge_z(u):                                                       # height of the line through the step edges
+        return (u_foot - u) * slope
+
+    for i in range(n):
+        top = (i + 1) * rise
+        ua = u_foot - run * (i + 1)
+        K.block(m, f, ua, ua + run, o0, o1, max(0.0, top - 0.36), top, "stair")
+    u_low = u_foot - waist / slope                                       # where the underside meets the floor
+    m.face([f.at(u_low, o0, 0.0), f.at(u_low, o1, 0.0), f.at(u_top, o1, z_top - waist), f.at(u_top, o0, z_top - waist)],
+           "stair", (0, 0, -1))
+    K.wall_u(m, f, u_top, o0, o1, z_top - waist, z_top - 0.36, "stair", facing=-1)   # closes the top under the last step
+    for o in (o0 - 0.07, o1 + 0.07):
+        # stringer: 0.14 m plate, 0.62 m deep, from below the floor to the gallery edge, its top 0.2 m over the step edges
+        K.rod(m, f, (u_foot + 0.35, o, edge_z(u_foot + 0.35) - 0.153), (u_top, o, edge_z(u_top) - 0.153), 0.14, "stair", 0.62)
+        a, b = f.at(u_foot + 0.2, o, edge_z(u_foot + 0.2) + 0.2), f.at(u_top, o, z_top + 0.2)
+        nrm = f.left()
+        for sgn in (1, -1):                                              # glass, seen from both sides
+            m.face([a, b, (b[0], b[1], z_top + 1.1), (a[0], a[1], a[2] + 0.9)], "glass", (nrm[0] * sgn, nrm[1] * sgn, 0))
+        K.rod(m, f, (u_foot + 0.2, o, edge_z(u_foot + 0.2) + 1.1), (u_top, o, z_top + 1.1), 0.05, "rail")
+        for k in range(7):                                               # steel posts of the handrail
+            u = u_foot + 0.2 + (u_top - u_foot - 0.2) * k / 6
+            K.block(m, f, u - 0.02, u + 0.02, o - 0.02, o + 0.02, edge_z(u) + 0.2, edge_z(u) + 1.1, "rail")
+    u_col = u_top + 3.4                                                  # two slim columns under the flight
+    for o in (o0 + 0.5, o1 - 0.5):
+        K.round_column(m, f, u_col, o, 0, edge_z(u_col) - waist, 0.2)
+        m.cylinder(f.at(u_col, o, 0), 0.36, 0.4, "wall", 12, top_radius=0.21)
+    for k, o in enumerate((o0 + 1.2, o1 - 1.2)):                         # palms in black troughs under the high end
+        K.planter(m, f, u_top + 1.7, o, 70 + k, palm=True)
+    for o in (o0 + 0.9, o0 + 2.35, o0 + 3.8):                            # seat cubes under the flight
+        K.block(m, f, u_col + 1.4, u_col + 1.92, o - 0.26, o + 0.26, 0.0, 0.46, "grey")
+
+
+def entrance_bridge(m, f):
+    """V18j (Luc's request): the timber-joist gallery across the entrance zone. In IMG_7722 (28-41 s), N07 and N11 the
+    joist gallery crosses the view from the main entrance 10 m inside, runs south and ends at the white block's
+    balcony. It spans the west lane overhead (underside 4.75 m); its columns stand clear of both lanes."""
+    (u0, u1), (o0, o1) = ENTRANCE_BRIDGE_U, ENTRANCE_BRIDGE_O
+    bu0, bo1 = WHITE_BLOCK_U[0], WHITE_BLOCK_O[1]
+    gallery_slab(m, f, u0, u1, o0, o1, (), timber=True)
+    gallery_slab(m, f, bu0, u1, bo1, o0, ("u1", "u0"), timber=True)     # link to the balcony of the white block
+    gallery_edge(m, f, "o", o0, u0, bu0)
+    gallery_edge(m, f, "o", o1, u0, u1)
+    gallery_edge(m, f, "u", u1, o0, o1)
+    for u, o in ((14.0, o0 - 0.25), (14.0, o1 + 0.25), (u1 - 0.6, o1 + 0.25)):
+        must_be_free("entrance bridge column", u - 0.22, u + 0.22, o - 0.22, o + 0.22)
+        K.round_column(m, f, u, o, 0, GALLERY_Z - 0.45, 0.22)
+    for u in (20.5, 26.0, 31.5):                                         # between them it hangs from the roof on thin
+        for o in (o0, o1):                                               # white rods, so the view to the letters is free
+            K.rod(m, f, (u, o, GALLERY_Z + 1.16), (u, o, ATRIUM_H - 0.3), 0.06, "steel_white")
+
+
+def white_block(m, f):
+    """V18j (Luc's request): the white two-storey block south of the main entrance (IMG_7722 36-41 s, tour slide 1):
+    a tall white box, in front of it (north) a lower part whose roof is a balcony with a glass balustrade, two grey
+    sofas and a round side table at its foot. No lettering. Narrower than the real one: the west lane passes."""
+    (u0, u1), (o0, o1) = WHITE_BLOCK_U, WHITE_BLOCK_O
+    must_be_free("white block", u0 - 1.0, u1, o0, o1)
+    K.block(m, f, u0 + 2.0, u1, o0, o1, 0.0, WHITE_BLOCK_H, "wall")
+    K.block(m, f, u0, u0 + 2.0, o0, o1, 0.0, GALLERY_Z, "wall")
+    gallery_edge(m, f, "u", u0, o0, o1)                                  # balustrade along the balcony's north edge
+    for oa in (o0 + 0.9, o0 + 4.1):                                      # sofas against the block, facing north
+        K.block(m, f, u0 - 0.95, u0 - 0.1, oa, oa + 2.6, 0.12, 0.42, "grey")
+        K.block(m, f, u0 - 0.3, u0 - 0.1, oa, oa + 2.6, 0.42, 0.78, "grey")
+        for ob in (oa, oa + 2.45):
+            K.block(m, f, u0 - 0.95, u0 - 0.1, ob, ob + 0.15, 0.42, 0.6, "grey")
+    p = f.at(u0 - 1.7, o0 + 3.75, 0)
+    m.cylinder((p[0], p[1], 0.0), 0.2, 0.03, "table", 12)                # round white side table
+    m.cylinder((p[0], p[1], 0.0), 0.04, 0.4, "table", 8)
+    m.cylinder((p[0], p[1], 0.4), 0.38, 0.04, "table", 16)
+
+
+def leaning_columns(m, f):
+    """V18j (Luc's request): the big white leaning tube columns just inside the west glass, each on a bolted foot
+    (tour slide 1, N11): two north of the main entrance, one south of it, clear of the door and the lane."""
+    for u_foot, u_head in ((9.5, 13.0), (19.0, 15.5), (32.0, 35.5)):
+        must_be_free("leaning column", u_foot - 0.5, u_foot + 0.5, 1.2, 2.3)
+        a, b = f.at(u_foot, 1.75, 0.3), f.at(u_head, 1.2, ATRIUM_H - 1.6)
+        m.tube(a, b, 0.26, "wall", 14)
+        base = f.at(u_foot, 1.75, 0.0)
+        m.box((base[0], base[1], 0.03), 0.5, 0.5, 0.03, "wall", f.h)                 # foot plate
+        m.cylinder((base[0], base[1], 0.06), 0.42, 0.34, "wall", 14, top_radius=0.27)   # cast foot
+        for du in (-0.4, 0.4):
+            for do in (-0.4, 0.4):
+                q = f.at(u_foot + du, 1.75 + do, 0.06)
+                m.cylinder(q, 0.035, 0.05, "rail", 6)                                 # bolts
 
 
 def artwork_wall(m, f):
@@ -576,7 +825,11 @@ def artwork_wall(m, f):
 
 def atrium_furniture(m, f):
     # entrance zone (west, IMG_7722): reception desk left of the door, sculpture ahead, boards with planter troughs
-    K.desk(m, f, 16.5, 3.4, 1.2, 5.0)                                     # welcome desk, left of the doors
+    # V18j (Luc's request): the welcome desk stands under the north gallery in front of a dark blank wall (no logo),
+    # between two of the white pillars (tour slide 5, N07). Was: K.desk(m, f, 16.5, 3.4, 1.2, 5.0) by the west glass.
+    K.desk(m, f, 4.6, 13.0, 5.0, 1.2)                                     # welcome desk, left of the doors
+    K.block(m, f, 4.0, 5.2, 9.6, 10.4, 0.0, 0.9, "table")                 # its low white side counter
+    K.block(m, f, 0.3, 0.45, 10.4, 15.6, 0.0, 3.9, "grey")                # the dark wall behind it
     # the big white NOVA letters straight ahead of the main entrance, as in the real hall (Noah, 2026-11-10: the
     # name may be used now). Read from the entrance: u runs south = left to right. All letters 2.6 m tall, 0.6 m deep.
     SO = 20.5                                                            # between the two track parts in front of the stair,
@@ -592,6 +845,9 @@ def atrium_furniture(m, f):
     K.rod(m, f, (U0 + 8.9, SO, 0.0), (U0 + 10.1, SO, H), 0.6, "wall")    # A: point at the top
     K.rod(m, f, (U0 + 11.3, SO, 0.0), (U0 + 10.1, SO, H), 0.6, "wall")
     K.rod(m, f, (U0 + 9.35, SO, 0.95), (U0 + 10.85, SO, 0.95), 0.4, "wall")  # A: crossbar
+    # V18j (Luc's request): the long low white plinth the letters stand on (tour slide 3). The letters are unchanged.
+    must_be_free("letter plinth", U0 - 0.2, U0 + 11.8, SO - 0.55, SO + 0.55)
+    K.block(m, f, U0 - 0.2, U0 + 11.8, SO - 0.55, SO + 0.55, 0.0, 0.3, "table")
     for k in range(6):                                                   # dark blue boards and planter troughs (north part)
         u = 8.5 + k * 2.0
         if k % 2 == 0:
@@ -605,19 +861,23 @@ def atrium_furniture(m, f):
     K.block(m, f, 50.0, 50.6, 0.6, 0.9, 1.0, 1.8, "red")                 # fire hose cabinet
 
     # east zone (IMG_7725): stage, cube seats in an arc, study tables with boards, planters, sofas by the exit
-    K.block(m, f, 47.0, 53.0, 41.0, 47.0, 0.0, 0.42, "grey")
-    for i in range(2):
-        K.block(m, f, 53.0, 53.6 - 0.3 * i, 43.0, 45.0, 0.0, 0.28 - 0.14 * i, "steel_dark")
-    for i in range(14):                                                  # seats on an arc west of the stage
-        a = math.radians(215 + 110 * i / 13)
-        u, o = 50.0 + 6.5 * math.cos(a), 44.0 + 6.5 * math.sin(a)
-        K.block(m, f, u - 0.27, u + 0.27, o - 0.27, o + 0.27, 0.0, 0.46, "grey")
+    # V18j (Luc's request): the portable stage and the seat arc where the walk video shows them (IMG_7725 268-278 s);
+    # the stair now stands straight behind the stage. Was: a 6 x 6 m block at u 47..53, o 41..47 with two steps at
+    # u 53, and 14 seats on an arc round (50, 44), r 6.5.
+    portable_stage(m, f)
+    seat_arc(m, f)
     for u in (42.0, 46.5, 51.0, 55.5, 60.0):
         long_table(m, f, u, 30.5, seats=2)
     board(m, f, 44.2, 33.6, 1.8, 2.0)
     board(m, f, 57.8, 33.6, 1.8, 2.0)
     for k in range(10):
         planter(m, f, 30.0 + k * 3.2, 65.6, 80 + k, palm=k % 3 == 0)
+    # V18j (Luc's request): the second row of black planter troughs on the east side, in front of the east gallery's
+    # columns, and the troughs beside the stair (IMG_7725 278-296 s)
+    for k, u in enumerate((34.3, 37.7, 42.3, 45.7, 50.3, 53.7)):
+        planter(m, f, u, 59.6, 100 + k, palm=k % 3 == 1)
+    for k, u in enumerate((29.6, 32.8)):
+        planter(m, f, u, 47.6, 110 + k)
     for k in range(3):
         if free(13.0 + k * 2.4, 62.5, 1.2):
             K.block(m, f, 12.0 + k * 2.4, 14.0 + k * 2.4, 62.0, 63.0, 0.0, 0.75, "board")        # dark blue sofas
@@ -626,13 +886,51 @@ def atrium_furniture(m, f):
     entrance_seating(m, f)
 
 
+def portable_stage(m, f):
+    """V18j (Luc's request): the portable stage (IMG_7725 270-278 s): a dark grey carpet deck 0.45 m up on an
+    aluminium frame with slim legs, open underneath, and a two-step unit on its south side."""
+    (u0, u1), (o0, o1), H = STAGE_U, STAGE_O, STAGE_H
+    must_be_free("stage", u0, u1 + 0.7, o0, o1)
+    K.block(m, f, u0, u1, o0, o1, H - 0.07, H, "stage")
+    for ua, ub, oa, ob in ((u0, u1, o0, o0 + 0.05), (u0, u1, o1 - 0.05, o1), (u0, u0 + 0.05, o0, o1), (u1 - 0.05, u1, o0, o1)):
+        K.block(m, f, ua, ub, oa, ob, H - 0.17, H - 0.07, "rail")       # frame under the deck's edge
+    for i in range(4):
+        for j in range(5):
+            u, o = u0 + 0.06 + (u1 - u0 - 0.12) * i / 3, o0 + 0.06 + (o1 - o0 - 0.12) * j / 4
+            K.block(m, f, u - 0.03, u + 0.03, o - 0.03, o + 0.03, 0.0, H - 0.07, "rail")
+    for i in range(2):                                                   # steps at the east end of the south side
+        K.block(m, f, u1, u1 + 0.6 - 0.3 * i, o1 - 1.9, o1 - 0.5, 0.15 * i, 0.15 * (i + 1), "steel_dark")
+
+
+def seat_arc(m, f):
+    """V18j (Luc's request): the dark seat cubes in one curved row west and north-west of the stage, with an aisle
+    between the row and the stage (IMG_7725 270-278 s)."""
+    (cu, co), r, first, last, n = SEAT_ARC
+    a0 = math.atan2(first[1] - co, first[0] - cu)
+    a1 = math.atan2(last[1] - co, last[0] - cu)
+    if a1 - a0 > math.pi:
+        a1 -= 2 * math.pi
+    if a0 - a1 > math.pi:
+        a1 += 2 * math.pi
+    for i in range(n):
+        a = a0 + (a1 - a0) * i / (n - 1)
+        u, o = cu + r * math.cos(a), co + r * math.sin(a)
+        must_be_free("seat cube", u - 0.37, u + 0.37, o - 0.37, o + 0.37)
+        p = f.at(u, o, 0.23)
+        m.box(p, 0.26, 0.26, 0.23, "grey", f.h + a)
+
+
 # Tables and chairs like in the long room, in two free spots of the atrium (Noah, 2026-11-11): the open floor between
 # the welcome desk and the blue boards (north of the main-entrance road), and the strip between the road and the west
 # glass south of the main entrance. round_table / long_table are guarded, so nothing lands on the track.
 ENTRANCE_ROUND_TABLES = [(10.5, 9.0), (10.5, 13.5), (14.5, 11.0), (14.5, 15.5), (18.5, 8.5), (18.5, 13.0), (18.5, 17.5)]
-WEST_GLASS_ROUND_TABLES = [(33.5, 5.0), (43.5, 5.0), (48.5, 5.0),    # (48.5: under the west balcony, Noah)
+# V18j (Luc's request): the white block now stands at u 35.5..44 by the west glass, so the three tables there moved
+# (same number of tables): the round one at (33.5, 5.0) 1.5 m north to the block's corner as in IMG_7722 37-41 s, the
+# round one at (43.5, 5.0) to the old place of the welcome desk (16.5, 4.0), the long one at (38.5, 4.6) between the
+# two lanes at (50.5, 23.8), where the real hall has its study tables.
+WEST_GLASS_ROUND_TABLES = [(32.0, 5.6), (16.5, 4.0), (48.5, 5.0),    # (48.5: under the west balcony, Noah)
                            (58.0, 5.0), (62.5, 5.0)]                 # (behind the cabinet, before the artwork wall)
-WEST_GLASS_LONG_TABLES = [(38.5, 4.6), (53.0, 4.6)]                   # (53.0: by the red fire hose cabinet)
+WEST_GLASS_LONG_TABLES = [(50.5, 23.8), (53.0, 4.6)]                  # (53.0: by the red fire hose cabinet)
 
 
 def entrance_seating(m, f):
@@ -733,6 +1031,9 @@ def long_room_shell(m, f):
             K.square_column(m, f, u, o, 0, LOW_Z, 0.7)
     K.block(m, f, u0, LOW_CEILING_END, 0.3, 29.7, LOW_Z, LOW_Z + 0.4, "wall")                   # floor above
     K.floor_rect(m, f, LOW_CEILING_END, u1, 0.0, 30.0, LONG_H, "deck", up=False)
+    # V18j (Luc's request, see-through check): the roof over the low-ceiling part had no underside, so from the long
+    # room the sky showed between the deck and the artwork wall (back faces are culled in Unity). Same deck, 12 m more.
+    K.floor_rect(m, f, u0, LOW_CEILING_END, 0.0, 30.0, LONG_H, "deck", up=False)
     K.floor_rect(m, f, u0, u1, 0.0, 30.0, LONG_H + 0.8, "concrete", up=True)
     for u in K.Frame().samples(LOW_CEILING_END + 2.0, u1 - 2.0, 6.0):
         K.truss(m, f, u, 0.0, 30.0, LONG_H - 1.6, LONG_H - 0.2, bays=10)
