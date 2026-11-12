@@ -11,8 +11,8 @@ from mathutils import Vector
 
 import env_common as E
 
-SUN_AZIMUTH = 245.0      # degrees clockwise from north: west-south-west (golden hour, as in Unity)
-SUN_ELEVATION = 19.0
+SUN_AZIMUTH = 225.0      # degrees clockwise from north: south-west (V18l summer afternoon, as in Unity)
+SUN_ELEVATION = 42.0
 RES = (1920, 1080)
 
 

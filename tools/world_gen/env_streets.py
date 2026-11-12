@@ -85,7 +85,7 @@ def mat(key):
     if key == "asphalt":
         # our own material with the track's asphalt texture: Unity imported the track's W_T_asphalt under the name
         # "Lit" when CampusWorld.fbx used it as well (it carries a roughness map), so the two files keep their own
-        return _textured("street_asphalt", "#55585E", "asphalt", 0.88)
+        return _textured("street_asphalt", "#686764", "asphalt", 0.88)   # V18k: the lighter, warmer grey of the real avenue
     if key == "lawn":
         import env_track
         return env_track.surface_material("lawn")

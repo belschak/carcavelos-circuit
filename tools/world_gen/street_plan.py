@@ -248,13 +248,14 @@ def frame_uv(origin, u, tile_u, tile_v):
     return (origin, u, tile_u, tile_v)
 
 
-def stripes(origin, u, t0, t1, s0, s1, width, gap, colour="white", along=True):
-    """Bands of paint filling a rectangle: `along` = bands run along u and repeat across (s), else the reverse."""
+def stripes(origin, u, t0, t1, s0, s1, width, gap, colour="white", along=True, road=False):
+    """Bands of paint filling a rectangle: `along` = bands run along u and repeat across (s), else the reverse.
+    road (V18k): the bands may run on across the race road (flush paint, see paint)."""
     k = 0
     lo, hi = (s0, s1) if along else (t0, t1)
     while lo + k * (width + gap) + width <= hi + 1e-6:
         a = lo + k * (width + gap)
-        paint(colour, rect(origin, u, t0, t1, a, a + width) if along else rect(origin, u, a, a + width, s0, s1))
+        paint(colour, rect(origin, u, t0, t1, a, a + width) if along else rect(origin, u, a, a + width, s0, s1), road)
         k += 1
 
 
@@ -754,7 +755,8 @@ def carpark():
     frame_paint("gravel", [kerb_pt(92.73, 1.93), kerb_pt(94.47, 1.93), kerb_pt(94.47, 3.67), kerb_pt(92.73, 3.67)], 0.12)
     # zebra Z1 in the south-west row (replaces two bays), the footpath to the beach behind it
     z1 = s_kerb(-198.0, -82.0)
-    stripes(kerb_pt(z1 - 2.5, 17.3), NE_KERB_U, 0.0, 5.0, 0.3, 4.6, 0.45, 0.45, along=True)
+    # V18k (road survey item 7): the real zebra runs across the whole aisle to the north-east bays (Street View 2019-10)
+    stripes(kerb_pt(z1 - 2.5, 17.3), NE_KERB_U, 0.0, 5.0, 0.3, 12.0, 0.45, 0.45, along=True, road=True)
     layer("F beach path", "slab", ribbon([kerb_pt(z1, 17.5), (-203.5, -93.0), (-207.0, -100.0)], -1.5, 1.5), conc_uv)
     # the yellow hatched box in the south-west row, direction arrows in the aisle
     yb = s_kerb(-177.0, -102.0)
@@ -1271,18 +1273,22 @@ def route_line(t0, t1, d, step=1.0):
     return [route_side(t0 + (t1 - t0) * k / n, d) for k in range(n + 1)]
 
 
+PROM_SETT_BORDERS = False   # V18k (road survey item 2): the dark sett bands at 4.6-5.65 m traced the race line; the real
+                            # paths have pale concrete edges and lawn (coastwalk survey, Google 21z). True draws them again.
+
+
 def promenade():
     sett_uv = None
     i0, i1 = PROM
     # land side: one border along the whole stretch; at the seat-walls the setts reach the wall's foot
-    for a, b in ((i0, i1),):
+    for a, b in (((i0, i1),) if PROM_SETT_BORDERS else ()):
         layer("G sett border land", "setts", route_line(a, b, PROM_SETT[0], 2.0) + route_line(a, b, PROM_SETT[1], 2.0)[::-1],
               sett_uv)
-    for a, b in PROM_SEAT["runs"]:
+    for a, b in (PROM_SEAT["runs"] if PROM_SETT_BORDERS else ()):
         foot = PROM_SEAT["offset"] - PROM_SEAT["width"] / 2 + 0.02
         layer("G sett strip at seat-wall", "setts",
               route_line(a - 0.4, b + 0.4, PROM_SETT[1] - 0.05) + route_line(a - 0.4, b + 0.4, foot)[::-1], sett_uv)
-    for a, b in PROM_SETT_SEA:
+    for a, b in (PROM_SETT_SEA if PROM_SETT_BORDERS else ()):
         layer("G sett border sea", "setts",
               route_line(a, b, -PROM_SETT[0], 2.0) + route_line(a, b, -PROM_SETT[1], 2.0)[::-1], sett_uv)
     # the slot drain: the road itself is the race surface and stays as it is, so the grate shows only on both verges

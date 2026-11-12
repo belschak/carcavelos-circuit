@@ -35,7 +35,7 @@ def half_width(p):
 # Colours: docs/art-style.md palette first, then environment additions (to be added to that doc).
 PALETTE = {
     # art-style.md
-    "kart_white": "#EAEAEC", "gloss_black": "#1D1D1F", "asphalt": "#55585E", "sand": "#E3C48D",
+    "kart_white": "#EAEAEC", "gloss_black": "#1D1D1F", "asphalt": "#686764", "sand": "#E3C48D",
     "atlantic_blue": "#2D8CD6", "boost_orange": "#FF8A1F",
     # environment additions
     "lawn": "#8FB37A", "leaf": "#5E8F4E", "leaf_dark": "#3F6B3A", "olive_leaf": "#8A9A6B", "palm_leaf": "#5F8A3E",

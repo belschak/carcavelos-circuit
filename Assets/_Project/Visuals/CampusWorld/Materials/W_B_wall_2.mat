@@ -125,7 +125,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BakedShadow: {r: 30, g: 42, b: 0.85, a: 0}
-    - _BaseColor: {r: 0.9647, g: 0.8475, b: 0.6129, a: 1}
+    - _BaseColor: {r: 0.9658, g: 0.8484, b: 0.6136, a: 1}
     - _Color: {r: 0.887, g: 0.7792, b: 0.5634999, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _NearRect: {r: -275, g: -180, b: 0.0024390244, a: 0.0025316456}

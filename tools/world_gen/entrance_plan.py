@@ -369,6 +369,8 @@ def avenue_side(S):
     import north_plan                       # lawn) go into the campus plan's ground paint, once
     if not any(lay["name"].endswith("(V18j)") for lay in campus_plan.GROUND_PAINT):
         north_plan.ground_paint(campus_plan.paint, campus_plan.SETTS, campus_plan.LAWN)
+        import lawn_road                    # V18k: lawn under the race road where it crosses real lawn
+        lawn_road.ground_paint(campus_plan.paint, campus_plan.LAWN)
 
 
 def inside(x, y, poly):
