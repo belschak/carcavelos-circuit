@@ -232,6 +232,29 @@ SCRUB_SHRUBS = [(186.0, 118.0), (190.5, 104.0), (184.5, 97.0), (196.0, 92.0), (1
                 (187.0, -38.0), (162.0, -52.0), (171.0, -58.0), (181.0, -62.0), (158.5, -66.0), (176.5, -72.0)]
 
 
+# walk 7 Nov (IMG_7725 1:52): a pale concrete planter box with shrubs on the plaza in front of the seat tiers
+PLANTER = ((134.6, -15.5), 14.0, 2.6, 1.0, 0.75)        # centre, bearing of the long axis, length, width, height
+# Street View May 2026 (Estr. da Medrosa, looking west): a dense, tall oleander hedge on the bank along the road
+HEDGE_LINE = [(186.0, -70.0), (192.8, -45.0), (195.8, -30.0), (199.8, -10.0), (202.6, 0.0)]
+HEDGE_STEP = 3.2
+# Street View (N6 at F, looking north): a post fence along the scrub's south edge, from F's corner to the Medrosa
+SCRUB_FENCE = [(148.5, -89.6), (182.0, -89.6)]
+SCRUB_FENCE_STEP, SCRUB_FENCE_H = 3.0, 1.2
+
+
+def along(line, step):
+    """Points every `step` metres along a polyline."""
+    out, carry = [], 0.0
+    for a, b in zip(line, line[1:]):
+        d = math.hypot(b[0] - a[0], b[1] - a[1])
+        t = carry
+        while t <= d:
+            out.append((a[0] + (b[0] - a[0]) * t / d, a[1] + (b[1] - a[1]) * t / d))
+            t += step
+        carry = t - d
+    return out
+
+
 def offset_ring(line, half):
     """Closed ring `half` metres on both sides of a polyline."""
     left, right = [], []

@@ -560,6 +560,19 @@ def build_court(m):
     m.box(c, u, length / 2, width / 2, g - 0.3, max(ground(x, y) for x, y in ring) + h, SLAT, DARK)
     clear("shed in the court", ring)
     K.keep_out(ring, 1.0)
+    c, bearing, length, width, h = P.PLANTER                       # planter box in front of the seat tiers
+    u, ring = _rect(c, bearing, length, width)
+    g = ground(*c)
+    m.box(c, u, length / 2, width / 2, g - 0.2, g + 0.07 + h, CONC, GROUND)
+    clear("planter box at the seat tiers", ring)
+    K.keep_out(ring, 0.6)
+    posts = P.along(P.SCRUB_FENCE, P.SCRUB_FENCE_STEP)             # post fence on the scrub's south edge
+    tops = [ground(x, y) + P.SCRUB_FENCE_H for x, y in posts]
+    for (x, y), top in zip(posts, tops):
+        m.box((x, y), (1.0, 0.0), 0.06, 0.06, top - P.SCRUB_FENCE_H - 0.3, top, SLAT, SLAT)
+    for (a, za), (e, ze) in zip(zip(posts, tops), list(zip(posts, tops))[1:]):
+        strip(m, a, e, min(za, ze) - 0.16, za - 0.1, ze - 0.1, 0.04, SLAT)
+    clear("post fence south of the scrub", posts)
     x, y = P.COURT_MAST
     g = ground(x, y)
     m.box((x, y), (1.0, 0.0), 0.09, 0.09, g - 0.3, g + P.COURT_MAST_H, SLAT, SLAT)
@@ -606,6 +619,13 @@ def dress(veg, props):
         plant("Veg_PlazaTree" if k % 2 else "Veg_PlazaTree_B", x, y, rng.uniform(0.85, 1.05))
     for k, (x, y) in enumerate(P.SCRUB_SHRUBS):
         plant("Veg_Shrub" if k % 3 else "Veg_Shrub_B", x, y, rng.uniform(1.25, 1.75))
+    for k, (x, y) in enumerate(P.along(P.HEDGE_LINE, P.HEDGE_STEP)):       # the oleander hedge along the Medrosa
+        plant("Veg_Shrub_B" if k % 2 else "Veg_Shrub", x + rng.uniform(-0.5, 0.5), y, rng.uniform(2.1, 2.7))
+    c, bearing, length, width, h = P.PLANTER
+    for t in (-0.8, 0.0, 0.8):                                  # the planter box's shrubs
+        x, y = c[0] + math.sin(math.radians(bearing)) * t, c[1] + math.cos(math.radians(bearing)) * t
+        veg2.append({"proto": "Veg_Shrub", "x": round(x, 3), "y": round(y, 3), "z": round(ground(x, y) + h - 0.1, 3),
+                     "rot_z": round(rng.uniform(0, 2 * math.pi), 4), "scale": 0.8})
     for k, (x, y) in enumerate(P.PINES):
         plant("Veg_UmbrellaPine" if k % 2 else "Veg_UmbrellaPine_B", x, y, rng.uniform(0.9, 1.1))
     # G's arcade: the two parasol sets go, timber picnic tables stand at the slab's edge (Google 20z, walk 7 Nov)
@@ -616,8 +636,8 @@ def dress(veg, props):
             raise RuntimeError(f"V18g: picnic table at ({x}, {y}) is too close to the race line")
         props2.append({"proto": "Prop_PicnicTable", "x": x, "y": y, "z": round(max(ground(x, y) + 0.04, F0 + 0.03), 3), "rot_z": rot,
                        "scale": 1.0})       # (the paving / the void's Floor-0 paving lies at 11.22 .. 11.26 here)
-    print(f"  campus east: dressing: removed {gone} and {len(props) - len(props2)} props of {len(sets)} parasol sets; "
-          f"{len(P.COURT_TREES)} court trees, {len(P.SCRUB_SHRUBS)} scrub shrubs, {len(P.PINES)} pines, "
+    print(f"  campus east: dressing: removed {gone} and {len(sets)} parasol sets (net {len(props) - len(props2)} props fewer); "
+          f"{len(P.COURT_TREES)} court trees, {len(P.SCRUB_SHRUBS)} scrub shrubs, {len(P.along(P.HEDGE_LINE, P.HEDGE_STEP))} hedge shrubs, {len(P.PINES)} pines, "
           f"{len(P.ARCADE_TABLES)} picnic tables at G's arcade; {moved} trees of the strip's rows moved by {P.TREE_ROW_SHIFT}")
     for fname, items in (("placements_vegetation.json", veg2), ("placements_props.json", props2)):
         path = os.path.join(E.OUT, fname)
