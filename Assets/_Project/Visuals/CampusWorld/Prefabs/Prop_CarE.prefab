@@ -100,6 +100,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2243137561937251549}
   - component: {fileID: 6873166426410023589}
+  - component: {fileID: 1149366499942740767}
   m_Layer: 0
   m_Name: Prop_CarE
   m_TagString: Untagged
@@ -144,3 +145,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.2893472, y: 1.4430683, z: 1.6}
   m_Center: {x: 0.001744926, y: 0.7188617, z: 0}
+--- !u!205 &1149366499942740767
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6835079406886363085}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0.0017449856, y: 0.7188617, z: 0}
+  m_Size: 2.2893472
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 4324919617126340291}
+  m_Enabled: 1

@@ -48,6 +48,7 @@ Shader "CarcavelosCircuit/WorldLit"
             half4 _Occlusion, _Shade;
             float4 _WorldRect, _NearRect, _BakedShadow, _WorldUV;
         CBUFFER_END
+        half _CampusBakedShadowDrop;   // V28 global (CampusWorldLighting): 1 = drop the baked noon shadow (sunset)
         ENDHLSL
 
         Pass
@@ -196,7 +197,7 @@ Shader "CarcavelosCircuit/WorldLit"
                 lit = lerp(lit, SAMPLE_TEXTURE2D(_GroundNearMap, sampler_GroundNearMap, nearUV).a, nearShare);
                 lit = lerp(1.0, lit, _Shade.y * saturate(geoN.y * 4.0 - 2.0));
                 lit = lerp(lit, 0.0, _Shade.x);
-                sun.shadowAttenuation = min(sun.shadowAttenuation, lerp(1.0, lerp(1.0 - _BakedShadow.z, 1.0, lit), far));
+                sun.shadowAttenuation = min(sun.shadowAttenuation, lerp(1.0, lerp(1.0 - _BakedShadow.z * (1.0 - _CampusBakedShadowDrop), 1.0, lit), far));
                 sun.color *= sunAO * ao.directAmbientOcclusion;
 
                 // the sky light takes the full vertex occlusion; reflections only a third of it (glass set back in a

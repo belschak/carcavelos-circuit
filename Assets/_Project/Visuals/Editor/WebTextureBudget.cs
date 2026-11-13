@@ -50,7 +50,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             {
                 return Array.IndexOf(BigProps, prop.Groups[1].Value) >= 0 ? 512 : 256;
             }
-            if (file == "sky_panorama.png")
+            if (file == "sky_panorama.png" || file == "sky_sunset.png")   // V28: the sunset sky like the noon sky
             {
                 return 512;                    // per cube face; the 2048 px source only has ~512 px per 90 degrees
             }

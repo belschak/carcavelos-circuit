@@ -1,7 +1,7 @@
 {
     "name": "CarcavelosCircuit.Visuals",
     "rootNamespace": "CarcavelosCircuit.Visuals",
-    "references": ["CarcavelosCircuit.Shared"],
+    "references": ["CarcavelosCircuit.Shared", "Unity.RenderPipelines.Core.Runtime"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
