@@ -7092,8 +7092,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0047",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0047",
+"proto": "Prop_SunLounger_Far",
 "x": -352.212,
 "y": 2.673,
 "z": -17.306,
@@ -7102,8 +7102,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0048",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0048",
+"proto": "Prop_SunLounger_Far",
 "x": -351.443,
 "y": 2.66,
 "z": -17.773,
@@ -7122,8 +7122,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0050",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0050",
+"proto": "Prop_SunLounger_Far",
 "x": -349.183,
 "y": 2.576,
 "z": -19.428,
@@ -7132,8 +7132,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0051",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0051",
+"proto": "Prop_SunLounger_Far",
 "x": -348.414,
 "y": 2.551,
 "z": -19.895,
@@ -7152,8 +7152,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0053",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0053",
+"proto": "Prop_SunLounger_Far",
 "x": -346.031,
 "y": 2.556,
 "z": -21.277,
@@ -7162,8 +7162,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0054",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0054",
+"proto": "Prop_SunLounger_Far",
 "x": -345.263,
 "y": 2.556,
 "z": -21.744,
@@ -7182,8 +7182,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0056",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0056",
+"proto": "Prop_SunLounger_Far",
 "x": -342.599,
 "y": 2.762,
 "z": -23.064,
@@ -7192,8 +7192,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0057",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0057",
+"proto": "Prop_SunLounger_Far",
 "x": -341.83,
 "y": 2.813,
 "z": -23.531,
@@ -7212,8 +7212,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0059",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0059",
+"proto": "Prop_SunLounger_Far",
 "x": -339.698,
 "y": 2.899,
 "z": -25.072,
@@ -7222,8 +7222,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0060",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0060",
+"proto": "Prop_SunLounger_Far",
 "x": -338.93,
 "y": 2.918,
 "z": -25.539,
@@ -7242,8 +7242,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0062",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0062",
+"proto": "Prop_SunLounger_Far",
 "x": -333.403,
 "y": 2.974,
 "z": -28.961,
@@ -7252,8 +7252,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0063",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0063",
+"proto": "Prop_SunLounger_Far",
 "x": -332.635,
 "y": 2.995,
 "z": -29.429,
@@ -7272,8 +7272,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0065",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0065",
+"proto": "Prop_SunLounger_Far",
 "x": -330.038,
 "y": 3.118,
 "z": -30.767,
@@ -7282,8 +7282,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0066",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0066",
+"proto": "Prop_SunLounger_Far",
 "x": -329.269,
 "y": 3.134,
 "z": -31.235,
@@ -7302,8 +7302,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0068",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0068",
+"proto": "Prop_SunLounger_Far",
 "x": -326.814,
 "y": 3.247,
 "z": -32.674,
@@ -7312,8 +7312,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0069",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0069",
+"proto": "Prop_SunLounger_Far",
 "x": -326.045,
 "y": 3.3,
 "z": -33.141,
@@ -7332,8 +7332,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0071",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0071",
+"proto": "Prop_SunLounger_Far",
 "x": -355.209,
 "y": 2.447,
 "z": -22.239,
@@ -7342,8 +7342,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0072",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0072",
+"proto": "Prop_SunLounger_Far",
 "x": -354.441,
 "y": 2.442,
 "z": -22.706,
@@ -7362,8 +7362,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0074",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0074",
+"proto": "Prop_SunLounger_Far",
 "x": -351.999,
 "y": 2.427,
 "z": -24.142,
@@ -7372,8 +7372,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0075",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0075",
+"proto": "Prop_SunLounger_Far",
 "x": -351.23,
 "y": 2.423,
 "z": -24.609,
@@ -7392,8 +7392,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0077",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0077",
+"proto": "Prop_SunLounger_Far",
 "x": -348.784,
 "y": 2.407,
 "z": -26.318,
@@ -7402,8 +7402,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0078",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0078",
+"proto": "Prop_SunLounger_Far",
 "x": -348.016,
 "y": 2.404,
 "z": -26.785,
@@ -7422,8 +7422,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0080",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0080",
+"proto": "Prop_SunLounger_Far",
 "x": -345.845,
 "y": 2.394,
 "z": -27.947,
@@ -7432,8 +7432,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0081",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0081",
+"proto": "Prop_SunLounger_Far",
 "x": -345.077,
 "y": 2.388,
 "z": -28.415,
@@ -7452,8 +7452,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0083",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0083",
+"proto": "Prop_SunLounger_Far",
 "x": -342.541,
 "y": 2.37,
 "z": -30.131,
@@ -7462,8 +7462,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0084",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0084",
+"proto": "Prop_SunLounger_Far",
 "x": -341.772,
 "y": 2.367,
 "z": -30.598,
@@ -7482,8 +7482,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0086",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0086",
+"proto": "Prop_SunLounger_Far",
 "x": -339.53,
 "y": 2.369,
 "z": -31.941,
@@ -7492,8 +7492,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0087",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0087",
+"proto": "Prop_SunLounger_Far",
 "x": -338.761,
 "y": 2.383,
 "z": -32.408,
@@ -7512,8 +7512,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0089",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0089",
+"proto": "Prop_SunLounger_Far",
 "x": -336.284,
 "y": 2.381,
 "z": -33.723,
@@ -7522,8 +7522,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0090",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0090",
+"proto": "Prop_SunLounger_Far",
 "x": -335.515,
 "y": 2.36,
 "z": -34.191,
@@ -7542,8 +7542,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0092",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0092",
+"proto": "Prop_SunLounger_Far",
 "x": -333.172,
 "y": 2.411,
 "z": -35.83,
@@ -7552,8 +7552,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0093",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0093",
+"proto": "Prop_SunLounger_Far",
 "x": -332.403,
 "y": 2.439,
 "z": -36.297,
@@ -7572,8 +7572,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0095",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0095",
+"proto": "Prop_SunLounger_Far",
 "x": -329.99,
 "y": 2.481,
 "z": -37.601,
@@ -7582,8 +7582,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SunLounger.0096",
-"proto": "Prop_SunLounger",
+"name": "Prop_SunLounger_Far.0096",
+"proto": "Prop_SunLounger_Far",
 "x": -329.222,
 "y": 2.532,
 "z": -38.068,
@@ -7772,8 +7772,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LifeguardTower.0115",
-"proto": "Prop_LifeguardTower",
+"name": "Prop_LifeguardTower_Far.0115",
+"proto": "Prop_LifeguardTower_Far",
 "x": -321.0,
 "y": 1.317,
 "z": -94.0,
@@ -11162,8 +11162,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0454",
-"proto": "Prop_CarE",
+"name": "Prop_CarE_Far.0454",
+"proto": "Prop_CarE_Far",
 "x": -95.3,
 "y": 12.82,
 "z": 107.6,
@@ -11172,8 +11172,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0455",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0455",
+"proto": "Prop_CarG_Far",
 "x": -93.4,
 "y": 12.676,
 "z": 101.8,
@@ -11382,8 +11382,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0476",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0476",
+"proto": "Prop_CarC_Far",
 "x": -170.497,
 "y": 8.882,
 "z": -11.339,
@@ -11452,8 +11452,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0483",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0483",
+"proto": "Prop_CarF_Far",
 "x": -155.55,
 "y": 8.728,
 "z": -12.791,
@@ -11462,8 +11462,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0484",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0484",
+"proto": "Prop_CarG_Far",
 "x": -150.45,
 "y": 8.69,
 "z": -12.889,
@@ -11542,8 +11542,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0492",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0492",
+"proto": "Prop_CarC_Far",
 "x": -142.118,
 "y": 8.741,
 "z": -10.178,
@@ -11552,8 +11552,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0493",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0493",
+"proto": "Prop_CarG_Far",
 "x": -142.096,
 "y": 8.658,
 "z": -13.011,
@@ -11562,8 +11562,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0494",
-"proto": "Prop_CarE",
+"name": "Prop_CarE_Far.0494",
+"proto": "Prop_CarE_Far",
 "x": -141.821,
 "y": 8.583,
 "z": -15.452,
@@ -11572,8 +11572,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0495",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0495",
+"proto": "Prop_CarG_Far",
 "x": -142.166,
 "y": 8.495,
 "z": -18.299,
@@ -11602,8 +11602,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0498",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0498",
+"proto": "Prop_CarA_Far",
 "x": -133.105,
 "y": 8.652,
 "z": -13.832,
@@ -11612,8 +11612,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0499",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0499",
+"proto": "Prop_CarA_Far",
 "x": -133.042,
 "y": 8.745,
 "z": -10.973,
@@ -11622,8 +11622,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0500",
-"proto": "Prop_CarB",
+"name": "Prop_CarB_Far.0500",
+"proto": "Prop_CarB_Far",
 "x": -133.485,
 "y": 8.907,
 "z": -5.694,
@@ -11632,8 +11632,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0501",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0501",
+"proto": "Prop_CarH_Far",
 "x": -133.518,
 "y": 8.988,
 "z": -3.061,
@@ -11642,8 +11642,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0502",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0502",
+"proto": "Prop_CarF_Far",
 "x": -133.31,
 "y": 9.073,
 "z": -0.339,
@@ -11652,8 +11652,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0503",
-"proto": "Prop_CarB",
+"name": "Prop_CarB_Far.0503",
+"proto": "Prop_CarB_Far",
 "x": -133.492,
 "y": 9.153,
 "z": 2.314,
@@ -11662,8 +11662,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0504",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0504",
+"proto": "Prop_CarF_Far",
 "x": -133.668,
 "y": 9.24,
 "z": 5.225,
@@ -11672,8 +11672,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0505",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0505",
+"proto": "Prop_CarD_Far",
 "x": -133.772,
 "y": 9.316,
 "z": 7.787,
@@ -11682,8 +11682,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0506",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0506",
+"proto": "Prop_CarA_Far",
 "x": -133.69,
 "y": 9.401,
 "z": 10.611,
@@ -11692,8 +11692,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0507",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0507",
+"proto": "Prop_CarF_Far",
 "x": -134.143,
 "y": 9.554,
 "z": 15.833,
@@ -11702,8 +11702,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0508",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0508",
+"proto": "Prop_CarH_Far",
 "x": -134.195,
 "y": 9.633,
 "z": 18.464,
@@ -11712,8 +11712,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0509",
-"proto": "Prop_CarE",
+"name": "Prop_CarE_Far.0509",
+"proto": "Prop_CarE_Far",
 "x": -134.356,
 "y": 9.808,
 "z": 24.119,
@@ -11722,8 +11722,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0510",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0510",
+"proto": "Prop_CarG_Far",
 "x": -134.063,
 "y": 9.89,
 "z": 26.665,
@@ -11732,8 +11732,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0511",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0511",
+"proto": "Prop_CarC_Far",
 "x": -134.54,
 "y": 10.069,
 "z": 32.124,
@@ -11742,8 +11742,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0512",
-"proto": "Prop_CarE",
+"name": "Prop_CarE_Far.0512",
+"proto": "Prop_CarE_Far",
 "x": -134.392,
 "y": 10.16,
 "z": 34.854,
@@ -11752,8 +11752,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0513",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0513",
+"proto": "Prop_CarA_Far",
 "x": -134.25,
 "y": 10.248,
 "z": 37.492,
@@ -11762,8 +11762,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0514",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0514",
+"proto": "Prop_CarC_Far",
 "x": -134.324,
 "y": 10.425,
 "z": 42.943,
@@ -11772,8 +11772,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0515",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0515",
+"proto": "Prop_CarH_Far",
 "x": -134.702,
 "y": 10.591,
 "z": 48.42,
@@ -11782,8 +11782,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0516",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0516",
+"proto": "Prop_CarF_Far",
 "x": -134.923,
 "y": 10.66,
 "z": 50.831,
@@ -11792,8 +11792,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0517",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0517",
+"proto": "Prop_CarD_Far",
 "x": -134.721,
 "y": 10.735,
 "z": 53.557,
@@ -11802,8 +11802,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0518",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0518",
+"proto": "Prop_CarD_Far",
 "x": -143.766,
 "y": 9.04,
 "z": -0.034,
@@ -11812,8 +11812,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0519",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0519",
+"proto": "Prop_CarH_Far",
 "x": -144.36,
 "y": 9.117,
 "z": 2.49,
@@ -11822,8 +11822,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0520",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0520",
+"proto": "Prop_CarF_Far",
 "x": -143.942,
 "y": 9.38,
 "z": 10.802,
@@ -11832,8 +11832,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0521",
-"proto": "Prop_CarE",
+"name": "Prop_CarE_Far.0521",
+"proto": "Prop_CarE_Far",
 "x": -144.004,
 "y": 9.46,
 "z": 13.291,
@@ -11842,8 +11842,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0522",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0522",
+"proto": "Prop_CarH_Far",
 "x": -144.613,
 "y": 9.815,
 "z": 24.109,
@@ -11852,8 +11852,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0523",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0523",
+"proto": "Prop_CarG_Far",
 "x": -264.004,
 "y": 9.714,
 "z": 40.937,
@@ -11862,8 +11862,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0524",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0524",
+"proto": "Prop_CarA_Far",
 "x": -269.876,
 "y": 9.538,
 "z": 45.521,
@@ -11872,8 +11872,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0525",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0525",
+"proto": "Prop_CarD_Far",
 "x": -270.284,
 "y": 9.615,
 "z": 48.081,
@@ -11882,8 +11882,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0526",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0526",
+"proto": "Prop_CarC_Far",
 "x": -265.64,
 "y": 10.036,
 "z": 51.633,
@@ -11892,8 +11892,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0527",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0527",
+"proto": "Prop_CarA_Far",
 "x": -270.714,
 "y": 9.698,
 "z": 50.88,
@@ -11902,8 +11902,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0528",
-"proto": "Prop_CarE",
+"name": "Prop_CarE_Far.0528",
+"proto": "Prop_CarE_Far",
 "x": -271.119,
 "y": 9.773,
 "z": 53.588,
@@ -11912,8 +11912,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0529",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0529",
+"proto": "Prop_CarD_Far",
 "x": -271.499,
 "y": 9.847,
 "z": 56.213,
@@ -11922,8 +11922,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0530",
-"proto": "Prop_CarE",
+"name": "Prop_CarE_Far.0530",
+"proto": "Prop_CarE_Far",
 "x": -271.917,
 "y": 9.916,
 "z": 58.9,
@@ -11932,8 +11932,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0531",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0531",
+"proto": "Prop_CarA_Far",
 "x": -267.244,
 "y": 10.288,
 "z": 62.12,
@@ -11942,8 +11942,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0532",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0532",
+"proto": "Prop_CarH_Far",
 "x": -272.301,
 "y": 9.982,
 "z": 61.426,
@@ -11952,8 +11952,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0533",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0533",
+"proto": "Prop_CarH_Far",
 "x": -268.066,
 "y": 10.404,
 "z": 67.521,
@@ -11962,8 +11962,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0534",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0534",
+"proto": "Prop_CarH_Far",
 "x": -269.303,
 "y": 10.731,
 "z": 80.833,
@@ -11972,8 +11972,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0535",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0535",
+"proto": "Prop_CarC_Far",
 "x": -269.532,
 "y": 10.802,
 "z": 83.477,
@@ -11982,8 +11982,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0536",
-"proto": "Prop_CarE",
+"name": "Prop_CarE_Far.0536",
+"proto": "Prop_CarE_Far",
 "x": -274.814,
 "y": 10.686,
 "z": 85.961,
@@ -11992,8 +11992,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0537",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0537",
+"proto": "Prop_CarD_Far",
 "x": -270.385,
 "y": 11.115,
 "z": 94.242,
@@ -12002,8 +12002,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0538",
-"proto": "Prop_CarB",
+"name": "Prop_CarB_Far.0538",
+"proto": "Prop_CarB_Far",
 "x": -275.475,
 "y": 10.941,
 "z": 93.872,
@@ -12012,8 +12012,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0539",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0539",
+"proto": "Prop_CarD_Far",
 "x": -251.561,
 "y": 10.252,
 "z": 33.858,
@@ -12022,8 +12022,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0540",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0540",
+"proto": "Prop_CarF_Far",
 "x": -251.405,
 "y": 10.542,
 "z": 39.371,
@@ -12032,8 +12032,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0541",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0541",
+"proto": "Prop_CarF_Far",
 "x": -250.816,
 "y": 10.705,
 "z": 41.989,
@@ -12042,8 +12042,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0542",
-"proto": "Prop_CarB",
+"name": "Prop_CarB_Far.0542",
+"proto": "Prop_CarB_Far",
 "x": -250.907,
 "y": 10.814,
 "z": 44.62,
@@ -12052,8 +12052,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0543",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0543",
+"proto": "Prop_CarC_Far",
 "x": -250.479,
 "y": 11.049,
 "z": 49.92,
@@ -12062,8 +12062,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0544",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0544",
+"proto": "Prop_CarG_Far",
 "x": -249.456,
 "y": 11.433,
 "z": 60.855,
@@ -12072,8 +12072,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0545",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0545",
+"proto": "Prop_CarD_Far",
 "x": -289.007,
 "y": 8.947,
 "z": 54.358,
@@ -12082,8 +12082,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0546",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0546",
+"proto": "Prop_CarC_Far",
 "x": -290.187,
 "y": 8.993,
 "z": 56.674,
@@ -12092,8 +12092,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0547",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0547",
+"proto": "Prop_CarC_Far",
 "x": -292.524,
 "y": 9.241,
 "z": 64.494,
@@ -12102,8 +12102,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0548",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0548",
+"proto": "Prop_CarF_Far",
 "x": -293.134,
 "y": 9.334,
 "z": 67.05,
@@ -12112,8 +12112,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0549",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0549",
+"proto": "Prop_CarG_Far",
 "x": -294.803,
 "y": 9.504,
 "z": 72.109,
@@ -12122,8 +12122,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0550",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0550",
+"proto": "Prop_CarH_Far",
 "x": -296.339,
 "y": 9.814,
 "z": 80.147,
@@ -12132,8 +12132,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0551",
-"proto": "Prop_CarB",
+"name": "Prop_CarB_Far.0551",
+"proto": "Prop_CarB_Far",
 "x": -297.823,
 "y": 9.998,
 "z": 85.511,
@@ -12142,8 +12142,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0552",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0552",
+"proto": "Prop_CarH_Far",
 "x": -298.48,
 "y": 10.079,
 "z": 87.947,
@@ -12152,8 +12152,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0553",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0553",
+"proto": "Prop_CarD_Far",
 "x": -299.54,
 "y": 10.149,
 "z": 90.416,
@@ -12162,8 +12162,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0554",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0554",
+"proto": "Prop_CarD_Far",
 "x": -300.35,
 "y": 10.23,
 "z": 93.037,
@@ -12172,8 +12172,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0555",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0555",
+"proto": "Prop_CarH_Far",
 "x": -301.185,
 "y": 10.306,
 "z": 95.578,
@@ -12182,8 +12182,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0556",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0556",
+"proto": "Prop_CarC_Far",
 "x": -282.259,
 "y": 8.187,
 "z": 28.998,
@@ -12192,8 +12192,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0557",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0557",
+"proto": "Prop_CarC_Far",
 "x": -276.797,
 "y": 8.305,
 "z": 26.305,
@@ -12202,8 +12202,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0558",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0558",
+"proto": "Prop_CarA_Far",
 "x": -274.408,
 "y": 8.331,
 "z": 24.516,
@@ -12212,8 +12212,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0559",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0559",
+"proto": "Prop_CarG_Far",
 "x": -272.139,
 "y": 8.375,
 "z": 23.058,
@@ -12222,8 +12222,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0560",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0560",
+"proto": "Prop_CarD_Far",
 "x": -266.975,
 "y": 8.496,
 "z": 19.944,
@@ -12232,8 +12232,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0561",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0561",
+"proto": "Prop_CarF_Far",
 "x": -261.74,
 "y": 8.659,
 "z": 17.221,
@@ -12242,8 +12242,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0562",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0562",
+"proto": "Prop_CarG_Far",
 "x": -259.294,
 "y": 8.716,
 "z": 15.543,
@@ -12252,8 +12252,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0563",
-"proto": "Prop_CarB",
+"name": "Prop_CarB_Far.0563",
+"proto": "Prop_CarB_Far",
 "x": -253.823,
 "y": 8.904,
 "z": 12.913,
@@ -12262,8 +12262,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0564",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0564",
+"proto": "Prop_CarA_Far",
 "x": -249.256,
 "y": 9.013,
 "z": 10.14,
@@ -12432,17 +12432,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0581",
-"proto": "Prop_CarF",
-"x": -178.565,
-"y": 8.059,
-"z": -27.949,
-"yaw": -75.378,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarG.0582",
+"name": "Prop_CarG.0581",
 "proto": "Prop_CarG",
 "x": -175.892,
 "y": 8.005,
@@ -12452,7 +12442,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0583",
+"name": "Prop_LampMarginal.0582",
 "proto": "Prop_LampMarginal",
 "x": -12.222,
 "y": 8.321,
@@ -12462,7 +12452,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0584",
+"name": "Prop_LampMarginal.0583",
 "proto": "Prop_LampMarginal",
 "x": 24.442,
 "y": 9.091,
@@ -12472,7 +12462,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0585",
+"name": "Prop_LampMarginal.0584",
 "proto": "Prop_LampMarginal",
 "x": 60.217,
 "y": 9.732,
@@ -12482,7 +12472,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0586",
+"name": "Prop_LampMarginal.0585",
 "proto": "Prop_LampMarginal",
 "x": 95.824,
 "y": 10.389,
@@ -12492,7 +12482,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0587",
+"name": "Prop_LampMarginal.0586",
 "proto": "Prop_LampMarginal",
 "x": 131.945,
 "y": 10.969,
@@ -12502,7 +12492,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMarginal.0588",
+"name": "Prop_LampMarginal.0587",
 "proto": "Prop_LampMarginal",
 "x": 166.156,
 "y": 11.617,
@@ -12512,7 +12502,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampAvenue.0589",
+"name": "Prop_LampAvenue.0588",
 "proto": "Prop_LampAvenue",
 "x": -111.533,
 "y": 12.551,
@@ -12522,7 +12512,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampAvenue.0590",
+"name": "Prop_LampAvenue.0589",
 "proto": "Prop_LampAvenue",
 "x": -118.897,
 "y": 13.153,
@@ -12532,7 +12522,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampSidewalk.0591",
+"name": "Prop_LampSidewalk.0590",
 "proto": "Prop_LampSidewalk",
 "x": 77.924,
 "y": 9.314,
@@ -12542,7 +12532,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampSidewalk.0592",
+"name": "Prop_LampSidewalk.0591",
 "proto": "Prop_LampSidewalk",
 "x": 108.041,
 "y": 10.225,
@@ -12552,7 +12542,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampSidewalk.0593",
+"name": "Prop_LampSidewalk.0592",
 "proto": "Prop_LampSidewalk",
 "x": 151.913,
 "y": 11.269,
@@ -12562,8 +12552,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0594",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0593",
+"proto": "Prop_CarG_Far",
 "x": 64.25,
 "y": 8.814,
 "z": -118.857,
@@ -12572,8 +12562,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0595",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0594",
+"proto": "Prop_CarA_Far",
 "x": 74.25,
 "y": 9.112,
 "z": -118.493,
@@ -12582,8 +12572,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0596",
-"proto": "Prop_CarB",
+"name": "Prop_CarB_Far.0595",
+"proto": "Prop_CarB_Far",
 "x": 86.75,
 "y": 9.541,
 "z": -118.348,
@@ -12592,8 +12582,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0597",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0596",
+"proto": "Prop_CarD_Far",
 "x": 89.25,
 "y": 9.627,
 "z": -118.415,
@@ -12602,8 +12592,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0598",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0597",
+"proto": "Prop_CarC_Far",
 "x": 91.75,
 "y": 9.714,
 "z": -118.394,
@@ -12612,8 +12602,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0599",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0598",
+"proto": "Prop_CarD_Far",
 "x": 104.25,
 "y": 10.117,
 "z": -118.613,
@@ -12622,8 +12612,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0600",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0599",
+"proto": "Prop_CarD_Far",
 "x": 106.75,
 "y": 10.192,
 "z": -118.521,
@@ -12632,8 +12622,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0601",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0600",
+"proto": "Prop_CarD_Far",
 "x": 111.75,
 "y": 10.344,
 "z": -118.511,
@@ -12642,8 +12632,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0602",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0601",
+"proto": "Prop_CarA_Far",
 "x": 114.25,
 "y": 10.419,
 "z": -118.663,
@@ -12652,8 +12642,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0603",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0602",
+"proto": "Prop_CarC_Far",
 "x": 119.25,
 "y": 10.568,
 "z": -119.034,
@@ -12662,8 +12652,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0604",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0603",
+"proto": "Prop_CarH_Far",
 "x": 121.75,
 "y": 10.643,
 "z": -118.893,
@@ -12672,8 +12662,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0605",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0604",
+"proto": "Prop_CarA_Far",
 "x": 131.75,
 "y": 10.937,
 "z": -119.133,
@@ -12682,8 +12672,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0606",
-"proto": "Prop_CarB",
+"name": "Prop_CarB_Far.0605",
+"proto": "Prop_CarB_Far",
 "x": 139.25,
 "y": 11.122,
 "z": -119.447,
@@ -12692,8 +12682,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0607",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0606",
+"proto": "Prop_CarC_Far",
 "x": 146.75,
 "y": 11.252,
 "z": -119.784,
@@ -12702,8 +12692,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0608",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0607",
+"proto": "Prop_CarH_Far",
 "x": 149.25,
 "y": 11.284,
 "z": -119.817,
@@ -12712,8 +12702,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0609",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0608",
+"proto": "Prop_CarD_Far",
 "x": 159.25,
 "y": 11.348,
 "z": -120.029,
@@ -12722,7 +12712,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0610",
+"name": "Prop_CarE.0609",
 "proto": "Prop_CarE",
 "x": -278.299,
 "y": 5.917,
@@ -12732,7 +12722,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0611",
+"name": "Prop_CarF.0610",
 "proto": "Prop_CarF",
 "x": -276.489,
 "y": 5.946,
@@ -12742,7 +12732,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0612",
+"name": "Prop_CarG.0611",
 "proto": "Prop_CarG",
 "x": -274.769,
 "y": 5.969,
@@ -12752,7 +12742,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0613",
+"name": "Prop_CarH.0612",
 "proto": "Prop_CarH",
 "x": -273.051,
 "y": 5.972,
@@ -12762,7 +12752,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0614",
+"name": "Prop_CarD.0613",
 "proto": "Prop_CarD",
 "x": -271.456,
 "y": 5.962,
@@ -12772,7 +12762,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0615",
+"name": "Prop_CarC.0614",
 "proto": "Prop_CarC",
 "x": -269.627,
 "y": 5.976,
@@ -12782,7 +12772,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0616",
+"name": "Prop_CarC.0615",
 "proto": "Prop_CarC",
 "x": -267.915,
 "y": 5.989,
@@ -12792,7 +12782,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0617",
+"name": "Prop_CarE.0616",
 "proto": "Prop_CarE",
 "x": -262.401,
 "y": 6.136,
@@ -12802,7 +12792,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0618",
+"name": "Prop_CarF.0617",
 "proto": "Prop_CarF",
 "x": -260.387,
 "y": 6.186,
@@ -12812,7 +12802,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0619",
+"name": "Prop_CarH.0618",
 "proto": "Prop_CarH",
 "x": -258.941,
 "y": 6.154,
@@ -12822,8 +12812,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0620",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0619",
+"proto": "Prop_CarC_Far",
 "x": -299.067,
 "y": 5.832,
 "z": 1.04,
@@ -12832,8 +12822,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0621",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0620",
+"proto": "Prop_CarD_Far",
 "x": -294.569,
 "y": 5.935,
 "z": -1.192,
@@ -12842,8 +12832,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0622",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0621",
+"proto": "Prop_CarD_Far",
 "x": -290.176,
 "y": 6.038,
 "z": -3.509,
@@ -12852,8 +12842,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0623",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0622",
+"proto": "Prop_CarD_Far",
 "x": -288.104,
 "y": 6.085,
 "z": -4.807,
@@ -12862,8 +12852,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0624",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0623",
+"proto": "Prop_CarF_Far",
 "x": -285.897,
 "y": 6.138,
 "z": -6.165,
@@ -12872,8 +12862,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0625",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0624",
+"proto": "Prop_CarA_Far",
 "x": -283.681,
 "y": 6.215,
 "z": -7.131,
@@ -12882,8 +12872,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0626",
-"proto": "Prop_CarB",
+"name": "Prop_CarB_Far.0625",
+"proto": "Prop_CarB_Far",
 "x": -281.397,
 "y": 6.286,
 "z": -8.344,
@@ -12892,8 +12882,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0627",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0626",
+"proto": "Prop_CarD_Far",
 "x": -279.272,
 "y": 6.355,
 "z": -9.445,
@@ -12902,8 +12892,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0628",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0627",
+"proto": "Prop_CarG_Far",
 "x": -277.028,
 "y": 6.434,
 "z": -10.499,
@@ -12912,7 +12902,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0629",
+"name": "Prop_CarA.0628",
 "proto": "Prop_CarA",
 "x": -274.805,
 "y": 6.503,
@@ -12922,7 +12912,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0630",
+"name": "Prop_CarF.0629",
 "proto": "Prop_CarF",
 "x": -272.665,
 "y": 6.569,
@@ -12932,7 +12922,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0631",
+"name": "Prop_CarC.0630",
 "proto": "Prop_CarC",
 "x": -270.412,
 "y": 6.654,
@@ -12942,7 +12932,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0632",
+"name": "Prop_CarC.0631",
 "proto": "Prop_CarC",
 "x": -175.898,
 "y": 4.125,
@@ -12952,7 +12942,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0633",
+"name": "Prop_CarF.0632",
 "proto": "Prop_CarF",
 "x": -173.339,
 "y": 4.046,
@@ -12962,7 +12952,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0634",
+"name": "Prop_CarD.0633",
 "proto": "Prop_CarD",
 "x": -171.664,
 "y": 3.991,
@@ -12972,7 +12962,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0635",
+"name": "Prop_CarD.0634",
 "proto": "Prop_CarD",
 "x": -169.924,
 "y": 3.935,
@@ -12982,7 +12972,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0636",
+"name": "Prop_CarC.0635",
 "proto": "Prop_CarC",
 "x": -167.576,
 "y": 3.841,
@@ -12992,7 +12982,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0637",
+"name": "Prop_CarE.0636",
 "proto": "Prop_CarE",
 "x": -165.959,
 "y": 3.767,
@@ -13002,7 +12992,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0638",
+"name": "Prop_CarE.0637",
 "proto": "Prop_CarE",
 "x": -164.257,
 "y": 3.715,
@@ -13012,7 +13002,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0639",
+"name": "Prop_CarF.0638",
 "proto": "Prop_CarF",
 "x": -160.093,
 "y": 3.563,
@@ -13022,7 +13012,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0640",
+"name": "Prop_CarA.0639",
 "proto": "Prop_CarA",
 "x": -158.212,
 "y": 3.519,
@@ -13032,7 +13022,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0641",
+"name": "Prop_CarG.0640",
 "proto": "Prop_CarG",
 "x": -156.397,
 "y": 3.453,
@@ -13042,7 +13032,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0642",
+"name": "Prop_CarG.0641",
 "proto": "Prop_CarG",
 "x": -151.991,
 "y": 3.298,
@@ -13052,7 +13042,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0643",
+"name": "Prop_CarD.0642",
 "proto": "Prop_CarD",
 "x": -150.186,
 "y": 3.258,
@@ -13062,7 +13052,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0644",
+"name": "Prop_CarG.0643",
 "proto": "Prop_CarG",
 "x": -147.986,
 "y": 3.238,
@@ -13072,7 +13062,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0645",
+"name": "Prop_CarB.0644",
 "proto": "Prop_CarB",
 "x": -237.378,
 "y": 5.067,
@@ -13082,7 +13072,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0646",
+"name": "Prop_CarB.0645",
 "proto": "Prop_CarB",
 "x": -235.473,
 "y": 4.954,
@@ -13092,7 +13082,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0647",
+"name": "Prop_CarB.0646",
 "proto": "Prop_CarB",
 "x": -233.402,
 "y": 4.917,
@@ -13102,7 +13092,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0648",
+"name": "Prop_CarA.0647",
 "proto": "Prop_CarA",
 "x": -231.693,
 "y": 4.779,
@@ -13112,7 +13102,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0649",
+"name": "Prop_CarH.0648",
 "proto": "Prop_CarH",
 "x": -229.652,
 "y": 4.713,
@@ -13122,7 +13112,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0650",
+"name": "Prop_CarE.0649",
 "proto": "Prop_CarE",
 "x": -227.586,
 "y": 4.717,
@@ -13132,7 +13122,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0651",
+"name": "Prop_CarD.0650",
 "proto": "Prop_CarD",
 "x": -225.648,
 "y": 4.658,
@@ -13142,7 +13132,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0652",
+"name": "Prop_CarH.0651",
 "proto": "Prop_CarH",
 "x": -223.605,
 "y": 4.661,
@@ -13152,7 +13142,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0653",
+"name": "Prop_CarG.0652",
 "proto": "Prop_CarG",
 "x": -221.706,
 "y": 4.607,
@@ -13162,7 +13152,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0654",
+"name": "Prop_CarE.0653",
 "proto": "Prop_CarE",
 "x": -219.689,
 "y": 4.601,
@@ -13172,7 +13162,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0655",
+"name": "Prop_CarF.0654",
 "proto": "Prop_CarF",
 "x": -217.77,
 "y": 4.592,
@@ -13182,7 +13172,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0656",
+"name": "Prop_CarG.0655",
 "proto": "Prop_CarG",
 "x": -237.846,
 "y": 3.895,
@@ -13192,7 +13182,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0657",
+"name": "Prop_CarG.0656",
 "proto": "Prop_CarG",
 "x": -235.468,
 "y": 3.899,
@@ -13202,7 +13192,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0658",
+"name": "Prop_CarC.0657",
 "proto": "Prop_CarC",
 "x": -232.961,
 "y": 3.873,
@@ -13212,7 +13202,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0659",
+"name": "Prop_CarG.0658",
 "proto": "Prop_CarG",
 "x": -230.584,
 "y": 3.871,
@@ -13222,7 +13212,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0660",
+"name": "Prop_CarC.0659",
 "proto": "Prop_CarC",
 "x": -228.218,
 "y": 3.879,
@@ -13232,7 +13222,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0661",
+"name": "Prop_CarA.0660",
 "proto": "Prop_CarA",
 "x": -225.689,
 "y": 3.88,
@@ -13242,7 +13232,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0662",
+"name": "Prop_CarG.0661",
 "proto": "Prop_CarG",
 "x": -223.259,
 "y": 3.898,
@@ -13252,7 +13242,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0663",
+"name": "Prop_CarE.0662",
 "proto": "Prop_CarE",
 "x": -220.884,
 "y": 3.943,
@@ -13262,7 +13252,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0664",
+"name": "Prop_CarA.0663",
 "proto": "Prop_CarA",
 "x": -218.341,
 "y": 3.941,
@@ -13272,7 +13262,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0665",
+"name": "Prop_CarG.0664",
 "proto": "Prop_CarG",
 "x": -216.027,
 "y": 4.127,
@@ -13282,7 +13272,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0666",
+"name": "Prop_CarA.0665",
 "proto": "Prop_CarA",
 "x": -213.43,
 "y": 4.283,
@@ -13292,7 +13282,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0667",
+"name": "Prop_CarA.0666",
 "proto": "Prop_CarA",
 "x": -211.016,
 "y": 4.424,
@@ -13302,7 +13292,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0668",
+"name": "Prop_CarC.0667",
 "proto": "Prop_CarC",
 "x": -208.614,
 "y": 4.515,
@@ -13312,18 +13302,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0669",
-"proto": "Prop_CarD",
-"x": -206.331,
-"y": 4.538,
-"z": -83.289,
-"yaw": 103.854,
-"roll": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_CarA.0670",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0668",
+"proto": "Prop_CarA_Far",
 "x": -352.228,
 "y": 4.632,
 "z": 15.511,
@@ -13332,8 +13312,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0671",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0669",
+"proto": "Prop_CarA_Far",
 "x": -354.497,
 "y": 4.588,
 "z": 16.455,
@@ -13342,8 +13322,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0672",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0670",
+"proto": "Prop_CarA_Far",
 "x": -361.173,
 "y": 4.48,
 "z": 19.948,
@@ -13352,8 +13332,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0673",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0671",
+"proto": "Prop_CarA_Far",
 "x": -363.285,
 "y": 4.465,
 "z": 21.394,
@@ -13362,8 +13342,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0674",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0672",
+"proto": "Prop_CarG_Far",
 "x": -365.484,
 "y": 4.402,
 "z": 22.185,
@@ -13372,8 +13352,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0675",
-"proto": "Prop_CarB",
+"name": "Prop_CarB_Far.0673",
+"proto": "Prop_CarB_Far",
 "x": -370.062,
 "y": 4.289,
 "z": 24.434,
@@ -13382,8 +13362,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0676",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0674",
+"proto": "Prop_CarH_Far",
 "x": -372.359,
 "y": 4.231,
 "z": 25.584,
@@ -13392,8 +13372,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0677",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0675",
+"proto": "Prop_CarH_Far",
 "x": -374.4,
 "y": 4.176,
 "z": 26.917,
@@ -13402,8 +13382,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0678",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0676",
+"proto": "Prop_CarA_Far",
 "x": -376.705,
 "y": 4.094,
 "z": 27.976,
@@ -13412,8 +13392,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0679",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0677",
+"proto": "Prop_CarH_Far",
 "x": -378.928,
 "y": 4.016,
 "z": 29.053,
@@ -13422,8 +13402,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0680",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0678",
+"proto": "Prop_CarG_Far",
 "x": -381.161,
 "y": 3.956,
 "z": 30.389,
@@ -13432,8 +13412,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0681",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0679",
+"proto": "Prop_CarF_Far",
 "x": -383.315,
 "y": 3.892,
 "z": 31.516,
@@ -13442,8 +13422,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0682",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0680",
+"proto": "Prop_CarA_Far",
 "x": -366.748,
 "y": 4.027,
 "z": 14.648,
@@ -13452,8 +13432,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0683",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0681",
+"proto": "Prop_CarA_Far",
 "x": -368.901,
 "y": 3.986,
 "z": 15.823,
@@ -13462,8 +13442,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0684",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0682",
+"proto": "Prop_CarA_Far",
 "x": -373.414,
 "y": 3.886,
 "z": 17.825,
@@ -13472,8 +13452,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0685",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0683",
+"proto": "Prop_CarG_Far",
 "x": -375.619,
 "y": 3.834,
 "z": 18.932,
@@ -13482,8 +13462,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0686",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0684",
+"proto": "Prop_CarC_Far",
 "x": -377.795,
 "y": 3.789,
 "z": 20.213,
@@ -13492,8 +13472,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0687",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0685",
+"proto": "Prop_CarG_Far",
 "x": -380.122,
 "y": 3.721,
 "z": 21.128,
@@ -13502,7 +13482,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0688",
+"name": "Prop_TimberBollard.0686",
 "proto": "Prop_TimberBollard",
 "x": -221.218,
 "y": 6.23,
@@ -13512,7 +13492,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0689",
+"name": "Prop_TimberBollard.0687",
 "proto": "Prop_TimberBollard",
 "x": -219.256,
 "y": 6.159,
@@ -13522,7 +13502,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0690",
+"name": "Prop_TimberBollard.0688",
 "proto": "Prop_TimberBollard",
 "x": -217.294,
 "y": 6.074,
@@ -13532,7 +13512,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0691",
+"name": "Prop_TimberBollard.0689",
 "proto": "Prop_TimberBollard",
 "x": -215.332,
 "y": 5.963,
@@ -13542,7 +13522,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0692",
+"name": "Prop_TimberBollard.0690",
 "proto": "Prop_TimberBollard",
 "x": -213.37,
 "y": 5.816,
@@ -13552,7 +13532,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0693",
+"name": "Prop_TimberBollard.0691",
 "proto": "Prop_TimberBollard",
 "x": -211.407,
 "y": 5.688,
@@ -13562,7 +13542,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0694",
+"name": "Prop_TimberBollard.0692",
 "proto": "Prop_TimberBollard",
 "x": -209.445,
 "y": 5.687,
@@ -13572,7 +13552,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0695",
+"name": "Prop_TimberBollard.0693",
 "proto": "Prop_TimberBollard",
 "x": -207.483,
 "y": 5.67,
@@ -13582,7 +13562,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0696",
+"name": "Prop_TimberBollard.0694",
 "proto": "Prop_TimberBollard",
 "x": -205.521,
 "y": 5.625,
@@ -13592,7 +13572,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0697",
+"name": "Prop_TimberBollard.0695",
 "proto": "Prop_TimberBollard",
 "x": -203.559,
 "y": 5.622,
@@ -13602,7 +13582,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0698",
+"name": "Prop_TimberBollard.0696",
 "proto": "Prop_TimberBollard",
 "x": -201.596,
 "y": 5.613,
@@ -13612,7 +13592,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0699",
+"name": "Prop_TimberBollard.0697",
 "proto": "Prop_TimberBollard",
 "x": -199.634,
 "y": 5.572,
@@ -13622,7 +13602,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0700",
+"name": "Prop_TimberBollard.0698",
 "proto": "Prop_TimberBollard",
 "x": -197.672,
 "y": 5.572,
@@ -13632,7 +13612,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0701",
+"name": "Prop_TimberBollard.0699",
 "proto": "Prop_TimberBollard",
 "x": -198.064,
 "y": 4.815,
@@ -13642,7 +13622,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0702",
+"name": "Prop_TimberBollard.0700",
 "proto": "Prop_TimberBollard",
 "x": -196.102,
 "y": 4.788,
@@ -13652,7 +13632,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0703",
+"name": "Prop_TimberBollard.0701",
 "proto": "Prop_TimberBollard",
 "x": -194.14,
 "y": 4.758,
@@ -13662,7 +13642,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0704",
+"name": "Prop_TimberBollard.0702",
 "proto": "Prop_TimberBollard",
 "x": -192.178,
 "y": 4.725,
@@ -13672,7 +13652,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0705",
+"name": "Prop_TimberBollard.0703",
 "proto": "Prop_TimberBollard",
 "x": -190.216,
 "y": 4.705,
@@ -13682,7 +13662,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0706",
+"name": "Prop_TimberBollard.0704",
 "proto": "Prop_TimberBollard",
 "x": -188.253,
 "y": 4.681,
@@ -13692,7 +13672,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0707",
+"name": "Prop_TimberBollard.0705",
 "proto": "Prop_TimberBollard",
 "x": -186.291,
 "y": 4.645,
@@ -13702,7 +13682,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0708",
+"name": "Prop_TimberBollard.0706",
 "proto": "Prop_TimberBollard",
 "x": -184.329,
 "y": 4.61,
@@ -13712,7 +13692,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0709",
+"name": "Prop_TimberBollard.0707",
 "proto": "Prop_TimberBollard",
 "x": -182.367,
 "y": 4.586,
@@ -13722,7 +13702,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0710",
+"name": "Prop_TimberBollard.0708",
 "proto": "Prop_TimberBollard",
 "x": -180.405,
 "y": 4.538,
@@ -13732,7 +13712,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0711",
+"name": "Prop_TimberBollard.0709",
 "proto": "Prop_TimberBollard",
 "x": -178.442,
 "y": 4.499,
@@ -13742,7 +13722,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0712",
+"name": "Prop_TimberBollard.0710",
 "proto": "Prop_TimberBollard",
 "x": -176.48,
 "y": 4.476,
@@ -13752,7 +13732,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0713",
+"name": "Prop_TimberBollard.0711",
 "proto": "Prop_TimberBollard",
 "x": -174.518,
 "y": 4.422,
@@ -13762,7 +13742,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0714",
+"name": "Prop_TimberBollard.0712",
 "proto": "Prop_TimberBollard",
 "x": -172.556,
 "y": 4.377,
@@ -13772,7 +13752,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0715",
+"name": "Prop_TimberBollard.0713",
 "proto": "Prop_TimberBollard",
 "x": -170.593,
 "y": 4.328,
@@ -13782,7 +13762,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0716",
+"name": "Prop_TimberBollard.0714",
 "proto": "Prop_TimberBollard",
 "x": -168.631,
 "y": 4.256,
@@ -13792,7 +13772,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0717",
+"name": "Prop_TimberBollard.0715",
 "proto": "Prop_TimberBollard",
 "x": -166.669,
 "y": 4.201,
@@ -13802,7 +13782,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0718",
+"name": "Prop_TimberBollard.0716",
 "proto": "Prop_TimberBollard",
 "x": -164.707,
 "y": 4.138,
@@ -13812,7 +13792,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0719",
+"name": "Prop_TimberBollard.0717",
 "proto": "Prop_TimberBollard",
 "x": -162.745,
 "y": 4.06,
@@ -13822,7 +13802,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0720",
+"name": "Prop_TimberBollard.0718",
 "proto": "Prop_TimberBollard",
 "x": -160.782,
 "y": 4.004,
@@ -13832,7 +13812,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0721",
+"name": "Prop_TimberBollard.0719",
 "proto": "Prop_TimberBollard",
 "x": -158.82,
 "y": 3.94,
@@ -13842,7 +13822,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0722",
+"name": "Prop_TimberBollard.0720",
 "proto": "Prop_TimberBollard",
 "x": -156.858,
 "y": 3.867,
@@ -13852,7 +13832,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0723",
+"name": "Prop_TimberBollard.0721",
 "proto": "Prop_TimberBollard",
 "x": -154.896,
 "y": 3.807,
@@ -13862,7 +13842,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0724",
+"name": "Prop_TimberBollard.0722",
 "proto": "Prop_TimberBollard",
 "x": -152.934,
 "y": 3.746,
@@ -13872,7 +13852,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0725",
+"name": "Prop_TimberBollard.0723",
 "proto": "Prop_TimberBollard",
 "x": -150.971,
 "y": 3.678,
@@ -13882,7 +13862,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0726",
+"name": "Prop_TimberBollard.0724",
 "proto": "Prop_TimberBollard",
 "x": -149.009,
 "y": 3.611,
@@ -13892,7 +13872,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0727",
+"name": "Prop_TimberBollard.0725",
 "proto": "Prop_TimberBollard",
 "x": -147.047,
 "y": 3.57,
@@ -13902,7 +13882,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0728",
+"name": "Prop_TimberBollard.0726",
 "proto": "Prop_TimberBollard",
 "x": -145.085,
 "y": 3.535,
@@ -13912,7 +13892,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0729",
+"name": "Prop_TimberBollard.0727",
 "proto": "Prop_TimberBollard",
 "x": -214.877,
 "y": 4.707,
@@ -13922,7 +13902,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0730",
+"name": "Prop_TimberBollard.0728",
 "proto": "Prop_TimberBollard",
 "x": -212.758,
 "y": 4.667,
@@ -13932,7 +13912,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0731",
+"name": "Prop_TimberBollard.0729",
 "proto": "Prop_TimberBollard",
 "x": -210.639,
 "y": 4.644,
@@ -13942,7 +13922,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0732",
+"name": "Prop_TimberBollard.0730",
 "proto": "Prop_TimberBollard",
 "x": -208.52,
 "y": 4.607,
@@ -13952,7 +13932,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0733",
+"name": "Prop_TimberBollard.0731",
 "proto": "Prop_TimberBollard",
 "x": -206.401,
 "y": 4.567,
@@ -13962,7 +13942,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0734",
+"name": "Prop_TimberBollard.0732",
 "proto": "Prop_TimberBollard",
 "x": -204.281,
 "y": 4.536,
@@ -13972,7 +13952,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0735",
+"name": "Prop_TimberBollard.0733",
 "proto": "Prop_TimberBollard",
 "x": -202.162,
 "y": 4.481,
@@ -13982,7 +13962,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0736",
+"name": "Prop_TimberBollard.0734",
 "proto": "Prop_TimberBollard",
 "x": -200.043,
 "y": 4.435,
@@ -13992,7 +13972,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0737",
+"name": "Prop_TimberBollard.0735",
 "proto": "Prop_TimberBollard",
 "x": -197.924,
 "y": 4.372,
@@ -14002,7 +13982,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0738",
+"name": "Prop_TimberBollard.0736",
 "proto": "Prop_TimberBollard",
 "x": -195.805,
 "y": 4.308,
@@ -14012,7 +13992,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0739",
+"name": "Prop_TimberBollard.0737",
 "proto": "Prop_TimberBollard",
 "x": -193.686,
 "y": 4.232,
@@ -14022,7 +14002,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberBollard.0740",
+"name": "Prop_TimberBollard.0738",
 "proto": "Prop_TimberBollard",
 "x": -191.566,
 "y": 4.156,
@@ -14032,7 +14012,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardWhite.0741",
+"name": "Prop_BollardWhite.0739",
 "proto": "Prop_BollardWhite",
 "x": -260.295,
 "y": 7.308,
@@ -14042,7 +14022,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardWhite.0742",
+"name": "Prop_BollardWhite.0740",
 "proto": "Prop_BollardWhite",
 "x": -261.623,
 "y": 7.122,
@@ -14052,7 +14032,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardWhite.0743",
+"name": "Prop_BollardWhite.0741",
 "proto": "Prop_BollardWhite",
 "x": -264.319,
 "y": 6.919,
@@ -14062,7 +14042,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardWhite.0744",
+"name": "Prop_BollardWhite.0742",
 "proto": "Prop_BollardWhite",
 "x": -266.485,
 "y": 6.864,
@@ -14072,7 +14052,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0745",
+"name": "Prop_BollardStone.0743",
 "proto": "Prop_BollardStone",
 "x": -132.132,
 "y": 2.673,
@@ -14082,7 +14062,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0746",
+"name": "Prop_BollardStone.0744",
 "proto": "Prop_BollardStone",
 "x": -130.028,
 "y": 2.651,
@@ -14092,7 +14072,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0747",
+"name": "Prop_BollardStone.0745",
 "proto": "Prop_BollardStone",
 "x": -128.125,
 "y": 2.632,
@@ -14102,7 +14082,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0748",
+"name": "Prop_BollardStone.0746",
 "proto": "Prop_BollardStone",
 "x": -126.325,
 "y": 2.582,
@@ -14112,7 +14092,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0749",
+"name": "Prop_BollardStone.0747",
 "proto": "Prop_BollardStone",
 "x": -124.65,
 "y": 2.527,
@@ -14122,7 +14102,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0750",
+"name": "Prop_BollardStone.0748",
 "proto": "Prop_BollardStone",
 "x": -123.057,
 "y": 2.492,
@@ -14132,7 +14112,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0751",
+"name": "Prop_BollardStone.0749",
 "proto": "Prop_BollardStone",
 "x": -120.034,
 "y": 2.408,
@@ -14142,7 +14122,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0752",
+"name": "Prop_BollardStone.0750",
 "proto": "Prop_BollardStone",
 "x": -118.446,
 "y": 2.36,
@@ -14152,7 +14132,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0753",
+"name": "Prop_BollardStone.0751",
 "proto": "Prop_BollardStone",
 "x": -114.394,
 "y": 2.276,
@@ -14162,7 +14142,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0754",
+"name": "Prop_BollardStone.0752",
 "proto": "Prop_BollardStone",
 "x": -111.73,
 "y": 2.285,
@@ -14172,7 +14152,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0755",
+"name": "Prop_BollardStone.0753",
 "proto": "Prop_BollardStone",
 "x": -106.147,
 "y": 2.392,
@@ -14182,7 +14162,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0756",
+"name": "Prop_BollardStone.0754",
 "proto": "Prop_BollardStone",
 "x": -103.359,
 "y": 2.472,
@@ -14192,7 +14172,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0757",
+"name": "Prop_BollardStone.0755",
 "proto": "Prop_BollardStone",
 "x": -95.108,
 "y": 2.722,
@@ -14202,7 +14182,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0758",
+"name": "Prop_BollardStone.0756",
 "proto": "Prop_BollardStone",
 "x": -65.163,
 "y": 4.28,
@@ -14212,7 +14192,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0759",
+"name": "Prop_BollardStone.0757",
 "proto": "Prop_BollardStone",
 "x": -58.494,
 "y": 4.661,
@@ -14222,7 +14202,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0760",
+"name": "Prop_BollardStone.0758",
 "proto": "Prop_BollardStone",
 "x": -55.764,
 "y": 4.753,
@@ -14232,7 +14212,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0761",
+"name": "Prop_BollardStone.0759",
 "proto": "Prop_BollardStone",
 "x": -52.927,
 "y": 4.854,
@@ -14242,7 +14222,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0762",
+"name": "Prop_BollardStone.0760",
 "proto": "Prop_BollardStone",
 "x": -50.221,
 "y": 4.943,
@@ -14252,7 +14232,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0763",
+"name": "Prop_BollardStone.0761",
 "proto": "Prop_BollardStone",
 "x": -47.405,
 "y": 5.022,
@@ -14262,7 +14242,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0764",
+"name": "Prop_BollardStone.0762",
 "proto": "Prop_BollardStone",
 "x": -44.641,
 "y": 5.103,
@@ -14272,7 +14252,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0765",
+"name": "Prop_BollardStone.0763",
 "proto": "Prop_BollardStone",
 "x": -41.805,
 "y": 5.197,
@@ -14282,7 +14262,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0766",
+"name": "Prop_BollardStone.0764",
 "proto": "Prop_BollardStone",
 "x": -38.903,
 "y": 5.293,
@@ -14292,7 +14272,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0767",
+"name": "Prop_BollardStone.0765",
 "proto": "Prop_BollardStone",
 "x": -36.071,
 "y": 5.392,
@@ -14302,7 +14282,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0768",
+"name": "Prop_BollardStone.0766",
 "proto": "Prop_BollardStone",
 "x": -30.513,
 "y": 5.593,
@@ -14312,7 +14292,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0769",
+"name": "Prop_BollardStone.0767",
 "proto": "Prop_BollardStone",
 "x": -27.723,
 "y": 5.653,
@@ -14322,7 +14302,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0770",
+"name": "Prop_BollardStone.0768",
 "proto": "Prop_BollardStone",
 "x": -24.923,
 "y": 5.645,
@@ -14332,7 +14312,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0771",
+"name": "Prop_BollardStone.0769",
 "proto": "Prop_BollardStone",
 "x": -151.161,
 "y": 2.778,
@@ -14342,7 +14322,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0772",
+"name": "Prop_BollardStone.0770",
 "proto": "Prop_BollardStone",
 "x": -148.961,
 "y": 2.788,
@@ -14352,7 +14332,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0773",
+"name": "Prop_BollardStone.0771",
 "proto": "Prop_BollardStone",
 "x": -146.784,
 "y": 2.753,
@@ -14362,7 +14342,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0774",
+"name": "Prop_BollardStone.0772",
 "proto": "Prop_BollardStone",
 "x": -144.639,
 "y": 2.681,
@@ -14372,7 +14352,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0775",
+"name": "Prop_BollardStone.0773",
 "proto": "Prop_BollardStone",
 "x": -142.571,
 "y": 2.651,
@@ -14382,7 +14362,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0776",
+"name": "Prop_BollardStone.0774",
 "proto": "Prop_BollardStone",
 "x": -140.527,
 "y": 2.62,
@@ -14392,7 +14372,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0777",
+"name": "Prop_BollardStone.0775",
 "proto": "Prop_BollardStone",
 "x": -138.571,
 "y": 2.588,
@@ -14402,7 +14382,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0778",
+"name": "Prop_BollardStone.0776",
 "proto": "Prop_BollardStone",
 "x": -136.798,
 "y": 2.55,
@@ -14412,7 +14392,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BollardStone.0779",
+"name": "Prop_BollardStone.0777",
 "proto": "Prop_BollardStone",
 "x": -135.127,
 "y": 2.513,
@@ -14422,7 +14402,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FloodMast.0780",
+"name": "Prop_FloodMast.0778",
 "proto": "Prop_FloodMast",
 "x": -135.363,
 "y": 2.749,
@@ -14432,7 +14412,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FloodMast.0781",
+"name": "Prop_FloodMast.0779",
 "proto": "Prop_FloodMast",
 "x": -109.536,
 "y": 2.331,
@@ -14442,7 +14422,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FloodMast.0782",
+"name": "Prop_FloodMast.0780",
 "proto": "Prop_FloodMast",
 "x": -70.316,
 "y": 3.641,
@@ -14452,7 +14432,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FloodMast.0783",
+"name": "Prop_FloodMast.0781",
 "proto": "Prop_FloodMast",
 "x": -32.841,
 "y": 5.511,
@@ -14462,7 +14442,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FitnessTwist.0784",
+"name": "Prop_FitnessTwist.0782",
 "proto": "Prop_FitnessTwist",
 "x": -149.239,
 "y": 2.564,
@@ -14472,7 +14452,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FitnessBars.0785",
+"name": "Prop_FitnessBars.0783",
 "proto": "Prop_FitnessBars",
 "x": -147.761,
 "y": 2.665,
@@ -14482,7 +14462,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FitnessBars.0786",
+"name": "Prop_FitnessBars.0784",
 "proto": "Prop_FitnessBars",
 "x": -116.633,
 "y": 2.33,
@@ -14492,7 +14472,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FitnessWheel.0787",
+"name": "Prop_FitnessWheel.0785",
 "proto": "Prop_FitnessWheel",
 "x": -114.367,
 "y": 2.315,
@@ -14502,7 +14482,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0788",
+"name": "Prop_CarB.0786",
 "proto": "Prop_CarB",
 "x": -124.0,
 "y": 4.462,
@@ -14512,7 +14492,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0789",
+"name": "Prop_CarA.0787",
 "proto": "Prop_CarA",
 "x": -118.0,
 "y": 4.496,
@@ -14522,8 +14502,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0790",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0788",
+"proto": "Prop_CarH_Far",
 "x": -112.0,
 "y": 4.527,
 "z": -113.4,
@@ -14532,8 +14512,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0791",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0789",
+"proto": "Prop_CarD_Far",
 "x": -106.0,
 "y": 4.562,
 "z": -113.9,
@@ -14542,8 +14522,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0792",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0790",
+"proto": "Prop_CarG_Far",
 "x": -91.8,
 "y": 4.666,
 "z": -115.2,
@@ -14552,8 +14532,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0793",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0791",
+"proto": "Prop_CarC_Far",
 "x": -85.0,
 "y": 4.71,
 "z": -115.8,
@@ -14562,7 +14542,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0794",
+"name": "Prop_CarA.0792",
 "proto": "Prop_CarA",
 "x": -88.8,
 "y": 4.686,
@@ -14572,7 +14552,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0795",
+"name": "Prop_CarF.0793",
 "proto": "Prop_CarF",
 "x": -77.0,
 "y": 4.762,
@@ -14582,7 +14562,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0796",
+"name": "Prop_CarG.0794",
 "proto": "Prop_CarG",
 "x": -70.0,
 "y": 4.313,
@@ -14592,7 +14572,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0797",
+"name": "Prop_CarC.0795",
 "proto": "Prop_CarC",
 "x": -9.2,
 "y": 4.93,
@@ -14602,7 +14582,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0798",
+"name": "Prop_CarA.0796",
 "proto": "Prop_CarA",
 "x": -7.4,
 "y": 5.293,
@@ -14612,7 +14592,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0799",
+"name": "Prop_CarH.0797",
 "proto": "Prop_CarH",
 "x": -6.0,
 "y": 5.812,
@@ -14622,7 +14602,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0800",
+"name": "Prop_CarB.0798",
 "proto": "Prop_CarB",
 "x": -5.4,
 "y": 5.772,
@@ -14632,7 +14612,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0801",
+"name": "Prop_CarD.0799",
 "proto": "Prop_CarD",
 "x": -6.4,
 "y": 5.693,
@@ -14642,7 +14622,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0802",
+"name": "Prop_CarG.0800",
 "proto": "Prop_CarG",
 "x": -6.4,
 "y": 5.632,
@@ -14652,7 +14632,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0803",
+"name": "Prop_CarA.0801",
 "proto": "Prop_CarA",
 "x": -6.4,
 "y": 5.505,
@@ -14662,8 +14642,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE.0804",
-"proto": "Prop_CarE",
+"name": "Prop_CarE_Far.0802",
+"proto": "Prop_CarE_Far",
 "x": -6.4,
 "y": 5.433,
 "z": -154.5,
@@ -14672,8 +14652,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0805",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0803",
+"proto": "Prop_CarF_Far",
 "x": -6.4,
 "y": 5.293,
 "z": -159.9,
@@ -14682,8 +14662,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0806",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0804",
+"proto": "Prop_CarC_Far",
 "x": -6.4,
 "y": 5.222,
 "z": -162.6,
@@ -14692,8 +14672,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0807",
-"proto": "Prop_CarB",
+"name": "Prop_CarB_Far.0805",
+"proto": "Prop_CarB_Far",
 "x": -6.4,
 "y": 5.15,
 "z": -165.3,
@@ -14702,8 +14682,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0808",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0806",
+"proto": "Prop_CarH_Far",
 "x": -6.4,
 "y": 4.995,
 "z": -170.7,
@@ -14712,8 +14692,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0809",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0807",
+"proto": "Prop_CarA_Far",
 "x": -6.4,
 "y": 4.914,
 "z": -173.4,
@@ -14722,8 +14702,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0810",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0808",
+"proto": "Prop_CarD_Far",
 "x": -6.4,
 "y": 4.759,
 "z": -178.8,
@@ -14732,8 +14712,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0811",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0809",
+"proto": "Prop_CarA_Far",
 "x": 52.8,
 "y": 8.419,
 "z": -119.7,
@@ -14742,8 +14722,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0812",
-"proto": "Prop_CarD",
+"name": "Prop_CarD_Far.0810",
+"proto": "Prop_CarD_Far",
 "x": 55.5,
 "y": 8.489,
 "z": -119.7,
@@ -14752,8 +14732,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0813",
-"proto": "Prop_CarG",
+"name": "Prop_CarG_Far.0811",
+"proto": "Prop_CarG_Far",
 "x": 61.0,
 "y": 8.631,
 "z": -119.7,
@@ -14762,8 +14742,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0814",
-"proto": "Prop_CarH",
+"name": "Prop_CarH_Far.0812",
+"proto": "Prop_CarH_Far",
 "x": 66.4,
 "y": 8.775,
 "z": -119.7,
@@ -14772,8 +14752,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0815",
-"proto": "Prop_CarC",
+"name": "Prop_CarC_Far.0813",
+"proto": "Prop_CarC_Far",
 "x": 69.1,
 "y": 8.851,
 "z": -119.7,
@@ -14782,8 +14762,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0816",
-"proto": "Prop_CarA",
+"name": "Prop_CarA_Far.0814",
+"proto": "Prop_CarA_Far",
 "x": 71.8,
 "y": 8.931,
 "z": -119.7,
@@ -14792,8 +14772,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0817",
-"proto": "Prop_CarF",
+"name": "Prop_CarF_Far.0815",
+"proto": "Prop_CarF_Far",
 "x": 82.8,
 "y": 9.296,
 "z": -119.7,
@@ -14802,7 +14782,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberPost.0818",
+"name": "Prop_TimberPost.0816",
 "proto": "Prop_TimberPost",
 "x": -22.879,
 "y": 5.546,
@@ -14812,7 +14792,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Bollard.0819",
+"name": "Prop_Bollard.0817",
 "proto": "Prop_Bollard",
 "x": -13.243,
 "y": 4.979,
@@ -14822,7 +14802,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Bollard.0820",
+"name": "Prop_Bollard.0818",
 "proto": "Prop_Bollard",
 "x": -10.166,
 "y": 4.842,
@@ -14832,7 +14812,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Bollard.0821",
+"name": "Prop_Bollard.0819",
 "proto": "Prop_Bollard",
 "x": -7.377,
 "y": 4.782,
@@ -14842,7 +14822,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0822",
+"name": "Prop_RailingSegment.0820",
 "proto": "Prop_RailingSegment",
 "x": 14.687,
 "y": 9.64,
@@ -14852,7 +14832,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0823",
+"name": "Prop_RailingSegment.0821",
 "proto": "Prop_RailingSegment",
 "x": 13.431,
 "y": 9.64,
@@ -14862,7 +14842,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0824",
+"name": "Prop_RailingSegment.0822",
 "proto": "Prop_RailingSegment",
 "x": 12.174,
 "y": 9.64,
@@ -14872,7 +14852,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0825",
+"name": "Prop_RailingSegment.0823",
 "proto": "Prop_RailingSegment",
 "x": 10.917,
 "y": 9.64,
@@ -14882,7 +14862,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0826",
+"name": "Prop_RailingSegment.0824",
 "proto": "Prop_RailingSegment",
 "x": 9.661,
 "y": 9.64,
@@ -14892,7 +14872,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0827",
+"name": "Prop_RailingSegment.0825",
 "proto": "Prop_RailingSegment",
 "x": 8.404,
 "y": 9.64,
@@ -14902,7 +14882,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0828",
+"name": "Prop_RailingSegment.0826",
 "proto": "Prop_RailingSegment",
 "x": 7.147,
 "y": 9.64,
@@ -14912,7 +14892,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0829",
+"name": "Prop_RailingSegment.0827",
 "proto": "Prop_RailingSegment",
 "x": 5.891,
 "y": 9.64,
@@ -14922,7 +14902,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0830",
+"name": "Prop_RailingSegment.0828",
 "proto": "Prop_RailingSegment",
 "x": 4.634,
 "y": 9.64,
@@ -14932,7 +14912,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0831",
+"name": "Prop_RailingSegment.0829",
 "proto": "Prop_RailingSegment",
 "x": 3.377,
 "y": 9.64,
@@ -14942,7 +14922,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0832",
+"name": "Prop_RailingSegment.0830",
 "proto": "Prop_RailingSegment",
 "x": 2.121,
 "y": 9.64,
@@ -14952,7 +14932,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0833",
+"name": "Prop_RailingSegment.0831",
 "proto": "Prop_RailingSegment",
 "x": 0.864,
 "y": 9.64,
@@ -14962,7 +14942,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0834",
+"name": "Prop_RailingSegment.0832",
 "proto": "Prop_RailingSegment",
 "x": -0.393,
 "y": 9.64,
@@ -14972,7 +14952,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SeatBlockPlaza.0835",
+"name": "Prop_SeatBlockPlaza.0833",
 "proto": "Prop_SeatBlockPlaza",
 "x": -39.55,
 "y": 5.299,
@@ -14982,7 +14962,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SeatBlockPlaza.0836",
+"name": "Prop_SeatBlockPlaza.0834",
 "proto": "Prop_SeatBlockPlaza",
 "x": -31.595,
 "y": 5.558,
@@ -14992,7 +14972,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SeatBlockPlaza.0837",
+"name": "Prop_SeatBlockPlaza.0835",
 "proto": "Prop_SeatBlockPlaza",
 "x": -23.623,
 "y": 5.578,
@@ -15002,7 +14982,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SeatBlockPlaza.0838",
+"name": "Prop_SeatBlockPlaza.0836",
 "proto": "Prop_SeatBlockPlaza",
 "x": -18.891,
 "y": 5.42,
@@ -15012,7 +14992,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SeatBlockPlaza.0839",
+"name": "Prop_SeatBlockPlaza.0837",
 "proto": "Prop_SeatBlockPlaza",
 "x": -11.746,
 "y": 4.758,
@@ -15022,7 +15002,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0840",
+"name": "Prop_PotOlive.0838",
 "proto": "Prop_PotOlive",
 "x": 60.6,
 "y": 14.58,
@@ -15032,7 +15012,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0841",
+"name": "Prop_PotOlive.0839",
 "proto": "Prop_PotOlive",
 "x": 61.8,
 "y": 14.58,
@@ -15042,7 +15022,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0842",
+"name": "Prop_PotOlive.0840",
 "proto": "Prop_PotOlive",
 "x": 63.0,
 "y": 14.58,
@@ -15052,7 +15032,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0843",
+"name": "Prop_PotOlive.0841",
 "proto": "Prop_PotOlive",
 "x": 64.2,
 "y": 14.58,
@@ -15062,7 +15042,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0844",
+"name": "Prop_PotOlive.0842",
 "proto": "Prop_PotOlive",
 "x": 74.95,
 "y": 14.58,
@@ -15072,7 +15052,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0845",
+"name": "Prop_PotOlive.0843",
 "proto": "Prop_PotOlive",
 "x": 108.5,
 "y": 14.58,
@@ -15082,7 +15062,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0846",
+"name": "Prop_PotOlive.0844",
 "proto": "Prop_PotOlive",
 "x": 107.8,
 "y": 14.58,
@@ -15092,7 +15072,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0847",
+"name": "Prop_PotOlive.0845",
 "proto": "Prop_PotOlive",
 "x": 107.2,
 "y": 14.58,
@@ -15102,7 +15082,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0848",
+"name": "Prop_PicnicTable.0846",
 "proto": "Prop_PicnicTable",
 "x": 121.6,
 "y": 11.194,
@@ -15112,7 +15092,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0849",
+"name": "Prop_PicnicTable.0847",
 "proto": "Prop_PicnicTable",
 "x": 127.0,
 "y": 11.266,
@@ -15122,7 +15102,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0850",
+"name": "Prop_PicnicTable.0848",
 "proto": "Prop_PicnicTable",
 "x": 131.5,
 "y": 11.17,
@@ -15132,7 +15112,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0851",
+"name": "Prop_PicnicTable.0849",
 "proto": "Prop_PicnicTable",
 "x": 139.5,
 "y": 11.17,
@@ -15142,7 +15122,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0852",
+"name": "Prop_PicnicTable.0850",
 "proto": "Prop_PicnicTable",
 "x": 125.5,
 "y": 11.632,
@@ -15152,7 +15132,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterTapered.0853",
+"name": "Prop_PlanterTapered.0851",
 "proto": "Prop_PlanterTapered",
 "x": 120.3,
 "y": 11.159,
@@ -15162,7 +15142,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterTapered.0854",
+"name": "Prop_PlanterTapered.0852",
 "proto": "Prop_PlanterTapered",
 "x": 125.4,
 "y": 11.166,
@@ -15172,7 +15152,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterTapered.0855",
+"name": "Prop_PlanterTapered.0853",
 "proto": "Prop_PlanterTapered",
 "x": 124.9,
 "y": 11.272,
@@ -15182,7 +15162,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0856",
+"name": "Prop_BistroTable.0854",
 "proto": "Prop_BistroTable",
 "x": 29.5,
 "y": 10.165,
@@ -15192,8 +15172,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol.0857",
-"proto": "Prop_Parasol",
+"name": "Prop_Parasol_Far.0855",
+"proto": "Prop_Parasol_Far",
 "x": 29.5,
 "y": 10.165,
 "z": -9.5,
@@ -15202,7 +15182,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0858",
+"name": "Prop_BistroChair.0856",
 "proto": "Prop_BistroChair",
 "x": 30.089,
 "y": 10.165,
@@ -15212,7 +15192,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0859",
+"name": "Prop_BistroChair.0857",
 "proto": "Prop_BistroChair",
 "x": 28.989,
 "y": 10.165,
@@ -15222,7 +15202,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0860",
+"name": "Prop_BistroChair.0858",
 "proto": "Prop_BistroChair",
 "x": 29.421,
 "y": 10.165,
@@ -15232,7 +15212,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0861",
+"name": "Prop_BistroTable.0859",
 "proto": "Prop_BistroTable",
 "x": 37.5,
 "y": 10.518,
@@ -15242,8 +15222,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol.0862",
-"proto": "Prop_Parasol",
+"name": "Prop_Parasol_Far.0860",
+"proto": "Prop_Parasol_Far",
 "x": 37.5,
 "y": 10.518,
 "z": -5.0,
@@ -15252,7 +15232,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0863",
+"name": "Prop_BistroChair.0861",
 "proto": "Prop_BistroChair",
 "x": 37.418,
 "y": 10.518,
@@ -15262,7 +15242,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0864",
+"name": "Prop_BistroChair.0862",
 "proto": "Prop_BistroChair",
 "x": 36.992,
 "y": 10.518,
@@ -15272,7 +15252,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0865",
+"name": "Prop_BistroChair.0863",
 "proto": "Prop_BistroChair",
 "x": 38.091,
 "y": 10.518,
@@ -15282,7 +15262,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0866",
+"name": "Prop_BistroTable.0864",
 "proto": "Prop_BistroTable",
 "x": 46.0,
 "y": 10.927,
@@ -15292,8 +15272,8 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol.0867",
-"proto": "Prop_Parasol",
+"name": "Prop_Parasol_Far.0865",
+"proto": "Prop_Parasol_Far",
 "x": 46.0,
 "y": 10.927,
 "z": -1.5,
@@ -15302,7 +15282,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0868",
+"name": "Prop_BistroChair.0866",
 "proto": "Prop_BistroChair",
 "x": 45.379,
 "y": 10.927,
@@ -15312,7 +15292,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0869",
+"name": "Prop_BistroChair.0867",
 "proto": "Prop_BistroChair",
 "x": 46.178,
 "y": 10.927,
@@ -15322,7 +15302,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0870",
+"name": "Prop_BistroChair.0868",
 "proto": "Prop_BistroChair",
 "x": 46.443,
 "y": 10.927,
@@ -15332,7 +15312,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0871",
+"name": "Prop_PicnicTable.0869",
 "proto": "Prop_PicnicTable",
 "x": 119.0,
 "y": 11.23,
@@ -15342,7 +15322,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0872",
+"name": "Prop_PicnicTable.0870",
 "proto": "Prop_PicnicTable",
 "x": 122.3,
 "y": 11.23,
@@ -15352,7 +15332,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0873",
+"name": "Prop_PicnicTable.0871",
 "proto": "Prop_PicnicTable",
 "x": 122.6,
 "y": 11.23,
@@ -15362,7 +15342,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignStop.0874",
+"name": "Prop_SignStop.0872",
 "proto": "Prop_SignStop",
 "x": -244.4,
 "y": 6.516,
@@ -15372,7 +15352,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BikeRack.0875",
+"name": "Prop_BikeRack.0873",
 "proto": "Prop_BikeRack",
 "x": -236.22,
 "y": 7.084,
@@ -15382,7 +15362,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BikeRack.0876",
+"name": "Prop_BikeRack.0874",
 "proto": "Prop_BikeRack",
 "x": -233.98,
 "y": 6.952,
@@ -15392,7 +15372,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BikeRack.0877",
+"name": "Prop_BikeRack.0875",
 "proto": "Prop_BikeRack",
 "x": -228.86,
 "y": 6.634,
@@ -15402,7 +15382,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BikeRack.0878",
+"name": "Prop_BikeRack.0876",
 "proto": "Prop_BikeRack",
 "x": -226.62,
 "y": 6.5,
@@ -15412,7 +15392,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AdTotem.0879",
+"name": "Prop_AdTotem.0877",
 "proto": "Prop_AdTotem",
 "x": -238.3,
 "y": 7.255,
@@ -15422,7 +15402,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BinsUnderground.0880",
+"name": "Prop_BinsUnderground.0878",
 "proto": "Prop_BinsUnderground",
 "x": -241.4,
 "y": 6.396,
@@ -15432,7 +15412,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BinsUnderground.0881",
+"name": "Prop_BinsUnderground.0879",
 "proto": "Prop_BinsUnderground",
 "x": -236.5,
 "y": 6.116,
@@ -15442,7 +15422,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_ScreenBox.0882",
+"name": "Prop_ScreenBox.0880",
 "proto": "Prop_ScreenBox",
 "x": -212.0,
 "y": 7.628,
@@ -15452,7 +15432,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignRoundTriangle.0883",
+"name": "Prop_SignRoundTriangle.0881",
 "proto": "Prop_SignRoundTriangle",
 "x": -216.6,
 "y": 7.448,
@@ -15462,7 +15442,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMast.0884",
+"name": "Prop_LampMast.0882",
 "proto": "Prop_LampMast",
 "x": -242.862,
 "y": 4.26,
@@ -15472,12 +15452,42 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PayMachine.0885",
+"name": "Prop_PayMachine.0883",
 "proto": "Prop_PayMachine",
 "x": -240.606,
 "y": 3.817,
 "z": -77.314,
 "yaw": 11.31,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_AIVolleyNet.0884",
+"proto": "Prop_AIVolleyNet",
+"x": -89.0,
+"y": 1.109,
+"z": -167.0,
+"yaw": -0.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_AIKiosk.0885",
+"proto": "Prop_AIKiosk",
+"x": -134.0,
+"y": 1.708,
+"z": -164.0,
+"yaw": -90.0,
+"roll": -0.0,
+"scale": 1.0
+},
+{
+"name": "Prop_AIFoodTruck.0886",
+"proto": "Prop_AIFoodTruck",
+"x": -74.0,
+"y": 4.13,
+"z": -133.0,
+"yaw": -180.0,
 "roll": -0.0,
 "scale": 1.0
 }
