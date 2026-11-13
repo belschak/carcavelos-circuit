@@ -2,7 +2,6 @@ using CarcavelosCircuit.RaceFlow;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace CarcavelosCircuit.Tests.EditMode
 {
@@ -74,7 +73,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             icon.Kind = ItemKind.Espresso;
             icon.Kind = ItemKind.SeagullDelivery; // the slot rolls on to an item with no picture
             Assert.IsFalse(icon.HasPicture);
-            Assert.AreEqual(StyleKeyword.None, icon.style.backgroundImage.keyword);
+            Assert.IsNull(icon.style.backgroundImage.value.texture, "no picture behind the drawing");
         }
 
         [Test]
@@ -86,7 +85,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreSame(wave, icon.style.backgroundImage.value.texture);
             icon.SetPicture(ItemKind.CarcavelosWave, null);
             Assert.IsFalse(icon.HasPicture);
-            Assert.AreEqual(StyleKeyword.None, icon.style.backgroundImage.keyword);
+            Assert.IsNull(icon.style.backgroundImage.value.texture, "no picture behind the drawing");
         }
 
         [Test]
