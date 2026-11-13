@@ -91,6 +91,8 @@ for obj in bpy.data.objects:
         if m.get("wind_shader"):        # swaying trees (env_vegetation.set_wind): shader + metres of bend and flutter
             e["wind"] = {"shader": m["wind_shader"], "bend": round(float(m["wind_bend"]), 3),
                          "flutter": round(float(m["wind_flutter"]), 3)}
+            if m.get("wind_crown"):     # V18n leaf cards (env_vegetation.leaf_material): baked crown normals, both faces alike
+                e["wind"]["crown"] = True
         if m.get("ground_shader"):      # detailed lawn and sand (env_materials.upgrade_all): shader + its textures
             e["ground"] = {"shader": m["ground_shader"], "mask": m["ground_mask"], "detail": m["ground_detail"],
                            "detail_normal": m["ground_detail_normal"]}
@@ -110,10 +112,10 @@ for obj in bpy.data.objects:
             e["roughness"] = round(b.inputs["Roughness"].default_value, 3)
             e["metallic"] = round(b.inputs["Metallic"].default_value, 3)
             e["alpha"] = round(b.inputs["Alpha"].default_value, 3)
-            e["albedo"] = linked_image(b.inputs["Base Color"])
+            e["albedo"] = linked_image(b.inputs["Base Color"]) or m.get("albedo_texture")   # V18n: texture x vertex colour
             e["rough"] = linked_image(b.inputs["Roughness"])
             e["normal"] = linked_image(b.inputs["Normal"])
-            if b.inputs["Normal"].is_linked:
+            if b.inputs["Normal"].is_linked and b.inputs["Normal"].links[0].from_node.type == "NORMAL_MAP":
                 e["normal_strength"] = round(b.inputs["Normal"].links[0].from_node.inputs["Strength"].default_value, 3)
             strength = b.inputs["Emission Strength"].default_value
             col = b.inputs["Emission Color"].default_value

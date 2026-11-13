@@ -775,11 +775,18 @@ def build_walls(col):
     ring = strip(*P.GAP_BARRIER, P.BARRIER_HALF)
     m.prism(ring, P.DECK_Z - 0.05, P.DECK_Z + P.BARRIER_H, "white")
     m.prism(strip(*P.GAP_BARRIER, P.BARRIER_HALF - 0.15), P.DECK_Z + P.BARRIER_H - 0.05, P.DECK_Z + P.BARRIER_H + 0.55, "hedge")
+    import env_vegetation as V                                 # V18n: leaf cards over the hedge boxes
+    V.hedge_leaves("Plaza_BarrierHedgeLeaves", V.hedge_box_faces(
+        list(P.GAP_BARRIER), 2 * (P.BARRIER_HALF - 0.15), lambda x, y: P.DECK_Z + P.BARRIER_H,
+        lambda x, y: P.DECK_Z + P.BARRIER_H + 0.55), "hedge", "broad", card=0.5, cover=5.0, seed=70, fins=0.4, foot=0.0)
     # V16 (survey V15: no hedges, planters or loungers on the plaza): V10i's two hedge planters and three lounge blocks
     # are gone; the hedge boxes of the shortcut's funnel stay exactly (they guide the yellow route).
     for a, b in zip(P.FUNNEL, P.FUNNEL[1:]):                   # V14b: hedge boxes that lead the climb's exit to checkpoint 10
         m.prism(strip(a, b, 0.5), P.DECK_Z - 0.05, P.DECK_Z + 0.5, "white")
         m.prism(strip(a, b, 0.37), P.DECK_Z + 0.45, P.DECK_Z + 0.95, "hedge")
+        V.hedge_leaves(f"Plaza_FunnelHedgeLeaves{P.FUNNEL.index(a)}", V.hedge_box_faces(
+            [a, b], 0.74, lambda x, y: P.DECK_Z + 0.5, lambda x, y: P.DECK_Z + 0.95), "hedge", "broad", card=0.45,
+            cover=5.0, seed=71 + P.FUNNEL.index(a), fins=0.35, foot=0.0)
     build_furniture(m)
     m.finish(col)
 
