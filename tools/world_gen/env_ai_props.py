@@ -260,21 +260,31 @@ def _ground_hit(x, y, z_from):
 
 
 def _wheel_ground(proto, p):
-    """A car stands on the lowest of its four wheel points: on sloping ground the old placement height (at its
-    centre) left one end in the air (Luc, 13 Nov: "the cars partly float")."""
+    """A car stands on its four wheel points (rays onto the built ground): height of their plane at the centre,
+    pitched (rot_y, about the car's own y) and rolled (rot_x, about its own x, the long axis) to lie on all four.
+    Luc, 13 Nov: "the cars partly float". Height only (V18m first try) left a wheel in the air on cross slopes.
+    A wheel point more than 25 cm off the others' median (beyond a kerb) takes the median instead."""
     if proto is None:
-        return p["z"]
+        return p
     xs = [v.co.x for v in proto.data.vertices]
     ys = [v.co.y for v in proto.data.vertices]
     hx, hy = 0.36 * (max(xs) - min(xs)), 0.38 * (max(ys) - min(ys))
     c, s_ = math.cos(p["rot_z"]), math.sin(p["rot_z"])
+    corners = ((hx, hy), (hx, -hy), (-hx, hy), (-hx, -hy))          # front-left, front-right, rear-left, rear-right
     zs = []
-    for ax, ay in ((hx, hy), (hx, -hy), (-hx, hy), (-hx, -hy)):
+    for ax, ay in corners:
         z = _ground_hit(p["x"] + c * ax - s_ * ay, p["y"] + s_ * ax + c * ay, p["z"] + 2.5)
-        if z is not None and abs(z - p["z"]) < 0.6:
-            zs.append(z)
-    # at most 8 cm below the old height: a wheel point beyond a kerb hits the lower ground there (up to 29 cm)
-    return round(max(min(zs), p["z"] - 0.08), 3) if zs else p["z"]
+        zs.append(z if z is not None and abs(z - p["z"]) < 0.6 else None)
+    known = sorted(z for z in zs if z is not None)
+    if len(known) < 2:
+        return p
+    med = known[len(known) // 2]
+    zs = [med if z is None or abs(z - med) > 0.25 else z for z in zs]
+    front, rear = (zs[0] + zs[1]) / 2, (zs[2] + zs[3]) / 2
+    left, right = (zs[0] + zs[2]) / 2, (zs[1] + zs[3]) / 2
+    pitch = math.atan2(front - rear, 2 * hx)                       # nose up > 0
+    roll = math.atan2(left - right, 2 * hy)                        # left side up > 0
+    return dict(p, z=round(sum(zs) / 4, 3), rot_y=round(-pitch, 4), rot_x=round(roll, 4))
 
 
 def far_variants(props, protos):
@@ -299,7 +309,7 @@ def far_variants(props, protos):
                 dupes += 1
                 continue
             cars.append((p["x"], p["y"]))
-            p = dict(p, z=_wheel_ground(protos.get(p["proto"]), p))
+            p = _wheel_ground(protos.get(p["proto"]), p)
         name = p["proto"]
         if name in protos and (name in SWAPS or name == "Prop_BikeRack") and S.route_distance(p["x"], p["y"]) > NEAR_M:
             fname = name + "_Far"

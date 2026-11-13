@@ -172,8 +172,9 @@ def unity_dressing():
             out.append({"name": f"{p['proto']}.{k:04d}", "proto": p["proto"],
                         "x": round(p["x"], 3), "y": round(p["z"], 3), "z": round(p["y"], 3),
                         "yaw": round(-math.degrees(p["rot_z"]), 3), "roll": round(-math.degrees(p.get("rot_y", 0.0)), 3),
+                        "pitch": round(-math.degrees(p.get("rot_x", 0.0)), 3),
                         "scale": round(p["scale"], 4)})
-    return {"note": "Unity axes (x east, y up, z north); rotation = Euler(0, yaw, 0) * Euler(0, 0, roll)", "items": out}
+    return {"note": "Unity axes (x east, y up, z north); rotation = Euler(0, yaw, 0) * Euler(0, 0, roll) * Euler(pitch, 0, 0)", "items": out}
 
 
 def heading_change(pts, i, span):

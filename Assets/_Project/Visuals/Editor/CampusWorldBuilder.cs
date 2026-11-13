@@ -90,7 +90,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             public float[] coast_west;    // far coast west of the shore map: world x, its z there, metres north per metre west
         }
         [Serializable] private class MatList { public MatInfo[] materials; public Shade shade; }
-        [Serializable] private class Item { public string name; public string proto; public float x, y, z, yaw, roll, scale; }
+        [Serializable] private class Item { public string name; public string proto; public float x, y, z, yaw, roll, pitch, scale; }
         [Serializable] private class Dressing { public Item[] items; }
         [Serializable] private class TrackPoint { public float x, y, z, width, s; public string zone; public bool tunnel; }
         [Serializable] private class TrackData
@@ -540,7 +540,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, group);
                 go.name = it.name;
                 go.transform.SetPositionAndRotation(new Vector3(it.x, it.y, it.z),
-                    Quaternion.Euler(0f, it.yaw, 0f) * Quaternion.Euler(0f, 0f, it.roll));
+                    Quaternion.Euler(0f, it.yaw, 0f) * Quaternion.Euler(0f, 0f, it.roll) * Quaternion.Euler(it.pitch, 0f, 0f));   // V18m: pitch = cars on cross slopes
                 go.transform.localScale = Vector3.one * it.scale;
                 MarkStatic(go);
             }
