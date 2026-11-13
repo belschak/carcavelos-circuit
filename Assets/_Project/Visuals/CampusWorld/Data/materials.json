@@ -1938,6 +1938,81 @@
    "smoothness": 0.2
   },
   {
+   "name": "W_ai_S3_foodtruck",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "S3_foodtruck_albedo.jpg",
+   "normal": "S3_foodtruck_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.45
+  },
+  {
+   "name": "W_ai_S4_kiosk",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "S4_kiosk_albedo.jpg",
+   "normal": "S4_kiosk_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.45
+  },
+  {
+   "name": "W_ai_B5_volleynet",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "B5_volleynet_albedo.jpg",
+   "normal": "B5_volleynet_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.4
+  },
+  {
    "name": "W_bench_wood",
    "colour": [
     0.6296,
@@ -1961,6 +2036,81 @@
    },
    "metallic_smoothness": null,
    "smoothness": 0.2
+  },
+  {
+   "name": "W_ai_P1_bicycle",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "P1_bicycle_albedo.jpg",
+   "normal": "P1_bicycle_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.55
+  },
+  {
+   "name": "W_ai_P1_bicycle_teal",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "P1_bicycle_albedo_teal.jpg",
+   "normal": "P1_bicycle_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.55
+  },
+  {
+   "name": "W_ai_P1_bicycle_orange",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "P1_bicycle_albedo_orange.jpg",
+   "normal": "P1_bicycle_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.55
   },
   {
    "name": "W_bin_body",
@@ -2111,6 +2261,206 @@
    },
    "metallic_smoothness": null,
    "smoothness": 0.6
+  },
+  {
+   "name": "W_ai_C1_hatchback_silver",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "C1_hatchback_albedo_silver.jpg",
+   "normal": "C1_hatchback_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.65
+  },
+  {
+   "name": "W_ai_C2_estate",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "C2_estate_albedo.jpg",
+   "normal": "C2_estate_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.65
+  },
+  {
+   "name": "W_ai_C3_suv",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "C3_suv_albedo.jpg",
+   "normal": "C3_suv_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.65
+  },
+  {
+   "name": "W_ai_C5_microcar",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "C5_microcar_albedo.jpg",
+   "normal": "C5_microcar_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.65
+  },
+  {
+   "name": "W_ai_C1_hatchback_red",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "C1_hatchback_albedo_red.jpg",
+   "normal": "C1_hatchback_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.65
+  },
+  {
+   "name": "W_ai_C6_panelvan",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "C6_panelvan_albedo.jpg",
+   "normal": "C6_panelvan_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.65
+  },
+  {
+   "name": "W_ai_C4_camper",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "C4_camper_albedo.jpg",
+   "normal": "C4_camper_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.65
+  },
+  {
+   "name": "W_ai_C1_hatchback",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "C1_hatchback_albedo.jpg",
+   "normal": "C1_hatchback_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.65
   },
   {
    "name": "W_piano_gloss",
@@ -2294,15 +2644,15 @@
    "smoothness": 0.4
   },
   {
-   "name": "W_planter_cream",
+   "name": "W_ai_B3_lifeguard",
    "colour": [
-    0.8469,
-    0.807,
-    0.7277
+    0.9035,
+    0.9035,
+    0.9035
    ],
    "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
+   "albedo": "B3_lifeguard_albedo.jpg",
+   "normal": "B3_lifeguard_normal.png",
    "normal_strength": 1.0,
    "emission": null,
    "alpha": 1.0,
@@ -2316,32 +2666,7 @@
     "world_uv": []
    },
    "metallic_smoothness": null,
-   "smoothness": 0.15
-  },
-  {
-   "name": "W_lifeguard_flag",
-   "colour": [
-    0.9071,
-    0.7673,
-    0.2846
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": false,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.2
+   "smoothness": 0.4
   },
   {
    "name": "W_chair_frame",
@@ -2394,14 +2719,39 @@
    "smoothness": 0.1
   },
   {
-   "name": "W_parasol_canvas",
+   "name": "W_ai_B1_parasol",
    "colour": [
-    0.9474,
-    0.887,
-    0.7792
+    0.9035,
+    0.9035,
+    0.9035
    ],
    "metallic": 0.0,
-   "albedo": null,
+   "albedo": "B1_parasol_albedo.jpg",
+   "normal": "B1_parasol_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.4
+  },
+  {
+   "name": "W_thatch",
+   "colour": [
+    0.6962,
+    0.5751,
+    0.3808
+   ],
+   "metallic": 0.0,
+   "albedo": "thatch_albedo.png",
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
@@ -2416,7 +2766,7 @@
     "world_uv": []
    },
    "metallic_smoothness": null,
-   "smoothness": 0.1
+   "smoothness": 0.05
   },
   {
    "name": "W_bark_light",
@@ -2444,14 +2794,14 @@
    "smoothness": 0.2
   },
   {
-   "name": "W_thatch",
+   "name": "W_planter_cream",
    "colour": [
-    0.6962,
-    0.5751,
-    0.3808
+    0.8469,
+    0.807,
+    0.7277
    ],
    "metallic": 0.0,
-   "albedo": "thatch_albedo.png",
+   "albedo": null,
    "normal": null,
    "normal_strength": 1.0,
    "emission": null,
@@ -2466,7 +2816,7 @@
     "world_uv": []
    },
    "metallic_smoothness": null,
-   "smoothness": 0.05
+   "smoothness": 0.15
   },
   {
    "name": "W_soil",
@@ -2592,6 +2942,31 @@
    },
    "metallic_smoothness": null,
    "smoothness": 0.3
+  },
+  {
+   "name": "W_ai_B2_lounger",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "B2_lounger_albedo.jpg",
+   "normal": "B2_lounger_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.4
   },
   {
    "name": "W_event_violet",

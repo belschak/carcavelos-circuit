@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: W_ai_S4_kiosk
+  m_Shader: {fileID: 4800000, guid: 066436310d5ce4bc1811d748bf65fbe5, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _NORMALMAP
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: 95dab954a4e2e4b249e39b3005dd3cdf, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 2800000, guid: 7386ffb9626434de5a9f4511f942aaf8, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _GroundNearMap:
+        m_Texture: {fileID: 2800000, guid: 28b28d5d8a90943c097de131a7b109e0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _GroundWorldMap:
+        m_Texture: {fileID: 2800000, guid: fbf9a02eca81d4451a9178d1fd08737a, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BumpScale: 1
+    - _Metallic: 0
+    - _Smoothness: 0.45
+    m_Colors:
+    - _BakedShadow: {r: 30, g: 42, b: 0.85, a: 0}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _NearRect: {r: -275, g: -180, b: 0.0024390244, a: 0.0025316456}
+    - _Occlusion: {r: 1, g: 0.35, b: 0, a: 0}
+    - _Shade: {r: 0, g: 0, b: 0, a: 0}
+    - _WorldRect: {r: -420, g: -270, b: 0.0014285714, a: 0.0019607844}
+    - _WorldUV: {r: 0.3333, g: 0.3333, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
