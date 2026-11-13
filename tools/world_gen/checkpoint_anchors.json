@@ -39,9 +39,10 @@
   },
   {
    "n": 6,
-   "x": -123.16,
-   "z": -150.58,
-   "v9_index": 336
+   "x": -179.18,
+   "z": -97.02,
+   "v9_index": 336,
+   "why": "V19 (2026-11-12): moved from (-123.16, -150.58) at the bottom of the beach dip to 4 route points before the promenade shortcut's split, so both ways pass it. Needs Noah's OK"
   },
   {
    "n": 7,

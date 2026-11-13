@@ -94,6 +94,10 @@ namespace CarcavelosCircuit.Visuals.Editor
         {
             public float length_m; public int jump_index, start_index, spawn_index; public int[] checkpoints; public TrackPoint[] points;
         }
+        // V19 promenade shortcut (tools/world_gen/promenade_shortcut_plan.py -> Data/shortcuts.json), Unity x/z.
+        [Serializable] private class XZ { public float x, z; }
+        [Serializable] private class ShortcutLine { public string name; public float width; public XZ[] points; }
+        [Serializable] private class ShortcutFile { public ShortcutLine[] shortcuts; public XZ[] wave_boxes; }
         [Serializable] private class BoxCheck { public string name; public float[] min; public float[] max; }
         [Serializable] private class CheckData { public BoxCheck[] instances; public BoxCheck[] objects; }
 
@@ -566,6 +570,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             TrackData data = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json"));
             var preview = new GameObject("Preview (Role 3)");
             AddRaceParts(preview, data);
+            AddWaveBoxSpots(preview);
             AddPreviewCamera(preview, data);
             EditorSceneManager.SaveScene(scene, ScenePath);
         }
@@ -603,6 +608,31 @@ namespace CarcavelosCircuit.Visuals.Editor
                     box.size = new Vector3(thickness, height, along.magnitude + 0.3f);
                     MarkStatic(wall);
                 }
+            }
+        }
+
+        // V19: the spots where ItemSystem puts the wave boxes (always the Carcavelos Wave), from Data/shortcuts.json,
+        // on the ground found by a ray. Preview scene only (with the race parts), never in the prefab.
+        private static void AddWaveBoxSpots(GameObject root)
+        {
+            string path = DataDir + "/shortcuts.json";
+            if (!File.Exists(path))
+            {
+                Debug.LogWarning("CampusWorldBuilder: no Data/shortcuts.json, so no wave boxes (run tools/world_gen/promenade_shortcut_plan.py)");
+                return;
+            }
+            ShortcutFile file = JsonUtility.FromJson<ShortcutFile>(File.ReadAllText(path));
+            var parent = new GameObject("WaveBoxSpots");
+            parent.transform.SetParent(root.transform, false);
+            Physics.SyncTransforms();
+            for (int k = 0; k < file.wave_boxes.Length; k++)
+            {
+                XZ p = file.wave_boxes[k];
+                var spot = new GameObject("WaveBoxSpot " + k);
+                spot.transform.SetParent(parent.transform, false);
+                bool ground = Physics.Raycast(new Vector3(p.x, 300f, p.z), Vector3.down, out RaycastHit hit, 600f, ~0, QueryTriggerInteraction.Ignore);
+                spot.transform.position = ground ? hit.point : new Vector3(p.x, 0f, p.z);
+                spot.AddComponent<WaveBoxSpot>();
             }
         }
 
@@ -1061,10 +1091,189 @@ namespace CarcavelosCircuit.Visuals.Editor
             {
                 failures++;
             }
+            failures += ShortcutSelfTest(report);
             failures += LightingTest(report);
             report.AppendLine(failures == 0 ? "RESULT: PASS" : "RESULT: FAIL (" + failures + ")");
             Debug.Log(report.ToString());
             return failures;
+        }
+
+        // V19: the promenade shortcut must be drivable, both ways must pass every checkpoint, and the wave boxes must
+        // have their spots. Walks the lane every 2 m from the split to the merge:
+        // - lane ground = the first terrain or track surface below (World_Ground*, Track_*); anything else the ray
+        //   meets above it (a kerb, a planter, a fence) is a blocker;
+        // - no step over 0.6 m to the next point, and the ground under the kart's footprint (2 x 2.4 m) at most
+        //   0.4 m above the lane (a bank, not a slope);
+        // - three kart-sized boxes across the 7 m lane (left, middle, right), 0.2..1.4 m over their own ground,
+        //   touch nothing that is not terrain (wall, fence, parked car, tree). Terrain is judged by the height rules.
+        private static int ShortcutSelfTest(StringBuilder report)
+        {
+            string path = DataDir + "/shortcuts.json";
+            if (!File.Exists(path))
+            {
+                report.AppendLine("shortcut: Data/shortcuts.json missing (run tools/world_gen/promenade_shortcut_plan.py)");
+                return 1;
+            }
+            ShortcutFile file = JsonUtility.FromJson<ShortcutFile>(File.ReadAllText(path));
+            int failures = 0;
+            int spots = UnityEngine.Object.FindObjectsByType<WaveBoxSpot>(FindObjectsSortMode.None).Length;
+            int wanted = file.wave_boxes != null ? file.wave_boxes.Length : 0;
+            report.AppendLine("shortcut: " + spots + " of " + wanted + " wave box spots");
+            if (spots != wanted)
+            {
+                failures++;
+            }
+            TrackData track = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json"));
+            Physics.SyncTransforms();
+            foreach (ShortcutLine line in file.shortcuts)
+            {
+                failures += CheckpointsOffFork(line, track, report);
+                int blocked = 0, noGround = 0, banks = 0;
+                float worstStep = 0f, worstBank = 0f;
+                float lastY = float.NaN;
+                for (int k = 0; k < line.points.Length; k++)
+                {
+                    XZ p = line.points[k];
+                    XZ q = line.points[Mathf.Min(k + 1, line.points.Length - 1)];
+                    XZ o = line.points[Mathf.Max(k - 1, 0)];
+                    Quaternion turn = Quaternion.LookRotation(new Vector3(q.x - o.x, 0f, q.z - o.z).normalized);
+                    if (!LaneGround(new Vector3(p.x, 0f, p.z), out Vector3 ground, out string onTop))
+                    {
+                        noGround++;
+                        continue;
+                    }
+                    if (onTop != null)
+                    {
+                        blocked += Blocker(report, blocked, p, onTop + " (on the lane itself)");
+                    }
+                    if (!float.IsNaN(lastY))
+                    {
+                        worstStep = Mathf.Max(worstStep, Mathf.Abs(ground.y - lastY));
+                    }
+                    lastY = ground.y;
+                    float bank = BankUnderKart(ground, turn);
+                    worstBank = Mathf.Max(worstBank, bank);
+                    if (bank > 0.4f)
+                    {
+                        banks++;
+                        report.AppendLine("  shortcut: ground " + bank.ToString("0.00") + " m above the lane under the kart at (" + p.x.ToString("0") + ", " + p.z.ToString("0") + ")");
+                    }
+                    for (int side = -1; side <= 1; side++)
+                    {
+                        Vector3 at = ground + turn * new Vector3(side * 2.5f, 0f, 0f);
+                        if (side != 0 && LaneGround(at, out Vector3 sideGround, out _))
+                        {
+                            at = sideGround;
+                        }
+                        foreach (Collider c in Physics.OverlapBox(at + Vector3.up * 0.8f, new Vector3(1.0f, 0.6f, 1.2f), turn, ~0, QueryTriggerInteraction.Ignore))
+                        {
+                            if (!IsTerrain(c.name))
+                            {
+                                blocked += Blocker(report, blocked, p, c.name);
+                            }
+                        }
+                    }
+                }
+                report.AppendLine("shortcut '" + line.name + "': " + line.points.Length + " points, " + blocked + " blockers, " +
+                                  noGround + " without ground, largest step " + worstStep.ToString("0.00") + " m, ground under the kart up to " +
+                                  worstBank.ToString("0.00") + " m above the lane");
+                if (blocked > 0 || noGround > 0 || worstStep > 0.6f || banks > 0)
+                {
+                    failures++;
+                }
+            }
+            return failures;
+        }
+
+        private static bool IsTerrain(string name)
+        {
+            // the surfaces a kart drives on: terrain, the race track and the street section's paving (env_streets)
+            return name.StartsWith("World_Ground", StringComparison.Ordinal) || name.StartsWith("Track_", StringComparison.Ordinal)
+                || name.StartsWith("Street_Paving", StringComparison.Ordinal);
+        }
+
+        // The first terrain or track surface below (x, z), and the name of the first other collider above it, if any.
+        private static bool LaneGround(Vector3 at, out Vector3 ground, out string onTop)
+        {
+            ground = at;
+            onTop = null;
+            RaycastHit[] hits = Physics.RaycastAll(new Vector3(at.x, 300f, at.z), Vector3.down, 600f, ~0, QueryTriggerInteraction.Ignore);
+            Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            foreach (RaycastHit h in hits)
+            {
+                if (IsTerrain(h.collider.name))
+                {
+                    ground = h.point;
+                    return true;
+                }
+                if (onTop == null && h.collider.GetComponentInParent<Camera>() == null)
+                {
+                    onTop = h.collider.name;
+                }
+            }
+            return false;
+        }
+
+        // How far the ground under the kart's footprint (2 x 2.4 m, nine rays) rises above the lane point.
+        private static float BankUnderKart(Vector3 ground, Quaternion turn)
+        {
+            float bank = 0f;
+            for (int gx = -1; gx <= 1; gx++)
+            {
+                for (int gz = -1; gz <= 1; gz++)
+                {
+                    Vector3 at = ground + turn * new Vector3(gx * 1.0f, 0f, gz * 1.2f);
+                    if (LaneGround(new Vector3(at.x, 0f, at.z), out Vector3 under, out _) && under.y < ground.y + 3f)
+                    {
+                        bank = Mathf.Max(bank, under.y - ground.y);
+                    }
+                }
+            }
+            return bank;
+        }
+
+        private static int Blocker(StringBuilder report, int already, XZ p, string what)
+        {
+            if (already < 12)
+            {
+                report.AppendLine("  shortcut blocked at (" + p.x.ToString("0") + ", " + p.z.ToString("0") + "): " + what);
+            }
+            return 1;
+        }
+
+        // Both ways must pass every checkpoint: none may lie between the route points where the lane leaves and rejoins.
+        private static int CheckpointsOffFork(ShortcutLine line, TrackData track, StringBuilder report)
+        {
+            int split = NearestRoutePoint(track, line.points[0]);
+            int merge = NearestRoutePoint(track, line.points[line.points.Length - 1]);
+            int bad = 0;
+            for (int c = 0; c < track.checkpoints.Length; c++)
+            {
+                if (track.checkpoints[c] >= split && track.checkpoints[c] <= merge)
+                {
+                    report.AppendLine("  shortcut: checkpoint " + c + " (route point " + track.checkpoints[c] + ") lies on the fork " + split + ".." + merge +
+                                      ": move its anchor in tools/world_gen/checkpoint_anchors.json");
+                    bad++;
+                }
+            }
+            report.AppendLine("shortcut '" + line.name + "': fork at route points " + split + ".." + merge + ", " + bad + " checkpoints on it");
+            return bad > 0 ? 1 : 0;
+        }
+
+        private static int NearestRoutePoint(TrackData track, XZ p)
+        {
+            int best = 0;
+            float bestD = float.MaxValue;
+            for (int i = 0; i < track.points.Length; i++)
+            {
+                float d = (track.points[i].x - p.x) * (track.points[i].x - p.x) + (track.points[i].z - p.z) * (track.points[i].z - p.z);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = i;
+                }
+            }
+            return best;
         }
 
         // CampusWorld.prefab is what Role 2 uses. The scene root must be a clean instance of it (no overrides), and the
