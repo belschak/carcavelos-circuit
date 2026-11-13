@@ -213,11 +213,17 @@ def add_sign(bm, pts, fr, i, turn):
     return p["s"]
 
 
+SHORTCUT_SIGN_REACH = 6.0       # m: a board stands about this far outside its corner's route point
+
+
 def build_signs(pts, fr, col):
     bm = bmesh.new()
     import entrance_plan                # V18h: no board in the curve plaza's drift zone (entrance_plan.FAN_NO_SIGN)
+    import promenade_shortcut_plan as PS  # V19: no board where the promenade shortcut leaves or joins (it would stand in its lane)
+    lane = PS.centreline()
     placed = [add_sign(bm, pts, fr, i, turn) for i, turn in corners(pts)
-              if not entrance_plan.FAN_NO_SIGN[0] <= i <= entrance_plan.FAN_NO_SIGN[1]]
+              if not entrance_plan.FAN_NO_SIGN[0] <= i <= entrance_plan.FAN_NO_SIGN[1]
+              and PS.distance(pts[i]["x"], pts[i]["y"], lane) > PS.CLEAR + SHORTCUT_SIGN_REACH]
     mesh = bpy.data.meshes.new("Track_CornerSigns")
     bm.to_mesh(mesh)
     bm.free()

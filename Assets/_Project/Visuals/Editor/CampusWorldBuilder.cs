@@ -1158,12 +1158,13 @@ namespace CarcavelosCircuit.Visuals.Editor
                         worstStep = Mathf.Max(worstStep, Mathf.Abs(ground.y - lastY));
                     }
                     lastY = ground.y;
-                    float bank = BankUnderKart(ground, turn);
+                    float bank = BankUnderKart(ground, turn, out string bankOn);
                     worstBank = Mathf.Max(worstBank, bank);
                     if (bank > 0.4f)
                     {
                         banks++;
-                        report.AppendLine("  shortcut: ground " + bank.ToString("0.00") + " m above the lane under the kart at (" + p.x.ToString("0") + ", " + p.z.ToString("0") + ")");
+                        report.AppendLine("  shortcut: ground " + bank.ToString("0.00") + " m above the lane under the kart at (" + p.x.ToString("0") + ", " + p.z.ToString("0") + "): " + bankOn +
+                                          "; lane on " + LaneSurface(ground) + " at y " + ground.y.ToString("0.00"));
                     }
                     for (int side = -1; side <= 1; side++)
                     {
@@ -1194,9 +1195,11 @@ namespace CarcavelosCircuit.Visuals.Editor
 
         private static bool IsTerrain(string name)
         {
-            // the surfaces a kart drives on: terrain, the race track and the street section's paving (env_streets)
-            return name.StartsWith("World_Ground", StringComparison.Ordinal) || name.StartsWith("Track_", StringComparison.Ordinal)
-                || name.StartsWith("Street_Paving", StringComparison.Ordinal);
+            // the surfaces a kart drives on: terrain, the race track, the street section's paving (env_streets) and the
+            // coast's paving sheet, 7 cm over the terrain (env_coast, V18h)
+            return name.StartsWith("World_Ground", StringComparison.Ordinal)
+                || (name.StartsWith("Track_", StringComparison.Ordinal) && !name.StartsWith("Track_CornerSigns", StringComparison.Ordinal))
+                || name.StartsWith("Street_Paving", StringComparison.Ordinal) || name.StartsWith("Coast_Paving", StringComparison.Ordinal);
         }
 
         // The first terrain or track surface below (x, z), and the name of the first other collider above it, if any.
@@ -1221,18 +1224,40 @@ namespace CarcavelosCircuit.Visuals.Editor
             return false;
         }
 
+        private static string LaneSurface(Vector3 ground)
+        {
+            return Physics.Raycast(ground + Vector3.up * 0.05f, Vector3.down, out RaycastHit h, 0.2f, ~0, QueryTriggerInteraction.Ignore) ? h.collider.name : "?";
+        }
+
         // How far the ground under the kart's footprint (2 x 2.4 m, nine rays) rises above the lane point.
         private static float BankUnderKart(Vector3 ground, Quaternion turn)
         {
+            return BankUnderKart(ground, turn, out _);
+        }
+
+        // The same, and the name of the surface that rises highest (for the report).
+        private static float BankUnderKart(Vector3 ground, Quaternion turn, out string highest)
+        {
+            highest = "";
             float bank = 0f;
             for (int gx = -1; gx <= 1; gx++)
             {
                 for (int gz = -1; gz <= 1; gz++)
                 {
                     Vector3 at = ground + turn * new Vector3(gx * 1.0f, 0f, gz * 1.2f);
-                    if (LaneGround(new Vector3(at.x, 0f, at.z), out Vector3 under, out _) && under.y < ground.y + 3f)
+                    if (LaneGround(new Vector3(at.x, 0f, at.z), out Vector3 under, out _) && under.y < ground.y + 3f && under.y - ground.y > bank)
                     {
-                        bank = Mathf.Max(bank, under.y - ground.y);
+                        bank = under.y - ground.y;
+                        RaycastHit[] top = Physics.RaycastAll(new Vector3(at.x, 300f, at.z), Vector3.down, 600f, ~0, QueryTriggerInteraction.Ignore);
+                        Array.Sort(top, (a, b) => a.distance.CompareTo(b.distance));
+                        foreach (RaycastHit h in top)
+                        {
+                            if (IsTerrain(h.collider.name))
+                            {
+                                highest = h.collider.name + " at (" + gx + ", " + gz + ")";
+                                break;
+                            }
+                        }
                     }
                 }
             }

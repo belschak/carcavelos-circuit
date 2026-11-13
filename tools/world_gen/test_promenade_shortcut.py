@@ -25,7 +25,7 @@ class PlanTests(unittest.TestCase):
         self.assertTrue(all(math.dist(a, b) <= P.STEP + 1e-6 for a, b in zip(line, line[1:])))
 
     def test_shortcut_is_131_m(self):
-        self.assertAlmostEqual(P.length(P.centreline()), 131.4, delta=0.5)
+        self.assertAlmostEqual(P.length(P.centreline()), 130.9, delta=0.5)
 
     def test_fork_on_real_track(self):
         pts = json.load(open(TRACK))["points"]

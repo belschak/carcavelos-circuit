@@ -29,7 +29,7 @@ SHORTCUTS = os.path.join(REPO, "Assets/_Project/Visuals/CampusWorld/Data/shortcu
 
 SPLIT = (-173.36, -102.51)            # route point where the shortcut leaves the race line
 MERGE = (-45.24, -122.35)             # route point where it comes back
-VIA = [(-150.0, -110.0), (-130.0, -113.5), (-65.0, -114.0)]   # along the parking aisle, north of the planted berm
+VIA = [(-150.0, -111.0), (-130.0, -116.5), (-68.0, -117.5)]   # the parking aisle, south of the north car row (V18g)
 WIDTH = 7.0                           # m, lane width
 STEP = 2.0                            # m between points, as the route
 CLEAR = WIDTH / 2 + 1.0               # m from the centreline: no dressing, no fence

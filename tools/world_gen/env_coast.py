@@ -26,6 +26,7 @@ import coast
 import coast_plan as P
 import env_beachfront as B
 import env_common as E
+import promenade_shortcut_plan as PS
 
 COLLECTION = B.COLLECTION
 REPORT = {}                # object -> minimum distance of a solid vertex to the race centreline
@@ -85,6 +86,17 @@ def pbeam(g, a, b, w, h, colour):
     ring = [side * s + up * t for s, t in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
     pal(g, [a + o for o in ring], colour, -d)
     pal(g, [b + o for o in ring], colour, d)
+
+
+_shortcut_lane = []
+
+
+def off_shortcut(x, y, reach=0.0):
+    """V19: True when an object of this reach at (x, y) stays clear of the promenade shortcut's lane (its dressing is
+    cleared by env_promenade_shortcut.dress; the trim built here from the earlier lists must keep out too)."""
+    if not _shortcut_lane:
+        _shortcut_lane.extend(PS.centreline())
+    return PS.distance(x, y, _shortcut_lane) >= PS.CLEAR + reach
 
 
 def guard(name, g, low=None):
@@ -1138,7 +1150,7 @@ def build_trim(veg):
         half = size[0] / 2
         zs = [paving_z(c[0] + u[0] * k * half, c[1] + u[1] * k * half) for k in (-1, 0, 1)]
         ends = [(c[0] + u[0] * k * half, c[1] + u[1] * k * half) for k in (-1, 1)]
-        if all(P.route_distance(*q) >= P.ROUTE_CLEAR + size[1] / 2 + 0.1 for q in ends + [c]):
+        if all(P.route_distance(*q) >= P.ROUTE_CLEAR + size[1] / 2 + 0.1 and off_shortcut(*q, size[1] / 2) for q in ends + [c]):
             tbox(g, c, u, half, size[1] / 2, min(zs) - 0.25, max(zs) + size[2], s0=s0)
             return 1
         return 0
@@ -1168,6 +1180,8 @@ def build_trim(veg):
     r, ph = P.POST["radius"], P.POST["height"]
     posts = 0
     for x, y in _state.get("posts", []):                    # round timber bollards, 1 m, on a small concrete collar
+        if not off_shortcut(x, y, r):
+            continue
         z = E.ground_z(x, y)
         ring = [(x + r * math.cos(2 * math.pi * k / 8), y + r * math.sin(2 * math.pi * k / 8)) for k in range(8)]
         for k in range(8):
@@ -1184,7 +1198,7 @@ def build_trim(veg):
         if not it["proto"].startswith("Veg_Palm") or not P.inside(it["x"], it["y"], P.UPPER):
             continue
         x, y = it["x"], it["y"]
-        if P.route_distance(x, y) < P.ROUTE_CLEAR + h * 1.5:
+        if P.route_distance(x, y) < P.ROUTE_CLEAR + h * 1.5 or not off_shortcut(x, y, h * 1.5):
             continue
         z = max(paving_z(x + dx, y + dy) for dx in (-h, h) for dy in (-h, h))
         u = P.UPPER_U
