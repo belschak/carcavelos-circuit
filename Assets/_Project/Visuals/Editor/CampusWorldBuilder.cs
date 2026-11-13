@@ -77,6 +77,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         {
             public string shader; public float bend; public float flutter;
             public bool upright;          // grass cards: both faces lit like the lawn they stand on
+            public bool crown;            // V18n leaf cards: baked crown normals light both faces, edge-on cards fade (_Crown)
             public float shrink_from, shrink_to;   // grass cards sink into the ground between these distances (m); 0 = never
         }
         [Serializable] private class Tuft { public float x, z, yaw, s; public int r = 255, g = 255, b = 255, big, far; }
@@ -89,7 +90,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             public float[] coast_west;    // far coast west of the shore map: world x, its z there, metres north per metre west
         }
         [Serializable] private class MatList { public MatInfo[] materials; public Shade shade; }
-        [Serializable] private class Item { public string name; public string proto; public float x, y, z, yaw, roll, scale; }
+        [Serializable] private class Item { public string name; public string proto; public float x, y, z, yaw, roll, pitch, scale; }
         [Serializable] private class Dressing { public Item[] items; }
         [Serializable] private class TrackPoint { public float x, y, z, width, s; public string zone; public bool tunnel; }
         [Serializable] private class TrackData
@@ -303,11 +304,12 @@ namespace CarcavelosCircuit.Visuals.Editor
                     // Foliage.shader: metres of bend (tree top) and flutter (leaf tips); the direction stays the shader's.
                     Vector4 wind = mat.GetVector("_Wind");
                     mat.SetVector("_Wind", new Vector4(wind.x, wind.y, m.wind.bend, m.wind.flutter));
-                    if (m.wind.upright)
+                    if (m.wind.upright || m.wind.crown)
                     {
                         SetFloat(mat, 0f, "_FlipBack");
                         SetFloat(mat, 1f, "_BackShade");
                     }
+                    SetFloat(mat, m.wind.crown ? 1f : 0f, "_Crown");
                     if (m.wind.shrink_to > m.wind.shrink_from && mat.HasProperty("_Shrink"))
                     {
                         mat.SetVector("_Shrink", new Vector4(m.wind.shrink_from, m.wind.shrink_to, 1f / (m.wind.shrink_to - m.wind.shrink_from), 0f));
@@ -538,7 +540,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, group);
                 go.name = it.name;
                 go.transform.SetPositionAndRotation(new Vector3(it.x, it.y, it.z),
-                    Quaternion.Euler(0f, it.yaw, 0f) * Quaternion.Euler(0f, 0f, it.roll));
+                    Quaternion.Euler(0f, it.yaw, 0f) * Quaternion.Euler(0f, 0f, it.roll) * Quaternion.Euler(it.pitch, 0f, 0f));   // V18m: pitch = cars on cross slopes
                 go.transform.localScale = Vector3.one * it.scale;
                 MarkStatic(go);
             }

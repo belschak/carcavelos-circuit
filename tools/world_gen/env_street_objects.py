@@ -427,16 +427,13 @@ def cabinet(name, col, colour, size):
 
 
 def sapling(name, col):
-    """Young staked tree, 3 m: thin trunk, a small two-tone crown, three timber stakes."""
-    g = Proto()
-    g.cyl(0.035, 0.025, -0.1, 1.9, 4, "wood_dark", cap=False)
-    g.cyl(0.25, 0.75, 1.5, 2.2, 5, "leaf_dark", cap=False)
-    g.cyl(0.75, 0.0, 2.2, 3.2, 5, "leaf", cap=False, phase=0.6)
-    for k in range(2):
-        a = 2 * math.pi * k / 2 + 0.5
-        g.box(0.4 * math.cos(a) - 0.03, 0.4 * math.cos(a) + 0.03, 0.4 * math.sin(a) - 0.03, 0.4 * math.sin(a) + 0.03,
-              -0.1, 1.4, "timber")
-    return g.build(name, col)
+    """Young staked tree, 3.2 m (V18n: the leafy young tree of env_vegetation at 0.57 of its size; was two green cones
+    on a stick): thin trunk, a narrow crown of leaf cards, three timber stakes."""
+    import env_vegetation as V
+    from mathutils import Matrix
+    obj = V.plaza_tree(name, 61, V.ramp_material("plaza"), col, V.leaf_material())
+    obj.data.transform(Matrix.Scale(0.57, 4))
+    return obj
 
 
 def fan_palm(name, col, seed, height, trunk, fronds, frond_len, variant=""):
@@ -450,22 +447,22 @@ def fan_palm(name, col, seed, height, trunk, fronds, frond_len, variant=""):
     radii = [trunk * 1.5, trunk * 1.15, trunk, trunk * 0.92, trunk * 0.88, trunk * 0.95, trunk * 1.5, trunk * 1.35,
              trunk * 0.7]
     path = [Vector((0, 0, z)) + lean * (max(z, 0) / height) ** 2 for z in zs]
-    V.soft_tube(mb, path, radii, 7, 0, tip=path[-1] + Vector((0, 0, 0.12)),
-                shade=[0.8, 0.8, 0.78, 0.72, 0.66, 0.5, 0.36, 0.28, 0.24])
+    V.ringed_trunk(mb, path[:6], radii[:6], 7, 0, [0.8, 0.8, 0.78, 0.72, 0.66, 0.5], step=0.7, depth=0.04)   # V18n: rings
+    V.soft_tube(mb, path[5:], radii[5:], 7, 0, tip=path[-1] + Vector((0, 0, 0.12)), shade=[0.5, 0.36, 0.28, 0.24])
     knob = path[-3]
     top_n = max(3, fronds // 4)
     low_n = (fronds - top_n) // 2
-    tiers = ((top_n, 0.35, 0.12, 60, 55, frond_len * 0.75, 0.75),
-             (fronds - top_n - low_n, 0.15, 0.22, 34, 78, frond_len, 0.9),
-             (low_n, -0.1, 0.26, 4, 70, frond_len * 0.95, 0.9))
-    for count, dz, r0, el0_deg, droop_deg, length, wide in tiers:
+    tiers = ((top_n, 0.35, 0.12, 60, 55, frond_len * 0.75, 0.75, (1.12, 1.1, 0.8)),     # V18n: tint per tier (young
+             (fronds - top_n - low_n, 0.15, 0.22, 34, 78, frond_len, 0.9, (1.0, 1.0, 1.0)),     # light, old darker)
+             (low_n, -0.1, 0.26, 4, 70, frond_len * 0.95, 0.9, (0.82, 0.86, 0.76)))
+    for count, dz, r0, el0_deg, droop_deg, length, wide, tint in tiers:
         offset = rng.uniform(0, 2 * math.pi)
         for i in range(count):
             az = offset + 2 * math.pi * i / count + rng.uniform(-0.2, 0.2)
             el0 = math.radians(el0_deg + rng.uniform(-6, 6))
             droop = math.radians(droop_deg + rng.uniform(-10, 10))
             base = knob + Vector((math.cos(az) * r0, math.sin(az) * r0, dz))
-            V.add_frond(mb, base, az, el0, droop, length * rng.uniform(0.9, 1.1), 1, rng, wide)
+            V.add_frond(mb, base, az, el0, droop, length * rng.uniform(0.9, 1.1), 1, rng, wide, tint=tint)
     key = "palm" + variant
     tex = "palm_frond_b_cutout_albedo.png" if variant else "palm_frond_cutout_albedo.png"
     return mb.build(name, [V.ramp_material(key), V.cutout_material("palm_frond" + variant, tex)], col, sway=True)
@@ -672,6 +669,10 @@ def build_structures(col):
     for t0, t1 in ((-0.8, S.PORTAL_T[0] - 0.15), (S.PORTAL_T[1] + 0.15, S.HEDGE_LEN + 1.3)):
         line = [hp(t0, S.BAY[1] + S.HEDGE_DEPTH / 2 + 0.3), hp(t1, S.BAY[1] + S.HEDGE_DEPTH / 2 + 0.3)]
         g.wall(line, S.HEDGE_DEPTH, lambda x, y: ST.ground(x, y) - 0.3, lambda x, y: ST.ground(x, y) + 1.25, "hedge", step=4.0)
+        import env_vegetation as V                               # V18n: leaf cards over the clipped hedge's box
+        V.hedge_leaves(f"Street_HedgeLeaves{int(t0 > 0)}", V.hedge_box_faces(
+            line, S.HEDGE_DEPTH, lambda x, y: ST.ground(x, y), lambda x, y: ST.ground(x, y) + 1.25), "hedge", "broad",
+            card=0.6, cover=5.0, seed=60 + int(t0 > 0), fins=0.4)
         kerb = [hp(t0, S.BAY[1] + 0.15), hp(t1, S.BAY[1] + 0.15)]          # V16g: concrete upstand in front of the hedge
         g.wall(kerb, 0.3, lambda x, y: ST.ground(x, y) - 0.2, lambda x, y: ST.ground(x, y) + 0.25, "palette", colour="kerb",
                step=4.0)

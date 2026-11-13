@@ -1512,6 +1512,31 @@
    "smoothness": 0.12
   },
   {
+   "name": "W_veg_leaves",
+   "colour": [
+    0.3733,
+    0.5751,
+    0.2846
+   ],
+   "metallic": 0.0,
+   "albedo": "veg_leaves_cutout_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.45,
+   "double_sided": true,
+   "wind": {
+    "shader": "CarcavelosCircuit/Foliage",
+    "bend": 0.05,
+    "flutter": 0.06,
+    "crown": true
+   },
+   "tint": false,
+   "metallic_smoothness": null,
+   "smoothness": 0.1
+  },
+  {
    "name": "W_entrance_planks",
    "colour": [
     0.7633,
@@ -4295,56 +4320,6 @@
    "smoothness": 0.15
   },
   {
-   "name": "W_pampas_leaf",
-   "colour": [
-    0.5519,
-    0.6257,
-    0.4033
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": false,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_pampas_plume",
-   "colour": [
-    0.9272,
-    0.883,
-    0.7633
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": false,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
    "name": "W_tree_olive",
    "colour": [
     0.4071,
@@ -4361,7 +4336,7 @@
    "double_sided": false,
    "wind": {
     "shader": "CarcavelosCircuit/Foliage",
-    "bend": 0.03,
+    "bend": 0.05,
     "flutter": 0.035
    },
    "tint": false,
@@ -4385,7 +4360,7 @@
    "double_sided": false,
    "wind": {
     "shader": "CarcavelosCircuit/Foliage",
-    "bend": 0.03,
+    "bend": 0.05,
     "flutter": 0.035
    },
    "tint": false,
@@ -4413,106 +4388,6 @@
     "flutter": 0.04
    },
    "tint": false,
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_leaf",
-   "colour": [
-    0.3696,
-    0.5558,
-    0.3103
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": false,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.15
-  },
-  {
-   "name": "W_leaf_dark",
-   "colour": [
-    0.2555,
-    0.4184,
-    0.2375
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": false,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.1
-  },
-  {
-   "name": "W_shrub_leaf_b",
-   "colour": [
-    0.314,
-    0.4943,
-    0.2773
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": false,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.15
-  },
-  {
-   "name": "W_shrub_leaf_dark_b",
-   "colour": [
-    0.2231,
-    0.3621,
-    0.216
-   ],
-   "metallic": 0.0,
-   "albedo": null,
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": false,
-    "always_shaded": false,
-    "world_uv": []
-   },
    "metallic_smoothness": null,
    "smoothness": 0.1
   },

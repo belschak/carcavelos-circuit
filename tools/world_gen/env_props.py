@@ -1336,7 +1336,7 @@ def instance_for_preview(placements, protos):
     for k, p in enumerate(placements):
         obj = bpy.data.objects.new(f"{p['proto']}.{k:04d}", protos[p["proto"]].data)
         obj.location = (p["x"], p["y"], p["z"])
-        obj.rotation_euler = (0.0, p.get("rot_y", 0.0), p["rot_z"])
+        obj.rotation_euler = (p.get("rot_x", 0.0), p.get("rot_y", 0.0), p["rot_z"])   # V18m: rot_x (cars on slopes)
         obj.scale = (p["scale"],) * 3
         col.objects.link(obj)
         objects.append(obj)

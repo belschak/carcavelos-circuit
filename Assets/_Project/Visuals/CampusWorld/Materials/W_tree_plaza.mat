@@ -32,6 +32,7 @@ Material:
     m_Floats:
     - _AlphaClip: 0
     - _BackShade: 0.78
+    - _Crown: 0
     - _Cull: 2
     - _Cutoff: 0.5
     - _FlipBack: 1
