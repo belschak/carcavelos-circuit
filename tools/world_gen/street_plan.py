@@ -1231,7 +1231,10 @@ PROM_SETT = (KEEP_OUT - 0.35, 5.65)  # granite-sett border outside the road's sh
 PROM_SETT_SEA = ((321, 334), (373, 398))   # sea side: only where there is land beside the road (sand / kerb between)
 PROM_BOLLARD = dict(offset=6.75, step=2.75, size=0.25, height=0.85,   # pale limestone posts on the lawn edge (S_p01)
                     land=(321.0, 398.0), sea=(321.0, 334.5),          # route index runs: land side, sea-side lawn
-                    gaps=((321.0, 326.4), (355.8, 357.6), (371.6, 373.6), (377.2, 381.0)))   # path mouths (land side)
+                    gaps=((321.0, 332.6), (355.8, 357.6), (371.6, 373.6), (377.2, 381.0)))   # path mouths (land side)
+# V20a: the first gap reaches on to 332.6 (was 326.4): the walkway north of the lawn (the left branch of the s09 fork,
+# Luc 13 Nov 2026: both ways lead to the checkpoint before the tunnel) opens over its whole mouth; before, three posts
+# stood across it 2.75 m apart.
 PROM_MAST = dict(offset=8.2, at=(325.0, 347.0, 370.5, 392.0), height=13.5)   # white flood masts, every 43-47 m
 PROM_SEAT = dict(offset=6.95, width=0.4, height=0.48,               # curved white seat-walls (S_p03 h080), centre line
                  runs=((358.0, 364.0), (366.0, 371.0)))              # ... 6.75 m inner face; from/to route index

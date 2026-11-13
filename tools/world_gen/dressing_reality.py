@@ -123,10 +123,12 @@ PROPS = [
     # survey 3.4 + App. D 2.5: a row of four thin olives in black conical pots at (65..70, 93..97) and one more at
     # the passage's south mouth (84, 62). The race line passes 2-6 m from those spots, so the row stands 4-5 m
     # further west, parallel to the line, and the single pot 4 m further west (all >= 7.5 m from the centreline)
-    (POT, 60.6, 100.3, None, "upper plaza: row of four potted olives"),
-    (POT, 61.8, 98.85, None, "upper plaza: row of four potted olives"),
-    (POT, 63.0, 97.4, None, "upper plaza: row of four potted olives"),
-    (POT, 64.2, 95.95, None, "upper plaza: row of four potted olives"),
+    # V20b: the shortcut's landing lane runs here now (plaza_plan "V20b"), so the row stands along the hall, 5.6 m left
+    # of the shortcut's axis, north of the light well (it was 2.5 to 4.4 m left of it, in the lane)
+    (POT, 59.82, 98.92, None, "upper plaza: row of four potted olives"),
+    (POT, 60.43, 97.23, None, "upper plaza: row of four potted olives"),
+    (POT, 61.04, 95.53, None, "upper plaza: row of four potted olives"),
+    (POT, 61.64, 93.84, None, "upper plaza: row of four potted olives"),
     (POT, 74.95, 60.15, None, "upper plaza: potted olive at the passage's south mouth"),   # V18i: (80.0, 59.6) stood ON the shortcut's kicker
     # survey 3.5 + App. E 2.5 / 2.6: dark conical pots in twos and threes at the stair top ((104, 8), (110, 5)) and
     # beside G's corner on the upper plaza. The stair top itself is the road here (the stairs are driven over their

@@ -210,9 +210,24 @@ def unity_track():
     def u(p):
         return {"x": round(p["x"], 3), "y": round(p["track_z"] + ROAD_LIFT, 3), "z": round(p["y"], 3),
                 "width": p.get("width", 8.0), "s": p["s"], "zone": p["zone"], "tunnel": bool(p["tunnel"])}
-    return {"note": "Unity axes; y = road surface height. checkpoints[0] = start/finish line. Indices into points.",
+    # V20a: trigger width per checkpoint (checkpoint_anchors.json "width"; CampusWorldBuilder.AddRaceParts reads it,
+    # pin_checkpoints.py rewrites it after the hall steps)
+    widths = pin_checkpoints.widths_for(pts, cps)
+    return {"note": "Unity axes; y = road surface height. checkpoints[0] = start/finish line. Indices into points. "
+                    "checkpoint_widths = trigger width across the road (m), one per checkpoint.",
             "length_m": route["length_m"], "jump_index": jump, "start_index": start, "spawn_index": spawn,
-            "checkpoints": cps, "points": [u(p) for p in pts]}
+            "checkpoints": cps, "checkpoint_widths": widths, "points": [u(p) for p in pts]}
+
+
+# V20b (package B, plaza jump): extra boost pads that are not on the race line, e.g. the jump pad on the plaza shortcut's
+# run-up. Written into track.json "boost_pads"; CampusWorldBuilder.AddBoostPads adds them after its own jump and tunnel
+# pads (a ray down puts each on the surface). Unity axes: x east, y up (the driving surface), z north; yaw in degrees
+# clockwise from north (Quaternion.Euler(0, yaw, 0)); width across, length along the driving direction, in metres.
+def boost_pads():
+    import plaza_plan
+    return [{"name": p["name"], "kind": p["kind"], "x": round(p["x"], 3), "y": round(plaza_plan.DECK_Z, 3),
+             "z": round(p["y"], 3), "yaw": round(p["heading"], 2), "width": round(p["width"], 2),
+             "length": round(p["length"], 2)} for p in plaza_plan.BOOST_PADS]
 
 
 def main():
@@ -287,6 +302,7 @@ def main():
     dressing = unity_dressing()
     json.dump(dressing, open(os.path.join(data, "dressing.json"), "w"), indent=0)
     track = unity_track()
+    track["boost_pads"] = boost_pads()                         # V20b: the plaza shortcut's jump pad
     json.dump(track, open(os.path.join(data, "track.json"), "w"), indent=0)
     json.dump({"instances": info["instances"], "objects": info["objects"]}, open(os.path.join(data, "check.json"), "w"), indent=1)
     size = sum(os.path.getsize(os.path.join(r, f)) for r, _, fs in os.walk(BUNDLE) for f in fs)

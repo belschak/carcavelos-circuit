@@ -13,7 +13,13 @@ This script re-lays only the last metres of the plaza line in front of that one 
     the lane's first direction) runs into the lane's first point, cut into 2 m steps like the rest.
 The plaza there is one paved deck (no road strip), so no geometry has to follow. Heights, width and zone are taken
 from the old points. Nothing else moves; the points after the join are renumbered (the script prints by how many).
-The other three doors (D1, D3, D5) lie on Noah's own line and are his to decide; they are left alone.
+
+V20c (Luc's request, 2026-11-13): the same at the exit door D5. The route outside D5 (Noah's line from route.json)
+starts 2 m south of the lane's last point and swings back north (a zigzag of 2.1 m sideways in track.json, there
+since V12). From the lane's last point a Hermite curve (tangents: the lane's direction and the route's own direction
+EXIT_AHEAD points on) runs into that route point; the points between are replaced, 2 m apart. In Unity
+HallDoorApproach still lines the first metres up with the door, so the road there does not change.
+The doors D1 and D3 lie on Noah's own line and are his to decide; they are left alone.
 
 Run order after every bundle export:  hall_route.py -> hall_join.py -> pin_checkpoints.py
 Safe to run again: once the line ends on the lane it finds nothing behind the facade and changes nothing.
@@ -36,6 +42,9 @@ STEP = 2.0                  # metres between route points
 BACK_POINTS = 8             # the curve starts this many points before the first dropped one (about 16 m)
 TANGENT = 1.3               # Hermite tangent length as a share of the chord: 1.3 gave the widest bend (10 m radius)
 BEHIND_M = -1.0             # points closer than this to the facade line (or behind it) are dropped
+EXIT_DOOR = "D5_out_north_east"
+EXIT_AHEAD = 8              # V20c: the exit curve joins the route this many points after the lane's last point (16 m)
+EXIT_TANGENT = 1.3          # Hermite tangent length as a share of the chord: 1.3 gave the widest bend (6.1 m radius)
 
 
 def hermite(p0, t0, p1, t1, n=400):
@@ -113,10 +122,74 @@ def _radius(a, b, c):
     return math.dist(a, b) / d if d > 1e-6 else 1e9
 
 
+def resample_curve(line, count):
+    """count points strictly between the ends of a dense polyline, evenly spaced along it."""
+    length = sum(math.dist(u, v) for u, v in zip(line, line[1:]))
+    step = length / (count + 1)
+    new_xy, walked, want = [], 0.0, step
+    for u, v in zip(line, line[1:]):
+        seg = math.dist(u, v)
+        while walked + seg >= want and len(new_xy) < count:
+            f = (want - walked) / seg
+            new_xy.append((u[0] + (v[0] - u[0]) * f, u[1] + (v[1] - u[1]) * f))
+            want += step
+        walked += seg
+    return new_xy, length, step
+
+
+def join_exit(track):
+    """V20c: from the east lane's last point (the hall point before the exit door) a smooth curve into the route
+    EXIT_AHEAD points on; the points between are replaced (see the module text)."""
+    door = next(d for d in json.load(open(DOORS))["doors"] if d["name"] == EXIT_DOOR)
+    pts = track["points"]
+    n = len(pts)
+    xz = lambda i: (pts[i]["x"], pts[i]["z"])
+    lasts = [i for i in range(n) if pts[i]["zone"] == HALL_ZONE and pts[(i + 1) % n]["zone"] != HALL_ZONE]
+    a = min(lasts, key=lambda i: math.hypot(pts[i]["x"] - door["x"], pts[i]["z"] - door["z"]))
+    b = a + EXIT_AHEAD
+    d0, d1 = unit(xz(a - 1), xz(a)), unit(xz(b - 1), xz(b + 1))
+    # already smooth? (every step between a and b turns less than 25 degrees and is about 2 m long)
+    heads = [math.atan2(*unit(xz(i), xz(i + 1))) for i in range(a - 1, b)]
+    turns = [abs((h1 - h0 + math.pi) % (2 * math.pi) - math.pi) for h0, h1 in zip(heads, heads[1:])]
+    if max(turns) < math.radians(25) and all(abs(math.dist(xz(i), xz(i + 1)) - STEP) < 0.3 for i in range(a, b)):
+        return None, [f"{EXIT_DOOR}: the route already leaves the lane smoothly (point {a}), nothing to do"]
+    p0, p1 = xz(a), xz(b)
+    chord = math.dist(p0, p1)
+    line = hermite(p0, (d0[0] * chord * EXIT_TANGENT, d0[1] * chord * EXIT_TANGENT), p1,
+                   (d1[0] * chord * EXIT_TANGENT, d1[1] * chord * EXIT_TANGENT))
+    length = sum(math.dist(u, v) for u, v in zip(line, line[1:]))
+    count = int(round(length / STEP)) - 1
+    new_xy, length, step = resample_curve(line, count)
+    radius = min(_radius(line[k - 20], line[k], line[k + 20]) for k in range(20, len(line) - 20))
+    new = [dict(pts[b], x=round(x, 3), z=round(z, 3)) for x, z in new_xy]
+    old_count = b - a - 1
+    out_pts = [dict(p) for p in pts[:a + 1]] + new + [dict(p) for p in pts[b:]]
+    shift = count - old_count
+    m = len(out_pts)
+    for k, p in enumerate(out_pts):
+        p["s"] = round(k * STEP, 1)
+    remap = lambda i: i if i <= a else i + shift if i >= b else min(a + count, i)
+    out = dict(track)
+    start = remap(track["start_index"])
+    out.update({"points": out_pts, "length_m": m * STEP, "start_index": start, "jump_index": remap(track["jump_index"]),
+                "spawn_index": (start - 4) % m, "checkpoints": [remap(c) for c in track["checkpoints"]]})
+    report = [f"{EXIT_DOOR}: points {a + 1}-{b - 1} ({old_count}, the largest turn between them {math.degrees(max(turns)):.0f} deg) "
+              f"-> {count} points on a {length:.1f} m curve from the lane's last point ({p0[0]:.2f}, {p0[1]:.2f}) into "
+              f"route point {b} ({p1[0]:.2f}, {p1[1]:.2f}), step {step:.3f} m, tightest bend {radius:.1f} m radius",
+              f"route {n} -> {m} points, lap {track['length_m']:.0f} -> {m * STEP:.0f} m; points after the exit renumbered by {shift:+d}"]
+    return out, report
+
+
 def main():
     track = json.load(open(TRACK))
     out, report = join(track)
     print("\n".join(report))
+    if out is not None:
+        track = out
+    out2, report2 = join_exit(track)          # V20c
+    print("\n".join(report2))
+    if out2 is not None:
+        out = out2
     if out is None or "--check" in sys.argv:
         return
     with open(TRACK, "w") as fh:

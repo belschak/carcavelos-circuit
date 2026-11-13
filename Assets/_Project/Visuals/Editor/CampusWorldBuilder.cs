@@ -96,6 +96,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         [Serializable] private class TrackData
         {
             public float length_m; public int jump_index, start_index, spawn_index; public int[] checkpoints; public TrackPoint[] points;
+            public float[] checkpoint_widths;   // V20a: trigger width per checkpoint (m); missing or <= 0 = road width + 4 m
         }
         [Serializable] private class BoxCheck { public string name; public float[] min; public float[] max; }
         [Serializable] private class CheckData { public BoxCheck[] instances; public BoxCheck[] objects; }
@@ -633,7 +634,9 @@ namespace CarcavelosCircuit.Visuals.Editor
                 cp.transform.SetPositionAndRotation(Pos(p) + Vector3.up * 2f, Quaternion.LookRotation(Forward(data, i)));
                 BoxCollider trigger = cp.AddComponent<BoxCollider>();
                 trigger.isTrigger = true;
-                trigger.size = new Vector3(p.width + 4f, 6f, 1f);
+                // V20a: per-checkpoint width from track.json (pin_checkpoints.py), e.g. wall to wall at the plaza fork
+                bool hasWidth = data.checkpoint_widths != null && c < data.checkpoint_widths.Length && data.checkpoint_widths[c] > 0f;
+                trigger.size = new Vector3(hasWidth ? data.checkpoint_widths[c] : p.width + 4f, 6f, 1f);
                 int after = (i + 2) % data.points.Length;                             // about 4 m further on
                 var respawn = new GameObject("RespawnPoint");
                 respawn.transform.SetParent(cp.transform, false);
@@ -830,7 +833,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             sun.intensity = 2.1f;                                                    // V18l: hot summer sun (V17: 1.9)
             sun.color = new Color(1f, 0.95f, 0.86f);                                 // #FFF2DB, nearly white, a little warm
             sun.shadows = LightShadows.Soft;
-            sun.shadowStrength = 1f;                                                 // V18l: full shadows, the fill lights the shade
+            sun.shadowStrength = 0.85f;                                              // V20e: a little light reaches the shade (V18l: 1)
             sun.shadowBias = 0.04f;                                                  // V17: no shadow acne on the long, flat paving
             sun.shadowNormalBias = 0.35f;
             float az = SunAzimuth * Mathf.Deg2Rad, el = SunElevation * Mathf.Deg2Rad;
@@ -866,8 +869,10 @@ namespace CarcavelosCircuit.Visuals.Editor
             // only a little bluer (bluer still turned the tunnel and the hall cold); the ground bounce stays warm.
             // V18l: the shade is lit by a clear blue summer sky: darker and bluer than V17, so sun and shade stand
             // apart hard (cool blue shadows against hot, nearly white sunlight); the ground bounce stays warm.
-            so.FindProperty("skyColour").colorValue = new Color(0.40f, 0.55f, 0.80f);       // #668CCC sky fill
-            so.FindProperty("horizonColour").colorValue = new Color(0.52f, 0.58f, 0.66f);
+            // V20e (Luc, 13 Nov: "the difference between shade and light is far too harsh, make it more fluid"; the
+            // hall and the shaded plazas read deep blue): a brighter, much less blue sky fill, a neutral horizon.
+            so.FindProperty("skyColour").colorValue = new Color(0.60f, 0.66f, 0.76f);       // #A8A8C2-ish (V18l #668CCC)
+            so.FindProperty("horizonColour").colorValue = new Color(0.64f, 0.65f, 0.66f);   // (V18l 0.52/0.58/0.66)
             so.FindProperty("groundColour").colorValue = new Color(0.55f, 0.45f, 0.33f);    // warm bounce from the paving
             so.FindProperty("hazeColour").colorValue = HazeColour;                          // the sky's horizon colour
             so.FindProperty("hazeDensity").floatValue = HazeDensity;
@@ -889,7 +894,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         // instead of clipping, mid-tones get more contrast. ACES darkens the mid-tones, so the exposure goes up.
         // Shadows a little cooler and highlights a little warmer (golden hour), blue and orange stay clean.
         // V18l summer: more contrast and colour, no golden cast; shade pushed towards blue, light towards warm white.
-        private const float LookExposure = 0.1f, LookContrast = 30f, LookSaturation = 22f;
+        private const float LookExposure = 0.1f, LookContrast = 20f, LookSaturation = 22f;   // V20e: contrast 30 -> 20, softer sun/shade step
 
         private static VolumeProfile BuildLookProfile()
         {
@@ -909,7 +914,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             WhiteBalance warm = profile.Add<WhiteBalance>(true);
             warm.temperature.Override(2f);
             ShadowsMidtonesHighlights split = profile.Add<ShadowsMidtonesHighlights>(true);
-            split.shadows.Override(new Vector4(0.93f, 0.98f, 1.10f, -0.07f));       // V18l: blue, deeper shade
+            split.shadows.Override(new Vector4(0.99f, 1.0f, 1.03f, -0.01f));        // V20e: nearly neutral, lifted shade (V18l: 0.93/0.98/1.10/-0.07)
             split.highlights.Override(new Vector4(1.03f, 1.0f, 0.96f, 0.02f));       // warm, bright sunlit tops
             foreach (VolumeComponent c in profile.components)
             {

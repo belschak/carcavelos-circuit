@@ -97,7 +97,6 @@ def plaza_paint(bm, uv, first_slot):
     import entrance_plan as EP
     import env_entrance as EN
     import env_north
-    import env_streets as ST
     from mathutils.bvhtree import BVHTree
     road = bpy.data.objects.get("Track_Road")
     tree = BVHTree.FromPolygons([road.matrix_world @ v.co for v in road.data.vertices],
@@ -129,14 +128,11 @@ def plaza_paint(bm, uv, first_slot):
         ts = [k * step for k in range(int(length / step) + 1)]
         rows = [((o[0] + d[0] * t, o[1] + d[1] * t), (o[0] + d[0] * t + n[0] * w, o[1] + d[1] * t + n[1] * w)) for t in ts]
         drains += strip(rows, first_slot, [((t / 0.5, 0.0), (t / 0.5, 1.0)) for t in ts])
-    (cx, cy), r1 = env_north.RING_C, env_north.RING_R
-    r0, cell = r1 - env_north.RING_BAND, ST.pal_uv("setts_dark")
-    rows = [((cx + r0 * math.cos(math.radians(k * 2.0)), cy + r0 * math.sin(math.radians(k * 2.0))),
-             (cx + r1 * math.cos(math.radians(k * 2.0)), cy + r1 * math.sin(math.radians(k * 2.0)))) for k in range(181)]
-    ring = strip(rows, first_slot + 1, [(cell, cell)] * len(rows))
+    rows, uvs, ring_mat = env_north.ring_paint_rows()      # V20d (package D): the thin basalt band, rows/UVs/material
+    ring = strip(rows, first_slot + 1, uvs)                 # from env_north (was a flat palette band of 0.25 m)
     print(f"  trackside: real paving details across the race road (flush, in Track_EdgeLines): {drains} quads of the "
-          f"entrance plaza's drain channels, {ring} of the forecourt's dark sett ring")
-    return [EN.materials()["drain"], ST.mat("palette")]
+          f"entrance plaza's drain channels, {ring} of the forecourt's basalt ring")
+    return [EN.materials()["drain"], ring_mat]
 
 
 def corners(pts):

@@ -299,6 +299,8 @@ def edge_height(heights, x, y):
 
 
 def build_outer_buildings(heights, col):
+    import env_north
+    import north_plan
     elements, nodes, ways = load_osm()
     bm = bmesh.new()
     count = 0
@@ -306,6 +308,8 @@ def build_outer_buildings(heights, col):
         tags = e.get("tags", {})
         if e["type"] != "way" or "building" not in tags or e["id"] == FORT_ID or e["id"] in FORT_PARTS:
             continue
+        if "w" + str(e["id"]) in north_plan.FAR_HOUSING:
+            continue                                    # V20d: built by env_north.build_far_housing (below)
         ring = way_points(e, nodes)
         if len(ring) > 1 and ring[0] == ring[-1]:
             ring = ring[:-1]
@@ -336,6 +340,7 @@ def build_outer_buildings(heights, col):
     mesh.materials.append(E.material("backdrop_building", "#E9E3D6", roughness=0.9))
     E.new_object("Backdrop_Buildings", mesh, col)
     print(f"  backdrop: {count} outer buildings")
+    env_north.build_far_housing(col)                    # V20d: the apartment blocks along R. da Holanda
 
 
 FORT_WALL_TOP = 18.5      # V10b: rampart walk on the landward part (m above the sea; K05 puts the far walls at ~18-20 m)

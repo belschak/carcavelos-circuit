@@ -97,7 +97,7 @@ BUS_STOP = (83.0, 191.0)                                # a slim post with a bla
 # Rua da Holanda starts at the forecourt's north edge: asphalt x 75.5 .. 80.7 from y 192.5 (satellite), level
 NORTH_Y = 197.6                                         # the sheet's north edge between x 62 and 88.5
 HOLANDA_Y = 200.6                                       # ... and of the street's tab (the map's road starts there)
-HOLANDA = [(75.5, 192.5), (80.7, 192.5), (80.7, HOLANDA_Y), (75.5, HOLANDA_Y)]
+HOLANDA = [(75.5, 192.5), (81.0, 192.5), (81.0, HOLANDA_Y), (75.5, HOLANDA_Y)]     # V20d: east kerb 81.0 (was 80.7)
 EAST_PATH = [(126.0, 190.2), (126.0, 194.3), (88.5, 194.3)]      # the paved band east of the waste station (north kerb y 194.3)
 
 
@@ -440,6 +440,116 @@ def lawn_road_quads(route):
     return out
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# V20d (Luc's playtest 13 Nov 2026, s20: "on Google Maps the houses on the right side are much further away"): what
+# lies north of the forecourt, measured on the DGT orthophoto (ortho_area, 3 px per metre, aligned with track.json),
+# the Google satellite mosaic (8 px per metre) and Street View N01 / N02 (Jun 2019). The OSM footprints there are
+# right (the villas' roofs and pools line up with the orthophoto); what was wrong is what stood on them: generic
+# 10.5 m flat-roofed blocks in pink and cream, in the open. Real: two-storey villas and terraced pairs with orange
+# hip roofs, ochre or white render, each behind a front garden with a pool, the gardens closed to the dry field by a
+# tall hedge, so from the forecourt only roofs and upper floors show above it, 45-90 m away.
+# ---------------------------------------------------------------------------------------------------------------
+HOUSE_STOREY = 3.0          # m per storey of the villas
+HOUSE_EAVE = 0.45           # m: the roof's overhang
+HOUSE_PITCH = 26.0          # degrees: Portuguese tile roofs
+# per OSM id: storeys, the parts as four corners (counter-clockwise, from the OSM vertices; small jogs of the OSM
+# outline are left out), and the wall colour of each part's units along its long side ("white" / "ochre"; a terraced
+# pair is two units under one roof); "chimney": the part that gets a chimney
+HOUSES = {
+    "w228204169": dict(storeys=2, parts=[[(108.9, 230.4), (119.0, 228.7), (120.4, 237.6), (110.3, 239.3)],
+                                         [(106.6, 234.4), (109.5, 233.9), (110.0, 236.8), (107.0, 237.2)]],
+                       walls=[["white"], ["white"]]),
+    "w228204163": dict(storeys=2, parts=[[(129.8, 227.2), (156.0, 222.9), (157.5, 231.4), (131.3, 235.8)]],
+                       walls=[["ochre", "ochre"]]),
+    "w228204161": dict(storeys=2, parts=[[(160.5, 221.9), (184.9, 218.6), (186.1, 227.3), (161.7, 230.6)]],
+                       walls=[["white", "ochre"]]),
+    "w228204164": dict(storeys=2, parts=[[(190.3, 217.8), (200.3, 216.3), (201.6, 224.9), (191.6, 226.4)],
+                                         [(200.6, 219.5), (203.3, 219.1), (203.7, 222.0), (201.0, 222.4)]],
+                       walls=[["ochre"], ["ochre"]]),
+    "w228204167": dict(storeys=2, parts=[[(223.8, 223.1), (242.6, 219.3), (244.1, 224.7), (224.8, 228.6)],
+                                         [(228.5, 199.0), (234.1, 196.5), (241.2, 217.6), (235.5, 220.0)],
+                                         [(236.6, 203.6), (243.2, 201.6), (245.3, 207.2), (238.7, 210.3)]],
+                       walls=[["white"], ["white"], ["white"]]),
+}
+# the gardens' tall hedge towards the dry field (orthophoto: the green plots end on a straight line), the hedges
+# between the plots (at these x on that line, square to it, up to the houses) and the pools (orthophoto, blue pixels)
+GARDEN_LINE = [(106.0, 222.2), (201.0, 202.6)]
+GARDEN_DIVIDERS = [129.5, 141.0, 157.5, 170.0, 185.5]
+HEDGE_DEPTH, HEDGE_H, DIVIDER_H = 0.9, 2.1, 1.7
+POOLS = [(117.8, 220.2, 122.4, 224.0), (123.8, 217.5, 128.8, 224.2), (147.2, 214.5, 151.5, 221.8),
+         (162.8, 212.6, 166.4, 219.4), (177.5, 209.8, 181.2, 217.2), (191.2, 206.2, 196.2, 214.5)]
+GARDEN_TREES = [(113.0, 226.0, "Veg_Olive", 0.8), (139.0, 219.0, "Veg_Olive_B", 0.7), (171.5, 214.0, "Veg_Olive", 0.75),
+                (125.0, 241.5, "Veg_UmbrellaPine_B", 0.85), (166.0, 238.0, "Veg_UmbrellaPine", 0.8),
+                (198.0, 233.0, "Veg_UmbrellaPine_B", 0.8)]
+FIELD_MARK = [(109.0, 202.4), (121.3, 202.6), (123.0, 210.6), (110.6, 214.6)]     # the white-lined plot in the dry field
+
+
+# the apartment blocks along Rua da Holanda north of the world's edge (OSM; env_backdrop drew them as plain 3-level
+# boxes): as the two blocks at the forecourt (env_campus.build_housing: white render, balconies, terracotta roof
+# edge, roof storey), storeys from Street View N01_h000 / N01_h315 / N02_h000 (west side 5, east side 4)
+FAR_HOUSING = {"w179614678": 5, "w179614659": 5, "w179614657": 5, "w179614766": 4, "w179614764": 4}
+
+
+def garden_y(x):
+    """y of the gardens' hedge line at x."""
+    (ax, ay), (bx, by) = GARDEN_LINE
+    return ay + (by - ay) * (x - ax) / (bx - ax)
+
+
+# Rua da Holanda north of the forecourt (Google mosaic and sat20_x085_y185: asphalt x 75.5 .. 81.0, straight north
+# to the orthophoto's edge at y 222; further north the street turns like OSM's line, 0.1645 m east per metre, along
+# the next apartment blocks). West of it a row of perpendicular parking bays (cars nose-in towards the apartment
+# block), a narrow sidewalk at the block; east of it a sett strip with one car parked along the kerb, the calcada
+# path north-north-east beside the dry field, and its low white seat wall (N01_h000 / h045 / h090: 0.45 m high,
+# 0.5 m wide; it turns east along the field's south edge)
+HOLANDA_KERBS = (75.5, 81.0)
+HOLANDA_BEND, HOLANDA_SLOPE = 218.0, 0.1645
+HOLANDA_ROW = (200.6, 241.0)             # from the forecourt sheet's tab to beyond the world's edge (y 240)
+BAY_DEPTH, BAY_W = 5.5, 2.5              # the bays west of the asphalt
+WALK_WEST = 3.4                          # the sidewalk between the bays and the apartment block (runs under its wall)
+STRIP_EAST, PATH_W = 3.3, 5.0            # sett strip east of the asphalt, then the calcada path
+SEAT_WALL_W, SEAT_WALL_H = 0.5, 0.45
+SEAT_WALL_SOUTH_Y = 194.55               # its east-west leg along the field's south edge (EAST_PATH's north kerb)
+SEAT_WALL_EAST_X = 126.0
+BAY_SHARE = 0.8                          # share of the bays with a car (N01_h315: nearly all taken)
+PARKING_SIGN = (86.9, 198.6)             # the blue P sign at the corner (N01_h000), facing the forecourt
+STONE_BOLLARD = (86.3, 197.4)            # the rough stone block bollard beside it
+SLIM_BOLLARDS = [(82.0, 193.4), (82.0, 195.4), (82.0, 197.4), (82.0, 199.4)]   # slim steel bollards along the kerb
+SIGN_SLAB = (90.9, 196.3)                # the black sign slab at the field's corner (blank: the real one names a firm)
+SCOOTERS = [(88.4, 199.6, 205.0), (88.5, 206.5, 200.0)]                   # x, y, bearing of the nose
+LAY_BY_CAR = (82.7, 204.0)               # the one car parked along the east kerb (satellite)
+STREET_LAMPS = [(83.6, 205.0), (85.4, 226.0)]
+CORNER_PINE = (70.5, 195.8)              # the big umbrella pine at the apartment block's corner (satellite crown r 4.5 m)
+
+
+def holanda_dx(y):
+    """Metres the street lies east of its line at the forecourt, at y (0 up to HOLANDA_BEND)."""
+    return max(0.0, y - HOLANDA_BEND) * HOLANDA_SLOPE
+
+
+def holanda_band(x0, x1, ya=None, yb=None, step=4.0):
+    """Ring of the band between x0 and x1 (at the forecourt's line, both moved east with the street) from ya to yb."""
+    ya, yb = ya if ya is not None else HOLANDA_ROW[0], yb if yb is not None else HOLANDA_ROW[1]
+    ys = [ya + (yb - ya) * k / max(1, int((yb - ya) / step)) for k in range(max(1, int((yb - ya) / step)) + 1)]
+    if HOLANDA_BEND not in ys and ya < HOLANDA_BEND < yb:
+        ys = sorted(ys + [HOLANDA_BEND])
+    return [(x0 + holanda_dx(y), y) for y in ys] + [(x1 + holanda_dx(y), y) for y in ys[::-1]]
+
+
+def holanda_bays():
+    """[(x, y of the car's middle, unit vector of its nose)] of the bays west of the asphalt."""
+    out = []
+    y = HOLANDA_ROW[0] + 0.6 + BAY_W / 2
+    d = math.hypot(HOLANDA_SLOPE, 1.0)
+    while y < HOLANDA_ROW[1] - BAY_W / 2:
+        along = (HOLANDA_SLOPE / d, 1.0 / d) if y > HOLANDA_BEND else (0.0, 1.0)
+        nose = (-along[1], along[0])                                    # west, square to the street
+        x = HOLANDA_KERBS[0] - BAY_DEPTH / 2 + 0.25 + holanda_dx(y)
+        out.append((x, y, nose))
+        y += BAY_W
+    return out
+
+
 def ground_paint(paint, setts, lawn):
     """Ground colours and lawn mask under the north side (called from entrance_plan.avenue_side with
     campus_plan.paint and its colours; make_groundmap draws campus_plan.GROUND_PAINT in order). Paved under the
@@ -450,3 +560,26 @@ def ground_paint(paint, setts, lawn):
     paint("north street lawn (V18j)", [p for p in LAWN if p[0] > -9.9] + [(-9.9, 170.0), (-9.9, 162.3)], lawn, 255)
     for k, quad in enumerate(lawn_road_quads(route)):
         paint(f"lawn under the race road {k} (V18j)", quad, lawn, 255)
+    # V20d: the dry field north of the curved path, the gardens behind their hedge, Rua da Holanda with its bays,
+    # sidewalks and the path, the white-lined plot in the field
+    meadow, asphalt, calcada, kerb = (178, 172, 122), (85, 88, 94), (226, 221, 208), (207, 201, 188)
+    paint("dry field north of the curved path (V20d)", [(89.8, 194.9), (126.0, 194.9), (190.0, 196.5), (206.0, 200.0),
+                                                        (201.0, 202.6), (106.0, 222.2), (96.0, 241.0), (89.8, 241.0)],
+          meadow, 235)
+    paint("gardens behind the hedge (V20d)", [(106.0, 222.2), (201.0, 202.6), (204.0, 214.0), (206.0, 241.0),
+                                              (100.0, 241.0)], lawn, 255)
+    k0, k1 = HOLANDA_KERBS
+    x_bays, x_walk = k0 - BAY_DEPTH, k0 - BAY_DEPTH - WALK_WEST
+    paint("R. da Holanda sidewalk at the block (V20d)", holanda_band(x_walk, x_bays), setts)
+    paint("R. da Holanda bays (V20d)", holanda_band(x_bays, k0), (96, 98, 102))
+    paint("R. da Holanda (V20d)", holanda_band(k0, k1), asphalt)
+    paint("R. da Holanda east strip (V20d)", holanda_band(k1, k1 + STRIP_EAST, 197.6), setts)
+    paint("path beside the field (V20d)", holanda_band(k1 + STRIP_EAST, k1 + STRIP_EAST + PATH_W, 194.3), calcada)
+    for name, a, b in (("west kerb", k0 - 0.12, k0 + 0.03), ("east kerb", k1 - 0.03, k1 + 0.12),
+                       ("bay kerb", x_bays - 0.12, x_bays + 0.02)):
+        paint(f"R. da Holanda {name} (V20d)", holanda_band(a, b), kerb)
+    for a, b in zip(FIELD_MARK, FIELD_MARK[1:] + FIELD_MARK[:1]):
+        d = math.hypot(b[0] - a[0], b[1] - a[1])
+        nx, ny = -(b[1] - a[1]) / d * 0.22, (b[0] - a[0]) / d * 0.22
+        paint("white line in the field (V20d)", [(a[0] - nx, a[1] - ny), (b[0] - nx, b[1] - ny), (b[0] + nx, b[1] + ny),
+                                                 (a[0] + nx, a[1] + ny)], (222, 219, 206), 0)
