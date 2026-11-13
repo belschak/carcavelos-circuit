@@ -261,7 +261,12 @@ def on_kicker(x, y):
 # The landing: the deck's edge across the courtyard, square to the axis, LAND_S after the lip. With the kicker above
 # (0.70 m, 8 degrees) a kart's ball comes down to deck level 13.0 m after the lip at 20 m/s (top speed), 8.2 m at
 # 15 m/s, 6.7 m at 13 m/s and 29.2 m with the jump pad (32 m/s), so 6 m clears from about 12.4 m/s on.
-LAND_S = 6.0
+# V23c (Luc, 13 Nov, q14: "the pit here, you can pull it forward up to the corner on the right, where this glass wall
+# has a corner ... that's how it is in reality"): that corner is the hall's jog at (69.7, 75.0), 15.2 m after the lip,
+# and 20 m/s only carries 13.0 m. So the edge goes as far as top speed without the pad still clears with 2 m to spare:
+# 11.0 m (from about 18 m/s on; 17 m/s lands at 10.1 m, 15 m/s at 8.2 m and now drops into the court; the pad's 32 m/s
+# lands 29.1 m on as before). To take it to the corner set 15.0: then only a boosted kart (23 m/s and more) clears.
+LAND_S = 11.0                        # V20b: 6.0
 
 
 def _hall_hit(s, ring=MAIN_EAST):

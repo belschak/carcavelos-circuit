@@ -149,6 +149,10 @@ UPPER = [(-139.5, -108.4), (-99.5, -111.8), (-72.3, -113.6), (-57.0, -115.0), (-
          (-59.5, -134.1), (-84.5, -135.5), (-86.8, -134.5), (-97.7, -122.7), (-100.5, -121.4), (-138.2, -120.5),
          (-139.5, -114.0)]
 UPPER_LEVEL = ((-138.0, 4.3), (-60.0, 4.8))               # (x, height): the level climbs eastwards
+# V23c: the paving's outline = UPPER with its south-west corner squared off. UPPER's west end runs slanting from
+# (-139.5, -114.0) to (-138.2, -120.5), the square's edge (street_plan) straight along x = -139: between them a sliver
+# of bare ground lay 7 cm under both pavings, a groove across the promenade shortcut's lane (part of q10's "lip").
+UPPER_PAVED = UPPER[:-2] + [(-139.5, -120.5), UPPER[-1]]
 BANK = 5.0                                                # m: the bank's width in plan (one terrain cell)
 BERM = dict(line=[(-138.2, -120.5), (-100.5, -121.4), (-97.7, -122.7), (-86.8, -134.5), (-84.5, -135.5), (-59.5, -134.1)])
 # Survey 2.7: beige concrete terrace about 25 x 20 m west of the cove, level with the promenade (the road beside it)
@@ -164,6 +168,38 @@ def ring_distance(x, y, ring):
 def upper_level(x):
     (xa, za), (xb, zb) = UPPER_LEVEL
     return za + (zb - za) * min(max((x - xa) / (xb - xa), 0.0), 1.0)
+
+
+# V23c (Luc, 13 Nov, q10: "the climb at the start is far too steep ... totally bumpy"): the level used to begin at full
+# height right at the junction square, so the ground (and the paving on it, which is the promenade shortcut's lane)
+# climbed 1.2 m in 7 m (up to 18 %) behind a lip. Now the level grows out of the ground that is there: at RAMP_WEST[0]
+# the target IS the natural ground (flush with the square, whatever its cross fall), at RAMP_WEST[1] it is the level,
+# an S-curve between them (about 5 % at its steepest on the lane).
+RAMP_WEST = (-140.0, -110.0)
+EDGE_SOFT = 1.0                 # m: this close to the level's outline the paving follows the ground again (bank, kerbs)
+SMOOTH_FROM = (17.0, 21.0)      # m from the race line: where the paving leaves the corridor's ground for the smooth level
+_NAT = {}                       # the height grid before this plan shaped it (shape_heights)
+
+
+def upper_target(x, natural):
+    """Height of the upper level at x where the ground was `natural` before: the natural ground west of the ramp."""
+    return natural + (upper_level(x) - natural) * smooth((x - RAMP_WEST[0]) / (RAMP_WEST[1] - RAMP_WEST[0]))
+
+
+def upper_design(x, y):
+    """(smooth height of the upper level at (x, y), share 0..1 with which the paving takes it) or None off the level.
+    The 5 m ground under it is the same surface at its nodes; between them it is flat cells with creases, it sags at
+    the level's rim and it dips 7 cm where the corridor's mesh ends: the paving followed all of that."""
+    if not _NAT or not inside(x, y, UPPER):
+        return None
+    h, x0, y0, step = _NAT["h"], _NAT["x0"], _NAT["y0"], _NAT["step"]
+    fx, fy = (x - x0) / step, (y - y0) / step
+    i, j = int(fx), int(fy)
+    ax, ay = fx - i, fy - j
+    nat = h[j][i] * (1 - ax) * (1 - ay) + h[j][i + 1] * ax * (1 - ay) + h[j + 1][i] * (1 - ax) * ay + h[j + 1][i + 1] * ax * ay
+    share = smooth((route_distance(x, y) - SMOOTH_FROM[0]) / (SMOOTH_FROM[1] - SMOOTH_FROM[0])) * \
+        smooth(ring_distance(x, y, UPPER) / EDGE_SOFT)
+    return upper_target(x, nat), share
 
 
 def upper_share(x, y):
@@ -190,6 +226,7 @@ def terrain_weight(x, y):
 def shape_heights(heights, x0, y0, step):
     """Moves the 5 m terrain nodes of the upper level (V18g) and levels those under the terrace. Returns the number changed."""
     changed = 0
+    _NAT.update(h=[row[:] for row in heights], x0=x0, y0=y0, step=step)
     for j, row in enumerate(heights):
         y = y0 + j * step
         if not -190.0 <= y <= -102.0:
@@ -203,7 +240,7 @@ def shape_heights(heights, x0, y0, step):
                 continue
             share = upper_share(x, y) * w
             if share > 0.01:
-                row[i] += (upper_level(x) - row[i]) * share
+                row[i] += (upper_target(x, row[i]) - row[i]) * share       # V23c: was upper_level(x)
                 changed += 1
             elif inside(x, y, TERRACE):
                 row[i] = row[i] + (TERRACE_LEVEL - row[i]) * smooth((route_distance(x, y) - 7.0) / 4.0)
@@ -443,7 +480,7 @@ def paving_layers():
             uv = (o, u, CONCRETE[mat]["tile"], CONCRETE[mat]["tile"])
         return dict(name=name, mat=mat, ring=[(float(x), float(y)) for x, y in ring], uv=uv)
     return [lay("promenade", "pale", promenade_ring(KERB_INSET)), lay("cove ring", "pale", cove_ring(KERB_INSET)),
-            lay("upper road and palm car park", "beige", UPPER), lay("lower road", "beige", LOWER),
+            lay("upper road and palm car park", "beige", UPPER_PAVED), lay("lower road", "beige", LOWER),
             lay("stepped ramp", "beige", RAMP["ring"]),
             lay("sett paving at the cove", "setts", SETTS), lay("upper path", "beige", PATH_WEST),
             lay("tunnel plaza and east road", "ochre", PLAZA), lay("lane", "asphalt", LANE),
@@ -501,7 +538,9 @@ SETT_BANDS = [((-121.0 + 1.92 * k, -109.9 - 0.163 * k), 35.0) for k in range(3)]
 # road passes 6 m away), so the steps are bands on the paving, not risers.
 RAMP = dict(ring=[(-139.5, -120.3), (-134.0, -120.6), (-133.0, -126.9), (-139.5, -126.5)],
             nosings=[-121.5, -122.85, -124.2, -125.55, -126.6], x=(-139.3, -133.4), drain=-120.75,
-            bollards=[(-138.4, -120.0), (-136.3, -120.1), (-134.2, -120.2)], hydrant=(-132.6, -121.0))
+            bollards=[], hydrant=None)
+# V23c (Luc, 13 Nov, q9: "take out the three black pins ... I don't know what the red one is for. Take both out"):
+# the ramp's three bollards stood at (-138.4, -120.0), (-136.3, -120.1), (-134.2, -120.2), the hydrant at (-132.6, -121.0).
 # mulch bed and shrub belt at the foot of the north bank (survey 3b: 2-3 m bed, today a dense 3-5 m shrub belt)
 MULCH_W = 2.6
 BELT = dict(first=-136.0, last=-60.0, step=3.3, back=1.7, scale=(2.0, 2.7))

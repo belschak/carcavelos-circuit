@@ -1334,7 +1334,10 @@ PROM_BOLLARD = dict(offset=6.75, step=2.75, size=0.25, height=0.85,   # pale lim
 # V20a: the first gap reaches on to 332.6 (was 326.4): the walkway north of the lawn (the left branch of the s09 fork,
 # Luc 13 Nov 2026: both ways lead to the checkpoint before the tunnel) opens over its whole mouth; before, three posts
 # stood across it 2.75 m apart.
-PROM_MAST = dict(offset=8.2, at=(325.0, 347.0, 370.5, 392.0), height=13.5)   # white flood masts, every 43-47 m
+PROM_MAST = dict(offset=8.2, at=(347.0, 370.5, 392.0), height=13.5)   # white flood masts, every 43-47 m
+# V23c (Luc, 13 Nov, q9): the mast at route index 325.0 stood at (-135.36, -122.84), on the corner between the timber
+# posts and the two flower troughs at the fork. Taken out: a route sign will stand there (keep the spot free).
+SIGN_SPOT_FORK = (-135.36, -122.84)
 PROM_SEAT = dict(offset=6.95, width=0.4, height=0.48,               # curved white seat-walls (S_p03 h080), centre line
                  runs=((358.0, 364.0), (366.0, 371.0)))              # ... 6.75 m inner face; from/to route index
 PROM_DRAIN = dict(at=323.0, width=0.3, reach=6.35)                   # cast-iron slot drain at the entrance (S_p01 h135)
