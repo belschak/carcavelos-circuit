@@ -785,8 +785,6 @@ namespace CarcavelosCircuit.Visuals.Editor
             return material;
         }
 
-        }
-
         // Checkpoint gates (task V13): a waving "NOVA KART" feather banner on each side of the road at every
         // checkpoint, so the player sees where to drive through. Each pole foot sits on the ground found by a ray;
         // a pole that would stand inside a wall (tunnel, ramp walls) moves in towards the road until it is free.
