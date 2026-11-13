@@ -4,18 +4,24 @@ using UnityEngine;
 
 namespace CarcavelosCircuit.RaceFlow
 {
-    // Task R8, plain C# (Edit Mode tested): the starting grid behind the track's SpawnPoint.
-    // Slot 0 = the SpawnPoint itself, always the player's (pole position, the time trial starts exactly as before).
-    // Bots take slots 1, 2, 3 ... in a staggered grid: slot 1 right and one row back, slot 2 left and one row back,
-    // slot 3 right two rows back, and so on (docs/interfaces.md: 2 m sideways, 3 m back per row, numbers in
-    // RaceSettings). A bot keeps its slot for the whole session, so Retry always puts it back on the same spot.
-    // A slot that is freed (a bot left) goes to the next bot that needs one: lowest free number first.
+    // Task R8, plain C# (Edit Mode tested): the starting grid at the track's SpawnPoint.
+    // V23 (Luc, 13 Nov 2026): the grid is pairs side by side, like the boxes painted on the start plaza.
+    // Slot 0 = box 1 = front row left, slot 1 = box 2 = front row right, slot 2 = box 3 = second row left, and so on.
+    // The front row is centred on the SpawnPoint (the SpawnPoint itself is the free middle between boxes 1 and 2).
+    // Numbers in RaceSettings (docs/interfaces.md: 2 m sideways, 3 m back per row).
+    // KEEP IN SYNC: tools/world_gen/start_plan.py slot_offset() is the same formula in Python; the generator paints
+    // the boxes with it. Change one, change the other (RacerGridTests.SlotOffsets_AreTheTableTheGeneratorPaints).
+    // Who stands where:
+    // - Bots take the slots from the front: 0, 1, 2 ... A bot keeps its slot for the whole session, so Retry always
+    //   puts it back on the same spot. A freed slot (a bot left) goes to the next bot that needs one, lowest first.
+    // - The player always starts LAST, in the slot right behind the last bot. Alone (time trial) that is slot 0.
     public class RacerGrid
     {
         private readonly float sidewaysMetres;
         private readonly float rowMetres;
         private readonly List<IRacer> racers = new List<IRacer>(); // racers[i] holds slots[i]
         private readonly List<int> slots = new List<int>();
+        private const int NoStoredSlot = -1; // the player's entry in slots (see SlotOf)
 
         public RacerGrid(float sidewaysMetres, float rowMetres)
         {
@@ -27,15 +33,24 @@ namespace CarcavelosCircuit.RaceFlow
         // How many racers have a slot right now.
         public int Count { get { return racers.Count; } }
 
+        // The player's slot in a time trial (no bots): front row, box 1.
+        public const int TimeTrialSlot = 0;
+
         // Where a slot is, seen from the SpawnPoint: x = metres to the right, z = metres forward (negative = behind).
         public Vector3 SlotOffset(int slot)
         {
-            if (slot <= 0)
+            return OffsetOf(slot, sidewaysMetres, rowMetres);
+        }
+
+        // The one grid formula (mirrored by start_plan.py slot_offset, see the note at the top).
+        public static Vector3 OffsetOf(int slot, float sidewaysMetres, float rowMetres)
+        {
+            if (slot < 0)
             {
-                return Vector3.zero;
+                slot = 0;
             }
-            int row = (slot + 1) / 2;              // 1,2 -> row 1; 3,4 -> row 2 ...
-            float side = slot % 2 == 1 ? 1f : -1f; // odd = right, even = left
+            int row = slot / 2;                    // 0,1 -> front row; 2,3 -> second row ...
+            float side = slot % 2 == 0 ? -1f : 1f; // even slot (odd box number) = left, odd slot = right
             return new Vector3(side * sidewaysMetres, 0f, -row * rowMetres);
         }
 
@@ -46,30 +61,49 @@ namespace CarcavelosCircuit.RaceFlow
             return spawnPosition + spawnRotation * SlotOffset(slot);
         }
 
-        // The racer's slot, or -1 if it has none yet.
+        // The racer's slot, or -1 if it has none yet. The player's slot is not stored: it is always the one behind
+        // the last bot, so it moves back when a bot joins and forward when the last bot leaves.
         public int SlotOf(IRacer racer)
         {
             int i = racers.IndexOf(racer);
-            return i < 0 ? -1 : slots[i];
+            if (i < 0)
+            {
+                return -1;
+            }
+            return racer.IsPlayer ? PlayerSlot : slots[i];
         }
 
-        // Gives the racer a slot and returns it: the player always gets 0, a bot keeps the slot it already has or gets
-        // the lowest free one from 1 up. Returns -1 for null.
+        // Where the player starts: behind every bot (highest bot slot + 1), or TimeTrialSlot if there is no bot.
+        public int PlayerSlot
+        {
+            get
+            {
+                int last = TimeTrialSlot - 1;
+                for (int i = 0; i < slots.Count; i++)
+                {
+                    if (!racers[i].IsPlayer && slots[i] > last)
+                    {
+                        last = slots[i];
+                    }
+                }
+                return last + 1;
+            }
+        }
+
+        // Gives the racer a slot and returns it: a bot keeps the slot it already has or gets the lowest free one
+        // from 0 up, the player gets PlayerSlot (the last one). Returns -1 for null.
         public int Assign(IRacer racer)
         {
             if (racer == null)
             {
                 return -1;
             }
-            int existing = SlotOf(racer);
-            if (existing >= 0)
+            if (racers.IndexOf(racer) < 0)
             {
-                return existing;
+                racers.Add(racer);
+                slots.Add(racer.IsPlayer ? NoStoredSlot : LowestFreeSlot());
             }
-            int slot = racer.IsPlayer ? 0 : LowestFreeSlot();
-            racers.Add(racer);
-            slots.Add(slot);
-            return slot;
+            return SlotOf(racer);
         }
 
         // Frees the racer's slot. False if it had none.
@@ -110,10 +144,10 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        // 1, 2, 3 ... the first number no bot holds (slot 0 is never given to a bot).
+        // 0, 1, 2 ... the first number no bot holds (the player's entry holds NoStoredSlot, so it never blocks one).
         private int LowestFreeSlot()
         {
-            int slot = 1;
+            int slot = 0;
             while (slots.Contains(slot))
             {
                 slot++;
