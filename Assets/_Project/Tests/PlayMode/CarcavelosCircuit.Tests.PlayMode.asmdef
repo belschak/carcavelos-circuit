@@ -6,6 +6,7 @@
         "CarcavelosCircuit.Shared",
         "CarcavelosCircuit.Track",
         "CarcavelosCircuit.RaceFlow",
+        "CarcavelosCircuit.Visuals",
         "Unity.Cinemachine"
     ],
     "includePlatforms": [],
