@@ -34,6 +34,7 @@ from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import env_common as E  # noqa: E402
+import env_corridor  # noqa: E402
 
 PROTO_COLLECTION = "Proto_Props"
 WORLD_COLLECTION = "World_Props"
@@ -41,14 +42,20 @@ PLACEMENTS_FILE = os.path.join(E.OUT, "placements_props.json")
 SEED = 20261108
 
 TRI_BUDGET = {"Prop_LampCampus": 120, "Prop_LampRoad": 150, "Prop_Bench": 60, "Prop_LoungeChair": 150,
-              "Prop_Bollard": 40, "Prop_RailingSegment": 100, "Prop_Bin": 60, "Prop_Parasol": 100,
+              "Prop_Bollard": 40, "Prop_RailingSegment": 30, "Prop_Bin": 60, "Prop_Parasol": 100,
               # design pass 2026-11-09 (Deep-Research catalogue, Phase 1): cafe kit, planters, atrium
               "Prop_BistroTable": 112, "Prop_BistroChair": 120, "Prop_TroughBloom": 210, "Prop_PlanterRound": 180,
-              "Prop_StudyTable": 96, "Prop_GrandPiano": 180}
+              "Prop_StudyTable": 96, "Prop_GrandPiano": 180,
+              # beach pass V10b 2026-11-10: straw parasols, loungers, lifeguard post, stone heaps
+              "Prop_ParasolThatch": 80, "Prop_SunLounger": 64, "Prop_LifeguardTower": 260, "Prop_StonePile": 330,
+              # V16f dressing pass: potted olive, tapered planter, picnic table
+              "Prop_PotOlive": 260, "Prop_PlanterTapered": 90, "Prop_PicnicTable": 110}
 FOOTPRINT = {"Prop_LampCampus": 0.3, "Prop_LampRoad": 0.3, "Prop_Bench": 1.0, "Prop_LoungeChair": 0.6,
              "Prop_Bollard": 0.15, "Prop_RailingSegment": 0.0, "Prop_Bin": 0.3, "Prop_Parasol": 1.6,
              "Prop_BistroTable": 0.4, "Prop_BistroChair": 0.3, "Prop_TroughBloom": 0.85, "Prop_PlanterRound": 0.45,
-             "Prop_StudyTable": 0.95, "Prop_GrandPiano": 1.2}
+             "Prop_StudyTable": 0.95, "Prop_GrandPiano": 1.2,
+             "Prop_ParasolThatch": 1.4, "Prop_SunLounger": 0.9, "Prop_LifeguardTower": 1.6, "Prop_StonePile": 2.0,
+             "Prop_PotOlive": 0.45, "Prop_PlanterTapered": 0.6, "Prop_PicnicTable": 1.2}
 
 # Placement rules (metres along the lap = route s, offsets from the centreline; + = left of the driving direction)
 NO_PROP_ZONES = {"tunnel", "atrium"}                  # indoors / underground: nothing stands there
@@ -61,12 +68,21 @@ RAILING_OFFSET, RAILING_LENGTH = 4.6, 2.0
 JUMP_GAP = 12.0                     # no deck railing within 6 m of the jump take-off
 # north tunnel ramp (railings on both sides) = the "ramp" points that follow the tunnel, whatever the route
 SEAWALL_GROUND_Z = 4.0              # promenade railing where the route's ground_z is below this
+SEAWALL_RAILING = False             # V10b: no blanket railing along the promenade (photos K03-K07: an open granite
+                                    # kerb, railings only at the stairs, built by env_beachfront)
 BENCH_STEP, BENCH_OFFSET = 25.0, 7.0
 BOLLARD_OFFSETS = (6.5, 8.0, 9.5, 11.0, 12.5)   # a row of 5 on each side, outside the 8 m road
 CHAIR_BAND = (7.0, 12.0)            # lounge chairs on the deck, this far from the centreline
 DECK_EDGE_GAP = 0.6                 # ... and at least this far inside the deck (roof) edge
-BEACH_BAR = (-75.0, -148.0)         # parasols near here, each >= PARASOL_CLEAR from the route
+BEACH_BAR = (-75.0, -148.0)         # parasols near here, each >= PARASOL_CLEAR from the route (until V10b)
 PARASOL_CLEAR = 8.0
+# Beach pass V10b (2026-11-10), evidence: ortho_west / ortho_south, photos K02-K06
+PAVILION_TERRACE = ((-44.3, -140.8), (0.968, -0.252), 6.3, (-6.0, -2.0, 2.0, 6.0))   # centre, long axis, out, tables
+BEACH_GRID = dict(origin=(-351.7, -17.4), along=(0.854, -0.519), rows=4, per_row=9, step=3.7, row_step=5.8,
+                  loungers_rows=2)      # straw parasols in rows on the sand west of A Pastorinha (ortho_west)
+LIFEGUARD = (-321.0, -94.0)            # lifeguard post on the main beach, facing the water
+STONE_PILES = ((-55.0, -161.0, 1.0), (-74.0, -159.8, 0.85), (-42.5, -171.0, 0.7))   # heaps on the cove sand (K05, K06)
+BEACH_SEA = (-0.742, -0.670)           # towards the water on the main beach
 BUILDING_GAP, ROAD_GAP = 2.0, 1.0
 TREE_GAP = 1.2                      # props keep their footprint + this from the real (OSM) tree positions
 ROAD_TYPES = {"primary", "primary_link", "secondary", "tertiary", "residential", "unclassified", "service",
@@ -76,6 +92,7 @@ REPORT = {}                         # filled by place(): what could not be place
 # Design pass 2026-11-09 (design reference: busy cafe terraces, planters lining the track, a furnished atrium)
 CAFE_ZONES = {"upper plaza": 4, "promenade": 2, "lower plaza": 1}   # cafe groups per zone (at most)
 CAFE_STEP = 38.0                    # m of route between cafe groups
+START_CAFE_DRAWS = 266              # V15b: random values the cafe group at the start drew in the approved V15 build (14 x 19)
 CAFE_OFFSETS = (9.5, 10.5, 11.5, 12.5, 14.0)   # group centre from the route centreline
 TROUGH_ZONES = {"upper plaza", "lower plaza", "promenade"}
 TROUGH_STEP, TROUGH_OFFSET = 18.0, 6.6          # a pair of flower troughs every ~18 m on straights
@@ -166,14 +183,14 @@ def tube(mb, path, radii, sides, mat):
 # Prototypes
 # =====================================================================================================
 def lamp_campus(name, metal, base, light, col):
-    """Slim modern campus lamp, 5 m: square concrete foot, octagonal pole, flat rectangular head that reaches
-    1 m out along +x, glowing underside."""
+    """Campus lamp (V16f, survey V15 section 1 point 9 and 3.1 / 3.4 / 3.6): a slim dark square column, 5.5 m, with
+    the lantern in its top (a glowing band under a dark cap), no arm. Low concrete foot."""
     mb = MeshBuilder()
     METAL, BASE, LIGHT = 0, 1, 2
-    box(mb, -0.17, 0.17, -0.17, 0.17, -0.15, 0.32, BASE)
-    lathe(mb, [(0.085, 0.25), (0.075, 4.8)], 8, METAL, phase=math.pi / 8)
-    profile = [(-0.16, 4.76), (0.16, 4.76), (0.16, 4.86), (0.12, 4.93), (-0.12, 4.93), (-0.16, 4.86)]
-    extrude(mb, profile, "x", -0.22, 1.05, [LIGHT, METAL, METAL, METAL, METAL, METAL, METAL])
+    box(mb, -0.13, 0.13, -0.13, 0.13, -0.15, 0.12, BASE)
+    box(mb, -0.08, 0.08, -0.08, 0.08, 0.12, 4.8, METAL, skip=("bottom", "top"))
+    box(mb, -0.065, 0.065, -0.065, 0.065, 4.8, 5.38, LIGHT, skip=("bottom", "top"))
+    box(mb, -0.08, 0.08, -0.08, 0.08, 5.38, 5.5, METAL, skip=())
     return mb.build(name, [metal, base, light], col)
 
 
@@ -222,17 +239,60 @@ def bollard(name, steel, cap, col):
     return mb.build(name, [steel, cap], col)
 
 
-def railing(name, steel, col):
-    """Stainless railing segment, 2.0 m along +x from its origin: post at the start, top rail, bottom rail and
-    seven vertical bars. Segments placed end to end make a continuous railing (each post hides a joint)."""
+def railing(name, mat, col):
+    """Bar railing segment, 2.0 m along +x from its origin (V16f, photosphere survey V15 section 1 point 1: flat-bar
+    steel, 1.1 m, close vertical bars 11 cm apart, a post every 2 m, flat top rail, light galvanised). One
+    alpha-clipped sheet carries the bars and the bottom rail (make_textures.make_railing, one 2 m module); the post
+    at the start and the flat top rail are solid, on the same material (their corners sit at UV (0.5, 0.5) = on a
+    bar of the texture). Outer size as before (x -0.03..2.0, y +-0.032, z -0.12..1.1): Unity's box collider, taken
+    from the bounds, does not move. Segments placed end to end make a continuous railing."""
     mb = MeshBuilder()
     box(mb, -0.03, 0.03, -0.03, 0.03, -0.12, 1.1, 0)                       # post
-    box(mb, 0.0, RAILING_LENGTH, -0.032, 0.032, 1.02, 1.08, 0, skip=())    # top rail (handrail)
-    box(mb, 0.0, RAILING_LENGTH, -0.022, 0.022, 0.1, 0.145, 0, skip=())    # bottom rail
-    for k in range(1, 8):                                                   # bars between the rails
-        x = k * RAILING_LENGTH / 8
-        box(mb, x - 0.018, x + 0.018, -0.018, 0.018, 0.145, 1.02, 0, skip=("bottom", "top"))
-    return mb.build(name, [steel], col)
+    box(mb, 0.0, RAILING_LENGTH, -0.032, 0.032, 1.05, 1.1, 0, skip=())     # flat top rail
+    sheet = [mb.v((x, 0.0, z), uv=(u, v)) for x, z, u, v in ((0.0, 0.0, 0.0, 0.0), (RAILING_LENGTH, 0.0, 1.0, 0.0),
+                                                             (RAILING_LENGTH, 1.1, 1.0, 1.0), (0.0, 1.1, 0.0, 1.0))]
+    mb.f(sheet, 0, keep=True)                                               # bars: drawn from both sides
+    return mb.build(name, [mat], col)
+
+
+def pot_olive(name, pot, soil, trunk, crown, crown_top, col):
+    """Dark conical pot, 0.9 m high (0.5 m across at the foot, 0.84 m at the rim), with a thin young olive: a slim
+    stem and a small loose crown, about 2.7 m in all (V16f, survey V15 3.4 / 3.5: 'four thin olives in black conical
+    pots', 'dark conical pots 0.9 m in twos and threes')."""
+    rng = random.Random(name)
+    mb = MeshBuilder()
+    POT, SOIL, TRUNK, CROWN, TOP = 0, 1, 2, 3, 4
+    lathe(mb, [(0.25, -0.05), (0.42, 0.9), (0.37, 0.9), (0.37, 0.84), (0.0, 0.84)], 10, [POT, POT, POT, SOIL])
+    lathe(mb, [(0.035, 0.84), (0.028, 1.75), (0.0, 1.8)], 5, TRUNK)
+    for cx, cy, cz, r in ((0.05, 0.0, 2.12, 0.5), (-0.2, -0.12, 1.98, 0.4)):
+        puff_lobe(mb, (cx, cy, cz), (r, r * 0.94, r * 0.78), rng, lambda z: TOP if z > 0.25 else CROWN, (0.0, 0.0, 1.7),
+                  floor=-0.7, jitter=0.04)
+    return mb.build(name, [pot, soil, trunk, crown, crown_top], col)
+
+
+def planter_tapered(name, pot, soil, crown, col):
+    """Black round tapered planter, 0.7 m high (0.7 m across at the foot, 1.2 m at the rim), with a low green mound
+    (V16f, survey V15 3.6 / App. F 2.2: '2-3 black round tapered planters' at G's corner on the lower plaza)."""
+    rng = random.Random(name)
+    mb = MeshBuilder()
+    POT, SOIL, CROWN = 0, 1, 2
+    lathe(mb, [(0.35, -0.05), (0.6, 0.7), (0.54, 0.7), (0.54, 0.64), (0.0, 0.64)], 10, [POT, POT, POT, SOIL])
+    puff_lobe(mb, (0.0, 0.0, 0.8), (0.42, 0.42, 0.26), rng, lambda z: CROWN, (0.0, 0.0, 0.64), subdiv=1, floor=-0.6)
+    return mb.build(name, [pot, soil, crown], col)
+
+
+def picnic_table(name, wood, col):
+    """Timber picnic table with its two benches in one piece (1.8 m long along x, 1.5 m across, top at 0.75 m):
+    plank top, two seat boards, two A-shaped end frames (V16f, survey V15 3.6: 'timber picnic tables')."""
+    mb = MeshBuilder()
+    box(mb, -0.9, 0.9, -0.36, 0.36, 0.71, 0.75, 0, skip=())
+    for y in (-0.62, 0.62):
+        box(mb, -0.9, 0.9, y - 0.13, y + 0.13, 0.41, 0.45, 0, skip=())
+    for x in (-0.66, 0.66):
+        box(mb, x - 0.035, x + 0.035, -0.7, 0.7, 0.33, 0.41, 0, skip=())                 # bar under the seats
+        extrude(mb, [(-0.52, -0.02), (-0.42, -0.02), (-0.2, 0.71), (-0.3, 0.71)], "x", x - 0.03, x + 0.03, 0)
+        extrude(mb, [(0.42, -0.02), (0.52, -0.02), (0.3, 0.71), (0.2, 0.71)], "x", x - 0.03, x + 0.03, 0)
+    return mb.build(name, [wood], col)
 
 
 def litter_bin(name, body, lid, opening, col):
@@ -369,6 +429,133 @@ def grand_piano(name, gloss, keys, col):
     return mb.build(name, [gloss, keys], col)
 
 
+def parasol_thatch(name, straw, pole, col):
+    """Straw beach parasol (the dried-grass parasols in rows on Carcavelos beach, ortho_west): a slim timber pole
+    and a ten-sided cone of straw, 2.9 m across, with a short ragged fringe and a flat underside. UVs for the
+    straw texture (make_textures.py thatch): u around the parasol (two repeats), v from the tip to the fringe.
+    One connected canopy; the UV seam is a doubled column of vertices, so the faces keep their winding (keep)."""
+    mb = MeshBuilder()
+    STRAW, POLE = 0, 1
+    lathe(mb, [(0.06, -0.3), (0.05, 2.25)], 5, POLE)
+    sides, r_rim, z_tip, z_rim, z_fringe = 10, 1.45, 2.85, 2.25, 2.08
+    rr = r_rim + 0.06
+    tip = mb.v((0, 0, z_tip), uv=(0.5, 0.0))
+    hub = mb.v((0, 0, z_rim - 0.05), uv=(0.5, 0.9))
+    rim, fringe = [], []
+    for j in range(sides + 1):                      # column `sides` = column 0 again, with u = 2.0 (the seam)
+        a = 2 * math.pi * (j % sides) / sides
+        c, sn, u = math.cos(a), math.sin(a), 2.0 * j / sides
+        dz = 0.03 if j % 2 else -0.03
+        rim.append(mb.v((c * r_rim, sn * r_rim, z_rim), uv=(u, 0.82)))
+        fringe.append(mb.v((c * rr, sn * rr, z_fringe + dz), uv=(u, 1.0)))
+    for j in range(sides):
+        mb.f((tip, rim[j], rim[j + 1]), STRAW, keep=True)
+        mb.f((rim[j], fringe[j], fringe[j + 1], rim[j + 1]), STRAW, keep=True)
+        mb.f((fringe[j + 1], fringe[j], hub), STRAW, keep=True)
+    return mb.build(name, [straw, pole], col)
+
+
+def sun_lounger(name, frame, cushion, col):
+    """Beach lounger (our own design): low timber frame on four legs, a cushion and a back raised about 35
+    degrees. 0.66 m wide, 1.95 m long along y; the back is at +y, the sitter looks along -y."""
+    mb = MeshBuilder()
+    FRAME, CUSHION = 0, 1
+    for x in (-0.3, 0.3):
+        for y in (-0.85, 0.55):
+            box(mb, x - 0.03, x + 0.03, y - 0.03, y + 0.03, -0.05, 0.28, FRAME, skip=("bottom", "top"))
+    box(mb, -0.33, 0.33, -0.95, 0.55, 0.28, 0.34, FRAME)
+    box(mb, -0.3, 0.3, -0.92, 0.5, 0.34, 0.41, CUSHION, skip=("bottom",))
+    ang = math.radians(35)
+    back = [(0.5, 0.34), (0.5 + 0.85 * math.cos(ang), 0.34 + 0.85 * math.sin(ang)),
+            (0.5 + 0.85 * math.cos(ang) - 0.07 * math.sin(ang), 0.34 + 0.85 * math.sin(ang) + 0.07 * math.cos(ang)),
+            (0.5 - 0.07 * math.sin(ang), 0.34 + 0.07 * math.cos(ang))]
+    extrude(mb, back, "x", -0.3, 0.3, CUSHION)
+    return mb.build(name, [frame, cushion], col)
+
+
+def lifeguard_tower(name, wood, white, red, flag, col):
+    """Lifeguard post (our own design): four timber legs, a platform 2.1 m up with a ladder, a small white hut
+    with a red band and a red mono-pitch roof, and a flag pole. Faces the water along -y."""
+    mb = MeshBuilder()
+    WOOD, WHITE, RED, FLAG = 0, 1, 2, 3
+    for x in (-0.85, 0.85):
+        for y in (-0.85, 0.85):
+            box(mb, x - 0.07, x + 0.07, y - 0.07, y + 0.07, -0.3, 2.1, WOOD, skip=("bottom", "top"))
+    box(mb, -1.1, 1.1, -1.25, 1.1, 2.1, 2.24, WOOD)
+    box(mb, -0.8, 0.8, -0.55, 0.85, 2.24, 3.5, WHITE, skip=("bottom", "top"))
+    box(mb, -0.82, 0.82, -0.57, 0.87, 3.05, 3.3, RED, skip=("bottom", "top"))
+    box(mb, -0.84, 0.84, -0.42, 0.66, 2.95, 3.05, WOOD, skip=("bottom",))      # window ledge band
+    roof = [(-0.75, 3.5), (1.05, 3.85), (1.05, 3.97), (-0.75, 3.62)]            # (y, z) mono-pitch, rising inland
+    extrude(mb, roof, "x", -0.98, 0.98, RED)
+    for x in (-0.25, 0.25):                                                      # ladder at the back
+        tube(mb, [(x, 1.55, 0.0), (x, 1.15, 2.15)], [0.035, 0.035], 4, WOOD)
+    for k in range(1, 5):
+        t = k / 5
+        box(mb, -0.25, 0.25, 1.55 - 0.4 * t - 0.025, 1.55 - 0.4 * t + 0.025, 2.15 * t - 0.02, 2.15 * t + 0.02, WOOD,
+            skip=())
+    box(mb, 0.92, 0.97, 0.92, 0.97, 2.24, 5.2, WOOD, skip=("bottom",))            # flag pole
+    box(mb, 0.97, 1.75, 0.935, 0.955, 4.65, 5.15, FLAG, skip=())                  # flag
+    return mb.build(name, [wood, white, red, flag], col)
+
+
+def stone_pile(name, light, mid, dark, col):
+    """Heap of loose stones on the sand (K05, K06): about 15 angular rocks of 0.25-0.7 m, about 3.5 m across and
+    0.6 m high. Flat shaded, three stone tones."""
+    rng = random.Random(name)
+    mb = MeshBuilder()
+    t = (1 + 5 ** 0.5) / 2
+    ico_v = [(-1, t, 0), (1, t, 0), (-1, -t, 0), (1, -t, 0), (0, -1, t), (0, 1, t), (0, -1, -t), (0, 1, -t),
+             (t, 0, -1), (t, 0, 1), (-t, 0, -1), (-t, 0, 1)]
+    ico_f = [(0, 11, 5), (0, 5, 1), (0, 1, 7), (0, 7, 10), (0, 10, 11), (1, 5, 9), (5, 11, 4), (11, 10, 2), (10, 7, 6),
+             (7, 1, 8), (3, 9, 4), (3, 4, 2), (3, 2, 6), (3, 6, 8), (3, 8, 9), (4, 9, 5), (2, 4, 11), (6, 2, 10),
+             (8, 6, 7), (9, 8, 1)]
+    rocks = 16
+    for k in range(rocks):
+        r = 1.6 * math.sqrt(rng.random())
+        a = rng.uniform(0, 2 * math.pi)
+        cx, cy = math.cos(a) * r, math.sin(a) * r * 0.75
+        size = rng.uniform(0.2, 0.42) * (1.25 - 0.35 * r / 1.6)
+        cz = size * 0.35 + (0.25 if r < 0.8 and rng.random() < 0.5 else 0.0)
+        sx, sy, sz = size * rng.uniform(0.9, 1.4), size * rng.uniform(0.8, 1.2), size * rng.uniform(0.55, 0.8)
+        yaw = rng.uniform(0, math.pi)
+        cyaw, syaw = math.cos(yaw), math.sin(yaw)
+        mat = rng.choice((0, 1, 1, 2))
+        idx = []
+        for vx, vy, vz in ico_v:
+            j = rng.uniform(0.85, 1.12)
+            x, y, z = vx / 1.902 * sx * j, vy / 1.902 * sy * j, vz / 1.902 * sz * j
+            idx.append(mb.v((cx + x * cyaw - y * syaw, cy + x * syaw + y * cyaw, cz + z)))
+        for f in ico_f:
+            mb.f(tuple(idx[i] for i in f), mat)
+    return mb.build(name, [light, mid, dark], col)
+
+
+RAILING_STEEL = "#9A978C"        # V16f: light galvanised / satin steel of the campus railings (survey V15, fix 1)
+RAILING_RECOLOUR = {             # every railing material of the world: W_<name> -> (colour or None, roughness, metallic)
+    "plaza_rail": (RAILING_STEEL, 0.55, 0.15),       # env_plaza: fences round the courtyard, stair railings
+    "entrance_steel": (RAILING_STEEL, 0.55, 0.15),   # env_entrance: handrails on the car-park ramp's walls
+    "B_steel": (None, 0.5, 0.2),                     # env_beachfront: two-rail stair railings (colour #A7ABB2 stays)
+}
+
+
+def railing_materials():
+    """The world's railing look in one place (V16f). Returns the cutout material of the bar railings (the campus
+    decks' 'B_railing' sheet: env_campus.railing_material) and sets the other modules' railing materials to the same
+    light galvanised steel: they were dark (#4A4E53) or so metallic (0.6-0.85) that they read black in the game,
+    where nothing bright is reflected. Called when the prototypes are built, i.e. after env_plaza / env_entrance
+    made their materials; a module that asks for the material later gets this one (E.material returns by name)."""
+    import env_campus
+    for name, (colour, roughness, metallic) in RAILING_RECOLOUR.items():
+        mat = E.material(name, colour or RAILING_STEEL, roughness=roughness, metallic=metallic)
+        bsdf = mat.node_tree.nodes.get("Principled BSDF")
+        if colour:
+            mat.diffuse_color = E.hex_rgba(colour)
+            bsdf.inputs["Base Color"].default_value = E.hex_rgba(colour)
+        bsdf.inputs["Roughness"].default_value = roughness
+        bsdf.inputs["Metallic"].default_value = metallic
+    return env_campus.railing_material()
+
+
 def build_prototypes():
     """Creates every prop prototype in collection Proto_Props and returns {name: object}.
     Rebuilding replaces the old objects. Raises if a prototype breaks its triangle budget."""
@@ -391,7 +578,7 @@ def build_prototypes():
         "Prop_LoungeChair": lounge_chair("Prop_LoungeChair", m("chair_frame", "#7C8189", roughness=0.6),
                                          m("chair_cushion", "#B7BBC1", roughness=0.9), col),
         "Prop_Bollard": bollard("Prop_Bollard", steel, m("bollard_cap", "#2E3136", roughness=0.4, metallic=0.5), col),
-        "Prop_RailingSegment": railing("Prop_RailingSegment", steel, col),
+        "Prop_RailingSegment": railing("Prop_RailingSegment", railing_materials(), col),
         "Prop_Bin": litter_bin("Prop_Bin", m("bin_body", "#5D646B", roughness=0.6, metallic=0.3), steel,
                                m("gloss_black", roughness=0.5), col),
         "Prop_Parasol": parasol("Prop_Parasol", m("parasol_canvas", "#F2E3C8", roughness=0.9),
@@ -414,6 +601,28 @@ def build_prototypes():
                                        m("cafe_metal", "#3E3B3A", roughness=0.5, metallic=0.5), col),
         "Prop_GrandPiano": grand_piano("Prop_GrandPiano", m("piano_gloss", "#1D1D1F", roughness=0.2),
                                        m("piano_keys", "#E8E2D2", roughness=0.5), col),
+        # beach pass V10b
+        "Prop_ParasolThatch": parasol_thatch("Prop_ParasolThatch", _textured(m("thatch", "#B39461", roughness=0.95),
+                                                                              "thatch"),
+                                             m("bark_light", roughness=0.8), col),
+        "Prop_SunLounger": sun_lounger("Prop_SunLounger", m("bench_wood", "#A27E58", roughness=0.8),
+                                       m("planter_cream", "#D9CFBB", roughness=0.85), col),
+        "Prop_LifeguardTower": lifeguard_tower("Prop_LifeguardTower", m("bench_wood", "#A27E58", roughness=0.8),
+                                               m("planter_cream", "#D9CFBB", roughness=0.85),
+                                               m("B_roof_tiles", "#C8664A", 0.85),
+                                               m("lifeguard_flag", "#E8C547", roughness=0.8), col),
+        "Prop_StonePile": stone_pile("Prop_StonePile", m("concrete_light", roughness=0.9),
+                                     m("fort_top", "#A99A7B", 0.95), m("fort_rock", "#8E7D59", 0.95), col),
+        # V16f dressing pass (survey V15): potted olives, black tapered planters, timber picnic tables
+        "Prop_PotOlive": pot_olive("Prop_PotOlive", m("lamp_foot", "#3A3D42", roughness=0.6, metallic=0.4),
+                                   m("soil", "#5E4A3A", roughness=1.0), m("bark_light", roughness=0.8),
+                                   m("olive_crown_b", "#5F7F4F", roughness=0.9),
+                                   m("olive_crown_top_b", "#9DB06E", roughness=0.9), col),
+        "Prop_PlanterTapered": planter_tapered("Prop_PlanterTapered",
+                                               m("lamp_foot", "#3A3D42", roughness=0.6, metallic=0.4),
+                                               m("soil", "#5E4A3A", roughness=1.0),
+                                               m("olive_crown_b", "#5F7F4F", roughness=0.9), col),
+        "Prop_PicnicTable": picnic_table("Prop_PicnicTable", m("bench_wood", "#A27E58", roughness=0.8), col),
     }
     for name, obj in protos.items():
         tris = triangles(obj)
@@ -424,6 +633,14 @@ def build_prototypes():
 
 def triangles(obj):
     return sum(len(p.vertices) - 2 for p in obj.data.polygons)
+
+
+def _textured(mat, base):
+    """Albedo texture on a prop material (make_textures.py), without touching env_materials.TEXTURED."""
+    import env_materials
+    if not mat.get("v10b_textured") and env_materials.upgrade(mat, base, 0.95):
+        mat["v10b_textured"] = 1
+    return mat
 
 
 # =====================================================================================================
@@ -489,6 +706,8 @@ class Site:
         if E.ground_class(x, y) in ("sea", "water"):
             return False
         if E.distance_to_route(x, y) < clear + footprint * 0.5:
+            return False
+        if _beach_side(x, y):                     # V10b: street props stay on the promenade, off the sand
             return False
         if self.building_clearance(x, y) < BUILDING_GAP:
             return False
@@ -584,13 +803,18 @@ def _every(site, indices, step, start=None):
     return out
 
 
-def _railing_run(site, idx, side, z_of, report_key, own_roof=None):
+def _railing_run(site, idx, side, z_of, report_key, own_roof=None, on_wall_top=False):
     """Railing segments end to end along route indices `idx`, RAILING_OFFSET m to one side. Each segment is
     exactly RAILING_LENGTH long (3-D), turned along the offset line and pitched to follow its slope.
     A segment that would cut into a building (other than `own_roof`, the deck it stands on) is left out."""
     line = []
     for i in idx:
         p, _t, (nx, ny) = site.frame(i)
+        top = env_corridor.railing_line(p, side) if on_wall_top else None
+        if top is not None:                             # V10g: on top of a flat cut wall, on the ground behind its edge
+            x, y = p["x"] + nx * top * side, p["y"] + ny * top * side
+            line.append(Vector((x, y, E.ground_z(x, y) + 0.03)))
+            continue
         line.append(Vector((p["x"] + nx * RAILING_OFFSET * side, p["y"] + ny * RAILING_OFFSET * side, z_of(p))))
     if len(line) < 2:
         return []
@@ -619,6 +843,109 @@ def _railing_run(site, idx, side, z_of, report_key, own_roof=None):
     return out
 
 
+_BEACH_BOX = (-300.0, -235.0, 7.0, -46.0)     # the promenade kerb lines plus 40 m (env_beachfront.on_beach_side)
+
+
+def _beach_side(x, y):
+    if not (_BEACH_BOX[0] < x < _BEACH_BOX[2] and _BEACH_BOX[1] < y < _BEACH_BOX[3]):
+        return False
+    import env_beachfront as B
+    return B.on_beach_side(x, y)
+
+
+def _beachfront(site, rng, free, fits):
+    """V10b beach dressing. Groups are checked as a whole against what already stands (free), then added.
+    Restaurant and pavilion terraces: a round table with three chairs (some with a parasol), on the terrace
+    height from env_beachfront; tagged site = "terrace" (they stand within 2 m of the building on purpose).
+    Main beach: rows of straw parasols on the sand west of A Pastorinha (ortho_west), loungers under the two
+    rows nearest the promenade, a lifeguard post nearer the water. Cove: three heaps of stones (K05, K06)."""
+    import env_beachfront as B
+    out, stats = [], {"terrace_tables": 0, "pavilion_tables": 0, "straw_parasols": 0, "loungers": 0,
+                      "lifeguard": 0, "stone_piles": 0}
+
+    def table_group(x, y, parasol):
+        items = [("Prop_BistroTable", x, y, rng.uniform(-math.pi, math.pi))]
+        if parasol:
+            items.append(("Prop_Parasol", x, y, rng.uniform(-math.pi, math.pi)))
+        a0 = rng.uniform(0, 2 * math.pi)
+        for q in range(3):
+            a = a0 + 2 * math.pi * q / 3 + rng.uniform(-0.15, 0.15)
+            px, py = x + math.cos(a) * 0.64, y + math.sin(a) * 0.64
+            items.append(("Prop_BistroChair", px, py, _facing(x - px, y - py) + rng.uniform(-0.25, 0.25)))
+        return items
+
+    def add(items, z_of, tag=None):
+        """The table must be free; a chair that would touch a plant or another prop is left out."""
+        if not free(items[0][1], items[0][2], items[0][0]):
+            return False
+        items = [it for it in items if it[0] in ("Prop_BistroTable", "Prop_Parasol") or free(it[1], it[2], it[0])]
+        for pr, x, y, rot in items:
+            e = _entry(pr, x, y, z_of(x, y), rot)
+            if tag:
+                e["site"] = tag
+            out.append(e)
+        return True
+
+    def blocked(x, y, r):
+        return any(math.hypot(x - q["x"], y - q["y"]) < r + FOOTPRINT[q["proto"]] + 0.3 for q in out)
+
+    for bid in B.RESTAURANTS:                                         # restaurant terraces
+        for kind, x, y, z, _rot in B.deck_spots(bid):
+            if kind in ("table", "parasol") and not blocked(x, y, 1.0):
+                if add(table_group(x, y, kind == "parasol"), lambda _x, _y, z=z: z, "terrace"):
+                    stats["terrace_tables"] += 1
+    (cx, cy), (ux, uy), off, ats = PAVILION_TERRACE                   # pavilion terrace (ortho_south, K02)
+    vx, vy = -uy, ux
+    for k, a in enumerate(ats):
+        x, y = cx + ux * a - vx * off, cy + uy * a - vy * off
+        group = table_group(x, y, True)
+        if all(site.ok(px, py, clear=PARASOL_CLEAR if pr == "Prop_Parasol" else E.KEEP_CLEAR,
+                       footprint=FOOTPRINT[pr]) for pr, px, py, _r in group) and add(group, _prop_z):
+            stats["pavilion_tables"] += 1
+
+    def on_sand(x, y, r):
+        return (E.ground_class(x, y) == "sand" and E.ground_z(x, y) > 1.2 and site.building_clearance(x, y) > 3.0
+                and E.distance_to_route(x, y) > 10.0 and not blocked(x, y, r))
+
+    g = BEACH_GRID                                                    # straw parasols in rows
+    (ox, oy), (dx, dy) = g["origin"], g["along"]
+    ex, ey = -dy, dx
+    if ex * BEACH_SEA[0] + ey * BEACH_SEA[1] < 0:
+        ex, ey = -ex, -ey
+    for r in range(g["rows"]):
+        for k in range(g["per_row"]):
+            x = ox + dx * k * g["step"] + ex * r * g["row_step"] + rng.uniform(-0.15, 0.15)
+            y = oy + dy * k * g["step"] + ey * r * g["row_step"] + rng.uniform(-0.15, 0.15)
+            if not on_sand(x, y, FOOTPRINT["Prop_ParasolThatch"]):
+                continue
+            items = [("Prop_ParasolThatch", x, y, rng.uniform(-math.pi, math.pi))]
+            if r < g["loungers_rows"]:
+                for sd in (-1, 1):
+                    lx, ly = x + ex * 0.25 + dx * 0.45 * sd, y + ey * 0.25 + dy * 0.45 * sd
+                    items.append(("Prop_SunLounger", lx, ly, _facing(ex, ey) + rng.uniform(-0.08, 0.08)))
+            if all(free(px, py, pr) for pr, px, py, _r in items[:1]):
+                for pr, px, py, rot in items:
+                    out.append(_entry(pr, px, py, E.ground_z(px, py), rot))
+                stats["straw_parasols"] += 1
+                stats["loungers"] += len(items) - 1
+    for rad in [0.0] + [1.0 * k for k in range(1, 13)]:               # lifeguard post
+        spot = next(((LIFEGUARD[0] + math.cos(a) * rad, LIFEGUARD[1] + math.sin(a) * rad)
+                     for a in (2 * math.pi * j / 12 for j in range(12))
+                     if on_sand(LIFEGUARD[0] + math.cos(a) * rad, LIFEGUARD[1] + math.sin(a) * rad, 1.6)
+                     and free(LIFEGUARD[0] + math.cos(a) * rad, LIFEGUARD[1] + math.sin(a) * rad,
+                              "Prop_LifeguardTower")), None)
+        if spot:
+            out.append(_entry("Prop_LifeguardTower", spot[0], spot[1], E.ground_z(*spot) - 0.05, _facing(*BEACH_SEA)))
+            stats["lifeguard"] = 1
+            break
+    for x, y, scale in STONE_PILES:                                   # stone heaps on the cove sand
+        if B.on_beach_side(x, y) and free(x, y, "Prop_StonePile") and not blocked(x, y, 2.0):
+            out.append(_entry("Prop_StonePile", x, y, E.ground_z(x, y) - 0.08, rng.uniform(-math.pi, math.pi), scale))
+            stats["stone_piles"] += 1
+    REPORT["beachfront"] = stats
+    return out
+
+
 def place(seed=SEED, write=True, avoid=()):
     """Computes all prop placements and writes out/placements_props.json.
     avoid: vegetation placements (env_vegetation.place()) to keep clear of, so no prop stands in a tree.
@@ -639,6 +966,14 @@ def place(seed=SEED, write=True, avoid=()):
     n = len(pts)
     placed = []
     REPORT.clear()
+    # V15b (start straight): the random sequence below is shared by the whole lap, so props placed in the changed
+    # start section would shift the random turns of every later prop (the cafe groups and atrium chairs in the
+    # refresh zones of dressing_freeze). Props of that section (route.json "start_section") therefore leave the
+    # sequence exactly where the approved build (V15, old start loop) left it: see the two places marked V15b.
+    sec = (E.ROUTE or {}).get("start_section")
+
+    def in_start(i):
+        return bool(sec) and ((i % n) > sec["from_index"] or (i % n) < sec["to_index"])
 
     import env_vegetation as V                      # same reach as the overlap rule in test_env_assets.py
     plants = [(v["x"], v["y"], V.KIND[V._kind(v["proto"])]["space"] * v["scale"]) for v in avoid]
@@ -683,7 +1018,10 @@ def place(seed=SEED, write=True, avoid=()):
             _p, (tx, ty), _nrm = site.frame(j)
             bx, by = x + tx * 1.3, y + ty * 1.3
             if fits(bx, by, "Prop_Bin"):
+                state = rng.getstate()
                 placed.append(_entry("Prop_Bin", bx, by, _prop_z(bx, by), rng.uniform(-math.pi, math.pi)))
+                if in_start(j):
+                    rng.setstate(state)                # V15b: the old start loop had no bin: no value drawn
         side = -1 if off > 0 else 1                    # alternate from the side actually used
     REPORT["campus_lamps_missed"] = missed
 
@@ -693,7 +1031,7 @@ def place(seed=SEED, write=True, avoid=()):
         for i in _every(site, zone_run, ROAD_LAMP_STEP):
             sea = _sea_side(site, range(i - 10, i + 11))       # decided locally: the coastal road turns
             spot = try_spot(i, sea, ROAD_LAMP_OFFSETS, "Prop_LampRoad")
-            if not spot and pts[i]["zone"] != "promenade":     # the coastal road may use the land side
+            if not spot:                                       # else the land side (V10b: not on the beach)
                 spot = try_spot(i, -sea, ROAD_LAMP_OFFSETS, "Prop_LampRoad")
             if not spot:
                 missed += 1
@@ -726,36 +1064,15 @@ def place(seed=SEED, write=True, avoid=()):
             after_tunnel = after_tunnel and zone == "tunnel"
     for run in _runs(ramp):
         for side in (1, -1):
-            placed += _railing_run(site, run, side, lambda p: p["track_z"], f"ramp {side:+d}")
+            placed += _railing_run(site, run, side, lambda p: p["track_z"], f"ramp {side:+d}", on_wall_top=True)
     seawall = [i for i, p in enumerate(pts) if p["ground_z"] < SEAWALL_GROUND_Z and p.get("zone") not in NO_PROP_ZONES]
-    for run in _runs(seawall):
+    for run in _runs(seawall) if SEAWALL_RAILING else ():
         placed += _railing_run(site, run, _sea_side(site, run), lambda p: p["track_z"], "promenade sea side")
 
-    # parasols at the beach bar --------------------------------------------------------------------------------
-    centre = None
-    for r in [0.0] + [0.5 * k for k in range(1, 41)]:
-        for a in range(0, 360, 15):
-            x = BEACH_BAR[0] + math.cos(math.radians(a)) * r
-            y = BEACH_BAR[1] + math.sin(math.radians(a)) * r
-            if site.ok(x, y, clear=PARASOL_CLEAR, footprint=FOOTPRINT["Prop_Parasol"]):
-                centre = (x, y)
-                break
-        if centre:
-            break
-    parasols = 0
-    if centre:
-        j = min(range(n), key=lambda q: (pts[q]["x"] - centre[0]) ** 2 + (pts[q]["y"] - centre[1]) ** 2)
-        _p, (tx, ty), _nrm = site.frame(j)
-        for u, v in ((-1.9, -1.9), (1.9, -1.9), (-1.9, 1.9), (1.9, 1.9), (0.0, 0.0), (5.4, 0.0), (-5.4, 0.0)):
-            if parasols >= 5:
-                break
-            x = centre[0] + tx * u - ty * v
-            y = centre[1] + ty * u + tx * v
-            if fits(x, y, "Prop_Parasol", clear=PARASOL_CLEAR):
-                placed.append(_entry("Prop_Parasol", x, y, _prop_z(x, y), rng.uniform(-math.pi, math.pi)))
-                parasols += 1
-    REPORT["parasol_centre"] = centre and (round(centre[0], 1), round(centre[1], 1))
-    REPORT["parasols"] = parasols
+    # beachfront (V10b): restaurant terraces, pavilion terrace, straw parasols, lifeguard post, stone heaps -----
+    placed += _beachfront(site, random.Random(seed + 10), free, fits)
+    for _ in range(3):
+        rng.uniform(-math.pi, math.pi)    # the three beach-bar parasols drew these: later props keep their old values
 
     # benches and bins on the promenade's land side --------------------------------------------------------------
     missed = 0
@@ -871,6 +1188,7 @@ def place(seed=SEED, write=True, avoid=()):
                 break
             land = -_sea_side(site, range(i - 10, i + 11)) if zone == "promenade" else None
             spot = None
+            state = rng.getstate() if in_start(i) else None
             for sd in ((land,) if land else (side, -side)):
                 for di in (0, 2, -2, 4, -4, 6, -6):
                     for off in CAFE_OFFSETS:
@@ -884,6 +1202,10 @@ def place(seed=SEED, write=True, avoid=()):
                         break
                 if spot:
                     break
+            if state is not None:                      # V15b: the group at the old start drew START_CAFE_DRAWS
+                rng.setstate(state)                    # values (it tried 14 spots) before it stood; the group
+                for _ in range(START_CAFE_DRAWS):      # at the new start tries others, the sequence goes on from
+                    rng.random()                       # the same place as before
             if not spot:
                 continue
             sd, items, j = spot
@@ -1014,7 +1336,7 @@ def instance_for_preview(placements, protos):
     for k, p in enumerate(placements):
         obj = bpy.data.objects.new(f"{p['proto']}.{k:04d}", protos[p["proto"]].data)
         obj.location = (p["x"], p["y"], p["z"])
-        obj.rotation_euler = (0.0, p.get("rot_y", 0.0), p["rot_z"])
+        obj.rotation_euler = (p.get("rot_x", 0.0), p.get("rot_y", 0.0), p["rot_z"])   # V18m: rot_x (cars on slopes)
         obj.scale = (p["scale"],) * 3
         col.objects.link(obj)
         objects.append(obj)

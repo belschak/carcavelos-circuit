@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 37430178302775813}
   - component: {fileID: 3292376630305336933}
+  - component: {fileID: 3132279390205021566}
   m_Layer: 0
   m_Name: Prop_LampCampus
   m_TagString: Untagged
@@ -53,9 +54,28 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.15
-  m_Height: 5.08
+  m_Height: 5.65
   m_Direction: 1
-  m_Center: {x: 0, y: 2.54, z: 0}
+  m_Center: {x: 0, y: 2.825, z: 0}
+--- !u!205 &3132279390205021566
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910858194941894906}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 2.675, z: 0}
+  m_Size: 5.65
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 4003552785065460252}
+  m_Enabled: 1
 --- !u!1 &6616487104231802738
 GameObject:
   m_ObjectHideFlags: 0

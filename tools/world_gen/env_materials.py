@@ -30,7 +30,48 @@ TEXTURED = {
 }
 
 
-MATTE = {"W_T_concrete_light"}   # use the albedo only, constant roughness (no polished-floor roughness map)
+TEXTURED.update({"W_B_solar": ("solar_panel", 0.75), "W_T_cut_wall": ("render_ochre", 0.9)})   # V10c; V10d: solar matte
+# (at 0.35 / metallic 0.2 the panels mirrored the bright sky at the aerial camera's grazing angle and read light grey)
+
+TEXTURED["W_B_deck_paving"] = ("concrete_sand", 0.9)      # V10c2: decks and terraces at plaza level (env_campus)
+
+MATTE = {"W_T_concrete_light", "W_B_deck_paving"}   # use the albedo only, constant roughness (no polished-floor roughness map)
+
+
+# V16h: materials that keep their own colour and get a neutral texture multiplied onto it in Unity (WorldLit.shader /
+# URP Lit tint; export_unity_bundle.py "tint"), so walls of many colours share one texture and no memory is added.
+# name -> (texture base, normal strength, world-space UVs or None). World-space UVs (tile metres across, up, roof
+# scale; 0 = roofs read one plain texel) are for meshes without UVs: WorldLit.shader projects the texture by world
+# position. In Blender these materials stay flat colour.
+RENDER = ("facade_white", 0.6, None)                       # rendered walls: UVs in metres already (3 m tile)
+CONCRETE = ("concrete_panel", 0.8, (2.4, 2.4, 1.0 / 2.4))  # fair-faced concrete with panel joints and tie holes
+FAR_HOUSE = ("far_facade", 0.0, (12.0, 9.0, 0.0))          # the buildings beyond the map edge: windows, sills
+TINTED = {
+    "W_B_wall_0": RENDER, "W_B_wall_1": RENDER, "W_B_wall_2": RENDER, "W_B_wall_3": RENDER, "W_B_wall_4": RENDER,
+    "W_B_wall_cream": RENDER, "W_B_wall_umber": RENDER,
+    "W_tunnel_concrete": CONCRETE, "W_portal_concrete": CONCRETE, "W_entrance_concrete": CONCRETE,
+    "W_concrete_light": CONCRETE, "W_B_interior_wall": CONCRETE,
+    "W_backdrop_building": FAR_HOUSE, "W_far_white": FAR_HOUSE, "W_far_cream": FAR_HOUSE, "W_far_ochre": FAR_HOUSE,
+}
+
+
+def tint_all():
+    import json
+    path = os.path.join(E.TEXTURES, "tint_gain.json")                     # make_textures.py: 1 / mean of each texture
+    gains = json.load(open(path)) if os.path.exists(path) else {}
+    done = 0
+    for name, (base, strength, world_uv) in TINTED.items():
+        mat = bpy.data.materials.get(name)
+        if not mat or not texture_path(base, "albedo"):
+            continue
+        mat["tint_albedo"] = base + "_albedo.png"
+        mat["tint_normal"] = base + "_normal.png" if strength > 0 and texture_path(base, "normal") else ""
+        mat["tint_normal_strength"] = strength
+        mat["tint_gain"] = float(gains.get(base + "_albedo.png", 1.0))
+        if world_uv:
+            mat["world_uv"] = list(world_uv)
+        done += 1
+    print(f"  materials: {done} keep their colour and get a shared texture in Unity (tint)")
 
 
 def texture_path(base, kind):
@@ -90,5 +131,6 @@ def upgrade_all():
             base, roughness = TEXTURED[mat.name]
             if upgrade(mat, base, roughness):
                 done.append(mat.name)
+    tint_all()
     print(f"  materials: {len(done)} textured ({', '.join(sorted(done))})")
     return done

@@ -24,14 +24,31 @@ import env_common as E          # noqa: E402  shared helpers (terrain, materials
 import env_terrain              # noqa: E402
 import env_track                # noqa: E402
 import env_trackside            # noqa: E402
+import env_route_signs          # noqa: E402
 import env_tunnel               # noqa: E402
 import env_buildings            # noqa: E402
 import env_backdrop             # noqa: E402
 import env_materials            # noqa: E402
 import env_interior             # noqa: E402
 import env_corridor             # noqa: E402
+import env_covebank             # noqa: E402  V10d: the cove bank outside the corridor
+import env_coast                # noqa: E402  V16e: coast section (forecourt, cove wall, terrace, bar, prow)
+import env_streets              # noqa: E402  V10f: the street section rebuilt from the Street View survey
+import env_street_objects       # noqa: E402
+import env_ai_props             # noqa: E402
+import env_capricciosa          # noqa: E402  V16g: Capricciosa forecourt, sea wall, car-park corner
+import env_promenade_shortcut   # noqa: E402  V19: Luc's red shortcut along the parking aisle
+import env_campus               # noqa: E402  V10c2: campus buildings, courtyards, pools
+import env_plaza                # noqa: E402  V10i: upper plaza, stairs, sunken courtyard
+import env_campus_east          # noqa: E402  V18g: its dress() hook (east grounds as on Google Maps)
+import hairpin_flush           # noqa: E402  V18i: smooth ground inside the Capricciosa hairpin
+import dressing_freeze         # noqa: E402  V10i: dressing stays put outside changed route sections
+import dressing_reality        # noqa: E402  V16f: what does not exist goes, what does is added (survey V15)
 import env_vegetation           # noqa: E402
 import env_props                # noqa: E402
+import env_entrance             # noqa: E402  V15a: entrance plaza (calcada, drain channels, car-park ramp, young trees)
+import env_north                # noqa: E402  V16: drop-off forecourt, avenue entrance side, east park
+import env_shade                # noqa: E402  V16h: ambient occlusion as vertex colours
 
 DATA = E.DATA
 
@@ -109,8 +126,12 @@ def build_ground(heights):
         for i in range(COLS - 1):
             a = j * COLS + i
             cx, cy = X0 + (i + 0.5) * STEP, Y0 + (j + 0.5) * STEP
-            if env_terrain.in_portal_hole(cx, cy) or env_corridor.covers_cell(cx, cy):
-                continue                       # the tunnel portal / the cut walls close this gap
+            if env_terrain.in_portal_hole(cx, cy) or env_corridor.covers_cell(cx, cy) or env_covebank.covers_cell(cx, cy) \
+                    or env_streets.covers_cell(cx, cy) or env_campus.covers_cell(cx, cy):
+                continue                       # the tunnel portal / the cut walls close this gap; V10d: the cove bank;
+                                               # V10f: the restaurant terrace
+            if env_entrance.covers_cell(cx, cy):   # V15a: the car-park ramp's apron replaces this cell
+                continue
             faces.append((a, a + 1, a + 1 + COLS, a + COLS))
             corner = [GRID["classes"][j][i], GRID["classes"][j][i + 1], GRID["classes"][j + 1][i], GRID["classes"][j + 1][i + 1]]
             mats.append(classes.index(max(set(corner), key=corner.count)))   # majority class of the 4 corners
@@ -281,9 +302,23 @@ def build_dressing():
     """Trees, shrubs, grass and props (env_vegetation.py, env_props.py). Each kind is built once as a prototype;
     the placements are data (out/placements_vegetation.json, out/placements_props.json) so Unity can instance them.
     In the .blend they appear as linked duplicates for the renders. Replaces the old cone trees."""
-    protos = {**env_vegetation.build_prototypes(), **env_props.build_prototypes()}
+    protos = {**env_vegetation.build_prototypes(), **env_props.build_prototypes(), **env_street_objects.build_prototypes()}
+    env_ai_props.swap(protos)                              # V18m: AI-made models (Tripo) for cars, parasols, loungers ...
     veg = env_vegetation.place()
     props = env_props.place(avoid=veg)
+    veg, props = env_street_objects.dress(veg, props)      # V10f: the street section's own trees, cars and furniture
+    veg, props = dressing_freeze.apply(veg, props)         # V10i: outside the changed route sections: as approved
+    veg, props = env_campus.dress(veg, props)              # V10c2: nothing in the pools, on the berms or the lower plaza
+    veg, props = env_plaza.dress(veg, props)               # V10i: the upper plaza's own trees and furniture
+    veg, props = env_entrance.dress(veg, props, protos)    # V15a: entrance plaza: young staked trees, seat blocks, lamps
+    veg, props = env_north.dress(veg, props, protos)       # V16: forecourt cars instead of cafe tables, lay-by posts
+    veg, props = env_street_objects.dress_promenade(veg, props)   # V15c: promenade bollards, flood masts, machines
+    veg, props = dressing_reality.apply(veg, props)        # V16f: planting and furniture to reality
+    veg, props = env_campus_east.dress(veg, props)         # V18g: east grounds and G's arcade as on Google Maps
+    veg, props = env_capricciosa.dress(veg, props, protos)        # V16g: builds its statics, then its own dressing
+    props = env_ai_props.far_variants(props, protos)       # V18m: lighter AI models away from the route
+    veg = env_vegetation.big_shrubs(veg, protos)           # V18n: big bushes get the prototype with small leaves
+    veg, props = env_promenade_shortcut.dress(veg, props, protos)  # V19: nothing on the promenade shortcut (last: writes the final lists)
     env_vegetation.instance_for_preview(veg, protos)
     env_props.instance_for_preview(props, protos)
     print(f"  dressing: {len(protos)} prototypes, {len(veg)} plants, {len(props)} props")
@@ -535,7 +570,7 @@ def export_for_unity():
     protos = set().union(*(members(n) for n in DRESSING_PROTOTYPES))
     settings = dict(object_types={"MESH", "EMPTY"}, apply_scale_options="FBX_SCALE_ALL", axis_forward="-Z", axis_up="Y",
                     bake_space_transform=True, mesh_smooth_type="FACE", use_mesh_modifiers=True, use_selection=True,
-                    use_triangles=True)
+                    use_triangles=True, colors_type="LINEAR")     # V16h: env_shade's vertex colours, as written
     for filename, wanted in (("CampusWorld.fbx", lambda o: o not in guide and o not in track and o not in protos),
                              ("TrackSurface.fbx", lambda o: o in track),
                              ("RouteGuide.fbx", lambda o: o in guide),
@@ -565,20 +600,38 @@ def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     heights = env_terrain.apply()          # shapes the 5 m terrain to the driving profile
     env_corridor.build_data()              # high-res corridor along the track; from now on E.ground_z uses it
+    env_plaza.install()                    # V10i: ... and the plaza's own surfaces (deck, courtyard, stairs)
+    env_covebank.plan()                    # V10d: 0.5 m lattice where the cove kerb crosses the 5 m grid
+    env_streets.plan_terrace()             # V10f: 1 m lattice along the retaining wall of the restaurant terrace
+    env_campus.plan_ground()               # V10c2: sunken courtyards and D's pool (trays in the 5 m grid)
+    env_entrance.plan_ground()             # V15a: the car-park ramp at the entrance plaza (cells -> apron + ramp floor)
     build_ground(heights)
     env_corridor.build_mesh()
+    env_covebank.build_mesh()
+    env_streets.build_terrace_mesh()
+    env_campus.build_ground_mesh()
+    env_entrance.build_ground_mesh()       # V15a
+    hairpin_flush.apply()                  # V18i: one smooth ground inside the Capricciosa hairpin (after all ground meshes)
+    env_streets.build()                    # V10f: paving, markings, kerbs, walls (before the dressing stands on it)
     build_paths()
     env_buildings.build()
+    env_plaza.build()                      # V10i: deck with skylights, stairs, courtyard, fences
+    env_entrance.build()                   # V15a: entrance plaza paving with drain channels, car-park ramp
+    env_north.build()                      # V16: forecourt setts and ring, edge bands, waste station, pylon, park
     build_dressing()
     build_route_guide()
     env_track.build()
     env_trackside.build()                  # edge lines + corner signs (readability), exported with the track
+    env_route_signs.build()                # V20a: route signs, start gate, chequered start line (Luc, 13 Nov)
     env_tunnel.build()
+    env_coast.build()                      # V16e: forecourt walls, terrace, details, railings (after the tunnel)
+    env_promenade_shortcut.build()         # V19: shortcut paint + ground check (after the coast statics)
     carve_drive_throughs()
     env_interior.dress(PASSAGE_RUNS, PASSAGE_WIDTH, PASSAGE_WIDTHS)
     env_backdrop.build(heights)
     add_origin_marker()
     env_materials.upgrade_all()
+    env_shade.bake()                         # V16h: after everything is built, before the .blend and the FBX files
     for obj in list(bpy.data.collections["Track_RouteGuide"].all_objects):
         obj.hide_render = True               # the guide is data for Role 2, not part of the look
     stats()
