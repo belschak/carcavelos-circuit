@@ -120,6 +120,9 @@ def bake():
     occluders = [o for o in world if not any(k in o.name for k in NO_OCCLUDER)]
     tree, first_solid = _tree(occluders)
     cache, done, corners, dark = {}, set(), 0, 0
+    for obj in meshes:                                       # V18n: plants and hedge leaves that bring their own vertex
+        if obj.data.get("own_colours"):                      # colours (env_vegetation.MeshBuilder.build) keep them
+            done.add(obj.data.name)
     for obj in world:
         if obj.data.name in done:
             continue

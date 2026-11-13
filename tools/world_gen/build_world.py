@@ -315,6 +315,7 @@ def build_dressing():
     veg, props = env_campus_east.dress(veg, props)         # V18g: east grounds and G's arcade as on Google Maps
     veg, props = env_capricciosa.dress(veg, props, protos)        # V16g: builds its statics, then its own dressing
     props = env_ai_props.far_variants(props, protos)       # V18m: lighter AI models away from the route
+    veg = env_vegetation.big_shrubs(veg, protos)           # V18n: big bushes get the prototype with small leaves
     env_vegetation.instance_for_preview(veg, protos)
     env_props.instance_for_preview(props, protos)
     print(f"  dressing: {len(protos)} prototypes, {len(veg)} plants, {len(props)} props")
