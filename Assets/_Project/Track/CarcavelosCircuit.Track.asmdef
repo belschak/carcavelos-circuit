@@ -1,7 +1,7 @@
 {
     "name": "CarcavelosCircuit.Track",
     "rootNamespace": "CarcavelosCircuit.Track",
-    "references": [],
+    "references": ["CarcavelosCircuit.Shared"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
