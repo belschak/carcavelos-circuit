@@ -109,6 +109,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         public static void Build()
         {
             ConfigureImporters();
+            WebMeshBudget.ConfigureHallImporter();                              // V26: hall without tangents (no normal maps)
             Dictionary<string, Material> materials = BuildMaterials();
             RemapModelMaterials(materials);
             Dictionary<string, GameObject> prefabs = BuildPrefabs();
@@ -567,6 +568,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             AddTunnelGuards(root, JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json")));
             AddGrassTufts(root);
             AddSunAndSky(root);
+            Debug.Log("CampusWorldBuilder: " + WebMeshBudget.Finish(root));    // V26: leaner generated meshes for the Web build
             // One prefab for everything you see and drive on. Saving over the old file keeps its GUID, so the
             // instance in Role 2's Track_Campus stays linked and shows the new world after every rebuild.
             PrefabUtility.SaveAsPrefabAssetAndConnect(root, WorldPrefabPath, InteractionMode.AutomatedAction);
