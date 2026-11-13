@@ -99,6 +99,18 @@ namespace CarcavelosCircuit.Driving
         [SerializeField, Tooltip("How fast the kart model tilts to the slope (and back to level in the air). Higher = snappier")]
         private float visualTiltSpeed = 10f;
 
+        [SerializeField, Tooltip("Flying animation: the nose tilts up or down by at most this many degrees (model only)")]
+        private float maxAirPitchDegrees = 25f;
+
+        [SerializeField, Tooltip("Flying animation: the vertical speed (m/s) at which the nose reaches the full angle")]
+        private float airPitchFullSpeed = 8f;
+
+        [SerializeField, Tooltip("Flying animation: the small side-to-side wobble, in degrees (0 = none)")]
+        private float airWobbleDegrees = 3f;
+
+        [SerializeField, Tooltip("Flying animation: how many wobbles per second")]
+        private float airWobbleHertz = 1.2f;
+
         public float MaxSpeed { get { return maxSpeed; } }
         public float MaxReverseSpeed { get { return maxReverseSpeed; } }
         public float Acceleration { get { return acceleration; } }
@@ -129,5 +141,9 @@ namespace CarcavelosCircuit.Driving
         public float AirSteerFraction { get { return airSteerFraction; } }
         public float FallGravityMultiplier { get { return fallGravityMultiplier; } }
         public float VisualTiltSpeed { get { return visualTiltSpeed; } }
+        public float MaxAirPitchDegrees { get { return maxAirPitchDegrees; } }
+        public float AirPitchFullSpeed { get { return airPitchFullSpeed; } }
+        public float AirWobbleDegrees { get { return airWobbleDegrees; } }
+        public float AirWobbleHertz { get { return airWobbleHertz; } }
     }
 }
