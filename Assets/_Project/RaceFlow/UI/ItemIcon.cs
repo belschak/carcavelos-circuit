@@ -95,7 +95,7 @@ namespace CarcavelosCircuit.RaceFlow
             return pictures[index];
         }
 
-        // The picture fills the element (keeps its square shape); no picture = no background, the drawing shows.
+        // The picture fills the element (keeps its square shape); no picture = no background image, the drawing shows.
         private void ShowPicture()
         {
             Texture2D picture = PictureOf(kind);
@@ -106,7 +106,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             else
             {
-                style.backgroundImage = StyleKeyword.None;
+                style.backgroundImage = StyleKeyword.Null; // clears the inline picture: nothing behind the drawing
             }
         }
 
