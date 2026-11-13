@@ -14,7 +14,12 @@ namespace CarcavelosCircuit.Tests.EditMode
         // A short straight drive along x, starting at startX (so the tests can tell two ghosts apart).
         private static string GhostText(float startX, string track, int checkpoints)
         {
-            GhostRecording recording = new GhostRecording(track, checkpoints);
+            return GhostText(startX, track, checkpoints, TrackLayout.Unknown);
+        }
+
+        private static string GhostText(float startX, string track, int checkpoints, int layoutStamp)
+        {
+            GhostRecording recording = new GhostRecording(track, checkpoints, layoutStamp);
             for (int i = 0; i <= 10; i++)
             {
                 float time = i * 0.05f;
@@ -22,6 +27,20 @@ namespace CarcavelosCircuit.Tests.EditMode
             }
             recording.LapSeconds = 0.5f;
             return recording.ToSaveString();
+        }
+
+        [Test]
+        public void OwnGhostFromAnotherRoad_IsSkipped_DeansGhostDrives()
+        {
+            bool isShipped;
+            GhostRecording ghost = GhostLoader.Choose(GhostText(1f, Track, Checkpoints, 1364), GhostText(2f, Track, Checkpoints, 1408),
+                Track, Checkpoints, 1408, out isShipped);
+            Assert.IsNotNull(ghost);
+            Assert.IsTrue(isShipped);
+            Assert.AreEqual(2f, StartX(ghost), 0.01f);
+            Assert.IsNull(GhostLoader.Choose(GhostText(1f, Track, Checkpoints, 1364), "", Track, Checkpoints, 1408, out isShipped),
+                "no ghost at all rather than one through the walls");
+            Assert.IsNotNull(GhostLoader.Choose(GhostText(1f, Track, Checkpoints, 1408), "", Track, Checkpoints, 1408, out isShipped));
         }
 
         private static float StartX(GhostRecording ghost)

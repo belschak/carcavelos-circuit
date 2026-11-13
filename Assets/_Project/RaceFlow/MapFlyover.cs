@@ -46,6 +46,10 @@ namespace CarcavelosCircuit.RaceFlow
         private Vector3 fromPosition;
         private Quaternion fromRotation;
 
+        // True while the camera floats high over the map (start screen orbit, rise after the finish); RaceCameraLook
+        // softens the far background then, like a camera lens. False during the glide down, so it clears in time.
+        public bool IsOverview { get { return mode == Mode.Orbit || mode == Mode.Outro; } }
+
         private void LateUpdate()
         {
             if (raceManager == null || !raceManager.IsSetUp)

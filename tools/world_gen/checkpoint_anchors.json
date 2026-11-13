@@ -1,0 +1,109 @@
+{
+ "source": "V20 (Luc's playtest of 13 Nov 2026, luc_notes/2026-11-13_playtest/s01-s20): 13 checkpoints on the places Luc chose, in driving order; Unity axes (x east, z north). The export and pin_checkpoints.py put each checkpoint on the route point nearest to its anchor (order along the lap checked). 'width' = trigger width across the road in metres (track.json checkpoint_widths; CampusWorldBuilder.AddRaceParts, fallback road width + 4 m). 'v20_index' = the index in the final track.json (after hall_route.py and hall_join.py) when the anchors were set. Before V20: 12 checkpoints on Noah's places of role3/V9-world-look (d2cae87).",
+ "checkpoints": [
+  {
+   "n": 0,
+   "x": -16.44,
+   "z": 132.11,
+   "width": 12.0,
+   "v20_index": 0,
+   "where": "start/finish line under the start gate (s01)"
+  },
+  {
+   "n": 1,
+   "x": 12.105,
+   "z": 135.958,
+   "width": 12.0,
+   "v20_index": 14,
+   "where": "hall west entrance door frame, door D1 (s02); HallDoors.json D1_main_entrance, 9.5 m wide"
+  },
+  {
+   "n": 2,
+   "x": 5.6,
+   "z": 57.67,
+   "width": 12.0,
+   "v20_index": 79,
+   "where": "foot of the terrace kicker ramp (s03; the lip is jump_index 82)"
+  },
+  {
+   "n": 3,
+   "x": -79.25,
+   "z": 44.05,
+   "width": 28.0,
+   "v20_index": 122,
+   "where": "end of the lawn path, between the two low walls where it crosses the pale strip before the avenue (s04); very wide, so a kart crossing the lawn anywhere passes it"
+  },
+  {
+   "n": 4,
+   "x": -100.6,
+   "z": -38.29,
+   "width": 16.0,
+   "v20_index": 168,
+   "where": "roundabout entry, just after the north arm's zebra, before the right turn (s05)"
+  },
+  {
+   "n": 5,
+   "x": -170.59,
+   "z": -42.85,
+   "width": 16.0,
+   "v20_index": 205,
+   "where": "halfway along the Avenida Marginal towards the Capricciosa hairpin (s06)"
+  },
+  {
+   "n": 6,
+   "x": -224.59,
+   "z": -21.95,
+   "width": 14.0,
+   "v20_index": 234,
+   "where": "before the hairpin's left turn (s07)"
+  },
+  {
+   "n": 7,
+   "x": -193.23,
+   "z": -82.79,
+   "width": 22.0,
+   "v20_index": 291,
+   "where": "coast car park, just behind the zebra Z1 (s08); across the aisle and the bays"
+  },
+  {
+   "n": 8,
+   "x": -9.29,
+   "z": -123.49,
+   "width": 18.0,
+   "v20_index": 405,
+   "where": "shortly before the beach tunnel's south portal (s11); both branches of the s09 fork meet before it"
+  },
+  {
+   "n": 9,
+   "x": 81.39,
+   "z": -55.93,
+   "width": 12.0,
+   "v20_index": 462,
+   "where": "directly after the beach tunnel, on the ramp up to the lower plaza (s12)"
+  },
+  {
+   "n": 10,
+   "x": 98.85,
+   "z": 14.41,
+   "width": 28.0,
+   "v20_index": 506,
+   "where": "upper plaza shortly before the fork (s14); very wide: wall to wall (hall 13.4 m left, Horizon Hall 10 m right), so the shortcut on the left and the main line on the right both pass it"
+  },
+  {
+   "n": 11,
+   "x": 62.869,
+   "z": 106.987,
+   "width": 14.0,
+   "v20_index": 559,
+   "where": "Hovione atrium entry door D4 (s17), where the main line and the shortcut's landing meet; HallDoors.json D4_entrance_room, 6 m wide"
+  },
+  {
+   "n": 12,
+   "x": 75.112,
+   "z": 162.762,
+   "width": 18.0,
+   "v20_index": 604,
+   "where": "atrium exit door D5 to the north plaza (s19); generous, because package C may widen the door to the left; HallDoors.json D5_out_north_east, 7.5 m wide"
+  }
+ ]
+}

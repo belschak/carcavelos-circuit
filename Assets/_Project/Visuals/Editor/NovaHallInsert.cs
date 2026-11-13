@@ -43,6 +43,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         // road, last = the point on the facade), and which road materials it replaces (the most used one is kept).
         private static List<int[]> doorPieces;
         private static List<Dictionary<Material, int>> pieceMaterials;
+        private static List<int> pieceCuts;                         // road triangles taken out in front of each door
         private static Material roadMaterial;                       // fallback: the first material of the old road
 
         // Edificio Principal footprint (Noah's world_data.json, metres; x = east, z = north).
@@ -123,11 +124,21 @@ namespace CarcavelosCircuit.Visuals.Editor
 
             var doorRoads = new GameObject("NovaHall door roads");
             doorRoads.transform.SetParent(worldRoot.transform, false);
+            int roads = 0;
             for (int k = 0; k < doorPieces.Count; k++)
             {
                 Material m = MostUsed(pieceMaterials[k]);
+                // V14: in front of the atrium door (D4) the road IS the plaza deck, one paved surface up to the facade.
+                // No road strip was taken out there, so no door road is laid on top of the deck (it would flicker).
+                if (m == null && pieceCuts[k] == 0)
+                {
+                    continue;
+                }
                 MakeDoorRoad(doorRoads.transform, doorPieces[k][0], doorPieces[k][1], m != null ? m : roadMaterial, k);
+                roads++;
             }
+
+            int carpets = MakeLaneColliders(worldRoot.transform);
 
             var hall = (GameObject)PrefabUtility.InstantiatePrefab(model, worldRoot.transform);
             hall.name = "NovaHall (Noah, #45)";
@@ -147,8 +158,8 @@ namespace CarcavelosCircuit.Visuals.Editor
                 fenceObject.transform.position = Vector3.zero;
             }
 
-            return "Nova hall in: " + hidden + " old objects off, " + props + " old props off, " + cut + " meshes cut, " + doorPieces.Count +
-                   " door roads, " + (fence ? "white fence in, " + railings + " metal railings off" : "no white fence prefab, railings stay");
+            return "Nova hall in: " + hidden + " old objects off, " + props + " old props off, " + cut + " meshes cut, " + roads +
+                   " door roads, " + carpets + " lane colliders, " + (fence ? "white fence in, " + railings + " metal railings off" : "no white fence prefab, railings stay");
         }
 
         private static void LoadRoute()
@@ -170,6 +181,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             roadMaterial = null;
             doorPieces = new List<int[]>();
             pieceMaterials = new List<Dictionary<Material, int>>();
+            pieceCuts = new List<int>();
             int n = routeAfter.Length;
             int i = 0;
             while (i < n)
@@ -189,6 +201,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 int last = facade.Contains(b) ? b : b + 1;
                 doorPieces.Add(new[] { first, last });
                 pieceMaterials.Add(new Dictionary<Material, int>());
+                pieceCuts.Add(0);
                 i++;
             }
         }
@@ -288,6 +301,135 @@ namespace CarcavelosCircuit.Visuals.Editor
             GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
         }
 
+        // V14 + hall, from the first bot race on the merged world: every kart was thrown 0.5 to 4.6 m into the air at each
+        // of the four hall doors and 0.3 to 0.9 m at a seam inside the hall floor (route point 44), all on dead level
+        // ground. The kart is a ball; where it rolls from one mesh collider onto the next (road -> door road -> hall
+        // floor), or over an edge between two unwelded parts of one mesh, PhysX kicks it (same finding as V10i on the
+        // plaza). Cure, as there: ONE welded, invisible driving surface per hall lane, from before the door road outside
+        // the entry door to after the door road outside the exit door. It lies LaneLift over the floor, so every border
+        // underneath is out of the ball's contact reach (2 cm), and at both ends it sinks through the road at a flat
+        // angle, so the kart changes collider where both are plain faces. Its side edges are sunk under the floor behind
+        // the fence line. Nothing is drawn.
+        private const float LaneLift = 0.04f;                       // m over the hall floor and the door roads
+        private static readonly float[] LaneEnds = { -0.06f, -0.03f, 0f, 0.02f };   // heights over the road, outermost row first
+        private const int LaneLead = 5;                             // route points (2 m) before / after the door road
+        private const float LaneSide = 1.0f;                        // m outside the road edge: behind the fence and its wall
+        private const float LaneSkirt = 0.9f;                       // ... and from there down under the floor
+        private const float LaneSkirtOutside = 4.0f;                // outside the building the sides sink over 4 m (4.5 %): at the atrium
+                                                                    // door the shortcut's karts come onto the lane from the open plaza
+                                                                    // (a boosted kart that met the 0.9 m side at 33 m/s stopped dead)
+        private const float LaneSkirtDrop = 0.14f;
+        private const int LaneColumns = 6;                          // faces across the road (about 1.3 m wide: no slivers)
+
+        private static int MakeLaneColliders(Transform parent)
+        {
+            int n = routeAfter.Length;
+            var holder = new GameObject("NovaHall lane colliders");
+            holder.transform.SetParent(parent, false);
+            int made = 0, i = 0;
+            while (i < n)
+            {
+                if (!Inside(routeBefore[i].x, routeBefore[i].z))
+                {
+                    i++;
+                    continue;
+                }
+                int a = i;
+                while (i + 1 < n && Inside(routeBefore[i + 1].x, routeBefore[i + 1].z))
+                {
+                    i++;
+                }
+                int b = i;
+                i++;
+                // Reach out over the door roads at both ends (pieces that touch this run), then LaneLead points more.
+                int first = a, last = b;
+                for (int k = 0; k < doorPieces.Count; k++)
+                {
+                    int[] piece = doorPieces[k];
+                    if (pieceCuts[k] == 0)
+                    {
+                        continue;                                   // no door road there (the plaza deck at D4): the facade is the only border
+                    }
+                    if (piece[1] >= a - 1 && piece[1] <= a + 1)
+                    {
+                        first = Mathf.Min(first, piece[0]);
+                    }
+                    if (piece[0] >= b - 1 && piece[0] <= b + 1)
+                    {
+                        last = Mathf.Max(last, piece[1]);
+                    }
+                }
+                first = Mathf.Max(0, first - LaneLead);
+                last = Mathf.Min(n - 1, last + LaneLead);
+                MakeLaneCollider(holder.transform, first, last, made);
+                made++;
+            }
+            return made;
+        }
+
+        private static void MakeLaneCollider(Transform parent, int first, int last, int k)
+        {
+            int cols = LaneColumns + 3;                             // skirt, edge, inner columns, edge, skirt
+            var verts = new List<Vector3>();
+            var tris = new List<int>();
+            var held = new Vector3[cols];
+            for (int i = first; i <= last; i++)
+            {
+                Vector3 c = routeAfter[i];
+                Vector3 f = routeAfter[Mathf.Min(i + 2, last)] - routeAfter[Mathf.Max(i - 2, first)];
+                f.y = 0f;
+                f.Normalize();
+                Vector3 r = Vector3.Cross(Vector3.up, f);
+                float half = widthAfter[i] / 2 + LaneSide;
+                int fromEnd = Mathf.Min(i - first, last - i);
+                float lift = fromEnd < LaneEnds.Length ? LaneEnds[fromEnd] : LaneLift;
+                for (int col = 0; col < cols; col++)
+                {
+                    float off, y = c.y + lift;
+                    if (col == 0 || col == cols - 1)
+                    {
+                        off = (half + (Inside(routeBefore[i].x, routeBefore[i].z) ? LaneSkirt : LaneSkirtOutside)) * (col == 0 ? -1f : 1f);
+                        y = c.y - LaneSkirtDrop;
+                    }
+                    else
+                    {
+                        off = Mathf.Lerp(-half, half, (col - 1) / (float)LaneColumns);
+                    }
+                    Vector3 v = new Vector3(c.x, y, c.z) + r * off;
+                    // On the inside of a tight turn a column would run backwards for a moment: hold it where it was.
+                    if (i > first && Vector3.Dot(new Vector3(v.x - held[col].x, 0f, v.z - held[col].z), f) <= 0.05f)
+                    {
+                        v = new Vector3(held[col].x, y, held[col].z);
+                    }
+                    held[col] = v;
+                    verts.Add(v);
+                }
+                if (i > first)
+                {
+                    int q = verts.Count - 2 * cols;
+                    for (int col = 0; col < cols - 1; col++)
+                    {
+                        int a0 = q + col, a1 = q + col + 1, b0 = a0 + cols, b1 = a1 + cols;
+                        if ((verts[a0] - verts[b0]).sqrMagnitude < 1e-6f && (verts[a1] - verts[b1]).sqrMagnitude < 1e-6f)
+                        {
+                            continue;                               // both columns held: no face
+                        }
+                        tris.Add(a0); tris.Add(b0); tris.Add(b1);   // seen from above: clockwise = facing up
+                        tris.Add(a0); tris.Add(b1); tris.Add(a1);
+                    }
+                }
+            }
+            var mesh = new Mesh { name = "HallLaneCollider_" + k };
+            mesh.SetVertices(verts);
+            mesh.SetTriangles(tris, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            AssetDatabase.CreateAsset(mesh, CutMeshDir + "/HallLaneCollider_" + k + ".asset");
+            var go = new GameObject("Hall lane " + k + " ColliderOnly");
+            go.transform.SetParent(parent, false);
+            go.AddComponent<MeshCollider>().sharedMesh = mesh;
+        }
+
         private static Material MostUsed(Dictionary<Material, int> count)
         {
             Material best = null;
@@ -342,6 +484,9 @@ namespace CarcavelosCircuit.Visuals.Editor
             }
             mesh.subMeshCount = src.subMeshCount;
             bool road = go.name.StartsWith("Track_");
+            // V14's upper plaza (deck, courtyard, stairs, shortcut and their welded collider) is not a road strip that a
+            // door road could replace: it only loses what lies inside the building.
+            bool strip = road && !go.name.StartsWith("Track_Plaza") && !go.name.StartsWith("Track_Shortcut");
             int removed = 0;
             for (int s = 0; s < src.subMeshCount; s++)
             {
@@ -360,9 +505,10 @@ namespace CarcavelosCircuit.Visuals.Editor
                         removed++; // road reaching over the facade: same height as the hall floor
                         continue;
                     }
-                    int piece = road ? DoorPieceAt(c) : -1;
+                    int piece = strip ? DoorPieceAt(c) : -1;
                     if (piece >= 0)
                     {
+                        pieceCuts[piece]++;
                         // In front of a hall door: the old road goes, the new straight piece replaces it (remember its material).
                         MeshRenderer mr = go.GetComponent<MeshRenderer>();
                         if (go.name.StartsWith("Track_Road") && mr != null && s < mr.sharedMaterials.Length)
@@ -398,10 +544,31 @@ namespace CarcavelosCircuit.Visuals.Editor
             return true;
         }
 
+        // True for a vertex that reaches into the building, more than EdgeTolerance behind its outline. A vertex ON the
+        // outline does not count: the plaza deck, the sunken courtyard and their collider (V14) end exactly on the
+        // Gallery's edge, and without the tolerance float noise decided which of their big triangles were thrown away
+        // (533 m2 of the deck and 585 m2 of its collider in the first merged build).
+        private const float EdgeTolerance = 0.25f;
+
         private static bool InsideWorld(GameObject go, Vector3 local)
         {
             Vector3 w = go.transform.TransformPoint(local);
-            return Inside(w.x, w.z);
+            return Inside(w.x, w.z) && OutlineDistance(w.x, w.z) > EdgeTolerance;
+        }
+
+        // Distance (m) from a point to the footprint's outline.
+        private static float OutlineDistance(float x, float z)
+        {
+            float best = float.MaxValue;
+            int n = Footprint.Length / 2;
+            for (int i = 0, j = n - 1; i < n; j = i++)
+            {
+                Vector2 a = new Vector2(Footprint[2 * j], Footprint[2 * j + 1]), b = new Vector2(Footprint[2 * i], Footprint[2 * i + 1]);
+                Vector2 ab = b - a, ap = new Vector2(x, z) - a;
+                float t = Mathf.Clamp01(Vector2.Dot(ap, ab) / Mathf.Max(0.0001f, ab.sqrMagnitude));
+                best = Mathf.Min(best, (ap - ab * t).magnitude);
+            }
+            return best;
         }
 
         // Point in polygon (ray casting) on the footprint.
