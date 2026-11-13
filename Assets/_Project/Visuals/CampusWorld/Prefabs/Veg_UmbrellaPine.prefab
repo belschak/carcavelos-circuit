@@ -101,6 +101,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4541942446389875427}
   - component: {fileID: 6129406004812731504}
+  - component: {fileID: 874737615448703914}
   m_Layer: 0
   m_Name: Veg_UmbrellaPine
   m_TagString: Untagged
@@ -147,3 +148,22 @@ CapsuleCollider:
   m_Height: 10.549523
   m_Direction: 1
   m_Center: {x: 0, y: 5.2747617, z: 0}
+--- !u!205 &874737615448703914
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7471791995831514693}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0.2946682, y: 4.860293, z: 0.10204315}
+  m_Size: 10.549523
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 8196432961868314719}
+  m_Enabled: 1

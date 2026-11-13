@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1462875179547951513}
   - component: {fileID: 1202161777939142358}
+  - component: {fileID: 2674074022986438299}
   m_Layer: 0
   m_Name: Prop_CarH
   m_TagString: Untagged
@@ -54,6 +55,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.2893472, y: 1.4430683, z: 1.6}
   m_Center: {x: 0.001744926, y: 0.7188617, z: 0}
+--- !u!205 &2674074022986438299
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7699817245977852039}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0.0017449856, y: 0.7188617, z: 0}
+  m_Size: 2.2893472
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 6144888378883109418}
+  m_Enabled: 1
 --- !u!1 &8450026244377083105
 GameObject:
   m_ObjectHideFlags: 0

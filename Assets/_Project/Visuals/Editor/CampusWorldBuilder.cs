@@ -455,6 +455,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             EnsureFolder(PrefabDir);
             var result = new Dictionary<string, GameObject>();
             GameObject model = Model("Dressing_Prototypes");
+            PropRenderBudget.Reset();
             foreach (MeshFilter source in model.GetComponentsInChildren<MeshFilter>(true))
             {
                 string kind = source.gameObject.name;
@@ -466,9 +467,11 @@ namespace CarcavelosCircuit.Visuals.Editor
                 visual.AddComponent<MeshFilter>().sharedMesh = source.sharedMesh;
                 visual.AddComponent<MeshRenderer>().sharedMaterials = source.GetComponent<MeshRenderer>().sharedMaterials;
                 AddDressingCollider(root, visual.GetComponent<MeshRenderer>().bounds, kind);
+                PropRenderBudget.Apply(root, visual.GetComponent<MeshRenderer>(), kind);   // V27: shadows and draw distance
                 result[kind] = PrefabUtility.SaveAsPrefabAsset(root, PrefabDir + "/" + kind + ".prefab");
                 UnityEngine.Object.DestroyImmediate(root);
             }
+            Debug.Log(PropRenderBudget.Summary());
             return result;
         }
 

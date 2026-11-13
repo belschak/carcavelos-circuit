@@ -100,6 +100,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6185495674021353212}
   - component: {fileID: 8623167680295657803}
+  - component: {fileID: 2553549041499212519}
   m_Layer: 0
   m_Name: Prop_CarF
   m_TagString: Untagged
@@ -144,3 +145,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 3.3237786, y: 2.0492947, z: 1.7399999}
   m_Center: {x: 0.000077307224, y: 1.0246474, z: -0.000000059604645}
+--- !u!205 &2553549041499212519
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4592026347875614233}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0.00007724762, y: 1.0246474, z: -0.000000059604645}
+  m_Size: 3.3237786
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 2785273684101300025}
+  m_Enabled: 1

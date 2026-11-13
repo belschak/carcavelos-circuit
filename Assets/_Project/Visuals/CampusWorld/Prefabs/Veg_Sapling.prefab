@@ -101,6 +101,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5726808278920858304}
   - component: {fileID: 5422198636699032038}
+  - component: {fileID: 1364257003346084132}
   m_Layer: 0
   m_Name: Veg_Sapling
   m_TagString: Untagged
@@ -147,3 +148,22 @@ CapsuleCollider:
   m_Height: 3.6841133
   m_Direction: 1
   m_Center: {x: 0, y: 1.8420566, z: 0}
+--- !u!205 &1364257003346084132
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7796230730935121816}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0.03629327, y: 1.6409999, z: 0.009146452}
+  m_Size: 3.6841133
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 2725646906831491205}
+  m_Enabled: 1
