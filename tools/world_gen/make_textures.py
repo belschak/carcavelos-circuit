@@ -1335,6 +1335,61 @@ def make_railing(W=512, H=256, seed=1616):
 BUILDERS["railing"] = make_railing
 
 
+# ----------------------------------------------------------------------------------------------
+# V20a: the start gate's banner (Luc, playtest 13 Nov 2026: "a gate with a bold START on it and Nova Kart").
+# 1024 x 144 px over the whole front of the 11.3 m x 1.6 m banner (env_route_signs.build_start_gate). Graphite field,
+# chequered border (one row of squares top and bottom, three columns at each end), START in white in the middle,
+# NOVA KART in Boost Orange on both sides. Drawn at twice the size and scaled down for clean letter edges. The fonts
+# are macOS system fonts (Helvetica Neue Condensed Black, Avenir Next Heavy); elsewhere PIL's default font is used.
+# ----------------------------------------------------------------------------------------------
+BANNER_W, BANNER_H = 1024, 144
+
+
+def _banner_font(size, faces):
+    for path, index in faces:
+        try:
+            return ImageFont.truetype(path, size, index=index)
+        except OSError:
+            pass
+    return ImageFont.load_default(size=size)
+
+
+def make_start_banner(k=2):
+    W, H, sq = BANNER_W * k, BANNER_H * k, 16 * k
+    black, white, orange = (29, 29, 31), (244, 244, 240), tuple(int(v * 255) for v in rgb("boost_orange"))
+    img = Image.new("RGB", (W, H), black)
+    draw = ImageDraw.Draw(img)
+    for c in range(W // sq):                                   # border rows
+        for r, y0 in ((0, 0), (1, H - sq)):
+            if (c + r) % 2 == 0:
+                draw.rectangle([c * sq, y0, (c + 1) * sq - 1, y0 + sq - 1], fill=white)
+    end = 3 * sq
+    for x0 in (0, W - end):                                    # chequered blocks at both ends
+        for c in range(3):
+            for r in range(H // sq):
+                if (c + r + (x0 > 0)) % 2 == 0:
+                    draw.rectangle([x0 + c * sq, r * sq, x0 + (c + 1) * sq - 1, (r + 1) * sq - 1], fill=white)
+    field = (sq + 2 * k, H - sq - 2 * k)                       # free band between the border rows
+    big = _banner_font(int((field[1] - field[0]) * 1.08), (("/System/Library/Fonts/HelveticaNeue.ttc", 9),
+                                                          ("/System/Library/Fonts/Helvetica.ttc", 1)))
+    small = _banner_font(int((field[1] - field[0]) * 0.38), (("/System/Library/Fonts/Avenir Next.ttc", 8),
+                                                            ("/System/Library/Fonts/Helvetica.ttc", 1)))
+
+    def centred(text, font, cx, fill):
+        x0, y0, x1, y1 = draw.textbbox((0, 0), text, font=font)
+        cy = (field[0] + field[1]) / 2
+        draw.text((cx - (x0 + x1) / 2, cy - (y0 + y1) / 2), text, font=font, fill=fill)
+        return x1 - x0
+    centred("START", big, W / 2, white)
+    side = (end + W / 2 - 165 * k) / 2                         # middle of each side field
+    for cx in (side, W - side):
+        centred("NOVA KART", small, cx, orange)
+    img.resize((BANNER_W, BANNER_H), Image.LANCZOS).save(os.path.join(TEX_DIR, "start_banner_albedo.png"), optimize=True)
+
+
+BUILDERS["start_banner"] = make_start_banner
+
+
 def main(argv):
     os.makedirs(TEX_DIR, exist_ok=True)
     os.makedirs(OUT_DIR, exist_ok=True)
