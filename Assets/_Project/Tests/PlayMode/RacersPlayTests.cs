@@ -41,6 +41,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
             Assert.IsTrue(roster.IsSetUp, "the roster was not set up in time");
             hud = Object.FindAnyObjectByType<PositionsHud>();
             Assert.IsNotNull(hud, "Main.unity has no PositionsHud");
+            yield return BotsOffForTests.RemoveFromRace(SetUpTimeoutSeconds); // RaceFlow alone + its dev test bots
 
             // The robot must not change a real player's records or coach tips on this computer (same as RaceSmokeTests).
             string[] keys = { "CarcavelosCircuit.Best." + race.TrackName, GhostLoader.SaveKey(race.TrackName) };

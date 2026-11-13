@@ -805,7 +805,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             hudToGhost.ApplyModifiedPropertiesWithoutUndo();
 
             BuildItems(manager, panel);
-            Role4RacersBuilder.Build(manager, settings, panel); // every racer on the grid, positions + minimap (R8, R9)
+            Role4RacersBuilder.Build(manager, settings, panel, kartPrefab); // every racer on the grid, positions + minimap (R8, R9), bots (V10)
             CarcavelosCircuit.Ambience.Editor.AmbienceBuilder.AddToScene(); // waves + surfers on the beach (R12)
 
             EditorSceneManager.SaveScene(scene, MainScenePath);
