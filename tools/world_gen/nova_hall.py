@@ -56,12 +56,19 @@ BRIDGE_U = (7.0, 27.5)       # landing gallery in the north-east of the atrium, 
 BRIDGE_O = (30.0, 60.8)      # .. and o from .. to; the wide staircase arrives at its south edge
 # V18j (Luc's request): the Hovione atrium as surveyed (reports/north-atrium-survey.md part 2; u, o in metres)
 STAIR_U = (37.0, 27.5)       # the big stair: foot and top (rises north), was 38.0 -> 27.0
-STAIR_O = (40.3, 45.0)       # .. 4.7 m wide, 6 m further east than before (was 34.0 .. 39.5)
+# V20c (Luc's request, playtest 2026-11-13, s17): "the lectern is further right, not straight in front of the door;
+# the stairs are also further right". The stair 4 m and the stage with its seat arc 5 m further east (+o, to the right
+# when driving in through D4), so the lane runs left of both. Were STAIR_O (40.3, 45.0), STAGE_O (38.6, 44.6),
+# SEAT_ARC ((51.3, 44.2), 7.6, (51.5, 36.6), (44.0, 42.0), 15).
+STAIR_O = (44.3, 49.0)       # .. 4.7 m wide
 STAIR_STEPS = 30
 STAGE_U = (51.0, 55.7)       # portable stage (was a 6 x 6 m block at u 47..53, o 41..47)
-STAGE_O = (38.6, 44.6)
+STAGE_O = (43.6, 49.6)
 STAGE_H = 0.45
-SEAT_ARC = ((51.3, 44.2), 7.6, (51.5, 36.6), (44.0, 42.0), 15)   # centre, radius, first seat, last seat, seats
+SEAT_ARC = ((51.3, 49.2), 7.6, (51.5, 41.6), (44.0, 47.0), 15)   # centre, radius, first seat, last seat, seats
+CLEAR_UNDER = 3.4            # V20c: where the east lane passes under the stair's high end, every part of the stair over
+                             # the lane (and 0.3 m beside it) is at least this high: the chase camera rides 3.0 m over
+                             # the kart (ChaseCamera.prefab FollowOffset y 3, near clip 0.3 m)
 GLASS_ROOF_U = (22.0, 54.0)  # the one glazed roof field (was four skylight bands over the whole block)
 GLASS_ROOF_O = (31.0, 50.0)
 FLOOR_PANEL = 5.6            # saw-cut joints of the polished concrete floor
@@ -70,8 +77,20 @@ ENTRANCE_BRIDGE_O = (12.5, 17.5)
 WHITE_BLOCK_U = (35.5, 44.0)      # white two-storey block south of the main entrance; its first 2 m are the balcony
 WHITE_BLOCK_O = (1.0, 8.6)        # (real: o 5..14; ours ends 0.5 m before the west lane's rail)
 WHITE_BLOCK_H = 8.4
-COLONNADE_STEP = 7.5         # white square pillars of the north-east exit colonnade, outside door D5
-COLONNADE_PILLAR = 0.75
+# V20c (Luc's request, s19/s20 + Street View of the north front): the north-east face (door D5) is a colonnade. Its
+# ground floor stands CANOPY_DEPTH back under the white upper storey, which rests on slim square white pillars on the
+# facade line (= the OSM outline = the real roof edge in the orthophoto; survey part 1.3: 7 m deep, 4.0-4.3 m clear;
+# Luc's own V15b campus model: 6 m, 4.0 m). It runs from the blank white north panel to the south end of the face.
+# Replaces V18j's exit_colonnade (0.75 m pillars standing in front of a full-height glass facade).
+CANOPY_LINE = ((78.31, 154.61), (66.58, 184.49))   # the face (two collinear OSM edges), south end -> north corner
+CANOPY_DEPTH = 6.0           # set-back of the ground floor behind the facade line
+CANOPY_Z = 4.4               # underside of the upper storey (= top of the ground-floor glass elsewhere)
+CANOPY_U = (4.05, 31.49)     # u of the set-back: north = the white panel's south edge, south = end of the face
+CANOPY_PILLAR = 0.5          # slim square white pillars (Street View: about 0.5 m)
+CANOPY_PILLARS_U = (29.0, 16.6, 10.3)   # 6-7 m apart; the bay of the exit is left wide (>= 1.2 m off the road edges)
+CANOPY_RIBBON = (5.6, 8.0)   # the storey's long window band (z from .. to)
+EXIT_OPEN_U = (14.5, 28.5)   # Luc (s19): the exit wider, above all to the left; was door D5 at u 19.65..27.15
+EXIT_HEADER_Z = 4.0          # the exit's header: high enough for the chase camera (3.0 m over the kart)
 WALL = 0.35                  # wall thickness (outer face offset)
 PLINTH = 5.0                 # outer walls go this far below the hall floor (the ground falls away to the south)
 SOLID_NORTH_U = 3.0          # facade pieces of the atrium closer than this to the north side are closed white walls
@@ -123,9 +142,17 @@ def regions(f):
 ROADS = [
     {"name": "west", "width": 7.0, "radii": [9.0, 9.0],
      "points": [(25.5, -8.0), (25.5, 13.0), (103.5, 13.0), (103.5, -10.0)]},
-    {"name": "east", "width": 6.0, "radii": [5.0, 5.0, 6.0, 6.0, 4.0],
-     "points": [(82.0, 37.2), (66.0, 37.0), (60.0, 31.0), (40.0, 31.0), (34.0, 26.5), (23.4, 26.5), (23.4, 78.0)]},
+    # V20c (Luc's request, s17): in through the middle of D4 (o 37.4; was 37.0-37.2, 0.4 m beside it), straight on
+    # left of the stage and the stair, right turn at the back,
+    # under the stair's high end (the lane's right half), out through the exit in the colonnade on the axis of door D5
+    # as HallDoors.json has it (u 22.73: snapped_doors keeps it 0.6 m off the face's end; before, the lane left 0.7 m
+    # beside it). Was radii [5, 5, 6, 6, 4], points (82, 37.2) (66, 37) (60, 31) (40, 31) (34, 26.5) (23.4, 26.5) (23.4, 78).
+    {"name": "east", "width": 6.0, "radii": [7.0, 8.0, 8.0],
+     "points": [(82.0, 37.4), (26.6, 37.4), (26.6, 54.5), (22.7, 62.0), (22.7, 78.0)]},
 ]
+RAIL_FREE_ROADS = ("east",)  # V20c (Luc, s17: "there is still a fence on the left, remove it"): no hall rails on the
+                             # east lane. Luc's NO_FENCE (fence_free.py) already trims the white fence there; what was
+                             # left were the rails' swings to the door frames, which no route piece reaches.
 RAIL_OFFSET = 0.35           # guard rail distance outside the road edge (m)
 RAIL_STOP = 0.15             # rails stop this far inside a facade; at a door they then end exactly at the frame
 RAIL_WALL_GAP = 0.6          # rails never run closer than this to the glass facade (the posts went through it)
@@ -281,6 +308,8 @@ def guard_rails(m, f, door_map):
         edges = [f.uo(d["c"][0] + d["t"][0] * sg * d["width"] / 2, d["c"][1] + d["t"][1] * sg * d["width"] / 2) for sg in (1, -1)]
         frames.append((cu, d["width"] / 2, edges))
     for road in ROADS:
+        if road["name"] in RAIL_FREE_ROADS:
+            continue
         line = road["line"]
         for side in (1, -1):
             pts = []
@@ -480,27 +509,110 @@ def rest_of_wing(m, f, poly):
     K.polygon_face(m, poly, 0.0, "floor", up=True)
 
 
-def exit_colonnade(m, a, b, inside, openings):
-    """V18j (Luc's request): white square pillars 0.75 m about every 7.5 m along the facade a-b, on its outer side,
-    starting beside the door (IMG_7725 299-310 s). They stand clear of the door, its open leaves and the door road."""
-    L = math.hypot(b[0] - a[0], b[1] - a[1])
-    tx, ty = (b[0] - a[0]) / L, (b[1] - a[1]) / L
-    s_door, width = [(s, w) for s, w, name in openings if name == "D5_out_north_east"][0]
-    half = COLONNADE_PILLAR / 2
-    spots = []
-    for sgn in (-1, 1):
-        s = s_door + sgn * (width / 2 + 1.1 + half + 0.45)             # past the open glass leaf (1.1 m) of the door
-        while half + 0.2 <= s <= L - half - 0.2:
-            spots.append(s)
-            s += sgn * COLONNADE_STEP
-    f = building_frame()
-    for s in spots:
-        x, y = a[0] + tx * s - inside[0] * (half - 0.1), a[1] + ty * s - inside[1] * (half - 0.1)
-        u, o = f.uo(x, y)
-        if not free(u, o, half * 1.42):
-            raise RuntimeError(f"V18j: colonnade pillar at u {u:.1f}, o {o:.1f} stands on a race lane")
-        m.box((x, y, (4.4 - 0.5) / 2), half, half, (4.4 + 0.5) / 2, "wall", math.atan2(ty, tx))
-    print(f"  colonnade: {len(spots)} pillars along the {L:.1f} m facade of door D5")
+def on_canopy_line(p, tol=0.05):
+    """True for a footprint point on the north-east face (CANOPY_LINE)."""
+    (ax, ay), (bx, by) = CANOPY_LINE
+    L = math.hypot(bx - ax, by - ay)
+    tx, ty = (bx - ax) / L, (by - ay) / L
+    s = (p[0] - ax) * tx + (p[1] - ay) * ty
+    return -tol <= s <= L + tol and abs((p[0] - ax) * ty - (p[1] - ay) * tx) < tol
+
+
+def north_canopy(m, f, inside, H):
+    """V20c (Luc's request, s19/s20 and his Street View panoramas of the north front): the colonnade of the exit.
+    On the facade line: the white upper storey with its long window band, on slim square white pillars, and the blank
+    white panel at the north corner (full height). CANOPY_DEPTH behind it: the ground-floor front: a white wall
+    section, the wide glass exit (EXIT_OPEN_U, header at EXIT_HEADER_Z), a glass shopfront with a cash niche (no
+    lettering). Between them: the white soffit with round lights, the hall floor, white return walls at both ends and
+    a grey concrete bench block against the north one. Door D5 in HallDoors.json stays on the facade line, so the
+    door road, the route and the white fence in Unity do not change."""
+    (ax, ay), (bx, by) = CANOPY_LINE
+    L = math.hypot(bx - ax, by - ay)
+    tx, ty = (bx - ax) / L, (by - ay) / L
+    nx, ny = inside
+    heading = math.atan2(ty, tx)
+
+    def s_of(u):                                                          # hall u -> distance along the face from its south end
+        x, y, _ = f.at(u, 68.4)
+        return (x - ax) * tx + (y - ay) * ty
+
+    def P(s, z, depth=0.0):                                               # depth: metres into the building (-WALL = outer face)
+        return (ax + tx * s + nx * depth, ay + ty * s + ny * depth, z)
+
+    def panel(s0, s1, z0, z1, depth, mat, both=True):
+        """Vertical face along the face at `depth`, seen from outside (and from inside when both)."""
+        if s1 - s0 < 0.01 or z1 - z0 < 0.01:
+            return
+        m.face([P(s0, z0, depth), P(s1, z0, depth), P(s1, z1, depth), P(s0, z1, depth)], mat, (-nx, -ny, 0))
+        if both:
+            m.face([P(s0, z0, depth), P(s1, z0, depth), P(s1, z1, depth), P(s0, z1, depth)], mat, (nx, ny, 0))
+
+    def slab(s0, s1, d0, d1, z0, z1, mat):                                # box: s0..s1 along, d0..d1 deep, z0..z1
+        c = P((s0 + s1) / 2, (z0 + z1) / 2, (d0 + d1) / 2)
+        m.box(c, (s1 - s0) / 2, (d1 - d0) / 2, (z1 - z0) / 2, mat, heading)
+
+    D, Z, top = CANOPY_DEPTH, CANOPY_Z, H + 0.8
+    s_north, s_south = s_of(CANOPY_U[0]), 0.0                             # set-back from s_south to s_north
+    # ---- facade line: the north panel full height, the upper storey over the colonnade
+    panel(s_north, L, 0.0, top, 0.0, "wall")
+    panel(s_north, L, 0.0, top, -WALL, "wall")
+    panel(s_south, s_north, Z, CANOPY_RIBBON[0], 0.0, "wall")
+    panel(s_south, s_north, Z, CANOPY_RIBBON[0], -WALL, "wall")
+    r0, r1 = s_south + 0.6, s_north - 0.6                                 # window band with white mullions every 1.6 m
+    panel(s_south, r0, CANOPY_RIBBON[0], CANOPY_RIBBON[1], 0.0, "wall")
+    panel(s_south, r0, CANOPY_RIBBON[0], CANOPY_RIBBON[1], -WALL, "wall")
+    panel(r1, s_north, CANOPY_RIBBON[0], CANOPY_RIBBON[1], 0.0, "wall")
+    panel(r1, s_north, CANOPY_RIBBON[0], CANOPY_RIBBON[1], -WALL, "wall")
+    panel(r0, r1, CANOPY_RIBBON[0], CANOPY_RIBBON[1], 0.0, "glass")
+    panel(r0, r1, CANOPY_RIBBON[0], CANOPY_RIBBON[1], -WALL, "glass")
+    for k in range(int((r1 - r0) / 1.6) + 1):
+        slab(r0 + k * 1.6 - 0.04, r0 + k * 1.6 + 0.04, -WALL - 0.05, -WALL + 0.02, CANOPY_RIBBON[0], CANOPY_RIBBON[1], "steel_white")
+    panel(s_south, s_north, CANOPY_RIBBON[1], top, 0.0, "wall")
+    panel(s_south, s_north, CANOPY_RIBBON[1], top, -WALL, "wall")
+    m.face([P(s_south, top), P(L, top), P(L, top, -WALL), P(s_south, top, -WALL)], "wall", (0, 0, 1))      # wall top
+    m.face([P(s_north, -PLINTH, -WALL), P(L, -PLINTH, -WALL), P(L, 0.0, -WALL), P(s_north, 0.0, -WALL)], "wall", (-nx, -ny, 0))
+    m.face([P(s_south, Z, 0.0), P(s_north, Z, 0.0), P(s_north, Z, -WALL), P(s_south, Z, -WALL)], "soffit", (0, 0, -1))
+    # ---- the soffit (and its upper side, seen from the galleries through the slot along the facade), round lights
+    for z, up in ((Z, (0, 0, -1)), (Z + 0.01, (0, 0, 1))):
+        m.face([P(s_south, z, 0.0), P(s_north, z, 0.0), P(s_north, z, D), P(s_south, z, D)], "soffit", up)
+    for u in f.samples(CANOPY_U[0] + 2.5, CANOPY_U[1] - 2.5, 5.5):
+        c = P(s_of(u), Z, D / 2)
+        m.cylinder((c[0], c[1], Z - 0.02), 0.11, 0.02, "light", 10)
+    # ---- return walls at both ends, up to the gallery floor (closes the slot over the soffit too)
+    for s0, s1 in ((s_south, s_south + 0.3), (s_north - 0.3, s_north)):
+        slab(s0, s1, -WALL, D, 0.0, GALLERY_Z, "wall")
+    # ---- the set-back front: white section (south), the exit, the shopfront (north); a white band up to the gallery
+    e0, e1 = sorted((s_of(EXIT_OPEN_U[1]), s_of(EXIT_OPEN_U[0])))         # exit from .. to (s grows northwards)
+    panel(s_south, e0, 0.0, Z, D, "wall")                                 # small white wall section
+    panel(e1, s_north, 0.0, Z, D, "glass")                                # shopfront glass
+    for k in range(int((s_north - e1) / 1.6) + 1):                        # its dark posts
+        s = e1 + 0.15 + k * 1.6
+        if s < s_north - 0.1:
+            slab(s - 0.05, s + 0.05, D - 0.06, D + 0.06, 0.0, Z, "steel_dark")
+    slab(s_north - 2.6, s_north - 1.4, D - 0.16, D - 0.02, 0.9, 2.2, "steel_dark")     # cash niche (no lettering)
+    slab(s_north - 2.45, s_north - 1.55, D - 0.18, D - 0.16, 1.45, 1.95, "light")      # its screen
+    panel(s_south, s_north, Z, GALLERY_Z, D, "wall")
+    slab(e0, e1, D - 0.15, D + 0.15, EXIT_HEADER_Z, Z, "steel_white")                 # header over the exit
+    for s in (e0, e1):                                                    # stainless posts of the sliding doors
+        slab(s - 0.08, s + 0.08, D - 0.12, D + 0.12, 0.0, EXIT_HEADER_Z, "rail")
+    for k in range(3):                                                    # the leaves slid open, stacked in front of the shopfront
+        s = e1 + 0.15 + k * 1.2
+        slab(s, s + 1.15, D + 0.2 + k * 0.06, D + 0.22 + k * 0.06, 0.0, EXIT_HEADER_Z - 0.1, "glass")
+    for s in (e0 + (e1 - e0) * 0.3, e0 + (e1 - e0) * 0.7):                # exit signs, inside, over the opening
+        slab(s - 0.3, s + 0.3, D + 0.16, D + 0.2, EXIT_HEADER_Z - 0.32, EXIT_HEADER_Z - 0.08, "exit")
+    # ---- pillars on the facade line, flush with its outer face
+    half = CANOPY_PILLAR / 2
+    for u in CANOPY_PILLARS_U:
+        s = s_of(u)
+        c = P(s, 0.0, -WALL + half)
+        pu, po = f.uo(c[0], c[1])
+        if not free(pu, po, half * 1.42 + 0.9):                           # 1.2 m off the lane's edge
+            raise RuntimeError(f"V20c: canopy pillar at u {pu:.1f}, o {po:.1f} stands less than 1.2 m from a race lane")
+        slab(s - half, s + half, -WALL, -WALL + 2 * half, -0.3, Z, "wall")
+    # grey concrete bench block against the north return wall (survey part 1.3), clear of the lane
+    slab(s_north - 0.85, s_north - 0.35, 0.6, 3.1, 0.0, 0.45, "concrete")
+    print(f"  canopy: {L:.1f} m face, set back {D} m from u {CANOPY_U[0]} to {CANOPY_U[1]}, exit u {EXIT_OPEN_U}, "
+          f"{len(CANOPY_PILLARS_U)} pillars at u {CANOPY_PILLARS_U}")
 
 
 def floor_joints(m, f, poly):
@@ -522,6 +634,7 @@ def shell(m, f, polys, door_map):
     K.polygon_face(m, atrium, 0.0, "floor", up=True)
     floor_joints(m, f, atrium)                                          # V18j (Luc's request)
     K.polygon_face(m, long_room, 0.0, "floor", up=True)
+    canopy_done = False
     for poly, H in ((atrium, ATRIUM_H), (long_room, LONG_H)):
         ccw = K.signed_area(poly) > 0
         for a, b in zip(poly, poly[1:] + poly[:1]):
@@ -539,12 +652,14 @@ def shell(m, f, polys, door_map):
                 style = "glass_low"                                    # glass at table level, white wall above (Noah)
             if poly is atrium and mid_u < SOLID_NORTH_U:               # atrium north facade: closed white wall (Noah)
                 style = "solid"
-            # V18j (Luc's request): the facade with door D5 is the north exit colonnade: white square pillars
-            # instead of the slim dark glass posts (survey part 1, finding 7)
-            colonnade = any(name == "D5_out_north_east" for _s, _w, name in door_map.get(edge_key(a, b), []))
-            facade(m, a, b, inside, H, door_map.get(edge_key(a, b), []), style, posts=not colonnade)
-            if colonnade:
-                exit_colonnade(m, a, b, inside, door_map[edge_key(a, b)])
+            # V20c (Luc's request): the north-east face with door D5 is the colonnade, built once by north_canopy()
+            # (was V18j: this facade with white square pillars in front of it, exit_colonnade())
+            if poly is atrium and on_canopy_line(a) and on_canopy_line(b):
+                if not canopy_done:
+                    north_canopy(m, f, inside, H)
+                    canopy_done = True
+                continue
+            facade(m, a, b, inside, H, door_map.get(edge_key(a, b), []), style)
 
 
 # ---------- atrium ----------
@@ -658,13 +773,17 @@ def atrium_structure(m, f):
         K.round_column(m, f, u, BRIDGE_O[0] + 0.3, 0, GALLERY_Z - 0.45, 0.22)
     # V18j (Luc's request): columns of the landing gallery: along its south edge (clear of the stair) and one row
     # under its middle. Was: two columns at u BRIDGE_U[1] + 0.3, o BRIDGE_O[0] + 0.3 and BRIDGE_O[1] - 0.3.
-    for u, o in ((BRIDGE_U[1] + 0.3, BRIDGE_O[0] + 0.3), (BRIDGE_U[1] + 0.3, 38.6), (BRIDGE_U[1] + 0.3, 46.7),
-                 (BRIDGE_U[1] + 0.3, 53.8), (16.5, 38.6), (16.5, 46.7), (16.5, 53.8)):
+    # V20c (Luc's request): the east lane now turns east under the gallery's south edge, so its three columns there
+    # (u 27.8, o 38.6 / 46.7 / 53.8) move 7.3 m north to u 20.5 (the one over o 38.6 goes: the arrow boards stand
+    # there, and its neighbour at u 16.5 carries the slab). The corner column at o 30.3 stays.
+    for u, o in ((BRIDGE_U[1] + 0.3, BRIDGE_O[0] + 0.3), (20.5, 46.7), (20.5, 53.8),
+                 (16.5, 38.6), (16.5, 46.7), (16.5, 53.8)):
         must_be_free("landing gallery column", u - 0.22, u + 0.22, o - 0.22, o + 0.22)
         K.round_column(m, f, u, o, 0, GALLERY_Z - 0.45, 0.22)
     for u in (11.5, 21.5):                                               # round ceiling lights under the landing gallery
         for o in (34.5, 42.5, 50.5, 57.5, 64.3):
-            K.downlight(m, f, u, o, GALLERY_Z - 0.45)
+            if o < 68.4 - CANOPY_DEPTH:                                  # V20c: not over the colonnade (its own soffit lights)
+                K.downlight(m, f, u, o, GALLERY_Z - 0.45)
     K.block(m, f, 14.0, 18.5, BRIDGE_O[0] - 0.12, BRIDGE_O[0] - 0.05, GALLERY_Z + 0.3, GALLERY_Z + 2.8, "piano")   # big screen
     # north wall, ground floor (seen left of the main entrance): white square pillars, doors, red exit signs
     for o in (4.0, 10.0, 16.0, 22.0):
@@ -674,7 +793,8 @@ def atrium_structure(m, f):
         K.block(m, f, 0.3, 0.42, o0 + 0.6, o0 + 1.4, 2.6, 2.85, "red")
     # V18j (Luc's request): the free column at (36.0, 46.0) would stand 1 m beside the moved stair's foot; it is now
     # at (39.0, 48.5), right of and in front of the foot as in IMG_7725 278-284 s. The other five are unchanged.
-    for u, o in ((39.0, 48.5), (36.0, 54.0), (46.0, 54.0), (56.0, 54.0), (46.0, 22.0), (56.0, 22.0)):
+    # V20c: the first one moves 4 m east with the stair, (39.0, 48.5) -> (39.0, 52.5): again right of and in front of its foot
+    for u, o in ((39.0, 52.5), (36.0, 54.0), (46.0, 54.0), (56.0, 54.0), (46.0, 22.0), (56.0, 22.0)):
         K.round_column(m, f, u, o, 0, ATRIUM_H - 1.6, 0.24)                                    # free columns up to the roof
         m.cylinder(f.at(u, o, 0), 0.44, 0.5, "wall", 14, top_radius=0.25)                      # flared foot (IMG_7725)
 
@@ -711,11 +831,14 @@ def grand_stair(m, f, u_foot, u_top, o0, o1, z_top):
     """V18j (Luc's request): the big stair as it is (IMG_7725 268-296 s, N09): one straight flight rising towards
     smaller u, white steps between two deep white stringers, a glass balustrade with a steel handrail on each
     stringer, open underneath (white sloping underside, two slim columns), palms in troughs under the high end."""
-    must_be_free("grand stair", u_top, u_foot + 0.4, o0 - 0.2, o1 + 0.2)
     n = STAIR_STEPS
     run, rise = (u_foot - u_top) / n, z_top / n
     slope = z_top / (u_foot - u_top)
     waist = 0.42                                                         # underside this far below the step edges
+    # V20c (Luc's request, s17: "pass half or fully under the stairs"): the east lane may run under the high end. Every
+    # part lower than CLEAR_UNDER (underside and stringers: up to 0.47 m under the step edges) stays off the lane.
+    u_low = u_foot - (CLEAR_UNDER + 0.47) / slope
+    must_be_free("grand stair (below the camera's clearance)", u_low, u_foot + 0.4, o0 - 0.2, o1 + 0.2)
 
     def edge_z(u):                                                       # height of the line through the step edges
         return (u_foot - u) * slope
@@ -741,12 +864,17 @@ def grand_stair(m, f, u_foot, u_top, o0, o1, z_top):
             K.block(m, f, u - 0.02, u + 0.02, o - 0.02, o + 0.02, edge_z(u) + 0.2, edge_z(u) + 1.1, "rail")
     u_col = u_top + 3.4                                                  # two slim columns under the flight
     for o in (o0 + 0.5, o1 - 0.5):
+        must_be_free("stair column", u_col - 0.36, u_col + 0.36, o - 0.36, o + 0.36)
         K.round_column(m, f, u_col, o, 0, edge_z(u_col) - waist, 0.2)
         m.cylinder(f.at(u_col, o, 0), 0.36, 0.4, "wall", 12, top_radius=0.21)
-    for k, o in enumerate((o0 + 1.2, o1 - 1.2)):                         # palms in black troughs under the high end
-        K.planter(m, f, u_top + 1.7, o, 70 + k, palm=True)
+    # V20c: the palm troughs stood under the high end (u_top + 1.7), now the lane: they move 3.2 m south, where the
+    # flight is still 2.1 m up, and the seat cubes behind them (were at u_col + 1.4). Together with the two columns they
+    # keep karts out from under the low part of the flight.
+    for k, o in enumerate((o0 + 1.2, o1 - 1.2)):                         # palms in black troughs under the flight
+        must_be_free("palm trough", u_top + 4.2, u_top + 5.6, o - 0.3, o + 0.3)
+        K.planter(m, f, u_top + 4.9, o, 70 + k, palm=True)
     for o in (o0 + 0.9, o0 + 2.35, o0 + 3.8):                            # seat cubes under the flight
-        K.block(m, f, u_col + 1.4, u_col + 1.92, o - 0.26, o + 0.26, 0.0, 0.46, "grey")
+        K.block(m, f, u_col + 2.7, u_col + 3.22, o - 0.26, o + 0.26, 0.0, 0.46, "grey")
 
 
 def entrance_bridge(m, f):
@@ -876,14 +1004,49 @@ def atrium_furniture(m, f):
     # columns, and the troughs beside the stair (IMG_7725 278-296 s)
     for k, u in enumerate((34.3, 37.7, 42.3, 45.7, 50.3, 53.7)):
         planter(m, f, u, 59.6, 100 + k, palm=k % 3 == 1)
-    for k, u in enumerate((29.6, 32.8)):
-        planter(m, f, u, 47.6, 110 + k)
+    # V20c: the two troughs east of the stair move with it (were (29.6, 47.6), (32.8, 47.6)); the lane passes at u 26.6
+    for k, u in enumerate((32.0, 35.0)):
+        planter(m, f, u, 51.6, 110 + k)
+    # V20c (Luc's request, s19: "put the benches rather left against the wall"): the three dark blue sofas stood at
+    # u 12..19, o 62..63, in front of the exit; now left of the widened exit, backs to the set-back shopfront
     for k in range(3):
-        if free(13.0 + k * 2.4, 62.5, 1.2):
-            K.block(m, f, 12.0 + k * 2.4, 14.0 + k * 2.4, 62.0, 63.0, 0.0, 0.75, "board")        # dark blue sofas
+        u0 = 4.4 + k * 2.1
+        must_be_free("sofa", u0, u0 + 1.9, 61.0, 62.0)
+        K.block(m, f, u0, u0 + 1.9, 61.0, 62.0, 0.0, 0.75, "board")
     big_plant(m, f, 14.0, 58.0, 3)
-    big_plant(m, f, 60.0, 40.0, 4)
+    big_plant(m, f, 60.0, 45.0, 4)                                     # V20c: with the stage, 5 m east (was o 40.0)
+    exit_arrows(m, f)
     entrance_seating(m, f)
+
+
+# V20c (Luc's request, s18: "arrows to the right so you see where it goes out, roughly where the front table with
+# chairs stands"): white boards with Boost Orange chevrons, as the track's corner signs (env_trackside.add_sign), on
+# the outside of the lane's right turn at the back of the atrium, facing the karts that come in from D4.
+ARROW_U = 22.6               # board line (u); the turn's outer edge is 1.6 m south of its nearest end
+ARROW_O = (33.3, 41.1)       # three boards side by side, o from .. to (the lane comes north on o 37)
+ARROW_H, ARROW_LIFT, ARROW_T = 0.9, 0.6, 0.08
+
+
+def exit_arrows(m, f):
+    o0, o1 = ARROW_O
+    w = (o1 - o0 - 2 * 0.15) / 3                                         # board width (2.4 m, as outside)
+    must_be_free("arrow boards", ARROW_U - 0.3, ARROW_U + 0.3, o0, o1)
+    tn = f.tangent()
+    front = ARROW_U + ARROW_T / 2 + 0.01                                 # the boards face +u (south, towards D4)
+    for k in range(3):
+        a = o0 + k * (w + 0.15)
+        c = a + w / 2
+        K.block(m, f, ARROW_U - ARROW_T / 2, ARROW_U + ARROW_T / 2, a, a + w, ARROW_LIFT, ARROW_LIFT + ARROW_H, "table")
+        for so in (-0.8, 0.8):                                           # two steel posts behind each board
+            K.block(m, f, ARROW_U - ARROW_T / 2 - 0.09, ARROW_U - ARROW_T / 2 - 0.01, c + so - 0.04, c + so + 0.04,
+                    0.0, ARROW_LIFT + 0.1, "rail")
+        # three chevrons pointing right (+o, the driver's right when driving north), env_trackside's proportions
+        cw, t, vm, vh = 0.34, 0.13, ARROW_LIFT + ARROW_H / 2, ARROW_H * 0.36
+        for u0 in (-0.72, 0.0, 0.72):
+            tip, back = c + u0 + cw / 2, c + u0 - cw / 2
+            for vend in (vm + vh, vm - vh):
+                quad = [(tip, vm), (tip - t, vm), (back - t, vend), (back, vend)]
+                m.face([f.at(front, o, z) for o, z in quad], "rail_orange", (tn[0], tn[1], 0))
 
 
 def portable_stage(m, f):
