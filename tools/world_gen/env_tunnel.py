@@ -16,6 +16,7 @@ import env_terrain
 FLOOR_HALF = E.ROUTE_WIDTH / 2 + 0.6     # road + narrow footway each side
 FOOTWAY_INNER = 0.065                    # footway height at the road edge: flush with the road (6 cm lift)
 CEILING = 3.9                            # clear height
+WALL_FOOT_Z = 0.12                       # the mural walls stand on the footway's outer edge, this far over the road
 SLAB = 0.7
 CEIL_HALF = FLOOR_HALF + CEILING         # 45 degree walls
 MURAL_TILE_M = 12.0                      # one mural texture repeat along the wall
@@ -54,7 +55,7 @@ def build_shell(pts, col):
     for i, p in enumerate(pts):
         _, nrm = frame(pts, i)
         rings.append((p, [bm.verts.new(at(p, nrm, s, z)) for s, z in (
-            (FLOOR_HALF, 0.12), (CEIL_HALF, CEILING), (-CEIL_HALF, CEILING), (-FLOOR_HALF, 0.12))]))
+            (FLOOR_HALF, WALL_FOOT_Z), (CEIL_HALF, CEILING), (-CEIL_HALF, CEILING), (-FLOOR_HALF, WALL_FOOT_Z))]))
     wall_len = math.hypot(CEIL_HALF - FLOOR_HALF, CEILING)
     for (pa, ra), (pb, rb) in zip(rings, rings[1:]):
         ua, ub = pa["s"] / MURAL_TILE_M, pb["s"] / MURAL_TILE_M
@@ -143,8 +144,15 @@ def build_portal(p, inward, cover, name, col, beige=False, closed=False, cap_lif
     V = lambda c: bm.verts.new(c)
     faces = [
         [pt(-HEADWALL_HALF, CEILING), pt(HEADWALL_HALF, CEILING), pt(HEADWALL_HALF, top), pt(-HEADWALL_HALF, top)],
-        [pt(-HEADWALL_HALF, -0.5), pt(-FLOOR_HALF, -0.5), pt(-CEIL_HALF, CEILING), pt(-HEADWALL_HALF, CEILING)],
-        [pt(FLOOR_HALF, -0.5), pt(HEADWALL_HALF, -0.5), pt(HEADWALL_HALF, CEILING), pt(CEIL_HALF, CEILING)],
+        # V23c (Luc, 13 Nov, q11: "you look into nothing ... the mural's end hangs free"): the opening's slanted edge
+        # ran from the wall foot's place at -0.5 m straight to the ceiling's corner, but the mural wall stands on the
+        # footway at WALL_FOOT_Z and leans at 45 degrees: a wedge up to 0.55 m wide stayed open beside each wall's end
+        # (widest at the foot), and through it one saw the terrain's hole behind the headwall. The edge now goes up
+        # the wall foot's line to WALL_FOOT_Z first and then follows the wall exactly.
+        [pt(-HEADWALL_HALF, -0.5), pt(-FLOOR_HALF, -0.5), pt(-FLOOR_HALF, WALL_FOOT_Z), pt(-CEIL_HALF, CEILING),
+         pt(-HEADWALL_HALF, CEILING)],
+        [pt(FLOOR_HALF, -0.5), pt(HEADWALL_HALF, -0.5), pt(HEADWALL_HALF, CEILING), pt(CEIL_HALF, CEILING),
+         pt(FLOOR_HALF, WALL_FOOT_Z)],
         # top of the headwall (0.6 m thick) and the cap over the hole behind it
         [pt(-HEADWALL_HALF, top), pt(HEADWALL_HALF, top), pt(HEADWALL_HALF, top, 0.6), pt(-HEADWALL_HALF, top, 0.6)],
         [pt(-HEADWALL_HALF, capz, 0.6), pt(HEADWALL_HALF, capz, 0.6),
@@ -158,6 +166,10 @@ def build_portal(p, inward, cover, name, col, beige=False, closed=False, cap_lif
             out = (nrm[0] * s, nrm[1] * s)
             extra.append(([pt(s * H, low, 0.0), pt(s * H, low, 0.6), pt(s * H, top, 0.6), pt(s * H, top, 0.0)], out))
             extra.append(([pt(s * H, low, 0.6), pt(s * H, low, far), pt(s * H, capz, far), pt(s * H, capz, 0.6)], out))
+        for s in (-1, 1):                                # V23c: the end of the footway (road edge to the wall's foot):
+            half = E.ROUTE_WIDTH / 2                     # one looked under its 6-12 cm step into the hole behind
+            extra.append(([pt(s * half, -0.5), pt(s * FLOOR_HALF, -0.5), pt(s * FLOOR_HALF, WALL_FOOT_Z),
+                           pt(s * half, FOOTWAY_INNER)], (-dx, -dy)))
         if cap_lift > 0.0:
             extra.append(([pt(-H, capz - 1.2, far), pt(H, capz - 1.2, far), pt(H, capz, far), pt(-H, capz, far)], (dx, dy)))
     for k, f in enumerate(faces):

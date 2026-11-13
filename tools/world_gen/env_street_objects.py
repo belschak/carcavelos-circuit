@@ -1141,6 +1141,7 @@ def promenade_placements(veg, props):
     for line in walls:
         solids += [(x, y, 1.1) for x, y in line]
     solids += [(x, y, 1.6) for _t, (x, y) in masts]
+    solids.append((*S.SIGN_SPOT_FORK, 1.6))               # V23c: the mast at the fork is gone, its spot stays free (a sign)
     machines = []
     for f in S.PROM_FITNESS:
         u = S.bearing(f["bearing"])

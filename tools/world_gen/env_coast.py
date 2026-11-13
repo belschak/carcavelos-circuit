@@ -148,6 +148,33 @@ def forecourt_wall():
     return out
 
 
+def portal_return(g, line):
+    """V23c (Luc, 13 Nov, q11: "this white wall must go up to the coloured one"): the white wall ends at the portal
+    6.85 m from the centreline, the mural wall begins 4.6 m from it and leans away, so between the two one looked at a
+    piece of the headwall (another concrete, square to the wall) with the mural's end free in front of it. The wall now
+    turns the corner: a panel of the same wall, in the portal's plane, from the wall's end to the mural wall's slanted
+    end and down under the ground. It lies RETURN_PROUD in front of the headwall and outside the road's shoulder."""
+    import env_terrain
+    import env_tunnel as T
+    p, (dx, dy) = env_terrain.portals()[0]
+    nrm = (-dy, dx)                                       # to the left of the driving direction: the wall's side
+    x, y, _foot, top, arc = line[-1]
+    side = (x - p["x"]) * nrm[0] + (y - p["y"]) * nrm[1] - P.FORE["wall_thick"] / 2      # the wall's face towards the road
+    if side <= T.FLOOR_HALF + 0.2:
+        return
+    z0 = p["track_z"]
+
+    def pt(s, z):
+        return (p["x"] + nrm[0] * s - dx * RETURN_PROUD, p["y"] + nrm[1] * s - dy * RETURN_PROUD, z0 + z)
+    meet = T.WALL_FOOT_Z + (side - T.FLOOR_HALF)          # the mural wall's height where the white wall's face stands
+    ring = [(T.FLOOR_HALF, -0.4), (side, -0.4), (side, min(meet, top - z0)), (T.FLOOR_HALF, T.WALL_FOOT_Z)]
+    g.face([pt(s, z) for s, z in ring], 1, out=(-dx, -dy, 0),
+           uvs=[P.trim_uv("wall", arc + side - s, 3.2 - (top - z0 - z)) for s, z in ring])
+
+
+RETURN_PROUD = 0.03
+
+
 def build_forecourt():
     f = P.FORE
     g, rails = B.Geo(), B.Geo()
@@ -172,6 +199,9 @@ def build_forecourt():
             (x0 - u[1] * half, y0 + u[0] * half, t0), (x0 + u[1] * half, y0 - u[0] * half, t0)], "white", (-u[0], -u[1], 0))
     B.railing_line(rails, [(x, y, top) for x, y, _f, top, _s in line], B.STEEL_SLOT, post=0.05, rails=(0.55, 1.1),
                    rail=0.045, step=2.0)
+    ret = B.Geo()                                         # V23c: no collider (the headwall behind it has one), no guard:
+    portal_return(ret, line)                              # it lies in the headwall's plane, where the tunnel's wall begins
+    finish("Coast_PortalReturn_NoCollide", ret, [atlas_material(), trim_material()])
     # white precast kerb-bench on the south side: 3 m segments on the ground behind the bank
     t0, t1 = f["bench"]
     pts = P.route_line(t0, t1, f["bench_offset"], 0.5)
@@ -975,7 +1005,13 @@ def paving_z(x, y):
     # land side near the kerb it now holds the promenade's level (env_covebank.land_beside_cove, as the corridor does).
     g = ST.ground(x, y)
     g = max(g, env_covebank.land_beside_cove(x, y, g))
-    return g + ST.lift_at(S.route_distance(x, y))
+    z = g + ST.lift_at(S.route_distance(x, y))
+    # V23c (Luc, 13 Nov, q10: "totally bumpy"): on the upper level, away from the race line and from the level's rim,
+    # the paving is the plan's smooth surface, not the 5 m ground's creases (never under the ground: + 2 cm at least)
+    design = P.upper_design(x, y)
+    if design is not None and design[1] > 0.0:
+        z = max(z + (design[0] + ST.LIFT - z) * design[1], g + 0.02)
+    return z
 
 
 def build_paving():
@@ -991,11 +1027,17 @@ def build_paving():
         b = (min(q[0] for q in la["ring"]), min(q[1] for q in la["ring"]), max(q[0] for q in la["ring"]), max(q[1] for q in la["ring"]))
         if b[2] > box[0] and b[0] < box[2] and b[3] > box[1] and b[1] < box[3]:
             layers.append(dict(name="street: " + la["name"], mat=None, ring=la["ring"], uv=None))
+    # V23c (Luc, 13 Nov, q11: "at the start of the tunnel you look into nothing"): the Marginal's grass strip
+    # (street_plan "N grass strip", a lawn hole) reaches over the cutting down to the portal's foot, so the forecourt's
+    # paving stopped 2.5 m short of the mouth on the wall's side and bare lawn showed between the road, the white wall
+    # and the mural. The forecourt lies in the cutting under that strip: it is drawn again on top of the streets' layers.
+    top = dict(layers[mine - 1], name="forecourt and ramp (over the streets' layers)")
+    layers.append(top)
     soup = ST.overlay(layers)
-    soup.tris = [t for t in soup.tris if t[3] < mine]
+    soup.tris = [t for t in soup.tris if t[3] < mine or t[3] == len(layers) - 1]
     soup.refine_near_route(3.0)
     soup.clip_route()
-    soup.follow_ground(paving_z)
+    soup.follow_ground(paving_z, down=0.03)               # V23c: 3 cm (was 7): no flat chords over the hollows of a ramp
     keys = []
     for la in layers[:mine]:
         if la["mat"] not in keys:
@@ -1232,15 +1274,16 @@ def build_trim(veg):
     for x, y in P.RAMP["bollards"]:                         # slim black steel bollards at the top of the stepped ramp
         z = paving_z(x, y)
         tcyl(g, x, y, 0.05, z - 0.1, z + 0.9, "black", n=6)
-    hx, hy = P.RAMP["hydrant"]                              # the red hydrant on the grass corner
-    hz = E.ground_z(hx, hy)
-    tcyl(g, hx, hy, 0.09, hz - 0.1, hz + 0.6, "red", n=8)
-    tcyl(g, hx, hy, 0.12, hz + 0.6, hz + 0.72, "red", n=8)
-    pbox_t(g, (hx, hy), (1.0, 0.0), 0.2, 0.045, hz + 0.38, hz + 0.47, "red", skip=())
+    if P.RAMP["hydrant"]:                                   # the red hydrant on the grass corner (V23c: none)
+        hx, hy = P.RAMP["hydrant"]
+        hz = E.ground_z(hx, hy)
+        tcyl(g, hx, hy, 0.09, hz - 0.1, hz + 0.6, "red", n=8)
+        tcyl(g, hx, hy, 0.12, hz + 0.6, hz + 0.72, "red", n=8)
+        pbox_t(g, (hx, hy), (1.0, 0.0), 0.2, 0.045, hz + 0.38, hz + 0.47, "red", skip=())
     guard("Coast_Trim", g)
     finish("Coast_Trim", g, [trim_material()])
     print(f"  coast trim (V18h): {blocks} white blocks, {len(P.BENCH_LAMPS)} lamp posts, {posts} timber bollards, {pits} palm pits, "
-          f"the waste station, a utility box, {len(P.RAMP['bollards'])} ramp bollards, a hydrant; {tris(g)} triangles")
+          f"the waste station, a utility box, {len(P.RAMP['bollards'])} ramp bollards, {1 if P.RAMP['hydrant'] else 0} hydrant; {tris(g)} triangles")
 
 
 def pbox_t(g, c, u, hu, hv, z0, z1, colour, skip=("bottom",)):
