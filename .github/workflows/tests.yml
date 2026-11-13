@@ -59,6 +59,9 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           unityVersion: auto
+          # The Web image (same as web-build.yml's build), because Role4WebBuild.cs uses UnityEditor.WebGL and the
+          # default image has no Web module, so the editor scripts would not compile.
+          customImage: unityci/editor:ubuntu-6000.3.28f1-webgl-3
           testMode: all
           artifactsPath: test-results
 
