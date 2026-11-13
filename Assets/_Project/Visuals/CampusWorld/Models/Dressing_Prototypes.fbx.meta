@@ -32,6 +32,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_ai_B4_surfrack
+    second: {fileID: 2100000, guid: 9015f1e59c9ef4a6b92bbfffc645b47b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_ai_B5_volleynet
     second: {fileID: 2100000, guid: 87519350649c04d518a92d68a34c7108, type: 2}
   - first:
@@ -92,6 +97,21 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_ai_P2_escooter
+    second: {fileID: 2100000, guid: 06671d2ac6ee249018f8c97f8ab81794, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_S1_bistroset
+    second: {fileID: 2100000, guid: 30c9a3f5f8d28483a9e9e84ec815fe26, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_S2_barstool
+    second: {fileID: 2100000, guid: dce95ae7e12b349569eed98d31811a33, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_ai_S3_foodtruck
     second: {fileID: 2100000, guid: 0fb1084cf6eee4c78930905ad772c722, type: 2}
   - first:
@@ -99,6 +119,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_ai_S4_kiosk
     second: {fileID: 2100000, guid: 5ce4da8ad3b4c49b79becc75fda5bb40, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_V1_scooter
+    second: {fileID: 2100000, guid: 31312ac1dbcb7471cb743a2f59357c01, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
