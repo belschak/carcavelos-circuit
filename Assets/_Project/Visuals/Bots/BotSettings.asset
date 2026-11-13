@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 008b5770cb3c74d3b8a4dbeaa9c5b6c8, type: 3}
+  m_Name: BotSettings
+  m_EditorClassIdentifier: CarcavelosCircuit.Visuals::CarcavelosCircuit.Visuals.BotSettings
+  bots:
+  - displayName: Gaivota
+    colour: {r: 0.88, g: 0.16, b: 0.16, a: 1}
+    pace: 0.97
+    cornering: 0.94
+    lane: -0.8
+    drifts: 1
+  - displayName: Bica
+    colour: {r: 0.56, g: 0.27, b: 0.86, a: 1}
+    pace: 0.99
+    cornering: 0.9
+    lane: 0.7
+    drifts: 1
+  - displayName: Sardinha
+    colour: {r: 0.16, g: 0.66, b: 0.36, a: 1}
+    pace: 0.95
+    cornering: 0.96
+    lane: 0
+    drifts: 0
+  - displayName: The Dean
+    colour: {r: 0.98, g: 0.8, b: 0.12, a: 1}
+    pace: 0.98
+    cornering: 0.95
+    lane: -0.3
+    drifts: 0
+  - displayName: Prof. Pastel
+    colour: {r: 0.16, g: 0.46, b: 0.96, a: 1}
+    pace: 0.94
+    cornering: 0.97
+    lane: 1
+    drifts: 0
+  turnDegreesPerSecond: 110
+  fullSteerSpeed: 5
+  lookAheadMetres: 4
+  lookAheadSeconds: 0.3
+  steerSeconds: 0.1
+  planMetres: 40
+  planBraking: 12
+  minCornerSpeed: 6
+  brakeMargin: 1.5
+  rubberBandMetres: 80
+  rubberBandBoost: 0.06
+  rubberBandSlow: 0.1
+  passLookMetres: 9
+  passSideMetres: 1.8
+  maxLaneMetres: 2.2
+  laneChangeSpeed: 2.5
+  driftLookMetres: 24
+  driftMinBendDegrees: 50
+  driftMaxBendDegrees: 130
+  driftMinSpeed01: 0.7
+  stuckSeconds: 2
+  reverseSeconds: 1.2
+  maxReverseTries: 3
+  fallMetres: 8
