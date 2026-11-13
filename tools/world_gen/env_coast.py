@@ -603,10 +603,13 @@ def build_details():
             prof = [(-half, gz - 0.2, 0.0), (-half * rng.uniform(0.9, 1.05), gz + 0.62 * k, 1.9), (-half * 0.5, gz + 0.95 * k, 2.7),
                     (half * 0.45, gz + k, 3.0), (half * rng.uniform(0.9, 1.05), gz + 0.6 * k, 1.9), (half, gz - 0.2, 0.0)]
             sections.append(([(x + n[0] * o, y + n[1] * o, zz, vv) for o, zz, vv in prof], s, n))
+        leafy = []                                           # V18n: the faces that get leaf cards (env_vegetation)
         for (pa, sa, na), (pb, sb, _nb) in zip(sections, sections[1:]):
             for k in range(5):
                 a0, a1, b0, b1 = pa[k], pa[k + 1], pb[k], pb[k + 1]
                 side = -1.0 if k < 2 else (1.0 if k > 2 else 0.0)
+                leafy.append(([a0[:3], b0[:3], b1[:3], a1[:3]],
+                              (na[0] * side, na[1] * side, 1.0 if k in (1, 2, 3) else 0.2)))
                 g.face([a0[:3], b0[:3], b1[:3], a1[:3]], 0, out=(na[0] * side, na[1] * side, 1.0 if k in (1, 2, 3) else 0.2),
                        uvs=[P.band_uv("hedge", sa, a0[3]), P.band_uv("hedge", sb, b0[3]), P.band_uv("hedge", sb, b1[3]),
                             P.band_uv("hedge", sa, a1[3])])
@@ -614,6 +617,17 @@ def build_details():
             tu = (n[1], -n[0])
             g.face([q[:3] for q in prof], 0, out=(tu[0] * sgn, tu[1] * sgn, 0),
                    uvs=[P.band_uv("hedge", s + q[3] * 0.0 + k * 0.6, q[3]) for k, q in enumerate(prof)])
+            leafy.append(([q[:3] for q in prof][::sgn], (tu[0] * sgn, tu[1] * sgn, 0.0)))
+        # V18n: a shell of leaf cards over the plain volume (soft, leafy outline; the red hedges with blossom cards
+        # instead of the red boxes); no collider, nothing solid
+        import env_vegetation as V
+        hedge_no = len([1 for _ in V.E.collection(V.HEDGE_COLLECTION).objects])
+        if red:
+            V.hedge_leaves(f"Coast_RedHedgeLeaves{hedge_no}", leafy, "hedge", "broad", card=0.8, cover=5.5, blossom=0.22,
+                           seed=40 + hedge_no)
+        else:
+            V.hedge_leaves(f"Coast_TamariskLeaves{hedge_no}", leafy, "tamarisk", "spray", card=1.25, cover=5.0,
+                           seed=40 + hedge_no)
         if red:                                                                     # red blossoms on the top and the south face
             for (prof, s0, n) in sections:
                 for _k in range(9):
@@ -623,8 +637,7 @@ def build_details():
                     d = rng.uniform(0.08, 0.14)
                     for quad in ([(fx - d, fy, fz), (fx + d, fy, fz), (fx + d, fy, fz + 2 * d), (fx - d, fy, fz + 2 * d)],
                                  [(fx - d, fy - d, fz + d), (fx + d, fy - d, fz + d), (fx + d, fy + d, fz + d), (fx - d, fy + d, fz + d)]):
-                        pal(g, quad, "terracotta", None)
-                        pal(g, quad[::-1], "terracotta", None)
+                        pass                                # V18n: the blossoms are leaf cards now (hedge_leaves)
                     flowers += 1
     guard("Coast_Details", g)
     finish("Coast_Details", g)
