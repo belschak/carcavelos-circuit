@@ -1,11 +1,20 @@
 """Backdrop: sea to the horizon, land beyond the world edge, the real buildings around it, and the fort.
 
-- Sea: one large water plane at z = 0 south of the coast (the terrain's seabed sits below it).
-- Land skirt: the terrain edge is extended 600 m outwards (west, north, east) so the world has no end;
-  on the south edge only land vertices are extended a little, the sea stays open.
+- Sea: one water plane at z = 0 that covers only the sea side of the coast (coast.sea_polygon: the traced waterline,
+  the far coast west of the world, the edge of the land skirts east of the cove), reaching SEA_UNDER_BEACH metres
+  under the beach so it meets the sand exactly on the waterline. Nothing inland stands over water, so no hollow or
+  gap in the ground can ever show the sea.
+- Land skirt: the terrain edge is extended 600 m outwards (north, east) so the world has no end;
+  on the south edge only land vertices are extended (SOUTH_SKIRT), sloping into the sea round the fort.
+- Far west (build_far_west): Carcavelos beach goes on for about a kilometre beyond the world edge. A strip that
+  follows the coast continues the world's own west-edge cross-section (sea, wet and dry sand, the promenade and road),
+  narrowing towards Parede, with the ground colour map read from the world's edge column. From coast.FAR_X the coast
+  is a straight line, which Sea.shader also uses for the foam beyond the shore map.
+- Rock shelves (build_rocks): low irregular limestone slabs on the beach and in the swash (coast.ROCKS).
 - Outer buildings: the real OSM buildings just outside the world bounds as simple blocks (low detail).
 - Forte de Sao Juliao da Barra (OSM way 155316963) with its lighthouse (Farol de Sao Juliao, 24 m tower,
-  light 39 m above the sea): the silhouette seen from the promenade in the videos.
+  light 39 m above the sea): the silhouette seen from the promenade in the videos. V10b (2026-11-10): stepped
+  stone walls on a rocky headland, inner buildings, sentry boxes and a squat square lighthouse tower (K03-K06).
 """
 import math
 import os
@@ -14,6 +23,7 @@ import sys
 import bmesh
 import bpy
 
+import coast
 import env_common as E
 
 sys.path.insert(0, E.HERE)
@@ -22,21 +32,33 @@ from world_data import load_osm, outer_rings, polygon_area, to_local, way_points
 SKIRT = 600.0
 SEA_LEVEL = 0.0
 FORT_ID = 155316963
+FORT_PARTS = {155316885, 155316891, 155316896,   # V10b: lighthouse and inner buildings (drawn by build_fort) and the
+              155316895, 228205972}               # ravelin and wall (env_beachfront): no plain blocks for these
 FORT_TOP = 13.0           # rampart walk height above the sea (m), from the lighthouse data
 LIGHTHOUSE_HEIGHT = 24.0
 
 
 DISTANT_LAND_Z = 8.0      # height of the land beyond the skirt (the skirt slopes to it)
+SOUTH_SKIRT = 60.0        # m: south of the world the land (headland to the fort) slopes from the edge into the sea
 COAST_Y = -100.0          # rough line of the coast outside the world (the ocean is south of it)
 
 
+SEA_UNDER_BEACH = 6.0     # m: the water plane reaches this far under the land along the whole coast
+
+
 def build_sea(col):
+    """The water plane, clipped to the sea side of the coast (one polygon, triangulated)."""
+    ring = coast.sea_polygon(inland=SEA_UNDER_BEACH)
+    bm = bmesh.new()
+    face = bm.faces.new([bm.verts.new((x, y, SEA_LEVEL)) for x, y in ring])
+    bmesh.ops.triangulate(bm, faces=[face], quad_method="BEAUTY", ngon_method="EAR_CLIP")
+    for f in bm.faces:
+        f.normal_update()
+        if f.normal.z < 0:
+            f.normal_flip()
     mesh = bpy.data.meshes.new("Backdrop_Sea")
-    s = 4000.0
-    xa, xb = E.X0 - SKIRT, E.X1 + SKIRT
-    verts = [(-s, -s, SEA_LEVEL), (s, -s, SEA_LEVEL), (s, COAST_Y, SEA_LEVEL), (-s, COAST_Y, SEA_LEVEL),
-             (xa, COAST_Y, SEA_LEVEL), (xb, COAST_Y, SEA_LEVEL), (xb, 150.0, SEA_LEVEL), (xa, 150.0, SEA_LEVEL)]
-    mesh.from_pydata(verts, [], [(0, 1, 2, 3), (4, 5, 6, 7)])
+    bm.to_mesh(mesh)
+    bm.free()
     mat = E.material("sea_water", "#2D8CD6", roughness=0.12, metallic=0.0)
     for key, value in sea_water_data().items():      # export_unity_bundle.py -> materials.json "water" -> Sea.shader
         mat[key] = value
@@ -52,26 +74,34 @@ WAVE_NORMAL = "sea_waves_normal.png"       # make_textures.py sea_waves
 
 def sea_water_data():
     """What the moving sea needs besides the mesh: shader name, its two textures, the world rectangle the shore map
-    covers (x0, y0, x1, y1, see shore_rect) and the straight coast line used outside that rectangle."""
+    covers (x0, y0, x1, y1, see shore_rect), the straight coast line used east of that rectangle (y = COAST_Y) and
+    the far coast west of it (x0, y0, metres north per metre west: coast.far_line_y)."""
     return {"water_shader": SEA_SHADER, "water_normal": WAVE_NORMAL, "water_shore_map": SHORE_MAP,
-            "water_shore_rect": list(shore_rect()), "water_shore_range": SHORE_RANGE, "water_coast": COAST_Y}
+            "water_shore_rect": list(shore_rect()), "water_shore_range": SHORE_RANGE, "water_coast": COAST_Y,
+            "water_coast_west": [float(coast.FAR_X), float(coast.FAR_Y), float(coast.FAR_SLOPE)]}
 
 
-def shore_rect(margin=(300.0, 400.0)):
-    return (E.X0 - margin[0], E.Y0 - margin[1], E.X1 + margin[0], E.Y1)
+SHORE_MARGIN = (500.0, 300.0, 400.0)       # metres the shore map reaches beyond the world: west, east, south
 
 
-def write_shore_map(size=1024, margin=(300.0, 400.0)):
+def shore_rect():
+    """The world plus SHORE_MARGIN; the west margin reaches past coast.FAR_X, so outside the map the far coast is
+    the straight line Sea.shader knows."""
+    west, east, south = SHORE_MARGIN
+    return (E.X0 - west, E.Y0 - south, E.X1 + east, E.Y1)
+
+
+def write_shore_map(size=1024):
     """textures/sea_shore_data.png: for every point of the world, how far it is from the shore, measured in the
     sea (0 on land and at the water's edge, 1 = SHORE_RANGE metres or more). Land is whatever a ray from the sky
     hits above SEA_LEVEL (terrain, land skirt, fort), sea is where it hits the water plane first: exactly the
     shoreline the 3D world shows. So call this when the ground and the backdrop exist (build() does). The map
-    covers the world bounds plus `margin` metres to the west/east and to the south (SHORE_RECT). The sea shader
+    covers the world bounds plus SHORE_MARGIN metres to the west, east and south (shore_rect). The sea shader
     reads it by world position for the turquoise shallows and the foam band, so the sea needs no depth texture
     and no extra geometry. Row 0 of the image is the south edge."""
     import numpy as np
     from mathutils import Vector
-    x0, y0, x1, y1 = shore_rect(margin)
+    x0, y0, x1, y1 = shore_rect()
     dx, dy = (x1 - x0) / size, (y1 - y0) / size
     bpy.context.view_layer.update()
     deps = bpy.context.evaluated_depsgraph_get()
@@ -101,7 +131,10 @@ def write_shore_map(size=1024, margin=(300.0, 400.0)):
     return land
 
 
-def build_skirt(heights, col):
+def build_skirt(heights, col, west_top):
+    """North, east and south (land only) skirts from the world edge, the NE corner, and the far land to the horizon:
+    one polygon from the top of the far-west strip (west_top, east to west) round the north, and the band east of
+    the east skirt. The west edge belongs to build_far_west."""
     bm = bmesh.new()
     rows, cols = E.ROWS, E.COLS
 
@@ -110,18 +143,18 @@ def build_skirt(heights, col):
 
     edges = []
     # (list of (i, j) along the edge, outward direction, distance)
-    edges.append(([(0, j) for j in range(rows)], (-1, 0), SKIRT))                 # west
     edges.append(([(cols - 1, j) for j in range(rows)], (1, 0), SKIRT))          # east
     edges.append(([(i, rows - 1) for i in range(cols)], (0, 1), SKIRT))          # north
-    edges.append(([(i, 0) for i in range(cols)], (0, -1), 45.0))                 # south (land only)
+    edges.append(([(i, 0) for i in range(cols)], (0, -1), SOUTH_SKIRT))          # south (land only)
     for cells, (dx, dy), dist in edges:
         for (i0, j0), (i1, j1) in zip(cells, cells[1:]):
             h0, h1 = heights[j0][i0], heights[j1][i1]
             if dy == -1 and (h0 < 0.5 or h1 < 0.5):
                 continue
             a, b = v(i0, j0), v(i1, j1)
-            far_h0 = DISTANT_LAND_Z if h0 > 0.5 else -1.5
-            far_h1 = DISTANT_LAND_Z if h1 > 0.5 else -1.5
+            land_z = -1.5 if dy == -1 else DISTANT_LAND_Z       # the headland slopes into the sea round the fort
+            far_h0 = land_z if h0 > 0.5 else -1.5
+            far_h1 = land_z if h1 > 0.5 else -1.5
             quad = [(a[0], a[1], h0), (b[0], b[1], h1), (b[0] + dx * dist, b[1] + dy * dist, far_h1),
                     (a[0] + dx * dist, a[1] + dy * dist, far_h0)]
             vs = [bm.verts.new(c) for c in quad]
@@ -129,22 +162,24 @@ def build_skirt(heights, col):
             face.normal_update()
             if face.normal.z < 0:
                 face.normal_flip()
-    # corners: fill the four corner squares so there is no gap
-    for (ci, cj), (dx, dy) in (((0, rows - 1), (-1, 1)), ((cols - 1, rows - 1), (1, 1))):
-        h = heights[cj][ci]
-        x, y = v(ci, cj)
-        f = DISTANT_LAND_Z
-        quad = [(x, y, h), (x + dx * SKIRT, y, f), (x + dx * SKIRT, y + dy * SKIRT, f), (x, y + dy * SKIRT, f)]
-        face = bm.faces.new([bm.verts.new(c) for c in quad])
-        face.normal_update()
-        if face.normal.z < 0:
-            face.normal_flip()
-    # distant land to the horizon: north of the coast, all around the world + skirt
+    # the north-east corner square (the north-west one is part of the far-west strip)
+    h = heights[rows - 1][cols - 1]
+    x, y = v(cols - 1, rows - 1)
+    f = DISTANT_LAND_Z
+    quad = [(x, y, h), (x + SKIRT, y, f), (x + SKIRT, y + SKIRT, f), (x, y + SKIRT, f)]
+    face = bm.faces.new([bm.verts.new(c) for c in quad])
+    face.normal_update()
+    if face.normal.z < 0:
+        face.normal_flip()
+    # distant land to the horizon
     s, z = 4000.0, DISTANT_LAND_Z
-    xa, xb, yt = E.X0 - SKIRT, E.X1 + SKIRT, E.Y1 + SKIRT
-    for quad in (((-s, yt), (s, yt), (s, s), (-s, s)), ((-s, COAST_Y), (xa, COAST_Y), (xa, yt), (-s, yt)),
-                 ((xb, COAST_Y), (s, COAST_Y), (s, yt), (xb, yt))):
-        face = bm.faces.new([bm.verts.new((x, y, z)) for x, y in quad])
+    xb, yt = E.X1 + SKIRT, E.Y1 + SKIRT
+    north = [(E.X0, yt)] + [(px, py) for px, py, _pz in west_top] + [(west_top[-1][0], s), (s, s), (s, yt)]
+    for ring in (north, ((xb, COAST_Y), (s, COAST_Y), (s, yt), (xb, yt))):
+        face = bm.faces.new([bm.verts.new((x, y, z)) for x, y in ring])
+        if len(ring) > 4:
+            bmesh.ops.triangulate(bm, faces=[face], quad_method="BEAUTY", ngon_method="EAR_CLIP")
+    for face in bm.faces:
         face.normal_update()
         if face.normal.z < 0:
             face.normal_flip()
@@ -153,6 +188,108 @@ def build_skirt(heights, col):
     bm.free()
     mesh.materials.append(E.material("backdrop_land", "#9DB58A", roughness=0.95))
     E.new_object("Backdrop_Land", mesh, col)
+
+
+# ---------- the beach beyond the west edge ----------
+FAR_COLUMNS = (20, 45, 75, 110, 150, 200, 260, 330, 410, 500, 600, 720, 880, 1130, 1480, 1980, 2700, 3580)  # m west
+FAR_ROWS = (-80, -40, -15, -5, 0, 3, 8, 15, 25, 40, 60, 85, 115, 150, 190, 240, 300, 380, 480, 600, 750)  # m north
+FAR_NARROW = (-1150.0, 0.55)    # by this x the beach and its hinterland are this share as deep as at the world edge
+U_EDGE = 1.0 / 2048.0           # ground colour map: the world's west edge column (u of the first texels)
+MAP_TOP_Y = 100.0               # world y at the edge up to which the colour map is used: the beach, promenade and road
+_FAR = {}
+
+
+def _far_setup(heights):
+    yc0 = coast.coast_y_west(E.X0)
+    h_top = heights[E.ROWS - 1][0]
+
+    def edge_z(y):
+        """The world's west edge cross-section at y; above the world it is the north skirt's slope to the far land."""
+        if y >= E.Y1:
+            return h_top + (DISTANT_LAND_Z - h_top) * min((y - E.Y1) / SKIRT, 1.0)
+        f = min(max((y - E.Y0) / E.STEP, 0.0), E.ROWS - 1.001)
+        j = int(f)
+        return heights[j][0] * (1 - (f - j)) + heights[j + 1][0] * (f - j)
+
+    _FAR.update(yc0=yc0, edge_z=edge_z, v_top=E.Y1 + SKIRT - yc0, edge_top=MAP_TOP_Y - yc0)
+
+
+def _far_width(x):
+    t = min(max((E.X0 - x) / (E.X0 - FAR_NARROW[0]), 0.0), 1.0)
+    return 1.0 + (FAR_NARROW[1] - 1.0) * t
+
+
+def far_west_point(x, v):
+    """Point of the far-west strip v metres north of the waterline at x: ((x, y, z), source offset at the world
+    edge). The cross-section is the world's west edge, squeezed to _far_width(x); below the waterline the seabed."""
+    yc = coast.coast_y_west(x)
+    if v <= 0:
+        return (x, yc + v, coast.beach_z(v * coast.cos_west(x))), v
+    src = v / _far_width(x)
+    return (x, yc + v, _FAR["edge_z"](_FAR["yc0"] + src)), src
+
+
+def far_west_ground(x, y):
+    """Ground height of the far-west strip at (x, y) (x < X0)."""
+    return far_west_point(x, y - coast.coast_y_west(x))[0][2]
+
+
+def build_far_west(heights, col):
+    """Carcavelos beach beyond the west edge: a strip of columns going west along the coast (FAR_COLUMNS) with rows
+    at fixed distances from the waterline (FAR_ROWS), so the water's edge is one straight row of vertices at z = 0.
+    The first column is the world's west edge itself (shared vertices, joined by a zipper of triangles), the last
+    row meets the far land at DISTANT_LAND_Z. Ground-map faces read the world's west-edge column of the colour map
+    at the matching distance from the water (sand, wet band, promenade, road); the rest is backdrop land.
+    Returns the top row (east to west) for the far land polygon."""
+    _far_setup(heights)
+    v_top, edge_top, yc0 = _FAR["v_top"], _FAR["edge_top"], _FAR["yc0"]
+    rows = [r for r in FAR_ROWS if r < v_top - 40.0] + [v_top]
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    span = E.Y1 - E.Y0
+
+    def vert(co, src):
+        vtx = bm.verts.new(co)
+        return vtx, src
+
+    # column 0: the world's west edge (every terrain vertex) and, above the world, the north skirt's west edge
+    first = [vert((E.X0, E.Y0 + j * E.STEP, heights[j][0]), E.Y0 + j * E.STEP - yc0) for j in range(E.ROWS)]
+    first += [vert((E.X0, yc0 + r, _FAR["edge_z"](yc0 + r)), r) for r in rows if yc0 + r > E.Y1 + 0.5]
+    columns = [first] + [[vert(*far_west_point(E.X0 - c, r)) for r in rows] for c in FAR_COLUMNS]
+
+    def face(corners):
+        f = bm.faces.new([c[0] for c in corners])
+        on_map = all(c[1] <= edge_top + 1e-6 for c in corners)
+        f.material_index = 0 if on_map else 1
+        for loop, (_v, src) in zip(f.loops, corners):
+            loop[uv].uv = (U_EDGE, min(max((yc0 + src - E.Y0) / span, 0.0), 1.0))
+        return f
+
+    a, b = columns[0], columns[1]                    # zipper: walk both columns from south to north
+    i = j = 0
+    while i < len(a) - 1 or j < len(b) - 1:
+        if j == len(b) - 1 or (i < len(a) - 1 and a[i + 1][0].co.y <= b[j + 1][0].co.y):
+            face((a[i], a[i + 1], b[j]))
+            i += 1
+        else:
+            face((a[i], b[j + 1], b[j]))
+            j += 1
+    for c0, c1 in zip(columns[1:], columns[2:]):
+        for m in range(len(rows) - 1):
+            face((c0[m], c1[m], c1[m + 1], c0[m + 1]))
+    for f in bm.faces:
+        f.normal_update()
+        if f.normal.z < 0:
+            f.normal_flip()
+    top = [tuple(c[-1][0].co) for c in columns[1:]]
+    mesh = bpy.data.meshes.new("Backdrop_FarBeach")
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(E.material("ground_map", "#A6AA82", roughness=0.95))
+    mesh.materials.append(E.material("backdrop_land", "#9DB58A", roughness=0.95))
+    E.new_object("Backdrop_FarBeach", mesh, col)
+    print(f"  far west: beach strip {len(mesh.polygons)} faces to x = {E.X0 - FAR_COLUMNS[-1]:.0f} m")
+    return top
 
 
 def edge_height(heights, x, y):
@@ -167,7 +304,7 @@ def build_outer_buildings(heights, col):
     count = 0
     for e in elements:
         tags = e.get("tags", {})
-        if e["type"] != "way" or "building" not in tags or e["id"] == FORT_ID:
+        if e["type"] != "way" or "building" not in tags or e["id"] == FORT_ID or e["id"] in FORT_PARTS:
             continue
         ring = way_points(e, nodes)
         if len(ring) > 1 and ring[0] == ring[-1]:
@@ -180,7 +317,10 @@ def build_outer_buildings(heights, col):
             continue                                    # inside the world: env_buildings does those
         if polygon_area(ring) < 0:
             ring = ring[::-1]
-        base = max(edge_height(heights, cx, cy), 0.5) - 2.0
+        if cx < coast.WATERLINE[-1][0] and coast.signed_distance(cx, cy) < 25.0:
+            continue                                    # nothing stands in the sea or on the beach west of the cove
+        ground = far_west_ground(cx, cy) if cx < E.X0 else edge_height(heights, cx, cy)
+        base = max(ground, 0.5) - 2.0
         levels = float(tags.get("building:levels", 3)) if tags.get("building:levels", "3").replace(".", "").isdigit() else 3.0
         top = base + 2.0 + levels * 3.2
         low = [bm.verts.new((x, y, base)) for x, y in ring]
@@ -198,7 +338,22 @@ def build_outer_buildings(heights, col):
     print(f"  backdrop: {count} outer buildings")
 
 
+FORT_WALL_TOP = 18.5      # V10b: rampart walk on the landward part (m above the sea; K05 puts the far walls at ~18-20 m)
+FORT_SEA_TOP = 12.0       # ... stepping down to this at the west bastion on the rocks (K03-K06)
+FORT_ROCK_TOP, FORT_ROCK_REACH = 3.0, 9.0   # rocky headland under the fort: top height, reach beyond the walls
+FORT_AXIS = (0.964, -0.265)   # long axis of the fort, west to east
+TOWER_SIDE, TOWER_TOP = 7.5, 33.0    # square lighthouse tower with a lantern; V16e (survey 2.10): a small tower, about
+                                     # 25 m above the sea at its parapet walk (was 10 m square, 35.5 m)
+FLAG_POLE = 9.0                      # V16e: a plain flag pole on the east bastion, a plain pale flag without emblem
+FORT_BLOCKS = ((75.0, -392.0, 44.0, 13.0, 23.0), (165.0, -432.0, 38.0, 12.0, 21.5), (28.0, -398.0, 18.0, 10.0, 19.5))
+#              inner buildings: centre x, y, length along FORT_AXIS, depth, top (m above the sea)
+
+
 def build_fort(col):
+    """Forte de Sao Juliao da Barra as seen from the beach (photos K03-K06): a long, low, stone-coloured star fort,
+    sloped outer walls (talus) with a parapet, stepping down towards its west bastion on the rocks, a few inner
+    buildings that rise just above the walls, sentry boxes on the salient corners and the lighthouse as a squat
+    square tower with battlements and a small lantern (no glowing light: it is daytime). V10b, 2026-11-10."""
     elements, nodes, ways = load_osm()
     fort = next(e for e in elements if e["type"] == "way" and e["id"] == FORT_ID)
     ring = way_points(fort, nodes)
@@ -208,43 +363,149 @@ def build_fort(col):
         ring = ring[::-1]
     cx = sum(p[0] for p in ring) / len(ring)
     cy = sum(p[1] for p in ring) / len(ring)
+    STONE, TOP, WHITE, DOME, ROOF, ROCK = range(6)
     bm = bmesh.new()
     n = len(ring)
-    # sloped bastion walls (talus): the top ring is pulled 1.5 m inwards
-    low = [bm.verts.new((x, y, -1.5)) for x, y in ring]
-    high = []
-    for x, y in ring:
-        d = math.hypot(x - cx, y - cy) or 1.0
-        high.append(bm.verts.new((x - (x - cx) / d * 1.5, y - (y - cy) / d * 1.5, FORT_TOP)))
+
+    def smooth01(e0, e1, x):
+        t = min(max((x - e0) / (e1 - e0), 0.0), 1.0)
+        return t * t * (3 - 2 * t)
+
+    def inset(x, y, d):
+        k = math.hypot(x - cx, y - cy) or 1.0
+        return x - (x - cx) / k * d, y - (y - cy) / k * d
+
+    def face(vs, mat):
+        f = bm.faces.new(vs)
+        f.material_index = mat
+        return f
+
+    heights = [FORT_SEA_TOP + (FORT_WALL_TOP - FORT_SEA_TOP) * smooth01(-30.0, 45.0, x) for x, _y in ring]
+    court = FORT_SEA_TOP - 0.5
+    r0 = [bm.verts.new((x, y, -1.5)) for x, y in ring]
+    r1 = [bm.verts.new((*inset(x, y, 1.5), h)) for (x, y), h in zip(ring, heights)]
+    r2 = [bm.verts.new((*inset(x, y, 1.5), h + 1.2)) for (x, y), h in zip(ring, heights)]
+    r3 = [bm.verts.new((*inset(x, y, 2.3), h + 1.2)) for (x, y), h in zip(ring, heights)]
+    r4 = [bm.verts.new((*inset(x, y, 2.3), court)) for x, y in ring]
     for k in range(n):
-        f = bm.faces.new((low[k], low[(k + 1) % n], high[(k + 1) % n], high[k]))
-        f.material_index = 0
-    top = bm.faces.new(high)
-    top.material_index = 1
-    # parapet rim
-    rim = [bm.verts.new((v.co.x, v.co.y, FORT_TOP + 1.2)) for v in high]
-    for k in range(n):
-        f = bm.faces.new((high[k], high[(k + 1) % n], rim[(k + 1) % n], rim[k]))
-        f.material_index = 0
-    # lighthouse (real position from OSM): white tower, red lantern
+        j = (k + 1) % n
+        face((r0[k], r0[j], r1[j], r1[k]), STONE)          # talus
+        face((r1[k], r1[j], r2[j], r2[k]), STONE)          # parapet, outer
+        face((r2[k], r2[j], r3[j], r3[k]), TOP)            # parapet top
+        face((r3[k], r3[j], r4[j], r4[k]), STONE)          # parapet, inner, down to the parade ground
+    yard = face(list(r4), TOP)
+    bm.normal_update()
+    if yard.normal.z < 0:
+        yard.normal_flip()
+
+    # rocky headland: the convex hull of the walls, a flat top just above the water, sloping into the sea
+    hull = convex_hull(ring)
+    hc = (sum(p[0] for p in hull) / len(hull), sum(p[1] for p in hull) / len(hull))
+
+    def push(p, d):
+        k = math.hypot(p[0] - hc[0], p[1] - hc[1]) or 1.0
+        return p[0] + (p[0] - hc[0]) / k * d, p[1] + (p[1] - hc[1]) / k * d
+    rock_top = [bm.verts.new((*push(p, 2.0), FORT_ROCK_TOP)) for p in hull]
+    rock_low = [bm.verts.new((*push(p, FORT_ROCK_REACH), -2.5)) for p in hull]
+    for k in range(len(hull)):
+        j = (k + 1) % len(hull)
+        face((rock_low[k], rock_low[j], rock_top[j], rock_top[k]), ROCK)
+    face(rock_top, ROCK)
+
+    ux, uy = FORT_AXIS
+    vx, vy = -uy, ux
+
+    def block(bx, by, hu, hv, z0, z1, mat_side, mat_top, bottom=False):
+        cs = [(bx + ux * a + vx * b, by + uy * a + vy * b) for a, b in ((-hu, -hv), (hu, -hv), (hu, hv), (-hu, hv))]
+        lo = [bm.verts.new((x, y, z0)) for x, y in cs]
+        hi = [bm.verts.new((x, y, z1)) for x, y in cs]
+        for k in range(4):
+            face((lo[k], lo[(k + 1) % 4], hi[(k + 1) % 4], hi[k]), mat_side)
+        face(hi, mat_top)
+        if bottom:
+            face(lo[::-1], mat_side)
+
+    for bx, by, length, depth, top in FORT_BLOCKS:                       # inner buildings, tiled roofs
+        block(bx, by, length / 2, depth / 2, court - 0.2, top, STONE, ROOF)
+    # lighthouse: square tower, corbelled cornice, battlements, small white lantern with a dark red dome
     light = next(e for e in elements if e["type"] == "node" and e.get("tags", {}).get("man_made") == "lighthouse")
     lx, ly = to_local(light["lat"], light["lon"])
-    tower = bmesh.ops.create_cone(bm, cap_ends=True, segments=12, radius1=2.6, radius2=2.0, depth=LIGHTHOUSE_HEIGHT)
-    bmesh.ops.translate(bm, verts=tower["verts"], vec=(lx, ly, FORT_TOP + LIGHTHOUSE_HEIGHT / 2))
-    for f in {f for v in tower["verts"] for f in v.link_faces}:
-        f.material_index = 2
-    lantern = bmesh.ops.create_cone(bm, cap_ends=True, segments=12, radius1=1.6, radius2=1.1, depth=2.4)
-    bmesh.ops.translate(bm, verts=lantern["verts"], vec=(lx, ly, FORT_TOP + LIGHTHOUSE_HEIGHT + 1.2))
+    half = TOWER_SIDE / 2
+    block(lx, ly, half, half, court - 0.2, TOWER_TOP, STONE, TOP)
+    block(lx, ly, half + 0.45, half + 0.45, TOWER_TOP, TOWER_TOP + 0.7, TOP, TOP, bottom=True)
+    zt = TOWER_TOP + 0.7
+    for side in range(4):
+        for k in range(3):
+            t = (k - 1) * (half - 0.6) * 0.95
+            a, b = [(t, half - 0.2), (half - 0.2, -t), (-t, -(half - 0.2)), (-(half - 0.2), t)][side]
+            block(lx + ux * a + vx * b, ly + uy * a + vy * b, 0.6, 0.45, zt, zt + 1.1, STONE, TOP)
+    lantern = bmesh.ops.create_cone(bm, cap_ends=True, segments=8, radius1=1.5, radius2=1.5, depth=2.6)
+    bmesh.ops.translate(bm, verts=lantern["verts"], vec=(lx, ly, zt + 1.3))
     for f in {f for v in lantern["verts"] for f in v.link_faces}:
-        f.material_index = 3
+        f.material_index = WHITE
+    dome = bmesh.ops.create_cone(bm, cap_ends=True, segments=8, radius1=1.7, radius2=0.15, depth=1.3)
+    bmesh.ops.translate(bm, verts=dome["verts"], vec=(lx, ly, zt + 2.6 + 0.65))
+    for f in {f for v in dome["verts"] for f in v.link_faces}:
+        f.material_index = DOME
+    # sentry boxes (guaritas) on the six sharpest salient corners
+    def turn(k):
+        (ax, ay), (bx, by), (qx, qy) = ring[k - 1], ring[k], ring[(k + 1) % n]
+        e0, e1 = (bx - ax, by - ay), (qx - bx, qy - by)
+        cross = e0[0] * e1[1] - e0[1] * e1[0]
+        ang = math.atan2(cross, e0[0] * e1[0] + e0[1] * e1[1])
+        long_enough = min(math.hypot(*e0), math.hypot(*e1)) > 6.0
+        return ang if long_enough else 0.0
+    corners = sorted(range(n), key=turn, reverse=True)[:6]
+    for k in corners:
+        x, y = inset(*ring[k], 2.2)
+        h = heights[k] + 1.2
+        box = bmesh.ops.create_cone(bm, cap_ends=True, segments=8, radius1=0.95, radius2=0.95, depth=2.4)
+        bmesh.ops.translate(bm, verts=box["verts"], vec=(x, y, h + 1.2))
+        cap = bmesh.ops.create_cone(bm, cap_ends=True, segments=8, radius1=1.1, radius2=0.05, depth=1.1)
+        bmesh.ops.translate(bm, verts=cap["verts"], vec=(x, y, h + 2.4 + 0.55))
+        for f in {f for v in box["verts"] for f in v.link_faces}:
+            f.material_index = STONE
+        for f in {f for v in cap["verts"] for f in v.link_faces}:
+            f.material_index = TOP
+    k = max(range(n), key=lambda q: ring[q][0])                      # V16e: flag pole on the east bastion
+    fx, fy = inset(*ring[k], 3.5)
+    fz = heights[k] + 1.2
+    block(fx, fy, 0.14, 0.14, fz - 1.0, fz + FLAG_POLE, WHITE, WHITE)
+    for order in (1, -1):                                            # seen from both sides
+        flag = [bm.verts.new((fx + ux * a_, fy + uy * a_, fz + FLAG_POLE - b_))
+                for a_, b_ in ((0.14, 0.2), (2.6, 0.35), (2.6, 1.75), (0.14, 1.9))[::order]]
+        face(flag, WHITE)
     bm.normal_update()
     mesh = bpy.data.meshes.new("Landmark_Fort")
     bm.to_mesh(mesh)
     bm.free()
-    for m in (E.material("fort_stone", "#D9CDB2", 0.95), E.material("fort_top", "#BFB59E", 0.95),
-              E.material("lighthouse_white", "#F2F0EA", 0.7), E.material("lighthouse_red", "#C8363A", 0.5, emission="#FF5A4E")):
+    import env_beachfront                  # V16e: dark grey-brown stone (survey 2.10), same as the outworks
+    for m in (E.material("fort_stone", env_beachfront.FORT_STONE, 0.95), E.material("fort_top", env_beachfront.FORT_TOP, 0.95),
+              E.material("lighthouse_white", "#F2F0EA", 0.7), E.material("lighthouse_red", "#7A2E29", 0.6),
+              E.material("B_roof_tiles", "#C8664A", 0.85), E.material("fort_rock", "#8E7D59", 0.95)):
         mesh.materials.append(m)
     E.new_object("Landmark_FortSaoJuliao", mesh, col)
+    tris = sum(len(p.vertices) - 2 for p in mesh.polygons)
+    print(f"  fort: {n}-point outline, walls {FORT_SEA_TOP:.0f}-{FORT_WALL_TOP:.0f} m, tower top {zt + 3.9:.1f} m, "
+          f"{len(corners)} sentry boxes, {tris} triangles")
+
+
+def convex_hull(points):
+    """Counter-clockwise convex hull (monotone chain)."""
+    pts = sorted(set((round(x, 3), round(y, 3)) for x, y in points))
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    lower, upper = [], []
+    for p in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
+            lower.pop()
+        lower.append(p)
+    for p in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
+            upper.pop()
+        upper.append(p)
+    return lower[:-1] + upper[:-1]
 
 
 def build_far_town(col, count=900, seed=11):
@@ -258,6 +519,8 @@ def build_far_town(col, count=900, seed=11):
         ang = rng.uniform(math.radians(-15), math.radians(195))           # north half only
         x, y = (E.X0 + E.X1) / 2 + r * math.cos(ang), (E.Y0 + E.Y1) / 2 + r * math.sin(ang)
         if y < COAST_Y + 40 or (E.X0 - SKIRT * 0.5 < x < E.X1 + SKIRT * 0.5 and y < E.Y1 + SKIRT * 0.5):
+            continue
+        if coast.signed_distance(x, y) < 220.0:                         # not in the sea or on the far beach
             continue
         w, d, h = rng.uniform(10, 30), rng.uniform(8, 18), rng.choice((7, 9, 10, 12, 15, 18))
         a = rng.uniform(0, math.pi)
@@ -278,11 +541,295 @@ def build_far_town(col, count=900, seed=11):
     E.new_object("Backdrop_FarTown", mesh, col)
 
 
+# ---------- V16h: the far backdrop (north, west, east): houses on the skirt, the railway, hills on the horizon ----------
+HORIZON_SEED = 1616
+HOUSE_BAND = 470.0            # m beyond the world's north and east edges that get houses (the far town starts there)
+HOUSE_STEP = 34.0             # m between plots
+RAIL_Y = E.Y1 + SKIRT + 28.0  # the Cascais line runs east-west about 0.9 km north of the beach (general geography)
+HILLS = ((2250.0, 55.0, 40.0, "far_hill_near", "#93A78C"), (2750.0, 120.0, 80.0, "far_hill", "#A3B4B5"))   # radius, height, +-
+
+
+def build_horizon(heights, col):
+    """Low-poly Carcavelos beyond the map edge, so the world does not just end: generic two-storey houses with tiled
+    gable roofs on the land skirt north and east of the world (seeded rows, clear of the real OSM blocks that
+    build_outer_buildings draws), the railway on its low embankment with catenary masts and one plain train north of
+    them, and two ridges of hazy hills round the north half of the horizon (higher to the north-west, towards
+    Sintra). Nothing south of the coast line (the fort and the sea are builder E's), nothing inside the world.
+    Walls use the far_* materials (white, cream, ochre: env_materials gives them the shared house-front texture by
+    world position), roofs far_roof. About 2,900 triangles, 3 new flat materials (rail, two hill tones)."""
+    import random
+    rng = random.Random(HORIZON_SEED)
+    elements, nodes, _ways = load_osm()
+    taken = []                                              # real buildings outside the world: keep the houses off them
+    for e in elements:
+        if e["type"] == "way" and "building" in e.get("tags", {}):
+            ring = way_points(e, nodes)
+            if ring:
+                cx, cy = sum(p[0] for p in ring) / len(ring), sum(p[1] for p in ring) / len(ring)
+                if not (E.X0 <= cx <= E.X1 and E.Y0 <= cy <= E.Y1):
+                    taken.append((cx, cy, max(math.hypot(x - cx, y - cy) for x, y in ring) + 9.0))
+    roads = [p for p in E.DATA["paths"] if p["width"] >= 5.0]
+
+    def skirt_z(x, y):
+        """Height of the land skirt (build_skirt): from the world's edge down to DISTANT_LAND_Z over SKIRT metres."""
+        if x < E.X0:
+            return far_west_ground(x, y)                     # the strip west of the world has its own ground
+        ex, ey = min(max(x, E.X0), E.X1), min(max(y, E.Y0), E.Y1)
+        t = min(max(max(x - E.X1, y - E.Y1) / SKIRT, 0.0), 1.0)
+        return edge_height(heights, ex, ey) * (1.0 - t) + DISTANT_LAND_Z * t
+
+    def road_ahead(x, y):
+        """True where a wide road of the world would run on beyond the edge (its last segment, extended)."""
+        for p in roads:
+            for (ax, ay), (bx, by) in ((p["points"][1], p["points"][0]), (p["points"][-2], p["points"][-1])):
+                if E.X0 + 15 < bx < E.X1 - 15 and E.Y0 + 15 < by < E.Y1 - 15:
+                    continue                                 # this end is not at the world's edge
+                d = math.hypot(bx - ax, by - ay) or 1.0
+                ux, uy = (bx - ax) / d, (by - ay) / d
+                along = (x - bx) * ux + (y - by) * uy
+                if 0.0 < along < 600.0 and abs((x - bx) * uy - (y - by) * ux) < p["width"] / 2 + 12.0:
+                    return True
+        return False
+
+    bm = bmesh.new()
+    houses = 0
+    nx, ny = int((E.X1 - E.X0 + HOUSE_BAND) / HOUSE_STEP), int((E.Y1 + HOUSE_BAND - COAST_Y) / HOUSE_STEP)
+    for j in range(ny + 1):
+        for i in range(-13, nx + 1):                         # 13 plots west of the world too (inland of the coast road)
+            r = random.Random(f"{HORIZON_SEED}|house|{i}|{j}")
+            x = E.X0 + (i + 0.5 + r.uniform(-0.22, 0.22)) * HOUSE_STEP
+            y = COAST_Y + 60.0 + (j + 0.5 + r.uniform(-0.22, 0.22)) * HOUSE_STEP
+            if E.X0 - 26.0 < x < E.X1 + 26.0 and y < E.Y1 + 26.0:
+                continue                                     # the world itself (and a strip at its edge)
+            if x <= E.X0 - 26.0 and (y < 150.0 or coast.signed_distance(x, y) < 170.0):
+                continue                                     # west of the world: only inland of the beach and its road
+            if y > E.Y1 + HOUSE_BAND or x > E.X1 + HOUSE_BAND or r.random() < 0.30:
+                continue
+            if any(math.hypot(x - cx, y - cy) < rad + 9.0 for cx, cy, rad in taken) or road_ahead(x, y):
+                continue
+            if x > E.X1 and coast.signed_distance(x, y) < 90.0:
+                continue
+            w, d = r.uniform(9.0, 15.0), r.uniform(7.5, 10.0)
+            wall, ridge = r.choice((6.2, 6.4, 9.4)), r.uniform(1.8, 2.6)
+            turn = math.radians(r.choice((0.0, 90.0)) + r.uniform(-7.0, 7.0))
+            ca, sa = math.cos(turn), math.sin(turn)
+            base = skirt_z(x, y) - 1.6
+
+            def at(u, v, z):
+                return bm.verts.new((x + ca * u - sa * v, y + sa * u + ca * v, z))
+            mat = r.choice((0, 0, 1, 2))
+            lo = [at(-w / 2, -d / 2, base), at(w / 2, -d / 2, base), at(w / 2, d / 2, base), at(-w / 2, d / 2, base)]
+            top = base + 1.6 + wall
+            hi = [at(-w / 2, -d / 2, top), at(w / 2, -d / 2, top), at(w / 2, d / 2, top), at(-w / 2, d / 2, top)]
+            for k in range(4):
+                bm.faces.new((lo[k], lo[(k + 1) % 4], hi[(k + 1) % 4], hi[k])).material_index = mat
+            ra, rb = at(-w / 2, 0.0, top + ridge), at(w / 2, 0.0, top + ridge)
+            bm.faces.new((hi[3], hi[0], ra)).material_index = mat          # gables
+            bm.faces.new((hi[1], hi[2], rb)).material_index = mat
+            bm.faces.new((hi[0], hi[1], rb, ra)).material_index = 3        # roof
+            bm.faces.new((hi[2], hi[3], ra, rb)).material_index = 3
+            houses += 1
+
+    # the railway: a low embankment, a mast every 45 m (two crossed sheets), one plain four-car train
+    z = DISTANT_LAND_Z
+    xa, xb = -1900.0, 2100.0
+    for x0, x1 in ((xa + k * 500.0, xa + (k + 1) * 500.0) for k in range(int((xb - xa) / 500.0))):
+        ring = [(-7.0, z - 0.5), (-4.0, z + 1.4), (4.0, z + 1.4), (7.0, z - 0.5)]
+        a = [bm.verts.new((x0, RAIL_Y + dy, dz)) for dy, dz in ring]
+        b = [bm.verts.new((x1, RAIL_Y + dy, dz)) for dy, dz in ring]
+        for k in range(3):
+            bm.faces.new((a[k], b[k], b[k + 1], a[k + 1])).material_index = 4
+    masts = 0
+    x = xa
+    while x < xb:
+        for dx, dy in ((0.25, 0.0), (0.0, 0.25)):
+            bm.faces.new([bm.verts.new((x - dx, RAIL_Y - 4.2 - dy, z + 1.4)), bm.verts.new((x + dx, RAIL_Y - 4.2 + dy, z + 1.4)),
+                          bm.verts.new((x + dx, RAIL_Y - 4.2 + dy, z + 8.6)), bm.verts.new((x - dx, RAIL_Y - 4.2 - dy, z + 8.6))]).material_index = 4
+        bm.faces.new([bm.verts.new((x, RAIL_Y - 4.2, z + 8.3)), bm.verts.new((x, RAIL_Y + 1.0, z + 8.3)),
+                      bm.verts.new((x, RAIL_Y + 1.0, z + 8.6)), bm.verts.new((x, RAIL_Y - 4.2, z + 8.6))]).material_index = 4
+        masts += 1
+        x += 45.0
+    for car in range(4):                                     # a train standing east of the campus's meridian
+        cx = 120.0 + car * 20.5
+        lo = [bm.verts.new((cx + u, RAIL_Y + v, z + 1.9)) for u, v in ((-9.8, -1.45), (9.8, -1.45), (9.8, 1.45), (-9.8, 1.45))]
+        hi = [bm.verts.new((v.co.x, v.co.y, z + 5.4)) for v in lo]
+        for k in range(4):
+            bm.faces.new((lo[k], lo[(k + 1) % 4], hi[(k + 1) % 4], hi[k])).material_index = 5
+        bm.faces.new(hi).material_index = 4
+
+    # hills: two ridges round the north half of the horizon; each a strip from the plain up to a wavy crest
+    cx, cy = (E.X0 + E.X1) / 2, (E.Y0 + E.Y1) / 2
+    for index, (radius, height, swing, _name, _hex) in enumerate(HILLS):
+        hr = random.Random(f"{HORIZON_SEED}|hills|{index}")
+        phase = [hr.uniform(0, 6.28) for _ in range(4)]
+        steps = 64
+        prev = None
+        for k in range(steps + 1):
+            ang = math.radians(-18.0 + 216.0 * k / steps)
+            wave = (math.sin(ang * 3.0 + phase[0]) + 0.6 * math.sin(ang * 7.0 + phase[1]) + 0.35 * math.sin(ang * 13.0 + phase[2])) / 1.95
+            sintra = math.exp(-((math.degrees(ang) - 150.0) / 28.0) ** 2)            # the Serra rises in the north-west
+            ends = min(1.0, k / 6.0, (steps - k) / 6.0)                               # the ridge sinks at both ends
+            top = DISTANT_LAND_Z + (height + swing * wave + (0.9 * height) * sintra * (index == 1)) * ends
+            rr = radius * (1.0 + 0.04 * math.sin(ang * 5.0 + phase[3]))
+            foot = bm.verts.new((cx + (rr - 160.0) * math.cos(ang), cy + (rr - 160.0) * math.sin(ang), DISTANT_LAND_Z - 1.0))
+            crest = bm.verts.new((cx + rr * math.cos(ang), cy + rr * math.sin(ang), max(top, DISTANT_LAND_Z + 1.0)))
+            if prev:
+                bm.faces.new((prev[0], foot, crest, prev[1])).material_index = 6 + index
+            prev = (foot, crest)
+    for face in bm.faces:
+        face.normal_update()
+    bmesh.ops.recalc_face_normals(bm, faces=[f for f in bm.faces if f.material_index < 6])
+    tris = sum(len(f.verts) - 2 for f in bm.faces)
+    mesh = bpy.data.meshes.new("Backdrop_Horizon")
+    bm.to_mesh(mesh)
+    bm.free()
+    for m in (E.material("far_white", "#ECE7DD", 0.9), E.material("far_cream", "#E6D9BC", 0.9),
+              E.material("far_ochre", "#DCC08E", 0.9), E.material("far_roof", "#B9705A", 0.9),
+              E.material("far_rail", "#6F6A63", 0.9), E.material("far_train", "#D9D6CF", 0.7),
+              E.material(HILLS[0][3], HILLS[0][4], 0.95), E.material(HILLS[1][3], HILLS[1][4], 0.95)):
+        mesh.materials.append(m)
+    E.new_object("Backdrop_Horizon", mesh, col)
+    print(f"  backdrop horizon (V16h): {houses} houses, railway with {masts} masts and a train, {len(HILLS)} hill ridges; {tris} triangles")
+
+
+ROCK_BURY = 0.3          # m: a rock piece's foot lies this far under the sand
+ROCK_UV_INSET = 0.9      # m: every rock vertex reads the colour map at least this far inside its piece
+
+
+def build_rocks(col, seed=505):
+    """Rock shelves (V10d, 2026-11-11, K03/K06/K07 and the ortho): the pieces of coast.rock_pieces() as low layered
+    limestone ledges. Per piece: a near-vertical wall from 0.3 m under the sand up to the first layer, then each
+    further layer set back by a width that wanders along the outline (0.1-2.8 m: a wide flat ledge here, one tall
+    wall there), a flat top that follows the beach and tilts along the piece, a skyline whose height wanders along
+    the outline; 1 layer under 0.45 m (and a fifth of the others), 3 on the tall big ones, else 2. Every ring of a piece lies on the rays
+    from its centre (the pieces are star-shaped), so the steps never cross; the top is a fan to the centre, so it
+    follows the sand under it. Plus the loose rocks of coast.rock_boulders(): flat-topped convex lumps, a third of
+    them under the sand. Flat shading (hard edges), ground-map material with UVs pulled ROCK_UV_INSET into the piece,
+    so walls and loose rocks read the piece's painted rock colour; Ground.shader darkens the faces, lightens the tops,
+    draws layer lines on the faces and wets the parts near the sea. No new material, no extra draw call."""
+    import random
+    rng = random.Random(seed)
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    uv_at = {}
+    pieces = coast.rock_pieces()
+    for piece in pieces:
+        ring, (cx, cy), h = piece["ring"], piece["centre"], piece["height"]
+        n = len(ring)
+        radius = [math.hypot(x - cx, y - cy) or 1.0 for x, y in ring]
+
+        def inset(k, d):
+            x, y = ring[k]
+            d = min(d, 0.6 * radius[k])
+            return x + (cx - x) / radius[k] * d, y + (cy - y) / radius[k] * d
+
+        # a ragged skyline: the height wanders along the outline (about 0.65-1.35 x), the same at every layer of a
+        # vertex, so the layers keep their order and the ledges stay flat across
+        ph = [rng.uniform(0, 2 * math.pi) for _ in range(2)]
+        skyline = [1.0 + 0.2 * math.sin(2 * math.pi * k / n * 3 + ph[0]) + 0.1 * math.sin(2 * math.pi * k / n * 7 + ph[1])
+                   + rng.uniform(-0.05, 0.05) for k in range(n)]
+
+        def level(x, y, share, k=None):                 # under water: the rock still stands h above the sea
+            s = 1.0 if k is None else skyline[k]
+            return max(E.ground_z(x, y), 0.0) + h * share * s * coast.piece_height_factor(piece, x, y)
+
+        def new_ring(depths, z_of):
+            loop = []
+            for k in range(n):
+                x, y = inset(k, depths[k])
+                v = bm.verts.new((x, y, z_of(x, y, k)))
+                uv_at[v] = inset(k, max(depths[k], ROCK_UV_INSET))
+                loop.append(v)
+            return loop
+
+        area = coast.ring_area(ring)
+        tiers = 1 if h < 0.45 or rng.random() < 0.2 else (2 if h < 1.0 or area < 60.0 else 3)
+        tiers = piece.get("tiers") or tiers             # V16e: set per shelf (flat platform, reef fingers)
+        shares = {1: [1.0], 2: [rng.uniform(0.4, 0.6), 1.0],
+                  3: [rng.uniform(0.28, 0.4), rng.uniform(0.6, 0.72), 1.0]}[tiers]
+        depth = [0.0] * n
+        loops = [new_ring(depth, lambda x, y, k: E.ground_z(x, y) - ROCK_BURY)]
+        prev = None
+        for t, share in enumerate(shares):
+            if t > 0:                                   # ledge: set back, flat, at the layer below's height
+                # the set-back changes slowly along the outline: wide ledges on one side, on another the upper
+                # layer comes almost to the edge and the rock stands as one wall (no stacked-plates look)
+                step = rng.uniform(0.6, 1.5)
+                ph = [rng.uniform(0, 2 * math.pi) for _ in range(3)]
+                width = [step * max(0.12, 1.0 + 0.75 * math.sin(2 * math.pi * k / n * 2 + ph[0])
+                                    + 0.45 * math.sin(2 * math.pi * k / n * 5 + ph[1])) + rng.uniform(-0.15, 0.25)
+                         for k in range(n)]
+                depth = [d + max(0.12, w) for d, w in zip(depth, width)]
+                loops.append(new_ring(depth, lambda x, y, k, s=prev: level(x, y, s, k) + 0.02))
+            wobble = [rng.uniform(-0.04, 0.04) for _ in range(n)]
+            top = [d + 0.06 for d in depth]             # the wall leans back a little
+            loop = new_ring(top, lambda x, y, k, s=share: level(x, y, s, k))
+            for v, w in zip(loop, wobble):
+                v.co.z += w
+            loops.append(loop)
+            depth, prev = top, share
+        for a, b in zip(loops, loops[1:]):
+            for k in range(n):
+                bm.faces.new((a[k], a[(k + 1) % n], b[(k + 1) % n], b[k]))
+        centre = bm.verts.new((cx, cy, level(cx, cy, 1.0)))
+        uv_at[centre] = (cx, cy)
+        top = loops[-1]
+        for k in range(n):
+            bm.faces.new((top[k], top[(k + 1) % n], centre))
+    pieces_tris = sum(len(f.verts) - 2 for f in bm.faces)
+
+    for b in coast.rock_boulders():                    # loose rocks: flat-topped convex lumps half sunk in the sand
+        r = random.Random(b["seed"])
+        (bx, by), (length, width, height), yaw = b["centre"], b["size"], b["yaw"]
+        piece = pieces[b["piece"]]
+        g = E.ground_z(bx, by)
+        height += max(0.0, -g)                          # in the swash: the top still stands out of the water
+        c = 0.8 * height
+        zc = g + height - 0.7 * c
+        cos_y, sin_y = math.cos(yaw), math.sin(yaw)
+        verts = []
+        for _ in range(11):
+            th, ph = r.uniform(0, 2 * math.pi), r.uniform(-1.2, 1.2)
+            lx, ly = 0.5 * length * math.cos(ph) * math.cos(th), 0.5 * width * math.cos(ph) * math.sin(th)
+            lz = min(c * math.sin(ph), 0.7 * c * r.uniform(0.9, 1.0))
+            v = bm.verts.new((bx + lx * cos_y - ly * sin_y, by + lx * sin_y + ly * cos_y, zc + lz))
+            uv_at[v] = piece["centre"]
+            verts.append(v)
+        verts.append(bm.verts.new((bx, by, zc - c)))     # the foot: always under the sand
+        uv_at[verts[-1]] = piece["centre"]
+        hull = bmesh.ops.convex_hull(bm, input=verts)
+        inner = list({g for g in hull["geom_interior"] + hull["geom_unused"] if isinstance(g, bmesh.types.BMVert)})
+        for v in inner:
+            uv_at.pop(v, None)
+        if inner:
+            bmesh.ops.delete(bm, geom=inner, context="VERTS")
+        faces = [g for g in hull["geom"] if isinstance(g, bmesh.types.BMFace) and g.is_valid]
+        bmesh.ops.recalc_face_normals(bm, faces=faces)
+    bmesh.ops.triangulate(bm, faces=[f for f in bm.faces if len(f.verts) > 4], quad_method="BEAUTY",
+                          ngon_method="EAR_CLIP")
+    for f in bm.faces:                                   # counter-clockwise rings: all faces already face out
+        f.smooth = False
+        for loop in f.loops:
+            x, y = uv_at.get(loop.vert, (loop.vert.co.x, loop.vert.co.y))
+            loop[uv].uv = ((x - E.X0) / (E.X1 - E.X0), (y - E.Y0) / (E.Y1 - E.Y0))
+    mesh = bpy.data.meshes.new("Coast_Rocks")
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(E.material("ground_map", "#A6AA82", roughness=0.95))
+    E.new_object("Coast_Rocks", mesh, col)
+    total = sum(len(p.vertices) - 2 for p in mesh.polygons)
+    print(f"  coast rocks: {len(pieces)} pieces of {len(coast.ROCKS)} shelves ({pieces_tris} triangles), "
+          f"{len(coast.rock_boulders())} loose rocks, {total} triangles")
+
+
 def build(heights):
     col = E.collection("Backdrop")
     build_sea(col)
-    build_skirt(heights, col)
+    west_top = build_far_west(heights, col)
+    build_skirt(heights, col, west_top)
+    build_rocks(col)
     build_outer_buildings(heights, col)
     build_far_town(col)
+    build_horizon(heights, col)            # V16h: houses, railway and hills beyond the map edge (north, west, east)
     build_fort(col)
     write_shore_map()                      # last: it looks at the finished ground and backdrop from above

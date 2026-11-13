@@ -36,7 +36,13 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string SkyTexture = TexDir + "/sky_panorama.png";       // world-gen/make_sky.py
         private const string LookProfile = SettingsDir + "/CampusWorld_Look.asset";
         // Golden hour (design pass 2026-11-09): low warm sun from the west-south-west. Must match make_sky.py.
-        private const float SunAzimuth = 245f, SunElevation = 19f;
+        // V18l (Luc, 12 Nov: "summer at the beach", much harder shadows with contrast): a high summer-afternoon sun
+        // from the south-west instead of golden hour. Must match make_sky.py (and so make_shadowmap.py).
+        private const float SunAzimuth = 225f, SunElevation = 42f;
+        // V17: warm sea haze = the painted sky's colour just above the horizon (sky_panorama.png, about #E0D3BC),
+        // a little darker so far walls do not glow. 0.0008 per metre: 21 % at 300 m, 55 % at 1 km.
+        private static readonly Color HazeColour = new Color(0.80f, 0.86f, 0.92f);   // V18l: the summer sky's pale blue horizon
+        private const float HazeDensity = 0.0008f;
         private const string ScenePath = "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity";
         private const string WorldPrefabPath = Root + "/CampusWorld.prefab";
         private const string WorldRootName = "CampusWorld";                  // root of the prefab and of its instance
@@ -53,24 +59,38 @@ namespace CarcavelosCircuit.Visuals.Editor
             public Water water;           // the moving sea (Sea.shader); without it or its shader: plain URP Lit
             public Wind wind;             // swaying trees (Foliage.shader); without it or its shader: plain URP Lit
             public Ground ground;         // detailed lawn and sand (Ground.shader); without it or its shader: plain URP Lit
+            // V16h begin
+            public WorldLit world_lit;    // vertex ambient occlusion + baked sun shadow (WorldLit.shader); else plain URP Lit
+            public bool tint;             // the texture is multiplied by the colour (one neutral texture, walls of many colours)
+            // V16h end
         }
+        // V16h begin: the two ground colour maps whose alpha is the baked sun shadow, and the world rectangles they cover
+        [Serializable] private class WorldLit
+        {
+            public string shader; public bool ground_shadow; public bool always_shaded;
+            public float[] world_uv;      // meshes without UVs: tile metres across, up, roof scale (texture read by world position)
+        }
+        [Serializable] private class Shade { public string world_map; public string near_map; public float[] world_rect; public float[] near_rect; }
+        // V16h end
         [Serializable] private class Ground { public string shader; public string mask; public string detail; public string detail_normal; }
         [Serializable] private class Wind
         {
             public string shader; public float bend; public float flutter;
             public bool upright;          // grass cards: both faces lit like the lawn they stand on
+            public bool crown;            // V18n leaf cards: baked crown normals light both faces, edge-on cards fade (_Crown)
             public float shrink_from, shrink_to;   // grass cards sink into the ground between these distances (m); 0 = never
         }
-        [Serializable] private class Tuft { public float x, z, yaw, s; public int r = 255, g = 255, b = 255, big; }
+        [Serializable] private class Tuft { public float x, z, yaw, s; public int r = 255, g = 255, b = 255, big, far; }
         [Serializable] private class TuftData { public Tuft[] tufts; }
         [Serializable] private class Water
         {
             public string shader; public string normal; public string shore_map;
             public float[] shore_rect;    // world x0, z0, x1, z1 covered by the shore map
             public float shore_range; public float coast;
+            public float[] coast_west;    // far coast west of the shore map: world x, its z there, metres north per metre west
         }
-        [Serializable] private class MatList { public MatInfo[] materials; }
-        [Serializable] private class Item { public string name; public string proto; public float x, y, z, yaw, roll, scale; }
+        [Serializable] private class MatList { public MatInfo[] materials; public Shade shade; }
+        [Serializable] private class Item { public string name; public string proto; public float x, y, z, yaw, roll, pitch, scale; }
         [Serializable] private class Dressing { public Item[] items; }
         [Serializable] private class TrackPoint { public float x, y, z, width, s; public string zone; public bool tunnel; }
         [Serializable] private class TrackData
@@ -138,7 +158,8 @@ namespace CarcavelosCircuit.Visuals.Editor
                 bool data = file.EndsWith("_data.png", StringComparison.Ordinal);              // numbers, not colour
                 ti.textureType = normal ? TextureImporterType.NormalMap : TextureImporterType.Default;
                 ti.sRGBTexture = !(normal || mask || data);
-                ti.alphaSource = mask || cutout || data ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
+                bool shadeAlpha = file.StartsWith("ground_colour", StringComparison.Ordinal);   // V16h: alpha = baked sun shadow
+                ti.alphaSource = mask || cutout || data || shadeAlpha ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
                 ti.alphaIsTransparency = cutout;                                 // no dark fringe around the leaflets
                 ti.mipMapsPreserveCoverage = cutout;                             // thin leaflets do not vanish far away
                 ti.alphaTestReferenceValue = 0.5f;
@@ -218,7 +239,15 @@ namespace CarcavelosCircuit.Visuals.Editor
                 {
                     Debug.LogWarning("CampusWorldBuilder: shader " + m.ground.shader + " not found, " + m.name + " stays URP Lit without detail.");
                 }
-                Shader shader = water != null ? water : foliage != null ? foliage : ground != null ? ground : lit;
+                // V16h begin
+                bool wantsWorldLit = m.world_lit != null && !string.IsNullOrEmpty(m.world_lit.shader);
+                Shader worldLit = wantsWorldLit ? Shader.Find(m.world_lit.shader) : null;
+                if (wantsWorldLit && worldLit == null)
+                {
+                    Debug.LogWarning("CampusWorldBuilder: shader " + m.world_lit.shader + " not found, " + m.name + " stays URP Lit.");
+                }
+                // V16h end
+                Shader shader = water != null ? water : foliage != null ? foliage : ground != null ? ground : worldLit != null ? worldLit : lit;
                 if (mat == null)
                 {
                     mat = new Material(shader);
@@ -234,7 +263,8 @@ namespace CarcavelosCircuit.Visuals.Editor
                 }
                 Texture2D albedo = Tex(m.albedo), normal = Tex(m.normal), mask = Tex(m.metallic_smoothness);
                 // with a texture the tint stays white: the texture carries the colour (its average = the palette)
-                Color colour = albedo != null ? Color.white : new Color(m.colour[0], m.colour[1], m.colour[2], 1f);
+                // (V16h: unless the entry says "tint": then the neutral texture is multiplied by the colour)
+                Color colour = albedo != null && !m.tint ? Color.white : new Color(m.colour[0], m.colour[1], m.colour[2], 1f);
                 SetColor(mat, colour, "_BaseColor", "_Color");
                 SetTexture(mat, albedo, "_BaseMap", "_MainTex");
                 SetTexture(mat, normal, "_BumpMap");
@@ -274,11 +304,12 @@ namespace CarcavelosCircuit.Visuals.Editor
                     // Foliage.shader: metres of bend (tree top) and flutter (leaf tips); the direction stays the shader's.
                     Vector4 wind = mat.GetVector("_Wind");
                     mat.SetVector("_Wind", new Vector4(wind.x, wind.y, m.wind.bend, m.wind.flutter));
-                    if (m.wind.upright)
+                    if (m.wind.upright || m.wind.crown)
                     {
                         SetFloat(mat, 0f, "_FlipBack");
                         SetFloat(mat, 1f, "_BackShade");
                     }
+                    SetFloat(mat, m.wind.crown ? 1f : 0f, "_Crown");
                     if (m.wind.shrink_to > m.wind.shrink_from && mat.HasProperty("_Shrink"))
                     {
                         mat.SetVector("_Shrink", new Vector4(m.wind.shrink_from, m.wind.shrink_to, 1f / (m.wind.shrink_to - m.wind.shrink_from), 0f));
@@ -290,7 +321,34 @@ namespace CarcavelosCircuit.Visuals.Editor
                     SetTexture(mat, Tex(m.ground.mask), "_GroundMask");
                     SetTexture(mat, Tex(m.ground.detail), "_DetailMap");
                     SetTexture(mat, Tex(m.ground.detail_normal), "_DetailNormal");
+                    // V16h: the fine colour map over the lap (alpha of both maps = baked sun shadow)
+                    if (list.shade != null && mat.HasProperty("_NearMap"))
+                    {
+                        SetTexture(mat, Tex(list.shade.near_map), "_NearMap");
+                        mat.SetVector("_NearRect", RectVector(Tex(list.shade.near_map) != null ? list.shade.near_rect : null));
+                    }
                 }
+                // V16h begin: WorldLit.shader reads the baked sun shadow from the ground maps by world position
+                if (worldLit != null && list.shade != null)
+                {
+                    SetTexture(mat, Tex(list.shade.world_map), "_GroundWorldMap");
+                    SetTexture(mat, Tex(list.shade.near_map), "_GroundNearMap");
+                    mat.SetVector("_WorldRect", RectVector(list.shade.world_rect));
+                    mat.SetVector("_NearRect", RectVector(Tex(list.shade.near_map) != null ? list.shade.near_rect : null));
+                    bool takes = m.world_lit.ground_shadow && Tex(list.shade.world_map) != null;
+                    mat.SetVector("_Shade", new Vector4(m.world_lit.always_shaded ? 1f : 0f, takes ? 1f : 0f, 0f, 0f));
+                }
+                if (worldLit != null)
+                {
+                    float[] wuv = m.world_lit.world_uv;
+                    bool byWorld = wuv != null && wuv.Length >= 3 && wuv[0] > 0f && wuv[1] > 0f;
+                    Keyword(mat, "_WORLD_UV", byWorld);
+                    if (byWorld)
+                    {
+                        mat.SetVector("_WorldUV", new Vector4(1f / wuv[0], 1f / wuv[1], wuv[2], 0f));
+                    }
+                }
+                // V16h end
                 if (water != null)
                 {
                     // Sea.shader: wave normal map, shore-distance map and the world rectangle that map covers.
@@ -303,6 +361,11 @@ namespace CarcavelosCircuit.Visuals.Editor
                     }
                     SetFloat(mat, m.water.shore_range, "_ShoreRange");
                     SetFloat(mat, m.water.coast, "_CoastZ");
+                    float[] cw = m.water.coast_west;
+                    if (cw != null && cw.Length >= 3 && mat.HasProperty("_CoastWest"))
+                    {
+                        mat.SetVector("_CoastWest", new Vector4(cw[0], cw[1], cw[2], 0f));
+                    }
                 }
                 mat.enableInstancing = true;
                 EditorUtility.SetDirty(mat);
@@ -310,6 +373,13 @@ namespace CarcavelosCircuit.Visuals.Editor
             }
             AssetDatabase.SaveAssets();
             return result;
+        }
+
+        // V16h: world rectangle (x0, z0, x1, z1) -> (x0, z0, 1 / width, 1 / depth) for the shaders; zero = no map
+        private static Vector4 RectVector(float[] r)
+        {
+            return r != null && r.Length >= 4 && r[2] > r[0] && r[3] > r[1]
+                ? new Vector4(r[0], r[1], 1f / (r[2] - r[0]), 1f / (r[3] - r[1])) : Vector4.zero;
         }
 
         // A saved material keeps its old numbers when a shader's defaults change. For our own shaders (sea, foliage,
@@ -423,22 +493,29 @@ namespace CarcavelosCircuit.Visuals.Editor
             foreach (MeshFilter mf in world.GetComponentsInChildren<MeshFilter>(true))
             {
                 string n = mf.gameObject.name;
-                if (!n.StartsWith("Backdrop_", StringComparison.Ordinal) && !n.StartsWith("Tunnel_Lights", StringComparison.Ordinal))
+                // V10f: "Street_NoCollide_*" = road markings and low kerbs of the street section: to look at, not to hit.
+                if (!n.StartsWith("Backdrop_", StringComparison.Ordinal) && !n.StartsWith("Tunnel_Lights", StringComparison.Ordinal)
+                    && !n.StartsWith("Street_NoCollide", StringComparison.Ordinal) && !n.Contains("NoCollide"))
                 {
                     mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
                 }
                 MarkStatic(mf.gameObject);
+                HideIfColliderOnly(mf);
             }
             GameObject track = Instance("TrackSurface", root.transform);
             foreach (MeshFilter mf in track.GetComponentsInChildren<MeshFilter>(true))
             {
                 // Edge lines and kerbs are paint, not bumps: a collider on the kerbs' ramp faces launched karts.
+                // V10i: "...NoCollide" = to look at only (the stairs' visible steps); "...ColliderOnly" = to drive on or
+                // to stop a kart, never drawn (the stairs' smooth driving surface, the guard strip behind the railings).
                 if (!mf.gameObject.name.StartsWith("Track_EdgeLines", StringComparison.Ordinal)
-                    && !mf.gameObject.name.StartsWith("Track_Kerbs", StringComparison.Ordinal))
+                    && !mf.gameObject.name.StartsWith("Track_Kerbs", StringComparison.Ordinal)
+                    && !mf.gameObject.name.Contains("NoCollide"))
                 {
                     mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
                 }
                 MarkStatic(mf.gameObject);
+                HideIfColliderOnly(mf);
             }
             GameObject guide = Instance("RouteGuide", root.transform);
             guide.SetActive(false);                                   // data for Role 2, never visible in the race
@@ -463,7 +540,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, group);
                 go.name = it.name;
                 go.transform.SetPositionAndRotation(new Vector3(it.x, it.y, it.z),
-                    Quaternion.Euler(0f, it.yaw, 0f) * Quaternion.Euler(0f, 0f, it.roll));
+                    Quaternion.Euler(0f, it.yaw, 0f) * Quaternion.Euler(0f, 0f, it.roll) * Quaternion.Euler(it.pitch, 0f, 0f));   // V18m: pitch = cars on cross slopes
                 go.transform.localScale = Vector3.one * it.scale;
                 MarkStatic(go);
             }
@@ -475,6 +552,13 @@ namespace CarcavelosCircuit.Visuals.Editor
             {
                 Debug.Log("CampusWorldBuilder: " + hall);
             }
+            // V14: the white fence stays out where the world has its own edge or the way must be open (fence_free.json).
+            string fenceFree = FenceFreeZones.Apply(root);
+            if (fenceFree != null)
+            {
+                Debug.Log("CampusWorldBuilder: " + fenceFree);
+            }
+
             AddTunnelGuards(root, JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json")));
             AddGrassTufts(root);
             AddSunAndSky(root);
@@ -584,7 +668,9 @@ namespace CarcavelosCircuit.Visuals.Editor
         // cutout, shifted 35 % towards the lawn colour under it (vertex colour; alpha = card height for the
         // shader's sink-away). All tufts of a 16 m cell are merged into one mesh, and a LODGroup hides the cell
         // beyond about 65 m (at LOD bias 1), so only the cells near the camera cost anything. No shadows cast.
-        private const float TuftCell = 16f, TuftCullDistance = 65f;
+        // V16h: tufts marked "far" are the far LOD: one cross of two cards (4 triangles), larger, in 32 m cells that stay
+        // visible to 150 m (material W_grass_tuft_far: sinks away just before), so lawns keep texture further out.
+        private const float TuftCell = 16f, TuftCullDistance = 65f, TuftFarCell = 32f, TuftFarCullDistance = 150f;
         private static readonly Color TuftLawn = new Color(143f / 255f, 179f / 255f, 122f / 255f).linear;   // the lawn the cutout was painted for
         private static readonly List<Vector3> tuftFeet = new List<Vector3>();
         private static int tuftsPlaced, tuftsLeftOut, tuftTriangles, tuftChunks;
@@ -595,6 +681,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             tuftFeet.Clear();
             string file = DataDir + "/grass_tufts.json", meshPath = ModelsDir + "/GrassTufts.asset";
             Material mat = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "/W_grass_tuft.mat");
+            Material farMat = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "/W_grass_tuft_far.mat");
             AssetDatabase.DeleteAsset(meshPath);
             if (!File.Exists(file) || mat == null)
             {
@@ -613,7 +700,15 @@ namespace CarcavelosCircuit.Visuals.Editor
                     tuftsLeftOut++;
                     continue;
                 }
-                var key = new Vector2Int(Mathf.FloorToInt(t.x / TuftCell), Mathf.FloorToInt(t.z / TuftCell));
+                bool farTuft = t.far > 0;
+                if (farTuft && farMat == null)
+                {
+                    tuftsLeftOut++;
+                    continue;
+                }
+                float cellSize = farTuft ? TuftFarCell : TuftCell;
+                // far cells get their own keys (x offset by 100000), so the two kinds never share a mesh
+                var key = new Vector2Int(Mathf.FloorToInt(t.x / cellSize) + (farTuft ? 100000 : 0), Mathf.FloorToInt(t.z / cellSize));
                 if (!cells.TryGetValue(key, out List<Vector4> list))
                 {
                     cells[key] = list = new List<Vector4>();
@@ -626,7 +721,9 @@ namespace CarcavelosCircuit.Visuals.Editor
             tuftRoot.transform.SetParent(root.transform, false);
             foreach (KeyValuePair<Vector2Int, List<Vector4>> cell in cells)
             {
-                var origin = new Vector3((cell.Key.x + 0.5f) * TuftCell, 0f, (cell.Key.y + 0.5f) * TuftCell);
+                bool farCell = cell.Key.x > 50000;
+                float size = farCell ? TuftFarCell : TuftCell;
+                var origin = new Vector3((cell.Key.x - (farCell ? 100000 : 0) + 0.5f) * size, 0f, (cell.Key.y + 0.5f) * size);
                 var verts = new List<Vector3>(); var normals = new List<Vector3>();
                 var uv = new List<Vector2>(); var sway = new List<Vector2>(); var tris = new List<int>();
                 var colours = new List<Color>();
@@ -639,7 +736,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                     var lawn = new Color(Mathf.Lerp(1f, Mathf.Clamp(here.r / TuftLawn.r, 0.6f, 1.5f), 0.35f),
                                          Mathf.Lerp(1f, Mathf.Clamp(here.g / TuftLawn.g, 0.6f, 1.5f), 0.35f),
                                          Mathf.Lerp(1f, Mathf.Clamp(here.b / TuftLawn.b, 0.6f, 1.5f), 0.35f));
-                    int crosses = t.big > 0 ? 4 : 3, cards = t.big > 0 ? 3 : 2;
+                    int crosses = farCell ? 1 : t.big > 0 ? 4 : 3, cards = t.big > 0 && !farCell ? 3 : 2;
                     for (int cross = 0; cross < crosses; cross++)
                     {
                         float away = cross == 0 ? 0f : (0.1f + 0.14f * R()) * t.s, around = (t.yaw + cross * 120f + 60f * R()) * Mathf.Deg2Rad;
@@ -663,7 +760,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                         }
                     }
                 }
-                var mesh = new Mesh { name = "GrassTufts_" + cell.Key.x + "_" + cell.Key.y };
+                var mesh = new Mesh { name = (farCell ? "GrassTuftsFar_" : "GrassTufts_") + (cell.Key.x - (farCell ? 100000 : 0)) + "_" + cell.Key.y };
                 mesh.SetVertices(verts); mesh.SetNormals(normals); mesh.SetUVs(0, uv); mesh.SetUVs(1, sway);
                 mesh.SetColors(colours);
                 mesh.SetTriangles(tris, 0);
@@ -681,13 +778,13 @@ namespace CarcavelosCircuit.Visuals.Editor
                 go.transform.position = origin;
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
                 MeshRenderer r = go.AddComponent<MeshRenderer>();
-                r.sharedMaterial = mat;
+                r.sharedMaterial = farCell ? farMat : mat;
                 r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 LODGroup lod = go.AddComponent<LODGroup>();
                 lod.SetLODs(new[] { new LOD(0.5f, new Renderer[] { r }) });
                 lod.RecalculateBounds();
                 // relative screen height of the cell at the cull distance, for a 60 degree camera
-                float shown = Mathf.Clamp(lod.size / (2f * TuftCullDistance * Mathf.Tan(30f * Mathf.Deg2Rad)), 0.01f, 0.9f);
+                float shown = Mathf.Clamp(lod.size / (2f * (farCell ? TuftFarCullDistance : TuftCullDistance) * Mathf.Tan(30f * Mathf.Deg2Rad)), 0.01f, 0.9f);
                 lod.SetLODs(new[] { new LOD(shown, new Renderer[] { r }) });
                 tuftChunks++;
                 tuftTriangles += tris.Count / 3;
@@ -720,7 +817,8 @@ namespace CarcavelosCircuit.Visuals.Editor
 
         // Golden hour (design reference, 2026-11-09): a low warm sun from the west-south-west, long soft shadows,
         // cool blue fill, a painted sky with cumulus clouds (also the reflection source), and a gentle warm grade.
-        // No fog, no bake. Sun and look volume are part of the prefab. Sky light, sky and reflections are scene
+        // V17 "AAA" pass: a stronger sun against a darker, cooler fill (more contrast between sun and shade, like a
+        // real late afternoon), a filmic tone curve, and a light warm sea haze for depth. No bake. Sun and look volume are part of the prefab. Sky light, sky and reflections are scene
         // settings, so CampusWorldLighting (on the prefab root) writes them into whichever scene holds the prefab while
         // that scene is the active one (the race makes the track scene active).
         private static void AddSunAndSky(GameObject root)
@@ -729,10 +827,12 @@ namespace CarcavelosCircuit.Visuals.Editor
             sunObject.transform.SetParent(root.transform, false);
             Light sun = sunObject.AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.intensity = 1.25f;
-            sun.color = new Color(1f, 0.878f, 0.71f);                                // #FFE0B5
+            sun.intensity = 2.1f;                                                    // V18l: hot summer sun (V17: 1.9)
+            sun.color = new Color(1f, 0.95f, 0.86f);                                 // #FFF2DB, nearly white, a little warm
             sun.shadows = LightShadows.Soft;
-            sun.shadowStrength = 0.85f;                                              // shade stays readable
+            sun.shadowStrength = 1f;                                                 // V18l: full shadows, the fill lights the shade
+            sun.shadowBias = 0.04f;                                                  // V17: no shadow acne on the long, flat paving
+            sun.shadowNormalBias = 0.35f;
             float az = SunAzimuth * Mathf.Deg2Rad, el = SunElevation * Mathf.Deg2Rad;
             var towardsSun = new Vector3(Mathf.Sin(az) * Mathf.Cos(el), Mathf.Sin(el), Mathf.Cos(az) * Mathf.Cos(el));
             sunObject.transform.rotation = Quaternion.LookRotation(-towardsSun);
@@ -762,9 +862,15 @@ namespace CarcavelosCircuit.Visuals.Editor
             CampusWorldLighting lighting = root.AddComponent<CampusWorldLighting>();
             var so = new SerializedObject(lighting);
             so.FindProperty("sun").objectReferenceValue = sun;
-            so.FindProperty("skyColour").colorValue = new Color(0.70f, 0.76f, 0.87f);       // #B3C2DE cool fill
-            so.FindProperty("horizonColour").colorValue = new Color(0.66f, 0.66f, 0.66f);
-            so.FindProperty("groundColour").colorValue = new Color(0.62f, 0.55f, 0.46f);    // warm bounce from the paving
+            // V17: the fill is darker than V8's (#B3C2DE / grey / #9E8C75), so shade reads as shade and the sun as sun;
+            // only a little bluer (bluer still turned the tunnel and the hall cold); the ground bounce stays warm.
+            // V18l: the shade is lit by a clear blue summer sky: darker and bluer than V17, so sun and shade stand
+            // apart hard (cool blue shadows against hot, nearly white sunlight); the ground bounce stays warm.
+            so.FindProperty("skyColour").colorValue = new Color(0.40f, 0.55f, 0.80f);       // #668CCC sky fill
+            so.FindProperty("horizonColour").colorValue = new Color(0.52f, 0.58f, 0.66f);
+            so.FindProperty("groundColour").colorValue = new Color(0.55f, 0.45f, 0.33f);    // warm bounce from the paving
+            so.FindProperty("hazeColour").colorValue = HazeColour;                          // the sky's horizon colour
+            so.FindProperty("hazeDensity").floatValue = HazeDensity;
             so.FindProperty("skybox").objectReferenceValue = skybox;
             so.FindProperty("reflection").objectReferenceValue = cube;                     // glass and gloss reflect the sky
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -777,8 +883,14 @@ namespace CarcavelosCircuit.Visuals.Editor
             volume.sharedProfile = BuildLookProfile();
         }
 
-        // Tonemapping + a gentle grade, made by code so every laptop gets the same look. Bloom stays in Role 4's
+        // Tonemapping + a grade, made by code so every laptop gets the same look. Bloom stays in Role 4's
         // RaceCameraVolume (Main.unity); the overrides do not overlap.
+        // V17: ACES (the filmic curve of film and most console games) instead of Neutral: highlights roll off softly
+        // instead of clipping, mid-tones get more contrast. ACES darkens the mid-tones, so the exposure goes up.
+        // Shadows a little cooler and highlights a little warmer (golden hour), blue and orange stay clean.
+        // V18l summer: more contrast and colour, no golden cast; shade pushed towards blue, light towards warm white.
+        private const float LookExposure = 0.1f, LookContrast = 30f, LookSaturation = 22f;
+
         private static VolumeProfile BuildLookProfile()
         {
             EnsureFolder(SettingsDir);
@@ -789,13 +901,16 @@ namespace CarcavelosCircuit.Visuals.Editor
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
             AssetDatabase.CreateAsset(profile, LookProfile);
             Tonemapping tone = profile.Add<Tonemapping>(true);
-            tone.mode.Override(TonemappingMode.Neutral);
+            tone.mode.Override(TonemappingMode.ACES);
             ColorAdjustments grade = profile.Add<ColorAdjustments>(true);
-            grade.postExposure.Override(0.1f);
-            grade.contrast.Override(8f);
-            grade.saturation.Override(12f);
+            grade.postExposure.Override(LookExposure);
+            grade.contrast.Override(LookContrast);
+            grade.saturation.Override(LookSaturation);
             WhiteBalance warm = profile.Add<WhiteBalance>(true);
-            warm.temperature.Override(4f);
+            warm.temperature.Override(2f);
+            ShadowsMidtonesHighlights split = profile.Add<ShadowsMidtonesHighlights>(true);
+            split.shadows.Override(new Vector4(0.93f, 0.98f, 1.10f, -0.07f));       // V18l: blue, deeper shade
+            split.highlights.Override(new Vector4(1.03f, 1.0f, 0.96f, 0.02f));       // warm, bright sunlit tops
             foreach (VolumeComponent c in profile.components)
             {
                 c.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
@@ -1000,10 +1115,11 @@ namespace CarcavelosCircuit.Visuals.Editor
 
             SceneManager.SetActiveScene(holder);
             RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.fog = true;
+            RenderSettings.fog = false;
             var second = (GameObject)PrefabUtility.InstantiatePrefab(asset, holder);
             bool painted = AssetDatabase.LoadAssetAtPath<Cubemap>(SkyTexture) != null;
-            bool applied = RenderSettings.ambientMode == AmbientMode.Trilight && !RenderSettings.fog &&
+            bool applied = RenderSettings.ambientMode == AmbientMode.Trilight && RenderSettings.fog &&
+                           Mathf.Approximately(RenderSettings.fogDensity, HazeDensity) &&
                            RenderSettings.sun != null && RenderSettings.sun.transform.IsChildOf(second.transform) &&
                            (!painted || (RenderSettings.skybox != null && RenderSettings.skybox.name == "Sky_Painted" &&
                                          RenderSettings.defaultReflectionMode == DefaultReflectionMode.Custom &&
@@ -1078,6 +1194,21 @@ namespace CarcavelosCircuit.Visuals.Editor
         {
             var go = (GameObject)PrefabUtility.InstantiatePrefab(Model(model), parent);
             return go;
+        }
+
+        // V10i: meshes named "...ColliderOnly" keep their collider but are not drawn.
+        private static void HideIfColliderOnly(MeshFilter mf)
+        {
+            if (!mf.gameObject.name.Contains("ColliderOnly"))
+            {
+                return;
+            }
+            MeshRenderer renderer = mf.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                renderer.enabled = false;
+            }
+            GameObjectUtility.SetStaticEditorFlags(mf.gameObject, 0);
         }
 
         // Materials the self-test accepts: Luc's material folder, the ones inside Noah's hall model (#45) and

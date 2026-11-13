@@ -18,6 +18,17 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKETCH = os.path.join(HERE, "sketch", "route_sketch_2026-11-08.webp")
 DATA = json.load(open(os.path.join(HERE, "world_data.json")))
+# V10i: the waypoint pipeline runs against the outlines it was made with (footprint_overrides.json
+# "route_base_polygon"), so a later footprint correction does not move any route point; section overrides that need
+# the corrected outline (apply_via_override) read it from _TRUE_POINTS.
+_TRUE_POINTS = {}
+_overrides = os.path.join(HERE, "footprint_overrides.json")
+for _id, _o in (json.load(open(_overrides)) if os.path.exists(_overrides) else {}).items():
+    if isinstance(_o, dict) and _o.get("route_base_polygon"):
+        for _b in DATA["buildings"]:
+            if _b["id"] == _id:
+                _TRUE_POINTS[_id] = _b["points"]
+                _b["points"] = [list(p) for p in _o["route_base_polygon"]]
 
 # The preview camera (build_world.py, shot "top"): ortho 816 m wide, 1600 x 1100 px, centred on (-70, -15).
 RENDER_W, M_PER_PX, LEFT_M, TOP_M = 1600, 816 / 1600, -478.0, 265.5
@@ -307,6 +318,8 @@ def road_widths(route, beach_tunnel, tunnel_len):
 
 _WAYPOINTS = {"points": None}      # set by waypoint_route(); used for the passage rule in wall_blockers()
 KICKER = {}                        # wedge kicker facts from apply_profile(), written into route.json
+WALL_CUTS = []                     # index ranges with flat 45 degree cut walls, from apply_section_overrides()
+START_SECTION = {}                 # V15: the section override over the lap seam (points strictly between the two indices)
 
 
 def catmull_closed(pts, samples=16):
@@ -505,6 +518,16 @@ def apply_profile(points, buildings):
         fixed[foot] = smooth[foot]
         KICKER.update({"type": "wedge", "slope_deg": kick.get("slope_deg", 35), "length_m": round(k * step, 1),
                        "drop_m": round(top - smooth[foot], 2), "foot_index": foot})
+    if edge is not None and kick.get("type") == "ramp":
+        # V10i: a real jump. A kicker ramp on the deck rises to the terrace edge (z = top + rise * t ** power, t from
+        # 0 at its start to 1 at the edge: no kink where it starts, steepest at the lip), then a free drop to the lawn.
+        top, length, rise, power = fixed[edge], kick["length_m"], kick["rise_m"], kick.get("power", 1.5)
+        for k in range(int(length / step) + 1):
+            fixed[(edge - k) % n] = top + rise * max(0.0, 1 - k * step / length) ** power
+        lip = power * rise / length
+        KICKER.update({"type": "ramp", "length_m": length, "rise_m": rise, "power": power,
+                       "lip_slope_deg": round(math.degrees(math.atan(lip)), 1),
+                       "drop_m": round(top + rise - smooth[(edge + 1) % n], 2)})
     for anchor in PROFILE["anchors"]:
         i = place(anchor, "s", "at")
         fixed[i] = anchor["z"]
@@ -597,6 +620,422 @@ def apply_profile(points, buildings):
     return (edge if edge is not None else 0), notes
 
 
+def _old_frac(points, f, key):
+    """Value of a number field at a fractional index of the route (linear between two points)."""
+    i = int(math.floor(f))
+    t = f - i
+    return points[i][key] * (1 - t) + points[i + 1][key] * t
+
+
+def _fillet_line(pa, da, pb, db, radius, ease_passes, dense=0.25):
+    """Straight from pa along da, one arc of `radius`, straight into pb along db; the corners of the curvature
+    are eased by `ease_passes` 3-point averages on a `dense` m polyline (ends fixed). Returns the polyline."""
+    den = da[0] * db[1] - da[1] * db[0]
+    t = ((pb[0] - pa[0]) * db[1] - (pb[1] - pa[1]) * db[0]) / den          # pa + t da = pb + u db (the vertex)
+    u = ((pb[0] - pa[0]) * da[1] - (pb[1] - pa[1]) * da[0]) / den
+    turn = math.atan2(den, da[0] * db[0] + da[1] * db[1])                    # + = left
+    tangent = radius * math.tan(abs(turn) / 2)
+    if not (t > tangent and -u > tangent):
+        raise ValueError(f"section override: radius {radius:.1f} m does not fit (legs {t:.1f} / {-u:.1f} m, tangent {tangent:.1f} m)")
+    side = 1.0 if turn > 0 else -1.0
+    start = (pa[0] + da[0] * (t - tangent), pa[1] + da[1] * (t - tangent))
+    centre = (start[0] - da[1] * side * radius, start[1] + da[0] * side * radius)
+    a0 = math.atan2(start[1] - centre[1], start[0] - centre[0])
+    line = [pa]
+    k = 1
+    while k * dense < t - tangent:
+        line.append((pa[0] + da[0] * k * dense, pa[1] + da[1] * k * dense))
+        k += 1
+    steps = max(2, int(radius * abs(turn) / dense))
+    for k in range(steps + 1):
+        a = a0 + turn * k / steps
+        line.append((centre[0] + radius * math.cos(a), centre[1] + radius * math.sin(a)))
+    end = line[-1]
+    rest = math.dist(end, pb)
+    k = 1
+    while k * dense < rest - 1e-6:
+        line.append((end[0] + db[0] * k * dense, end[1] + db[1] * k * dense))
+        k += 1
+    line.append(pb)
+    for _ in range(ease_passes):
+        line = [line[0]] + [((line[i - 1][0] + line[i][0] + line[i + 1][0]) / 3,
+                             (line[i - 1][1] + line[i][1] + line[i + 1][1]) / 3) for i in range(1, len(line) - 1)] + [line[-1]]
+    return line
+
+
+def _resample_open(line, count):
+    """`count` points at equal distances along the polyline, strictly between its two ends."""
+    cum = [0.0]
+    for a, b in zip(line, line[1:]):
+        cum.append(cum[-1] + math.dist(a, b))
+    out, k = [], 0
+    for j in range(1, count + 1):
+        d = cum[-1] * j / (count + 1)
+        while cum[k + 1] < d:
+            k += 1
+        t = (d - cum[k]) / ((cum[k + 1] - cum[k]) or 1e-9)
+        out.append((line[k][0] + (line[k + 1][0] - line[k][0]) * t, line[k][1] + (line[k + 1][1] - line[k][1]) * t))
+    return out, cum[-1]
+
+
+def apply_curve_override(points, spec):
+    """V14c: one wide turn with a smooth curvature profile, for a hairpin that was too tight to drift.
+
+    From the route point at `from_at` (its position, direction and curvature are kept) the curvature rises evenly over
+    `ease_in_m` to 1 / `radius_m`, holds, falls evenly over `ease_between_m` through zero to a counter-curve of
+    `counter_radius_m`, holds, and returns to zero over `ease_out_m`. The two hold lengths are solved so that the line
+    ends ON the old line's straight after the turn (`straight_at`: any point on that straight) with its direction; the
+    first old point after that end is where the old line goes on. In between the points are 2 m apart as everywhere
+    (the count is round(length / 2)), heights follow the ground under the new line and meet the old heights at both
+    ends, width, zone and surface are taken from the old point at the same share of the way.
+    Every point outside keeps its values and is only renumbered. Returns report lines."""
+    n = len(points)
+    near = lambda at: min(range(n), key=lambda i: (points[i]["x"] - at[0]) ** 2 + (points[i]["y"] - at[1]) ** 2)
+    xy = lambda i: (points[i]["x"], points[i]["y"])
+    a, st = near(spec["from_at"]), near(spec["straight_at"])
+    if not 2 <= a < st < n - 6:
+        raise ValueError("curve override: from_at must come before straight_at and not near point 0")
+    h0 = math.atan2(xy(a + 1)[1] - xy(a - 1)[1], xy(a + 1)[0] - xy(a - 1)[0])
+    h1 = math.atan2(xy(a)[1] - xy(a - 2)[1], xy(a)[0] - xy(a - 2)[0])
+    h2 = math.atan2(xy(a + 2)[1] - xy(a)[1], xy(a + 2)[0] - xy(a)[0])
+    k0 = ((h2 - h1 + math.pi) % (2 * math.pi) - math.pi) / math.dist(xy(a - 2), xy(a))      # the old line's curvature at from_at
+    kmax, kr = 1.0 / spec["radius_m"], 1.0 / spec["counter_radius_m"]
+    sign = 1.0 if spec.get("turn", "left") == "left" else -1.0
+    l_in, l_mid, l_out = spec["ease_in_m"], spec["ease_between_m"], spec["ease_out_m"]
+    d = (xy(st + 3)[0] - xy(st - 3)[0], xy(st + 3)[1] - xy(st - 3)[1])                      # the straight after the turn
+    dl = math.hypot(*d)
+    d = (d[0] / dl, d[1] / dl)
+    ha = math.atan2(d[1], d[0])
+
+    def run(hold, counter, ds=0.05):
+        x, y, h = xy(a)[0], xy(a)[1], h0
+        line = [(x, y)]
+        for length, ka, kb in ((l_in, k0, sign * kmax), (hold, sign * kmax, sign * kmax), (l_mid, sign * kmax, -sign * kr),
+                               (counter, -sign * kr, -sign * kr), (l_out, -sign * kr, 0.0)):
+            steps = max(1, int(round(length / ds)))
+            for i in range(steps):
+                h += (ka + (kb - ka) * (i + 0.5) / steps) * length / steps
+                x += math.cos(h) * length / steps
+                y += math.sin(h) * length / steps
+                line.append((x, y))
+        off_h = (h - ha + math.pi) % (2 * math.pi) - math.pi
+        off_l = (x - xy(st)[0]) * (-d[1]) + (y - xy(st)[1]) * d[0]
+        return line, off_h, off_l
+    hold, counter = spec.get("hold_start_m", 20.0), spec.get("counter_start_m", 4.0)
+    for _ in range(80):                                                 # Newton steps on the two hold lengths
+        line, eh, el = run(hold, counter)
+        if abs(eh) < 1e-5 and abs(el) < 1e-4:
+            break
+        e = 0.05
+        _l, ah, al = run(hold + e, counter)
+        _l, bh, bl = run(hold, counter + e)
+        j = [[(ah - eh) / e, (bh - eh) / e], [(al - el) / e, (bl - el) / e]]
+        det = j[0][0] * j[1][1] - j[0][1] * j[1][0]
+        hold += max(-3.0, min(3.0, (-eh * j[1][1] + el * j[0][1]) / det))
+        counter += max(-3.0, min(3.0, (eh * j[1][0] - el * j[0][0]) / det))
+        if hold < 0 or counter < 0:
+            raise ValueError("curve override: no line with these radii and easings ends on the old straight")
+    else:
+        raise ValueError("curve override: the hold lengths did not settle")
+    end = line[-1]
+    b = next(i for i in range(a + 1, n) if (xy(i)[0] - end[0]) * d[0] + (xy(i)[1] - end[1]) * d[1] > 0.5
+             and abs((xy(i)[0] - end[0]) * (-d[1]) + (xy(i)[1] - end[1]) * d[0]) < 0.05)      # first old point after the end, on the straight
+    line = line + [xy(b)]
+    length = sum(math.dist(p, q) for p, q in zip(line, line[1:]))
+    count = int(round(length / SPACING)) - 1
+    new_xy, _ = _resample_open(line, count)
+    step = length / (count + 1)
+    old = points[a:b + 1]
+    za, zb = points[a]["track_z"], points[b]["track_z"]
+    # heights: the ground under the new line (5-point mean), meeting the old heights at both ends over 4 points
+    # (an even ramp between the two ends stood up to 0.4 m over the forecourt, which falls away to the south-west)
+    gz = [ground_z(x, y) for x, y in new_xy]
+    sm = [sum(gz[max(0, k - 2):k + 3]) / len(gz[max(0, k - 2):k + 3]) for k in range(count)]
+    new = []
+    for k, (x, y) in enumerate(new_xy):
+        t = (k + 1) / (count + 1)
+        w = min(1.0, (k + 1) / 4.0, (count - k) / 4.0)
+        z = (za + (zb - za) * t) * (1 - w) + sm[k] * w
+        src = old[min(len(old) - 1, int(round(t * (len(old) - 1))))]
+        new.append(dict(src, x=round(x, 2), y=round(y, 2), ground_z=round(gz[k], 2), track_z=round(z, 2), building="", tunnel=False))
+    old_count = b - a - 1
+    points[a + 1:b] = new
+    for i, p in enumerate(points):
+        p["i"], p["s"] = i, round(i * SPACING, 1)
+    return [f"curve override '{spec['name']}': {old_count} points between ({xy(a)[0]}, {xy(a)[1]}) and ({points[a + 1 + count]['x']}, "
+            f"{points[a + 1 + count]['y']}) replaced by {count} points ({length:.2f} m, step {step:.3f} m); radius {spec['radius_m']} m held "
+            f"for {hold:.1f} m, counter-curve {spec['counter_radius_m']} m for {counter:.1f} m; lap {(count - old_count) * SPACING:+.0f} m; "
+            f"steepest slope {max(abs(p['track_z'] - q['track_z']) / step for p, q in zip(points[a:a + count + 1], points[a + 1:a + count + 2])) * 100:.1f} %"]
+
+
+def apply_section_overrides(points, buildings, beach_tunnel, tunnel_len):
+    """Replaces a stretch of the finished route by a hand-set line (route_profile.json "section_overrides").
+
+    Why here and not in the waypoints: the spline, the smoothing and the 2 m resampling run round the whole lap,
+    so a moved waypoint shifts every later point by a fraction of a metre. This step runs after everything else
+    and touches only the points strictly between `from_at` and `to_at`; every other point keeps its x, y, heights,
+    width, zone and surface to the last digit and is only renumbered (i, s).
+
+    Line: straight on from `from_at` along `heading_deg` (0 = north, 90 = east), one arc of about `radius_m`,
+    straight into `to_at` along the old line. The radius is tuned (within +/- 4 m, and so that the arc ends before
+    `to_at`) until the new stretch is a whole
+    number of 2 m steps long, so the spacing stays 2.0 m.
+    Heights: from the height at `from_at` a ramp up to `plateau_z`, reached `ramp_m` after `from_at` (slope eased in
+    over `ease_in_m`, out over `ease_out_m`); then level; the last metres before `to_at` copy the old height
+    profile (same distance before `to_at`), so the join has no step and no kink.
+    `wall_cut`: the ramp points (and `from_at`, the portal) are listed in route.json "wall_cuts"; env_corridor then
+    builds flat 45 degree walls from the road edge up to the ground there, and env_props puts the railings on top.
+    Returns report lines."""
+    notes = []
+    for spec in PROFILE.get("section_overrides", []):
+        if "via" in spec:
+            notes += apply_via_override(points, buildings, beach_tunnel, tunnel_len, spec)
+            continue
+        if spec.get("type") == "curve":                         # V14c: a wide turn with a smooth curvature profile
+            notes += apply_curve_override(points, spec)
+            continue
+        n = len(points)
+        near = lambda at: min(range(n), key=lambda i: (points[i]["x"] - at[0]) ** 2 + (points[i]["y"] - at[1]) ** 2)
+        a, b = near(spec["from_at"]), near(spec["to_at"])
+        # V15: a section over the lap seam (end of the lap -> point 0) needs "start_at". The list is turned so that
+        # the section lies inside it, the block below runs as for any other section, then _restart() makes the new
+        # point nearest to start_at point 0 again. Sections without "start_at" never get here.
+        seam = (b, points[b]) if "start_at" in spec and a > b else None
+        if seam:
+            k = (a + b) // 2
+            points[:] = points[k:] + points[:k]
+            a, b = a - k, b + n - k
+        if not a < b:
+            raise ValueError("section override: from_at must come before to_at and must not span point 0")
+        pa, pb = (points[a]["x"], points[a]["y"]), (points[b]["x"], points[b]["y"])
+        h = math.radians(spec["heading_deg"])
+        da = (math.sin(h), math.cos(h))
+        db = (points[b + 1]["x"] - pb[0], points[b + 1]["y"] - pb[1])
+        dl = math.hypot(*db)
+        db = (db[0] / dl, db[1] / dl)
+        ease = spec.get("ease_passes", 60)
+
+        def length_for(radius):
+            line = _fillet_line(pa, da, pb, db, radius, ease)
+            return sum(math.dist(p, q) for p, q in zip(line, line[1:])), line
+        r0 = spec["radius_m"]
+        den = da[0] * db[1] - da[1] * db[0]
+        legs = (((pb[0] - pa[0]) * db[1] - (pb[1] - pa[1]) * db[0]) / den, -((pb[0] - pa[0]) * da[1] - (pb[1] - pa[1]) * da[0]) / den)
+        half = abs(math.atan2(den, da[0] * db[0] + da[1] * db[1])) / 2
+        lo, hi = r0 - 4.0, min(r0 + 4.0, (min(legs) - 0.3) / math.tan(half))     # hi: the arc must end before to_at
+        # a larger radius cuts the corner: shorter line. Whole number of 2 m steps within reach, nearest to radius_m
+        fits = [m * SPACING for m in range(int(length_for(hi)[0] / SPACING) + 1, int(length_for(lo)[0] / SPACING) + 1)]
+        if not fits:
+            raise ValueError("section override: no radius near radius_m gives a whole number of 2 m steps")
+        target = min(fits, key=lambda L: abs(L - length_for(r0)[0]))
+        for _ in range(50):
+            mid = (lo + hi) / 2
+            if length_for(mid)[0] > target:
+                lo = mid
+            else:
+                hi = mid
+        radius = (lo + hi) / 2
+        length, line = length_for(radius)
+        count = int(round(target / SPACING)) - 1
+        xy, _ = _resample_open(line, count)
+        step = length / (count + 1)
+
+        # heights -----------------------------------------------------------------------------------------
+        za, top, ramp = points[a]["track_z"], spec["plateau_z"], spec["ramp_m"]
+        e1, e2 = spec.get("ease_in_m", 6.0), spec.get("ease_out_m", 14.0)
+        g0 = (points[a]["track_z"] - points[a - 1]["track_z"]) / SPACING + spec.get("slope_in_add", 0.0)
+        g = (top - za - g0 * e1 / 2) / (ramp - e1 / 2 - e2 / 2)             # slope of the even part of the ramp
+
+        def ramp_z(d):
+            if d <= e1:
+                return za + g0 * d + (g - g0) * d * d / (2 * e1)
+            if d <= ramp - e2:
+                return za + (g0 + g) / 2 * e1 + g * (d - e1)
+            if d <= ramp:
+                r = ramp - d
+                return top - g * r * r / (2 * e2)
+            return top
+        flat = b
+        while flat > a and abs(points[flat]["track_z"] - top) > 0.005:
+            flat -= 1                                                      # last old point that is level at plateau_z
+        tail = (b - flat) * SPACING
+        if flat <= a or length - tail < ramp:
+            raise ValueError("section override: no room for the ramp before the old height profile takes over")
+        new = []
+        for j, (x, y) in enumerate(xy):
+            d = (j + 1) * step
+            back = length - d
+            if back < tail:
+                f = b - back / SPACING
+                z = _old_frac(points, f, "track_z")
+                like = points[int(round(f))]
+                zone, surface = like["zone"], like["surface"]
+            else:
+                z = ramp_z(d)
+                zone, surface = (spec.get("ramp_zone", "ramp") if d < ramp - e2 / 2 else spec.get("plateau_zone", "lower plaza")), spec["surface"]
+            inside = [bd["name"] or bd["id"] for bd, path in buildings if path.contains_point((x, y))]
+            _, d_beach, along = closest_on_polyline((x, y), beach_tunnel)
+            if inside or (d_beach < 2.5 and 0.5 < along < tunnel_len - 0.5):
+                raise ValueError(f"section override: new point ({x:.1f}, {y:.1f}) lies in {inside or 'the tunnel'}")
+            new.append({"i": 0, "x": round(x, 2), "y": round(y, 2), "ground_z": round(ground_z(x, y), 2), "s": 0.0,
+                        "width": MAX_WIDTH, "building": "", "tunnel": False, "main_road": False,
+                        "track_z": round(z, 2), "zone": zone, "level": "", "surface": surface})
+        old_count = b - a - 1
+        points[a + 1:b] = new
+        if spec.get("wall_cut"):                        # env_corridor: flat 45 degree walls beside the ramp points
+            last = max((a + 1 + j for j, q in enumerate(new) if q["zone"] == spec.get("ramp_zone", "ramp")), default=a)
+            WALL_CUTS.append({"from_index": a, "to_index": last, "why": spec["name"]})
+        for i, p in enumerate(points):
+            p["i"], p["s"] = i, round(i * SPACING, 1)
+
+        # checks: room to the walls, slope, curvature ------------------------------------------------------------
+        route = [(p["x"], p["y"]) for p in points]
+        polys, _, passable = wall_blockers(route, beach_tunnel, tunnel_len)
+        frames = left_normals(route)
+        room = min(min(wall_distances(route, i, polys, passable, frames[i])[:2]) for i in range(a + 1, a + 1 + count))
+        if room < MAX_WIDTH / 2 + WALL_GAP:
+            raise ValueError(f"section override: only {room:.1f} m to a wall, the 8 m road does not fit")
+        slope = max(abs(points[i + 1]["track_z"] - points[i]["track_z"]) / math.dist(route[i], route[i + 1])
+                    for i in range(a, a + count + 1))
+
+        def bend(i):
+            h1 = math.atan2(route[i][1] - route[i - 1][1], route[i][0] - route[i - 1][0])
+            h2 = math.atan2(route[i + 1][1] - route[i][1], route[i + 1][0] - route[i][0])
+            return abs((h2 - h1 + math.pi) % (2 * math.pi) - math.pi) / SPACING
+        curve = max(bend(i) for i in range(a, a + count + 2))
+        notes.append(f"section override '{spec['name']}': {old_count} points ({(old_count + 1) * SPACING:.0f} m) between "
+                     f"({pa[0]}, {pa[1]}) and ({pb[0]}, {pb[1]}) replaced by {count} points ({length:.2f} m, "
+                     f"step {step:.3f} m, arc radius {radius:.2f} m); lap {(old_count - count) * SPACING:.0f} m shorter")
+        notes.append(f"  steepest slope {slope * 100:.1f} %, tightest bend 1/{1 / curve:.0f} m, nearest wall {room:.1f} m "
+                     f"from the centreline, even ramp slope {g * 100:.1f} %")
+        if seam:
+            first_kept, last_kept = seam[1], points[a]             # to_at and from_at (both stay)
+            notes.append(_restart(points, spec["start_at"], *seam))
+            # for env_props: the props of this section must not shift the random sequence of the rest of the lap
+            START_SECTION.update({"from_index": last_kept["i"], "to_index": first_kept["i"], "why": spec["name"]})
+    return notes
+
+
+def _restart(points, start_at, old_index, kept):
+    """V15, after a section override over the lap seam: turns the list so that the point nearest to `start_at` is
+    point 0 (start/finish) and renumbers i and s. `kept` (the point at to_at, old index `old_index`) must get its
+    old index back: then every point after the section keeps its index, and the jump index, the wall cuts and the
+    checkpoints of the rest of the lap stay valid. If it does not, the build stops (move start_at or radius_m)."""
+    j = min(range(len(points)), key=lambda i: (points[i]["x"] - start_at[0]) ** 2 + (points[i]["y"] - start_at[1]) ** 2)
+    points[:] = points[j:] + points[:j]
+    for i, p in enumerate(points):
+        p["i"], p["s"] = i, round(i * SPACING, 1)
+    if kept["i"] != old_index:
+        raise ValueError(f"section override over the lap seam: the point after the section would move from index "
+                         f"{old_index} to {kept['i']}; start_at must lie {old_index} steps before to_at")
+    off = math.hypot(points[0]["x"] - start_at[0], points[0]["y"] - start_at[1])
+    return (f"  over the lap seam: point 0 (start/finish) = ({points[0]['x']}, {points[0]['y']}), {off:.2f} m from "
+            f"start_at; points {old_index}.. keep their index; lap now {len(points) * SPACING:.0f} m")
+
+
+def _catmull_open(ctrl, dense=0.25):
+    """Centripetal Catmull-Rom spline through the control points (open), as a dense polyline."""
+    g0 = (2 * ctrl[0][0] - ctrl[1][0], 2 * ctrl[0][1] - ctrl[1][1])
+    g1 = (2 * ctrl[-1][0] - ctrl[-2][0], 2 * ctrl[-1][1] - ctrl[-2][1])
+    pts, out = [g0] + list(ctrl) + [g1], []
+    for i in range(1, len(pts) - 2):
+        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[i + 1], pts[i + 2]
+        t0 = 0.0
+        t1 = t0 + math.dist(p0, p1) ** 0.5
+        t2 = t1 + math.dist(p1, p2) ** 0.5
+        t3 = t2 + math.dist(p2, p3) ** 0.5
+        steps = max(2, int(math.dist(p1, p2) / dense))
+        for k in range(steps):
+            t = t1 + (t2 - t1) * k / steps
+
+            def mix(a, b, ta, tb):
+                return (a[0] * (tb - t) / (tb - ta) + b[0] * (t - ta) / (tb - ta),
+                        a[1] * (tb - t) / (tb - ta) + b[1] * (t - ta) / (tb - ta))
+            a1, a2, a3 = mix(p0, p1, t0, t1), mix(p1, p2, t1, t2), mix(p2, p3, t2, t3)
+            out.append(mix(mix(a1, a2, t0, t2), mix(a2, a3, t1, t3), t1, t2))
+    out.append(tuple(ctrl[-1]))
+    return out
+
+
+def apply_via_override(points, buildings, beach_tunnel, tunnel_len, spec):
+    """V10i: a hand-set line through `via` points (smooth spline, eased), with the stairs' own height profile.
+
+    Positions: only the points strictly between `from_at` and `to_at` are replaced. The new line is a spline through
+    the two route points before `from_at`, `from_at`, the via points, `to_at` and the two points after it, eased by
+    `ease_passes` 3-point averages, then cut into equal steps as close to 2 m as the length allows (the count is
+    round(length / 2); `s` keeps counting 2 m per point as everywhere else).
+    Heights, zones, surfaces (plaza_plan.py): between `heights_from_at` and `to_at`, level at Floor 0 before the
+    stairs, the stairs' profile (sag curve at the foot, even slope, crest curve) on them, level at Floor 1 after.
+    Stair points get zone "stairs" / terracotta, the points from the last riser on zone "plaza deck" / plaza_ochre:
+    env_plaza.py builds the driving surface there (stairs with steps, the paved deck), env_track builds no road.
+    Every point outside keeps its x, y, heights, width, zone and surface and is only renumbered. Returns report lines."""
+    import plaza_plan as PL
+    buildings = [(bd, Path(_TRUE_POINTS.get(bd["id"], bd["points"]))) for bd, _path in buildings]
+    n = len(points)
+    near = lambda at: min(range(n), key=lambda i: (points[i]["x"] - at[0]) ** 2 + (points[i]["y"] - at[1]) ** 2)
+    a, b, h0 = near(spec["from_at"]), near(spec["to_at"]), near(spec["heights_from_at"])
+    if not h0 <= a < b < n - 2:
+        raise ValueError("via override: heights_from_at <= from_at < to_at, and not across point 0")
+    xy = lambda i: (points[i]["x"], points[i]["y"])
+    ctrl = [xy(a - 2), xy(a - 1), xy(a)] + [tuple(v) for v in spec["via"]] + [xy(b), xy(b + 1), xy(b + 2)]
+    raw = _catmull_open(ctrl)
+    line = raw
+    for _ in range(spec.get("ease_passes", 60)):
+        line = [line[0]] + [((line[i - 1][0] + line[i][0] + line[i + 1][0]) / 3,
+                             (line[i - 1][1] + line[i][1] + line[i + 1][1]) / 3) for i in range(1, len(line) - 1)] + [line[-1]]
+    ia = min(range(len(raw)), key=lambda i: math.dist(raw[i], xy(a)))
+    ib = min(range(len(raw)), key=lambda i: math.dist(raw[i], xy(b)))
+    # the eased line takes over gradually (over JOIN m after from_at and before to_at): at the two joins the line is
+    # the spline itself, which passes through the old points with their direction, so there is no kink
+    join = spec.get("join_m", 8.0) / 0.25
+    mixed = []
+    for i in range(ia, ib + 1):
+        w = min(1.0, (i - ia) / join, (ib - i) / join)
+        w = w * w * (3 - 2 * w)
+        mixed.append((raw[i][0] + (line[i][0] - raw[i][0]) * w, raw[i][1] + (line[i][1] - raw[i][1]) * w))
+    line = [xy(a)] + mixed[1:-1] + [xy(b)]
+    length = sum(math.dist(p, q) for p, q in zip(line, line[1:]))
+    count = int(round(length / SPACING)) - 1
+    new_xy, _ = _resample_open(line, count)
+    step = length / (count + 1)
+    old_count = b - a - 1
+    new = []
+    for x, y in new_xy:
+        inside = [bd["name"] or bd["id"] for bd, path in buildings if path.contains_point((x, y))]
+        if inside:
+            raise ValueError(f"via override: new point ({x:.1f}, {y:.1f}) lies in {inside}")
+        new.append({"i": 0, "x": round(x, 2), "y": round(y, 2), "ground_z": round(ground_z(x, y), 2), "s": 0.0,
+                    "width": MAX_WIDTH, "building": "", "tunnel": False, "main_road": False,
+                    "track_z": PL.FLOOR1, "zone": "plaza deck", "level": "", "surface": spec["surface"]})
+    points[a + 1:b] = new
+    b = a + 1 + count
+    for i in range(h0, b + 1):                               # heights, zones, surfaces from the stairs' own profile
+        p = points[i]
+        s, _u = PL.stair_frame(p["x"], p["y"])
+        s = round(s, 1)
+        p["width"] = MAX_WIDTH
+        if s < -0.05:
+            p["track_z"], p["zone"], p["surface"] = round(PL.stair_profile(s), 2), spec.get("foot_zone", "lower plaza"), spec.get("foot_surface", "concrete_sand")
+        elif s < PL.STAIR_LEN - 0.05:
+            p["track_z"], p["zone"], p["surface"] = round(PL.stair_profile(s), 2), "stairs", "terracotta"
+        else:
+            p["track_z"], p["zone"], p["surface"] = round(PL.stair_profile(s), 2), "plaza deck", spec["surface"]
+    for i, p in enumerate(points):
+        p["i"], p["s"] = i, round(i * SPACING, 1)
+    route = [(p["x"], p["y"]) for p in points]
+    slope = max(abs(points[i + 1]["track_z"] - points[i]["track_z"]) / math.dist(route[i], route[i + 1]) for i in range(h0, b))
+
+    def bend(i, span=2):
+        h1 = math.atan2(route[i][1] - route[i - span][1], route[i][0] - route[i - span][0])
+        h2 = math.atan2(route[i + span][1] - route[i][1], route[i + span][0] - route[i][0])
+        return abs((h2 - h1 + math.pi) % (2 * math.pi) - math.pi) / (2 * span * step)
+    curve = max(bend(i) for i in range(a - 1, b + 2))
+    return [f"via override '{spec['name']}': {old_count} points between ({xy(a)[0]}, {xy(a)[1]}) and "
+            f"({points[b]['x']}, {points[b]['y']}) replaced by {count} points ({length:.2f} m, step {step:.3f} m); "
+            f"lap {(old_count - count) * SPACING:.0f} m shorter",
+            f"  steepest slope {slope * 100:.1f} % (stairs), tightest bend 1/{1 / curve:.0f} m (5-point mean)"]
+
+
 def main():
     beach_tunnel = next(p["points"] for p in DATA["paths"] if p["tunnel"] and p["name"] == "Sagres Beach Way")
     tunnel_len = sum(math.dist(a, b) for a, b in zip(beach_tunnel, beach_tunnel[1:]))
@@ -650,7 +1089,7 @@ def main():
     # ---------- driving height (track_z), zones and surfaces ----------
     jump_sketch_i = jump_i
     jump_i, notes = apply_profile(points, buildings)
-    notes = clear_notes + notes
+    notes = clear_notes + notes + apply_section_overrides(points, buildings, beach_tunnel, tunnel_len)
     for line in notes:
         print(line)
     landing = points[(jump_i + 1) % len(points)]
@@ -665,7 +1104,10 @@ def main():
                                        "note": "Luc's green mark; moved to the terrace edge (decided 2026-11-08)"}},
               "heights": "ground_z = terrain from the elevation data; track_z = driving height (route_profile.json); zone and surface per point",
               "axes": "x = east, y = north (Unity: x = east, z = north), metres from the world origin",
+              "wall_cuts": WALL_CUTS,
               "points": points}
+    if START_SECTION:                                   # V15: only with a section override over the lap seam
+        result = {**{k: v for k, v in result.items() if k != "points"}, "start_section": START_SECTION, "points": points}
     json.dump(result, open(os.path.join(HERE, "route.json"), "w"), indent=1)
 
     # ---------- report ----------

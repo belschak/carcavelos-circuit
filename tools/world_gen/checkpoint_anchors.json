@@ -1,0 +1,77 @@
+{
+ "source": "Checkpoint positions of Noah's route as on role3/V9-world-look (d2cae87), Data/track.json; Unity axes (x east, z north). The export puts each checkpoint on the route point nearest to its anchor instead of respreading them, so a change of the line elsewhere does not move them (Noah's condition for the V14 race-line changes, 2026-11-11). Update these when Noah moves checkpoints (e.g. after #77).",
+ "checkpoints": [
+  {
+   "n": 0,
+   "x": -16.26,
+   "z": 133.0,
+   "v9_index": 0
+  },
+  {
+   "n": 1,
+   "x": 47.46,
+   "z": 68.13,
+   "v9_index": 56
+  },
+  {
+   "n": 2,
+   "x": -61.64,
+   "z": 47.74,
+   "v9_index": 112
+  },
+  {
+   "n": 3,
+   "x": -101.79,
+   "z": -39.9,
+   "v9_index": 168
+  },
+  {
+   "n": 4,
+   "x": -208.15,
+   "z": -29.26,
+   "v9_index": 224
+  },
+  {
+   "n": 5,
+   "x": -203.21,
+   "z": -72.97,
+   "v9_index": 280
+  },
+  {
+   "n": 6,
+   "x": -123.16,
+   "z": -150.58,
+   "v9_index": 336
+  },
+  {
+   "n": 7,
+   "x": -27.26,
+   "z": -123.06,
+   "v9_index": 392
+  },
+  {
+   "n": 8,
+   "x": 65.91,
+   "z": -68.55,
+   "v9_index": 448
+  },
+  {
+   "n": 9,
+   "x": 103.96,
+   "z": 1.52,
+   "v9_index": 504
+  },
+  {
+   "n": 10,
+   "x": 66.48,
+   "z": 103.6,
+   "v9_index": 560
+  },
+  {
+   "n": 11,
+   "x": 49.27,
+   "z": 188.47,
+   "v9_index": 616
+  }
+ ]
+}

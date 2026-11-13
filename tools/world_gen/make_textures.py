@@ -34,7 +34,7 @@ TAU = 2.0 * np.pi
 
 # docs/art-style.md palette, env_common.PALETTE additions, and the mural's bright extras (sRGB)
 HEX = {
-    "kart_white": "#EAEAEC", "gloss_black": "#1D1D1F", "asphalt": "#55585E", "sand": "#E3C48D",
+    "kart_white": "#EAEAEC", "gloss_black": "#1D1D1F", "asphalt": "#686764", "sand": "#E3C48D",
     "atlantic_blue": "#2D8CD6", "boost_orange": "#FF8A1F",
     "calcada": "#E6E1D6", "concrete_sand": "#D9C9A8", "concrete_light": "#C9C5BC",
     "terracotta": "#C8664A", "lawn": "#8FB37A", "glass": "#2E3A46", "wet_sand": "#C9A877",
@@ -478,22 +478,108 @@ def make_grass(S=512, seed=77):
 # ----------------------------------------------------------------------------------------------
 # 8. White render facade with very faint panel joints, 3 m x 3 m (512 px)
 # ----------------------------------------------------------------------------------------------
-def make_facade(S=512, seed=88):
+def make_facade(S=1024, seed=88):
+    """V16h: white render with real detail, 3 m x 3 m at 1024 px (3 mm per pixel): fine sand grain and float marks,
+    3.0 x 1.5 m panel joints, very subtle rain streaks that start under each horizontal joint and fade downwards,
+    and a matching normal map (grain, joints). Also the neutral texture that env_materials.TINTED multiplies by the
+    colour of the other rendered walls (cream, ochre, pink, umber)."""
     rng = np.random.default_rng(seed)
     X, Y = grid(S, S)
-    v = (0.010 * noise((S, S), 40, rng) + 0.006 * noise((S, S), 6, rng) + 0.009 * noise((S, S), 1.0, rng)
-         + 0.005 * noise((S, S), 2.2, rng))
+    k = S / 512.0
+    # V18l (Luc, 12 Nov: the walls read like a blank canvas): about three times the detail of V16h, so the render
+    # reads as a real wall in the hard summer sun: sand grain, trowel marks, cloudy patches of the render
+    grain = 0.026 * noise((S, S), 0.8, rng) + 0.016 * noise((S, S), 2.2, rng)          # sand in the render
+    marks = 0.018 * warped(noise((S, S), 5.0 * k, rng, 18.0 * k), rng, 14.0 * k, 40.0 * k)   # float marks
+    v = 0.034 * noise((S, S), 40 * k, rng) + 0.016 * noise((S, S), 6 * k, rng) + grain + marks
     alb = rgb("kart_white") * (1.0 + v)[..., None]
-    alb += 0.004 * noise((S, S), 70, rng)[..., None] * np.array([1.0, 0.3, -0.8])
+    alb += 0.004 * noise((S, S), 70 * k, rng)[..., None] * np.array([1.0, 0.3, -0.8])
     # joints: vertical every 3 m (the tile edge), horizontal every 1.5 m -> 3.0 x 1.5 m panels
     d = np.minimum(np.minimum(X, S - X), np.minimum(np.abs(Y - S / 2), np.minimum(Y, S - Y)))
-    line = smoothstep(1.6, 0.4, d)
-    alb = alb * (1.0 - 0.065 * line - 0.012 * (1.0 - smoothstep(1.0, 5.0, d)))[..., None]
-    # a whisper of grime below each horizontal joint
-    streak = (1.0 - smoothstep(0.0, 40.0, np.mod(Y, S / 2))) * (0.5 + 0.5 * noise((S, S), 3.0, rng, 25.0))
-    alb = alb * (1.0 - 0.010 * np.clip(streak, 0, 1))[..., None]
+    line = smoothstep(1.6 * k, 0.4 * k, d)
+    alb = alb * (1.0 - 0.17 * line - 0.035 * (1.0 - smoothstep(1.0 * k, 6.0 * k, d)))[..., None]
+    # rain streaks: thin runs under each horizontal joint (image y grows downwards), strongest in the first 30 cm,
+    # gone after about 1.1 m; a few of them, not a curtain
+    below = np.mod(Y, S / 2) / (S / 2)
+    runs = np.clip(noise((S, S), 2.2 * k, rng, 110.0 * k) - 0.55, 0.0, None) * 0.9
+    streak = np.clip(runs, 0.0, 1.0) * (1.0 - smoothstep(0.0, 0.75, below)) * (0.6 + 0.4 * smoothstep(0.0, 0.03, below))
+    grime = (1.0 - smoothstep(0.0, 0.06, below)) * (0.5 + 0.5 * noise((S, S), 3.0 * k, rng, 25.0 * k))
+    alb = alb * (1.0 - np.clip(0.10 * streak + 0.035 * np.clip(grime, 0, 1), 0.0, 0.16)[..., None] * np.array([1.0, 0.96, 0.88]))
     alb = match_mean(alb, "kart_white", 0.7)
     save("facade_white_albedo.png", alb)
+    height = grain * 7.0 + marks * 9.0 - 1.4 * line
+    save("facade_white_normal.png", normal_map(height, 2.6), dither=False)
+    _tint_gain("facade_white_albedo.png", alb)
+
+
+def _tint_gain(name, alb):
+    """textures/tint_gain.json: 1 / the texture's mean (linear light), so a colour multiplied by the texture
+    (env_materials.TINTED, export_unity_bundle.py) keeps its brightness."""
+    import json
+    path = os.path.join(TEX_DIR, "tint_gain.json")
+    gains = json.load(open(path)) if os.path.exists(path) else {}
+    gains[name] = round(float(1.0 / (np.clip(alb, 0.0, 1.0) ** 2.2).mean()), 4)
+    json.dump(gains, open(path, "w"), indent=1, sort_keys=True)
+
+
+def make_concrete_panel(S=1024, seed=2323):
+    """V16h: fair-faced concrete, 2.4 m x 2.4 m at 1024 px: formwork panels 2.4 x 1.2 m (joint on the tile edge and
+    at mid height), form-tie holes (two rows per panel, 60 cm apart) with a faint run under each, pour clouds, pores.
+    Near-neutral light grey: env_materials.TINTED multiplies it by the material's own colour. With a normal map."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(S, S)
+    m = S / 2.4                                              # pixels per metre
+    clouds = 0.030 * noise((S, S), 60, rng) + 0.016 * noise((S, S), 16, rng) + 0.010 * noise((S, S), 150, rng, 7)   # pour bands
+    fine = 0.008 * noise((S, S), 1.0, rng)
+    alb = rgb("#CFCDC8") * (1.0 + clouds + fine)[..., None]
+    alb += 0.004 * noise((S, S), 70, rng)[..., None] * np.array([1.0, 0.3, -0.8])
+    pores = specks(S, 24, rng, 0.40, 0.8, 2.0, 0.08, 0.17, 1.0)
+    alb = alb * (1.0 + pores)[..., None]
+    d = np.minimum(np.minimum(X, S - X), np.minimum(np.abs(Y - S / 2), np.minimum(Y, S - Y)))
+    line = smoothstep(2.4, 0.9, d)
+    alb = alb * (1.0 - 0.22 * line - 0.04 * (1.0 - smoothstep(1.0, 10.0, d)))[..., None]
+    hole = np.zeros((S, S))
+    run = np.zeros((S, S))
+    for panel in range(2):
+        for row in (0.30, 0.90):
+            cy = (panel * 1.2 + row) * m
+            for cx in (0.3 * m, 0.9 * m, 1.5 * m, 2.1 * m):
+                r = np.hypot(X - cx, Y - cy)
+                hole = np.maximum(hole, smoothstep(0.016 * m, 0.010 * m, r))
+                run = np.maximum(run, np.exp(-((X - cx) / (0.008 * m)) ** 2) * smoothstep(0.0, 0.02 * m, Y - cy)
+                                 * (1.0 - smoothstep(0.0, 0.32 * m, Y - cy)))
+    rim = np.zeros((S, S)) + hole
+    alb = alb * (1.0 - 0.40 * hole - 0.030 * run)[..., None]
+    save("concrete_panel_albedo.png", alb)
+    save("concrete_panel_normal.png", normal_map(fine * 10.0 - 1.1 * line - 1.6 * rim + 5.0 * pores, 2.0), dither=False)
+    _tint_gain("concrete_panel_albedo.png", alb)
+
+
+def make_far_facade(S=512, seed=2424):
+    """V16h: a generic house front for the buildings beyond the map edge (no lettering, nothing from a real building):
+    12 m wide x 9 m high (4 bays, 3 storeys) of pale render with window openings, sills, a floor line per storey and a
+    darker plinth share. Near white, so env_materials.TINTED can multiply it by white, cream and ochre. The corner at
+    (0, 0) is plain wall: WorldLit.shader reads that texel for roofs (world-space UVs)."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(S, S)
+    u, v = X / S * 12.0, (S - Y) / S * 9.0                   # metres across, metres up
+    alb = rgb("#EDEAE4") * (1.0 + 0.012 * noise((S, S), 30, rng) + 0.006 * noise((S, S), 1.5, rng))[..., None]
+    bu, sv = np.mod(u, 3.0), np.mod(v, 3.0)                  # inside one bay, one storey
+    win = (np.abs(bu - 1.5) < 0.62) & (sv > 1.0) & (sv < 2.45)
+    edge = np.minimum(np.minimum(np.abs(bu - 1.5 + 0.62), np.abs(bu - 1.5 - 0.62)), np.minimum(np.abs(sv - 1.0), np.abs(sv - 2.45)))
+    pane = np.floor(u / 3.0).astype(int) * 3 + np.floor(v / 3.0).astype(int)
+    tone = np.array([0.0, 0.5, 0.25, 0.8, 0.1, 0.6, 0.35, 0.9, 0.2, 0.7, 0.45, 0.15])[pane % 12]
+    glass = lerp(rgb("#4E6478"), rgb("#93AEC4"), (tone * (0.5 + 0.5 * (sv - 1.0) / 1.45))[..., None])
+    alb = np.where(win[..., None], glass, alb)
+    alb = np.where((win & (edge < 0.06))[..., None], rgb("#F4F2EE"), alb)                      # frame
+    alb = np.where((win & (np.abs(bu - 1.5) < 0.03))[..., None], rgb("#F4F2EE"), alb)          # mullion
+    sill = (np.abs(bu - 1.5) < 0.70) & (sv > 0.90) & (sv <= 1.0)
+    alb = np.where(sill[..., None], rgb("#D9D5CC"), alb)
+    shade = (np.abs(bu - 1.5) < 0.62) & (sv >= 2.45) & (sv < 2.52)                             # lintel shadow
+    alb = alb * np.where(shade, 0.86, 1.0)[..., None]
+    alb = alb * (1.0 - 0.05 * smoothstep(0.05, 0.0, np.minimum(sv, 3.0 - sv)))[..., None]      # floor line
+    save("far_facade_albedo.png", alb)
+    wall = np.where(win, np.nan, 1.0)[..., None] * alb
+    _tint_gain("far_facade_albedo.png", wall[~np.isnan(wall[..., 0])])
 
 
 # ----------------------------------------------------------------------------------------------
@@ -533,6 +619,10 @@ def make_window_band(W=1024, H=256, seed=99):
     alb = lerp(alb, metal + 0.05 * smoothstep(frame - 2, frame, np.minimum(Y, H - Y))[..., None],
                frame_m[..., None])
     save("window_band_albedo.png", alb)
+    # V16h: the frame and the mullions stand proud of the glass and are matt; the glass is a mirror for the sky
+    metal_mask = np.maximum(mull, frame_m)
+    save("window_band_normal.png", normal_map(blur(metal_mask, 0.8) * 4.0, 1.6), dither=False)
+    save("window_band_rough.png", lerp(0.06, 0.55, metal_mask))
 
 
 # ----------------------------------------------------------------------------------------------
@@ -547,6 +637,76 @@ def make_kerb(W=256, H=64, seed=1010):
     alb = alb * (1.0 - 0.30 * smoothstep(1.2, 0.3, dj) - 0.04 * smoothstep(5, 1, dj))[..., None]
     alb = alb * (1.0 - 0.06 * smoothstep(3.0, 0.0, np.minimum(Y, H - Y)))[..., None]
     save("kerb_stripes_albedo.png", alb, dither=False)
+
+
+# ----------------------------------------------------------------------------------------------
+# 10b. Beachfront objects (V10b, 2026-11-10): timber deck, granite promenade kerb, straw parasol
+# ----------------------------------------------------------------------------------------------
+def make_timber_deck(S=512, seed=1616):
+    """Weathered timber decking, 2 m x 2 m (512 px), tiles both ways: 14 boards of 14.3 cm running along x
+    (u), dark gaps between them, staggered butt joints, a grey-brown tone per board and fine grain streaks.
+    For the restaurant terraces on the sand (Capricciosa, A Pastorinha) and the pergola slats."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(S, S)
+    boards = 14
+    bh = S / boards
+    row = np.floor(Y / bh).astype(int) % boards
+    tone = rng.uniform(-0.10, 0.08, boards)
+    hue = rng.uniform(-0.03, 0.03, boards)
+    base = lerp(rgb("#8F7154"), rgb("#B39373"), 0.5)
+    alb = base * (1.0 + tone[row])[..., None] + (hue[row])[..., None] * np.array([1.0, 0.2, -0.8])
+    grain = noise((S, S), 22.0, rng, 0.9) * 0.05 + noise((S, S), 5.0, rng, 0.5) * 0.035
+    alb = alb * (1.0 + grain)[..., None]
+    alb = lerp(alb, rgb("#A8A39A"), (0.10 + 0.08 * noise((S, S), 60.0, rng).clip(0, None))[..., None])   # silvering
+    gap = np.minimum(np.mod(Y, bh), bh - np.mod(Y, bh))
+    alb = alb * (1.0 - 0.55 * smoothstep(2.2, 0.6, gap))[..., None]
+    for b in range(boards):                                      # two butt joints per board, wrap-aware
+        for x0 in rng.uniform(0, S, 2):
+            d = np.abs(wrap(X - x0, S))
+            m = (row == b) & (d < 1.4)
+            alb[m] = alb[m] * 0.55
+    save("timber_deck_albedo.png", match_mean(alb, "#A2825F", 0.8))
+
+
+def make_granite_kerb(W=512, H=128, seed=1717):
+    """Promenade kerb of dressed stone blocks, 4 m x 1 m (512 x 128), tiles along x: blocks of 0.8-1.4 m with dark
+    joints, mostly speckled grey granite with the odd lighter limestone block (photos K03-K07). v 0-0.35 is the
+    top of the kerb, v 0.35-1 the face that drops to the sand (env_beachfront maps it like that)."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(H, W)
+    lengths = []
+    while sum(lengths) < W - 1:
+        lengths.append(rng.uniform(0.8, 1.4) * W / 4)
+    lengths = np.array(lengths) * (W / sum(lengths))
+    edges = np.concatenate([[0.0], np.cumsum(lengths)])
+    block = np.clip(np.searchsorted(edges, X, side="right") - 1, 0, len(lengths) - 1)
+    pal = [rgb("#8B8F92"), rgb("#7E8386"), rgb("#969794"), rgb("#B9B2A3")]
+    pick = rng.choice(len(pal), len(lengths), p=[0.34, 0.3, 0.22, 0.14])
+    cols = np.array([pal[k] * rng.uniform(0.95, 1.05) for k in pick])
+    alb = cols[block]
+    speck = noise((H, W), 0.7, rng) * 0.07 + noise((H, W), 2.0, rng) * 0.03 + noise((H, W), 14.0, rng) * 0.03
+    alb = alb * (1.0 + speck)[..., None]
+    joint = np.min(np.abs(X[..., None] - edges[None, None, :]), axis=-1)
+    joint = np.minimum(joint, np.abs(W - X))
+    alb = alb * (1.0 - 0.45 * smoothstep(2.0, 0.5, joint))[..., None]
+    v = Y / H
+    alb = alb * (1.0 + 0.10 * smoothstep(0.30, 0.35, v) * smoothstep(0.42, 0.36, v))[..., None]   # worn arris
+    alb = alb * (1.0 - 0.10 * smoothstep(0.55, 1.0, v))[..., None]                                 # damp foot
+    save("granite_kerb_albedo.png", alb)
+
+
+def make_thatch(W=256, H=256, seed=1818):
+    """Straw of a beach parasol (the dried-grass parasols on Carcavelos beach), tiles along x (u = around the
+    parasol), v = 0 at the tip to 1 at the rim: thin straw strands along v, lighter on top, darker and ragged
+    towards the rim."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(H, W)
+    strands = noise((H, W), 0.6, rng, 18.0) * 0.10 + noise((H, W), 2.5, rng, 40.0) * 0.07
+    alb = lerp(rgb("#C8A96B"), rgb("#9C7E48"), smoothstep(0.1, 1.0, Y / H)[..., None])
+    alb = alb * (1.0 + strands)[..., None]
+    bands = 0.05 * np.sin(Y / H * TAU * 3.0 + 0.4 * noise((H, W), 20.0, rng))     # tied layers
+    alb = alb * (1.0 - bands)[..., None]
+    save("thatch_albedo.png", match_mean(alb, "#B39461", 0.6))
 
 
 # ----------------------------------------------------------------------------------------------
@@ -1093,13 +1253,86 @@ def make_grass_tuft(W=256, H=128, seed=1515):
     img.resize((W, H), Image.LANCZOS).save(os.path.join(TEX_DIR, "grass_tuft_cutout_albedo.png"))
 
 
+# ----------------------------------------------------------------------------------------------
+# V10c. Solar panel array tile (3 m x 3 m, 512 px) and smooth sandy-ochre render (cutting walls, 2 x 2 m)
+# ----------------------------------------------------------------------------------------------
+def make_solar_panel(S=512, seed=1301):
+    """Dark blue-black photovoltaic cells in 6 x 6 panels per tile, silver frame lines, faint sky gradient."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(S, S)
+    cell = S / 6.0
+    fx = np.abs((X % cell) - cell / 2) / (cell / 2)            # 0 centre .. 1 edge of one panel
+    fy = np.abs((Y % cell) - cell / 2) / (cell / 2)
+    edge = np.maximum(fx, fy)
+    cells_x = np.abs(((X % cell) / cell * 6 % 1.0) - 0.5) * 2    # 6 cell columns per panel
+    base = lerp(rgb("#1B2436"), rgb("#2F4260"), np.clip(0.5 + 0.12 * noise((S, S), 40, rng), 0, 1)[..., None])
+    base = base * (1.0 - 0.10 * smoothstep(0.78, 1.0, cells_x))[..., None]      # busbar-like cell lines
+    frame = smoothstep(0.93, 0.98, edge)
+    out = lerp(base, rgb("#A9B0B8"), frame[..., None])
+    save("solar_panel_albedo.png", out)
+
+
+def make_render_ochre(S=512, seed=1302):
+    """Smooth warm rendered concrete wall (S01/S02/S08): sandy ochre, soft stains, a faint panel joint."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(S, S)
+    n = noise((S, S), 60, rng) * 0.025 + noise((S, S), 6, rng) * 0.008
+    base = rgb("#DAC399")
+    out = base[None, None, :] * (1.0 + n)[..., None]
+    joint = np.exp(-((np.abs((X % (S / 2)) - 1)) / 1.2) ** 2) * 0.05
+    out = out * (1.0 - joint)[..., None]
+    save("render_ochre_albedo.png", out)
+
+
 BUILDERS = {
     "calcada": make_calcada, "concrete_sand": make_concrete_sand, "concrete_polished": make_concrete_polished,
     "asphalt": make_asphalt, "terracotta": make_terracotta, "sand": make_sand, "grass": make_grass,
     "facade": make_facade, "window": make_window_band, "kerb": make_kerb, "mural": make_mural,
     "palm_frond": make_palm_frond, "sea_waves": make_sea_waves,
     "ground_detail": make_ground_detail, "grass_tuft": make_grass_tuft,
+    "solar_panel": make_solar_panel, "render_ochre": make_render_ochre,
 }
+BUILDERS.update({"timber_deck": make_timber_deck, "granite_kerb": make_granite_kerb, "thatch": make_thatch})   # V10b
+BUILDERS.update({"concrete_panel": make_concrete_panel, "far_facade": make_far_facade})                       # V16h
+
+
+# ----------------------------------------------------------------------------------------------
+# V10c2 / V16f. Bar railing as a cutout: one 2 m module of the campus railings as the photosphere survey V15 shows
+# them (section 1, point 1): 1.1 m high, flat top rail, bottom rail, close VERTICAL flat bars 11 cm apart, a post at
+# each end (so every 2 m), light galvanised / satin steel (#9a978c, reads silver-grey); a second file in bronze-tan
+# (#a09075) for the CTT terrace. 512 x 256 RGBA, alpha = steel / air. One module per sheet of about 2 m
+# (env_campus.Detail.railing, env_props.railing); a bar stands exactly at u = 0.5, so solid parts of a mesh (posts,
+# rails) can share the material with every corner at UV (0.5, 0.5).
+# ----------------------------------------------------------------------------------------------
+RAILING_M = 2.0                                          # metres of railing on one texture module
+RAILING_BAR = 2.0 / 18                                   # bar spacing: 11.1 cm
+RAILING_TONES = {"railing_cutout_albedo.png": ("#9A978C", "#84827A", "#A8A59A"),        # bars, shade, top rail
+                 "railing_tan_cutout_albedo.png": ("#A09075", "#8A7C64", "#AD9D82")}
+
+
+def make_railing(W=512, H=256, seed=1616):
+    k = 4
+    for fname, tones in RAILING_TONES.items():
+        steel, shade, top = (np.array(rgb(c)) * 255 for c in tones)
+        img = Image.new("RGBA", (W * k, H * k), tuple(int(v) for v in steel) + (0,))
+        draw = ImageDraw.Draw(img)
+        px_m = W * k / RAILING_M                         # pixels per metre (module 2 m wide, 1.1 m tall)
+        py_m = H * k / 1.1
+
+        def bar(x0, x1, y0, y1, col):                    # metres, y up from the foot
+            draw.rectangle([x0 * px_m, H * k - y1 * py_m, x1 * px_m - 1, H * k - y0 * py_m - 1],
+                           fill=tuple(int(v) for v in col) + (255,))
+        for i in range(1, 18):                           # 17 bars between the posts, bar 9 at u = 0.5
+            x = i * RAILING_BAR
+            bar(x - 0.011, x + 0.011, 0.10, 1.04, steel if i % 2 else lerp(steel, shade, 0.3))
+        bar(0.0, RAILING_M, 0.07, 0.115, shade)          # bottom rail
+        bar(0.0, RAILING_M, 1.04, 1.10, top)             # flat top rail
+        bar(0.0, 0.03, 0.0, 1.10, steel)                 # posts (half a post at each end: neighbours complete it)
+        bar(RAILING_M - 0.03, RAILING_M, 0.0, 1.10, steel)
+        img.resize((W, H), Image.LANCZOS).save(os.path.join(TEX_DIR, fname))
+
+
+BUILDERS["railing"] = make_railing
 
 
 def main(argv):

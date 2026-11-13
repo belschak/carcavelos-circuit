@@ -127,9 +127,189 @@
     }
   ],
   "kicker": {
-    "type": "wedge",
-    "slope_deg": 35,
-    "why": "concrete wedge at the west end of the roof terrace (video IMG_7723 0-12 s): smooth slab down to the lawn, no step"
+    "type": "ramp",
+    "length_m": 6.0,
+    "rise_m": 1.0,
+    "power": 2.0,
+    "why": "V10i (Luc, 2026-11-11): a real jump at the west end of the roof terrace. A kicker ramp rises 0.65 m over the last 6 m of the deck (a parabola: level where it starts, 12 degrees at the lip), then a free drop to the lawn (before: a 35 degree concrete wedge led down from the edge, karts just fell). Tuned with the headless bot race: power 1.5 had a kink at its start that made some karts hop on the ramp and jump short. V18i (Luc after his drive, 2026-11-12: \"a bit higher\"): rise 0.65 -> 1.0 m, same 6 m and the same parabola (level at its start), 18.4 degrees at the lip (was 12.2)."
   },
-  "surface_overrides": true
+  "surface_overrides": true,
+  "section_overrides": [
+    {
+      "name": "Capricciosa hairpin wide enough to drift (V14c, proposal for Noah)",
+      "why": "Luc's test drive, 2026-11-11: the hairpin into the restaurants' car park cannot be taken in a drift, it is too tight (6.7 m at the apex; at 18 m/s and 110 degrees per second the kart needs 9.4 m without a drift). The turn now opens into the forecourt's free concrete: curvature rises evenly to a 12.5 m radius (the middle of the kart's drift steering range at 18 m/s), holds, and a gentle counter-curve brings the line back onto the car-park aisle. Only the points strictly after from_at and before the point where the old aisle line is rejoined are replaced; delete this block to get the old line back. It stands first in the list because it changes the number of points before the two later sections.",
+      "type": "curve",
+      "turn": "left",
+      "from_at": [
+        -238.19,
+        -19.06
+      ],
+      "straight_at": [
+        -222.2,
+        -55.2
+      ],
+      "radius_m": 12.5,
+      "ease_in_m": 9.0,
+      "ease_between_m": 14.0,
+      "counter_radius_m": 25.0,
+      "ease_out_m": 9.0
+    },
+    {
+      "name": "tunnel exit straight (V10g, proposal for Noah)",
+      "why": "The line swung east after the north portal and came back (a right-left). The real walkway (orthophoto, team photos S01, S02, S08) leaves the portal and runs straight up to the plaza in front of the terracotta steps. Only the points strictly between from_at and to_at are replaced; delete this block to get the old line back. to_at is the first terracotta point (foot of the stairs): the stairs and the line over them are untouched.",
+      "from_at": [
+        70.59,
+        -64.84
+      ],
+      "to_at": [
+        111.07,
+        -10.54
+      ],
+      "heading_deg": 50.5,
+      "radius_m": 17.0,
+      "ease_passes": 60,
+      "plateau_z": 11.2,
+      "ramp_m": 54.0,
+      "ease_in_m": 6.0,
+      "ease_out_m": 14.0,
+      "surface": "concrete_sand",
+      "ramp_zone": "ramp",
+      "plateau_zone": "lower plaza",
+      "wall_cut": true
+    },
+    {
+      "name": "upper plaza through the library's bridge passage (V10i, proposal for Noah)",
+      "why": "The old line ran over the real sunken courtyard beside the Gallery (survey V10h 4.3) and the game's library stood on the real passage. New line (survey line B, biased to Luc's drawing 9_luc_red_line): from the top of the terracotta stairs along the library's west facade, under the library's north bridge, through the neck between the courtyard fence and the stair slot, back onto the old line in front of the atrium. Positions change only strictly between from_at and to_at; heights are re-set from heights_from_at (level lower plaza, the stairs' profile from plaza_plan.py, level 14.5 m). Delete this block to get the old line back.",
+      "heights_from_at": [
+        113.81,
+        -20.05
+      ],
+      "from_at": [
+        100.33,
+        8.65
+      ],
+      "to_at": [
+        66.31,
+        111.6
+      ],
+      "via": [
+        [
+          98.8,
+          14.5
+        ],
+        [
+          98.1,
+          20.0
+        ],
+        [
+          97.65,
+          26.0
+        ],
+        [
+          97.15,
+          32.0
+        ],
+        [
+          96.05,
+          38.0
+        ],
+        [
+          94.45,
+          44.0
+        ],
+        [
+          92.55,
+          50.0
+        ],
+        [
+          90.4,
+          55.5
+        ],
+        [
+          88.45,
+          60.3
+        ],
+        [
+          86.8,
+          63.9
+        ],
+        [
+          86.05,
+          71.86
+        ],
+        [
+          85.3,
+          79.95
+        ],
+        [
+          84.62,
+          83.46
+        ],
+        [
+          83.27,
+          86.74
+        ],
+        [
+          80.87,
+          90.18
+        ],
+        [
+          77.95,
+          93.48
+        ],
+        [
+          75.04,
+          96.77
+        ],
+        [
+          72.12,
+          100.07
+        ],
+        [
+          69.26,
+          103.31
+        ],
+        [
+          67.93,
+          105.14
+        ],
+        [
+          66.98,
+          107.17
+        ],
+        [
+          66.43,
+          109.37
+        ]
+      ],
+      "ease_passes": 60,
+      "surface": "plaza_ochre"
+    },
+    {
+      "name": "start straight and wider loop at the entrance plaza (V15, proposal for Noah)",
+      "why": "Luc's request 2026-11-11: a longer start straight like a Formula 1 start, and the loop before the start swung out west across the entrance plaza to just before the underground car-park ramp. Before, the run-in turned back in a tight loop (radius 9 m) right west of the entrance pool and only about 30 m of gently winding line led into the main building. Now the run-in goes straight on from from_at (same direction as the old line there, heading_deg), turns back in one arc of about radius_m and runs as one straight line into to_at, the last old point before the west entrance (the direction is the old line's there, so the line from the entrance on is untouched). The arc is as far west as the car-park ramp allows (walls and handrails at least 7 m from the centreline). The section runs over the lap seam: start_at (= Noah's start/finish, checkpoint 0) names the place of point 0; the new point nearest to it becomes point 0, 12 steps before to_at as before, so every other point keeps its index. Level at 14.5 m like the plaza before. Only the points strictly between from_at and to_at are replaced; delete this block to get the old line back.",
+      "from_at": [
+        -21.0,
+        155.79
+      ],
+      "to_at": [
+        7.45,
+        134.39
+      ],
+      "start_at": [
+        -16.26,
+        133.0
+      ],
+      "heading_deg": 255.48,
+      "radius_m": 10.45,
+      "ease_passes": 150,
+      "plateau_z": 14.5,
+      "ramp_m": 4.0,
+      "ease_in_m": 1.0,
+      "ease_out_m": 1.0,
+      "surface": "concrete_sand",
+      "ramp_zone": "upper plaza",
+      "plateau_zone": "upper plaza"
+    }
+  ]
 }
