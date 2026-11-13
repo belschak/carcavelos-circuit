@@ -35,7 +35,7 @@ sys.path.insert(0, HERE)
 import env_common as E  # noqa: E402
 
 SKIP_COLLECTIONS = {"Track_RouteGuide", "Hero", "Render_Lights", "Tmp_Cutters"}
-ROAD = {"Track_Road", "Track_JumpKicker"}
+ROAD = {"Track_Road", "Track_JumpKickerDrive_ColliderOnly", "Track_PlazaDrive_ColliderOnly", "Track_PlazaLow"}
 ALLOWED_ON_ROAD = {"Track_Kerbs", "Track_EdgeLines"}   # painted on top of the road on purpose
 EXPECTED_TIGHT = ("Tunnel_Shell", "Interior_Passages", "Tunnel_")
 TERRAIN = ("World_Ground", "World_GroundCorridor")
@@ -46,7 +46,7 @@ def build_bvh():
     deps = bpy.context.evaluated_depsgraph_get()
     verts, polys, owner, names = [], [], [], []
     for obj in bpy.data.objects:
-        if obj.type != "MESH" or obj.hide_render:
+        if obj.type != "MESH" or (obj.hide_render and not obj.get("collider_only")):   # V10i: colliders count
             continue
         if any(c.name in SKIP_COLLECTIONS for c in obj.users_collection):
             continue
@@ -145,7 +145,7 @@ def main():
                     raw.append(("covered", i, 0, n1, round(z1 - z, 2), f"offset={o}"))
                 elif abs(z1 - z) > 0.12:
                     raw.append(("height", i, 0, n1, round(z1 - z, 2), f"offset={o}"))
-                if len(hs) > 1 and hs[0][0] - hs[1][0] < 0.03:
+                if len(hs) > 1 and hs[0][0] - hs[1][0] < 0.03 and "ColliderOnly" not in hs[0][1] + hs[1][1]:   # not drawn
                     raw.append(("coplanar", i, 0, f"{hs[0][1]} / {hs[1][1]}", round(hs[0][0] - hs[1][0], 3), f"offset={o}"))
             # edges
             for side in (1, -1):

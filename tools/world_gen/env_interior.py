@@ -112,7 +112,10 @@ def dress(runs, passage_width, widths=None):
         return
     widths = widths or [[(passage_width / 2, passage_width / 2)] * len(run) for run in runs]
     # only the part inside the building, and only real halls (the short corner clips stay bare)
-    pairs = [[(p, w) for p, w in zip(run, ws) if p["building"]] for run, ws in zip(runs, widths)]
+    # V10c2: and only inside the walls of the building itself (the passage reaches 10 m past each wall: its
+    # columns and glazing stood on the CTT roof terrace and under the roof overhang)
+    import env_campus
+    pairs = [[(p, w) for p, w in zip(run, ws) if p["building"] and env_campus.in_hall(p)] for run, ws in zip(runs, widths)]
     pairs = [pr for pr in pairs if len(pr) >= 10]
     if not pairs:
         return

@@ -2,7 +2,129 @@
   "note": "Hand corrections of OpenStreetMap building footprints, applied by world_data.py. 'polygon' replaces the footprint (world metres: x east, y north, counter-clockwise). Always say why.",
   "w496301638": {
     "name": "CTT Student Hall",
-    "polygon": [[-0.1, 47.7], [43.2, 54.4], [37.3, 69.7], [-1.3, 63.55], [-1.3, 58.5], [-0.8, 55.1]],
+    "polygon": [
+      [
+        -0.1,
+        47.7
+      ],
+      [
+        43.2,
+        54.4
+      ],
+      [
+        37.3,
+        69.7
+      ],
+      [
+        -1.3,
+        63.55
+      ],
+      [
+        -1.3,
+        58.5
+      ],
+      [
+        -0.8,
+        55.1
+      ]
+    ],
     "why": "OSM draws two thin arms west of the roof terrace. The walk video (IMG_7723, 0-25 s) shows they are the ramps down to the lawn, not storeys. Trimmed so the jump off the terrace edge lands on open ground instead of a 3.4 m slot between two walls (decided 2026-11-08). The ramps can come back as low props outside the landing zone."
+  },
+  "w496301632": {
+    "name": "Biblioteca Teresa e Alexandre Soares dos Santos",
+    "polygon": [
+      [
+        105.0,
+        34.0
+      ],
+      [
+        123.3,
+        40.6
+      ],
+      [
+        114.8,
+        68.3
+      ],
+      [
+        115.9,
+        68.2
+      ],
+      [
+        113.9,
+        84.1
+      ],
+      [
+        90.07,
+        80.5
+      ],
+      [
+        91.59,
+        64.25
+      ],
+      [
+        92.8,
+        64.8
+      ]
+    ],
+    "why": "V10i: OSM draws the roof outline, which includes the bridge at the north-west end. The ground floor is the south wing and the north block east of the passage (campus survey V10h 4.4, plaza_plan.LIB_GROUND): the race line runs through the passage under the bridge at plaza level. env_library.py builds the bridge above it. world_data.json was patched for this building only (same result as world_data.py gives for it).",
+    "route_base_polygon": [
+      [
+        85.69626297205801,
+        80.07517600031449
+      ],
+      [
+        86.7651850231129,
+        77.78699800027937
+      ],
+      [
+        78.69178188956948,
+        76.47157200061585
+      ],
+      [
+        78.90035204584277,
+        75.24457800041489
+      ],
+      [
+        81.29890884329417,
+        60.76383800005985
+      ],
+      [
+        88.22517611733458,
+        61.891346000669074
+      ],
+      [
+        92.55300686062253,
+        62.5988020002967
+      ],
+      [
+        104.60662381053763,
+        31.53706200017666
+      ],
+      [
+        123.48222295620211,
+        38.76637800061772
+      ],
+      [
+        112.94073963957702,
+        65.91500200056387
+      ],
+      [
+        115.9215547900609,
+        66.41243200009342
+      ],
+      [
+        113.32311825946282,
+        82.12016600064942
+      ],
+      [
+        107.08339441659152,
+        81.10319800054654
+      ],
+      [
+        104.51102915552758,
+        87.37081599995975
+      ]
+    ],
+    "route_base_why": "The OSM outline. route_from_sketch.py runs Noah's waypoint pipeline against it (the old line was pushed off this outline), so every point outside the V10i section stays where it was; the section override then uses the corrected ground-floor polygon."
   }
 }

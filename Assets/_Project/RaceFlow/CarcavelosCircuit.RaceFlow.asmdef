@@ -1,7 +1,7 @@
 {
     "name": "CarcavelosCircuit.RaceFlow",
     "rootNamespace": "CarcavelosCircuit.RaceFlow",
-    "references": ["CarcavelosCircuit.Shared", "CarcavelosCircuit.Track", "CarcavelosCircuit.Audio", "Unity.InputSystem", "Unity.Cinemachine"],
+    "references": ["CarcavelosCircuit.Shared", "CarcavelosCircuit.Track", "CarcavelosCircuit.Audio", "Unity.InputSystem", "Unity.Cinemachine", "Unity.RenderPipelines.Core.Runtime", "Unity.RenderPipelines.Universal.Runtime"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

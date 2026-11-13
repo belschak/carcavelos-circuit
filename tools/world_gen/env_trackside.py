@@ -6,6 +6,9 @@ from the chase camera. Two cheap aids, both in collection Track_Surface (TrackSu
                      surfaces (asphalt, tunnel floor, terracotta), graphite on the light ones (sand, light and
                      polished concrete, calcada). Left out in the tunnel (its footways mark the edge), across the
                      jump drop and on a side where a kerb already marks a tight corner (env_track.build_kerbs rule).
+                     V18g: only inside the hall (env_track.RACE_LINE_ZONES); everywhere else the road carries no race
+                     paint, only the real markings below. V18r: none on the roundabout (street_plan.RB_NO_LINES); there the mesh carries the roundabout's
+                     own markings where they lie on the race road (env_streets.road_paint), like the coast's paint.
   Track_CornerSigns  white boards with Boost Orange chevrons on the outside of the sharpest outdoor corners,
                      facing the approaching kart. Orange on white is the one allowed use of the signal colour in
                      the scenery (route arrows); the boards keep at least 1.2 m from the road edge.
@@ -19,11 +22,12 @@ from mathutils import Vector
 
 import env_common as E
 import env_track as T
+import street_plan
 
 LINE_W = 0.18               # m, painted line width
 LINE_INSET = 0.25           # m, from the road edge to the outer side of the line
 LINE_LIFT = 0.04            # m above the road surface (2 cm still flickered at a distance)
-DARK_SURFACES = {"asphalt", "tunnel_floor", "terracotta"}
+DARK_SURFACES = {"asphalt", "tunnel_floor", "terracotta", "street_setts"}
 
 SIGN_ZONES = {"lawn and paths", "coastal road", "promenade", "lower plaza", "upper plaza", "tunnel plaza"}
 SIGNS_MAX = 6
@@ -36,30 +40,25 @@ LOOK_BACK = 6               # route points (12 m): the board faces the kart this
 
 def kerb_sides(pts):
     """Per route point, the sides that already carry a kerb (same rule as env_track.build_kerbs)."""
-    out = []
-    for i, p in enumerate(pts):
-        k = T.curvature(pts, i)
-        radius = 1 / abs(k) if abs(k) > 1e-6 else 1e9
-        sides = set()
-        if p["zone"] in T.KERB_ZONES and radius < 35:
-            sides.add(1 if k > 0 else -1)
-            if radius < 20:
-                sides.add(-1 if k > 0 else 1)
-        out.append(sides)
-    return out
+    return [set(T.race_kerb_sides(pts, i)) for i in range(len(pts))]
 
 
 def build_lines(pts, fr, col):
     n = len(pts)
     kerbs = kerb_sides(pts)
     bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")           # V18g: only plaza_paint's faces use it (textured materials)
     for side in (1, -1):
         for i in range(n):
             a, b = pts[i], pts[(i + 1) % n]
-            if a["tunnel"] or b["tunnel"] or T.is_drop(a, b):
-                continue
+            if a["tunnel"] or b["tunnel"] or T.is_drop(a, b) or a["zone"] in T.PLAZA_ZONES or b["zone"] in T.PLAZA_ZONES:
+                continue                           # V10i: no painted lines on the stairs and the plaza
             if side in kerbs[i] and side in kerbs[(i + 1) % n]:
                 continue
+            if a["zone"] not in T.RACE_LINE_ZONES:
+                continue                           # V18g: race edge lines only inside the hall (the map comes first)
+            if street_plan.race_lines_off(i) and street_plan.race_lines_off((i + 1) % n):
+                continue                           # V18r: on the roundabout the road carries the real markings
             (_, na), (_, nb) = fr[i], fr[(i + 1) % n]
             za, zb = T.road_z(a) + LINE_LIFT, T.road_z(b) + LINE_LIFT
 
@@ -67,7 +66,12 @@ def build_lines(pts, fr, col):
                 return bm.verts.new((p["x"] + side * nrm[0] * o, p["y"] + side * nrm[1] * o, z))
             oa, ob = E.half_width(a) - LINE_INSET, E.half_width(b) - LINE_INSET
             face = bm.faces.new((at(a, na, oa, za), at(b, nb, ob, zb), at(b, nb, ob - LINE_W, zb), at(a, na, oa - LINE_W, za)))
-            face.material_index = 0 if a["surface"] in DARK_SURFACES else 1
+            face.material_index = 0 if T.visual_surface(a) in DARK_SURFACES else 1
+    import env_coast                       # V16e: flush paint of the coast section (slot drains, step nosings)
+    env_coast.road_paint(bm, pts, fr)
+    import env_streets                     # V18r: the roundabout's own markings where they lie on the race road
+    extra = env_streets.road_paint(bm, first_slot=2)
+    plaza = plaza_paint(bm, uv, first_slot=2 + len(extra))
     bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=0.005)
     bm.normal_update()
     for f in bm.faces:
@@ -78,7 +82,57 @@ def build_lines(pts, fr, col):
     bm.free()
     mesh.materials.append(E.material("edge_line_white", "#EDEDE8", roughness=0.6))
     mesh.materials.append(E.material("edge_line_graphite", "#4A4D52", roughness=0.7))
+    for name, hexcol in extra:
+        mesh.materials.append(E.material(name, hexcol, roughness=0.8))
+    for mat in plaza:
+        mesh.materials.append(mat)
     return E.new_object("Track_EdgeLines", mesh, col)
+
+
+def plaza_paint(bm, uv, first_slot):
+    """V18g: details of the real paving that the race road interrupts, continued across it as flush paint (like
+    env_streets.road_paint: draped 4 cm over Track_Road and its shoulders, no collider): the entrance plaza's
+    rust-brown drain channels and the dark sett ring of the drop-off forecourt. They use the materials and UVs of
+    the pieces beside the road (entrance_drain, the street palette), so nothing new is drawn. Returns the materials."""
+    import entrance_plan as EP
+    import env_entrance as EN
+    import env_north
+    from mathutils.bvhtree import BVHTree
+    road = bpy.data.objects.get("Track_Road")
+    tree = BVHTree.FromPolygons([road.matrix_world @ v.co for v in road.data.vertices],
+                                [tuple(q.vertices) for q in road.data.polygons], epsilon=0.0)
+    edge = street_plan.KEEP_OUT - 0.03               # the paving beside the road begins at KEEP_OUT
+
+    def strip(rows, slot, uvs):
+        """rows: [(inner point, outer point)] along a band; a piece is drawn where it lies on the road."""
+        made = 0
+        for (a0, a1), (b0, b1), (ua, ub) in zip(rows, rows[1:], zip(uvs, uvs[1:])):
+            cx, cy = (a0[0] + a1[0] + b0[0] + b1[0]) / 4, (a0[1] + a1[1] + b0[1] + b1[1]) / 4
+            if street_plan.route_distance(cx, cy) > edge:
+                continue
+            vs = []
+            for x, y in (a0, b0, b1, a1):
+                hit = tree.ray_cast(Vector((x, y, 200.0)), Vector((0.0, 0.0, -1.0)), 400.0)
+                z = hit[0].z if hit[0] is not None else E.nearest_route_point(x, y)["track_z"] - 0.02   # the shoulder's foot
+                vs.append(bm.verts.new((x, y, z + LINE_LIFT)))
+            f = bm.faces.new(vs)
+            f.material_index = slot
+            for loop, t in zip(f.loops, (ua[0], ub[0], ub[1], ua[1])):
+                loop[uv].uv = t
+            made += 1
+        return made
+    w, step, drains = EP.CHANNEL_W, 0.25, 0
+    for a, d, length in EN._channel_quads():        # the channels as env_entrance lays them (its sheet stops at the road)
+        n = (-d[1], d[0])
+        o = (a[0] - n[0] * w / 2, a[1] - n[1] * w / 2)
+        ts = [k * step for k in range(int(length / step) + 1)]
+        rows = [((o[0] + d[0] * t, o[1] + d[1] * t), (o[0] + d[0] * t + n[0] * w, o[1] + d[1] * t + n[1] * w)) for t in ts]
+        drains += strip(rows, first_slot, [((t / 0.5, 0.0), (t / 0.5, 1.0)) for t in ts])
+    rows, uvs, ring_mat = env_north.ring_paint_rows()      # V20d (package D): the thin basalt band, rows/UVs/material
+    ring = strip(rows, first_slot + 1, uvs)                 # from env_north (was a flat palette band of 0.25 m)
+    print(f"  trackside: real paving details across the race road (flush, in Track_EdgeLines): {drains} quads of the "
+          f"entrance plaza's drain channels, {ring} of the forecourt's basalt ring")
+    return [EN.materials()["drain"], ring_mat]
 
 
 def corners(pts):
@@ -155,9 +209,17 @@ def add_sign(bm, pts, fr, i, turn):
     return p["s"]
 
 
+SHORTCUT_SIGN_REACH = 6.0       # m: a board stands about this far outside its corner's route point
+
+
 def build_signs(pts, fr, col):
     bm = bmesh.new()
-    placed = [add_sign(bm, pts, fr, i, turn) for i, turn in corners(pts)]
+    import entrance_plan                # V18h: no board in the curve plaza's drift zone (entrance_plan.FAN_NO_SIGN)
+    import promenade_shortcut_plan as PS  # V19: no board where the promenade shortcut leaves or joins (it would stand in its lane)
+    lane = PS.centreline()
+    placed = [add_sign(bm, pts, fr, i, turn) for i, turn in corners(pts)
+              if not entrance_plan.FAN_NO_SIGN[0] <= i <= entrance_plan.FAN_NO_SIGN[1]
+              and PS.distance(pts[i]["x"], pts[i]["y"], lane) > PS.CLEAR + SHORTCUT_SIGN_REACH]
     mesh = bpy.data.meshes.new("Track_CornerSigns")
     bm.to_mesh(mesh)
     bm.free()

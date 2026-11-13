@@ -4,7 +4,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "CarcavelosCircuit.Driving"
+        "CarcavelosCircuit.Driving",
+        "CarcavelosCircuit.Shared"
     ],
     "includePlatforms": [
         "Editor"

@@ -15,11 +15,20 @@ import bmesh
 import bpy
 
 import env_common as E
+import env_beachfront           # V10b: beachfront restaurants, cove pavilion, promenade edge
+import env_campus               # V10c2: the Nova SBE buildings on and west of the spine, each as itself
+import env_library              # V10i: the library with its loggia and the bridge over the passage
 
 STOREY = 3.5
 WALL, GLASS, ROOF, STEEL, GLASS_ROOF = range(5)
 OTHER_WALLS = ["#EFE6D2", "#F3F0EA", "#E3C891", "#E9C9BE", "#DCD6CA"]
-SPECIAL = {"w665606788": "atrium", "w496301621": "wedge", "w496301627": "cantilever"}
+SPECIAL = {"w665606788": "atrium", "w496301621": "wedge", "w496301627": "cantilever", "w622493089": "residence"}
+# V10c: the glass roof and trusses cover only the Hovione Atrium (north block of the main building, north of this
+# local y); the long gallery spine south of it has a flat grey roof with solar arrays (ortho_campus.jpg, W08, A03).
+ATRIUM_ROOF_Y = 112.0
+# V10c: VivaGym has almost the same footprint as Horizon Hall (G) and sat inside / through its walls: not built
+REDUNDANT = {"w1502611968"}
+SOLAR = 5                  # extra material slot on the main building only
 
 
 def ascii_name(text):
@@ -152,6 +161,13 @@ def build_canopy(b, index):
 
 
 def build_one(b, index):
+    if env_beachfront.owns(b):
+        return env_beachfront.build_one(b, index)
+    if env_campus.owns(b):                              # V10c2
+        return env_campus.build_one(b, index)
+    import env_north                                    # V20d: the villas north of the forecourt's field
+    if env_north.owns_house(b):
+        return env_north.build_house(b, index)
     if b.get("osm_building") == "roof":
         return build_canopy(b, index)
     pts = b["points"]
@@ -183,7 +199,14 @@ def build_one(b, index):
         f = bm.faces.new((bottom[k], bottom[(k + 1) % n], tops[(k + 1) % n], tops[k]))
         f.material_index = WALL
     roof = bm.faces.new(tops)
-    roof.material_index = GLASS_ROOF if kind == "atrium" else ROOF
+    roof.material_index = ROOF
+    if kind == "atrium":                                # glass only north of ATRIUM_ROOF_Y, grey roof south of it
+        cut = bmesh.ops.bisect_plane(bm, geom=[roof] + list(roof.edges) + list(roof.verts), dist=0.001,
+                                     plane_co=(0, ATRIUM_ROOF_Y, 0), plane_no=(0, 1, 0))
+        bm.normal_update()
+        for f in bm.faces:
+            if f.normal.z > 0.9 and abs(f.calc_center_median().z - top_flat) < 0.01:
+                f.material_index = GLASS_ROOF if f.calc_center_median().y > ATRIUM_ROOF_Y else ROOF
     floor = bm.faces.new(bottom[::-1])
     floor.material_index = WALL
 
@@ -207,7 +230,9 @@ def build_one(b, index):
         off = 0.05
         for s in range(storeys):
             z0 = ground + s * STOREY
-            if campus:
+            if kind == "residence":
+                add_residence_storey(bm, (ax, ay), (bx, by), seg, (ox, oy), z0, s, top, blocked)
+            elif campus:
                 bands = [(z0 + 0.25, z0 + 3.0)] if s == 0 else [(z0 + 0.95, z0 + 2.55)]
                 for lo, hi in bands:
                     if hi > top - 0.3:
@@ -241,6 +266,7 @@ def build_one(b, index):
 
     if kind == "atrium":
         add_atrium_ribs(bm, pts, (cx, cy), axis, top_flat)
+        add_roof_panels(bm, pts, (cx, cy), axis, top_flat)
     if kind == "cantilever":
         add_cantilever(bm, pts, (cx, cy), top_flat)
     if b.get("osm_building") in ("house", "detached"):
@@ -254,6 +280,8 @@ def build_one(b, index):
         data.free()
         for m in materials(campus, index):
             mesh.materials.append(m)
+        if kind == "atrium":
+            mesh.materials.append(E.material("B_solar", "#243349", roughness=0.75, metallic=0.0))   # V10d: matte, no sky glare
         if b.get("osm_building") in ("house", "detached"):
             mesh.materials[ROOF] = E.material("B_roof_tiles", "#C8664A", 0.85)
         meshes.append(mesh)
@@ -301,7 +329,7 @@ def split_around(p0, p1, lo, hi, blocked, clear=E.ROUTE_WIDTH / 2 + 1.5):
     return pieces
 
 
-def add_atrium_ribs(bm, pts, centre, axis, top):
+def add_atrium_ribs(bm, pts, centre, axis, top, y_min=ATRIUM_ROOF_Y):
     """Steel ribs across the glass roof every 6 m (only where the roof is)."""
     across = (-axis[1], axis[0])
     proj = [(x - centre[0]) * axis[0] + (y - centre[1]) * axis[1] for x, y in pts]
@@ -314,6 +342,15 @@ def add_atrium_ribs(bm, pts, centre, axis, top):
             for side in (-0.12, 0.12):
                 a = (origin[0] + across[0] * (t0 + 0.5) + axis[0] * side, origin[1] + across[1] * (t0 + 0.5) + axis[1] * side)
                 c = (origin[0] + across[0] * (t1 - 0.5) + axis[0] * side, origin[1] + across[1] * (t1 - 0.5) + axis[1] * side)
+                if y_min is not None:                       # V10c: only the part of the rib north of y_min
+                    if max(a[1], c[1]) < y_min:
+                        continue
+                    if a[1] < y_min:
+                        f = (y_min - a[1]) / (c[1] - a[1])
+                        a = (a[0] + (c[0] - a[0]) * f, y_min)
+                    elif c[1] < y_min:
+                        f = (y_min - c[1]) / (a[1] - c[1])
+                        c = (c[0] + (a[0] - c[0]) * f, y_min)
                 add_quad(bm, [(*a, top), (*c, top), (*c, top + 0.9), (*a, top + 0.9)], STEEL, flip=side > 0)
         t += 6.0
 
@@ -344,9 +381,96 @@ def add_hip_roof(bm, pts, centre, top):
         f.material_index = ROOF
 
 
+def ccw(ring):
+    """V10d: the ring counter-clockwise seen from above, so a cap faces up and walls built along it face out (the
+    roof panels' boxes were clockwise: their tops faced down and were culled, the spine roof showed through)."""
+    area = sum(ax * by - bx * ay for (ax, ay), (bx, by) in zip(ring, ring[1:] + ring[:1]))
+    return ring if area > 0 else ring[::-1]
+
+
+def add_roof_panels(bm, pts, centre, axis, top):
+    """V10c: dark solar arrays on slightly raised flat boxes over the gallery spine (south of the atrium), with a
+    few skylight strips between the rows. Rows sit across the spine every 9 m, two blocks per row with a service
+    gap; every corner stays 1.5 m inside the outline."""
+    across = (-axis[1], axis[0])
+    proj = [(x - centre[0]) * axis[0] + (y - centre[1]) * axis[1] for x, y in pts]
+    t = min(proj) + 6.0
+    row = 0
+    while t < max(proj) - 4.0:
+        origin = (centre[0] + axis[0] * t, centre[1] + axis[1] * t)
+        if origin[1] < ATRIUM_ROOF_Y - 8.0 and origin[1] > -26.0:
+            for t0, t1 in line_intervals(pts, origin, across):
+                if t1 - t0 < 12:
+                    continue
+                mid = (t0 + t1) / 2
+                for lo, hi in ((t0 + 3.0, mid - 1.2), (mid + 1.2, t1 - 3.0)):
+                    if hi - lo < 4:
+                        continue
+                    box = ccw([(origin[0] + across[0] * u + axis[0] * v, origin[1] + across[1] * u + axis[1] * v)
+                               for u, v in ((lo, -2.6), (hi, -2.6), (hi, 2.6), (lo, 2.6))])
+                    if not all(E.inside_polygon(x, y, pts) for x, y in box):
+                        continue
+                    z0, z1 = top + 0.02, top + 0.38
+                    add_quad(bm, [(*c, z1) for c in box], SOLAR)
+                    for k in range(4):
+                        p, q = box[k], box[(k + 1) % 4]
+                        add_quad(bm, [(*p, z0), (*q, z0), (*q, z1), (*p, z1)], STEEL)
+                if row % 3 == 1:                       # skylight strip in the gap between two rows
+                    sk = ccw([(origin[0] + across[0] * u + axis[0] * v, origin[1] + across[1] * u + axis[1] * v)
+                              for u, v in ((mid - 0.8, 4.6), (mid + 0.8, 4.6), (mid + 0.8, 6.0), (mid - 0.8, 6.0))])
+                    if all(E.inside_polygon(x, y, pts) for x, y in sk):
+                        add_quad(bm, [(*c, top + 0.1) for c in sk], GLASS_ROOF)
+        t += 9.0
+        row += 1
+
+
+def add_residence_storey(bm, a, b, seg, out, z0, s, top, blocked):
+    """V10c, Milestone residence (J01): a white block with dark recessed balcony niches, a white slab under each
+    niche, small punched windows in between, glazed ground floor. Niches alternate by storey (staggered)."""
+    ax, ay = a
+    bx, by = b
+    ox, oy = out
+    tx, ty = (bx - ax) / seg, (by - ay) / seg
+
+    def at(u, off, z):
+        return (ax + tx * u + ox * off, ay + ty * u + oy * off, z)
+    if s == 0:                                          # ground floor: sliding glass doors
+        u = 1.2
+        while u + 2.2 < seg - 1.2:
+            lo, hi = z0 + 0.1, z0 + 2.6
+            if z0 + 2.6 < top - 0.3:
+                for q0, q1 in split_around(at(u, 0.05, 0)[:2], at(u + 2.2, 0.05, 0)[:2], lo, hi, blocked):
+                    add_quad(bm, [(*q0, lo), (*q1, lo), (*q1, hi), (*q0, hi)], GLASS)
+            u += 4.6
+        return
+    lo, hi = z0 + 0.5, z0 + 2.9
+    if hi > top - 0.6:
+        return
+    u = 1.5 + (3.0 if s % 2 else 0.0)
+    while u + 2.4 < seg - 1.0:
+        p0, p1 = at(u, 0.05, 0), at(u + 2.4, 0.05, 0)
+        add_quad(bm, [(*p0[:2], lo), (*p1[:2], lo), (*p1[:2], hi), (*p0[:2], hi)], GLASS)
+        # white slab under the niche, sticking out 0.6 m (5 faces)
+        sl0, sl1, sh = z0 + 0.25, z0 + 0.5, 0.6
+        c = [at(u - 0.2, 0.0, 0), at(u + 2.6, 0.0, 0), at(u + 2.6, sh, 0), at(u - 0.2, sh, 0)]
+        add_quad(bm, [(*c[3][:2], sl1), (*c[2][:2], sl1), (*c[1][:2], sl1), (*c[0][:2], sl1)], WALL)
+        add_quad(bm, [(*c[0][:2], sl0), (*c[1][:2], sl0), (*c[2][:2], sl0), (*c[3][:2], sl0)], WALL, flip=True)
+        add_quad(bm, [(*c[3][:2], sl0), (*c[2][:2], sl0), (*c[2][:2], sl1), (*c[3][:2], sl1)], WALL)
+        # small punched window next to the niche
+        w0, w1 = at(u + 3.4, 0.05, 0), at(u + 4.6, 0.05, 0)
+        if u + 4.8 < seg - 1.0:
+            add_quad(bm, [(*w0[:2], z0 + 0.95), (*w1[:2], z0 + 0.95), (*w1[:2], z0 + 2.45), (*w0[:2], z0 + 2.45)], GLASS)
+        u += 6.0
+
+
 def build():
     for index, b in enumerate(E.DATA["buildings"]):
-        volume, details = build_one(b, index)
+        if b["id"] in REDUNDANT:
+            continue
+        if b["id"] in env_library.OWNED:               # V10i: the library as in the photos (plaza_plan.py); V16: the pergola
+            volume, details = env_library.build(b, index)
+        else:
+            volume, details = build_one(b, index)
         name = "B_" + b["id"] + ("_" + ascii_name(b["name"]) if b["name"] else "")
         col = E.collection("World_Buildings_Campus" if b["campus"] else "World_Buildings_Other")
         obj = E.new_object(name, volume, col)
@@ -355,3 +479,70 @@ def build():
         if details.polygons:
             det = E.new_object("BD_" + name[2:], details, col)
             det.parent = obj
+    env_beachfront.build_promenade()
+    env_campus.build_extras()                           # V10c2: pools, courtyard walls, seat steps, berms
+    # build_roundabout_island()   V10c: replaced in V10f by env_streets (radius 14.3 m, sett apron, steel wedges)
+
+
+# ----------------------------------------------------------------------------------------------
+# V10c: roundabout island at the west campus edge (GAME-03, ortho_west marker 01): raised kerb ring, dark planted
+# centre with pale gravel stripes. The ground colour map only paints a light disc there.
+# ----------------------------------------------------------------------------------------------
+ISLAND_CENTRE = (-107.2, -63.5)
+ISLAND_R = 13.4                      # outer kerb edge (the light disc in the ground map is r about 13.8)
+KERB_W = 0.6
+
+
+def build_roundabout_island():
+    cx, cy = ISLAND_CENTRE
+    n = 48
+    gz = E.ground_z
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.verify()
+
+    def ring(r, dz):
+        return [bm.verts.new((cx + r * math.cos(2 * math.pi * k / n), cy + r * math.sin(2 * math.pi * k / n),
+                              gz(cx + r * math.cos(2 * math.pi * k / n), cy + r * math.sin(2 * math.pi * k / n)) + dz)) for k in range(n)]
+    outer_lo, outer_hi = ring(ISLAND_R, -0.15), ring(ISLAND_R, 0.28)
+    inner_hi, inner_lo = ring(ISLAND_R - KERB_W, 0.28), ring(ISLAND_R - KERB_W, 0.16)
+    for k in range(n):
+        j = (k + 1) % n
+        bm.faces.new((outer_lo[k], outer_lo[j], outer_hi[j], outer_hi[k])).material_index = 0      # outer wall
+        bm.faces.new((outer_hi[k], outer_hi[j], inner_hi[j], inner_hi[k])).material_index = 0      # kerb top
+        bm.faces.new((inner_hi[k], inner_hi[j], inner_lo[j], inner_lo[k])).material_index = 0      # inner wall
+    # planted centre: three rings so it follows the ground
+    r_in = ISLAND_R - KERB_W
+    mid = ring(r_in * 0.5, 0.2)
+    rim = ring(r_in, 0.2)
+    c = bm.verts.new((cx, cy, gz(cx, cy) + 0.2))
+    for k in range(n):
+        j = (k + 1) % n
+        bm.faces.new((c, mid[k], mid[j])).material_index = 1
+        bm.faces.new((mid[k], rim[k], rim[j], mid[j])).material_index = 1
+    # gravel stripes: chords across the island, 1.1 m wide, every 4.2 m, tilted 25 degrees
+    ang = math.radians(25)
+    ux, uy = math.cos(ang), math.sin(ang)
+    for d in (-8.4, -4.2, 0.0, 4.2, 8.4):
+        half = math.sqrt(max(r_in - 0.8, 0) ** 2 - d * d)
+        steps = max(2, int(2 * half / 2.5))
+        pts_l, pts_r = [], []
+        for t in range(steps + 1):
+            u = -half + 2 * half * t / steps
+            for w, bucket in ((-0.55, pts_l), (0.55, pts_r)):
+                x = cx + ux * u - uy * (d + w)
+                y = cy + uy * u + ux * (d + w)
+                bucket.append(bm.verts.new((x, y, gz(x, y) + 0.24)))
+        for t in range(steps):
+            bm.faces.new((pts_l[t], pts_l[t + 1], pts_r[t + 1], pts_r[t])).material_index = 2
+    bm.normal_update()
+    for f in bm.faces:
+        if f.normal.z < 0 and f.material_index in (1, 2):
+            f.normal_flip()
+    mesh = bpy.data.meshes.new("RoundaboutIsland")
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.materials.append(E.material("island_kerb", "#CFC8BA", 0.85))
+    mesh.materials.append(E.material("island_planting", "#3E4B34", 0.95))
+    mesh.materials.append(E.material("island_gravel", "#B7A98C", 0.9))
+    E.new_object("World_RoundaboutIsland", mesh, E.collection("World_Dressing"))
+    print(f"  roundabout island: {len(mesh.polygons)} faces")
