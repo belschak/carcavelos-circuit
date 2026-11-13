@@ -176,6 +176,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 ti.wrapMode = file.StartsWith("ground_colour", StringComparison.Ordinal) || cutout || !tiles ? TextureWrapMode.Clamp : TextureWrapMode.Repeat;
                 ti.mipmapEnabled = true;
                 ti.anisoLevel = file.Contains("_detail_") ? 8 : 4;               // ground detail is seen at very flat angles
+                WebTextureBudget.Apply(ti, file);                                // V24: smaller sizes in the Web build only
                 ti.SaveAndReimport();
             }
             // The painted sky (2:1 lat-long picture) becomes a cubemap: the skybox and the reflections on glass
@@ -193,6 +194,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 sky.mipmapEnabled = true;
                 sky.wrapMode = TextureWrapMode.Clamp;
                 sky.maxTextureSize = 1024;                                      // per cube face
+                WebTextureBudget.Apply(sky, Path.GetFileName(SkyTexture));      // V24: 512 per face on the Web
                 sky.SaveAndReimport();
             }
             foreach (string name in Models)
