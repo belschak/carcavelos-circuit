@@ -66,7 +66,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(51f + 12f, middle.y, 0.001f); // halfway height + the full hump
         }
 
-        // V28 mood preview: from the land side, looking towards the sun, the sun in the upper part of the picture.
+        // V28 mood preview: from the land side, looking towards the sun, a low sun in the strip along the top edge.
         [Test]
         public void PreviewPose_LowSun_StandsOppositeTheSunAndLooksAtIt()
         {
@@ -81,7 +81,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.Greater(Vector3.Dot(new Vector3(look.x, 0f, look.z).normalized, flatSun), 0.99f, "looks towards the sun");
             Assert.Less(look.y, 0f, "a low sun: looks down onto the campus");
             float sunAboveCentre = Vector3.SignedAngle(look, towardsSun, rotation * Vector3.right) * -1f;
-            Assert.That(sunAboveCentre, Is.InRange(5f, 30f), "sun in the upper half, inside the 60 deg picture");
+            Assert.That(sunAboveCentre, Is.InRange(22f, 29f), "sun in the strip along the top edge, inside the 60 deg picture");
         }
 
         [Test]
@@ -93,7 +93,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             FlyoverPath.PreviewPose(Vector3.zero, 300f, towardsSun, 60f, 35f, out position, out rotation);
             Vector3 look = rotation * Vector3.forward;
             float pitch = Mathf.Asin(look.y) * Mathf.Rad2Deg;
-            Assert.AreEqual(16f, pitch, 0.01f);
+            Assert.AreEqual(-10f, pitch, 0.01f, "the noon sun is out of the picture anyway: look down onto campus and sea");
         }
 
         [Test]
