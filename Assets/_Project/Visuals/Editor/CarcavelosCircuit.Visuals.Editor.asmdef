@@ -1,0 +1,23 @@
+{
+    "name": "CarcavelosCircuit.Visuals.Editor",
+    "rootNamespace": "CarcavelosCircuit.Visuals.Editor",
+    "references": [
+        "CarcavelosCircuit.Track",
+        "CarcavelosCircuit.RaceFlow",
+        "CarcavelosCircuit.Visuals",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "CarcavelosCircuit.Track.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

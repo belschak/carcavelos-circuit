@@ -1,0 +1,27 @@
+{
+    "name": "CarcavelosCircuit.RaceFlow.Editor",
+    "rootNamespace": "CarcavelosCircuit.RaceFlow.Editor",
+    "references": [
+        "CarcavelosCircuit.Shared",
+        "CarcavelosCircuit.Shared.Editor",
+        "CarcavelosCircuit.RaceFlow",
+        "CarcavelosCircuit.Track",
+        "CarcavelosCircuit.Audio",
+        "CarcavelosCircuit.Ambience",
+        "CarcavelosCircuit.Ambience.Editor",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.Cinemachine"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

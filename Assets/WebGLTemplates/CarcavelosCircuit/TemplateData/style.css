@@ -1,0 +1,742 @@
+/* Carcavelos Circuit Web template (Role 4, P2 + P8). Colours from docs/art-style.md (Role 3 palette) and the
+   HUD spec "Linha de Costa": Atlantic sunrise, azulejo tiles, calcada wave, chunky keycaps with a darker lip.
+   No web fonts: Bahnschrift (a road-sign DIN font that ships with Windows) with system fallbacks. */
+:root {
+  --kart-white: #EAEAEC;
+  --gloss-black: #1D1D1F;
+  --asphalt: #55585E;
+  --sand: #E3C48D;
+  --atlantic-blue: #2D8CD6;
+  --blue-deep: #123B5E;          /* darker step of Atlantic Blue (HUD start/results background) */
+  --night: #0B2034;              /* darkest step, top of the sky and bottom of the sea */
+  --boost-orange: #FF8A1F;
+  --horizon: 72%;                /* where the sea starts, from the top of the screen */
+  --sun-x: 76%;                  /* the sun sits to the right, away from the text */
+  --cc-progress: 0;              /* 0 to 1, set by onProgress in index.html */
+  --font-display: "Arial Black", "Segoe UI Black", "Helvetica Neue", system-ui, sans-serif;
+  --font-ui: "Bahnschrift", "DIN Alternate", "DIN Condensed", "Avenir Next Condensed", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; } /* "hidden" must win over display: flex/grid below */
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;              /* never scrollbars, whatever the window size */
+  background: var(--gloss-black);
+  color: var(--kart-white);
+  font-family: var(--font-ui);
+}
+
+/* The game: always the whole window. Unity matches its render size to this (times the capped pixel ratio). */
+#cc-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  outline: none;
+  background: var(--gloss-black);
+}
+
+/* ---------- Loading screen: layout ---------- */
+#cc-loader {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: 1fr auto auto auto;   /* middle content, controls, calcada wave, credits */
+  overflow: hidden;
+  background: var(--night);
+  transition: opacity 0.45s ease;
+  z-index: 2;
+}
+
+.cc-done { opacity: 0; pointer-events: none; }
+.cc-done .cc-center { transform: scale(1.04); }
+
+/* ---------- Background layers ---------- */
+.cc-sky, .cc-sun, .cc-sea, .cc-tiles { position: absolute; pointer-events: none; }
+
+.cc-sky {
+  inset: 0 0 calc(100% - var(--horizon)) 0;
+  background: linear-gradient(180deg, var(--night) 0%, var(--blue-deep) 34%, #245F8C 62%, #8C8A8E 84%, #E8A672 95%, #FFB463 100%);
+}
+
+/* The sun rises with the loading progress: a sliver at 0 %, well above the sea at 100 %. */
+.cc-sun {
+  left: var(--sun-x);
+  top: var(--horizon);
+  width: min(24vmin, 190px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, #FFF1CF 0%, #FFD08A 38%, #FFA347 70%, var(--boost-orange) 100%);
+  box-shadow: 0 0 60px 18px rgba(255, 150, 60, 0.45), 0 0 160px 60px rgba(255, 138, 31, 0.22);
+  transform: translate(-50%, calc(-18% - var(--cc-progress) * 52%));
+  transition: transform 0.6s ease-out, box-shadow 0.6s ease-out;
+  animation: cc-glow 3.2s ease-in-out infinite alternate;
+}
+
+.cc-ready .cc-sun { box-shadow: 0 0 80px 26px rgba(255, 160, 70, 0.55), 0 0 220px 90px rgba(255, 138, 31, 0.28); }
+
+.cc-sea {
+  inset: var(--horizon) 0 0 0;
+  background: linear-gradient(180deg, #1E5E8C 0%, var(--blue-deep) 30%, var(--night) 100%);
+  box-shadow: 0 -1px 0 rgba(255, 200, 140, 0.55);  /* thin bright horizon line */
+}
+
+/* Sun reflection: short orange streaks on the water under the sun, brighter as the sun rises. */
+.cc-sea::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--sun-x);
+  width: min(30vmin, 240px);
+  height: 70%;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(180deg, rgba(255, 170, 80, 0.75) 0 3px, transparent 3px 11px);
+  -webkit-mask-image: radial-gradient(50% 100% at 50% 0%, #000 0%, transparent 100%);
+  mask-image: radial-gradient(50% 100% at 50% 0%, #000 0%, transparent 100%);
+  opacity: calc(0.25 + var(--cc-progress) * 0.6);
+  animation: cc-shimmer 2.4s ease-in-out infinite alternate;
+}
+
+/* Azulejo tiles: a faint diamond pattern over the sky, fading out towards the sea. */
+.cc-tiles {
+  inset: 0 0 calc(100% - var(--horizon)) 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23EAEAEC' stroke-width='1.6'%3E%3Cpath d='M32 7L57 32L32 57L7 32Z'/%3E%3Cpath d='M32 20L44 32L32 44L20 32Z'/%3E%3Ccircle cx='32' cy='32' r='3'/%3E%3Cpath d='M0 10A10 10 0 0 0 10 0M54 0A10 10 0 0 0 64 10M64 54A10 10 0 0 0 54 64M10 64A10 10 0 0 0 0 54'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 64px 64px;
+  background-position: center top;
+  opacity: 0.075;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 35%, transparent 90%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 35%, transparent 90%);
+}
+
+/* ---------- Middle: emblem, title, one panel ---------- */
+.cc-center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: max(20px, env(safe-area-inset-top)) 16px 12px;
+  text-align: center;
+  transition: transform 0.45s ease;
+}
+
+/* The countdown diamond from the HUD: a white tile with an orange core and a darker lip. */
+.cc-emblem {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 22px;
+  border-radius: 8px;
+  background: var(--kart-white);
+  box-shadow: 3px 3px 0 #9A9BA1, 0 0 26px rgba(255, 138, 31, 0.35);
+  transform: rotate(45deg);
+  display: grid;
+  place-items: center;
+  animation: cc-rise 0.5s ease-out both;
+}
+.cc-emblem span {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  background: var(--boost-orange);
+}
+
+.cc-kicker {
+  margin: 0 0 10px;
+  font-size: clamp(12px, 1.5vw, 15px);
+  font-weight: 600;
+  letter-spacing: 0.38em;
+  padding-left: 0.38em;          /* letter-spacing adds space after the last letter; this keeps it centred */
+  text-transform: uppercase;
+  color: var(--sand);
+  animation: cc-rise 0.5s 0.08s ease-out both;
+}
+
+.cc-title {
+  margin: 0 0 clamp(22px, 4.5vh, 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: clamp(36px, 7.6vw, 88px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--kart-white);
+  text-shadow: 0 0.06em 0 var(--night), 0 0.16em 0.4em rgba(0, 0, 0, 0.35);  /* chunky tile lip */
+  animation: cc-rise 0.55s 0.14s ease-out both;
+}
+
+.cc-title-accent {
+  margin-top: 0.22em;
+  font-family: var(--font-ui);
+  font-size: 0.36em;
+  font-weight: 700;
+  letter-spacing: 0.72em;
+  padding-left: 0.72em;
+  color: var(--boost-orange);
+  text-shadow: 0 2px 0 var(--night);
+}
+
+.cc-panel {
+  width: min(520px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: cc-rise 0.5s 0.22s ease-out both;
+}
+
+/* ---------- Loading panel: the progress bar is a little road with a kart driving along ---------- */
+.cc-road {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--asphalt);
+  box-shadow:
+    0 0 0 3px var(--night),
+    0 6px 0 2px rgba(0, 0, 0, 0.35),
+    0 14px 30px rgba(0, 0, 0, 0.35);
+}
+
+.cc-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--atlantic-blue), var(--boost-orange));
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.25s ease-out;
+}
+
+.cc-lane {
+  position: absolute;
+  left: 14px;
+  right: 24px;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: repeating-linear-gradient(90deg, rgba(234, 234, 236, 0.85) 0 12px, transparent 12px 24px);
+}
+
+.cc-finish {
+  position: absolute;
+  top: 0;
+  right: 7px;
+  width: 12px;
+  height: 100%;
+  background: repeating-conic-gradient(var(--kart-white) 0 25%, var(--gloss-black) 0 50%) 0 0 / 6px 6px;
+}
+
+/* The kart: white body, black outline, blue helmet, orange exhaust. Moves with the progress. */
+.cc-kart {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  width: 30px;
+  height: 18px;
+  margin-top: -9px;
+  transform: translateX(-50%);
+  border-radius: 5px 9px 9px 5px;
+  background: linear-gradient(180deg, var(--kart-white) 0 62%, #C9C9CD 62% 100%);
+  box-shadow: inset 0 0 0 2px var(--gloss-black), 0 0 14px rgba(255, 138, 31, 0.75);
+  transition: left 0.25s ease-out;
+}
+
+.cc-kart::before {               /* driver's helmet */
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--atlantic-blue);
+  box-shadow: inset 0 0 0 2px var(--gloss-black);
+}
+
+.cc-kart::after {                /* exhaust flame */
+  content: "";
+  position: absolute;
+  right: 100%;
+  top: 5px;
+  width: 12px;
+  height: 8px;
+  border-radius: 8px 0 0 8px;
+  background: linear-gradient(90deg, rgba(255, 138, 31, 0), var(--boost-orange));
+  animation: cc-flame 0.18s ease-in-out infinite alternate;
+}
+
+.cc-status {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 20px 0 10px;
+  padding: 0 4px;
+  text-transform: uppercase;
+}
+
+.cc-phase {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: rgba(234, 234, 236, 0.8);
+}
+
+.cc-percent {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.cc-tip {
+  margin: 0;
+  min-height: 2.7em;
+  max-width: 440px;
+  font-size: 15px;
+  line-height: 1.35;
+  color: rgba(234, 234, 236, 0.75);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.25s ease;
+}
+.cc-tip-out { opacity: 0; }
+
+.cc-failed .cc-dock { display: none; }   /* no controls legend next to an error: one message at a time */
+
+/* ---------- "Click to play" ---------- */
+.cc-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 36px 16px 30px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--boost-orange);
+  color: var(--gloss-black);
+  font-family: var(--font-ui);
+  font-size: clamp(18px, 2.2vw, 22px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 6px 0 #B4560A, 0 0 0 0 rgba(255, 138, 31, 0.6);
+  animation: cc-pop 0.35s ease-out both, cc-breathe 1.8s 0.35s ease-in-out infinite;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.cc-play:hover { transform: translateY(-1px); filter: brightness(1.06); }
+.cc-play:active { transform: translateY(4px); box-shadow: 0 2px 0 #B4560A; }
+.cc-play:focus-visible { outline: 3px solid var(--kart-white); outline-offset: 5px; }
+
+.cc-play-hint {
+  margin: 22px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(234, 234, 236, 0.7);
+}
+
+#cc-loader.cc-ready { cursor: pointer; }  /* a click anywhere starts */
+
+/* ---------- Cards: mobile notice and errors ---------- */
+.cc-card {
+  padding: 22px 26px 20px;
+  border-radius: 20px;
+  background: rgba(11, 32, 52, 0.86);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow:
+    0 0 0 2px rgba(234, 234, 236, 0.14),
+    0 6px 0 rgba(0, 0, 0, 0.35),
+    0 26px 50px rgba(0, 0, 0, 0.4);
+}
+
+.cc-card-icon { color: var(--kart-white); margin-bottom: 10px; }
+
+.cc-card h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.cc-card p {
+  margin: 0;
+  max-width: 420px;
+  font-size: 15px;
+  line-height: 1.4;
+  color: rgba(234, 234, 236, 0.85);
+}
+
+.cc-error-steps {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(234, 234, 236, 0.85);
+}
+.cc-error-steps li { position: relative; padding-left: 20px; margin-bottom: 6px; }
+.cc-error-steps li::before {     /* a small orange diamond as the bullet */
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0.45em;
+  width: 7px;
+  height: 7px;
+  border-radius: 1.5px;
+  background: var(--boost-orange);
+  transform: rotate(45deg);
+}
+
+.cc-actions { margin-top: 18px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+.cc-button {
+  padding: 11px 22px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--kart-white);
+  color: var(--gloss-black);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #8E9096;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.cc-button:active { transform: translateY(3px); box-shadow: 0 1px 0 #8E9096; }
+.cc-button:focus-visible { outline: 3px solid var(--boost-orange); outline-offset: 4px; }
+
+.cc-card .cc-small { margin-top: 12px; font-size: 12px; color: rgba(234, 234, 236, 0.6); }
+
+.cc-details { margin-top: 14px; font-size: 12px; color: rgba(234, 234, 236, 0.6); text-align: left; }
+.cc-details summary { cursor: pointer; text-align: center; }
+.cc-details p {
+  margin-top: 8px;
+  max-height: 120px;
+  overflow: auto;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Controls legend ---------- */
+.cc-dock {
+  position: relative;
+  padding: 0 16px 16px;
+  animation: cc-rise 0.5s 0.3s ease-out both;
+}
+
+.cc-controls {
+  margin: 0 auto;
+  padding: 0;
+  max-width: 1120px;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 20px;
+}
+
+.cc-controls li { display: inline-flex; align-items: center; gap: 7px; }
+.cc-keys { display: inline-flex; gap: 3px; }
+
+kbd {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--kart-white);
+  color: var(--gloss-black);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  box-shadow: 0 3px 0 #8E9096;
+}
+kbd.cc-wide { padding: 0 11px; font-size: 12px; letter-spacing: 0.08em; }
+
+.cc-or, .cc-key-text {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(234, 234, 236, 0.8);
+}
+.cc-or { color: rgba(234, 234, 236, 0.5); letter-spacing: 0.06em; text-transform: none; }
+
+/* ---------- Calcada wave band ("mar largo" pavement) and credits ---------- */
+.cc-wave {
+  position: relative;
+  height: 16px;
+  background-color: var(--kart-white);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='16' viewBox='0 0 96 16'%3E%3Cpath d='M0 5Q12 -1 24 5T48 5T72 5T96 5M0 13Q12 7 24 13T48 13T72 13T96 13' fill='none' stroke='%231D1D1F' stroke-width='3.2'/%3E%3C/svg%3E");
+  background-size: 96px 16px;
+  background-repeat: repeat-x;
+  opacity: 0.92;
+}
+
+.cc-credits {
+  position: relative;
+  margin: 0;
+  padding: 8px 16px max(10px, env(safe-area-inset-bottom));
+  background: var(--gloss-black);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  color: rgba(234, 234, 236, 0.5);
+}
+
+/* ---------- Fullscreen button and warning toast ---------- */
+#cc-fullscreen {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(29, 29, 31, 0.55);
+  color: var(--kart-white);
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  z-index: 1;
+}
+
+#cc-fullscreen:hover, #cc-fullscreen:focus-visible { opacity: 1; outline: 2px solid var(--boost-orange); }
+
+/* Hidden while you drive (it sits where the split chip and countdown appear): it comes back when the mouse moves. */
+#cc-fullscreen.cc-idle { opacity: 0; pointer-events: none; }
+
+#cc-toast {
+  position: fixed;
+  left: 50%;
+  top: 56px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(29, 29, 31, 0.85);
+  box-shadow: 0 0 0 2px var(--sand);
+  font-size: 13px;
+  z-index: 3;
+}
+
+/* ---------- Touch controls (task P9, phones and tablets only) ---------- */
+/* Touch mode: the page never scrolls, zooms or selects text, and a long press opens no menu. */
+.cc-touch-mode, .cc-touch-mode body {
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The panel itself lets touches through to the game; only the buttons catch them. */
+#cc-touch {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  --pad-side: max(14px, env(safe-area-inset-left), env(safe-area-inset-right));
+  --pad-bottom: calc(max(84px, 25vh) + env(safe-area-inset-bottom)); /* above the HUD's drift bar and speedometer */
+  --size: clamp(60px, 17vmin, 84px);
+}
+
+.cc-touch-button, .cc-touch-pill {
+  pointer-events: auto;
+  touch-action: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid rgba(234, 234, 236, 0.45);
+  background: rgba(18, 59, 94, 0.38);
+  color: var(--kart-white);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  transition: transform 0.06s ease, background-color 0.06s ease;
+}
+
+.cc-touch-button {
+  width: var(--size);
+  height: var(--size);
+  border-radius: 22px;
+  font-size: 13px;
+}
+
+/* Pressed: orange, a little smaller (feels like a real button). */
+.cc-touch-button.cc-pressed, .cc-touch-pill.cc-pressed {
+  background: rgba(255, 138, 31, 0.78);
+  border-color: var(--boost-orange);
+  transform: scale(0.94);
+}
+
+.cc-touch-steer {
+  position: fixed;
+  left: var(--pad-side);
+  bottom: var(--pad-bottom);
+  display: flex;
+  gap: 12px;
+}
+.cc-touch-steer .cc-touch-button { width: calc(var(--size) * 1.1); }
+
+/* Right thumb: Gas at the bottom right, Drift beside it, Brake above Gas, the reserved Item slot above Drift. */
+.cc-touch-pedals {
+  position: fixed;
+  right: var(--pad-side);
+  bottom: var(--pad-bottom);
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas: "item brake" "drift gas";
+  gap: 10px;
+  align-items: end;
+  justify-items: center;
+}
+.cc-touch-item { grid-area: item; }
+.cc-touch-brake { grid-area: brake; height: calc(var(--size) * 0.72); }
+.cc-touch-drift { grid-area: drift; }
+.cc-touch-gas {
+  grid-area: gas;
+  width: calc(var(--size) * 1.15);
+  height: calc(var(--size) * 1.15);
+  border-radius: 50%;
+  border-color: rgba(255, 138, 31, 0.8);
+  font-size: 15px;
+}
+
+/* Start screen, results and menus (the game has not sent "racing"): no driving buttons, so they never cover the
+   title, the leaderboard or the name field (task R10/R11). The fullscreen button in the tools row stays. */
+html:not(.cc-racing) .cc-touch-steer,
+html:not(.cc-racing) .cc-touch-pedals,
+html:not(.cc-racing) .cc-touch-tools .cc-touch-pill {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Recover, Retry (and fullscreen): small, top left, away from the thumbs. */
+.cc-touch-tools {
+  position: fixed;
+  left: var(--pad-side);
+  top: calc(env(safe-area-inset-top) + max(108px, 31vh)); /* under the lap time (the HUD scales with the height) */
+  display: flex;
+  gap: 8px;
+}
+.cc-touch-pill {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 17px;
+  font-size: 11px;
+}
+
+/* In touch mode the fullscreen button joins Recover and Retry (top centre is where the countdown appears)
+   and stays visible (there is no mouse to bring it back). */
+.cc-touch-tools #cc-fullscreen {
+  position: static;
+  transform: none;
+  width: 34px;
+  height: 34px;
+  border: 2px solid rgba(234, 234, 236, 0.45);
+  border-radius: 17px;
+  background: rgba(18, 59, 94, 0.38);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* "Turn your phone" hint: only in portrait, until closed. */
+#cc-rotate {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 10px);
+  transform: translateX(-50%);
+  display: none;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  padding: 6px 6px 6px 12px;
+  border-radius: 18px;
+  background: rgba(29, 29, 31, 0.8);
+  font-size: 13px;
+  z-index: 3;
+}
+#cc-rotate button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(234, 234, 236, 0.15);
+  color: var(--kart-white);
+  font-size: 18px;
+  line-height: 1;
+}
+@media (orientation: portrait) {
+  #cc-rotate { display: flex; }
+}
+#cc-rotate.cc-closed { display: none; }
+
+/* ---------- Animations (all switched off for "reduce motion", see the end) ---------- */
+@keyframes cc-rise { from { opacity: 0; transform: translateY(14px); } }
+@keyframes cc-pop { from { opacity: 0; transform: scale(0.85); } }
+@keyframes cc-breathe {
+  0%, 100% { box-shadow: 0 6px 0 #B4560A, 0 0 0 0 rgba(255, 138, 31, 0.55); }
+  60% { box-shadow: 0 6px 0 #B4560A, 0 0 0 14px rgba(255, 138, 31, 0); }
+}
+@keyframes cc-flame { from { width: 8px; opacity: 0.7; } to { width: 14px; opacity: 1; } }
+@keyframes cc-glow { to { filter: brightness(1.08) saturate(1.1); } }
+@keyframes cc-shimmer { to { background-position: 0 4px; } }
+
+/* The emblem keeps its 45 degree turn while it rises in. */
+.cc-emblem { animation-name: cc-rise-turned; }
+@keyframes cc-rise-turned { from { opacity: 0; transform: translateY(14px) rotate(45deg); } to { transform: rotate(45deg); } }
+
+/* ---------- Small screens ---------- */
+@media (max-height: 640px) {
+  .cc-emblem { display: none; }
+  .cc-title { margin-bottom: 18px; }
+  .cc-status { margin-top: 14px; }
+  .cc-dock { padding-bottom: 10px; }
+  .cc-card { padding: 16px 20px; }
+  .cc-card-icon { display: none; }
+}
+
+@media (max-height: 470px) {
+  .cc-kicker, .cc-tip { display: none; }
+  .cc-dock { display: none; }
+}
+
+@media (max-width: 560px) {
+  :root { --sun-x: 80%; }
+  .cc-controls { gap: 8px 16px; }
+  .cc-or, .cc-controls li:nth-child(1) .cc-keys + .cc-or + .cc-keys { display: none; } /* WASD only, no arrows */
+  .cc-card { padding: 18px 18px 16px; }
+  .cc-card h2 { font-size: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

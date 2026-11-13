@@ -1,0 +1,39 @@
+id,name,campus,osm_building,levels,height_m,roof_z,source,drive_through,drive_on_roof,note
+w1174472373,Student Central,yes,university,3.0,,,survey V10h,yes,,"V10c2: separate two-storey white box east of the atrium; the race line passes through the atrium, not through this building (survey V10h, SC): the drive_through flag is not needed and has no effect. Modelled by env_campus.py"
+w1174472383,Santander Academic Hall,yes,university,3.0,,,survey V10h,,,"V10c2 (survey V10h, D): Floor-1 ribbon storey with planted roof strips, set-back glazed roof storey (top 22 m), blank angular head (top 20 m) cantilevering over a dark base in a reflecting pool. Modelled by env_campus.py from campus_plan.py; height_m is not used"
+w1502611968,Ginásio VivaGym Carcavelos,yes,yes,3.0,,,default-campus,,,
+w496301621,Grande Auditório Jerónimo Martins,yes,university,3.0,12.0,,survey V10h,,,"V10c2 (survey V10h, F): faceted white monolith, ridge north-south, peak 26 m at the north-west corner, undercut corner with a dark entrance, grass bank on the west (IMG_6270, 6277; F01, F02). Modelled by env_campus.py; height_m is not used"
+w496301627,Horizon Hall,yes,university,3.0,13.0,,survey V10h,,,"V10c2 (survey V10h, G): Floor-1 podium on round columns over a dark undercroft, cream box over a glazed front, glazed block with a balcony, flying roof slab at 26 m on two tall columns; the gym is its Floor 0 (G01, G02, H01). Modelled by env_campus.py; height_m is not used"
+w496301632,Biblioteca Teresa e Alexandre Soares dos Santos,yes,university,3.0,9.0,,photo-estimate,,,"2 floors, upper box with dark ribbon windows on pilotis (IMG_6383, 6387, 6388)"
+w496301638,CTT Student Hall,yes,university,3.0,10.5,14.5,photo-estimate,,yes,"roof = concrete terrace deck at level 1, same height as the atrium floor; the route drives on it and jumps off the west edge onto the lawn about 3.8 m below (IMG_7722 112-174 s, IMG_7723 0-15 s)"
+w496301640,Cascais Academic Hall,yes,university,3.0,8.0,,survey V10h,,,"V10c2 (survey V10h, B): Floor-1 ribbon storey over a planted bank, planted roof strips, set-back glazed roof storey (top 22 m), blank white head (top 20 m) with a portal hood (IMG_6239; B01, B02, C02). Modelled by env_campus.py; height_m is not used"
+w622493089,Milestone Carcavelos Nova,yes,dormitory,3.0,10.5,,photo-estimate,,,3 floors (IMG_6429)
+w665606788,Edifício Principal,yes,university,3.0,13.0,,survey V10h,yes,,"V10c2 (survey V10h, A + I): roof 24.5 m; Gallery glass wall set back under the roof overhang, atrium with one glass roof field of about 20 x 34 m, glazed west entrance, white end wall; the race line passes through (hall cut as before). Modelled by env_campus.py from campus_plan.py; height_m is not used"
+w1414332250,,yes,roof,1.0,4.0,,photo-estimate,,,"open canopy on thin pillars, a kart could pass under it (IMG_6397)"
+w496301634,,yes,university,3.0,,,survey V10h,,,"V10c2 (survey V10h, E = Ming C. Hsu Executive Hall): white podium at Floor 1 with two upper boxes under dark roofs. Modelled by env_campus.py; height_m is not used"
+w1042019940,NCI Academy,no,college,3.0,,,default,,,
+w213238769,Pizzaria Capricciosa,no,yes,1.0,4.3,,ortho+photo-estimate,,,"V10b: low white beach restaurant on a plinth, glazed sea front, timber deck with pergola; modelled by env_beachfront.py (DGT ortho 2023, label CAP)"
+w213238771,A Pastorinha,no,yes,1.0,3.8,,ortho+photo-estimate,,,"V10b: low white beach restaurant beside Capricciosa, white canopy over a stone terrace; modelled by env_beachfront.py (ortho label PA)"
+w213240239,Fonte dos Ingleses,no,storage_tank,1.0,,,default-small,,,
+w1339824982,,no,yes,3.0,,,default,,,
+w155316895,,no,yes,1.0,,,osm-tags,,,"V10b: ravelin of the Forte de Sao Juliao (OSM barrier=city_wall, defensive_works=ravelin): low sloped rampart, env_beachfront.py"
+w155320191,,no,yes,3.0,,,default,,,
+w155320228,,no,yes,3.0,,,default,,,
+w167483144,,no,yes,3.0,,,default,,,
+w179614442,,no,yes,3.0,,,default,,,
+w179614681,,no,yes,3.0,,,default,,,
+w179614712,,no,yes,3.0,,,default,,,
+w205127348,,no,yes,3.0,,,default,,,
+w213239659,,no,yes,1.0,5.3,,ortho-estimate,,,V10b: tiled-roof house on the promenade's land side (ortho_west); env_beachfront.py
+w228164466,,no,yes,3.0,,,default,,,
+w228164470,,no,yes,3.0,,,default,,,
+w228204161,,no,yes,2.0,,,orthophoto + Street View N02 (V20d),,,"V20d: two-storey villa / terraced pair with an orange hip roof behind its garden hedge (orthophoto pools and roofs, Street View N02 Jun 2019); built by env_north.build_house from north_plan.HOUSES"
+w228204163,,no,yes,2.0,,,orthophoto + Street View N02 (V20d),,,"V20d: two-storey villa / terraced pair with an orange hip roof behind its garden hedge (orthophoto pools and roofs, Street View N02 Jun 2019); built by env_north.build_house from north_plan.HOUSES"
+w228204164,,no,yes,2.0,,,orthophoto + Street View N02 (V20d),,,"V20d: two-storey villa / terraced pair with an orange hip roof behind its garden hedge (orthophoto pools and roofs, Street View N02 Jun 2019); built by env_north.build_house from north_plan.HOUSES"
+w228204167,,no,yes,2.0,,,orthophoto + Street View N02 (V20d),,,"V20d: two-storey villa / terraced pair with an orange hip roof behind its garden hedge (orthophoto pools and roofs, Street View N02 Jun 2019); built by env_north.build_house from north_plan.HOUSES"
+w228204169,,no,yes,2.0,,,orthophoto + Street View N02 (V20d),,,"V20d: two-storey villa / terraced pair with an orange hip roof behind its garden hedge (orthophoto pools and roofs, Street View N02 Jun 2019); built by env_north.build_house from north_plan.HOUSES"
+w228205972,,no,yes,1.0,,,osm-tags,,,"V10b: fort wall (OSM barrier=city_wall): low sloped rampart, env_beachfront.py"
+w482697583,,no,yes,1.0,2.7,,ortho-estimate,,,V10b: kiosk beside the cove pavilion; env_beachfront.py
+w482697584,,no,yes,1.0,5.1,,ortho+photo-estimate,,,"V10b: cove pavilion, one storey with a terracotta hip roof (ortho_south, K02); env_beachfront.py"
+w482716060,,no,retail,3.0,,,default,,,
+w683128359,,no,yes,3.0,,,default,,,

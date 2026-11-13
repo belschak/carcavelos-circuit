@@ -1,0 +1,309 @@
+/* Start screen (task R11, restyled in R15 "Azulejo Arcade"). Loaded after RaceHud.uss (see RaceHud.uxml), same tokens
+   and the same animation pattern: RaceHud adds "intro-in" to the start screen a moment after it shows, and every rule
+   ".intro-in .x" below is the end state that the transitions run to. UI/TitleScreen.cs makes the title letters
+   (with a growing transition-delay each) and runs the light sweep.
+   Layout at the 1280x720 reference: one focal point on the left (the logo lockup: CARCAVELOS big, CIRCUIT on a tilted
+   orange plate, then the breathing start plate and your best time), the leaderboard plate on the right, and only
+   the two most needed keys at the bottom. The left side is darker (RaceHud's start gradient), the right side lets the
+   campus show. Narrow windows (RaceHud adds hud--narrow below 1230 px, e.g. 4:3) get smaller type at the end of this
+   file, reduced motion gets no animation at all (last block). */
+
+/* ---------- Layout ---------- */
+.ts-layout {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    flex-direction: row;
+    align-items: center;
+    padding: 30px 56px 84px 64px; /* bottom: room for the key legend */
+}
+
+.start-screen .ts-hero {
+    flex-grow: 1;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+/* The letters and the CIRCUIT row share one width: the width of the letters. */
+.ts-lockup {
+    align-items: stretch;
+}
+
+/* ---------- Logo: CARCAVELOS, one Label per letter (TitleScreen) ---------- */
+.ts-logo {
+    flex-direction: row;
+}
+
+.ts-letters {
+    flex-direction: row;
+}
+
+/* Each letter drops in from above, a little too big, and settles (ease-out-back = a small overshoot).
+   Cream with a thick ink outline and a hard ink shadow: a sticker, not a web headline. */
+.ts-letter {
+    font-size: 80px; /* Unbounded is a wide face: 10 letters at 80 px fill the left part next to the board */
+    color: var(--cc-white);
+    -unity-text-outline-width: 5px;
+    -unity-text-outline-color: var(--ink);
+    text-shadow: 0 8px 0 rgba(14, 34, 56, 0.85);
+    opacity: 0;
+    translate: 0 -80px;
+    scale: 1.4 1.4;
+    transition-property: opacity, translate, scale;
+    transition-duration: 160ms, 460ms, 460ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back;
+}
+
+.intro-in .ts-letter {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1 1;
+}
+
+/* The light sweep: two bands that each clip a gold copy of the letters (TitleScreen moves them). A wide soft band
+   and a narrow bright core on the same centre read as one sheen with soft edges. Hidden between sweeps. */
+.ts-glint {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 56px;
+    overflow: hidden;
+    opacity: 0;
+}
+
+.ts-glint--soft {
+    width: 170px;
+}
+
+.ts-glint--on {
+    opacity: 1;
+}
+
+.ts-letters--glint {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Three classes: beats ".intro-in .ts-letter", the copy never drops in, it is always in place. Same outline as
+   the real letters, so the copy lies exactly on them; no shadow (the real one is already there). */
+.ts-glint .ts-letters--glint .ts-letter {
+    color: #FFE08A;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    opacity: 1;
+    translate: 0 0;
+    scale: 1 1;
+    transition-duration: 0s;
+}
+
+.ts-glint.ts-glint--soft .ts-letters--glint .ts-letter {
+    color: rgba(255, 214, 120, 0.6);
+}
+
+/* ---------- CIRCUIT on a tilted orange plate, ROUND 3 as a small cream stamp beside it ---------- */
+.ts-sub-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 2px;
+    margin-right: 6px;
+}
+
+.start-screen .ts-circuit {
+    font-size: 40px;
+    letter-spacing: 4px;
+    padding: 2px 26px 12px 30px; /* bottom: the plate's lip */
+    color: var(--cc-white);
+    rotate: -3deg;
+    opacity: 0;
+    translate: 60px 0;
+    scale: 1.5 1.5;
+    transition-property: opacity, translate, scale;
+    transition-duration: 200ms, 360ms, 360ms;
+    transition-timing-function: ease-out, ease-out-back, ease-out-back;
+    transition-delay: 620ms;
+}
+
+.intro-in .ts-circuit {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1 1;
+}
+
+.ts-slogan {
+    margin-left: 14px;
+    padding: 2px 14px 10px 14px; /* bottom: the chip's shadow */
+    color: var(--ink);
+    font-size: 19px;
+    letter-spacing: 1px;
+    -unity-text-outline-width: 0;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    opacity: 0;
+    scale: 1.8 1.8;
+    transition-property: opacity, scale;
+    transition-duration: 160ms, 260ms;
+    transition-timing-function: ease-out, ease-out-back;
+    transition-delay: 900ms;
+}
+
+.intro-in .ts-slogan {
+    opacity: 1;
+    scale: 1 1;
+}
+
+/* ---------- Start plate, best time, menu (RaceHud and HudMenus run them; only sizes and timing change here) ---------- */
+.start-screen .ts-prompt {
+    margin-top: 34px;
+    margin-left: 4px;
+    height: 70px;
+    padding: 0 40px 6px 40px;
+    font-size: 28px;
+    letter-spacing: 1px;
+}
+
+/* Your best time: a clear cream chip with ink digits (readable on any background).
+   No best yet: TitleScreen adds ts-best--empty and the chip is gone. */
+.start-screen .ts-best {
+    margin-top: 16px;
+    margin-left: 6px;
+    padding: 3px 18px 11px 18px;
+    font-size: 23px;
+    color: var(--ink);
+}
+
+.start-screen .ts-best--empty {
+    display: none;
+}
+
+.start-screen .ts-menu {
+    margin-top: 18px;
+    justify-content: flex-start;
+}
+
+.intro-in .ts-prompt { transition-delay: 1100ms, 1100ms, 0ms; }
+.intro-in .ts-best { transition-delay: 1200ms, 1200ms, 0ms; }
+.intro-in .ts-menu { transition-delay: 1260ms, 1260ms, 0ms; }
+
+/* ---------- Key legend at the bottom ---------- */
+.ts-footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 16px;
+    align-items: center;
+}
+
+.start-screen .ts-controls {
+    margin-top: 0;
+}
+
+.intro-in .ts-controls { transition-delay: 1400ms, 1400ms, 0ms; }
+
+/* ---------- The leaderboard plate on the right slides in after the title ---------- */
+.lb-host--start {
+    width: 400px;
+    margin-left: 28px;
+    opacity: 0;
+    translate: 80px 0;
+    transition-property: opacity, translate;
+    transition-duration: 300ms, 420ms;
+    transition-timing-function: ease-out, ease-out-back;
+    transition-delay: 700ms;
+}
+
+.intro-in .lb-host--start {
+    opacity: 1;
+    translate: 0 0;
+}
+
+/* ---------- Results screen: the card and the leaderboard side by side ---------- */
+.hud-root .results-screen {
+    flex-direction: row;
+}
+
+.lb-host--results {
+    width: 380px;
+    margin-left: 22px;
+    opacity: 0;
+    translate: 60px 0;
+    transition-property: opacity, translate;
+    transition-duration: 260ms, 380ms;
+    transition-timing-function: ease-out, ease-out-back;
+    transition-delay: 450ms;
+}
+
+.results--in .lb-host--results {
+    opacity: 1;
+    translate: 0 0;
+}
+
+/* ---------- Narrow windows (4:3, 16:10) ---------- */
+.hud--narrow .ts-layout {
+    padding-left: 28px;
+    padding-right: 24px;
+}
+
+.hud--narrow .ts-letter {
+    font-size: 54px;
+    -unity-text-outline-width: 4px;
+    text-shadow: 0 6px 0 rgba(14, 34, 56, 0.85);
+}
+
+.hud--narrow .start-screen .ts-circuit {
+    font-size: 28px;
+    letter-spacing: 2px;
+}
+
+.hud--narrow .ts-slogan {
+    font-size: 16px;
+}
+
+.hud--narrow .start-screen .ts-prompt {
+    font-size: 21px;
+    height: 60px;
+    padding: 0 26px 6px 26px;
+}
+
+.hud--narrow .lb-host--start {
+    width: 340px;
+    margin-left: 16px;
+}
+
+.hud--narrow .lb-host--results {
+    width: 330px;
+    margin-left: 12px;
+}
+
+.hud--narrow .start-screen .ts-controls {
+    scale: 0.85 0.85;
+}
+
+/* ---------- Reduced motion: everything is simply there, nothing moves, nothing flashes ----------
+   The start values are set to the end values, so adding "intro-in" changes nothing (the letters' inline delays
+   then do nothing either). TitleScreen also skips the light sweep. */
+.reduce-motion .ts-letter,
+.reduce-motion .intro-in .ts-letter {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1 1;
+}
+
+.reduce-motion .ts-circuit,
+.reduce-motion .lb-host--start,
+.reduce-motion .lb-host--results {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1 1;
+}
+
+.reduce-motion .ts-slogan {
+    opacity: 1;
+    scale: 1 1;
+}
+
+.reduce-motion .ts-glint {
+    opacity: 0;
+}

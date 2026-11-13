@@ -1,0 +1,311 @@
+fileFormatVersion: 2
+guid: 823be633fe6bf48fabe73463b53ca163
+ModelImporter:
+  serializedVersion: 24300
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_B_deck_white
+    second: {fileID: 2100000, guid: 5a42edaefe504480b80032f7a05ba35e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_asphalt
+    second: {fileID: 2100000, guid: 9e282c72958bf43f0865323dbe7a4f4a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_calcada
+    second: {fileID: 2100000, guid: 61443a07cfebc475892cd0093dfe146c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_concrete_light
+    second: {fileID: 2100000, guid: 4ddfa01b900a2413ebbffeb4531dc204, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_concrete_polished
+    second: {fileID: 2100000, guid: e5a3902a81e02420ebec93637d855a97, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_concrete_sand
+    second: {fileID: 2100000, guid: e535d10e2edb94b3ba6284dcc5ae4a71, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_kerb
+    second: {fileID: 2100000, guid: b1f8cf19a6b3e4f32b3b02c2f599ae20, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_plaza_ochre
+    second: {fileID: 2100000, guid: c6e0559daa34a4cc597357d4802e83ef, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_sand
+    second: {fileID: 2100000, guid: cb4df7b947503462aa1302ab6f94d9ff, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_skylight
+    second: {fileID: 2100000, guid: 158e3c95d7bd44eecba116a66f08b886, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_terracotta
+    second: {fileID: 2100000, guid: 846434ce738da40d399a8c58986dbfa3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_T_tunnel_floor
+    second: {fileID: 2100000, guid: 95c59b7035dfe4ad4b5e04c15fd82b4b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_campus_east_concrete
+    second: {fileID: 2100000, guid: 35cf648256f974023b2f57f4f740cab0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_coast_concrete_beige
+    second: {fileID: 2100000, guid: 20a830b2c80774d4384987ed12feca8e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_coast_concrete_ochre
+    second: {fileID: 2100000, guid: 6a117b48e2ad145278a77f8efdfb871e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_coast_concrete_pale
+    second: {fileID: 2100000, guid: d6314627c56ad4ef8949dd58a09183e5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_edge_line_graphite
+    second: {fileID: 2100000, guid: 5e533bae82ee84c94b375233d845a8f4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_edge_line_white
+    second: {fileID: 2100000, guid: cb80ba6a17cc04414914b48dcada5d72, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_calcada
+    second: {fileID: 2100000, guid: a111e9648630f488192f47d433289e6a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_drain
+    second: {fileID: 2100000, guid: 3c312f9c365b64fd1936fc4f3a6383f7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_entrance_planks
+    second: {fileID: 2100000, guid: 293399d8a519d4cbc8a4604c668b9c57, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ground_map
+    second: {fileID: 2100000, guid: ae4fb58be0c3e4049a95152f455dec8a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_north_basalt
+    second: {fileID: 2100000, guid: 2d842f04d9ad04dd7ab1170997647268, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_plaza_terracotta
+    second: {fileID: 2100000, guid: 70e713d00742e4df1b6d751b136449ef, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_road_paint_kerb
+    second: {fileID: 2100000, guid: e3ee13faeb52640bdae21152510cd5c2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_road_paint_line_worn
+    second: {fileID: 2100000, guid: 6df96de4ba53a4ab1b9fc93c9f94731e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_road_paint_render_white
+    second: {fileID: 2100000, guid: 37021dc0e0fbf45579eaa65c0ee87cbe, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_road_paint_sett_pale
+    second: {fileID: 2100000, guid: 523be66c049f044b6b99e00f6d766c7d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_road_paint_setts_dark
+    second: {fileID: 2100000, guid: b96de452125924c6fa9c902ec7da43de, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_road_paint_white
+    second: {fileID: 2100000, guid: aad4e11effb464530991e631f5e35b45, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_road_paint_yellow
+    second: {fileID: 2100000, guid: 61c97f3ac3b304d6eab9e65a537220a1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_sign_chevron
+    second: {fileID: 2100000, guid: e2aee4a441815488bae4fb746da72cae, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_sign_post
+    second: {fileID: 2100000, guid: cdd32cac71ed247d5a1670a2d3b2847c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_sign_white
+    second: {fileID: 2100000, guid: fafe7686088e445d0b4b1d74154e89e3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_start_banner
+    second: {fileID: 2100000, guid: 6a2ad2434bd0a4d98b70f259aed81d56, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_concrete
+    second: {fileID: 2100000, guid: 010b1b53f318047e9bc19a1ff172eade, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_palette
+    second: {fileID: 2100000, guid: 45924e4bfe0e54c1c9a747a920268611, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_setts
+    second: {fileID: 2100000, guid: a32b502b2d12c413d88fc0fd4e5eeacf, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_slab
+    second: {fileID: 2100000, guid: fbf398ad1abf346efae3ab01831138ed, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_street_slab_dark
+    second: {fileID: 2100000, guid: b98565456136b4178afff13d810cbdef, type: 2}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+    searchTexturesGlobally: 0
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 0
+    importCameras: 0
+    importLights: 0
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 0
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

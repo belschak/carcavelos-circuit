@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 329c3571df44f0242807a1ff8bae9b1b, type: 3}
+  m_Name: KartTuning
+  m_EditorClassIdentifier: CarcavelosCircuit.Driving::CarcavelosCircuit.Driving.KartTuning
+  maxSpeed: 18
+  maxReverseSpeed: 8
+  acceleration: 10
+  brakeDeceleration: 30
+  reverseAcceleration: 10
+  coastDeceleration: 6
+  turnDegreesPerSecond: 110
+  fullSteerSpeed: 5
+  sideGrip: 10
+  groundCheckExtra: 0.3
+  driftMinSteer: 0.5
+  driftStartSpeedFraction: 0.4
+  driftMinSpeedFraction: 0.3
+  driftGripMultiplier: 0.3
+  driftMinTurn: 0.4
+  driftMaxTurn: 1.1
+  driftSpeedLoss: 0.1
+  stage1Seconds: 0.8
+  stage2Seconds: 1.6
+  chargeRateAgainstTurn: 0.7
+  chargeRateIntoTurn: 1.3
+  boostSpeedMultiplier: 1.45
+  boostAcceleration: 40
+  stage1BoostSeconds: 0.4
+  stage2BoostSeconds: 1.2
+  airSteerFraction: 0.25
+  fallGravityMultiplier: 1.5
+  visualTiltSpeed: 10

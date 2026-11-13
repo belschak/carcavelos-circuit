@@ -25,6 +25,7 @@ namespace CarcavelosCircuit.Shared.Editor
         {
             "Assets/_Project/RaceFlow/Scenes/Main.unity",
             "Assets/_Project/Track/Scenes/Track_Campus.unity",
+            "Assets/_Project/RaceFlow/Scenes/RaceFlow_PlaceholderTrack.unity", // Role 4 test loop, added only if it exists
         };
 
         [MenuItem("Carcavelos Circuit/Project Setup")]
@@ -92,9 +93,22 @@ namespace CarcavelosCircuit.Shared.Editor
         private static void SetBuildScenes()
         {
             var list = new List<EditorBuildSettingsScene>();
+            var ours = new List<string>();
             foreach (string path in BuildScenes)
             {
-                list.Add(new EditorBuildSettingsScene(path, true));
+                if (System.IO.File.Exists(path))
+                {
+                    list.Add(new EditorBuildSettingsScene(path, true));
+                    ours.Add(path);
+                }
+            }
+            // Merged, never replaced: keep every scene someone else added (e.g. Track_CampusWorld from the race builder).
+            foreach (EditorBuildSettingsScene existing in EditorBuildSettings.scenes)
+            {
+                if (!ours.Contains(existing.path))
+                {
+                    list.Add(existing);
+                }
             }
             EditorBuildSettings.scenes = list.ToArray();
         }
