@@ -52,6 +52,11 @@ NEW = {
     "Prop_AIFoodTruck": ("S3_foodtruck", ("width", 2.3), True),
     "Prop_AIKiosk": ("S4_kiosk", ("span", 3.0), True),
     "Prop_AIVolleyNet": ("B5_volleynet", ("box", (9.5, None, 2.55)), False),   # spans along x; a real net: 9.5 x 2.43 m
+    "Prop_AISurfRack": ("B4_surfrack", ("height", 2.3), True),
+    "Prop_AIBistroSet": ("S1_bistroset", ("span", 1.6), True),
+    "Prop_AIBarStool": ("S2_barstool", ("height", 0.76), True),
+    "Prop_AIScooter": ("V1_scooter", ("span", 1.8), True),
+    "Prop_AIEScooter": ("P2_escooter", ("span", 1.1), True),
 }
 # Where they stand: on the cove beach south of the promenade (sand 13-17 m from the route, ground mask checked) and
 # the food truck on the palm car park at the beach bar (paving, 13 m from the route). (x, y, yaw deg, ground)
@@ -59,7 +64,18 @@ NEW_PLACES = (
     ("Prop_AIVolleyNet", -89.0, -167.0, 0.0, "sand"),
     ("Prop_AIKiosk", -134.0, -164.0, 90.0, "sand"),                   # its counter faces the promenade (north)
     ("Prop_AIFoodTruck", -74.0, -133.0, 180.0, "paving"),
-)       # Prop_BikeRack: three bikes beside its hoops (x of each)
+    # Luc, 13 Nov: the rest too. Surf rack beside the kiosk, three stools at its counter (sand), a scooter next to the
+    # food truck, three hire e-scooters on the coastal road's pavement between its bike racks (11-13 m from the route)
+    ("Prop_AISurfRack", -138.5, -164.0, 90.0, "sand"),
+    ("Prop_AIBarStool", -135.0, -162.3, 0.0, "sand"),
+    ("Prop_AIBarStool", -134.0, -162.3, 40.0, "sand"),
+    ("Prop_AIBarStool", -133.0, -162.3, 75.0, "sand"),
+    ("Prop_AIScooter", -79.0, -132.5, 70.0, "paving"),
+    ("Prop_AIEScooter", -231.9, -33.7, 53.0, "paving"),
+    ("Prop_AIEScooter", -231.4, -34.1, 58.0, "paving"),
+    ("Prop_AIEScooter", -230.9, -34.5, 48.0, "paving"),
+)
+BEACH_BAR = (-46.0, -147.0, 9.0)       # the beach bar terrace: its tables and chairs become AI bistro sets (centre, radius)       # Prop_BikeRack: three bikes beside its hoops (x of each)
 ROUGHNESS = {"C": 0.35, "B": 0.6, "P": 0.45}                  # paint a little glossy, beach wood and canvas matt
 
 
@@ -228,10 +244,54 @@ def swap(protos):
     return report
 
 
+def _ground_hit(x, y, z_from):
+    """Height of the built ground (not a prop or plant) under (x, y), from z_from down; None if nothing."""
+    dg = bpy.context.evaluated_depsgraph_get()
+    sc = bpy.context.scene
+    z = z_from
+    for _ in range(6):
+        hit, loc, _n, _i, ob, _m = sc.ray_cast(dg, Vector((x, y, z)), Vector((0.0, 0.0, -1.0)), distance=40.0)
+        if not hit:
+            return None
+        if not ob.name.startswith(("Prop_", "Veg_", "Proto")):
+            return loc.z
+        z = loc.z - 0.01
+    return None
+
+
+def _wheel_ground(proto, p):
+    """A car stands on the lowest of its four wheel points: on sloping ground the old placement height (at its
+    centre) left one end in the air (Luc, 13 Nov: "the cars partly float")."""
+    if proto is None:
+        return p["z"]
+    xs = [v.co.x for v in proto.data.vertices]
+    ys = [v.co.y for v in proto.data.vertices]
+    hx, hy = 0.36 * (max(xs) - min(xs)), 0.38 * (max(ys) - min(ys))
+    c, s_ = math.cos(p["rot_z"]), math.sin(p["rot_z"])
+    zs = []
+    for ax, ay in ((hx, hy), (hx, -hy), (-hx, hy), (-hx, -hy)):
+        z = _ground_hit(p["x"] + c * ax - s_ * ay, p["y"] + s_ * ax + c * ay, p["z"] + 2.5)
+        if z is not None and abs(z - p["z"]) < 0.6:
+            zs.append(z)
+    # at most 8 cm below the old height: a wheel point beyond a kerb hits the lower ground there (up to 29 cm)
+    return round(max(min(zs), p["z"] - 0.08), 3) if zs else p["z"]
+
+
 def far_variants(props, protos):
     """Placements more than NEAR_M from the route use '<proto>_Far': the same model and textures, decimated to
     FAR_TRIS. Adds those prototypes to `protos` and the Proto_Props collection. Returns the new props list."""
     import street_plan as S
+    bx, by, br = BEACH_BAR
+    bar_tables = []
+    if "Prop_AIBistroSet" in protos:
+        kept = []
+        for p in props:
+            at_bar = math.hypot(p["x"] - bx, p["y"] - by) < br
+            if at_bar and p["proto"] == "Prop_BistroTable":
+                bar_tables.append(p)
+            elif not (at_bar and p["proto"] == "Prop_BistroChair"):
+                kept.append(p)
+        props = kept + [dict(t, proto="Prop_AIBistroSet") for t in bar_tables]
     out, far, dupes, cars = [], 0, 0, []
     for p in props:
         if p["proto"].startswith("Prop_Car"):          # two dressing steps put a car on the same bay twice (2 spots)
@@ -239,6 +299,7 @@ def far_variants(props, protos):
                 dupes += 1
                 continue
             cars.append((p["x"], p["y"]))
+            p = dict(p, z=_wheel_ground(protos.get(p["proto"]), p))
         name = p["proto"]
         if name in protos and (name in SWAPS or name == "Prop_BikeRack") and S.route_distance(p["x"], p["y"]) > NEAR_M:
             fname = name + "_Far"
@@ -272,5 +333,5 @@ def far_variants(props, protos):
     data["counts"] = counts
     json.dump(data, open(path, "w"), indent=1)
     print(f"  ai props (V18m): {far} placements further than {NEAR_M:.0f} m from the route use the _Far versions; "
-          f"{dupes} doubled cars removed")
+          f"{dupes} doubled cars removed; {len(bar_tables)} beach bar tables are bistro sets")
     return out
