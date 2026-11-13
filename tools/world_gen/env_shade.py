@@ -34,7 +34,8 @@ SKIP_COLLECTIONS = ("Track_RouteGuide", "World_TunnelGuides")
 GROUND_PREFIX = ("World_Ground",)                       # occluders that count as "the ground" (weight AO_GROUND)
 NO_OCCLUDER = ("ColliderOnly", "Backdrop_", "WorldOrigin", "RouteGuide", "Marker_", "World_Paths_tunnel", "NoCollide_Paint")
 NO_TARGET = ("ColliderOnly", "Backdrop_Sea", "Backdrop_Land", "Backdrop_FarBeach", "Backdrop_FarTown", "Backdrop_Horizon",
-             "WorldOrigin", "World_Ground", "Coast_Rocks", "Track_Road", "Track_Kerbs", "Track_EdgeLines", "NoCollide_Paint")
+             "WorldOrigin", "World_Ground", "Coast_Rocks", "Track_Road", "Track_Kerbs", "Track_EdgeLines", "NoCollide_Paint",
+             "Track_PlazaStairs")   # V18: the steps occlude each other (mean 0.50), the drivable stairs stay unshaded like the road
 
 
 def _directions():
@@ -119,6 +120,9 @@ def bake():
     occluders = [o for o in world if not any(k in o.name for k in NO_OCCLUDER)]
     tree, first_solid = _tree(occluders)
     cache, done, corners, dark = {}, set(), 0, 0
+    for obj in meshes:                                       # V18n: plants and hedge leaves that bring their own vertex
+        if obj.data.get("own_colours"):                      # colours (env_vegetation.MeshBuilder.build) keep them
+            done.add(obj.data.name)
     for obj in world:
         if obj.data.name in done:
             continue

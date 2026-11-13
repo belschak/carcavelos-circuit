@@ -92,6 +92,7 @@ Material:
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
+    - _Crown: 0
     - _Cull: 2
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
@@ -121,9 +122,11 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _Leaf: {r: 0.4, g: 0.9, b: 0.4, a: 0}
     - _Shrink: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _Wind: {r: 0.9, g: 0.42, b: 0.03, a: 0.035}
+    - _Translucency: {r: 0.62, g: 0.66, b: 0.16, a: 1}
+    - _Wind: {r: 0.9, g: 0.42, b: 0.05, a: 0.035}
     - _WindSpeed: {r: 0.9, g: 2.6, b: 0.07, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

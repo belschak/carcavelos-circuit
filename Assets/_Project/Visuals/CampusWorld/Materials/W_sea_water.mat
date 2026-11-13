@@ -143,12 +143,14 @@ Material:
     - _BaseColor: {r: 0.1911, g: 0.5442, b: 0.835, a: 1}
     - _CoastWest: {r: -860, g: 68, b: 0.522, a: 0}
     - _Color: {r: 0.19109997, g: 0.5442, b: 0.835, a: 1}
-    - _DeepColor: {r: 0.07, g: 0.3, b: 0.62, a: 1}
+    - _DeepColor: {r: 0.03, g: 0.27, b: 0.62, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Foam: {r: 2.2, g: 1.6, b: 0.7, a: 2.5}
     - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
     - _Glint: {r: 260, g: 2.4, b: 0, a: 0}
-    - _ShallowColor: {r: 0.33, g: 0.8, b: 0.78, a: 1}
+    - _ScatterColor: {r: 0.05, g: 0.68, b: 0.58, a: 1}
+    - _ShallowColor: {r: 0.16, g: 0.86, b: 0.8, a: 1}
+    - _Sheen: {r: 18, g: 0.35, b: 3.2, a: 0.5}
     - _ShoreRect: {r: -920, g: -670, b: 0.00066666666, a: 0.0010989011}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _WaveA: {r: 13, g: 1, b: 0.35, a: 0.9}

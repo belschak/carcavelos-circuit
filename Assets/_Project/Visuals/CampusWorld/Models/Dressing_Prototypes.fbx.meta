@@ -7,8 +7,123 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_B_railing
+    second: {fileID: 2100000, guid: 128bfc8c94c2345a3a83ce714aedd223, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_B_roof_tiles
     second: {fileID: 2100000, guid: c9a7e83b5e1ab44af9f9ec87d7e8b2c4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_B1_parasol
+    second: {fileID: 2100000, guid: c09e43a3a85e84b5abfb460387d6f0f4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_B2_lounger
+    second: {fileID: 2100000, guid: 108922aeda7f24c52aa5da5fa88fbed4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_B3_lifeguard
+    second: {fileID: 2100000, guid: caf3f67ae35b04e50aa2c4ff607477cc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_B4_surfrack
+    second: {fileID: 2100000, guid: 9015f1e59c9ef4a6b92bbfffc645b47b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_B5_volleynet
+    second: {fileID: 2100000, guid: 87519350649c04d518a92d68a34c7108, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_C1_hatchback
+    second: {fileID: 2100000, guid: db3665536242d41dda8bbe033426a93c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_C1_hatchback_red
+    second: {fileID: 2100000, guid: d72e0803a8b2642eaa04155039d5be4d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_C1_hatchback_silver
+    second: {fileID: 2100000, guid: 9766cd1a89ecf4747ba401e87dc38d6b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_C2_estate
+    second: {fileID: 2100000, guid: aa80fbcdc851c40e6ae6cd2926a83918, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_C3_suv
+    second: {fileID: 2100000, guid: 6fd3c78b4648d479e9d647c7d7d7af7b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_C4_camper
+    second: {fileID: 2100000, guid: 8c29d33d4cbeb43fa9b99b144ffa00d9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_C5_microcar
+    second: {fileID: 2100000, guid: 150e3a89d9164405c84267008c506a8a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_C6_panelvan
+    second: {fileID: 2100000, guid: c40848500b760440b941f8d1536dcd4c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_P1_bicycle
+    second: {fileID: 2100000, guid: 754ad5360eddb4668adab7858308bf9b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_P1_bicycle_orange
+    second: {fileID: 2100000, guid: 0903e33960cbb4717ab3c511f569a6c8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_P1_bicycle_teal
+    second: {fileID: 2100000, guid: 278c1afce3d80401fbdcc4bb9aed1196, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_P2_escooter
+    second: {fileID: 2100000, guid: 06671d2ac6ee249018f8c97f8ab81794, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_S1_bistroset
+    second: {fileID: 2100000, guid: 30c9a3f5f8d28483a9e9e84ec815fe26, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_S2_barstool
+    second: {fileID: 2100000, guid: dce95ae7e12b349569eed98d31811a33, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_S3_foodtruck
+    second: {fileID: 2100000, guid: 0fb1084cf6eee4c78930905ad772c722, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_S4_kiosk
+    second: {fileID: 2100000, guid: 5ce4da8ad3b4c49b79becc75fda5bb40, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_ai_V1_scooter
+    second: {fileID: 2100000, guid: 31312ac1dbcb7471cb743a2f59357c01, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -369,6 +484,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_tree_plaza
     second: {fileID: 2100000, guid: 620aead0238ae4a38aa5edd5cfbf20be, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_veg_leaves
+    second: {fileID: 2100000, guid: d31445a535fce4982a24c35a79cb787d, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

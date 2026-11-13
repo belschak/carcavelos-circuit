@@ -60,7 +60,7 @@ def mat(key):
     if key == "glass":
         return _textured("T_skylight", "#9DBAC0", "skylight_glass", 0.35)
     if key == "terracotta":             # own material (the track's W_T_terracotta carries a roughness map)
-        return _textured("plaza_terracotta", "#B08A72", "plaza_terracotta", 0.85)   # V16: pale salmon; V10i: #C8664A
+        return _textured("plaza_terracotta", "#DBC3A6", "plaza_terracotta", 0.85)   # V18g: pale peach stone; V18 walk #C6AA93; V16 #B08A72; V10i: #C8664A
     if key == "floor":
         return env_track.surface_material("concrete_polished")
     if key == "white":
@@ -478,32 +478,72 @@ def build_low(col):
 
 
 def build_kicker(col):
-    """V14b: what you see of the shortcut's kicker: Boost Orange stripes across (the kerb texture, like the terrace
-    kicker), solid sides, a front under the lip. No collider (the welded drive mesh carries it)."""
+    """V14b: what you see of the shortcut's kicker. No collider (the welded drive mesh carries it, 2 mm higher).
+    V18i (Luc: "the ramp is transparent"): ONE closed, welded solid with every face looking outwards by construction.
+    Before, each face had its own vertices and recalc_face_normals() turned every island on its own, so about half
+    the top strips and side pieces looked inwards and vanished in the game (Unity draws front faces only); the cheeks
+    and the front also overlapped the pier's walls by 5 cm in the same plane. Now: striped top between two white edge
+    lines, Boost Orange cheeks and lip face that start exactly at the deck / the pier's top (no overlap), a bottom."""
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new("UVMap")
     grid = kick_grid()
     w = P.KICK_U[1] - P.KICK_U[0]
+    line = 0.16                                                  # white edge line on both sides of the top
+    cache = {}
+
+    def vert(p):
+        key = (round(p[0], 4), round(p[1], 4), round(p[2], 4))
+        if key not in cache:
+            cache[key] = bm.verts.new(p)
+        return cache[key]
+
+    def face(pts, uvs, slot, want):
+        """want: the direction the face must look (its normal's dot product with it > 0); turned if it does not."""
+        ring = []
+        for p, t in zip(pts, uvs):                               # a cheek's first piece is a triangle (height 0)
+            v = vert(p)
+            if not ring or (v is not ring[-1][0] and v is not ring[0][0]):
+                ring.append((v, t))
+        if len(ring) < 3:
+            return
+        a, b, c = (Vector(v.co) for v, _t in ring[:3])
+        if (b - a).cross(c - a).dot(Vector(want)) < 0:
+            ring.reverse()
+        f = bm.faces.new([v for v, _t in ring])
+        f.material_index = slot
+        for loop, (_v, t) in zip(f.loops, ring):
+            loop[uv].uv = t
+
+    def across(row, u):                                          # point of a row at u metres from its west end
+        t = u / w
+        return tuple(row[0][k] + (row[-1][k] - row[0][k]) * t for k in range(3))
+    right, fwd, up = P.SC_RIGHT, P.SC_DIR, (0.0, 0.0, 1.0)
     for k, (r0, r1) in enumerate(zip(grid, grid[1:])):
         s0, s1 = P.KICK_LEN * k / KICK_ROWS, P.KICK_LEN * (k + 1) / KICK_ROWS
-        top = bm.faces.new([bm.verts.new(p) for p in (r0[0], r0[-1], r1[-1], r1[0])])
-        for loop, c in zip(top.loops, ((0.0, s0 / 2), (w / 2, s0 / 2), (w / 2, s1 / 2), (0.0, s1 / 2))):
-            loop[uv].uv = c
-        for a, b, flip in ((r0[0], r1[0], True), (r0[-1], r1[-1], False)):
-            vs = [bm.verts.new((a[0], a[1], P.DECK_Z - 0.05)), bm.verts.new((b[0], b[1], P.DECK_Z - 0.05)), bm.verts.new(b), bm.verts.new(a)]
-            side = bm.faces.new(vs[::-1] if flip else vs)
-            for loop in side.loops:
-                loop[uv].uv = (0.05, loop.vert.co.z)
-    a, b = grid[-1][0], grid[-1][-1]
-    front = bm.faces.new([bm.verts.new((a[0], a[1], P.DECK_Z - 0.05)), bm.verts.new(a), bm.verts.new(b), bm.verts.new((b[0], b[1], P.DECK_Z - 0.05))])
-    for loop in front.loops:
-        loop[uv].uv = (0.05, loop.vert.co.z)
+        for u0, u1, slot in ((0.0, line, 1), (line, w - line, 0), (w - line, w, 1)):
+            face([across(r0, u0), across(r0, u1), across(r1, u1), across(r1, u0)],
+                 [(u0 / 2, s0 / 2), (u1 / 2, s0 / 2), (u1 / 2, s1 / 2), (u0 / 2, s1 / 2)], slot, up)
+        for a, b, out in ((r0[0], r1[0], (-right[0], -right[1], 0.0)), (r0[-1], r1[-1], (right[0], right[1], 0.0))):
+            pts = [(a[0], a[1], P.DECK_Z), (b[0], b[1], P.DECK_Z), b, a]
+            face(pts, [(0.05, p[2]) for p in pts], 0, out)
+    a, b = grid[-1][0], grid[-1][-1]                             # the lip's face, looking into the courtyard
+    pts = [(a[0], a[1], P.DECK_Z), a] + [across(grid[-1], u) for u in (line, w - line)] + [b, (b[0], b[1], P.DECK_Z)]
+    face(pts, [(0.05, p[2]) for p in pts], 0, (fwd[0], fwd[1], 0.0))
+    ring = [(r[0][0], r[0][1], P.DECK_Z) for r in grid] + [(r[-1][0], r[-1][1], P.DECK_Z) for r in reversed(grid)] \
+        + [across(grid[0], u) for u in (w - line, line)]        # (the first row lies on the deck's level)
+    face(ring, [(0.05, 0.0)] * len(ring), 0, (0.0, 0.0, -1.0))  # the bottom (on the deck's level, never seen)
     bm.normal_update()
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    open_edges = sum(1 for e in bm.edges if len(e.link_faces) != 2)
+    inward = sum(1 for e in bm.edges if not e.is_contiguous) + (bm.calc_volume(signed=True) <= 0)
+    print(f"  plaza: shortcut kicker {len(bm.faces)} faces, edges not shared by exactly two faces: {open_edges}, "
+          f"edges whose two faces disagree about the outside (+1 if the whole solid is inside out): {inward}")
+    if open_edges or inward:
+        raise RuntimeError("V18i: the shortcut kicker is not a closed solid with outward faces")
     mesh = bpy.data.meshes.new("Track_ShortcutKicker")
     bm.to_mesh(mesh)
     bm.free()
     mesh.materials.append(E.material("T_kerb", "#FF8A1F", roughness=0.7))
+    mesh.materials.append(E.material("edge_line_white", "#EDEDE8", roughness=0.6))
     E.new_object("Track_ShortcutKicker_NoCollide", mesh, col)
 
 
@@ -597,7 +637,34 @@ def build_stairs(col):
     # main stairs. V16 (survey V15, section 4 item 2): low steps over the full width, 21 risers of about 0.16 m
     # (V10i: steps on the east half, seating tiers of two steps each on the west half). The steps keep their place under
     # the driving surface: tread k lies STEP_UNDER below the profile at its own riser, as before.
-    build_steps(vis, P.stair_point, zmain, 0.0, length, treads, -half, half, P.LOW_Z, zmain(length), "terracotta")
+    # V18g (walk 7 Nov 2026, ANTWORT A10): the flight is two halves, offset lengthwise, with a joint down the middle.
+    # East half as before; the west half's risers stand half a tread further up (its treads still lie STEP_UNDER below
+    # the profile at their own riser, so the driving surface is never below a step). Visual only.
+    build_steps(vis, P.stair_point, zmain, 0.0, length, treads, 0.0, half, P.LOW_Z, zmain(length), "terracotta")
+    d = length / treads
+    ua, ub = -half / TILE_STEP, 0.0
+
+    def west_tread(a, b, z):
+        t = (b - a) / d
+        vis.face([(*P.stair_point(a, -half), z), (*P.stair_point(a, 0.0), z), (*P.stair_point(b, 0.0), z),
+                  (*P.stair_point(b, -half), z)], "terracotta", [(ua, 0.0), (ub, 0.0), (ub, t), (ua, t)])
+
+    def west_z(s):
+        return P.LOW_Z + 0.004 if s < d / 2 else zmain(d / 2 + int((s - d / 2) / d) * d) - STEP_UNDER
+    west_tread(0.0, d / 2, P.LOW_Z + 0.004)                             # the landing strip before the first riser
+    build_steps(vis, P.stair_point, zmain, d / 2, length - d / 2, treads - 1, -half, 0.0, P.LOW_Z + 0.004,
+                zmain(length - d / 2) - STEP_UNDER, "terracotta")
+    west_tread(length - d / 2, length, zmain(length - d / 2) - STEP_UNDER)
+    vis.face([(*P.stair_point(length, -half), zmain(length - d / 2) - STEP_UNDER), (*P.stair_point(length, 0.0), zmain(length - d / 2) - STEP_UNDER),
+              (*P.stair_point(length, 0.0), zmain(length)), (*P.stair_point(length, -half), zmain(length))], "terracotta",
+             [(ua, 0.42), (ub, 0.42), (ub, 0.58), (ua, 0.58)])
+    for j in range(2 * treads):                                         # the joint's cheeks (sawtooth between the halves)
+        a, b = j * d / 2, (j + 1) * d / 2
+        ze, zw = tread_z(zmain, 0.0, length, treads, (a + b) / 2), west_z((a + b) / 2)
+        if abs(ze - zw) < 0.005:
+            continue
+        face = P.STAIR_RIGHT if zw > ze else (-P.STAIR_RIGHT[0], -P.STAIR_RIGHT[1])
+        vis.wall(P.stair_point(a, 0.0), P.stair_point(b, 0.0), max(ze, zw), max(ze, zw), min(ze, zw), face, key="terracotta")
     # the stair in the slot
     build_steps(vis, P.slot_point, zslot, P.SLOT_LANDING, P.SLOT_LEN, P.SLOT_RISERS - 1, 0.0, P.SLOT_W, P.LOW_Z, zslot(P.SLOT_LEN),
                 "ochre", tile=TILE_OCHRE)
@@ -708,11 +775,18 @@ def build_walls(col):
     ring = strip(*P.GAP_BARRIER, P.BARRIER_HALF)
     m.prism(ring, P.DECK_Z - 0.05, P.DECK_Z + P.BARRIER_H, "white")
     m.prism(strip(*P.GAP_BARRIER, P.BARRIER_HALF - 0.15), P.DECK_Z + P.BARRIER_H - 0.05, P.DECK_Z + P.BARRIER_H + 0.55, "hedge")
+    import env_vegetation as V                                 # V18n: leaf cards over the hedge boxes
+    V.hedge_leaves("Plaza_BarrierHedgeLeaves", V.hedge_box_faces(
+        list(P.GAP_BARRIER), 2 * (P.BARRIER_HALF - 0.15), lambda x, y: P.DECK_Z + P.BARRIER_H,
+        lambda x, y: P.DECK_Z + P.BARRIER_H + 0.55), "hedge", "broad", card=0.5, cover=5.0, seed=70, fins=0.4, foot=0.0)
     # V16 (survey V15: no hedges, planters or loungers on the plaza): V10i's two hedge planters and three lounge blocks
     # are gone; the hedge boxes of the shortcut's funnel stay exactly (they guide the yellow route).
     for a, b in zip(P.FUNNEL, P.FUNNEL[1:]):                   # V14b: hedge boxes that lead the climb's exit to checkpoint 10
         m.prism(strip(a, b, 0.5), P.DECK_Z - 0.05, P.DECK_Z + 0.5, "white")
         m.prism(strip(a, b, 0.37), P.DECK_Z + 0.45, P.DECK_Z + 0.95, "hedge")
+        V.hedge_leaves(f"Plaza_FunnelHedgeLeaves{P.FUNNEL.index(a)}", V.hedge_box_faces(
+            [a, b], 0.74, lambda x, y: P.DECK_Z + 0.5, lambda x, y: P.DECK_Z + 0.95), "hedge", "broad", card=0.45,
+            cover=5.0, seed=71 + P.FUNNEL.index(a), fins=0.35, foot=0.0)
     build_furniture(m)
     m.finish(col)
 

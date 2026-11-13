@@ -34,10 +34,13 @@ import env_covebank             # noqa: E402  V10d: the cove bank outside the co
 import env_coast                # noqa: E402  V16e: coast section (forecourt, cove wall, terrace, bar, prow)
 import env_streets              # noqa: E402  V10f: the street section rebuilt from the Street View survey
 import env_street_objects       # noqa: E402
+import env_ai_props             # noqa: E402
 import env_capricciosa          # noqa: E402  V16g: Capricciosa forecourt, sea wall, car-park corner
 import env_promenade_shortcut   # noqa: E402  V19: Luc's red shortcut along the parking aisle
 import env_campus               # noqa: E402  V10c2: campus buildings, courtyards, pools
 import env_plaza                # noqa: E402  V10i: upper plaza, stairs, sunken courtyard
+import env_campus_east          # noqa: E402  V18g: its dress() hook (east grounds as on Google Maps)
+import hairpin_flush           # noqa: E402  V18i: smooth ground inside the Capricciosa hairpin
 import dressing_freeze         # noqa: E402  V10i: dressing stays put outside changed route sections
 import dressing_reality        # noqa: E402  V16f: what does not exist goes, what does is added (survey V15)
 import env_vegetation           # noqa: E402
@@ -299,6 +302,7 @@ def build_dressing():
     the placements are data (out/placements_vegetation.json, out/placements_props.json) so Unity can instance them.
     In the .blend they appear as linked duplicates for the renders. Replaces the old cone trees."""
     protos = {**env_vegetation.build_prototypes(), **env_props.build_prototypes(), **env_street_objects.build_prototypes()}
+    env_ai_props.swap(protos)                              # V18m: AI-made models (Tripo) for cars, parasols, loungers ...
     veg = env_vegetation.place()
     props = env_props.place(avoid=veg)
     veg, props = env_street_objects.dress(veg, props)      # V10f: the street section's own trees, cars and furniture
@@ -309,8 +313,11 @@ def build_dressing():
     veg, props = env_north.dress(veg, props, protos)       # V16: forecourt cars instead of cafe tables, lay-by posts
     veg, props = env_street_objects.dress_promenade(veg, props)   # V15c: promenade bollards, flood masts, machines
     veg, props = dressing_reality.apply(veg, props)        # V16f: planting and furniture to reality
+    veg, props = env_campus_east.dress(veg, props)         # V18g: east grounds and G's arcade as on Google Maps
     veg, props = env_capricciosa.dress(veg, props, protos)        # V16g: builds its statics, then its own dressing
-    veg, props = env_promenade_shortcut.dress(veg, props, protos)  # V19: nothing on the promenade shortcut
+    props = env_ai_props.far_variants(props, protos)       # V18m: lighter AI models away from the route
+    veg = env_vegetation.big_shrubs(veg, protos)           # V18n: big bushes get the prototype with small leaves
+    veg, props = env_promenade_shortcut.dress(veg, props, protos)  # V19: nothing on the promenade shortcut (last: writes the final lists)
     env_vegetation.instance_for_preview(veg, protos)
     env_props.instance_for_preview(props, protos)
     print(f"  dressing: {len(protos)} prototypes, {len(veg)} plants, {len(props)} props")
@@ -603,6 +610,7 @@ def main():
     env_streets.build_terrace_mesh()
     env_campus.build_ground_mesh()
     env_entrance.build_ground_mesh()       # V15a
+    hairpin_flush.apply()                  # V18i: one smooth ground inside the Capricciosa hairpin (after all ground meshes)
     env_streets.build()                    # V10f: paving, markings, kerbs, walls (before the dressing stands on it)
     build_paths()
     env_buildings.build()

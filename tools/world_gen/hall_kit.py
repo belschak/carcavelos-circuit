@@ -25,13 +25,19 @@ def _mat(name, colour, rough=0.6, metal=0.0, emission=None, alpha=1.0):
 
 
 MATERIALS = {
-    "floor": _mat("N_floor", "#8E9093", 0.3),                  # one even grey for the whole floor (Noah)                 # polished concrete, warm brown-grey (the videos)
+    # V18j (Luc's request): the floor is the real warm beige polished concrete (survey 2.3: #a8a294, glossy), was the
+    # even grey "#8E9093", 0.3 (Noah). One material for the whole hall, so there is no colour step at the artwork wall.
+    "floor": _mat("N_floor", "#A8A294", 0.15),
+    "floor_joint": _mat("N_floor_joint", "#8C8778", 0.4),      # V18j (Luc's request): saw-cut joints of the floor panels
     "wall": _mat("N_wall", "#E9E7E1", 0.85),
     "soffit": _mat("N_soffit", "#F4F3EF", 0.9),
     "steel_white": _mat("N_steel_white", "#ECECE8", 0.5, 0.3),
     "steel_dark": _mat("N_steel_dark", "#2B2E33", 0.4, 0.6),
     "deck": _mat("N_deck", "#85888E", 0.6, 0.4),               # roof deck underside, grey corrugated sheet
-    "timber": _mat("N_timber", "#A8643A", 0.55),               # the orange-brown wooden joists under the gallery
+    # V18j (Luc's request): red-brown like the real joists (survey 2.3: #8a4a2a), was "#A8643A"
+    "timber": _mat("N_timber", "#8E4E2C", 0.55),               # the wooden joists under the gallery
+    "deck_dark": _mat("N_deck_dark", "#5A5D60", 0.6, 0.4),     # V18j (Luc's request): dark steel roof deck over the entrance zone
+    "stage": _mat("N_stage", "#6A6D76", 0.95),                 # V18j (Luc's request): carpet top of the portable stage
     "glass": _mat("N_glass", "#BCD6E6", 0.05, 0.0, None, 0.22),
     "black": _mat("N_black", "#1E1F22", 0.7),
     "grey": _mat("N_grey", "#3A3D44", 0.9),

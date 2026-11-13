@@ -8,7 +8,9 @@ Objects (collection World_Streets, exported with CampusWorld.fbx):
                            Nothing lies within KEEP_OUT (4.95 m) of the route centreline: the road and its shoulders are
                            Role 2's (env_track only shows the matching surface on the road); the paving meets the foot
                            of the shoulder level with the terrain and rises to its 7 cm over 3 m.
-  Street_NoCollide_Paint   road markings 4 cm above the paving (one palette material, no collider in Unity)
+  Street_NoCollide_Paint   road markings 4 cm above the paving (one palette material, no collider in Unity).
+                           V18r: markings flagged road=True that reach the race road (the roundabout's) go as a whole
+                           into Track_EdgeLines instead (road_paint): flush paint on Role 2's road, no collider
   Street_NoCollide_Kerbs   low raised kerbs (the Marginal's median, island kerbs up to 0.2 m): to look at, karts pass
                            through them instead of being launched (CampusWorldBuilder skips "Street_NoCollide")
   Street_Structures        things with a collider: walls, hedges, the entrance portal and its stair, steel frames ...
@@ -31,6 +33,7 @@ from mathutils.geometry import delaunay_2d_cdt, tessellate_polygon
 import env_common as E
 import env_corridor
 import env_terrain
+import hairpin_flush           # V18i: one smooth ground inside the Capricciosa hairpin
 import street_plan as S
 
 COLLECTION = "World_Streets"
@@ -40,7 +43,7 @@ LIFT_NEAR = 0.035          # ... 1.2 m further out
 TAPER = (1.2, 3.2)         # m from the edge at which the paving has reached LIFT_NEAR and LIFT
 PAINT_LIFT = 0.04          # m: markings above the paving (2 cm flickered at a distance on the track's edge lines)
 GRID = 10.0                # m: the paving is cut along every second terrain grid line, then refined where the ground bends
-TILE = {"concrete": 4.0, "setts": 2.0, "calcada": 1.0, "asphalt": 2.0}
+TILE = {"concrete": 4.0, "setts": 2.0, "calcada": 1.0, "asphalt": 2.0, "slab": 10.0, "slab_dark": 10.0, "setts_dark": 2.0}
 
 # one small palette texture carries every flat colour (markings, kerbs, signs, cars, bollards): one material
 PALETTE = S.PALETTE
@@ -64,6 +67,14 @@ def mat(key):
         return _textured("street_concrete", "#CDC4B6", "street_concrete", 0.9)
     if key == "bays":
         return _textured("street_bays", "#CDC4B6", "street_bays", 0.9)
+    if key == "slab":                 # V18h: the car park's concrete, four panels of 5 m per tile (albedo + normal)
+        return _textured("street_slab", "#A59B8C", "street_slab", 0.9)
+    if key == "slab_dark":            # V18h: dark tinted concrete (the square at the car park's south-east end)
+        return _textured("street_slab_dark", "#84786F", "street_slab_dark", 0.9)
+    if key == "setts_dark":           # V18h: dark granite setts of gutters and borders
+        return _textured("street_setts_dark", "#615E58", "street_setts_dark", 0.85)
+    if key == "kerbstone":            # V18h: flush kerb stones, a strip texture along the kerb line
+        return _textured("street_kerbstone", "#CFC9BC", "street_kerbstone", 0.85)
     if key == "brick":
         return _textured("street_brick", "#9C7F6B", "street_brick", 0.9)
     if key == "setts":
@@ -74,10 +85,12 @@ def mat(key):
     if key == "asphalt":
         # our own material with the track's asphalt texture: Unity imported the track's W_T_asphalt under the name
         # "Lit" when CampusWorld.fbx used it as well (it carries a roughness map), so the two files keep their own
-        return _textured("street_asphalt", "#55585E", "asphalt", 0.88)
+        return _textured("street_asphalt", "#686764", "asphalt", 0.88)   # V18k: the lighter, warmer grey of the real avenue
     if key == "lawn":
         import env_track
         return env_track.surface_material("lawn")
+    if key == "ground_map":           # V18i: the terrain's own material (hairpin_flush.layers: lawn as part of the paving)
+        return E.material("ground_map", "#A6AA82", roughness=0.95)
     if key == "rust":
         return _textured("street_rust", "#8E5238", "street_rust", 0.85)
     if key == "hedge":
@@ -91,6 +104,18 @@ def mat(key):
     if key in ("palette", "kerb") or key.startswith("pal:"):
         return _textured("street_palette", "#B0B0B0", "street_palette", 0.8)
     raise KeyError(key)
+
+
+def road_look(key):
+    """V18h: the race road inside the Capricciosa forecourt and the coastal car park shows the paving it lies in,
+    in that paving's own UV frame (street_plan.q_uv), so the slab joints run on across the road. Registers the look
+    with env_track (name -> material, uv function) and returns its name; called from env_track.ROAD_LOOK rows."""
+    import env_track
+    looks = env_track._looks()
+    name = "q_" + key
+    if name not in looks:
+        looks[name] = (mat(key), env_track._frame(S.NE_KERB_A, S.NE_KERB_U, TILE[key], TILE[key]))
+    return name
 
 
 def pal_uv(colour):
@@ -133,6 +158,9 @@ def _ground_tree():
 
 def ground(x, y):
     """Height of the built terrain at (x, y) (the highest surface under the point)."""
+    h = hairpin_flush.height(x, y)                 # V18i: inside the hairpin the ground is hairpin_flush's smooth field
+    if h is not None:
+        return h
     if _bvh["tree"] is None:
         _bvh["tree"] = _ground_tree()
     hit = _bvh["tree"].ray_cast(Vector((x, y, 200.0)), Vector((0.0, 0.0, -1.0)), 400.0)
@@ -258,6 +286,44 @@ class Soup:
                 out.append((poly[0], poly[k], poly[k + 1], tag))
         self.tris = out
 
+    def cut_level(self, level):
+        """Cut every triangle along the line `level` metres from the centreline; both sides stay (V18r, road paint)."""
+        cross = {}
+
+        def crossing(a, b):
+            key = (a, b) if a < b else (b, a)
+            if key not in cross:
+                (xa, ya), (xb, yb) = self.xy[key[0]], self.xy[key[1]]
+                lo, hi = (0.0, 1.0) if self.dist(key[0]) < level else (1.0, 0.0)
+                for _ in range(14):
+                    t = (lo + hi) / 2
+                    if S.route_distance(xa + (xb - xa) * t, ya + (yb - ya) * t) < level:
+                        lo = t
+                    else:
+                        hi = t
+                cross[key] = self.add(xa + (xb - xa) * hi, ya + (yb - ya) * hi)
+                self._d[cross[key]] = level
+            return cross[key]
+        out = []
+        for a, b, c, tag in self.tris:
+            far = [self.dist(v) >= level for v in (a, b, c)]
+            if all(far) or not any(far):
+                out.append((a, b, c, tag))
+                continue
+            polys = {True: [], False: []}
+            ring = (a, b, c)
+            for k in range(3):
+                p, q = ring[k], ring[(k + 1) % 3]
+                polys[far[k]].append(p)
+                if far[k] != far[(k + 1) % 3]:
+                    x = crossing(p, q)
+                    polys[True].append(x)
+                    polys[False].append(x)
+            for poly in polys.values():
+                for k in range(1, len(poly) - 1):
+                    out.append((poly[0], poly[k], poly[k + 1], tag))
+        self.tris = out
+
     def follow_ground(self, zf, up=0.02, down=0.07, passes=5):
         """Split edges whose middle would lie more than `up` under or `down` over the real surface zf(x, y)."""
         z = {}
@@ -343,7 +409,7 @@ def _hull_radius(x, y):
 
 def _paving_z(d, x, y):
     z = ground(x, y)
-    r = _hull_radius(x, y)
+    r = 0.0 if hairpin_flush.in_zone(x, y) else _hull_radius(x, y)
     if r:
         for k in range(8):
             a = math.pi * k / 4
@@ -351,17 +417,19 @@ def _paving_z(d, x, y):
                 px, py = x + math.cos(a) * r * f, y + math.sin(a) * r * f
                 if S.route_distance(px, py) >= S.ROAD_HALF + 2.0:          # not the road itself
                     z = max(z, ground(px, py))
-    return z + lift_at(d)
+    return z + hairpin_flush.lift(x, y, lift_at(d), LIFT_EDGE)
 
 
 def build_paving(col):
-    layers = S.LAYERS
+    layers = hairpin_flush.layers(S.LAYERS)        # V18i: + the hairpin's inside as one layer under all others
     soup = overlay(layers)
+    hairpin_flush.retag(soup, layers)
     soup.tris = [t for t in soup.tris if layers[t[3]]["mat"] is not None]
     counts = [len(soup.tris)]
     soup.refine_near_route(3.0)
     counts.append(len(soup.tris))
     soup.clip_route()
+    hairpin_flush.refine(soup)
     counts.append(len(soup.tris))
     soup.follow_ground(lambda x, y: _paving_z(S.route_distance(x, y), x, y))
     counts.append(len(soup.tris))
@@ -473,6 +541,25 @@ def build_paint(col):
         for tri in tessellate_polygon([[Vector((x, y, 0.0)) for x, y in ring]]):
             soup.tris.append((base + tri[0], base + tri[1], base + tri[2], k))
     soup.limit_edges(9.0)
+    # V18r: markings flagged road=True (the roundabout's lane line, zebras ...) that reach the race road are not cut
+    # off at the keep-out: the whole marking goes to the road's own paint mesh (road_paint below, Track_EdgeLines)
+    on_road = {k for k, p in enumerate(S.PAINT) if p.get("road") and _touches_road(p["ring"])}
+    lane = Soup()
+    lane.xy, lane._d = soup.xy, soup._d
+    lane.tris = [t for t in soup.tris if t[3] in on_road]
+    soup.tris = [t for t in soup.tris if t[3] not in on_road]
+    hairpin_flush.refine(soup)                     # V18i: the paving inside the hairpin is curved (not the road's paint)
+    lane.limit_edges(1.2)
+    lane.cut_level(S.ROAD_HALF)
+    lane.cut_level(S.KEEP_OUT - 0.05)
+    lane.cut_level(S.KEEP_OUT + 0.02)
+    del ROAD_PAINT[:]
+    for a, b, c, tag in lane.tris:
+        tri = [lane.xy[v] for v in (a, b, c)]
+        if S.PAINT[tag]["road"] == "fill" and S.route_distance(sum(q[0] for q in tri) / 3, sum(q[1] for q in tri) / 3) \
+                >= S.KEEP_OUT + 0.02:
+            continue                                  # "fill": only where the road has cut the paving away
+        ROAD_PAINT.append((tri, S.PAINT[tag]["colour"]))
     soup.refine_near_route(3.2)
     soup.clip_route()
     verts, faces, uvs = [], [], []
@@ -506,7 +593,67 @@ def build_paint(col):
     mesh.validate()
     mesh.update()
     E.new_object("Street_NoCollide_Paint", mesh, col)
-    print(f"  streets: markings {len(faces)} triangles ({dropped} off the paving or in the road's keep-out)")
+    print(f"  streets: markings {len(faces)} triangles ({dropped} off the paving or in the road's keep-out); "
+          f"{len(on_road)} markings ({len(ROAD_PAINT)} triangles) lie on the race road: Track_EdgeLines takes them")
+
+
+# =====================================================================================================
+# V18r: the roundabout's markings on the race road. The road is Role 2's and stays as it is; these are flush paint on
+# top of it, in Track_EdgeLines (no collider in Unity, and the one mesh qa_geometry.py allows over the road), 4 cm
+# above the road, its shoulders and the paving beside it, in the street palette's own colours.
+# =====================================================================================================
+ROAD_PAINT = []            # (three (x, y) points, palette colour) per triangle; filled by build_paint
+
+
+def _touches_road(ring):
+    for a, b in zip(ring, ring[1:] + ring[:1]):
+        n = max(1, int(math.hypot(b[0] - a[0], b[1] - a[1]) / 0.4))
+        if any(S.route_distance(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n) < S.KEEP_OUT for k in range(n + 1)):
+            return True
+    return False
+
+
+def road_paint(bm, first_slot):
+    """env_trackside.build_lines hook: adds the triangles of ROAD_PAINT to the edge lines' mesh. Returns the extra
+    materials [(name, hex colour)]; faces use the slots first_slot, first_slot + 1 ..."""
+    if not ROAD_PAINT:
+        return []
+    from mathutils.bvhtree import BVHTree
+    road = bpy.data.objects.get("Track_Road")
+    tree = BVHTree.FromPolygons([road.matrix_world @ v.co for v in road.data.vertices],
+                                [tuple(p.vertices) for p in road.data.polygons], epsilon=0.0)
+    down = Vector((0.0, 0.0, -1.0))
+
+    def z_at(x, y):
+        best = ground(x, y)
+        h = paving_height(x, y)
+        if h is not None:
+            best = max(best, h)
+        if S.route_distance(x, y) < S.KEEP_OUT:
+            hit = tree.ray_cast(Vector((x, y, 200.0)), down, 400.0)
+            if hit[0] is not None:
+                best = max(best, hit[0].z)
+        return best + PAINT_LIFT
+    colours, cache = [], {}
+    for pts, colour in ROAD_PAINT:
+        if colour not in colours:
+            colours.append(colour)
+        vs = []
+        for x, y in pts:
+            key = (round(x, 4), round(y, 4))
+            if key not in cache:
+                cache[key] = bm.verts.new((x, y, z_at(x, y)))
+            vs.append(cache[key])
+        if len(set(vs)) < 3:
+            continue
+        try:
+            f = bm.faces.new(vs)
+        except ValueError:                           # the same triangle twice
+            continue
+        f.material_index = first_slot + colours.index(colour)
+    print(f"  streets: road paint (flush, in Track_EdgeLines, no collider): {len(ROAD_PAINT)} triangles in "
+          f"{len(colours)} colours ({', '.join(colours)})")
+    return [("road_paint_" + c, PALETTE[c]) for c in colours]
 
 
 # =====================================================================================================

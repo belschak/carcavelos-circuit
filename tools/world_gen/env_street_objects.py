@@ -2,7 +2,7 @@
 
 Static meshes (collection World_Streets):
   Street_Structures       walls, hedges, the entrance portal with its stair, the planted bank, steel frames, the
-                          roundabout's steel wedges ... (mesh collider in Unity like every world mesh)
+                          roundabout's five corten beds ... (mesh collider in Unity like every world mesh)
   Street_NoCollide_Kerbs  low kerbs: the Marginal's median, island kerbs (no collider: see env_streets)
 Prototypes (Proto_Props / Proto_Vegetation) placed through the dressing files so Unity instances them: parked cars,
 bollards, lamps, masts, signs (generic pictograms, no text), bins, the tall fan palms and slim date palms, saplings.
@@ -370,6 +370,16 @@ def chevron_board(name, col, width=3.0):
     return g.build(name, col)
 
 
+def bollard_round(name, col, colour, height, radius, collar=True):
+    """V18h: a round post: peeled timber bollards along the car park's edges (coast-walk survey: 1.0 m, d 15 cm,
+    grey-brown, a small concrete collar), white round bollards on the island at the throat (0.8 m)."""
+    g = Proto()
+    if collar:
+        g.cyl(radius + 0.07, radius + 0.05, -0.1, 0.04, 8, "concrete", cap=True)
+    g.cyl(radius, radius * 0.94, -0.1, height, 8, colour)
+    return g.build(name, col)
+
+
 def ad_totem(name, col):
     """Advert totem: dark case with a blank pale lit face on both sides; faces +-y."""
     g = Proto()
@@ -417,16 +427,13 @@ def cabinet(name, col, colour, size):
 
 
 def sapling(name, col):
-    """Young staked tree, 3 m: thin trunk, a small two-tone crown, three timber stakes."""
-    g = Proto()
-    g.cyl(0.035, 0.025, -0.1, 1.9, 4, "wood_dark", cap=False)
-    g.cyl(0.25, 0.75, 1.5, 2.2, 5, "leaf_dark", cap=False)
-    g.cyl(0.75, 0.0, 2.2, 3.2, 5, "leaf", cap=False, phase=0.6)
-    for k in range(2):
-        a = 2 * math.pi * k / 2 + 0.5
-        g.box(0.4 * math.cos(a) - 0.03, 0.4 * math.cos(a) + 0.03, 0.4 * math.sin(a) - 0.03, 0.4 * math.sin(a) + 0.03,
-              -0.1, 1.4, "timber")
-    return g.build(name, col)
+    """Young staked tree, 3.2 m (V18n: the leafy young tree of env_vegetation at 0.57 of its size; was two green cones
+    on a stick): thin trunk, a narrow crown of leaf cards, three timber stakes."""
+    import env_vegetation as V
+    from mathutils import Matrix
+    obj = V.plaza_tree(name, 61, V.ramp_material("plaza"), col, V.leaf_material())
+    obj.data.transform(Matrix.Scale(0.57, 4))
+    return obj
 
 
 def fan_palm(name, col, seed, height, trunk, fronds, frond_len, variant=""):
@@ -440,22 +447,22 @@ def fan_palm(name, col, seed, height, trunk, fronds, frond_len, variant=""):
     radii = [trunk * 1.5, trunk * 1.15, trunk, trunk * 0.92, trunk * 0.88, trunk * 0.95, trunk * 1.5, trunk * 1.35,
              trunk * 0.7]
     path = [Vector((0, 0, z)) + lean * (max(z, 0) / height) ** 2 for z in zs]
-    V.soft_tube(mb, path, radii, 7, 0, tip=path[-1] + Vector((0, 0, 0.12)),
-                shade=[0.8, 0.8, 0.78, 0.72, 0.66, 0.5, 0.36, 0.28, 0.24])
+    V.ringed_trunk(mb, path[:6], radii[:6], 7, 0, [0.8, 0.8, 0.78, 0.72, 0.66, 0.5], step=0.7, depth=0.04)   # V18n: rings
+    V.soft_tube(mb, path[5:], radii[5:], 7, 0, tip=path[-1] + Vector((0, 0, 0.12)), shade=[0.5, 0.36, 0.28, 0.24])
     knob = path[-3]
     top_n = max(3, fronds // 4)
     low_n = (fronds - top_n) // 2
-    tiers = ((top_n, 0.35, 0.12, 60, 55, frond_len * 0.75, 0.75),
-             (fronds - top_n - low_n, 0.15, 0.22, 34, 78, frond_len, 0.9),
-             (low_n, -0.1, 0.26, 4, 70, frond_len * 0.95, 0.9))
-    for count, dz, r0, el0_deg, droop_deg, length, wide in tiers:
+    tiers = ((top_n, 0.35, 0.12, 60, 55, frond_len * 0.75, 0.75, (1.12, 1.1, 0.8)),     # V18n: tint per tier (young
+             (fronds - top_n - low_n, 0.15, 0.22, 34, 78, frond_len, 0.9, (1.0, 1.0, 1.0)),     # light, old darker)
+             (low_n, -0.1, 0.26, 4, 70, frond_len * 0.95, 0.9, (0.82, 0.86, 0.76)))
+    for count, dz, r0, el0_deg, droop_deg, length, wide, tint in tiers:
         offset = rng.uniform(0, 2 * math.pi)
         for i in range(count):
             az = offset + 2 * math.pi * i / count + rng.uniform(-0.2, 0.2)
             el0 = math.radians(el0_deg + rng.uniform(-6, 6))
             droop = math.radians(droop_deg + rng.uniform(-10, 10))
             base = knob + Vector((math.cos(az) * r0, math.sin(az) * r0, dz))
-            V.add_frond(mb, base, az, el0, droop, length * rng.uniform(0.9, 1.1), 1, rng, wide)
+            V.add_frond(mb, base, az, el0, droop, length * rng.uniform(0.9, 1.1), 1, rng, wide, tint=tint)
     key = "palm" + variant
     tex = "palm_frond_b_cutout_albedo.png" if variant else "palm_frond_cutout_albedo.png"
     return mb.build(name, [V.ramp_material(key), V.cutout_material("palm_frond" + variant, tex)], col, sway=True)
@@ -527,6 +534,8 @@ def build_prototypes():
         "Prop_BollardSquare": bollard_square("Prop_BollardSquare", pc),
         "Prop_BollardBanded": bollard_banded("Prop_BollardBanded", pc),
         "Prop_TimberPost": timber_post("Prop_TimberPost", pc),
+        "Prop_TimberBollard": bollard_round("Prop_TimberBollard", pc, "timber_grey", 1.0, 0.075),          # V18h
+        "Prop_BollardWhite": bollard_round("Prop_BollardWhite", pc, "render_white", 0.8, 0.09, collar=False),   # V18h
         "Prop_LampMarginal": lamp_arm("Prop_LampMarginal", pc, 11.5, 1),
         "Prop_LampAvenue": lamp_arm("Prop_LampAvenue", pc, 10.5, 2, colour="steel_grey"),
         "Prop_LampSidewalk": lamp_arm("Prop_LampSidewalk", pc, 9.0, 1, colour="steel_grey", reach=1.5),
@@ -660,6 +669,10 @@ def build_structures(col):
     for t0, t1 in ((-0.8, S.PORTAL_T[0] - 0.15), (S.PORTAL_T[1] + 0.15, S.HEDGE_LEN + 1.3)):
         line = [hp(t0, S.BAY[1] + S.HEDGE_DEPTH / 2 + 0.3), hp(t1, S.BAY[1] + S.HEDGE_DEPTH / 2 + 0.3)]
         g.wall(line, S.HEDGE_DEPTH, lambda x, y: ST.ground(x, y) - 0.3, lambda x, y: ST.ground(x, y) + 1.25, "hedge", step=4.0)
+        import env_vegetation as V                               # V18n: leaf cards over the clipped hedge's box
+        V.hedge_leaves(f"Street_HedgeLeaves{int(t0 > 0)}", V.hedge_box_faces(
+            line, S.HEDGE_DEPTH, lambda x, y: ST.ground(x, y), lambda x, y: ST.ground(x, y) + 1.25), "hedge", "broad",
+            card=0.6, cover=5.0, seed=60 + int(t0 > 0), fins=0.4)
         kerb = [hp(t0, S.BAY[1] + 0.15), hp(t1, S.BAY[1] + 0.15)]          # V16g: concrete upstand in front of the hedge
         g.wall(kerb, 0.3, lambda x, y: ST.ground(x, y) - 0.2, lambda x, y: ST.ground(x, y) + 0.25, "palette", colour="kerb",
                step=4.0)
@@ -698,20 +711,44 @@ def build_structures(col):
     ramp_e = [S.SERVICE_RAMP[1], S.SERVICE_RAMP[2]]
     g.wall(ramp_e, 0.25, lambda x, y: S.TERRACE_Z - 0.5, lambda x, y: ST.ground(*_out(x, y, ramp_e, -0.9)) + 0.95,
            "wall_white", step=4.0, side=-0.15)
-    # --- C: rust-coloured steel wedges in the roundabout's gravel bed (our own arrangement, see street_plan.BLADES) ---
-    au = S.BLADE_AXIS
-    an = S.left_of(au)
-    zb = surface(*S.RB) - 0.05
-    for off, width, a_low, a_high, height in S.BLADES:
-        lo = [(S.RB[0] + an[0] * (off + side * width / 2) + au[0] * a_low, S.RB[1] + an[1] * (off + side * width / 2) + au[1] * a_low)
-              for side in (-1, 1)]
-        hi = [(S.RB[0] + an[0] * (off + side * width / 2) + au[0] * a_high, S.RB[1] + an[1] * (off + side * width / 2) + au[1] * a_high)
-              for side in (-1, 1)]
-        d = S.unit(hi[0][0] - lo[0][0], hi[0][1] - lo[0][1])
-        g.face([(*lo[0], zb), (*lo[1], zb), (*hi[1], zb + height), (*hi[0], zb + height)], "rust", (0, 0, 1))
-        g.face([(*hi[0], zb), (*hi[1], zb), (*hi[1], zb + height), (*hi[0], zb + height)], "rust", (d[0], d[1], 0))
-        for k, sign in ((0, -1), (1, 1)):
-            g.face([(*lo[k], zb), (*hi[k], zb), (*hi[k], zb + height)], "rust", (an[0] * sign, an[1] * sign, 0))
+    # --- C: the five corten beds on the roundabout's island (V18r; street_plan.BLADES): long wedge-shaped boxes of
+    # weathering steel across the pale gravel, dark gravel inside the steel rim, each rising from 0.2 m at one end to
+    # about 1 m at the other. The island lies on a 6 % slope: the beds stand on the plane through its ground. ---
+    samples = [S.RB] + [S.rb_pt(a, S.RB_BED - 1.0) for a in range(0, 360, 45)] + [S.rb_pt(a, S.RB_BED / 2) for a in range(0, 360, 90)]
+    zs = [ST.ground(x, y) for x, y in samples]
+    n = len(samples)
+    mx, my, mz = sum(q[0] for q in samples) / n, sum(q[1] for q in samples) / n, sum(zs) / n
+    sxx = sum((q[0] - mx) ** 2 for q in samples)
+    syy = sum((q[1] - my) ** 2 for q in samples)
+    sxy = sum((q[0] - mx) * (q[1] - my) for q in samples)
+    sxz = sum((q[0] - mx) * (z - mz) for q, z in zip(samples, zs))
+    syz = sum((q[1] - my) * (z - mz) for q, z in zip(samples, zs))
+    det = sxx * syy - sxy * sxy
+    gx, gy = (sxz * syy - syz * sxy) / det, (syz * sxx - sxz * sxy) / det
+
+    def island_z(x, y):
+        return mz + gx * (x - mx) + gy * (y - my)
+    off = max(abs(island_z(x, y) - z) for (x, y), z in zip(samples, zs))
+    near = 1e9
+    for t0, t1, high_end, height in S.BLADES:
+        outer = S.blade_outline(t0, t1)
+        inner = S.blade_outline(t0, t1, S.BLADE_RIM)
+        near = min(near, min(S.route_distance(x, y) for x, y in outer))
+
+        def top(q):
+            return (q[0], q[1], island_z(*q) + S.blade_height(q[0], q[1], t0, t1, high_end, height))
+        m = len(outer)
+        cx, cy = sum(q[0] for q in outer) / m, sum(q[1] for q in outer) / m
+        for k in range(m):
+            a_, b_ = outer[k], outer[(k + 1) % m]
+            g.face([(a_[0], a_[1], island_z(*a_) - 0.35), (b_[0], b_[1], island_z(*b_) - 0.35), top(b_), top(a_)], "rust",
+                   ((a_[0] + b_[0]) / 2 - cx, (a_[1] + b_[1]) / 2 - cy, 0.0))
+            g.face([top(a_), top(b_), top(inner[(k + 1) % m]), top(inner[k])], "rust", (0, 0, 1))
+        g.face([top(q) for q in inner], "palette", (0, 0, 1), "gravel")
+    if near < S.PROP_CLEAR:
+        raise RuntimeError(f"env_street_objects: a corten bed of the roundabout stands {near:.2f} m from the centreline")
+    print(f"  streets: roundabout island: 5 corten beds on the ground's plane (slope {100 * math.hypot(gx, gy):.1f} %, the "
+          f"ground differs from it by at most {off * 100:.0f} cm), nearest {near:.2f} m from the centreline")
     # --- C: rust-coloured steel portal frames in the verges (posts 11 cm, 4.7 m high, some with a rail at 1.1 m) ---
 
     def frames(points, rail):
@@ -726,11 +763,11 @@ def build_structures(col):
             if rail:
                 g.beam((*a, za + 1.1), (*b, zb_ + 1.1), 0.06, 0.06, "rust", ends=False)
     frames([(-129.8, -42.6), (-126.6, -38.3)], False)
-    row = [S.at_s([(-124.0, -82.0), (-134.0, -72.0)], k * 14.14 / 5)[0] for k in range(6)]
-    frames(row, True)
-    frames([(-134.0, -72.0), (-137.2, -68.6), (-140.2, -65.4)], False)
+    row = [S.at_s([(-124.8, -82.9), (-135.0, -72.3)], k * 14.71 / 5)[0] for k in range(6)]   # V18r: behind the rebuilt
+    frames(row, True)                                                                        # south sidewalk
+    frames([(-135.0, -72.3), (-137.9, -69.3), (-140.9, -67.6)], False)
     # --- B: the old wire fence on timber posts along the west side of the avenue ---
-    fence = [S.av_pt(y, 17.2) for y in range(-26, 99, 4)]
+    fence = [S.av_pt(y, 17.2) for y in range(-10, 99, 4)]             # V18r: the north arm's sidewalk bends west south of it
     fz = [ST.ground(x, y) for x, y in fence]
     for (x, y), z in zip(fence, fz):
         g.post(x, y, z - 0.2, z + 1.4, 0.1, "palette", "timber")
@@ -907,27 +944,25 @@ def placements():
             off += 0.25                                           # the road lies on the sidewalk here: further out
         q = S.pt(p, u, 0.0, off)
         add(props, "Prop_LampMarginal", q[0], q[1], heading_rot((u[1], -u[0])))
-    for k in range(38):                                           # staked young trees in the meadow (2026 state)
-        x = -322.0 + k * 4.7 + rng.uniform(-1.2, 1.2)
-        d = S.N_WALK[1] + 4.0 + rng.uniform(0.0, 30.0) + (6.0 if k % 3 == 0 else 0.0)
-        px, py = S.med_pt(x, d)
-        add(plants, "Veg_Sapling", px, py, rng.uniform(0, 360), rng.uniform(0.8, 1.25), clear=S.PROP_CLEAR + 1.0,
-            z=ST.ground(px, py))
-    # ---------------- C: roundabout ----------------
+    for k in range(38):                                           # (V18g: no saplings, the ground north of the road is
+        rng.uniform(0, 1), rng.uniform(0, 1), rng.uniform(0, 1), rng.uniform(0, 1)   # the dusty car park: streets_v18g();
+                                                                  # the random sequence stays as it was)
+    # ---------------- C: roundabout (V18r: positions on the rebuilt layout) ----------------
     c = S.RB
-    for ang in (93.0, 150.0, 345.0, 200.0):                       # chevron boards on the apron, facing the entries
-        radial = (math.cos(math.radians(ang)), math.sin(math.radians(ang)))
-        add(props, "Prop_ChevronBoard", c[0] + radial[0] * 12.4, c[1] + radial[1] * 12.4, facing_rot(radial))
-    for x, y in ((-118.5, -41.0), (-92.0, -45.0), (-84.0, -62.0), (-97.0, -87.0), (-115.0, -88.0), (-131.0, -68.0)):
+    for ang in (94.5, 211.0, 5.0):                                # chevron boards on the island's paved band, one facing
+        radial = (math.cos(math.radians(ang)), math.sin(math.radians(ang)))          # each entry (north, west, east)
+        add(props, "Prop_ChevronBoard", c[0] + radial[0] * 11.9, c[1] + radial[1] * 11.9, facing_rot(radial))
+    for x, y in ((-118.6, -40.6), (-92.2, -46.6), (-83.6, -62.6), (-97.0, -87.2), (-115.2, -87.9), (-131.8, -73.6)):
         add(props, "Prop_LampMarginal", x, y, heading_rot(S.unit(c[0] - x, c[1] - y)), 0.88)
-    add(props, "Prop_SignRoundTriangle", -129.6, -59.6, facing_rot(S.bearing(270.0)))
-    add(props, "Prop_SignRound", -84.6, -72.6, facing_rot(S.bearing(110.0)))
-    add(props, "Prop_SignCrossing", -137.6, -66.4, facing_rot(S.bearing(290.0)))
-    add(props, "Prop_SignCrossing", -110.6, -39.4, facing_rot(S.bearing(0.0)))
+    add(props, "Prop_SignRoundTriangle", -131.4, -60.4, facing_rot(S.bearing(270.0)))       # on the west splitter
+    add(props, "Prop_SignRound", -84.9, -73.4, facing_rot(S.bearing(110.0)))                # on the east splitter
+    add(props, "Prop_SignCrossing", -138.4, -67.6, facing_rot(S.bearing(290.0)))            # zebra of the west arm
+    add(props, "Prop_SignCrossing", -114.8, -33.2, facing_rot(S.bearing(0.0)))              # zebra of the north arm
+    add(props, "Prop_SignCrossing", -86.6, -85.2, facing_rot(S.bearing(110.0)))             # zebra of the east arm
     add(props, "Prop_AdTotem", -110.0, -93.0, facing_rot(S.bearing(0.0)), 1.9)
     add(props, "Prop_CabinetGrey", -103.0, -90.0, 0.0)
     add(props, "Prop_CabinetGrey", -101.6, -90.2, 0.0, 0.75)
-    add(props, "Prop_Billboard", -120.6, -38.4, facing_rot(S.bearing(85.0)))
+    add(props, "Prop_Billboard", -121.6, -37.6, facing_rot(S.bearing(85.0)))
     for k in range(17):                                           # clipped round shrubs closing the ring's south side
         ang = math.radians(204.0 + k * 6.7)
         r = S.RB_OUT + 5.2 + rng.uniform(-0.6, 0.6)
@@ -945,13 +980,13 @@ def placements():
         for k in range(8):
             add(props, "Prop_BollardBanded", x, 20.0 - k * 3.0 - (1.5 if x > -88 else 0.0))
     add(props, "Prop_SignRound", -85.3, 33.3, facing_rot(S.bearing(180.0)))
-    add(props, "Prop_BoardDirectionTall", -105.4, -30.6, facing_rot(S.bearing(0.0)))
+    add(props, "Prop_BoardDirectionTall", -104.5, -27.5, facing_rot(S.bearing(0.0)))        # V18r: on the north splitter
     add(props, "Prop_SignCrossing", -85.2, -32.4, facing_rot(S.bearing(0.0)))
     for k in range(16):                                           # reeds along the fence
         x, y = S.av_pt(-22.0 + k * 7.4 + rng.uniform(-2, 2), 16.3 + rng.uniform(-0.3, 0.5))
         add(plants, "Veg_Grass", x, y, rng.uniform(0, 360), rng.uniform(1.0, 1.4))
-    for k in range(9):                                            # a few cars on the dusty car park behind it
-        add(props, cars[rng.randrange(len(cars))], -131.0 + rng.uniform(-0.3, 0.3), -8.0 - k * 2.7, rng.choice((0.0, 180.0)))
+    for k in range(9):                                            # (V18g: the car park's cars are streets_v18g()'s)
+        rng.randrange(len(cars)), rng.uniform(-0.3, 0.3), rng.choice((0.0, 180.0))
     # the belt between the Marginal and the car park (survey D 6, F 4): a shrub hedge at its east end, dark round
     # trees in the middle, open lawn with a few palms towards the hairpin, dense shrubs on the bank in the south-east
     for k in range(12):
@@ -1208,11 +1243,213 @@ def upper_path_seats(props):
     return out
 
 
+# =====================================================================================================
+# V18g: the dusty car park north-west of the roundabout and the N6 east of it. An explicit edit of the dressing
+# lists after dressing_freeze.apply (called from dress_promenade), like the promenade's: nothing else moves.
+# =====================================================================================================
+def streets_v18g(veg, props):
+    """(veg, props) without the older items that stand in the car park (saplings, reeds, cars) or on the N6's new
+    paving, plus the parked cars, the scrub's bushes, the verges' bushes, the N6's lamps, palms and shrub row."""
+    rng = random.Random(SEED + 18)
+    lot = S.dust_outline()
+    cars = [c[0] for c in CAR_KINDS]
+
+    def goes(it):
+        x, y = it["x"], it["y"]
+        if S.inside(x, y, lot) and S.ring_distance(x, y, lot) > 0.6:
+            return it["proto"].startswith(("Veg_", "Prop_Car"))
+        top = S.layer_at(x, y)
+        return top is not None and top["name"].startswith("N ") and (top["mat"] is not None or it["proto"].startswith("Veg_"))
+    veg2, props2 = [p for p in veg if not goes(p)], [p for p in props if not goes(p)]
+    removed = len(veg) - len(veg2) + len(props) - len(props2)
+    plants, ours = [], []
+
+    def car(x, y, nose):
+        if S.route_distance(x, y) < S.CAR_CLEAR + 1.0:
+            return
+        rot = heading_rot(nose) + rng.uniform(-4.0, 4.0) + (180.0 if rng.random() < 0.35 else 0.0)
+        ours.append(_entry(cars[rng.randrange(len(cars))], x, y, rot))
+
+    # ---- the car park: loose rows on the dust (no bays, no lines) ----
+    for row in S.DUST_ROWS:
+        total = S.line_length(row["line"])
+        t = 1.2
+        while t < total:
+            (x, y), u = S.at_s(row["line"], t)
+            n = S.left_of(u)
+            for side in ((-1, 1) if row["double"] else (1,)):
+                if rng.random() < row["share"]:
+                    off = side * 2.55 if row["double"] else rng.uniform(-0.3, 0.3)
+                    car(x + n[0] * off + u[0] * rng.uniform(-0.15, 0.15), y + n[1] * off + u[1] * rng.uniform(-0.15, 0.15),
+                        (n[0] * side, n[1] * side))
+            t += 2.7
+    r = S.DUST_ROAD_ROW
+    x = r["x"][0]
+    while x <= r["x"][1]:                                 # the row along the Marginal, noses to the road
+        p, u = S.at_s(S.MEDIAN, S.med_s(x))
+        off = r["offset"]
+        while S.route_distance(*S.pt(p, u, 0.0, off)) < S.CAR_CLEAR + 2.0 and off < r["offset"] + 9.0:
+            off += 0.5
+        if rng.random() < r["share"]:
+            q = S.pt(p, u, rng.uniform(-0.2, 0.2), off + rng.uniform(-0.4, 0.4))
+            car(q[0], q[1], (u[1], -u[0]))
+        x += 2.55
+
+    # ---- bushes: in the scrub patches, on the two verges ----
+    def bush(x, y, lo, hi, reeds=0.0):
+        if S.route_distance(x, y) < S.PROP_CLEAR + 2.5:
+            return
+        proto = "Veg_Grass" if rng.random() < reeds else ("Veg_Shrub" if rng.random() < 0.5 else "Veg_Shrub_B")
+        plants.append(_entry(proto, x, y, rng.uniform(0, 360), rng.uniform(lo, hi), z=ST.ground(x, y) - 0.15))
+    for ring, n in zip(S.DUST_SCRUB, (20, 4, 7)):                 # dry clumps and a few low bushes in the scrub
+        x0, x1 = min(q[0] for q in ring), max(q[0] for q in ring)
+        y0, y1 = min(q[1] for q in ring), max(q[1] for q in ring)
+        done = 0
+        while done < n:
+            x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
+            if S.inside(x, y, ring) and S.ring_distance(x, y, ring) > 2.0:
+                bush(x, y, 1.5, 2.3, reeds=0.6)
+                done += 1
+    for y in (-4.0, 9.0, 24.0, 40.0, 52.0, 71.0, 84.0, 101.0, 116.0, 131.0, 146.0):     # dark bushes west of the avenue
+        x, yy = S.av_pt(y + rng.uniform(-2.0, 2.0), S.AV_WEST_WALK[1] + rng.uniform(3.0, 8.5))
+        bush(x, yy, 1.8, 2.7)
+    for x in (-284.0, -262.0, -247.0, -224.0, -203.0, -188.0, -166.0):                # low bushes on the Marginal's verge
+        q = S.med_pt(x + rng.uniform(-3.0, 3.0), S.N_WALK[1] + rng.uniform(1.5, 4.5))
+        bush(q[0], q[1], 1.2, 1.9)
+
+    # ---- the N6 east of the roundabout ----
+    walk_n, kerb_s = S.n6e_line(lambda row: row[3] + S.N6E_WALK[0] - 0.45, 1.0), S.n6e_line(4, 1.0)
+
+    def at_x(line, x):
+        return min(line, key=lambda q: abs(q[0] - x))
+    for x in (-12.0, 24.0, 60.0, 96.0, 132.0, 166.0):             # lamps on the north sidewalk, arm to the road
+        q = at_x(walk_n, x)
+        ours.append(_entry("Prop_LampMarginal", q[0], q[1], heading_rot((0.0, -1.0))))
+    for y in (113.0, 146.0):                                      # the avenue's median lamps go on north of y 100
+        ours.append(_entry("Prop_LampAvenue", *S.av_pt(y, 6.95)))
+    for x in (78.0, 108.0, 152.0):                                # lower lamps in the grass strip south of the road
+        q = at_x(kerb_s, x)
+        ours.append(_entry("Prop_LampSidewalk", q[0], q[1] - S.N6E_WALK[1] - 0.8, heading_rot((0.0, 1.0))))
+    for k, (x, y) in enumerate(S.N6E_PALMS):                      # date palms in the grass strip
+        plants.append(_entry("Veg_Palm" if k % 2 else "Veg_Palm_B", x, y, rng.uniform(0, 360), rng.uniform(0.8, 0.95),
+                             z=ST.ground(x, y) - 0.1))
+    for k in range(12):                                           # the row of clipped round shrubs south of the road
+        x = -82.0 + k * 6.2 + rng.uniform(-0.6, 0.6)
+        q = at_x(S.n6e_line(lambda row: row[4] - 7.4, 1.0), x) if x > -29.0 else S.east_pt((x + 78.5) / S.EAST_U[0], S.EAST["exit"] - 7.4)
+        if S.route_distance(*q) >= S.PROP_CLEAR + 2.0:
+            plants.append(_entry("Veg_Shrub" if k % 2 else "Veg_Shrub_B", q[0], q[1], rng.uniform(0, 360), rng.uniform(2.0, 2.5)))
+    x0, x1 = S.N6E_BAYS
+    n = int((x1 - x0) / S.BAY[0])
+    for k in range(n):                                            # parked cars in the bay row, noses to the road
+        if rng.random() < 0.42:
+            x = x0 + (k + 0.5) * (x1 - x0) / n
+            car(x, S.n6e_lot_edge(x) - 2.5 + rng.uniform(-0.2, 0.2), (0.0, 1.0))
+    print(f"  streets (V18g): car park and N6: {removed} older items removed; {len(ours)} props "
+          f"({sum(1 for it in ours if it['proto'].startswith('Prop_Car'))} parked cars) and {len(plants)} plants added")
+    return veg2 + plants, props2 + ours
+
+
+def carpark_v18h(veg, props):
+    """V18h (builder Q): the parked cars of the Capricciosa forecourt, the coastal car park and the west car park,
+    bay by bay as on the satellite view of 2026 (nearly full), aligned with the painted bays. The older cars in
+    these places go. A car is left out where any of its corners would stand closer than PROP_CLEAR to the race
+    centreline: the race road is wider than the real aisle, so both bay rows of the aisle stay empty where it runs
+    between them. Own random sequence: nothing outside these car parks moves."""
+    rng = random.Random(SEED + 26)
+    names = ("E concrete", "F aisle concrete", "F asphalt square", "E brick bays", "H west car park", "H island")
+    rings = [lay["ring"] for lay in S.LAYERS if lay["name"] in names]
+
+    def mine(it):
+        x, y = it["x"], it["y"]
+        if it["proto"] == "Prop_BollardSquare":                   # the pale square posts along both kerbs of the car park
+            t = S.s_kerb(x, y)
+            d = (x - S.NE_KERB_A[0]) * -S.left_of(S.NE_KERB_U)[0] + (y - S.NE_KERB_A[1]) * -S.left_of(S.NE_KERB_U)[1]
+            return -6.0 < t < 112.0 and -3.0 < d < 21.0
+        if it["proto"] == "Prop_TimberPost":                      # the posts on the grass island at the throat
+            return S.inside(x, y, S.GRASS_ISLAND)
+        return it["proto"].startswith("Prop_Car") and x < -135.0 and any(S.inside(x, y, r) for r in rings)
+    props2 = [p for p in props if not mine(p)]
+    apron = next(lay["ring"] for lay in S.LAYERS if lay["name"] == "H apron")     # lawn until V18h: its plants go
+    veg2 = [p for p in veg if not S.inside(p["x"], p["y"], apron)]
+    cars = [c[0] for c in CAR_KINDS]
+    ours, left = [], 0
+
+    def fits(x, y, nose):
+        side = S.left_of(nose)
+        return all(S.route_distance(x + nose[0] * a + side[0] * b, y + nose[1] * a + side[1] * b) >= S.PROP_CLEAR + 0.2
+                   for a in (-2.3, 0.0, 2.3) for b in (-1.0, 1.0))
+
+    def row(frame, t0, n, s_mid, nose, share, skip=(), nudge=None):
+        nonlocal left
+        for k in range(n):
+            if k in skip or rng.random() > share:
+                continue
+            t = t0 + (k + 0.5) * S.BAY[0] + rng.uniform(-0.1, 0.1) + (nudge or {}).get(k, 0.0)
+            x, y = frame(t, s_mid + rng.uniform(-0.2, 0.25))
+            if not fits(x, y, nose):
+                left += 1
+                continue
+            rot = heading_rot(nose) + rng.uniform(-2.5, 2.5) + (180.0 if rng.random() < 0.25 else 0.0)
+            ours.append(_entry(cars[rng.randrange(len(cars))], x, y, rot))
+
+    hp, bp, kp = S.hedge_pt, S.brick_pt, S.kerb_pt
+    hu, bu, ku = S.HEDGE_U, S.BRICK_U, S.NE_KERB_U
+    back = (-S.left_of(hu)[0], -S.left_of(hu)[1])                 # from the bay front towards the hedge
+    row(hp, 0.0, 7, 2.5, back, 0.94)
+    row(hp, S.PORTAL_T[1], 9, 2.5, back, 0.94)
+    row(bp, 0.0, int(S.BRICK_LEN / S.BAY[0]), 2.5, S.left_of(bu), 0.9, skip={1, 3})
+    ne = S.left_of(ku)
+    sw = (-ne[0], -ne[1])
+    nudge = {}
+    for t in S.PIT_T:                                             # a palm's pit stands on the line between two bays:
+        k = int(round(t / S.BAY[0]))                              # the cars beside it keep 0.3 m more to their far side
+        nudge[k - 1], nudge[k] = -0.3, 0.3
+    # bay 37 holds the coast section's first slim palm (env_coast WASHINGTONIAS, placed only if nothing stands within
+    # 2.5 m: a car there would drop it and shift that module's random sequence): no car in it, its neighbours keep off
+    nudge[36], nudge[38] = -0.4, 0.3
+    row(kp, 0.0, S.NE_BAYS, 2.6, ne, 0.95, skip={37}, nudge=nudge)
+    z1 = int((S.s_kerb(-198.0, -82.0) - S.SW_ROW_T0) / S.BAY[0])
+    yb = int((S.s_kerb(-177.0, -102.0) - S.SW_ROW_T0) / S.BAY[0])
+    row(lambda t, s: kp(t, s), S.SW_ROW_T0, 41, 15.0, sw, 0.95, skip={z1 - 1, z1, yb})
+    row(kp, S.CENTRAL_T0, 11, 20.0, ne, 0.95)
+    sa, su = (-241.0, -72.6), S.unit(39.0, -8.9)
+    row(lambda t, s: S.pt(sa, su, t, -s), 0.0, 16, 2.5, (su[1], -su[0]), 0.95)
+    wa, wu = (-348.0, 16.5), S.unit(-41.0, 21.0)                  # the west car park: the row along its north edge
+    row(lambda t, s: S.pt(wa, wu, t, s), 2.0, 15, 2.8, (-S.left_of(wu)[0], -S.left_of(wu)[1]), 0.85)
+    row(lambda t, s: S.pt(wa, wu, t, s), 9.5, 9, 10.3, S.left_of(wu), 0.8)
+    n_cars = len(ours)
+    # peeled timber bollards (1 m, every 2.5 m) instead of the pale square posts: behind the calcada strip in the
+    # west half of the north-east edge, at the kerb further east, and on the grass strip of the south-west edge
+    def post(proto, x, y):
+        if S.route_distance(x, y) >= S.PROP_CLEAR:
+            ours.append(_entry(proto, x, y, rng.uniform(0.0, 360.0)))
+    t = 2.5
+    while t <= 103.0:
+        post("Prop_TimberBollard", *kp(t, -4.55 if t <= 33.0 else -0.75))
+        t += 2.5
+    t = 28.5
+    while t <= 91.0:
+        post("Prop_TimberBollard", *kp(t, 18.15))
+        t += 2.7
+    isl = S.GRASS_ISLAND                                          # white round bollards on the island at the throat
+    cx, cy = sum(q[0] for q in isl) / len(isl), sum(q[1] for q in isl) / len(isl)
+    for k in (3, 4, 5, 6):
+        x, y = isl[k]
+        d = math.hypot(cx - x, cy - y)
+        ours.append(_entry("Prop_BollardWhite", x + (cx - x) * 0.7 / d, y + (cy - y) * 0.7 / d, 0.0, z=surface(x, y) + 0.25))
+    print(f"  streets (V18h): car parks at the Capricciosa: {len(props) - len(props2)} older cars and posts removed, {n_cars} "
+          f"cars parked in the bays, {len(ours) - n_cars} bollards; {left} bays stay empty because the race road is too near; {len(veg) - len(veg2)} plants removed "
+          f"from the concrete apron at the lawn's tip")
+    return veg2, props2 + ours
+
+
 def dress_promenade(veg, props):
     """V15c, called after dressing_freeze.apply: an explicit edit of the dressing lists. Removes the dark road lamps
     along the promenade (the real ones are white flood masts) and the few older props that stand where a seat-wall,
     mast, machine or the beach steps now are; adds the limestone bollards, flood masts, fitness machines and the old
     olive on the lawn path. Everything else stays exactly as it was. Rewrites the dressing files."""
+    veg, props = streets_v18g(veg, props)         # V18g: the dusty car park and the N6 east of the roundabout
+    veg, props = carpark_v18h(veg, props)         # V18h: the cars of the Capricciosa forecourt and the coastal car park
     plants, ours, removed = promenade_placements(veg, props)
     gone = {id(p) for p in removed}
     veg2, props2 = list(veg) + plants, [p for p in props if id(p) not in gone] + ours

@@ -68,9 +68,10 @@ ROADS = {"primary", "primary_link", "secondary", "tertiary", "residential", "unc
 # old OSM road bands shows beside the new streets.
 STREET_COLOURS = {"concrete": (205, 196, 182), "bays": (205, 196, 182), "brick": (156, 127, 107), "setts": (142, 138, 132),
                   "calcada": (230, 225, 214), "asphalt": (85, 88, 94), "kerb": (207, 201, 188)}
-STREET_GROUND = {"lawn": (143, 179, 122), "meadow": (178, 176, 126), "bank": (128, 134, 88), "soil": (138, 115, 85),
+STREET_COLOURS.update({"slab": (165, 155, 140), "slab_dark": (132, 120, 111), "kerbstone": (207, 201, 188), "setts_dark": (97, 94, 88)})   # V18h-q
+STREET_GROUND = {"lawn": (143, 179, 122), "meadow": (178, 176, 126), "bank": (128, 134, 88), "soil": (138, 115, 85), "scrub": (112, 116, 78),
                  "paved": (201, 197, 188), "dust": (190, 172, 138), "gravel": (208, 198, 174)}
-STREET_LAWN = {"lawn": 255, "meadow": 235, "bank": 150, "soil": 0, "paved": 0, "dust": 60, "gravel": 0}   # mask red: 255 = lawn
+STREET_LAWN = {"lawn": 255, "meadow": 235, "bank": 150, "soil": 0, "paved": 0, "dust": 60, "gravel": 0, "scrub": 170}   # mask red: 255 = lawn
 
 
 def street_layers(scale, lawn_mask=False):
@@ -80,10 +81,13 @@ def street_layers(scale, lawn_mask=False):
     for lay in street_plan.LAYERS:
         if lay["mat"] is None or lay["mat"] == "lawn":
             c = (STREET_LAWN[lay["ground"]],) * 3 if lawn_mask else STREET_GROUND[lay["ground"]]
+        elif lay.get("ground") in STREET_COLOURS:       # V18r: a paved layer may name the colour the map shows under it
+            c = (0, 0, 0) if lawn_mask else STREET_COLOURS[lay["ground"]]
         else:
             c = (0, 0, 0) if lawn_mask else STREET_COLOURS.get(lay["mat"]) or tuple(
                 int(street_plan.PALETTE[lay["mat"][4:]][k:k + 2], 16) for k in (1, 3, 5))
         d.polygon([to_px(x, y, scale) for x, y in lay["ring"]], fill=c + (255,))
+    campus_plan.WEST.over_streets(d, lambda x, y: to_px(x, y, scale), lawn_mask)   # V18g-w: perimeter path on the verge
     return img
 
 

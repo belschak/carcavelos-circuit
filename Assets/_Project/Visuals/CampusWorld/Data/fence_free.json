@@ -1,7 +1,13 @@
 {
  "note": "Pieces of the white fence that the campus world leaves out (tools/world_gen/fence_free.py). A piece = fence between route points k and k + 1, from <= k < to; side +1 right, -1 left, 0 both.",
- "points": 688,
+ "points": 707,
  "free": [
+  {
+   "from": 79,
+   "to": 707,
+   "side": 0,
+   "why": "Luc 12 Nov: no white fence after the terrace ramp (markers come place by place)"
+  },
   {
    "from": 79,
    "to": 85,

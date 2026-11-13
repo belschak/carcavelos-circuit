@@ -68,6 +68,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _NearMap:
+        m_Texture: {fileID: 2800000, guid: 28b28d5d8a90943c097de131a7b109e0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -127,11 +131,17 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
+    - _BakedShadow: {r: 30, g: 42, b: 0.85, a: 0}
+    - _Bare: {r: 0.2, g: 0.12, b: 0.02, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Detail: {r: 6, g: 47, b: 30, a: 120}
+    - _Detail: {r: 6, g: 47, b: 70, a: 250}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Grass: {r: 0.42, g: 0.34, b: 1, a: 0.6}
+    - _GrassGlow: {r: 0.55, g: 0.62, b: 0.12, a: 1}
+    - _Micro: {r: 0.45, g: 0.55, b: 0.12, a: 0}
+    - _Mid: {r: 21, g: 0.75, b: 12, a: 70}
+    - _NearRect: {r: -275, g: -180, b: 0.0024390244, a: 0.0025316456}
     - _Rock: {r: 0.4, g: 0.3, b: 0.35, a: 0.9}
     - _RockFace: {r: 1.1, g: 0.45, b: 3.2, a: 0.3}
     - _RockWet: {r: 0.35, g: 1.3, b: 0, a: 0}

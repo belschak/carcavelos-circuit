@@ -62,7 +62,8 @@ TIER_Y = [-22.0, -18.5, -15.0, -11.5, -7.9]                 # stations of the cu
 TIER_X = [137.5, 137.95, 138.6, 139.35, 140.3]              # ... its x there (survey: (137.5, -22) to (140, -7))
 TIERS, TIER_H, TIER_D = 6, 0.45, 1.5
 TIER_TOP = F0 + TIERS * TIER_H                              # 13.9 m = the east lawn
-TIER_COLOUR = "#9A6850"             # survey: #6a402b in July shade, #9a7462 in neutral March light
+TIER_COLOUR = "#C4A07C"             # V18g: pale terracotta stone (walk 7 Nov, IMG_7725 1:52; orthophoto mean 211/184/145).
+#                                     V16b: #9A6850 (survey: #6a402b in July shade, #9a7462 in neutral March light)
 STAIR_X0, STAIR_Y = 141.0, (-7.6, -4.0)                     # grey concrete stair, 3.6 m between its cheeks, going east
 STAIR_RISERS, STAIR_RISE, STAIR_TREAD = 19, 0.15, 0.36
 CHEEK, CHEEK_H = 0.3, 1.0
@@ -184,7 +185,104 @@ C.paint("lower plaza", [(96.0, -29.3), (106.6, -25.4), (104.5, -18.0), (110.5, -
                         (130.5, -20.5), (122.3, -22.3), (122.6, -32.7), (114.0, -36.5), (104.0, -38.5)], PLAZA_LOW)
 C.paint("lower plaza paving", PLAZA_RING, PLAZA_LOW)
 C.paint("rim path above the ramp", rim_path_ring(), PLAZA_LOW)
-C.paint("lawn above the seat tiers", [(TIER_X[0] + TIERS * TIER_D, TIER_Y[0] - 5.0), (158.0, TIER_Y[0] - 5.0),
-                                      (158.0, STAIR_Y[1] + 2.0), (STAIR_X0 + 7.0, STAIR_Y[1] + 0.3),
-                                      (TIER_X[-1] + TIERS * TIER_D, TIER_Y[-1])], C.LAWN, lawn=255)
+# (V18g: "lawn above the seat tiers" is painted with the east grounds below, on the orthophoto's outline)
 C.paint("lawn at E's south corner", E_SOUTH_CORNER, C.LAWN, lawn=255)
+
+
+# ----------------------------------------------------------------------------------------------------------------
+# V18g (2026-11-12): the east grounds as on Google Maps / the DGT orthophoto (3 px/m, +-0.7 m): the sand strip with
+# the two tree rows, the big lawn, the pale path on the campus' east edge with dry scrub beyond it, the concrete
+# court east of G with its plant compound, the lawn wedge behind the seat tiers.
+# ----------------------------------------------------------------------------------------------------------------
+SCRUB = (134, 130, 92)              # dry scrub east of the campus (orthophoto: brown-olive, no lawn)
+PATH_PALE = (212, 204, 184)         # the east path: pale brushed concrete, 4.5 m
+COURT = (205, 197, 176)             # the court east of G: pale grey-beige concrete
+# (all lines below: read from the orthophoto's pixel rows, green / pale thresholds, not by eye)
+LAWN_WEST = [(104.5, 158.0), (106.4, 150.0), (109.5, 140.0), (115.2, 130.0), (123.0, 110.0), (130.0, 90.0),
+             (137.1, 70.0), (140.6, 59.6)]                                      # lawn / sand strip (south of y 100 the
+#                                                                                 rows' shadows hide the edge: straight on)
+LAWN_SE = (178.6, 74.2)             # the lawn's south edge runs from LAWN_WEST[-1] to here (kerb, then the court)
+EAST_PATH_N = [(186.0, 162.0), (181.9, 150.0), (178.0, 140.0), (174.7, 130.0), (171.0, 120.0), (168.9, 110.0),
+               (170.3, 104.0), (173.7, 95.0), (178.9, 82.0), (181.6, 75.0)]     # centreline, north of the court
+EAST_PATH_S = [(175.0, 25.0), (173.6, 20.0), (170.6, 10.0), (167.9, 0.0), (165.5, -10.0), (162.5, -20.0),
+               (159.6, -30.0), (156.9, -40.0), (153.9, -50.0), (151.2, -60.0), (148.6, -70.0), (145.6, -80.0),
+               (143.3, -88.5)]                                                  # ... south of it, to the Marginal
+EAST_PATH_W = 4.2
+COURT_EAST = [(184.5, 72.5), (187.0, 65.0), (186.0, 58.0), (183.8, 50.0), (181.1, 40.0), (177.8, 30.0)]
+COURT_RING = [LAWN_WEST[-1], LAWN_SE] + COURT_EAST + [(177.2, 25.0), (172.8, 25.0), (167.6, 11.8), (150.6, 41.0),
+                                                      (146.0, 44.0), (142.5, 52.0)]
+TREE_ROW_SHIFT = (4.4, 1.6)         # the strip's two tree rows stand 1 m and 6.5 m west of the lawn's edge (Google 20z)
+SCRUB_EAST = [(184.0, -90.0), (187.0, -72.0), (194.0, -45.0), (197.0, -30.0), (201.0, -10.0), (204.0, 2.0),
+              (208.0, 20.0), (212.0, 45.0), (212.0, 162.0)]                     # 1 m short of the Medrosa's sidewalk
+# the plant compound in the court: a walled yard 12 x 7.5 m (open to the sky, dark inside) and the dark shed beside it
+COMPOUND = ((167.6, 37.7), 111.0, 12.0, 7.5, 2.4)      # centre, bearing of the long axis, length, width, wall height
+SHED = ((161.0, 48.4), 100.0, 5.6, 4.8, 2.9)
+COURT_MAST = (159.5, 64.5)          # the court's one tall lamp mast (its shadow on the orthophoto and on Google)
+COURT_MAST_H = 9.0
+COURT_TREES = [(155.0, 57.0), (162.0, 60.0), (164.5, 53.0), (172.0, 55.5), (179.0, 58.5), (176.0, 66.0),
+               (147.5, 54.5)]       # young trees in single pits (orthophoto; Google 20z shows about ten)
+PINES = [(153.5, -80.5), (160.0, -85.0), (165.5, -79.0)]            # the dark clump of big trees south-east of F
+# timber picnic tables at the edge of G's arcade (Google 20z; the fourth one, at (113, -3), would stand 5 m from the
+# race line and is left out): x, y, rot_z
+ARCADE_TABLES = [(119.0, -1.6, 1.9), (122.3, -0.9, 0.35), (122.6, -5.6, 1.9)]
+# shrubs of the scrub (the orthophoto's dark dots; positions as seen, not a pattern)
+SCRUB_SHRUBS = [(186.0, 118.0), (190.5, 104.0), (184.5, 97.0), (196.0, 92.0), (189.0, 128.0), (199.0, 121.0),
+                (193.0, 140.0), (203.0, 148.0), (190.0, 66.0), (196.5, 52.0), (188.0, 35.0), (199.0, 30.0),
+                (181.0, 8.0), (190.0, 2.0), (172.0, -12.0), (183.0, -22.0), (166.0, -33.0), (176.0, -41.0),
+                (187.0, -38.0), (162.0, -52.0), (171.0, -58.0), (181.0, -62.0), (158.5, -66.0), (176.5, -72.0)]
+
+
+# walk 7 Nov (IMG_7725 1:52): a pale concrete planter box with shrubs on the plaza in front of the seat tiers
+PLANTER = ((134.6, -15.5), 14.0, 2.6, 1.0, 0.75)        # centre, bearing of the long axis, length, width, height
+# Street View May 2026 (Estr. da Medrosa, looking west): a dense, tall oleander hedge on the bank along the road
+HEDGE_LINE = [(186.0, -70.0), (192.8, -45.0), (195.8, -30.0), (199.8, -10.0), (202.6, 0.0)]
+HEDGE_STEP = 3.2
+# Street View (N6 at F, looking north): a post fence along the scrub's south edge, from F's corner to the Medrosa
+SCRUB_FENCE = [(148.5, -89.6), (182.0, -89.6)]
+SCRUB_FENCE_STEP, SCRUB_FENCE_H = 3.0, 1.2
+
+
+def along(line, step):
+    """Points every `step` metres along a polyline."""
+    out, carry = [], 0.0
+    for a, b in zip(line, line[1:]):
+        d = math.hypot(b[0] - a[0], b[1] - a[1])
+        t = carry
+        while t <= d:
+            out.append((a[0] + (b[0] - a[0]) * t / d, a[1] + (b[1] - a[1]) * t / d))
+            t += step
+        carry = t - d
+    return out
+
+
+def offset_ring(line, half):
+    """Closed ring `half` metres on both sides of a polyline."""
+    left, right = [], []
+    for i, (x, y) in enumerate(line):
+        a, b = line[max(i - 1, 0)], line[min(i + 1, len(line) - 1)]
+        ux, uy = _unit(a, b)
+        left.append((x - uy * half, y + ux * half))
+        right.append((x + uy * half, y - ux * half))
+    return left + right[::-1]
+
+
+_path_n_e = offset_ring(EAST_PATH_N, EAST_PATH_W / 2)[:len(EAST_PATH_N)]          # (left of a southbound line = east)
+_path_n_w = offset_ring(EAST_PATH_N, EAST_PATH_W / 2)[len(EAST_PATH_N):][::-1]
+_ps = offset_ring(EAST_PATH_S, EAST_PATH_W / 2)
+_path_s_e, _path_s_w = _ps[:len(EAST_PATH_S)], _ps[len(EAST_PATH_S):][::-1]
+C.paint("dry scrub east of the campus", _path_n_e + COURT_EAST + _path_s_e + SCRUB_EAST, SCRUB, lawn=150)
+C.paint("east lawn", LAWN_WEST + [LAWN_SE] + _path_n_w[::-1], C.LAWN, lawn=255)
+C.paint("sand strip with the two tree rows", [(88.0, 158.0)] + LAWN_WEST + [(142.5, 52.0), (146.0, 44.0), (150.6, 41.0),
+                                              (145.9, 38.2), (127.8, 27.6), (118.0, 40.0), (112.0, 62.0), (108.0, 90.0),
+                                              (96.0, 118.0)], C.OCHRE)
+C.paint("thin path from the seat ring to the east path", offset_ring([(159.5, 148.6), (183.5, 157.0)], 1.0), PATH_PALE)
+C.paint("court east of G", COURT_RING, COURT)
+C.paint("apron between G and the tier lawn", [(148.0, 1.0), (151.6, 2.6), (167.6, 11.8), (172.8, 25.0), (177.2, 25.0),
+                                             (172.7, 10.0), (170.0, 0.0), (167.6, -10.0), (163.4, -10.0), (157.5, -6.3),
+                                             (156.0, -4.7), (148.0, -4.7)], COURT)
+C.paint("east path, north", offset_ring(EAST_PATH_N, EAST_PATH_W / 2), PATH_PALE)
+C.paint("east path, south", offset_ring(EAST_PATH_S, EAST_PATH_W / 2), PATH_PALE)
+TIER_LAWN = [(tier_x(TIERS, 0), TIER_Y[0] - 0.5), (146.0, -27.5), (155.5, -36.5)] + \
+    [p for p in _path_s_w if -31.0 < p[1] < -11.0][::-1] + [(163.4, -10.0), (157.5, -6.3), (156.0, -4.7),
+                                                          (STAIR_X0 + 7.0, STAIR_Y[1] + 0.3), (tier_x(TIERS, 4), TIER_Y[-1])]
+C.paint("lawn above the seat tiers", TIER_LAWN, C.LAWN, lawn=255)

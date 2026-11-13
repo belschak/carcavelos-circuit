@@ -461,15 +461,16 @@ def dress(veg, props, protos):
 
     # the island inside the hairpin (V18, team walk 7 Nov): plain calcada, a stop sign at its west tip; the bike dock, the bins
     add(new_p, "Prop_SignStop", *CP.STOP_SIGN, facing_rot(S.bearing(270.0)))
-    (ax, ay), (ex, ey) = CP.BIKE_DOCK
+    (ax, ay), (ex, ey) = CP.LAWN_EDGE                      # V18h: bike docks and the dark totem on the calcada band
     du = S.unit(ex - ax, ey - ay)
-    length = math.hypot(ex - ax, ey - ay)
-    k = 0
-    while 1.35 + k * 2.75 <= length:
-        add(new_p, "Prop_BikeRack", ax + du[0] * (1.35 + k * 2.75), ay + du[1] * (1.35 + k * 2.75), heading_rot(du))
-        k += 1
-    (ax, ay), (ex, ey) = CP.BIN_PAD
-    add(new_p, "Prop_BinsUnderground", (ax + ex) / 2, (ay + ey) / 2, heading_rot(S.unit(ex - ax, ey - ay)))
+    out = (-S.left_of(du)[0], -S.left_of(du)[1])           # from the lawn towards the car park
+    for t in CP.DOCKS_AT:
+        add(new_p, "Prop_BikeRack", ax + du[0] * t + out[0] * CP.LAWN_BAND / 2, ay + du[1] * t + out[1] * CP.LAWN_BAND / 2,
+            heading_rot(du))
+    add(new_p, "Prop_AdTotem", ax + du[0] * CP.TOTEM_AT + out[0] * 1.0, ay + du[1] * CP.TOTEM_AT + out[1] * 1.0, facing_rot(out))
+    (ax, ay), (ex, ey) = CP.LAWN_EDGE                      # V18h: two pads of underground bins, parallel to the lawn's edge
+    for c in CP.BIN_PADS:
+        add(new_p, "Prop_BinsUnderground", c[0], c[1], heading_rot(S.unit(ex - ax, ey - ay)))
     add(new_p, "Prop_ScreenBox", *CP.SCREEN_AT, facing_rot(S.bearing(20.0)))
     add(new_p, "Prop_SignRoundTriangle", *CP.SIGN_AT, facing_rot(S.bearing(110.0)))
     # forecourt: the broad date-type palm, the olive in the court's planter

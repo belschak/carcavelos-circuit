@@ -42,7 +42,7 @@ Shader "CarcavelosCircuit/Ground"
         _NearRect ("Fine map: world x0, z0, 1 / width, 1 / depth (0 = none)", Vector) = (0, 0, 0, 0)
         _BakedShadow ("Baked sun shadow: fade in from m, to m, strength, -", Vector) = (30, 42, 0.85, 0)
         _Detail ("Detail: small tile m, large tile m, fade from m, fade to m", Vector) = (6, 47, 70, 250)
-        _Bare ("Paved and bare ground (neither lawn, sand nor rock): grain, patches, normal, -", Vector) = (0.20, 0.12, 0.12, 0)
+        _Bare ("Paved and bare ground (neither lawn, sand nor rock): grain, patches, normal, -", Vector) = (0.20, 0.12, 0.02, 0)
         _Mid ("Mid detail: tile m, strength, in from m, in to m", Vector) = (21, 0.75, 12, 70)
         _Grass ("Lawn: blades, patches, patch tint, normal", Vector) = (0.42, 0.34, 1, 0.6)
         _Sand ("Sand: ripples, grain, patches, normal", Vector) = (0.22, 0.26, 0.15, 1.0)

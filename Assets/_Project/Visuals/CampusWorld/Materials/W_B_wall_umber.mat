@@ -21,17 +21,17 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: W_B_wall_umber
-  m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
+  m_Shader: {fileID: 4800000, guid: 066436310d5ce4bc1811d748bf65fbe5, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _NORMALMAP
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap:
-    RenderType: Opaque
+  stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
   m_LockedProperties: 
@@ -39,11 +39,11 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 602a9b4abe24a4489b7f1102367cba5a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 695f7718aa79e465894a6bba1583c95d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -60,6 +60,14 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _GroundNearMap:
+        m_Texture: {fileID: 2800000, guid: 28b28d5d8a90943c097de131a7b109e0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _GroundWorldMap:
+        m_Texture: {fileID: 2800000, guid: fbf9a02eca81d4451a9178d1fd08737a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -101,7 +109,7 @@ Material:
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
-    - _BumpScale: 1
+    - _BumpScale: 0.6
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 2
@@ -129,9 +137,15 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.2956, g: 0.2267, b: 0.1982, a: 1}
+    - _BakedShadow: {r: 30, g: 42, b: 0.85, a: 0}
+    - _BaseColor: {r: 0.3822, g: 0.2235, b: 0.1814, a: 1}
     - _Color: {r: 0.29559997, g: 0.22669995, b: 0.19819996, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _NearRect: {r: -275, g: -180, b: 0.0024390244, a: 0.0025316456}
+    - _Occlusion: {r: 1, g: 0.35, b: 0, a: 0}
+    - _Shade: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _WorldRect: {r: -420, g: -270, b: 0.0014285714, a: 0.0019607844}
+    - _WorldUV: {r: 0.3333, g: 0.3333, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

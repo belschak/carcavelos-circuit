@@ -1,9 +1,9 @@
 {
 "note": "Unity axes; y = road surface height. checkpoints[0] = start/finish line. Indices into points.",
-"length_m": 1376.0,
+"length_m": 1414.0,
 "jump_index": 82,
 "start_index": 0,
-"spawn_index": 684,
+"spawn_index": 703,
 "checkpoints": [
 0,
 57,
@@ -20,108 +20,108 @@
 ],
 "points": [
 {
-"x": -16.26,
+"x": -16.44,
 "y": 14.56,
-"z": 133.0,
+"z": 132.11,
 "width": 8.0,
 "s": 0.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -14.33,
+"x": -14.45,
 "y": 14.56,
-"z": 132.49,
+"z": 132.3,
 "width": 8.0,
 "s": 2.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -12.35,
+"x": -12.46,
 "y": 14.56,
-"z": 132.18,
+"z": 132.49,
 "width": 8.0,
 "s": 4.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -10.36,
+"x": -10.47,
 "y": 14.56,
-"z": 132.02,
+"z": 132.68,
 "width": 8.0,
 "s": 6.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -8.36,
+"x": -8.48,
 "y": 14.56,
-"z": 132.02,
+"z": 132.87,
 "width": 8.0,
 "s": 8.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -6.36,
+"x": -6.49,
 "y": 14.56,
-"z": 132.16,
+"z": 133.06,
 "width": 8.0,
 "s": 10.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -4.38,
+"x": -4.5,
 "y": 14.56,
-"z": 132.39,
+"z": 133.25,
 "width": 8.0,
 "s": 12.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -2.4,
+"x": -2.5,
 "y": 14.56,
-"z": 132.7,
+"z": 133.44,
 "width": 8.0,
 "s": 14.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -0.43,
+"x": -0.51,
 "y": 14.56,
-"z": 133.05,
+"z": 133.63,
 "width": 8.0,
 "s": 16.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": 1.53,
+"x": 1.48,
 "y": 14.56,
-"z": 133.42,
+"z": 133.82,
 "width": 8.0,
 "s": 18.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": 3.5,
+"x": 3.47,
 "y": 14.56,
-"z": 133.79,
+"z": 134.01,
 "width": 8.0,
 "s": 20.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": 5.47,
+"x": 5.46,
 "y": 14.56,
-"z": 134.12,
+"z": 134.2,
 "width": 8.0,
 "s": 22.0,
 "zone": "upper plaza",
@@ -741,7 +741,7 @@
 },
 {
 "x": 3.63,
-"y": 14.63,
+"y": 14.67,
 "z": 57.28,
 "width": 8.0,
 "s": 160.0,
@@ -750,7 +750,7 @@
 },
 {
 "x": 1.68,
-"y": 14.85,
+"y": 15.0,
 "z": 56.87,
 "width": 8.0,
 "s": 162.0,
@@ -759,7 +759,7 @@
 },
 {
 "x": -0.28,
-"y": 15.21,
+"y": 15.56,
 "z": 56.45,
 "width": 8.0,
 "s": 164.0,
@@ -6068,146 +6068,317 @@
 "tunnel": false
 },
 {
-"x": -22.93,
+"x": -22.94,
 "y": 14.56,
-"z": 155.25,
+"z": 155.29,
 "width": 8.0,
 "s": 1344.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -24.82,
+"x": -24.87,
 "y": 14.56,
-"z": 154.6,
+"z": 154.79,
 "width": 8.0,
 "s": 1346.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -26.62,
+"x": -26.81,
 "y": 14.56,
-"z": 153.74,
+"z": 154.29,
 "width": 8.0,
 "s": 1348.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -28.21,
+"x": -28.74,
 "y": 14.56,
-"z": 152.56,
+"z": 153.78,
 "width": 8.0,
 "s": 1350.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -29.43,
+"x": -30.68,
 "y": 14.56,
-"z": 151.0,
+"z": 153.28,
 "width": 8.0,
 "s": 1352.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -30.08,
+"x": -32.62,
 "y": 14.56,
-"z": 149.13,
+"z": 152.78,
 "width": 8.0,
 "s": 1354.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -30.06,
+"x": -34.55,
 "y": 14.56,
-"z": 147.15,
+"z": 152.28,
 "width": 8.0,
 "s": 1356.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -29.53,
+"x": -36.49,
 "y": 14.56,
-"z": 145.23,
+"z": 151.78,
 "width": 8.0,
 "s": 1358.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -28.66,
+"x": -38.42,
 "y": 14.56,
-"z": 143.43,
+"z": 151.26,
 "width": 8.0,
 "s": 1360.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -27.57,
+"x": -40.34,
 "y": 14.56,
-"z": 141.75,
+"z": 150.69,
 "width": 8.0,
 "s": 1362.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -26.33,
+"x": -42.2,
 "y": 14.56,
-"z": 140.19,
+"z": 149.96,
 "width": 8.0,
 "s": 1364.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -24.97,
+"x": -43.95,
 "y": 14.56,
-"z": 138.72,
+"z": 148.99,
 "width": 8.0,
 "s": 1366.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -23.5,
+"x": -45.49,
 "y": 14.56,
-"z": 137.36,
+"z": 147.73,
 "width": 8.0,
 "s": 1368.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -21.94,
+"x": -46.77,
 "y": 14.56,
-"z": 136.11,
+"z": 146.19,
 "width": 8.0,
 "s": 1370.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -20.29,
+"x": -47.72,
 "y": 14.56,
-"z": 134.99,
+"z": 144.44,
 "width": 8.0,
 "s": 1372.0,
 "zone": "upper plaza",
 "tunnel": false
 },
 {
-"x": -18.55,
+"x": -48.31,
 "y": 14.56,
-"z": 134.0,
+"z": 142.53,
 "width": 8.0,
 "s": 1374.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -48.52,
+"y": 14.56,
+"z": 140.55,
+"width": 8.0,
+"s": 1376.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -48.33,
+"y": 14.56,
+"z": 138.56,
+"width": 8.0,
+"s": 1378.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -47.75,
+"y": 14.56,
+"z": 136.64,
+"width": 8.0,
+"s": 1380.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -46.81,
+"y": 14.56,
+"z": 134.88,
+"width": 8.0,
+"s": 1382.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -45.55,
+"y": 14.56,
+"z": 133.34,
+"width": 8.0,
+"s": 1384.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -44.01,
+"y": 14.56,
+"z": 132.07,
+"width": 8.0,
+"s": 1386.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -42.25,
+"y": 14.56,
+"z": 131.13,
+"width": 8.0,
+"s": 1388.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -40.34,
+"y": 14.56,
+"z": 130.54,
+"width": 8.0,
+"s": 1390.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -38.36,
+"y": 14.56,
+"z": 130.29,
+"width": 8.0,
+"s": 1392.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -36.36,
+"y": 14.56,
+"z": 130.28,
+"width": 8.0,
+"s": 1394.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -34.36,
+"y": 14.56,
+"z": 130.41,
+"width": 8.0,
+"s": 1396.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -32.37,
+"y": 14.56,
+"z": 130.59,
+"width": 8.0,
+"s": 1398.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -30.38,
+"y": 14.56,
+"z": 130.78,
+"width": 8.0,
+"s": 1400.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -28.39,
+"y": 14.56,
+"z": 130.97,
+"width": 8.0,
+"s": 1402.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -26.4,
+"y": 14.56,
+"z": 131.16,
+"width": 8.0,
+"s": 1404.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -24.41,
+"y": 14.56,
+"z": 131.35,
+"width": 8.0,
+"s": 1406.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -22.41,
+"y": 14.56,
+"z": 131.54,
+"width": 8.0,
+"s": 1408.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -20.42,
+"y": 14.56,
+"z": 131.73,
+"width": 8.0,
+"s": 1410.0,
+"zone": "upper plaza",
+"tunnel": false
+},
+{
+"x": -18.43,
+"y": 14.56,
+"z": 131.92,
+"width": 8.0,
+"s": 1412.0,
 "zone": "upper plaza",
 "tunnel": false
 }

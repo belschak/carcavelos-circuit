@@ -6,6 +6,12 @@ Writes textures/coast_atlas_albedo.png        1024 px: the bands of coast_plan.A
        textures/coast_render_beige_albedo.png 512 px, tiling: sand-beige render of the tunnel ramp's walls and the
                                               north portal (#c8b890, survey 3.6)
        textures/coast_boardmarked_albedo.png  512 px, tiling: board-marked in-situ concrete (tunnel ceiling, 2 m tile)
+V18h (2026-11-12), the ground and edges seen close from the kart (Street View Oct 2009 / Oct 2019 / Dec 2022):
+       textures/coast_concrete_{beige,ochre,pale}_albedo.png + _normal.png   1024 px, tiling both ways: in-situ concrete
+                                              slabs with saw-cut joints, broom finish, aggregate, stains, hairline
+                                              cracks (coast_plan.CONCRETE: colour, tile and slab size in metres)
+       textures/coast_trim_albedo.png         1024 px: the bands of coast_plan.TRIM (white precast blocks, kerb stones,
+                                              white wall panels, timber, cast-iron covers) and coast_plan.TRIM_PALETTE
 """
 import os
 
@@ -217,8 +223,256 @@ def make_boardmarked(size=512, seed=1613):
     print("coast_boardmarked_albedo.png", size, "px")
 
 
+# =====================================================================================================
+# V18h: concrete slabs (tiling both ways) and the trim atlas
+# =====================================================================================================
+def wrap_noise(n, cells, rng):
+    """Smooth noise in -0.5..0.5 that tiles both ways: a random grid of `cells` x `cells`, bicubic."""
+    small = rng.random((cells, cells)).astype(np.float32)
+    pad = np.pad(small, 2, mode="wrap")
+    k = n // cells
+    big = np.asarray(Image.fromarray((pad * 255).astype(np.uint8)).resize(((cells + 4) * k, (cells + 4) * k), Image.BICUBIC),
+                     np.float32) / 255.0
+    out = big[2 * k:2 * k + cells * k, 2 * k:2 * k + cells * k]
+    if out.shape[0] != n:
+        out = np.asarray(Image.fromarray((out * 255).astype(np.uint8)).resize((n, n), Image.BICUBIC), np.float32) / 255.0
+    return out - 0.5
+
+
+def fbm(n, rng, cells=(4, 8, 16, 32), gain=0.55):
+    out, amp, total = np.zeros((n, n), np.float32), 1.0, 0.0
+    for c in cells:
+        out += wrap_noise(n, c, rng) * amp
+        total += amp
+        amp *= gain
+    return out / total
+
+
+def wrap_blots(n, rng, count, r0, r1, stretch=(1.0, 1.0)):
+    """Soft round blots (0..1) at random places, wrapped; radius r0..r1 px, optionally stretched along x / y."""
+    ys, xs = np.mgrid[0:n, 0:n].astype(np.float32)
+    out = np.zeros((n, n), np.float32)
+    for _ in range(count):
+        cx, cy, r = rng.uniform(0, n), rng.uniform(0, n), rng.uniform(r0, r1)
+        dx = np.abs(xs - cx)
+        dx = np.minimum(dx, n - dx) / stretch[0]
+        dy = np.abs(ys - cy)
+        dy = np.minimum(dy, n - dy) / stretch[1]
+        out = np.maximum(out, np.clip(1.0 - np.hypot(dx, dy) / r, 0, 1) ** 1.5 * rng.uniform(0.4, 1.0))
+    return out
+
+
+def normal_from_height(h, strength):
+    gx = (np.roll(h, -1, 1) - np.roll(h, 1, 1)) * strength
+    gy = (np.roll(h, -1, 0) - np.roll(h, 1, 0)) * strength
+    nz = np.ones_like(h)
+    ln = np.sqrt(gx * gx + gy * gy + nz * nz)
+    return np.stack([(-gx / ln + 1) * 127.5, (gy / ln + 1) * 127.5, (nz / ln) * 255.0], -1)
+
+
+def make_concrete(name, spec, n=1024):
+    """In-situ concrete slabs: u = along the road. spec: colour, tile (m), slab (m along u, m along v), seed, stain."""
+    rng = np.random.default_rng(spec["seed"])
+    px = n / spec["tile"]                                   # pixels per metre
+    su, sv = spec["slab"]
+    nu, nv = int(round(spec["tile"] / su)), int(round(spec["tile"] / sv))
+    ys, xs = np.mgrid[0:n, 0:n]
+    slab_id = (ys * nv // n) * nu + (xs * nu // n)
+    tone = rng.uniform(-0.035, 0.035, nu * nv).astype(np.float32)[slab_id]
+    warm = rng.uniform(-1.0, 1.0, nu * nv).astype(np.float32)[slab_id]
+    # distance (px) to the nearest slab joint; the joints lie on the tile's border too, so the tile repeats cleanly
+    du = np.minimum(xs % (n // nu), (n // nu) - xs % (n // nu)).astype(np.float32)
+    dv = np.minimum(ys % (n // nv), (n // nv) - ys % (n // nv)).astype(np.float32)
+    dj = np.minimum(du, dv)
+    cut = np.clip(1.0 - dj / max(1.0, 0.008 * px), 0, 1)                # the saw cut, 1.6 cm
+    grime = np.clip(1.0 - dj / (0.22 * px), 0, 1) ** 2                  # dirt that gathers along a joint
+    blotch = fbm(n, rng, (3, 6, 12, 24))
+    fine = fbm(n, rng, (64, 128), 0.7)
+    grain = rng.normal(0, 1, (n, n)).astype(np.float32)
+    broom = np.repeat(rng.normal(0, 1, (n, 1)).astype(np.float32), n, axis=1)
+    broom = (broom + np.roll(broom, 1, 0)) / 2.0
+    broom = broom.T                                                     # broom strokes run across the road (along v)
+    specks = (rng.random((n, n)) < 0.006).astype(np.float32) * rng.uniform(0.5, 1.0, (n, n)).astype(np.float32)
+    pale_specks = (rng.random((n, n)) < 0.004).astype(np.float32)
+    stains = wrap_blots(n, rng, spec.get("stains", 14), 0.10 * px, 0.45 * px)
+    drips = wrap_blots(n, rng, spec.get("drips", 40), 0.015 * px, 0.05 * px)
+    wear = wrap_blots(n, rng, 5, 0.5 * px, 1.3 * px, stretch=(3.0, 1.0))             # long pale worn patches along the road
+    # hairline cracks: random walks that start on a joint
+    crack = np.zeros((n, n), np.float32)
+    for _ in range(spec.get("cracks", 5)):
+        x, y = float(rng.integers(0, nu) * (n // nu)), float(rng.uniform(0, n))
+        ang = rng.uniform(-0.6, 0.6)
+        for _step in range(int(rng.uniform(0.8, 2.6) * px)):
+            crack[int(y) % n, int(x) % n] = 1.0
+            ang += rng.normal(0, 0.18)
+            ang = float(np.clip(ang, -1.2, 1.2))
+            x += np.cos(ang)
+            y += np.sin(ang)
+    lum = (1.0 + tone + 0.10 * blotch + 0.05 * fine + 0.022 * grain + 0.022 * broom - 0.16 * specks + 0.07 * pale_specks
+           - spec.get("stain", 0.13) * stains - 0.18 * drips + 0.04 * wear - 0.11 * grime - 0.24 * crack)
+    lum *= 1.0 - 0.5 * cut
+    base = rgb(spec["colour"])
+    col = base[None, None] * lum[..., None]
+    col[..., 0] *= 1.0 + 0.012 * warm + 0.015 * blotch                 # a little colour drift: warmer / greyer slabs
+    col[..., 2] *= 1.0 - 0.018 * warm - 0.03 * stains
+    col = col + (rgb("#6E6A5E")[None, None] - col) * (0.25 * grime * (0.5 + blotch))[..., None] * 0.6
+    Image.fromarray(np.clip(col, 0, 255).astype(np.uint8)).save(os.path.join(OUT, name + "_albedo.png"))
+    height = -1.0 * cut - 0.25 * crack + 0.05 * grain + 0.08 * fine + 0.03 * broom - 0.2 * specks
+    Image.fromarray(np.clip(normal_from_height(height, 1.6), 0, 255).astype(np.uint8)).save(os.path.join(OUT, name + "_normal.png"))
+    print(name + "_albedo.png / _normal.png", n, "px,", spec["tile"], "m tile,", nu * nv, "slabs")
+
+
+def strip_noise(h, w, rng, cells=(8, 32, 96)):
+    """Noise for a band w x h that tiles along x."""
+    big = fbm(w, rng, cells)
+    return big[:h] if h <= w else np.tile(big, (h // w + 1, 1))[:h]
+
+
+def trim_precast(h, w, rng, top=False):
+    """White precast concrete blocks, 2.4 m long (four per tile): joints, bug holes, a chamfered top edge, drip streaks
+    and a damp green foot on the faces (`top`: the top face, without foot and streaks)."""
+    xs = np.arange(w)
+    block = w // 4
+    bid = xs // block
+    tone = rng.uniform(-0.03, 0.03, 4).astype(np.float32)[bid][None, :]
+    joint = ((xs % block) < 3).astype(np.float32)[None, :]
+    n1 = strip_noise(h, w, rng)
+    grain = rng.normal(0, 1, (h, w)).astype(np.float32)
+    holes = (rng.random((h, w)) < 0.004).astype(np.float32)
+    down = (np.arange(h) / h)[:, None]
+    lum = 1.0 + tone + 0.05 * n1 + 0.012 * grain - 0.2 * holes - 0.45 * joint
+    col = rgb("#DCDAD3")[None, None] * lum[..., None]
+    if top:
+        edge = np.minimum(np.arange(h), h - 1 - np.arange(h))[:, None]
+        col *= (1.0 - 0.10 * np.clip(1.0 - edge / 5.0, 0, 1))[..., None]            # the two arrises, a little darker
+        dirt = np.clip(strip_noise(h, w, rng, (6, 20)) * 3.0, 0, 1)
+        return col + (rgb("#B9B2A0")[None, None] - col) * (0.25 * dirt)[..., None]
+    streak = np.clip(np.repeat(rng.normal(0, 1, (1, w)).astype(np.float32), h, axis=0), 0, 3) / 3.0
+    streak = (streak + np.roll(streak, 1, 1) + np.roll(streak, -1, 1)) / 3.0
+    col *= (1.0 - 0.10 * streak * (0.3 + down))[..., None]
+    col[:4] *= 1.06                                                                  # chamfer catches the light
+    foot = np.clip((down - 0.72) / 0.28, 0, 1) * (0.6 + 0.8 * (n1 + 0.5))
+    return col + (rgb("#8E8F72")[None, None] - col) * (0.42 * np.clip(foot, 0, 1))[..., None]
+
+
+def trim_kerb(h, w, rng):
+    """Pale concrete kerb stones, 1 m long (eight per tile)."""
+    xs = np.arange(w)
+    stone = w // 8
+    tone = rng.uniform(-0.06, 0.06, 8).astype(np.float32)[xs // stone][None, :]
+    joint = ((xs % stone) < 3).astype(np.float32)[None, :]
+    grain = rng.normal(0, 1, (h, w)).astype(np.float32)
+    lum = 1.0 + tone + 0.06 * strip_noise(h, w, rng, (16, 64)) + 0.03 * grain - 0.4 * joint
+    edge = np.minimum(np.arange(h), h - 1 - np.arange(h))[:, None]
+    lum = lum * (1.0 - 0.16 * np.clip(1.0 - edge / 6.0, 0, 1))
+    return rgb("#B9B5A6")[None, None] * lum[..., None]
+
+
+def trim_wall(h, w, rng):
+    """White painted in-situ concrete wall: 2.4 m panels, tie holes, weather streaks from the coping, a damp foot."""
+    xs = np.arange(w)
+    panel = w // 4
+    joint = ((xs % panel) < 2).astype(np.float32)[None, :]
+    tone = rng.uniform(-0.02, 0.02, 4).astype(np.float32)[xs // panel][None, :]
+    n1 = strip_noise(h, w, rng, (6, 24, 96))
+    grain = rng.normal(0, 1, (h, w)).astype(np.float32)
+    down = (np.arange(h) / h)[:, None]
+    streak = np.clip(np.repeat(rng.normal(0, 1, (1, w)).astype(np.float32), h, axis=0), 0.4, 3) / 3.0
+    for _ in range(3):
+        streak = (streak + np.roll(streak, 1, 1) + np.roll(streak, -1, 1)) / 3.0
+    lum = 1.0 + tone + 0.035 * n1 + 0.008 * grain - 0.22 * joint - 0.16 * streak * np.clip(1.2 - down * 1.4, 0, 1)
+    col = rgb("#E8E6DF")[None, None] * lum[..., None]
+    for k in range(4):                                                               # form-tie holes, two rows
+        for fy in (0.3, 0.7):
+            for fx in (0.25, 0.75):
+                cx, cy = int((k + fx) * panel), int(fy * h)
+                col[cy - 2:cy + 3, cx - 2:cx + 3] *= 0.8
+    col[:5] *= 0.93                                                                  # the coping's shadow line
+    foot = np.clip((down - 0.8) / 0.2, 0, 1) * (0.5 + n1 + 0.5)
+    return col + (rgb("#A49F88")[None, None] - col) * (0.4 * np.clip(foot, 0, 1))[..., None]
+
+
+def trim_timber(h, w, rng):
+    """Weathered grey-brown timber, grain along u."""
+    grain = np.repeat(rng.normal(0, 1, (h, 1)).astype(np.float32), w, axis=1)
+    grain = (grain + np.roll(grain, 1, 0)) / 2.0
+    n1 = strip_noise(h, w, rng, (8, 32))
+    check = (rng.random((h, w)) < 0.002).astype(np.float32)
+    for _ in range(18):
+        check = np.maximum(check, np.roll(check, 1, 1) * 0.92)                       # short drying cracks along the grain
+    lum = 1.0 + 0.10 * grain + 0.12 * n1 - 0.3 * check
+    return rgb("#7A6A52")[None, None] * lum[..., None]
+
+
+def trim_iron(h, w, rng):
+    """Cast-iron covers, one per square cell (h x h): 0 round manhole cover in its concrete frame, 1 slot gully grate,
+    2 dark planting soil / mulch, 3 plain cast iron. The other cells stay plain concrete grey."""
+    out = np.zeros((h, w, 3), np.float32) + rgb("#B4AC9C")[None, None]
+    ys, xs = np.mgrid[0:h, 0:h].astype(np.float32)
+    r = np.hypot(xs - h / 2, ys - h / 2) / (h / 2)
+    iron = rgb("#4E4B48")
+    noise = 1.0 + 0.10 * rng.normal(0, 1, (h, h)).astype(np.float32)
+    cell = np.zeros((h, h, 3), np.float32) + rgb("#A9A294")[None, None]              # 0: the round cover
+    studs = ((np.sin(xs * 0.9) * np.sin(ys * 0.9)) > 0.35).astype(np.float32)
+    lid = iron[None, None] * (noise * (0.9 + 0.22 * studs * (r < 0.78)))[..., None]
+    ring = ((r > 0.80) & (r < 0.86)) | (r > 0.93)
+    cell = np.where((r < 0.97)[..., None], lid, cell)
+    cell = np.where((ring & (r < 0.97))[..., None], iron[None, None] * 0.6, cell)
+    out[:, 0:h] = cell
+    cell = np.zeros((h, h, 3), np.float32) + iron[None, None] * noise[..., None]     # 1: the gully grate
+    slots = ((xs % 14) < 6) & (ys > 0.12 * h) & (ys < 0.88 * h) & (xs > 0.08 * h) & (xs < 0.92 * h)
+    cell = np.where(slots[..., None], rgb("#1E1D1C")[None, None], cell)
+    out[:, h:2 * h] = cell
+    soil = rgb("#5A4A3A")[None, None] * (1.0 + 0.25 * rng.normal(0, 1, (h, h)).astype(np.float32)
+                                         + 0.3 * strip_noise(h, h, rng, (8, 16)))[..., None]
+    out[:, 2 * h:3 * h] = soil                                                       # 2: mulch
+    out[:, 3 * h:4 * h] = iron[None, None] * noise[..., None]                        # 3: plain iron
+    return out
+
+
+def trim_setts(h, w, rng):
+    """Two rows of dark basalt / granite setts, 12 cm cubes with worn round tops and dark joints (survey: #5f5c56)."""
+    cube = h // 2
+    ys, xs = np.mgrid[0:h, 0:w]
+    row = ys // cube
+    shift = (row * cube) // 2                                   # the second row is laid half a stone on
+    col = (xs + shift) // cube
+    ids = row * (w // cube + 2) + col
+    tone = rng.uniform(-0.16, 0.16, ids.max() + 1).astype(np.float32)[ids]
+    fx = ((xs + shift) % cube) / cube - 0.5
+    fy = (ys % cube) / cube - 0.5
+    edge = np.maximum(np.abs(fx), np.abs(fy))
+    dome = 1.0 - 0.9 * np.clip((edge - 0.34) / 0.16, 0, 1) ** 1.5         # round tops falling into the joint
+    grain = rng.normal(0, 1, (h, w)).astype(np.float32)
+    lum = (1.0 + tone + 0.05 * grain) * (0.45 + 0.55 * dome)
+    out = rgb("#6A6660")[None, None] * lum[..., None]
+    out[..., 2] *= 1.0 + 0.04 * tone * 4
+    return out
+
+
+TRIM_FN = {"setts": trim_setts, "precast": trim_precast, "precast_top": lambda h, w, rng: trim_precast(h, w, rng, top=True), "kerb": trim_kerb,
+           "wall": trim_wall, "timber": trim_timber, "iron": trim_iron}
+
+
+def make_trim(seed=1811):
+    rng = np.random.default_rng(seed)
+    img = np.zeros((S, S, 3), np.float32)
+    for name, b in P.TRIM.items():
+        r0, h = b["row"], b["px"]
+        if name == "pal":
+            for k, colour in enumerate(P.TRIM_PALETTE.values()):
+                img[r0:r0 + h, k * 64:(k + 1) * 64] = rgb(colour)
+            continue
+        img[r0:r0 + h] = TRIM_FN[name](h, S, rng)
+    Image.fromarray(np.clip(img, 0, 255).astype(np.uint8)).save(os.path.join(OUT, "coast_trim_albedo.png"))
+    print("coast_trim_albedo.png", S, "px,", len(P.TRIM), "bands,", len(P.TRIM_PALETTE), "flat colours")
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     make_atlas()
     make_render_beige()
     make_boardmarked()
+    for _name, _spec in P.CONCRETE.items():
+        make_concrete("coast_concrete_" + _name, _spec)
+    make_trim()
