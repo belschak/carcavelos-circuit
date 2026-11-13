@@ -46,7 +46,20 @@ SWAPS = {
 NEAR_M = 30.0
 NEAR_TRIS = {"Prop_Car": 4000, "Prop_Parasol": 2000, "Prop_SunLounger": 1800, "Prop_LifeguardTower": 6000, "Prop_BikeRack": 9000}
 FAR_TRIS = {"Prop_Car": 650, "Prop_Parasol": 400, "Prop_SunLounger": 300, "Prop_LifeguardTower": 1500, "Prop_BikeRack": 1500}
-BIKES = (("", -0.78), ("teal", 0.0), ("orange", 0.78))       # Prop_BikeRack: three bikes beside its hoops (x of each)
+BIKES = (("", -0.78), ("teal", 0.0), ("orange", 0.78))
+# New prototypes (Luc, 13 Nov: "food truck, kiosk and volleyball net on the beach"): model, size, turn the nose to +x.
+NEW = {
+    "Prop_AIFoodTruck": ("S3_foodtruck", ("width", 2.3), True),
+    "Prop_AIKiosk": ("S4_kiosk", ("span", 3.0), True),
+    "Prop_AIVolleyNet": ("B5_volleynet", ("box", (9.5, None, 2.55)), False),   # spans along x; a real net: 9.5 x 2.43 m
+}
+# Where they stand: on the cove beach south of the promenade (sand 13-17 m from the route, ground mask checked) and
+# the food truck on the palm car park at the beach bar (paving, 13 m from the route). (x, y, yaw deg, ground)
+NEW_PLACES = (
+    ("Prop_AIVolleyNet", -89.0, -167.0, 0.0, "sand"),
+    ("Prop_AIKiosk", -134.0, -164.0, 90.0, "sand"),                   # its counter faces the promenade (north)
+    ("Prop_AIFoodTruck", -74.0, -133.0, 180.0, "paving"),
+)       # Prop_BikeRack: three bikes beside its hoops (x of each)
 ROUGHNESS = {"C": 0.35, "B": 0.6, "P": 0.45}                  # paint a little glossy, beach wood and canvas matt
 
 
@@ -82,8 +95,13 @@ def _fit(data, how, turn=True):
     hi = Vector((max(c.x for c in co), max(c.y for c in co), max(c.z for c in co)))
     size = hi - lo
     kind, metres = how
-    s = metres / {"width": size.y, "height": size.z, "span": max(size.x, size.y)}[kind]
     data.transform(Matrix.Translation(Vector((-(lo.x + hi.x) / 2, -(lo.y + hi.y) / 2, -lo.z))))
+    if kind == "box":                                 # per axis (None = keep the x scale): for a flat thing like a net
+        sx = metres[0] / size.x
+        k = Vector((sx, metres[1] / size.y if metres[1] else sx, metres[2] / size.z))
+        data.transform(Matrix.Diagonal((k.x, k.y, k.z, 1.0)))
+        return Vector((size.x * k.x, size.y * k.y, size.z * k.z))
+    s = metres / {"width": size.y, "height": size.z, "span": max(size.x, size.y)}[kind]
     data.transform(Matrix.Scale(s, 4))
     return size * s
 
@@ -168,6 +186,19 @@ def swap(protos):
         _replace(obj, data)
         report.append(f"{name}={model}{'/' + variant if variant else ''} {size.x:.2f}x{size.y:.2f}x{size.z:.2f} m "
                       f"{sum(len(p.vertices) - 2 for p in data.polygons)} tris")
+    home = next(iter(protos["Prop_CarA"].users_collection)) if "Prop_CarA" in protos else E.collection("Proto_Props")
+    for name, (model, how, turn) in NEW.items():
+        if name in protos or not os.path.exists(os.path.join(AI, model + ".glb")):
+            continue
+        data = _mesh(model)
+        size = _fit(data, how, turn=turn)
+        data.materials.clear()
+        data.materials.append(_material(model, ""))
+        obj = bpy.data.objects.new(name, data)
+        data.name = name
+        home.objects.link(obj)
+        protos[name] = obj
+        report.append(f"{name}={model} {size.x:.2f}x{size.y:.2f}x{size.z:.2f} m {sum(len(p.vertices) - 2 for p in data.polygons)} tris")
     rack = protos.get("Prop_BikeRack")
     if rack is not None and os.path.exists(os.path.join(AI, "P1_bicycle.glb")):
         bm = bmesh.new()
@@ -221,6 +252,16 @@ def far_variants(props, protos):
             p = dict(p, proto=fname)
             far += 1
         out.append(p)
+    import env_coast
+    for name, x, y, yaw, ground in NEW_PLACES:
+        if name not in protos:
+            continue
+        clear = S.route_distance(x, y)
+        assert clear > 6.6 + 3.0, f"{name} at ({x}, {y}) only {clear:.1f} m from the route"
+        dg = bpy.context.evaluated_depsgraph_get()            # the built ground (sand or paving) right under it
+        hit, loc, _n, _i, _o, _m = bpy.context.scene.ray_cast(dg, Vector((x, y, 200.0)), Vector((0.0, 0.0, -1.0)))
+        z = loc.z if hit else (env_coast.paving_z(x, y) if ground == "paving" else E.ground_z(x, y))
+        out.append({"proto": name, "x": x, "y": y, "z": round(z, 3), "rot_z": math.radians(yaw), "scale": 1.0})
     import json
     path = os.path.join(E.OUT, "placements_props.json")         # what export_unity_bundle hands to Unity
     data = json.load(open(path))
