@@ -24,6 +24,23 @@ Every board is checked against the race line (route.json, its half width) and ag
 (the plaza shortcut, the s09 walkway branch): the log prints the clearance of each board, and a WARNING where it is
 less than GAP (1.2 m) or, for fork boards, FORK_GAP (1.5 m). Boards stand on the ground found by a ray (vegetation and
 props ignored). Signs inside the hall are package C's (atrium arrows), not here.
+
+V21a (Luc's second free-roam drive of 13 Nov 2026, luc_notes/2026-11-13_playtest2 p1 / p2), data in start_plan.py:
+
+  grid boxes         ten start positions painted on the home straight, Boost Orange, exactly where RacerGrid puts the
+                     karts. V23 (Luc's third drive, luc_notes/2026-11-13_playtest3 q4 / q5): pairs side by side, the
+                     front row centred on the SpawnPoint, odd numbers left; F1-style boxes of 1.7 x 2.3 m: a line
+                     across the front (the start line's side), 1.0 m side lines running back, open behind; the
+                     position number 1-10 beside the box on the outside. Flush paint in Track_EdgeLines like the
+                     start line, 1 cm higher (a drain channel's paint crosses the grid).
+  U-turn boards      four left boards (uturn_signs) behind the outside wall of the U-turn before the home straight:
+                     U1 straight ahead of the westbound leg, U2 at the apex, U3 and U4 round to where the home
+                     straight starts. A sign may now give "lift" (board bottom over the ground; these stand 0.95 m
+                     up, over the 0.8 m wall) and "face": "road" (parallel to the road at its route point).
+  barriers           the centre lines of the Nova Kart walls package V21b builds in Unity (start_plan.barriers: the
+                     median between the two legs, the outside of the U-turn) get their paving heights here by ray
+                     and go to out/start_barriers.json; export_unity_bundle.py writes them into track.json
+                     "barriers". Nothing is built for them in Blender. The log prints every clearance.
 """
 import math
 
@@ -32,6 +49,7 @@ import bpy
 from mathutils import Vector
 
 import env_common as E
+import start_plan
 
 GAP, FORK_GAP = 1.2, 1.5            # m between a board (or post) and the road edge / a fork lane
 SIZES = {   # width, height, lift (bottom over the ground), thickness, post offsets along the board, post half size
@@ -39,7 +57,10 @@ SIZES = {   # width, height, lift (bottom over the ground), thickness, post offs
     "big": dict(w=3.6, h=1.2, lift=0.6, t=0.10, posts=(-1.3, 1.3), post=0.06),
     "fork": dict(w=6.0, h=2.0, lift=0.9, t=0.14, posts=(-2.5, 0.0, 2.5), post=0.08),
     "overhead": dict(w=3.2, h=1.4, lift=4.0, t=0.12, posts=(0.9,), post=0.09),   # mast 0.9 m right of the middle
-    # (V20 integration: 3.2 m wide, 4 m up, so on V20b's axis it stays off the race road and the chase camera passes under)
+    # (V20 integration: 3.2 m wide, 4 m up, so on V20b's axis it stays off the race road and the chase camera passes under;
+    # V23s: no board uses it any more, Luc's q12: "an absolute catastrophe")
+    "half": dict(w=3.0, h=1.0, lift=0.6, t=0.10, posts=(-1.1, 1.1), post=0.06),    # V23s: half the fork board (Luc, q9)
+    "wall": dict(w=1.44, h=1.0, lift=1.1, t=0.06, posts=(), post=0.0),             # V23s: flat on a wall, no posts (q12)
 }
 
 # Lanes that are not the race line but must stay clear: lists of (centre polyline, half width in m).
@@ -74,13 +95,25 @@ SIGNS = [
     dict(id="RB2", shot="s05", type="right", size="big", at=(-91.5, -44.0), face_from=(-97.3, -28.9),
          note="on the splitter island where a wrong left turn would go (east side of the ring)"),
     # s07 hairpin: "put more left signs here so that nobody drives straight on"
-    dict(id="H2", shot="s07", type="left", size="normal", near=(-219.0, -24.0), side=-1, offset=7.5,
-         face_from=(-208.2, -29.3), note="early, on the verge left of the Marginal at idx ~232"),
+    # V23s (Luc, 13 Nov, q7): H2 stood 7.5 m left of the race line at idx ~232 = on the eastbound carriageway ("the
+    # sign on the far left stands in the middle of the road"); it is gone. H3 is his new one: "on the far right, so
+    # that you don't keep driving straight on": a big left board across the right lane of the westbound carriageway,
+    # past the median gap, facing the driver on the approach. Its place is the one constant CAP_STRAIGHT_ON below
+    # (Luc will mark the exact spot).
+    dict(id="H3", shot="q7", type="left", size="big", at="cap_straight_on", face_from=(-215.4, -25.9),
+         note="far right: across the westbound carriageway's right lane where the Marginal goes straight on (idx 236-242)"),
     dict(id="H1", shot="s07", type="left", size="big", at=(-253.0, -15.5), face_from=(-228.4, -20.6),
          note="straight ahead where a kart that misses the hairpin would go on along the Marginal"),
     # s09 fork with the yellow markings: one big two-way board in the middle
-    dict(id="F1", shot="s09", type="two_way", size="fork", at=(-118.5, -138.5), face_from=(-156.4, -116.5),
-         note="on the lawn wedge between the walkway (left branch) and the race band (right branch)"),
+    # V23s (Luc, 13 Nov, q9 / q10): the 6 m board on three posts on the lawn wedge (-118.5, -138.5) is gone ("the one
+    # behind it, the one with three posts, you can leave out"). Instead two smaller two-way boards before the fork:
+    # F1 half as wide "exactly at the corner left of this yellow crossing", F0 where the tall lamp post stood, right
+    # of the wooden post fence and left of the purple planters ("an arrow that goes left and right, because you can
+    # go down to the beach or straight on to the tunnel"; package V23c removes the mast and the bollards there).
+    dict(id="F1", shot="q9", type="two_way", size="half", at=(-143.2, -117.8), face_from=(-158.0, -115.3),
+         note="on the dark square beside the yellow box's north corner, left of the race band at idx ~321"),
+    dict(id="F0", shot="q10", type="two_way", size="normal", at=(-135.36, -122.84), face_from=(-152.0, -120.0),
+         note="the flood mast's place between the timber posts and the flower troughs, left of the race band at idx ~326"),
     # ... and a series along the right branch towards the beach tunnel (with the corner signs at s 686 and 762)
     dict(id="F2", shot="s09", type="left", size="normal", near=(-125.4, -147.3), side=1, offset=7.5,
          face_from=(-137.8, -131.7), note="sea side of the bend at idx ~338, before the corner sign at s 686"),
@@ -91,8 +124,13 @@ SIGNS = [
     dict(id="T1", shot="s12", type="left", size="big", at=(120.2, -26.6), face_from=(95.3, -44.5),
          note="lower plaza, outside the left turn at idx 480-486, in front of the picnic tables"),
     # s14: "again a sign that you can go left and right" (shortcut left, main line right)
-    dict(id="P1", shot="s14", type="two_way", size="overhead", at="shortcut_fork", face_from=(98.85, 14.41),
-         note="one mast between the shortcut's pad lane and the main line, board 3 m up, facing checkpoint 10"),
+    # V23s (Luc, 13 Nov, q12: "smaller, above all a bit narrower, and on the ground ... placed so that you can't
+    # drive into it ... maybe right of the ramp. You can also consider putting it on the wall behind"): between the
+    # kicker and the main line there are 2.1 m of deck, too little for a board with FORK_GAP on both sides, so the
+    # board hangs flat on the south face of the bridge's west pier, right of the kicker's lip: "< >", 1.44 x 1.0 m,
+    # 1.1 to 2.1 m over the deck, no post, nothing to drive into (the pier is a wall anyway).
+    dict(id="P1", shot="q12", type="two_way", size="wall", at="pier_face",
+         note="flat on the bridge pier's south face, right of the kicker's lip; jump lane left of it, main line right"),
     # s19 / s20 north plaza: "shortly before the cars please arrows to the left, and after turning left again to the left"
     dict(id="N1", shot="s19", type="left", size="big", at=(84.5, 163.5), face_from=(69.6, 159.8),
          note="in front of the parked cars, facing the atrium exit door D5"),
@@ -100,7 +138,10 @@ SIGNS = [
          note="outside the second left turn (idx 616-626), after the corner sign at s 1186"),
 ]
 
-SHORTCUT_FORK = (-14.0, 2.0)     # P1's middle: plaza_plan.sc_point(s, u) on V20b's jump axis, 3.5 m before the pad, where
+CAP_STRAIGHT_ON = (-240.6, -9.1)  # H3's middle (V23s): the ONE place to move when Luc marks the spot (generator x, y =
+                                  # track.json x, z). Now: 5.0 m north of the median's line at x -243, i.e. the middle of
+                                  # the westbound carriageway's right lane, 10 m past the race road's outer edge.
+SHORTCUT_FORK = (-14.0, 2.0)     # (V20; unused since V23s) the overhead board's middle: plaza_plan.sc_point(s, u) on V20b's jump axis, 3.5 m before the pad, where
                                  # the shortcut leaves the main line; mast 0.9 m further right, at u 2.5 (V20 integration)
 
 
@@ -142,11 +183,20 @@ def resolve(sign):
     if sign.get("at") == "shortcut_fork":
         import plaza_plan as P
         c = Vector((*P.sc_point(*SHORTCUT_FORK), 0))
+    elif sign.get("at") == "cap_straight_on":
+        c = Vector((*CAP_STRAIGHT_ON, 0))
+    elif sign.get("at") == "pier_face":            # V23s: flat on the south face of the bridge's west pier (plaza_plan.PIER)
+        import plaza_plan as P
+        a, b = Vector((*P.PIER[0], 0)), Vector((*P.PIER[1], 0))
+        f = Vector((*P.PASSAGE_DIR, 0)).normalized()             # from the driver into the wall
+        return (a + b) / 2 - f * (SIZES[sign["size"]]["t"] / 2 + 0.02), f
     elif "at" in sign:
         c = Vector((sign["at"][0], sign["at"][1], 0))
     else:
         p, _f, r = _route_frame(*sign["near"])
         c = Vector((p["x"], p["y"], 0)) + r * (sign["side"] * sign["offset"])
+    if sign.get("face") == "road":                  # V21a: parallel to the road, read from the road
+        return c, r * sign["side"]
     if "yaw" in sign:
         yaw = math.radians(sign["yaw"])
         f = -Vector((math.sin(yaw), math.cos(yaw), 0))
@@ -207,13 +257,19 @@ def add_board(bm, sign, c, f):
     z_ref = E.nearest_route_point(c.x, c.y)["track_z"]
     feet = [c + u * pu for pu in s["posts"]]
     grounds = [ground_at(p.x, p.y, z_ref) for p in feet]
-    z0 = max(grounds) + s["lift"]
+    if not feet:                                                # V23s: a wall board hangs over the plaza deck
+        import plaza_plan as P
+        grounds = [P.DECK_Z]
+    z0 = max(grounds) + sign.get("lift", s["lift"])
     add_box(bm, c, u, f, s["w"] / 2, s["t"] / 2, z0, z0 + s["h"], 0)                       # board (white)
     for p, g in zip(feet, grounds):                                                        # posts behind it
         add_box(bm, p + f * (s["t"] / 2 + s["post"] + 0.01), u, f, s["post"], s["post"], g - 0.1, z0 + s["h"] * 0.6, 2)
     front = c - f * (s["t"] / 2 + 0.01)
     vm, h = z0 + s["h"] / 2, s["h"]
-    if sign["type"] == "two_way":
+    if sign["type"] == "two_way" and s["w"] < 2.9 * h:          # V23s: a narrow board carries one chevron each way, "< >"
+        for u0, point in ((-0.45 * h, -1), (0.45 * h, 1)):
+            chevron(bm, front, u, f, u0, point, vm, h)
+    elif sign["type"] == "two_way":
         sp = 0.8 * h
         for u0, point in ((-1.5 * sp, -1), (-0.5 * sp, -1), (0.5 * sp, 1), (1.5 * sp, 1)):
             chevron(bm, front, u, f, u0, point, vm, h)
@@ -241,6 +297,8 @@ def check(sign, c, f, u, feet):
     near = {k: v for k, v in lane.items() if v < 6.0}
     need = FORK_GAP if sign["type"] == "two_way" else GAP
     low = road < need or any(v < need for v in near.values())
+    if sign["size"] == "wall":                     # V23s: flat on a wall that stands there anyway (6 cm proud of it):
+        low = road < 0.5                           # the wall bounds the lanes, the board only must not reach the road
     if sign["size"] == "overhead":                 # the board itself must not reach over the race road
         over = min(road_clearance(p.x, p.y) for p in (c + u * (s["w"] / 2), c - u * (s["w"] / 2)))
         low = low or over < 0.0
@@ -249,10 +307,57 @@ def check(sign, c, f, u, feet):
     return road, near, low, over
 
 
+# V21a, p1 ("here we need arrows and a barrier to the left, so you know where the home straight is"): boards on the
+# outside of the U-turn, behind the wall start_plan.uturn_outside (V21b builds it). k = route points after the
+# bend's first point (of 14); 'back' = metres between the wall's outer face and the board's nearest part.
+UTURN_LIFT = 0.95                # board bottom over the paving: clear of the 0.8 m wall in front of it
+UTURN_BOARDS = [
+    dict(id="U1", k=4, size="big", back=0.35, face_k=-12,
+         note="straight ahead of the westbound leg, facing the driver from 24 m before the bend"),
+    dict(id="U2", k=7, size="big", back=0.35, note="at the apex, parallel to the wall"),
+    dict(id="U3", k=10, size="normal", back=0.35, note="three quarters round, parallel to the wall"),
+    dict(id="U4", k=14, size="normal", back=0.35, note="where the home straight starts, parallel to the wall"),
+]
+
+
+def uturn_signs():
+    pts = E.route_points()
+    n = len(pts)
+    first, _last, _c, _r = start_plan.uturn(E.ROUTE)
+    out = []
+    for b in UTURN_BOARDS:
+        i = first + b["k"]
+        p = pts[i % n]
+        s = SIZES[b["size"]]
+        rx, ry = start_plan.right_of(pts, i)
+        wall = E.half_width(p) + start_plan.UTURN_GAP + start_plan.WALL_T / 2          # the wall's outer face
+        sign = dict(id=b["id"], shot="p1", type="left", size=b["size"], lift=UTURN_LIFT, note=b["note"])
+        if "face_k" in b:                           # turned towards the approaching driver: its near end swings in
+            q = pts[(first + b["face_k"]) % n]
+            sign["face_from"] = (q["x"], q["y"])
+            off = wall + b["back"] + s["t"] / 2
+            for _ in range(3):                      # the offset depends on the angle and the angle on the offset
+                c = Vector((p["x"] + rx * off, p["y"] + ry * off, 0))
+                f = (c - Vector((q["x"], q["y"], 0))).normalized()
+                swing = abs(f.x * ry - f.y * rx) * s["w"] / 2 + abs(f.x * rx + f.y * ry) * s["t"] / 2
+                off = wall + b["back"] + swing
+        else:
+            sign["face"] = "road"
+            off = wall + b["back"] + s["t"] / 2
+            sign["side"] = 1
+        sign["at"] = (p["x"] + rx * off, p["y"] + ry * off)
+        if sign.get("face") == "road":
+            sign["near"], sign["offset"] = (p["x"], p["y"]), off
+            del sign["at"]
+        out.append(sign)
+    return out
+
+
 def build_signs(col):
     bm = bmesh.new()
     lines = []
-    for sign in SIGNS:
+    signs = SIGNS + uturn_signs()
+    for sign in signs:
         c, f = resolve(sign)
         u, feet, grounds, z0 = add_board(bm, sign, c, f)
         road, near, low, over = check(sign, c, f, u, feet)
@@ -270,7 +375,7 @@ def build_signs(col):
     mesh.materials.append(E.material("sign_post", E.PALETTE["steel"], roughness=0.4, metallic=0.6))
     obj = E.new_object("Track_RouteSigns", mesh, col)
     tris = sum(len(p.vertices) - 2 for p in mesh.polygons)
-    print(f"  route signs (V20a): {len(SIGNS)} boards, {tris} triangles")
+    print(f"  route signs (V20a, V21a): {len(signs)} boards, {tris} triangles")
     print("\n".join(lines))
     return obj
 
@@ -391,6 +496,195 @@ def add_start_line():
           f"{clash} faces of older flush paint (drain channel) under the band removed")
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# V21a: start grid boxes (p2: "we still need small start positions marked on the ground. Make them orange too.
+# Say 10 positions.")
+# ---------------------------------------------------------------------------------------------------------------
+GRID_LIFT = 0.05                 # over the road: 1 cm above the other flush paint (drain channel under row 2)
+DIGIT_H, DIGIT_W, DIGIT_T = 0.60, 0.32, 0.09       # position numbers: seven-segment digits, read from behind
+DIGIT_GAP = 0.16                 # between the box's side and its number; also between the digits of "10"
+_SEG = {"a": (0, 1, "h"), "g": (0, 0, "h"), "d": (0, -1, "h"),           # (u, v in half units, across or upright)
+        "f": (-1, 0.5, "v"), "b": (1, 0.5, "v"), "e": (-1, -0.5, "v"), "c": (1, -0.5, "v")}
+_DIGITS = {"0": "abcdef", "1": "bc", "2": "abged", "3": "abgcd", "4": "fgbc", "5": "afgcd", "6": "afgedc",
+           "7": "abc", "8": "abcdefg", "9": "abcdfg"}
+
+
+def _digit_rects(ch, u0, v0):
+    """Rectangles (u_min, u_max, v_min, v_max) of one digit centred at (u0, v0); u = driver's right, v = ahead."""
+    hu, hv, t = (DIGIT_W - DIGIT_T) / 2, (DIGIT_H - DIGIT_T) / 2, DIGIT_T / 2
+    out = []
+    for seg in _DIGITS[ch]:
+        su, sv, kind = _SEG[seg]
+        cu, cv = u0 + su * hu, v0 + sv * hv
+        if kind == "h":
+            out.append((u0 - hu - t, u0 + hu + t, cv - t, cv + t))
+        else:
+            out.append((cu - t, cu + t, cv - hv / 2 - t, cv + hv / 2 + t))
+    return out
+
+
+def grid_rects(slot):
+    """The paint of one slot in its own frame (u right, v ahead, origin = the kart's position).
+    V23, F1 style (Luc: "these U's should be the other way round, take Formula 1 as the example"): one line across
+    the FRONT (the side facing the start line; the kart's nose stops behind it and it drives out across it) and two
+    short side lines running back from its ends, open behind. The footprint BOX_W x BOX_L stays centred on the slot.
+    The number stands the F1 way: beside the box on the outside of the grid (left of the left box, right of the right
+    box), level with the front line, so no kart of the pair covers it and it reads from the chase camera."""
+    hw, hl, t = start_plan.BOX_W / 2, start_plan.BOX_L / 2, start_plan.BOX_LINE
+    back = hl - t - start_plan.BOX_SIDE
+    rects = [(-hw, hw, hl - t, hl), (-hw, -hw + t, back, hl - t), (hw - t, hw, back, hl - t)]   # front, left, right
+    text = str(slot + 1)
+    total = len(text) * DIGIT_W + (len(text) - 1) * DIGIT_GAP
+    out = -1.0 if slot % 2 == 0 else 1.0                 # start_plan.slot_offset: even slot = left column
+    u_mid = out * (hw + DIGIT_GAP + total / 2)
+    v0 = hl - DIGIT_H / 2
+    for k, ch in enumerate(text):
+        rects += _digit_rects(ch, u_mid - total / 2 + DIGIT_W / 2 + k * (DIGIT_W + DIGIT_GAP), v0)
+    return rects
+
+
+def add_grid_boxes():
+    """Ten Boost Orange start boxes with their numbers, into Track_EdgeLines (flush paint, no collider)."""
+    obj = bpy.data.objects.get("Track_EdgeLines")
+    if obj is None:
+        print("  grid boxes (V21a): no Track_EdgeLines, left out")
+        return
+    mesh = obj.data
+    orange = E.material("sign_chevron", E.PALETTE["boost_orange"], roughness=0.6)
+    if orange.name not in [m.name for m in mesh.materials if m]:
+        mesh.materials.append(orange)
+    slot_index = [m.name if m else "" for m in mesh.materials].index(orange.name)
+    slots = start_plan.grid_slots(E.ROUTE)
+    side, row = start_plan.grid_numbers()
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    made, lines, worst = 0, [], 1e9
+    gate_p, gate_f, _r = start_frame()
+    for s in slots:
+        c = Vector((s["x"], s["y"], 0))
+        f, r = Vector((*s["forward"], 0)), Vector((*s["right"], 0))
+        z = s["track_z"] + ROAD_LIFT + GRID_LIFT
+        rects = grid_rects(s["slot"])
+        for u0, u1, v0, v1 in rects:
+            face = bm.faces.new([bm.verts.new((*(c + r * u + f * v)[:2], z))
+                                 for u, v in ((u0, v0), (u1, v0), (u1, v1), (u0, v1))])
+            face.material_index = slot_index
+            face.normal_update()
+            if face.normal.z < 0:
+                face.normal_flip()
+            made += 1
+        corners = [c + r * u + f * v for u0, u1, v0, v1 in rects for u in (u0, u1) for v in (v0, v1)]
+        edge = max(road_clearance(q.x, q.y) for q in corners)            # negative = on the road; the corner nearest the edge
+        worst = min(worst, -edge)
+        ahead = min((Vector((gate_p["x"], gate_p["y"], 0)) - q).dot(gate_f) for q in corners)
+        lines.append(f"    slot {s['slot']} (number {s['slot'] + 1}) at ({s['x']:.2f}, {s['y']:.2f}), paint "
+                     f"{-edge:.2f} m inside the road edge, {ahead:.2f} m before the start line")
+    bm.to_mesh(mesh)
+    bm.free()
+    print(f"  grid boxes (V21a, V23 pairs + F1 style): {len(slots)} boxes {start_plan.BOX_W} x {start_plan.BOX_L} m (line "
+          f"{start_plan.BOX_LINE} m, sides {start_plan.BOX_SIDE} m) with numbers, {made} quads in Track_EdgeLines, {GRID_LIFT * 100:.0f} cm over the "
+          f"road; RacerGrid {side:g} m sideways, {row:g} m per row (RaceSettings.asset); all paint at least "
+          f"{worst:.2f} m inside the road edge")
+    print("\n".join(lines))
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# V21a: barrier centre lines for package V21b's Nova Kart walls (heights by ray, checks, out/start_barriers.json)
+# ---------------------------------------------------------------------------------------------------------------
+BARRIER_STEP = 1.0               # m between height samples along a barrier
+BARRIER_Z_TOL = 0.02             # m: a sample is kept where the paving leaves the straight line between its neighbours
+WALL_H = 0.8                     # the Nova Kart wall's height (BRIEF_V21): for the obstacle check only
+
+
+def _resample(points, step):
+    out = [Vector((*points[0], 0))]
+    for a, b in zip(points, points[1:]):
+        a, b = Vector((*a, 0)), Vector((*b, 0))
+        k = max(1, int(math.ceil((b - a).length / step - 1e-6)))
+        out += [a + (b - a) * (j / k) for j in range(1, k + 1)]
+    return out
+
+
+def _thin(samples, corners):
+    """Keeps the ends, the polyline's own corners, and as few samples between them as keep every dropped sample's
+    height within BARRIER_Z_TOL of the straight line between the kept ones."""
+    def fits(i, j):
+        a, b = samples[i], samples[j]
+        span = max((b.xy - a.xy).length, 1e-9)
+        return all(abs(a.z + (b.z - a.z) * (samples[m].xy - a.xy).length / span - samples[m].z) <= BARRIER_Z_TOL
+                   for m in range(i + 1, j))
+    keep, last = [0], len(samples) - 1
+    while keep[-1] < last:
+        i = j = keep[-1]
+        while j < last and fits(i, j + 1):
+            j += 1
+            if j in corners:
+                break
+        keep.append(max(j, i + 1))
+    return [samples[i] for i in keep]
+
+
+def _obstacles(a, b, ground):
+    """Names of built things (not the ground) that reach into the wall's box between two samples."""
+    scene, deps = bpy.context.scene, bpy.context.evaluated_depsgraph_get()
+    side = Vector(((b - a).y, -(b - a).x, 0)).normalized() * (start_plan.WALL_T / 2)
+    found = set()
+    steps = max(1, int((b - a).length / 0.25))
+    for j in range(steps + 1):
+        p = a + (b - a) * (j / steps)
+        for off in (-1, 0, 1):
+            q = p + side * off
+            hit, loc, _n, _i, obj, _m = scene.ray_cast(deps, Vector((q.x, q.y, ground + WALL_H + 0.05)),
+                                                       Vector((0, 0, -1)), distance=WALL_H)
+            if hit and loc.z > ground + 0.08 and not obj.name.startswith(("Track_RouteGuide", "RouteGuide")) \
+                    and not (obj.users_collection and obj.users_collection[0].name == "Track_RouteGuide"):
+                found.add(obj.name)
+    return found
+
+
+def write_barriers():
+    import json
+    import os
+    pts = E.route_points()
+    gate_p, gate_f, gate_r = start_frame()
+    pylons = [Vector((gate_p["x"], gate_p["y"], 0)) + gate_r * (s * GATE_HALF) for s in (-1, 1)]
+    boxes = []
+    for s in start_plan.grid_slots(E.ROUTE):
+        c, f, r = Vector((s["x"], s["y"], 0)), Vector((*s["forward"], 0)), Vector((*s["right"], 0))
+        boxes += [c + r * u + f * v for u0, u1, v0, v1 in grid_rects(s["slot"]) for u in (u0, u1) for v in (v0, v1)]
+    out, lines = [], []
+    for bar in start_plan.barriers(E.ROUTE):
+        corners_xy = bar["points"]
+        samples = _resample(corners_xy, BARRIER_STEP)
+        corners = {i for i, q in enumerate(samples) if any((q.xy - Vector(c)).length < 1e-6 for c in corners_xy)}
+        z_ref = E.nearest_route_point(samples[0].x, samples[0].y)["track_z"]
+        for q in samples:
+            q.z = ground_at(q.x, q.y, z_ref)
+        kept = _thin(samples, corners)
+        length = sum((b.xy - a.xy).length for a, b in zip(samples, samples[1:]))
+        road = min(start_plan.road_clearance(q.x, q.y, E.ROUTE) for q in samples) - start_plan.WALL_T / 2
+        seg = lambda q, pts_: min(_seg_dist((q.x, q.y), (a.x, a.y), (b.x, b.y)) for a, b in zip(pts_, pts_[1:]))
+        gate = min(seg(p, samples) for p in pylons) - PYLON - start_plan.WALL_T / 2
+        grid = min(seg(p, samples) for p in boxes) - start_plan.WALL_T / 2
+        hits = set()
+        for a, b in zip(samples, samples[1:]):
+            hits |= _obstacles(a, b, max(a.z, b.z))
+        zs = [q.z for q in samples]
+        warn = "WARNING " if hits or road < 0.8 or gate < 1.0 or grid < 1.0 else ""
+        lines.append(f"    {warn}{bar['name']}: {len(kept)} points, {length:.1f} m, paving {min(zs):.2f}-{max(zs):.2f} m; "
+                     f"wall face to road edge {road:.2f} m, to the gate's pylons {gate:.2f} m, to the grid paint "
+                     f"{grid:.2f} m; in its way: {', '.join(sorted(hits)) or 'nothing'}")
+        out.append({"name": bar["name"], "points": [[round(q.x, 3), round(q.y, 3), round(q.z, 3)] for q in kept]})
+    path = os.path.join(E.OUT, "start_barriers.json")
+    json.dump({"note": "V21a: centre lines of the Nova Kart walls at the start plaza, generator metres "
+                       "[x east, y north, z paving height]. env_route_signs.write_barriers -> "
+                       "export_unity_bundle.barriers -> track.json 'barriers' (Unity axes).",
+               "barriers": out}, open(path, "w"), indent=1)
+    print(f"  barriers (V21a): {len(out)} wall centre lines for V21b -> out/start_barriers.json")
+    print("\n".join(lines))
+    return out
+
+
 def build():
     if not E.route_points():
         return
@@ -399,3 +693,5 @@ def build():
     build_signs(col)
     build_start_gate(col)
     add_start_line()
+    add_grid_boxes()                         # V21a
+    write_barriers()                         # V21a

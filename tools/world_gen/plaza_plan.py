@@ -261,7 +261,12 @@ def on_kicker(x, y):
 # The landing: the deck's edge across the courtyard, square to the axis, LAND_S after the lip. With the kicker above
 # (0.70 m, 8 degrees) a kart's ball comes down to deck level 13.0 m after the lip at 20 m/s (top speed), 8.2 m at
 # 15 m/s, 6.7 m at 13 m/s and 29.2 m with the jump pad (32 m/s), so 6 m clears from about 12.4 m/s on.
-LAND_S = 6.0
+# V23c (Luc, 13 Nov, q14: "the pit here, you can pull it forward up to the corner on the right, where this glass wall
+# has a corner ... that's how it is in reality"): that corner is the hall's jog at (69.7, 75.0), 15.2 m after the lip,
+# and 20 m/s only carries 13.0 m. So the edge goes as far as top speed without the pad still clears with 2 m to spare:
+# 11.0 m (from about 18 m/s on; 17 m/s lands at 10.1 m, 15 m/s at 8.2 m and now drops into the court; the pad's 32 m/s
+# lands 29.1 m on as before). To take it to the corner set 15.0: then only a boosted kart (23 m/s and more) clears.
+LAND_S = 11.0                        # V20b: 6.0
 
 
 def _hall_hit(s, ring=MAIN_EAST):
@@ -342,7 +347,9 @@ SKYLIGHT_PANES = {"S2": (5, 4), "S1": (4, 5), "S3": (2, 3), "S4": (4, 3), "S5": 
 # on the right as in Luc's drawing 10), 6.5 m wide, 10 m long. Steps go down to the south; at the bottom a level
 # landing, from there an underpass under the plaza (and under the race line) to the courtyard. Open at the top
 # (north), so a later lower path (jump into the courtyard, through it, up this stair) only needs a ramp at S3.
-SLOT_ORIGIN = (86.75, 91.38)         # south-west corner
+# V23 (Luc q13, 13 Nov: "a bit further right, it is not as far left as now"): 0.8 m west (towards the race line, as the
+# orthophoto has it), was (86.75, 91.38); its west side now keeps ~0.4 m to the 8 m road edge (route points 545-548).
+SLOT_ORIGIN = (86.15, 90.85)         # south-west corner
 SLOT_DIR = (-0.663, 0.749)           # uphill (north-north-west), parallel to the race line there
 SLOT_RIGHT = (0.749, 0.663)
 SLOT_LEN, SLOT_W, SLOT_LANDING = 10.0, 6.5, 2.5

@@ -104,6 +104,14 @@
    "width": 18.0,
    "v20_index": 604,
    "where": "atrium exit door D5 to the north plaza (s19); generous, because package C may widen the door to the left; HallDoors.json D5_out_north_east, 7.5 m wide"
+  },
+  {
+   "n": 13,
+   "x": -48.52,
+   "z": 140.55,
+   "width": 12.0,
+   "v20_index": 678,
+   "where": "V23 (Luc, 13 Nov): apex of the U-turn before the home straight; with the 12 m start median a kart could cut from the westbound leg straight onto the home straight (~35 m shorter), and this checkpoint makes that cut miss a checkpoint. No item-box row (rows only after every 2nd checkpoint)"
   }
  ]
 }
