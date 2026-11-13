@@ -21,6 +21,17 @@ EXIT_AHEAD points on) runs into that route point; the points between are replace
 HallDoorApproach still lines the first metres up with the door, so the road there does not change.
 The doors D1 and D3 lie on Noah's own line and are his to decide; they are left alone.
 
+V21c (Luc's request p4 "straight up to the entrance", item from the integrator, 2026-11-13): the same kind of fix
+at the main entrance D1 (join_west). The start straight aimed 1.3 m south of the door's middle: its last outside
+point lay 0.97 m south of the door axis (3.78 m from the south jamb's line), then the line jumped 1.15 m back north
+onto the hall lane. Package B's Nova Kart walls run straight from route point 2 to the two jambs, so the 8 m road
+reached through the south wall there. From point WEST_KEEP on, the outside points now lie on ONE straight line that
+ends in the door's middle; they keep their distance along the door axis (so the 2 m step, the point count, the
+heights and every index stay). The line turns 2.8 degrees at point WEST_KEEP; points 0..WEST_KEEP do not move.
+Why not all of them on the door axis itself: the walls are straight from point 2 to the jambs, so the only centre
+line that keeps an 8 m road inside both walls is the straight one from point 2 to the door's middle. A line that
+swings onto the axis earlier (say from point 6) would put the road's south edge up to 3.5 m outside the south wall.
+
 Run order after every bundle export:  hall_route.py -> hall_join.py -> pin_checkpoints.py
 Safe to run again: once the line ends on the lane it finds nothing behind the facade and changes nothing.
 
@@ -180,6 +191,54 @@ def join_exit(track):
     return out, report
 
 
+WEST_DOOR = "D1_main_entrance"
+WEST_KEEP = 2               # V21c: route points up to this one stay (start line = 0; package B's walls start at 2)
+
+
+def west_clearance(track):
+    """Per outside point before D1: (index, metres before the facade, metres south of the door axis, distance to the
+    north jamb's line, distance to the south jamb's line)."""
+    door = next(d for d in json.load(open(DOORS))["doors"] if d["name"] == WEST_DOOR)
+    pts = track["points"]
+    firsts = [i for i in range(len(pts)) if pts[i]["zone"] == HALL_ZONE and pts[i - 1]["zone"] != HALL_ZONE]
+    lane = min(firsts, key=lambda i: math.hypot(pts[i]["x"] - door["x"], pts[i]["z"] - door["z"]))
+    rows = []
+    for i in range(WEST_KEEP, lane):
+        rx, rz = pts[i]["x"] - door["x"], pts[i]["z"] - door["z"]
+        depth = rx * door["nx"] + rz * door["nz"]
+        south = rx * door["nz"] - rz * door["nx"]                 # along the facade, + = right of the way in (south)
+        rows.append((i, -depth, south, door["width"] / 2 + south, door["width"] / 2 - south))
+    return lane, rows
+
+
+def join_west(track):
+    """V21c: the outside points before the main entrance D1 on one straight line from point WEST_KEEP into the
+    door's middle (see the module text). Only x and z of points WEST_KEEP + 1 .. lane - 1 change."""
+    door = next(d for d in json.load(open(DOORS))["doors"] if d["name"] == WEST_DOOR)
+    lane, before = west_clearance(track)
+    _, depth0, south0, _, _ = before[0]                           # point WEST_KEEP: stays
+    out = dict(track)
+    out["points"] = [dict(p) for p in track["points"]]
+    moved = 0.0
+    for i, depth, south, _, _ in before[1:]:
+        want = south0 * depth / depth0                            # on the line from point WEST_KEEP to the door's middle
+        shift = want - south
+        p = out["points"][i]
+        p["x"] = round(p["x"] + door["nz"] * shift, 3)
+        p["z"] = round(p["z"] - door["nx"] * shift, 3)
+        moved = max(moved, abs(shift))
+    _, after = west_clearance(out)
+    report = [f"{WEST_DOOR}: points {WEST_KEEP + 1}-{lane - 1} on the straight line from point {WEST_KEEP} into the door's "
+              f"middle, largest sideways move {moved:.2f} m; the line turns "
+              f"{math.degrees(math.atan2(before[1][2] - south0, depth0 - before[1][1]) - math.atan2(-south0, depth0)):.1f} deg at point {WEST_KEEP}",
+              "  point  before the door  south of axis (was)  to north jamb line  to south jamb line (was)"]
+    for (i, depth, south, _, to_s), (_, _, south2, to_n2, to_s2) in zip(before, after):
+        report.append(f"  {i:5d}  {depth:12.2f} m  {south2:+8.2f} ({south:+.2f})  {to_n2:14.2f} m  {to_s2:13.2f} m ({to_s:.2f})")
+    if moved < 0.005:
+        return None, [f"{WEST_DOOR}: the line already runs straight into the door's middle, nothing to do"] + report[1:]
+    return out, report
+
+
 def main():
     track = json.load(open(TRACK))
     out, report = join(track)
@@ -189,7 +248,11 @@ def main():
     out2, report2 = join_exit(track)          # V20c
     print("\n".join(report2))
     if out2 is not None:
-        out = out2
+        out = track = out2
+    out3, report3 = join_west(track)          # V21c
+    print("\n".join(report3))
+    if out3 is not None:
+        out = out3
     if out is None or "--check" in sys.argv:
         return
     with open(TRACK, "w") as fh:

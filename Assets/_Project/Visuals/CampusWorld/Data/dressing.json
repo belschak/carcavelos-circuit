@@ -687,7 +687,7 @@
 "name": "Veg_Palm.0062",
 "proto": "Veg_Palm",
 "x": -128.842,
-"y": 3.181,
+"y": 2.952,
 "z": -122.84,
 "yaw": -352.862,
 "roll": -0.0,
@@ -5703,7 +5703,7 @@
 "name": "Veg_Shrub_B.0518",
 "proto": "Veg_Shrub_B",
 "x": -113.47,
-"y": 3.386,
+"y": 3.38,
 "z": -124.146,
 "yaw": 152.355,
 "roll": -0.0,
@@ -5791,7 +5791,7 @@
 "name": "Veg_Shrub_B_L.0526",
 "proto": "Veg_Shrub_B_L",
 "x": -110.512,
-"y": 3.654,
+"y": 3.647,
 "z": -124.96,
 "yaw": 155.988,
 "roll": -0.0,
@@ -5802,7 +5802,7 @@
 "name": "Veg_Shrub_B.0527",
 "proto": "Veg_Shrub_B",
 "x": -111.452,
-"y": 3.74,
+"y": 3.734,
 "z": -122.747,
 "yaw": -30.51,
 "roll": -0.0,
@@ -5835,7 +5835,7 @@
 "name": "Veg_Shrub_B_L.0530",
 "proto": "Veg_Shrub_B_L",
 "x": -136.232,
-"y": 4.087,
+"y": 3.791,
 "z": -106.75,
 "yaw": 76.312,
 "roll": -0.0,
@@ -5846,7 +5846,7 @@
 "name": "Veg_Shrub_L.0531",
 "proto": "Veg_Shrub_L",
 "x": -133.037,
-"y": 4.114,
+"y": 3.846,
 "z": -107.344,
 "yaw": 83.405,
 "roll": -0.0,
@@ -5857,7 +5857,7 @@
 "name": "Veg_Shrub_L.0532",
 "proto": "Veg_Shrub_L",
 "x": -129.003,
-"y": 4.216,
+"y": 3.952,
 "z": -107.571,
 "yaw": 94.933,
 "roll": -0.0,
@@ -5868,7 +5868,7 @@
 "name": "Veg_Shrub_L.0533",
 "proto": "Veg_Shrub_L",
 "x": -125.995,
-"y": 4.237,
+"y": 4.042,
 "z": -107.545,
 "yaw": 51.406,
 "roll": -0.0,
@@ -5879,7 +5879,7 @@
 "name": "Veg_Shrub_L.0534",
 "proto": "Veg_Shrub_L",
 "x": -122.542,
-"y": 4.262,
+"y": 4.128,
 "z": -107.872,
 "yaw": -21.308,
 "roll": -0.0,
@@ -5890,7 +5890,7 @@
 "name": "Veg_Shrub_L.0535",
 "proto": "Veg_Shrub_L",
 "x": -119.115,
-"y": 4.311,
+"y": 4.229,
 "z": -108.141,
 "yaw": 67.019,
 "roll": -0.0,
@@ -5901,7 +5901,7 @@
 "name": "Veg_Shrub_B_L.0536",
 "proto": "Veg_Shrub_B_L",
 "x": -116.618,
-"y": 4.346,
+"y": 4.295,
 "z": -108.384,
 "yaw": -40.147,
 "roll": -0.0,
@@ -5912,7 +5912,7 @@
 "name": "Veg_Shrub_L.0537",
 "proto": "Veg_Shrub_L",
 "x": -112.537,
-"y": 4.386,
+"y": 4.372,
 "z": -108.633,
 "yaw": -78.192,
 "roll": -0.0,
@@ -14286,7 +14286,7 @@
 "y": 3.594,
 "z": -99.627,
 "yaw": -231.727,
-"roll": -5.025,
+"roll": -5.019,
 "pitch": 1.604,
 "scale": 1.0
 },
@@ -15218,7 +15218,7 @@
 "name": "Prop_TimberBollard.0720",
 "proto": "Prop_TimberBollard",
 "x": -145.085,
-"y": 3.535,
+"y": 3.513,
 "z": -106.925,
 "yaw": -138.083,
 "roll": -0.0,
@@ -15712,17 +15712,6 @@
 {
 "name": "Prop_FloodMast.0765",
 "proto": "Prop_FloodMast",
-"x": -135.363,
-"y": 2.749,
-"z": -122.844,
-"yaw": 41.35,
-"roll": -0.0,
-"pitch": -0.0,
-"scale": 1.0
-},
-{
-"name": "Prop_FloodMast.0766",
-"proto": "Prop_FloodMast",
 "x": -109.536,
 "y": 2.331,
 "z": -149.146,
@@ -15732,7 +15721,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FloodMast.0767",
+"name": "Prop_FloodMast.0766",
 "proto": "Prop_FloodMast",
 "x": -70.316,
 "y": 3.641,
@@ -15743,7 +15732,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FloodMast.0768",
+"name": "Prop_FloodMast.0767",
 "proto": "Prop_FloodMast",
 "x": -32.841,
 "y": 5.511,
@@ -15754,7 +15743,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FitnessTwist.0769",
+"name": "Prop_FitnessTwist.0768",
 "proto": "Prop_FitnessTwist",
 "x": -149.239,
 "y": 2.564,
@@ -15765,7 +15754,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FitnessBars.0770",
+"name": "Prop_FitnessBars.0769",
 "proto": "Prop_FitnessBars",
 "x": -147.761,
 "y": 2.665,
@@ -15776,7 +15765,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FitnessBars.0771",
+"name": "Prop_FitnessBars.0770",
 "proto": "Prop_FitnessBars",
 "x": -116.633,
 "y": 2.33,
@@ -15787,7 +15776,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_FitnessWheel.0772",
+"name": "Prop_FitnessWheel.0771",
 "proto": "Prop_FitnessWheel",
 "x": -114.367,
 "y": 2.315,
@@ -15798,7 +15787,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0773",
+"name": "Prop_CarA.0772",
 "proto": "Prop_CarA",
 "x": -88.8,
 "y": 4.616,
@@ -15809,7 +15798,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF.0774",
+"name": "Prop_CarF.0773",
 "proto": "Prop_CarF",
 "x": -77.0,
 "y": 4.718,
@@ -15820,7 +15809,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0775",
+"name": "Prop_CarG.0774",
 "proto": "Prop_CarG",
 "x": -70.0,
 "y": 4.272,
@@ -15831,7 +15820,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC.0776",
+"name": "Prop_CarC.0775",
 "proto": "Prop_CarC",
 "x": -9.2,
 "y": 4.833,
@@ -15842,7 +15831,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH.0777",
+"name": "Prop_CarH.0776",
 "proto": "Prop_CarH",
 "x": -6.0,
 "y": 5.735,
@@ -15853,7 +15842,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB.0778",
+"name": "Prop_CarB.0777",
 "proto": "Prop_CarB",
 "x": -5.4,
 "y": 5.761,
@@ -15864,7 +15853,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD.0779",
+"name": "Prop_CarD.0778",
 "proto": "Prop_CarD",
 "x": -6.4,
 "y": 5.618,
@@ -15875,7 +15864,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG.0780",
+"name": "Prop_CarG.0779",
 "proto": "Prop_CarG",
 "x": -6.4,
 "y": 5.516,
@@ -15886,7 +15875,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA.0781",
+"name": "Prop_CarA.0780",
 "proto": "Prop_CarA",
 "x": -6.4,
 "y": 5.435,
@@ -15897,7 +15886,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarE_Far.0782",
+"name": "Prop_CarE_Far.0781",
 "proto": "Prop_CarE_Far",
 "x": -6.4,
 "y": 5.363,
@@ -15908,7 +15897,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF_Far.0783",
+"name": "Prop_CarF_Far.0782",
 "proto": "Prop_CarF_Far",
 "x": -6.4,
 "y": 5.223,
@@ -15919,7 +15908,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC_Far.0784",
+"name": "Prop_CarC_Far.0783",
 "proto": "Prop_CarC_Far",
 "x": -6.4,
 "y": 5.152,
@@ -15930,7 +15919,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarB_Far.0785",
+"name": "Prop_CarB_Far.0784",
 "proto": "Prop_CarB_Far",
 "x": -6.4,
 "y": 5.079,
@@ -15941,7 +15930,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH_Far.0786",
+"name": "Prop_CarH_Far.0785",
 "proto": "Prop_CarH_Far",
 "x": -6.4,
 "y": 4.925,
@@ -15952,7 +15941,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA_Far.0787",
+"name": "Prop_CarA_Far.0786",
 "proto": "Prop_CarA_Far",
 "x": -6.4,
 "y": 4.844,
@@ -15963,7 +15952,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD_Far.0788",
+"name": "Prop_CarD_Far.0787",
 "proto": "Prop_CarD_Far",
 "x": -6.4,
 "y": 4.689,
@@ -15974,7 +15963,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA_Far.0789",
+"name": "Prop_CarA_Far.0788",
 "proto": "Prop_CarA_Far",
 "x": 52.8,
 "y": 8.49,
@@ -15985,7 +15974,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarD_Far.0790",
+"name": "Prop_CarD_Far.0789",
 "proto": "Prop_CarD_Far",
 "x": 55.5,
 "y": 8.559,
@@ -15996,7 +15985,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarG_Far.0791",
+"name": "Prop_CarG_Far.0790",
 "proto": "Prop_CarG_Far",
 "x": 61.0,
 "y": 8.702,
@@ -16007,7 +15996,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarH_Far.0792",
+"name": "Prop_CarH_Far.0791",
 "proto": "Prop_CarH_Far",
 "x": 66.4,
 "y": 8.848,
@@ -16018,7 +16007,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarC_Far.0793",
+"name": "Prop_CarC_Far.0792",
 "proto": "Prop_CarC_Far",
 "x": 69.1,
 "y": 8.923,
@@ -16029,7 +16018,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarA_Far.0794",
+"name": "Prop_CarA_Far.0793",
 "proto": "Prop_CarA_Far",
 "x": 71.8,
 "y": 9.003,
@@ -16040,7 +16029,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_CarF_Far.0795",
+"name": "Prop_CarF_Far.0794",
 "proto": "Prop_CarF_Far",
 "x": 82.8,
 "y": 9.368,
@@ -16051,7 +16040,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_TimberPost.0796",
+"name": "Prop_TimberPost.0795",
 "proto": "Prop_TimberPost",
 "x": -22.879,
 "y": 5.546,
@@ -16062,7 +16051,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Bollard.0797",
+"name": "Prop_Bollard.0796",
 "proto": "Prop_Bollard",
 "x": -13.243,
 "y": 4.979,
@@ -16073,7 +16062,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Bollard.0798",
+"name": "Prop_Bollard.0797",
 "proto": "Prop_Bollard",
 "x": -10.166,
 "y": 4.842,
@@ -16084,7 +16073,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Bollard.0799",
+"name": "Prop_Bollard.0798",
 "proto": "Prop_Bollard",
 "x": -7.377,
 "y": 4.782,
@@ -16095,7 +16084,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0800",
+"name": "Prop_RailingSegment.0799",
 "proto": "Prop_RailingSegment",
 "x": 14.687,
 "y": 9.64,
@@ -16106,7 +16095,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0801",
+"name": "Prop_RailingSegment.0800",
 "proto": "Prop_RailingSegment",
 "x": 13.431,
 "y": 9.64,
@@ -16117,7 +16106,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0802",
+"name": "Prop_RailingSegment.0801",
 "proto": "Prop_RailingSegment",
 "x": 12.174,
 "y": 9.64,
@@ -16128,7 +16117,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0803",
+"name": "Prop_RailingSegment.0802",
 "proto": "Prop_RailingSegment",
 "x": 10.917,
 "y": 9.64,
@@ -16139,7 +16128,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0804",
+"name": "Prop_RailingSegment.0803",
 "proto": "Prop_RailingSegment",
 "x": 9.661,
 "y": 9.64,
@@ -16150,7 +16139,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0805",
+"name": "Prop_RailingSegment.0804",
 "proto": "Prop_RailingSegment",
 "x": 8.404,
 "y": 9.64,
@@ -16161,7 +16150,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0806",
+"name": "Prop_RailingSegment.0805",
 "proto": "Prop_RailingSegment",
 "x": 7.147,
 "y": 9.64,
@@ -16172,7 +16161,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0807",
+"name": "Prop_RailingSegment.0806",
 "proto": "Prop_RailingSegment",
 "x": 5.891,
 "y": 9.64,
@@ -16183,7 +16172,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0808",
+"name": "Prop_RailingSegment.0807",
 "proto": "Prop_RailingSegment",
 "x": 4.634,
 "y": 9.64,
@@ -16194,7 +16183,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0809",
+"name": "Prop_RailingSegment.0808",
 "proto": "Prop_RailingSegment",
 "x": 3.377,
 "y": 9.64,
@@ -16205,7 +16194,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0810",
+"name": "Prop_RailingSegment.0809",
 "proto": "Prop_RailingSegment",
 "x": 2.121,
 "y": 9.64,
@@ -16216,7 +16205,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0811",
+"name": "Prop_RailingSegment.0810",
 "proto": "Prop_RailingSegment",
 "x": 0.864,
 "y": 9.64,
@@ -16227,7 +16216,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_RailingSegment.0812",
+"name": "Prop_RailingSegment.0811",
 "proto": "Prop_RailingSegment",
 "x": -0.393,
 "y": 9.64,
@@ -16238,7 +16227,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SeatBlockPlaza.0813",
+"name": "Prop_SeatBlockPlaza.0812",
 "proto": "Prop_SeatBlockPlaza",
 "x": -39.55,
 "y": 5.299,
@@ -16249,7 +16238,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SeatBlockPlaza.0814",
+"name": "Prop_SeatBlockPlaza.0813",
 "proto": "Prop_SeatBlockPlaza",
 "x": -31.595,
 "y": 5.558,
@@ -16260,7 +16249,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SeatBlockPlaza.0815",
+"name": "Prop_SeatBlockPlaza.0814",
 "proto": "Prop_SeatBlockPlaza",
 "x": -23.623,
 "y": 5.578,
@@ -16271,7 +16260,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SeatBlockPlaza.0816",
+"name": "Prop_SeatBlockPlaza.0815",
 "proto": "Prop_SeatBlockPlaza",
 "x": -18.891,
 "y": 5.42,
@@ -16282,7 +16271,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SeatBlockPlaza.0817",
+"name": "Prop_SeatBlockPlaza.0816",
 "proto": "Prop_SeatBlockPlaza",
 "x": -11.746,
 "y": 4.758,
@@ -16293,7 +16282,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0818",
+"name": "Prop_PotOlive.0817",
 "proto": "Prop_PotOlive",
 "x": 59.82,
 "y": 14.58,
@@ -16304,7 +16293,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0819",
+"name": "Prop_PotOlive.0818",
 "proto": "Prop_PotOlive",
 "x": 60.43,
 "y": 14.58,
@@ -16315,7 +16304,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0820",
+"name": "Prop_PotOlive.0819",
 "proto": "Prop_PotOlive",
 "x": 61.04,
 "y": 14.58,
@@ -16326,7 +16315,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0821",
+"name": "Prop_PotOlive.0820",
 "proto": "Prop_PotOlive",
 "x": 61.64,
 "y": 14.58,
@@ -16337,7 +16326,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0822",
+"name": "Prop_PotOlive.0821",
 "proto": "Prop_PotOlive",
 "x": 74.95,
 "y": 14.58,
@@ -16348,7 +16337,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0823",
+"name": "Prop_PotOlive.0822",
 "proto": "Prop_PotOlive",
 "x": 108.5,
 "y": 14.58,
@@ -16359,7 +16348,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0824",
+"name": "Prop_PotOlive.0823",
 "proto": "Prop_PotOlive",
 "x": 107.8,
 "y": 14.58,
@@ -16370,7 +16359,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PotOlive.0825",
+"name": "Prop_PotOlive.0824",
 "proto": "Prop_PotOlive",
 "x": 107.2,
 "y": 14.58,
@@ -16381,7 +16370,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0826",
+"name": "Prop_PicnicTable.0825",
 "proto": "Prop_PicnicTable",
 "x": 121.6,
 "y": 11.194,
@@ -16392,7 +16381,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0827",
+"name": "Prop_PicnicTable.0826",
 "proto": "Prop_PicnicTable",
 "x": 127.0,
 "y": 11.266,
@@ -16403,7 +16392,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0828",
+"name": "Prop_PicnicTable.0827",
 "proto": "Prop_PicnicTable",
 "x": 131.5,
 "y": 11.17,
@@ -16414,7 +16403,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0829",
+"name": "Prop_PicnicTable.0828",
 "proto": "Prop_PicnicTable",
 "x": 139.5,
 "y": 11.17,
@@ -16425,7 +16414,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0830",
+"name": "Prop_PicnicTable.0829",
 "proto": "Prop_PicnicTable",
 "x": 125.5,
 "y": 11.632,
@@ -16436,7 +16425,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterTapered.0831",
+"name": "Prop_PlanterTapered.0830",
 "proto": "Prop_PlanterTapered",
 "x": 120.3,
 "y": 11.159,
@@ -16447,7 +16436,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterTapered.0832",
+"name": "Prop_PlanterTapered.0831",
 "proto": "Prop_PlanterTapered",
 "x": 125.4,
 "y": 11.166,
@@ -16458,7 +16447,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PlanterTapered.0833",
+"name": "Prop_PlanterTapered.0832",
 "proto": "Prop_PlanterTapered",
 "x": 124.9,
 "y": 11.272,
@@ -16469,7 +16458,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0834",
+"name": "Prop_BistroTable.0833",
 "proto": "Prop_BistroTable",
 "x": 29.5,
 "y": 10.165,
@@ -16480,7 +16469,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol_Far.0835",
+"name": "Prop_Parasol_Far.0834",
 "proto": "Prop_Parasol_Far",
 "x": 29.5,
 "y": 10.165,
@@ -16491,7 +16480,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0836",
+"name": "Prop_BistroChair.0835",
 "proto": "Prop_BistroChair",
 "x": 30.089,
 "y": 10.165,
@@ -16502,7 +16491,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0837",
+"name": "Prop_BistroChair.0836",
 "proto": "Prop_BistroChair",
 "x": 28.989,
 "y": 10.165,
@@ -16513,7 +16502,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0838",
+"name": "Prop_BistroChair.0837",
 "proto": "Prop_BistroChair",
 "x": 29.421,
 "y": 10.165,
@@ -16524,7 +16513,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0839",
+"name": "Prop_BistroTable.0838",
 "proto": "Prop_BistroTable",
 "x": 37.5,
 "y": 10.518,
@@ -16535,7 +16524,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol_Far.0840",
+"name": "Prop_Parasol_Far.0839",
 "proto": "Prop_Parasol_Far",
 "x": 37.5,
 "y": 10.518,
@@ -16546,7 +16535,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0841",
+"name": "Prop_BistroChair.0840",
 "proto": "Prop_BistroChair",
 "x": 37.418,
 "y": 10.518,
@@ -16557,7 +16546,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0842",
+"name": "Prop_BistroChair.0841",
 "proto": "Prop_BistroChair",
 "x": 36.992,
 "y": 10.518,
@@ -16568,7 +16557,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0843",
+"name": "Prop_BistroChair.0842",
 "proto": "Prop_BistroChair",
 "x": 38.091,
 "y": 10.518,
@@ -16579,7 +16568,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroTable.0844",
+"name": "Prop_BistroTable.0843",
 "proto": "Prop_BistroTable",
 "x": 46.0,
 "y": 10.927,
@@ -16590,7 +16579,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_Parasol_Far.0845",
+"name": "Prop_Parasol_Far.0844",
 "proto": "Prop_Parasol_Far",
 "x": 46.0,
 "y": 10.927,
@@ -16601,7 +16590,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0846",
+"name": "Prop_BistroChair.0845",
 "proto": "Prop_BistroChair",
 "x": 45.379,
 "y": 10.927,
@@ -16612,7 +16601,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0847",
+"name": "Prop_BistroChair.0846",
 "proto": "Prop_BistroChair",
 "x": 46.178,
 "y": 10.927,
@@ -16623,7 +16612,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BistroChair.0848",
+"name": "Prop_BistroChair.0847",
 "proto": "Prop_BistroChair",
 "x": 46.443,
 "y": 10.927,
@@ -16634,7 +16623,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0849",
+"name": "Prop_PicnicTable.0848",
 "proto": "Prop_PicnicTable",
 "x": 119.0,
 "y": 11.23,
@@ -16645,7 +16634,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0850",
+"name": "Prop_PicnicTable.0849",
 "proto": "Prop_PicnicTable",
 "x": 122.3,
 "y": 11.23,
@@ -16656,7 +16645,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PicnicTable.0851",
+"name": "Prop_PicnicTable.0850",
 "proto": "Prop_PicnicTable",
 "x": 122.6,
 "y": 11.23,
@@ -16667,7 +16656,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignStop.0852",
+"name": "Prop_SignStop.0851",
 "proto": "Prop_SignStop",
 "x": -244.4,
 "y": 6.516,
@@ -16678,7 +16667,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BikeRack.0853",
+"name": "Prop_BikeRack.0852",
 "proto": "Prop_BikeRack",
 "x": -236.22,
 "y": 7.084,
@@ -16689,7 +16678,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BikeRack.0854",
+"name": "Prop_BikeRack.0853",
 "proto": "Prop_BikeRack",
 "x": -233.98,
 "y": 6.952,
@@ -16700,7 +16689,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BikeRack.0855",
+"name": "Prop_BikeRack.0854",
 "proto": "Prop_BikeRack",
 "x": -228.86,
 "y": 6.634,
@@ -16711,7 +16700,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BikeRack.0856",
+"name": "Prop_BikeRack.0855",
 "proto": "Prop_BikeRack",
 "x": -226.62,
 "y": 6.5,
@@ -16722,7 +16711,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AdTotem.0857",
+"name": "Prop_AdTotem.0856",
 "proto": "Prop_AdTotem",
 "x": -238.3,
 "y": 7.255,
@@ -16733,7 +16722,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BinsUnderground.0858",
+"name": "Prop_BinsUnderground.0857",
 "proto": "Prop_BinsUnderground",
 "x": -241.4,
 "y": 6.396,
@@ -16744,7 +16733,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_BinsUnderground.0859",
+"name": "Prop_BinsUnderground.0858",
 "proto": "Prop_BinsUnderground",
 "x": -236.5,
 "y": 6.116,
@@ -16755,7 +16744,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_ScreenBox.0860",
+"name": "Prop_ScreenBox.0859",
 "proto": "Prop_ScreenBox",
 "x": -212.0,
 "y": 7.633,
@@ -16766,7 +16755,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_SignRoundTriangle.0861",
+"name": "Prop_SignRoundTriangle.0860",
 "proto": "Prop_SignRoundTriangle",
 "x": -216.6,
 "y": 7.448,
@@ -16777,7 +16766,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_LampMast.0862",
+"name": "Prop_LampMast.0861",
 "proto": "Prop_LampMast",
 "x": -242.862,
 "y": 4.26,
@@ -16788,7 +16777,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_PayMachine.0863",
+"name": "Prop_PayMachine.0862",
 "proto": "Prop_PayMachine",
 "x": -240.606,
 "y": 3.817,
@@ -16799,7 +16788,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIBistroSet.0864",
+"name": "Prop_AIBistroSet.0863",
 "proto": "Prop_AIBistroSet",
 "x": -51.696,
 "y": 4.76,
@@ -16810,7 +16799,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIBistroSet.0865",
+"name": "Prop_AIBistroSet.0864",
 "proto": "Prop_AIBistroSet",
 "x": -47.824,
 "y": 4.76,
@@ -16821,7 +16810,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIBistroSet.0866",
+"name": "Prop_AIBistroSet.0865",
 "proto": "Prop_AIBistroSet",
 "x": -43.952,
 "y": 4.76,
@@ -16832,7 +16821,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIBistroSet.0867",
+"name": "Prop_AIBistroSet.0866",
 "proto": "Prop_AIBistroSet",
 "x": -40.08,
 "y": 4.76,
@@ -16843,7 +16832,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIVolleyNet.0868",
+"name": "Prop_AIVolleyNet.0867",
 "proto": "Prop_AIVolleyNet",
 "x": -89.0,
 "y": 1.109,
@@ -16854,7 +16843,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIKiosk.0869",
+"name": "Prop_AIKiosk.0868",
 "proto": "Prop_AIKiosk",
 "x": -134.0,
 "y": 1.708,
@@ -16865,7 +16854,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIFoodTruck.0870",
+"name": "Prop_AIFoodTruck.0869",
 "proto": "Prop_AIFoodTruck",
 "x": -74.0,
 "y": 4.13,
@@ -16876,7 +16865,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AISurfRack.0871",
+"name": "Prop_AISurfRack.0870",
 "proto": "Prop_AISurfRack",
 "x": -138.5,
 "y": 1.545,
@@ -16887,7 +16876,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIBarStool.0872",
+"name": "Prop_AIBarStool.0871",
 "proto": "Prop_AIBarStool",
 "x": -135.0,
 "y": 1.722,
@@ -16898,7 +16887,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIBarStool.0873",
+"name": "Prop_AIBarStool.0872",
 "proto": "Prop_AIBarStool",
 "x": -134.0,
 "y": 1.778,
@@ -16909,7 +16898,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIBarStool.0874",
+"name": "Prop_AIBarStool.0873",
 "proto": "Prop_AIBarStool",
 "x": -133.0,
 "y": 1.876,
@@ -16920,7 +16909,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIScooter.0875",
+"name": "Prop_AIScooter.0874",
 "proto": "Prop_AIScooter",
 "x": -79.0,
 "y": 4.553,
@@ -16931,7 +16920,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIEScooter.0876",
+"name": "Prop_AIEScooter.0875",
 "proto": "Prop_AIEScooter",
 "x": -231.9,
 "y": 6.839,
@@ -16942,7 +16931,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIEScooter.0877",
+"name": "Prop_AIEScooter.0876",
 "proto": "Prop_AIEScooter",
 "x": -231.4,
 "y": 6.804,
@@ -16953,7 +16942,7 @@
 "scale": 1.0
 },
 {
-"name": "Prop_AIEScooter.0878",
+"name": "Prop_AIEScooter.0877",
 "proto": "Prop_AIEScooter",
 "x": -230.9,
 "y": 6.769,

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -12,6 +13,17 @@ namespace CarcavelosCircuit.Track.Editor
     // Inside the Nova hall the route data does not fit the building: there the fence follows the course of the hall's
     // own railing (copied by HallRailingCourse), and the outside fence stops where that course begins.
     // Rerun after Role 3 exports a new track.json; the prefab keeps its GUID, so scenes keep their reference.
+    // V21 (Luc's playtest of 13 Nov 2026, done by Luc's Claude):
+    //  - in the zones of KartWallZones (start plaza and hall) the fence is the orange and white Nova Kart wall
+    //    (NovaKartWall, child object "NovaKartWalls" of the prefab); everywhere else the white fence stays,
+    //  - the wall runs in one straight line from 24 m before the hall's west door to the door frame, on both sides,
+    //  - nothing to see in the zones of HiddenFenceZones (terrace deck: the terrace has its own metal railings);
+    //    only the invisible collision wall stays there, because those railings have no collider of their own,
+    //  - extra walls along the lines of the optional "barriers" list in track.json (child object "NovaKartBarriers").
+    // V22w (Luc's reference models, done by Luc's Claude):
+    //  - the Nova Kart wall has a new shape (NovaKartWall: foot, orange stripe, rounded top, end pieces),
+    //  - barrier lines whose name is in TyreBarriers are a row of tyre stacks instead of the wall
+    //    (TrackProps.TyreWall, child object "NovaKartTyres"); their collision wall stays, on the tyres' road side.
     public static class WhiteGuardrailBuilder
     {
         private const string DataPath = "Assets/_Project/Visuals/CampusWorld/Data/track.json";
@@ -32,8 +44,20 @@ namespace CarcavelosCircuit.Track.Editor
         private const float TunnelEndShift = 0f;    // plus = the last post moves further into the tunnel mouth
         private const float WallHeight = 1.0f;      // invisible collision wall behind the fence
         private const float WallThickness = 0.3f;
-        private const string JumpZone = "kicker";    // zone name of the terrace jump in track.json
         private const string HallZone = "atrium";    // zone name of the Nova hall in track.json
+        private const string JumpZone = "kicker";    // zone name of the terrace jump in older track.json files
+        // Zones where no fence is drawn but the invisible collision wall stays (V21, Luc: "leave out the white fences,
+        // there are already fences outside"). The terrace's metal railings stand 0.3 m behind this wall and have no
+        // collider, so without the wall a kart would drive through them and fall off the deck.
+        private static readonly string[] HiddenFenceZones = { "terrace deck" };
+        // Zones where the fence is the Nova Kart wall instead of the white wooden fence. Add a zone name to extend it.
+        private static readonly string[] KartWallZones = { "upper plaza", "atrium" };
+        private const int StraightPieces = 12;      // the wall is one straight line over this many route points before a hall door
+        public const string KartWallName = "NovaKartWalls";       // child object: the walls along the route and in the hall
+        public const string BarrierName = "NovaKartBarriers";     // child object: the walls along track.json "barriers"
+        public const string TyreName = "NovaKartTyres";           // child object: the tyre stacks along some of those lines
+        // Barrier lines (by their name in track.json) that are tyre stacks instead of the Nova Kart wall.
+        private static readonly string[] TyreBarriers = { "uturn_outside" };
         private const float HallJoin = 2f;          // the outside fence stops this close to a post of the hall course
         private const float HallReach = 6f;         // ... and then gets one more board to the hall's end post, if this near
 
@@ -55,6 +79,9 @@ namespace CarcavelosCircuit.Track.Editor
         private static TrackPoint[] points;
         private static HallRailingCourse.Course hall;
         private static bool[] inHall;   // route points just inside a hall door (HallDoorApproach)
+        private static NovaKartWall kartWall;                     // collects the Nova Kart wall pieces of this build
+        private static Dictionary<int, Vector3> straightRight;    // fence points on the straight line to a hall door,
+        private static Dictionary<int, Vector3> straightLeft;     // by route point (right and left side of the road)
 
         [MenuItem("Carcavelos Circuit/Build White Guardrails (Role 2)")]
         public static void Build()
@@ -64,18 +91,47 @@ namespace CarcavelosCircuit.Track.Editor
                 Debug.LogError("WhiteGuardrailBuilder: " + DataPath + " not found.");
                 return;
             }
-            points = JsonUtility.FromJson<TrackData>(File.ReadAllText(DataPath)).points;
+            string json = File.ReadAllText(DataPath);
+            points = JsonUtility.FromJson<TrackData>(json).points;
             hall = HallRailingCourse.Load();
             LineUpWithHallDoors();
+            StraightenDoorApproach();
             EnsureFolder(PrefabFolder);
             EnsureFolder(MeshFolder);
 
             NovaMesh fence = new NovaMesh();
             NovaMesh wall = new NovaMesh();
+            kartWall = new NovaKartWall();
             int posts = 0;
             posts += AddSide(fence, wall, 1f);
             posts += AddSide(fence, wall, -1f);
             posts += AddHall(fence, wall);
+            float kartMetres = kartWall.Build();
+
+            // Extra walls from track.json "barriers" (for example the median of the start plaza). They get their own
+            // object and their own collision wall, in the middle of the line because karts pass on both sides.
+            // A line named in TyreBarriers is a row of tyre stacks instead; its collision wall stands on the side of
+            // the tyres that faces the road, because a tyre is wider than the wall.
+            NovaKartWall barriers = new NovaKartWall();
+            TrackProps.TyreWall tyres = new TrackProps.TyreWall();
+            NovaMesh barrierWall = new NovaMesh();
+            List<string> barrierNames = new List<string>();
+            List<Vector3[]> barrierLines = TrackBarriers.Read(json, barrierNames);
+            for (int l = 0; l < barrierLines.Count; l++)
+            {
+                Vector3[] line = barrierLines[l];
+                bool asTyres = System.Array.IndexOf(TyreBarriers, barrierNames[l]) >= 0 && tyres.AddLine(line);
+                if (!asTyres)
+                {
+                    barriers.AddLine(line);
+                }
+                for (int k = 0; k + 1 < line.Length; k++)
+                {
+                    Vector3 shift = asTyres ? TowardsRoad(line[k], line[k + 1]) * (TrackProps.TyreRadius + TrackProps.TyreInward - WallThickness * 0.5f) : Vector3.zero;
+                    AddWall(barrierWall, line[k], line[k + 1], shift);
+                }
+            }
+            float barrierMetres = barriers.Build();
 
             Mesh fenceMesh = SaveMesh(fence.ToMesh("WhiteGuardrails_Fence"), MeshFolder + "/WhiteGuardrails_Fence.asset");
             Mesh wallMesh = SaveMesh(wall.ToMesh("WhiteGuardrails_Wall"), MeshFolder + "/WhiteGuardrails_Wall.asset");
@@ -85,11 +141,117 @@ namespace CarcavelosCircuit.Track.Editor
             root.AddComponent<MeshRenderer>().sharedMaterial = WhiteMaterial();
             root.AddComponent<MeshCollider>().sharedMesh = wallMesh; // simple solid wall, so the kart cannot slip between the boards
             GameObjectUtility.SetStaticEditorFlags(root, StaticEditorFlags.BatchingStatic);
+            if (kartWall.VertexCount > 0)
+            {
+                // Its collision wall is part of the root's wall mesh, like the white fence's.
+                AddChild(root, KartWallName, SaveMesh(kartWall.ToMesh(KartWallName), MeshFolder + "/" + KartWallName + ".asset"),
+                    null, NovaKartWall.Material());
+            }
+            if (barrierWall.VertexCount > 0)
+            {
+                // The collision wall of all barrier lines, and the walls you see (none if every line is tyres).
+                AddChild(root, BarrierName,
+                    barriers.VertexCount > 0 ? SaveMesh(barriers.ToMesh(BarrierName), MeshFolder + "/" + BarrierName + ".asset") : null,
+                    SaveMesh(barrierWall.ToMesh(BarrierName + "_Wall"), MeshFolder + "/" + BarrierName + "_Wall.asset"), NovaKartWall.Material());
+            }
+            if (tyres.VertexCount > 0)
+            {
+                AddChild(root, TyreName, SaveMesh(tyres.ToMesh(TyreName), MeshFolder + "/" + TyreName + ".asset"), null, TrackProps.Material());
+            }
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             Object.DestroyImmediate(root);
             AssetDatabase.SaveAssets();
-            Debug.Log("WhiteGuardrailBuilder: saved " + PrefabPath + " with " + posts + " posts (" + hall.posts.Length
-                + " of them in the hall). Drag it into the scene at position 0, 0, 0.");
+            Debug.Log("WhiteGuardrailBuilder: saved " + PrefabPath + " with " + posts + " white fence posts, "
+                + kartMetres.ToString("F0") + " m of Nova Kart wall (" + hall.posts.Length + " hall posts followed) and "
+                + barrierLines.Count + " barrier lines (" + barrierMetres.ToString("F0") + " m of wall, " + tyres.Stacks
+                + " tyre stacks). Drag it into the scene at position 0, 0, 0.");
+        }
+
+        // A child of the fence object that draws one mesh (if given) with this material, with its own collider if given.
+        private static void AddChild(GameObject root, string name, Mesh mesh, Mesh colliderMesh, Material material)
+        {
+            GameObject child = new GameObject(name);
+            child.transform.SetParent(root.transform, false);
+            if (mesh != null)
+            {
+                child.AddComponent<MeshFilter>().sharedMesh = mesh;
+                child.AddComponent<MeshRenderer>().sharedMaterial = material;
+            }
+            if (colliderMesh != null)
+            {
+                child.AddComponent<MeshCollider>().sharedMesh = colliderMesh;
+            }
+            GameObjectUtility.SetStaticEditorFlags(child, StaticEditorFlags.BatchingStatic);
+        }
+
+        // Flat unit vector at right angles to the piece a-b, pointing to the side where the race road is
+        // (towards the nearest route point). Zero if the piece has no length.
+        private static Vector3 TowardsRoad(Vector3 a, Vector3 b)
+        {
+            Vector3 along = b - a;
+            along.y = 0f;
+            if (along.sqrMagnitude < 0.0001f)
+            {
+                return Vector3.zero;
+            }
+            Vector3 sideways = Vector3.Cross(Vector3.up, along.normalized);
+            Vector3 mid = (a + b) * 0.5f;
+            int nearest = 0;
+            float best = float.MaxValue;
+            for (int i = 0; i < points.Length; i++)
+            {
+                float d = (Pos(i) - mid).sqrMagnitude;
+                if (d < best)
+                {
+                    best = d;
+                    nearest = i;
+                }
+            }
+            return Vector3.Dot(Pos(nearest) - mid, sideways) >= 0f ? sideways : -sideways;
+        }
+
+        // V21 (Luc: "the fence is curved for no reason, make it straight up to the entrance"): where the route enters
+        // the hall from a Nova Kart wall zone, the wall of each side is one straight line over the last StraightPieces
+        // route points, ending on the door frame (the end post of the hall course there, if the hall has one).
+        private static void StraightenDoorApproach()
+        {
+            straightRight = new Dictionary<int, Vector3>();
+            straightLeft = new Dictionary<int, Vector3>();
+            int n = points.Length;
+            for (int door = 0; door < n; door++)
+            {
+                bool entersHall = points[door].zone != HallZone && points[(door + 1) % n].zone == HallZone;
+                if (!entersHall || !IsKartWallZone(points[door].zone))
+                {
+                    continue;
+                }
+                int from = (door - StraightPieces + n) % n;
+                for (float side = 1f; side >= -1f; side -= 2f)
+                {
+                    Vector3 start = FencePoint(from, side);
+                    Vector3 end = FencePoint(door, side);
+                    int post = NearestHallEnd(end);
+                    if (post >= 0)
+                    {
+                        end = hall.posts[post];
+                    }
+                    Dictionary<int, Vector3> straight = side > 0f ? straightRight : straightLeft;
+                    for (int k = 1; k <= StraightPieces; k++)
+                    {
+                        straight[(from + k) % n] = Vector3.Lerp(start, end, k / (float)StraightPieces);
+                    }
+                }
+            }
+        }
+
+        private static bool IsKartWallZone(string zone)
+        {
+            return System.Array.IndexOf(KartWallZones, zone) >= 0;
+        }
+
+        private static bool IsHiddenFenceZone(string zone)
+        {
+            return System.Array.IndexOf(HiddenFenceZones, zone) >= 0;
         }
 
         // Where the hall test has door data, the route runs straight into each door at the door's width, so the fence
@@ -118,14 +280,27 @@ namespace CarcavelosCircuit.Track.Editor
         }
 
         // The fence inside the hall: a post where each post of the hall's own railing stands, boards between neighbours.
+        // With the hall in KartWallZones it is the Nova Kart wall along the same course instead (no posts).
         private static int AddHall(NovaMesh fence, NovaMesh wall)
         {
+            bool kart = IsKartWallZone(HallZone);
             for (int k = 0; k + 1 < hall.links.Length; k += 2)
             {
                 Vector3 a = hall.posts[hall.links[k]];
                 Vector3 b = hall.posts[hall.links[k + 1]];
-                AddBoards(fence, a, b);
+                if (kart)
+                {
+                    kartWall.AddPiece(a, b);
+                }
+                else
+                {
+                    AddBoards(fence, a, b);
+                }
                 AddWall(wall, a, b, Vector3.zero);
+            }
+            if (kart)
+            {
+                return 0;
             }
             for (int p = 0; p < hall.posts.Length; p++)
             {
@@ -135,7 +310,32 @@ namespace CarcavelosCircuit.Track.Editor
         }
 
         // Board from the outside fence's last post p to the nearest end post of the hall course (a post with one neighbour).
-        private static void JoinHall(NovaMesh fence, NovaMesh wall, Vector3 p)
+        // kart = this part of the fence is the Nova Kart wall: then a piece of wall instead of the boards.
+        // hidden = this part has only the invisible collision wall: then nothing to see here either.
+        private static void JoinHall(NovaMesh fence, NovaMesh wall, Vector3 p, bool kart, bool hidden)
+        {
+            int best = NearestHallEnd(p);
+            if (best < 0)
+            {
+                return;
+            }
+            if (hidden)
+            {
+                // collision wall only (below)
+            }
+            else if (kart)
+            {
+                kartWall.AddPiece(p, hall.posts[best]);
+            }
+            else
+            {
+                AddBoards(fence, p, hall.posts[best]);
+            }
+            AddWall(wall, p, hall.posts[best], Vector3.zero);
+        }
+
+        // The end post of the hall course (a post with one neighbour) nearest to p within HallReach, or -1.
+        private static int NearestHallEnd(Vector3 p)
         {
             int best = -1;
             float bestDistance = HallReach;
@@ -148,11 +348,7 @@ namespace CarcavelosCircuit.Track.Editor
                     bestDistance = d;
                 }
             }
-            if (best >= 0)
-            {
-                AddBoards(fence, p, hall.posts[best]);
-                AddWall(wall, p, hall.posts[best], Vector3.zero);
-            }
+            return best;
         }
 
         // How many boards start or end at hall post k.
@@ -211,17 +407,32 @@ namespace CarcavelosCircuit.Track.Editor
                 bool runStarts = !ok[(i - 1 + n) % n];
                 bool runEnds = !ok[j];
 
-                AddBoards(fence, a, b);
-                AddWall(wall, a, b, Right(i) * (side * WallThickness * 0.5f)); // wall just outside the fence line
-                posts += AddPosts(fence, a, b, runStarts, runEnds, ref sinceLastPost);
+                bool kart = IsKartWallZone(points[i].zone);
+                bool hidden = IsHiddenFenceZone(points[i].zone);
+                if (hidden)
+                {
+                    AddWall(wall, a, b, Right(i) * (side * WallThickness * 0.5f)); // collision only, nothing to see
+                }
+                else if (kart)
+                {
+                    // The Nova Kart wall is thicker than a board: the collision wall starts at its road-side face.
+                    kartWall.AddPiece(a, b);
+                    AddWall(wall, a, b, Right(i) * (side * (WallThickness - NovaKartWall.Thickness) * 0.5f));
+                }
+                else
+                {
+                    AddBoards(fence, a, b);
+                    AddWall(wall, a, b, Right(i) * (side * WallThickness * 0.5f)); // wall just outside the fence line
+                    posts += AddPosts(fence, a, b, runStarts, runEnds, ref sinceLastPost);
+                }
                 // Where the fence stops at the hall course, one more board closes the gap to the hall's end post.
                 if (runStarts)
                 {
-                    JoinHall(fence, wall, a);
+                    JoinHall(fence, wall, a, kart, hidden);
                 }
                 if (runEnds)
                 {
-                    JoinHall(fence, wall, b);
+                    JoinHall(fence, wall, b, kart, hidden);
                 }
             }
             return posts;
@@ -386,6 +597,11 @@ namespace CarcavelosCircuit.Track.Editor
 
         private static Vector3 FencePoint(int i, float side)
         {
+            Vector3 onStraight;
+            if ((side > 0f ? straightRight : straightLeft).TryGetValue(i, out onStraight))
+            {
+                return onStraight; // on the straight line to a hall door (StraightenDoorApproach)
+            }
             return Pos(i) + Right(i) * (side * (points[i].width * 0.5f + EdgeOffset));
         }
 

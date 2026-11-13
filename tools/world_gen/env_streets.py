@@ -248,18 +248,21 @@ class Soup:
             if not self.split(lambda a, b: self.length(a, b) > max_edge):
                 break
 
-    def clip_route(self):
-        """Keep only what lies at least KEEP_OUT from the centreline; cut triangles get exact crossing points."""
+    def clip_route(self, keep_out=None):
+        """Keep only what lies at least KEEP_OUT from the centreline; cut triangles get exact crossing points.
+        keep_out (V23s): f(x, y) -> the keep-out at that place (street_plan.keep_out_at: the paving runs on under
+        the shoulder's edge where the road is a public street); default = KEEP_OUT everywhere."""
         cross = {}
+        lim = (lambda x, y: S.KEEP_OUT) if keep_out is None else keep_out
 
         def crossing(a, b):                          # a inside the keep-out, b outside (or the reverse)
             key = (a, b) if a < b else (b, a)
             if key not in cross:
                 (xa, ya), (xb, yb) = self.xy[key[0]], self.xy[key[1]]
-                lo, hi = (0.0, 1.0) if self.dist(key[0]) < S.KEEP_OUT else (1.0, 0.0)
+                lo, hi = (0.0, 1.0) if self.dist(key[0]) < lim(xa, ya) else (1.0, 0.0)
                 for _ in range(14):                   # lo: inside the keep-out, hi: outside
                     t = (lo + hi) / 2
-                    if S.route_distance(xa + (xb - xa) * t, ya + (yb - ya) * t) < S.KEEP_OUT:
+                    if S.route_distance(xa + (xb - xa) * t, ya + (yb - ya) * t) < lim(xa + (xb - xa) * t, ya + (yb - ya) * t):
                         lo = t
                     else:
                         hi = t
@@ -268,7 +271,7 @@ class Soup:
             return cross[key]
         out = []
         for a, b, c, tag in self.tris:
-            keep = [self.dist(v) >= S.KEEP_OUT for v in (a, b, c)]
+            keep = [self.dist(v) >= lim(*self.xy[v]) for v in (a, b, c)]
             if all(keep):
                 out.append((a, b, c, tag))
                 continue
@@ -428,7 +431,7 @@ def build_paving(col):
     counts = [len(soup.tris)]
     soup.refine_near_route(3.0)
     counts.append(len(soup.tris))
-    soup.clip_route()
+    soup.clip_route(S.keep_out_at)                 # V23s: no slot between the paving and the road's shoulder on the Marginal
     hairpin_flush.refine(soup)
     counts.append(len(soup.tris))
     soup.follow_ground(lambda x, y: _paving_z(S.route_distance(x, y), x, y))

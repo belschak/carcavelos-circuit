@@ -160,6 +160,21 @@ RAIL_FLARE = 8.0             # within this many metres of a door the rails swing
 FRAME_REACH = 4.5            # a rail ending this close to a door frame is joined to it (with a curve beyond 2.5 m)
 FRAME_GAP = 0.35             # ... and that curve keeps this far into the opening, clear of the glass beside the door
 
+# V21c (Luc's request, playtest 2 of 13 Nov 2026, p4 + p5): at the main entrance D1 the rails run STRAIGHT in from the
+# two door jambs (before: an S-bend from the 9.5 m door to the 7.7 m rail gauge within RAIL_FLARE; "the fence is
+# curved for no reason, I would make it straight up to the entrance"). Left of the lane (the outside of the right
+# turn) the rail runs straight on, parallel to the lane's entry axis, to the far side of the turn and ends there;
+# from that corner the turn's outside is a row of chevron boards pointing right (turn_boards) instead of the curved
+# rail in front of the NOVA letters ("here I would rather use signs that point to the right"), and the corridor's
+# left rail begins where the boards end. Right of the lane (the inside of the turn) the rail runs straight in and
+# then turns on ONE arc into the corridor's right rail: it has to stay, it keeps the karts off the cafe table, the
+# sofas and the white block that stand inside the turn.
+STRAIGHT_DOOR = "D1_main_entrance"
+ENTRY_ARC_R = 4.25           # radius of the right rail's arc (0.35 m outside the lane's inner edge at its closest)
+TURN_BOARDS_END_U = 38.3     # the board row ends here (u); 1 m past the south end of the NOVA letters' plinth
+TURN_BOARD_T, TURN_BOARD_H = 0.18, 0.85    # boards: as thick as the Nova Kart wall outside, standing on the floor
+TURN_BOARDS = 7              # boards in the row (about 2.4 m each, the size of the track's corner signs)
+
 
 def rounded_line(points, radii, step=0.5):
     """Points every `step` m along a polyline whose corners are replaced by circular arcs of the given radii."""
@@ -303,10 +318,13 @@ def guard_rails(m, f, door_map):
     """Low rails on both sides of each road: white posts every 2 m and a light lilac board (no top tube, Noah).
     Near a door they swing to the door frame and end exactly at its edge, so the fence outside can join them."""
     frames = []                                                          # (door centre, half width, two frame points) in u/o
+    straight = []                                                        # V21c: the frame points of STRAIGHT_DOOR
     for d in door_list(door_map):
         cu = f.uo(*d["c"])
         edges = [f.uo(d["c"][0] + d["t"][0] * sg * d["width"] / 2, d["c"][1] + d["t"][1] * sg * d["width"] / 2) for sg in (1, -1)]
         frames.append((cu, d["width"] / 2, edges))
+        if d["name"] == STRAIGHT_DOOR:
+            straight = edges
     for road in ROADS:
         if road["name"] in RAIL_FREE_ROADS:
             continue
@@ -375,22 +393,67 @@ def guard_rails(m, f, door_map):
                             run.insert(0, p)
                     else:
                         run.extend(bridge)
-                sub = run[::2]                                           # one segment per metre
-                if sub[-1] != run[-1]:
-                    sub.append(run[-1])
-                for (u0, o0), (u1, o1) in zip(sub, sub[1:]):
-                    m.beam(f.at(u0, o0, 0.58), f.at(u1, o1, 0.58), 0.05, 0.16, "rail_lilac")
-                ends = run[::4] if (len(run) - 1) % 4 == 0 else run[::4] + [run[-1]]
-                for k, (u0, o0) in enumerate(ends):                      # a post every 2 m and one at the end
-                    p = f.at(u0, o0, 0)
-                    RAIL_POSTS.append((p[0], p[1]))                       # also kept for HallRailingCourse.json
-                    if k > 0:
-                        RAIL_LINKS.append((len(RAIL_POSTS) - 2, len(RAIL_POSTS) - 1))
-                    m.box((p[0], p[1], 0.36), 0.05, 0.05, 0.36, "wall", f.h)
+                # V21c: a run that starts at a jamb of the main entrance is re-laid straight (straight_entry)
+                at_jamb = [e for e in straight if math.hypot(e[0] - run[0][0], e[1] - run[0][1]) < 0.01]
+                for run in (straight_entry(road, run, side) if at_jamb and road["name"] == "west" else [run]):
+                    sub = run[::2]                                       # one segment per metre
+                    if sub[-1] != run[-1]:
+                        sub.append(run[-1])
+                    for (u0, o0), (u1, o1) in zip(sub, sub[1:]):
+                        m.beam(f.at(u0, o0, 0.58), f.at(u1, o1, 0.58), 0.05, 0.16, "rail_lilac")
+                    ends = run[::4] if (len(run) - 1) % 4 == 0 else run[::4] + [run[-1]]
+                    for k, (u0, o0) in enumerate(ends):                  # a post every 2 m and one at the end
+                        p = f.at(u0, o0, 0)
+                        RAIL_POSTS.append((p[0], p[1]))                   # also kept for HallRailingCourse.json
+                        if k > 0:
+                            RAIL_LINKS.append((len(RAIL_POSTS) - 2, len(RAIL_POSTS) - 1))
+                        m.box((p[0], p[1], 0.36), 0.05, 0.05, 0.36, "wall", f.h)
+
+
+def entry_rail_o(side):
+    """o of the west lane's corridor rail south of the entrance turn: side +1 = left of the lane (east), -1 = right."""
+    road = ROADS[0]
+    return road["points"][1][1] + side * (road["width"] / 2 + RAIL_OFFSET)
+
+
+def straight_entry(road, run, side):
+    """V21c (Luc's request, p4 + p5): the rail run that starts at a jamb of the main entrance, re-laid. Returns the
+    runs that replace it (points every 0.5 m, hall coordinates). side +1 = left of the lane (outside of the right
+    turn): straight from the jamb to the corridor rail's line, a gap for the chevron boards (turn_boards), then the
+    old run from TURN_BOARDS_END_U on. side -1 = right (inside of the turn): straight in, one arc of ENTRY_ARC_R,
+    then the old run. Every new point keeps RAIL_OFFSET - 0.05 m or more to the lane's edge."""
+    ju, jo = run[0]                                                       # the jamb: the exact frame point
+    target = entry_rail_o(side)
+
+    def line(a, b):
+        n = max(1, int(math.ceil(math.hypot(b[0] - a[0], b[1] - a[1]) / 0.5)))
+        return [(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n) for k in range(n + 1)]
+
+    if side > 0:
+        first = line((ju, jo), (ju, target))
+        k = next(i for i, p in enumerate(run) if p[0] > TURN_BOARDS_END_U + 0.1 and abs(p[1] - target) < 0.05)
+        out = [first, [(TURN_BOARDS_END_U + 0.1, target)] + run[k:]]
+    else:
+        R = ENTRY_ARC_R
+        cu, co = ju + R, target - R                                       # arc centre: tangent to u = ju and to o = target
+        first = line((ju, jo), (ju, co))
+        n = max(2, int(math.ceil(R * math.pi / 2 / 0.5)))
+        arc = [(cu - R * math.cos(math.pi / 2 * i / n), co + R * math.sin(math.pi / 2 * i / n)) for i in range(1, n + 1)]
+        k = next(i for i, p in enumerate(run) if p[0] > cu + 0.25 and abs(p[1] - target) < 0.05)
+        out = [first + arc + run[k:]]
+    limit = road["width"] / 2 + RAIL_OFFSET - 0.05
+    for pts in out:
+        for u, o in pts:
+            gap = min(math.hypot(u - pu, o - po) for pu, po in road["line"])
+            if gap < limit:
+                raise RuntimeError(f"V21c: entry rail at u {u:.1f}, o {o:.1f} is {gap - road['width'] / 2:.2f} m from the lane's edge")
+    print(f"  V21c entry rail, side {side:+d}: jamb u {ju:.2f} o {jo:.2f}, {len(out)} run(s), "
+          f"{sum(math.hypot(b[0] - a[0], b[1] - a[1]) for pts in out[:1] for a, b in zip(pts, pts[1:]) if abs(a[0] - ju) < 1e-6 and abs(b[0] - ju) < 1e-6):.1f} m straight from the jamb")
+    return out
 
 
 # ---------- outer walls with doors ----------
-def snapped_doors(polys):
+def snapped_doors(polys, quiet=False):
     """Door centre on the nearest facade edge (edges of at least 5 m): {edge key: [(distance along edge, width, name)]}."""
     out = {}
     f = building_frame()
@@ -409,7 +472,8 @@ def snapped_doors(polys):
                 if best is None or d < best[0]:
                     best = (d, edge_key(a, b), t * L)
         out.setdefault(best[1], []).append((best[2], width, name))
-        print(f"  door {name}: {best[0]:.1f} m from the marked spot")
+        if not quiet:
+            print(f"  door {name}: {best[0]:.1f} m from the marked spot")
     return out
 
 
@@ -633,7 +697,8 @@ def shell(m, f, polys, door_map):
     atrium, long_room = polys[0], polys[1]
     K.polygon_face(m, atrium, 0.0, "floor", up=True)
     floor_joints(m, f, atrium)                                          # V18j (Luc's request)
-    K.polygon_face(m, long_room, 0.0, "floor", up=True)
+    for part in floor_with_well(long_room, f):                          # V21c: the floor round the stair well
+        K.polygon_face(m, part, 0.0, "floor", up=True)
     canopy_done = False
     for poly, H in ((atrium, ATRIUM_H), (long_room, LONG_H)):
         ccw = K.signed_area(poly) > 0
@@ -805,6 +870,7 @@ def atrium_structure(m, f):
     # foot at u 37, top at the landing gallery at u 27.5, o 40.3-45. Was: stair(m, f, 38.0, BRIDGE_U[1], 34.0, 39.5, GALLERY_Z)
     grand_stair(m, f, STAIR_U[0], STAIR_U[1], STAIR_O[0], STAIR_O[1], GALLERY_Z)
     leaning_columns(m, f)
+    side_door(m, f)                                                     # V21c (Luc's request, p6)
     # "With great power ..." wall on the east side: light panel with a dark band (no text in the model)
     K.block(m, f, 40.0, 50.0, 67.3, 67.6, 3.0, 4.6, "table")
     K.block(m, f, 42.0, 48.0, 67.25, 67.3, 3.6, 4.0, "steel_dark")
@@ -916,6 +982,44 @@ def white_block(m, f):
     m.cylinder((p[0], p[1], 0.4), 0.38, 0.04, "table", 16)
 
 
+# V21c (Luc's request, p6: "here it actually also goes in to the right, even if that is not part of the race. A closed
+# entrance door is enough"): the side entrance in the wall right of the corridor (the west facade under the timber
+# balcony, where the Cascais Academic Hall adjoins: u 39..68). A closed, framed double door with side lights in a
+# white portal. Solid: every hall mesh gets a MeshCollider in NovaHallInsert, and the concrete wall and the hall's
+# facade stand right behind it.
+SIDE_DOOR_U = (53.0, 58.0)   # the portal along the wall (u from .. to), in the middle of the balcony's stretch
+SIDE_DOOR_H = 2.75           # clear height of the opening; the leaves are 2.2 m with a glazed transom above
+SIDE_WALL_IN = 0.37          # the concrete wall seen there is the Cascais Academic Hall's east wall in the campus world
+                             # (env_campus): its face stands this far inside the hall's west glass (ray check, V21c)
+
+
+def side_door(m, f):
+    u0, u1 = SIDE_DOOR_U
+    wall_o = max(f.uo(*nearest_wall(*f.at(u, 0.6)[:2])[1:])[1] for u in (u0, u1))   # inner face of the west facade
+    o0 = wall_o + SIDE_WALL_IN + 0.03                                     # just in front of the concrete wall
+    must_be_free("side door", u0, u1, o0, o0 + 0.5)
+    pier, deep = 0.35, 0.3
+    for ua in (u0, u1 - pier):                                            # white portal: two piers and a lintel
+        K.block(m, f, ua, ua + pier, o0 - 0.12, o0 + deep, 0.0, SIDE_DOOR_H + 0.35, "wall")   # (they reach into the wall)
+    K.block(m, f, u0 + pier, u1 - pier, o0 - 0.12, o0 + deep, SIDE_DOOR_H, SIDE_DOOR_H + 0.35, "wall")
+    a, b = u0 + pier, u1 - pier                                           # the opening
+    K.wall_o(m, f, o0 + 0.05, a, b, 0.0, SIDE_DOOR_H, "grey", facing=1)   # dark behind the glass: nothing to see through
+    K.wall_o(m, f, o0 + 0.16, a, b, 0.0, SIDE_DOOR_H, "glass", facing=1)
+    mid, leaf, bar = (a + b) / 2, 1.35, 0.035
+    stiles = (a + 0.04, mid - leaf, mid - 0.04, mid + 0.04, mid + leaf, b - 0.04)   # frame, side lights, meeting stiles
+    for u in stiles:
+        K.block(m, f, u - bar, u + bar, o0 + 0.12, o0 + 0.2, 0.0, SIDE_DOOR_H, "steel_dark")
+    for z0, z1 in ((0.0, 0.1), (2.2, 2.28), (SIDE_DOOR_H - 0.07, SIDE_DOOR_H)):   # threshold rail, transom, head
+        K.block(m, f, a, b, o0 + 0.12, o0 + 0.2, z0, z1, "steel_dark")
+    for sg in (-1, 1):                                                    # two pull handles on the meeting stiles
+        u = mid + sg * 0.16
+        K.block(m, f, u - 0.02, u + 0.02, o0 + 0.25, o0 + 0.29, 0.75, 1.65, "rail")
+        for z in (0.85, 1.55):
+            K.block(m, f, u - 0.015, u + 0.015, o0 + 0.2, o0 + 0.25, z - 0.015, z + 0.015, "rail")
+    K.floor_rect(m, f, a + 0.3, b - 0.3, o0 + deep, o0 + deep + 1.3, 0.006, "mat")   # door mat in front of it (off the lane)
+    print(f"  V21c side door: u {u0}..{u1}, wall at o {wall_o:.2f}")
+
+
 def leaning_columns(m, f):
     """V18j (Luc's request): the big white leaning tube columns just inside the west glass, each on a bolted foot
     (tour slide 1, N11): two north of the main entrance, one south of it, clear of the door and the lane."""
@@ -1016,6 +1120,7 @@ def atrium_furniture(m, f):
     big_plant(m, f, 14.0, 58.0, 3)
     big_plant(m, f, 60.0, 45.0, 4)                                     # V20c: with the stage, 5 m east (was o 40.0)
     exit_arrows(m, f)
+    turn_boards(m, f)                                                   # V21c (Luc's request, p5)
     entrance_seating(m, f)
 
 
@@ -1047,6 +1152,46 @@ def exit_arrows(m, f):
             for vend in (vm + vh, vm - vh):
                 quad = [(tip, vm), (tip - t, vm), (back - t, vend), (back, vend)]
                 m.face([f.at(front, o, z) for o, z in quad], "rail_orange", (tn[0], tn[1], 0))
+
+
+def turn_boards(m, f):
+    """V21c (Luc's request, p5: "here I would also rather use signs that point to the right"): the outside of the
+    right turn behind the main entrance is a row of low white boards with Boost Orange chevrons pointing right (the
+    look of exit_arrows and of the track's corner signs), in place of the curved rail in front of the NOVA letters.
+    The row starts at the corner where the left entry rail ends (straight_entry) and runs south on the corridor
+    rail's line to TURN_BOARDS_END_U, where that rail takes over. The boards stand on the floor and are solid (every
+    hall mesh gets a MeshCollider in NovaHallInsert), so they are the barrier there: behind them are the open floor
+    in front of the letters, the entrance bridge's column and the way into the atrium's east half. They are low
+    (TURN_BOARD_H), so the letters 3 m behind them stay in full view."""
+    jamb_u = min(e[0] for e in door_frame_uo(f, STRAIGHT_DOOR))          # the left jamb = the entry rail's line
+    front = entry_rail_o(1)                                               # the boards' face = the rail's line
+    u0, u1 = jamb_u - 0.05, TURN_BOARDS_END_U
+    gap = 0.12
+    w = (u1 - u0 - (TURN_BOARDS - 1) * gap) / TURN_BOARDS
+    must_be_free("turn boards", u0, u1, front, front + TURN_BOARD_T)
+    nrm = f.left()
+    face_o = front - 0.006
+    for k in range(TURN_BOARDS):
+        a = u0 + k * (w + gap)
+        c = a + w / 2
+        K.block(m, f, a, a + w, front, front + TURN_BOARD_T, 0.0, TURN_BOARD_H, "table")
+        K.block(m, f, a, a + w, front - 0.004, front + TURN_BOARD_T + 0.004, TURN_BOARD_H, TURN_BOARD_H + 0.05, "rail_orange")   # cap
+        # three chevrons pointing right (+u = south = the driver's right when driving in), exit_arrows' proportions
+        cw, t, vm, vh = 0.34, 0.13, TURN_BOARD_H / 2, TURN_BOARD_H * 0.36
+        for du in (-0.72, 0.0, 0.72):
+            tip, back = c + du + cw / 2, c + du - cw / 2
+            for vend in (vm + vh, vm - vh):
+                quad = [(tip, vm), (tip - t, vm), (back - t, vend), (back, vend)]
+                m.face([f.at(u, face_o, z) for u, z in quad], "rail_orange", (-nrm[0], -nrm[1], 0))
+    print(f"  V21c turn boards: {TURN_BOARDS} boards of {w:.2f} m, u {u0:.2f}..{u1:.2f}, face at o {front:.2f}")
+
+
+def door_frame_uo(f, name):
+    """The two frame points of a door in hall coordinates (u, o)."""
+    for d in door_list(snapped_doors(regions(f)[:2], quiet=True)):
+        if d["name"] == name:
+            return [f.uo(d["c"][0] + d["t"][0] * sg * d["width"] / 2, d["c"][1] + d["t"][1] * sg * d["width"] / 2) for sg in (1, -1)]
+    raise RuntimeError(f"door {name} not found")
 
 
 def portable_stage(m, f):
@@ -1091,9 +1236,11 @@ ENTRANCE_ROUND_TABLES = [(10.5, 9.0), (10.5, 13.5), (14.5, 11.0), (14.5, 15.5), 
 # (same number of tables): the round one at (33.5, 5.0) 1.5 m north to the block's corner as in IMG_7722 37-41 s, the
 # round one at (43.5, 5.0) to the old place of the welcome desk (16.5, 4.0), the long one at (38.5, 4.6) between the
 # two lanes at (50.5, 23.8), where the real hall has its study tables.
-WEST_GLASS_ROUND_TABLES = [(32.0, 5.6), (16.5, 4.0), (48.5, 5.0),    # (48.5: under the west balcony, Noah)
-                           (58.0, 5.0), (62.5, 5.0)]                 # (behind the cabinet, before the artwork wall)
-WEST_GLASS_LONG_TABLES = [(50.5, 23.8), (53.0, 4.6)]                  # (53.0: by the red fire hose cabinet)
+# V21c (Luc's request, p6: "a closed entrance door is enough, and the chairs can go too, plus the tables"): the cafe
+# sets along the side wall right of the corridor are gone, the side entrance stands there (side_door). Were round
+# tables at (48.5, 5.0) (under the west balcony, Noah), (58.0, 5.0), (62.5, 5.0) and a long one at (53.0, 4.6).
+WEST_GLASS_ROUND_TABLES = [(32.4, 5.3), (16.5, 4.0)]    # (32.4: was (32.0, 5.6); 0.4 m clear of the new entry rail)
+WEST_GLASS_LONG_TABLES = [(50.5, 23.8)]
 
 
 def entrance_seating(m, f):
@@ -1244,24 +1391,124 @@ def long_room_structure(m, f):
     K.wall_o(m, f, 21.95, LONG_END_U - 12.0, LONG_END_U - 0.3, 6.6, 7.8, "glass", facing=-1)
 
 
-PIANO_U = 93.0               # the piano by the west glass, where the middle long table of the first three stood (Noah, T10)
-PIANO_CLEAR = 5.0            # no long table closer than this along the glass: the tables on both sides of the piano go (Noah)
+# V21c (Luc's request, p7: "I would pull the piano a bit towards the kart, directly behind the posts, and behind it a
+# staircase must go down (wide, but it must not get in the way of the track)"). The grand piano moves 8.7 m north
+# (towards the kart that comes in through the artwork wall) and 2.2 m towards the lane: its tail now ends 0.55 m
+# behind the right rail's posts (rail at o 9.15). Same turn as before (keyboard to the glass, tail to the lane), so
+# Noah's AtriumPiano only needs the new position. Was PIANO_U 93.0 at o 5.4 (Noah, T10).
+PIANO_U = 84.3
+PIANO_O = 7.6
+# Behind it (south, further along the lane): the wide open stair down to Floor 0. A well in the hall floor between
+# the west glass and the right rail, a straight flight going down southwards (so the kart sees the treads fall
+# away), a landing with a dark doorway, glass balustrades on the three closed sides. All of it stays STAIR_WELL_KEEP
+# or more behind the rail line; the rail (in Unity: the fence and its collision wall) keeps the karts out.
+STAIR_WELL_U = (87.0, 95.0)  # the well in the floor: u from (top step) .. to (wall behind the landing)
+STAIR_WELL_O = (2.9, 8.5)    # .. and o from .. to: a 5.6 m wide flight
+STAIR_WELL_DROP = 3.3        # down to Floor 0 (11.2 m; the hall floor is 14.5 m)
+STAIR_WELL_STEPS = 20        # 0.165 m risers, 0.30 m treads: a 6 m flight and a 2 m landing
+STAIR_WELL_KEEP = 0.5        # the well's rim stays at least this far behind the rail line (the lane's edge + RAIL_OFFSET)
+FURNITURE_FREE_U = (PIANO_U - 3.0, STAIR_WELL_U[1] + 4.0)   # no long tables along the glass here (piano, stair, its foot)
 
 
 def long_room_furniture(m, f):
     for u in K.Frame().samples(84.0, LONG_END_U - 4.0, 4.6):
-        if abs(u - TERRACE_DOOR_U) > 3.5 and abs(u - PIANO_U) > PIANO_CLEAR:   # keep the terrace door and the piano's surroundings free
+        # keep the terrace door free, and (V21c) the place of the piano and the stair behind it
+        if abs(u - TERRACE_DOOR_U) > 3.5 and not FURNITURE_FREE_U[0] <= u <= FURNITURE_FREE_U[1]:
             long_table(m, f, u, 5.4, seats=3)
     for k, u in enumerate(K.Frame().samples(84.0, LONG_END_U - 4.0, 4.0)):   # round tables in two staggered rows
         round_table(m, f, u, 12.5 if k % 2 == 0 else 14.0, 4)
         round_table(m, f, u + 2.0, 19.5 if k % 2 == 0 else 21.0, 4 if k % 3 else 3)
-    grand_piano(m, f, PIANO_U, 5.4, 90)                                 # was at u 86, squeezed between two tables
+    if not free(PIANO_U, PIANO_O, 1.4):
+        raise RuntimeError("V21c: the grand piano stands too close to the lane")
+    K.grand_piano(m, f, PIANO_U, PIANO_O, 90)                           # V21c: was grand_piano(m, f, 93.0, 5.4, 90)
+    stair_down(m, f)                                                    # V21c (Luc's request, p7)
     # V18 (Luc, 11 Nov): the second grand piano at u 113 is gone; the atrium has one piano (T10 above)
     for k, u in enumerate(K.Frame().samples(82.0, LONG_END_U - 3.0, 16.0)):  # fig trees in pots along the glass
         if abs(u - TERRACE_DOOR_U) > 4.5:
             big_plant(m, f, u, 2.4, 9 + k)
     for k, (u, o) in enumerate(((71.0, 14.0), (86.0, 24.0), (150.0, 23.5), (180.0, 23.5))):
         info_stand(m, f, u, o, k)
+
+
+def stair_down(m, f):
+    """V21c (Luc's request, p7): the wide stair down behind the piano. See STAIR_WELL_*. The hall floor has the
+    matching hole (floor_with_well). Treads and risers are plain faces (the well's walls hide what is under them)."""
+    (u0, u1), (o0, o1), drop, n = STAIR_WELL_U, STAIR_WELL_O, STAIR_WELL_DROP, STAIR_WELL_STEPS
+    road = ROADS[0]
+    limit = road["width"] / 2 + RAIL_OFFSET + STAIR_WELL_KEEP
+    for u, o in ((u0, o1), (u1, o1), ((u0 + u1) / 2, o1), (u1, (o0 + o1) / 2)):
+        gap = min(math.hypot(u - pu, o - po) for pu, po in road["line"])
+        if gap < limit:
+            raise RuntimeError(f"V21c: stair well rim at u {u:.1f}, o {o:.1f} is only {gap - road['width'] / 2 - RAIL_OFFSET:.2f} m behind the rail line")
+    rise, run = drop / n, 0.30
+    t = f.tangent()
+    for i in range(n):                                                    # riser i, then the tread below it
+        u = u0 + i * run
+        K.wall_u(m, f, u, o0, o1, -(i + 1) * rise, -i * rise, "stair", facing=1)
+        if i < n - 1:
+            K.floor_rect(m, f, u, u + run, o0, o1, -(i + 1) * rise, "stair", up=True)
+    foot = u0 + (n - 1) * run
+    K.floor_rect(m, f, foot, u1, o0, o1, -drop, "floor", up=True)        # landing on Floor 0
+    for i in range(n - 1):                                                # the walls beside the flight, step by step
+        ua, z = u0 + i * run, -(i + 1) * rise
+        K.wall_o(m, f, o0, ua, ua + run, z, 0.0, "wall", facing=1)
+        K.wall_o(m, f, o1, ua, ua + run, z, 0.0, "wall", facing=-1)
+    K.wall_o(m, f, o0, foot, u1, -drop, 0.0, "wall", facing=1)
+    K.wall_o(m, f, o1, foot, u1, -drop, 0.0, "wall", facing=-1)
+    K.wall_u(m, f, u1, o0, o1, -drop, 0.0, "wall", facing=-1)             # the wall behind the landing ..
+    mid = (o0 + o1) / 2
+    K.wall_u(m, f, u1 - 0.02, mid - 1.6, mid + 1.6, -drop, -drop + 2.5, "pit", facing=-1)   # .. with a dark doorway
+    K.block(m, f, u1 - 0.06, u1 - 0.02, mid - 1.7, mid + 1.7, -drop + 2.5, -drop + 2.62, "steel_dark")
+    K.block(m, f, u1 - 0.07, u1 - 0.02, mid - 1.2, mid + 1.2, -0.75, -0.6, "light")           # light strip over it
+    # the rim: a low white kerb, glass balustrades with a steel handrail on the three closed sides
+    kerb, top = 0.12, 1.1
+    for o in (o0 - 0.05, o1 + 0.05):                                      # the two long sides
+        K.block(m, f, u0, u1 + 0.1, o - 0.05, o + 0.05, 0.0, kerb, "wall")
+        K.block(m, f, u0, u1 + 0.1, o - 0.025, o + 0.025, top - 0.04, top + 0.02, "rail")
+        for facing in (1, -1):
+            K.wall_o(m, f, o, u0, u1 + 0.1, kerb, top - 0.04, "glass", facing=facing)
+    K.block(m, f, u1, u1 + 0.1, o0, o1, 0.0, kerb, "wall")                # the south end
+    K.block(m, f, u1 + 0.025, u1 + 0.075, o0, o1, top - 0.04, top + 0.02, "rail")
+    for facing in (1, -1):
+        K.wall_u(m, f, u1 + 0.05, o0, o1, kerb, top - 0.04, "glass", facing=facing)
+    for u, o in ((u0, o0 - 0.05), (u0, o1 + 0.05), (u1 + 0.05, o0 - 0.05), (u1 + 0.05, o1 + 0.05),
+                 ((u0 + u1) / 2, o0 - 0.05), ((u0 + u1) / 2, o1 + 0.05), (u1 + 0.05, mid)):
+        K.block(m, f, u - 0.03, u + 0.03, o - 0.03, o + 0.03, 0.0, top, "rail")           # steel posts
+    for o in (o0 + 0.07, o1 - 0.07):                                      # handrails along the flight, on brackets
+        K.rod(m, f, (u0 - 0.3, o, 0.95), (u0, o, 0.95), 0.045, "rail")
+        K.rod(m, f, (u0, o, 0.95), (foot, o, -drop + rise + 0.95), 0.045, "rail")
+        for k in range(4):
+            u = u0 + (foot - u0) * (k + 0.5) / 4
+            z = 0.95 - (u - u0) / run * rise
+            K.block(m, f, u - 0.015, u + 0.015, min(o, o + (0.07 if o < mid else -0.07)), max(o, o + (0.07 if o < mid else -0.07)), z - 0.06, z - 0.03, "rail")
+    print(f"  V21c stair down: well u {u0}..{u1}, o {o0}..{o1}, {n} steps of {rise:.3f} m, landing {u1 - foot:.1f} m at {-drop} m")
+
+
+def floor_with_well(poly, f):
+    """V21c: the long room's floor polygon as pieces round the stair well (STAIR_WELL_U x STAIR_WELL_O): the strip
+    west of it, the strip east of it, and the middle strip north and south of it. The strips get a vertex at the
+    well's corners, so neighbouring pieces share their corners (no T-junction, no hairline gap)."""
+    (u0, u1), (o0, o1) = STAIR_WELL_U, STAIR_WELL_O
+
+    def cut(part, axis, limit, below):
+        return K.clip_polygon(part, lambda p: (limit - f.uo(*p)[axis]) if below else (f.uo(*p)[axis] - limit))
+
+    def with_corners(part, o):
+        """Adds the well's two corners on the line o to the polygon's edge that runs along that line."""
+        out = []
+        for a, b in zip(part, part[1:] + part[:1]):
+            out.append(a)
+            (ua, oa), (ub, ob) = f.uo(*a), f.uo(*b)
+            if abs(oa - o) < 1e-6 and abs(ob - o) < 1e-6:
+                for u in sorted((u0, u1), reverse=ua > ub):
+                    if min(ua, ub) + 1e-6 < u < max(ua, ub) - 1e-6:
+                        out.append(f.at(u, o)[:2])
+        return out
+
+    middle = cut(cut(poly, 1, o0, False), 1, o1, True)
+    pieces = [with_corners(cut(poly, 1, o0, True), o0), with_corners(cut(poly, 1, o1, False), o1),
+              cut(middle, 0, u0, True), cut(middle, 0, u1, False)]
+    return [part for part in pieces if len(part) >= 3 and abs(K.signed_area(part)) > 0.01]
 
 
 # ---------- assembly ----------
