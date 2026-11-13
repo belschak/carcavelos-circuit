@@ -59,6 +59,7 @@ namespace CarcavelosCircuit.Bots.Editor
 
             TrackData data = JsonUtility.FromJson<TrackData>(File.ReadAllText(TrackFile));
             GameObject root = new GameObject("BotRace");
+            CarcavelosCircuit.Playtest.Editor.PlaytestSceneBuilder.AddBoostPads(root);   // the pads (Luc, 13 Nov)
 
             // Racing line for the bots, baked from track.json.
             BotRoute route = root.AddComponent<BotRoute>();
