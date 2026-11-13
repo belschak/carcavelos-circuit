@@ -43,7 +43,7 @@ PLACEMENTS_FILE = os.path.join(E.OUT, "placements_vegetation.json")
 SEED = 20261108
 
 # Hard triangle limits per plant type (both colour variants of a type share the limit).
-TRI_BUDGET = {"Veg_UmbrellaPine": 1700, "Veg_Palm": 1200, "Veg_Olive": 1150, "Veg_Shrub": 420, "Veg_Shrub_L": 900, "Veg_Grass": 80,
+TRI_BUDGET = {"Veg_UmbrellaPine": 1700, "Veg_Palm": 1200, "Veg_Olive": 1150, "Veg_Shrub": 420, "Veg_Shrub_L": 900, "Veg_Shrub_B_L": 900, "Veg_Grass": 80,
               "Veg_PlazaTree": 520}          # V15a: the young staked tree of the entrance plaza; V18n: shrub 120 -> 420
                                              # (leaf cards: the shrubs were the faceted balls), palm 700 -> 1200
 
@@ -651,7 +651,7 @@ def crown_tone(palette, centre, z_range, reach, low=0.0):
     def tone(p, jitter=0.0, dark=1.0):
         h = min(max((p.z - z_lo) / (z_hi - z_lo), 0.0), 1.0)
         out = min((Vector(p) - cc).length / reach, 1.0)
-        t = 0.06 + 0.46 * h + 0.42 * out ** 1.5 - low * (1.0 - h) ** 2 + jitter
+        t = 0.14 + 0.44 * h + 0.4 * out ** 1.5 - low * (1.0 - h) ** 2 + jitter
         return [c * dark for c in leaf_tone(palette, t)]
     return tone
 
@@ -736,7 +736,7 @@ def leaf_shell(mb, lobes, mat, crown_centre, tone, rng, tile="broad", card=0.5, 
     return count
 
 
-def leaf_core(mb, lobes, mat, crown_centre, tone, shrink=0.86, dark=0.55, blend=0.45, min_z=None, reach=3.0):
+def leaf_core(mb, lobes, mat, crown_centre, tone, shrink=0.86, dark=0.68, blend=0.45, min_z=None, reach=3.0):
     """The dark inside of a crown, seen between the leaf cards: every lobe as a smooth clump (geo(lobe["core"]) or
     20 x freq^2 triangles, default 2), `shrink` x its size, textured with the atlas's solid leaf tile and coloured
     `dark` x the crown tone. Faces entirely below `min_z` are left out (buried)."""
@@ -1075,7 +1075,7 @@ def hedge_leaves(name, faces, palette="hedge", tile="broad", card=0.8, cover=5.5
     def tone_for(pal):
         def tone(p, jitter=0.0, dark=1.0):
             h = min(max((p.z - z_lo) / max(z_hi - z_lo, 0.1), 0.0), 1.0)
-            return [c * dark for c in leaf_tone(pal, 0.1 + 0.72 * h ** 1.2 + jitter)]
+            return [c * dark for c in leaf_tone(pal, 0.16 + 0.68 * h ** 1.2 + jitter)]
         return tone
 
     leaves, flowers = tone_for(palette), tone_for("blossom")
@@ -1091,7 +1091,7 @@ def hedge_leaves(name, faces, palette="hedge", tile="broad", card=0.8, cover=5.5
         skin = []
         for c, a, b in zip(corners, us, vs):
             uv = (u0 + (u1 - u0) * (0.08 + 0.84 * (a - min(us)) / span), v0 + (v1 - v0) * (0.08 + 0.84 * (b - min(vs)) / span))
-            skin.append(mb.v(c + n * 0.03, sn, uv, leaves(c, 0.0, 0.5)))
+            skin.append(mb.v(c + n * 0.03, sn, uv, leaves(c, 0.0, 0.62)))
         mb.f(skin, 0, keep=True)
     for corners, n in faces:
         tris = [(corners[0], corners[k], corners[k + 1]) for k in range(1, len(corners) - 1)]

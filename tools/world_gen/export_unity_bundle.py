@@ -115,7 +115,7 @@ for obj in bpy.data.objects:
             e["albedo"] = linked_image(b.inputs["Base Color"]) or m.get("albedo_texture")   # V18n: texture x vertex colour
             e["rough"] = linked_image(b.inputs["Roughness"])
             e["normal"] = linked_image(b.inputs["Normal"])
-            if b.inputs["Normal"].is_linked:
+            if b.inputs["Normal"].is_linked and b.inputs["Normal"].links[0].from_node.type == "NORMAL_MAP":
                 e["normal_strength"] = round(b.inputs["Normal"].links[0].from_node.inputs["Strength"].default_value, 3)
             strength = b.inputs["Emission Strength"].default_value
             col = b.inputs["Emission Color"].default_value

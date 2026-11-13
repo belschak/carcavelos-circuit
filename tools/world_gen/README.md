@@ -16,6 +16,7 @@ $PY make_campus_east_textures.py  # V16b: the lower plaza's beige-grey concrete 
 $PY make_west_textures.py    # V16c: terrace deck with saw cuts, perforated brick screen, tan terrace railing (env_campus_west.py)
 $PY make_coast_textures.py   # V16e: textures of the coast section (one atlas, sand-beige render, board-marked concrete)
 $PY make_capricciosa_textures.py  # V16g: cap_rubble (rubble sea wall, parapet, cliff and rocks at the beach restaurants)
+$PY make_veg_textures.py     # V18n: veg_leaves_cutout_albedo (leaf atlas for the leaf cards of shrubs, crowns, hedges: env_vegetation.py)
 $PY make_sky.py            # painted golden-hour sky -> textures/sky_panorama.png (Unity skybox + reflections)
 $PY make_groundmap.py      # ground colour map from the OSM shapes and the traced coast -> textures/ground_colour.png, ground_mask_data.png
 $BL -b -P build_world.py   # -> out/CampusWorld.blend, CampusWorld.fbx, TrackSurface.fbx, RouteGuide.fbx, previews

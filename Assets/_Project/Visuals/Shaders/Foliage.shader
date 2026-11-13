@@ -167,13 +167,17 @@ Shader "CarcavelosCircuit/Foliage"
                 // V17: wrapped light: thin leaves stay lit a little past the terminator, so a crown is round, not cut
                 half lit = saturate((dot(N, sun.direction) + _Leaf.x) / (1.0 + _Leaf.x));
                 half through = saturate(dot(-N, sun.direction)) * 0.5;            // a leaf lit from behind glows a little
-                half3 direct = sun.color * (sun.shadowAttenuation * lerp(lit, max(lit, through), 1.0 - front));
+                // V18n: inside a crown of leaf cards the light scatters from leaf to leaf: its own shadow is not black
+                half shadow = lerp(sun.shadowAttenuation, 1.0, 0.3 * _Crown);
+                half3 direct = sun.color * (shadow * lerp(lit, max(lit, through), 1.0 - front));
                 // V17: looking at the tree against the low sun: warm light shines through the leaves
                 half3 V = normalize(_WorldSpaceCameraPos - i.positionWS);
                 half againstSun = pow(saturate(dot(-V, sun.direction)), 4.0);
-                direct += _Translucency.rgb * sun.color * (againstSun * sun.shadowAttenuation * _Leaf.y * (0.4 + 0.6 * i.height));
+                direct += _Translucency.rgb * sun.color * (againstSun * shadow * _Leaf.y * (0.4 + 0.6 * i.height));
                 // V17: less sky light low in the crown and near the trunk (the crown shades itself)
-                half3 sky = SampleSH(N) * lerp(1.0 - _Leaf.z, 1.0, saturate(i.height * 1.4));
+                // (V18n: a crown card looks more to the sky than its baked normal says, and gets the scattered light)
+                half3 sky = SampleSH(normalize(N + half3(0.0, 0.6 * _Crown, 0.0))) * (1.0 + 0.5 * _Crown)
+                            * lerp(1.0 - _Leaf.z, 1.0, saturate(i.height * 1.4));
                 #if defined(_SCREEN_SPACE_OCCLUSION)
                 AmbientOcclusionFactor ao = GetScreenSpaceAmbientOcclusion(GetNormalizedScreenSpaceUV(i.positionCS));
                 direct *= ao.directAmbientOcclusion;
