@@ -7,7 +7,10 @@ namespace CarcavelosCircuit.RaceFlow
     // AzulejoPattern: no image files, own work after Luc's four item designs (items_showcase.png, Role 3):
     // Espresso = a cup on a saucer with steam, Carcavelos Wave = a curling turquoise wave with foam,
     // Dean's List = a graduation cap on a ring of gold coins, Seagull Delivery = a seagull with a red and white
-    // lifebuoy. Drawn on a 72 x 72 grid and scaled to the element's size. Luc's real icons can replace these later.
+    // lifebuoy. Drawn on a 72 x 72 grid and scaled to the element's size.
+    // Luc's real icons (request Q16, Visuals/Items/Icons/<ItemKind>.png via ItemSettings) replace these: an item with
+    // a picture (SetPicture) shows it as the element's background image and skips the drawing; an item without one
+    // (picture missing or not imported yet) keeps the code-drawn icon, so the slot never stays empty.
     // generateVisualContent only runs when MarkDirtyRepaint is called: on a new icon, or every frame while the
     // steam moves (SteamPhase).
     public class ItemIcon : VisualElement
@@ -27,6 +30,7 @@ namespace CarcavelosCircuit.RaceFlow
 
         private ItemKind kind = ItemKind.None;
         private float steamPhase;
+        private readonly Texture2D[] pictures = new Texture2D[5]; // one per ItemKind value (0 = None stays empty)
 
         public ItemIcon()
         {
@@ -42,6 +46,7 @@ namespace CarcavelosCircuit.RaceFlow
                 if (kind != value)
                 {
                     kind = value;
+                    ShowPicture();
                     MarkDirtyRepaint();
                 }
             }
@@ -54,19 +59,63 @@ namespace CarcavelosCircuit.RaceFlow
             set
             {
                 steamPhase = value;
-                if (kind == ItemKind.Espresso)
+                if (kind == ItemKind.Espresso && !HasPicture)
                 {
                     MarkDirtyRepaint();
                 }
             }
         }
 
+        // True when the item shown now has Luc's picture (then nothing is drawn in code).
+        public bool HasPicture { get { return PictureOf(kind) != null; } }
+
+        // Gives an item its picture (null = back to the code-drawn icon). ItemKind.None and unknown values are ignored.
+        public void SetPicture(ItemKind item, Texture2D picture)
+        {
+            int index = (int)item;
+            if (index <= 0 || index >= pictures.Length)
+            {
+                return;
+            }
+            pictures[index] = picture;
+            if (item == kind)
+            {
+                ShowPicture();
+                MarkDirtyRepaint();
+            }
+        }
+
+        private Texture2D PictureOf(ItemKind item)
+        {
+            int index = (int)item;
+            if (index <= 0 || index >= pictures.Length)
+            {
+                return null;
+            }
+            return pictures[index];
+        }
+
+        // The picture fills the element (keeps its square shape); no picture = no background image, the drawing shows.
+        private void ShowPicture()
+        {
+            Texture2D picture = PictureOf(kind);
+            if (picture != null)
+            {
+                style.backgroundImage = new StyleBackground(picture);
+                style.backgroundSize = new BackgroundSize(BackgroundSizeType.Contain); // whole picture, scaled to fit
+            }
+            else
+            {
+                style.backgroundImage = StyleKeyword.Null; // clears the inline picture: nothing behind the drawing
+            }
+        }
+
         private void Draw(MeshGenerationContext context)
         {
             Rect rect = contentRect;
-            if (rect.width <= 0f || rect.height <= 0f || kind == ItemKind.None)
+            if (rect.width <= 0f || rect.height <= 0f || kind == ItemKind.None || HasPicture)
             {
-                return;
+                return; // nothing to draw, or Luc's picture is shown instead
             }
             Painter2D painter = context.painter2D;
             float unit = Mathf.Min(rect.width, rect.height) / Grid;

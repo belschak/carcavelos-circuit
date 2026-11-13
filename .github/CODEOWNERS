@@ -1,4 +1,5 @@
 # Who owns what (roles fixed 2026-11-07, see docs/team.md). GitHub asks the owner to review PRs that touch their folder.
+# This is only a request: any one teammate's approval is enough to merge (AGENTS.md "Nobody waits for one person").
 # Default: Role 4 (integration) reviews everything not listed.
 *                              @belschak
 /Assets/_Project/Driving/      @alessandrorossicareer-ctrl
