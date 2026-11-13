@@ -14,6 +14,7 @@ Output in textures/ (no photos; colours from the survey's sunlit averages, a ste
   north_buff_albedo/normal  V18j: buff brushed concrete (apron along the hall's north face, floor at Student Central),
                             panels of 3 x 3 m on a 6 m tile, saw cuts, rain stains, 1024 px
   north_grating_albedo/normal  V18j: galvanised steel bars (drain gratings in the north street, the louvre screen), 256 px
+  north_basalt_albedo/normal   V20d: the forecourt ring's band of dark basalt cubes, ONE stone wide, 1.5 x 0.14 m, 1024 x 96 px
 """
 import sys
 import time
@@ -266,8 +267,63 @@ def blur_safe(a):
     return (a + np.roll(a, 1, 0) + np.roll(a, -1, 0) + np.roll(a, 1, 1) + np.roll(a, -1, 1)) / 5.0
 
 
+BASALT = "#4A4B4E"           # V20d: dark basalt cubes of the forecourt's ring (Street View N02, Jun 2019: blue-grey)
+BASALT_JOINT = "#A39A86"     # ... set in the pale calcada's sand joints
+
+
+def make_basalt(W=1024, H=96, seed=1407):
+    """V20d: the thin band of dark basalt cubes in the forecourt's pale setts (env_north.RING_BAND, 0.14 m), ONE
+    stone wide, as in Portuguese calcada: u (x) runs along the band (a tile of 1.5 m), v (y) across it (0.14 m).
+    Stones 8.5-12.5 cm long and 9.5-12 cm across, each set a little off the band's axis, hand-cut edges, a tone of
+    their own (blue-grey to warm grey, never black), worn tops a step lighter; pale sand joints of 6-9 mm between
+    them and along both edges, so the band meets the pale setts beside it without a hard line."""
+    rng = np.random.default_rng(seed)
+    X, Y = grid(H, W)
+    px_m = W / 1.5                                                     # pixels per metre (both axes: 96 px = 0.14 m)
+    cuts, x = [], 0.0
+    while x < W - 0.06 * px_m:
+        cuts.append(x)
+        x += rng.uniform(0.085, 0.125) * px_m
+    cuts.append(float(W))                                              # the tile wraps on a joint
+    cuts = np.array(cuts)
+    n = len(cuts) - 1
+    k = np.clip(np.searchsorted(cuts, X, side="right") - 1, 0, n - 1)
+    left, right = cuts[k], cuts[k + 1]
+    half_w = rng.uniform(0.0475, 0.06, n)[k] * px_m                    # half the stone's width across the band
+    off = rng.normal(0.0, 0.004, n)[k] * px_m                          # off the band's axis
+    skew = rng.normal(0.0, 0.06, n)[k]                                 # a slightly turned stone
+    cx = (left + right) / 2.0
+    vy = (Y - H / 2.0 - off) - skew * (X - cx)
+    d_end = np.minimum(X - left, right - X)                            # px to the butt joints
+    d_side = half_w - np.abs(vy)                                       # px to the stone's long edges
+    d = np.minimum(d_end, d_side) + 0.9 * noise((H, W), 2.5, rng) + 0.4 * noise((H, W), 0.9, rng)   # hand-cut
+    jh = rng.uniform(2.0, 3.1, n)[k]                                   # half joint: 3-4.5 mm
+    cov = smoothstep(jh - 0.8, jh + 0.8, d)                            # 1 = stone
+    inner = np.maximum(d - jh, 0.0)
+    warm = rng.uniform(-1, 1, n)[k][..., None]
+    base = rgb(BASALT)
+    stone = np.where(warm >= 0, lerp(base, rgb("#57544F"), warm * 0.6), lerp(base, rgb("#3F4349"), -warm * 0.6))
+    bright = np.clip(rng.normal(1.0, 0.07, n), 0.85, 1.18)[k]
+    grain = 1.0 + 0.06 * noise((H, W), 0.8, rng) + 0.04 * noise((H, W), 2.5, rng)            # vesicles and grain
+    polish = 1.0 + 0.10 * smoothstep(3.0, 18.0, inner)                                        # walked-smooth tops
+    stone = stone * (bright * grain * polish)[..., None]
+    joint = rgb(BASALT_JOINT)[None, None, :] * (1.0 + 0.10 * noise((H, W), 1.0, rng) + 0.05 * noise((H, W), 4.0, rng))[..., None]
+    joint = joint * (0.80 + 0.20 * smoothstep(0.0, 3.0, d + jh))[..., None]                  # darker deep in the joint
+    alb = lerp(joint, stone, cov[..., None])
+    save("north_basalt_albedo.png", alb)
+    tilt_a = rng.uniform(0, 2 * np.pi, n)[k]
+    tilt_s = rng.uniform(0.0, 0.12, n)[k]
+    dome = 1.0 - (1.0 - smoothstep(0.0, 14.0, inner)) ** 2
+    fu = (X - cx) / np.maximum(right - left, 1.0) * 2.0
+    fv = vy / np.maximum(half_w, 1.0)
+    height = lerp(0.05 + 0.04 * noise((H, W), 1.0, rng),
+                  0.55 + 0.40 * dome + tilt_s * (np.cos(tilt_a) * fu + np.sin(tilt_a) * fv) + 0.02 * noise((H, W), 1.2, rng), cov)
+    save("north_basalt_normal.png", T.normal_map(height * 12.0, 1.0), dither=False)
+
+
 BUILDERS = {"entrance_calcada": make_calcada, "entrance_drain": make_drain, "entrance_planks": make_planks,
-            "entrance_edging": make_edging, "north_buff": make_buff, "north_grating": make_grating}
+            "entrance_edging": make_edging, "north_buff": make_buff, "north_grating": make_grating,
+            "north_basalt": make_basalt}
 
 
 def main(argv=()):

@@ -45,6 +45,23 @@ flat street that simply continues west"; plan and sources: north_plan.py):
                              end, two grey utility boxes on the lawn, concrete bench blocks, the bus stop post
   road_look()                env_track.ROAD_LOOK hook: the race road shows setts on the real street and the terrain's
                              own lawn where it runs over the real lawn
+
+V20d (Luc's playtest 13 Nov 2026, s20: "odd black markings on the square", "on Google Maps the houses on the right side
+are much further away"; plan and sources: north_plan.py, section V20d):
+  the ring                   ONE row of dark basalt cubes, 0.14 m (was a flat dark band of 0.25 m): two half rings of
+                             the textured band (mat "basalt", polar UVs ring_uv), continued across the race road by
+                             env_trackside.plaza_paint with ring_paint_rows()
+  build_house()              env_buildings.build_one hook (owns_house): the villas north of the dry field as two-storey
+                             houses and terraced pairs with orange hip roofs, ochre or white render, windows with
+                             white surrounds, a chimney (were generic 10.5 m flat-roofed blocks)
+  North_Gardens              the tall hedge closing the gardens to the field, the hedges between the plots, the pools;
+                             North_GardenHedgeLeaves_NoCollide: leaf cards over the hedges
+  North_Street (more)        the low white seat wall of the path beside the field, the blank black sign slab
+  dress (more)               Rua da Holanda: cars nose-in in the bays, one along the east kerb, the P sign, the stone
+                             block bollard, slim bollards, two scooters, two street lamps; the umbrella pine at the
+                             apartment block's corner, trees in the gardens
+  build_far_housing()        (from env_backdrop) the apartment blocks along Rua da Holanda beyond the world's edge as
+                             white 4-5 storey blocks (env_campus.build_housing), not plain boxes
 """
 import json
 import math
@@ -74,8 +91,18 @@ BUFF_TILE = 6.0                                 # m per tile of north_buff (make
 GRATING_TILE = 0.4                              # m per tile of north_grating along a drain's run (8 bars)
 PINK_BUFF, OCHRE = "cream", "ochre"             # street palette cells (survey #e5d0b5, #ebd0a9)
 BAND_PINK, BAND_OCHRE = 1.3, 1.0                                # m: widths of the two edge bands east of the setts
-RING_C, RING_R, RING_BAND = (80.3, 176.1), 4.45, 0.25           # dark sett ring: outer radius, band width (V18g:
-                                                                # satellite 21z: centre (80.3, 176.0), 8.9 m across, a thin line)
+RING_C, RING_R = (80.9, 176.3), 4.62   # the dark ring's centre and outer radius. V20d: fitted on the DGT orthophoto (the
+                                       # frame the generator and track.json share): band centre line r 4.55 round (80.9,
+                                       # 176.3). V18g had (80.3, 176.1), r 4.45 from the Google 21z tile, which sits about
+                                       # 0.6 m west of the orthophoto here; the survey V15 had (80.7, 177), 9.3 m across
+# V20d (Luc's playtest 13 Nov 2026, s20: "odd black markings on the square"): the ring was a flat dark palette band of
+# 0.25 m that read as a thick black line. Real (Street View N02, Jun 2019, from inside the ring; Google 21z: a line
+# of 1-2 px): ONE row of dark basalt cubes, 10-12 cm, in the pale setts' sand joints. The band is now 0.14 m of the
+# textured basalt band (make_entrance_textures.make_basalt, mat "basalt"), its stones laid along the arc (polar UVs,
+# RING_TILES tiles round the circle so the texture closes on itself); env_trackside.plaza_paint continues it across
+# the race road with ring_paint_rows().
+RING_BAND = 0.14
+RING_TILES = 19              # tiles of north_basalt (1.5 m) round the ring: 2 pi x 4.55 m = 28.6 m
 # The ring crosses the race road (the centreline passes 1 m from its centre). Painting it on the road needs one line
 # in qa_geometry.py: its 'covered' check allows only ALLOWED_ON_ROAD = {Track_Kerbs, Track_EdgeLines} over the road
 # and reports this paint as two new 'covered' runs (s 1180, 1186). So it is OFF until the lead / Luc decide:
@@ -133,6 +160,46 @@ def _clear(what, pts, limit=CLEAR):
 
 def _circle(c, r, n):
     return [(c[0] + r * math.cos(2 * math.pi * k / n), c[1] + r * math.sin(2 * math.pi * k / n)) for k in range(n)]
+
+
+def ring_arc(a0, a1, step=3.0):
+    """V20d: the basalt band from angle a0 to a1 (degrees, counter-clockwise from east), as one polygon."""
+    m = max(1, int(math.ceil((a1 - a0) / step)))
+    r0, r1 = RING_R - RING_BAND, RING_R
+    angles = [math.radians(a0 + (a1 - a0) * k / m) for k in range(m + 1)]
+    inner = [(RING_C[0] + r0 * math.cos(a), RING_C[1] + r0 * math.sin(a)) for a in angles]
+    outer = [(RING_C[0] + r1 * math.cos(a), RING_C[1] + r1 * math.sin(a)) for a in angles]
+    return inner + outer[::-1]
+
+
+def ring_uv(a0):
+    """V20d: polar UVs of the basalt band for the half ring that starts at angle a0 (degrees): u along the ring
+    (RING_TILES tiles round it, from east counter-clockwise; angles are taken from a0 on, so the half ring from 180
+    to 360 degrees ends on u = RING_TILES, not 0), v across it (0 at the inner edge, 1 at the outer)."""
+    lo = math.radians(a0) - 1e-6
+
+    def uv(x, y):
+        dx, dy = x - RING_C[0], y - RING_C[1]
+        a = math.atan2(dy, dx)
+        while a < lo:
+            a += 2.0 * math.pi
+        return (a / (2.0 * math.pi) * RING_TILES, (math.hypot(dx, dy) - (RING_R - RING_BAND)) / RING_BAND)
+    return uv
+
+
+def ring_paint_rows(step=2.0):
+    """V20d (for env_trackside.plaza_paint, which continues the ring across the race road): rows [(inner point,
+    outer point)] every `step` degrees round the whole ring, their uvs [(uv inner, uv outer)] and the material."""
+    import env_entrance as EN
+    r0, r1 = RING_R - RING_BAND, RING_R
+    rows, uvs = [], []
+    for k in range(int(round(360.0 / step)) + 1):
+        a = math.radians(k * step)
+        rows.append(((RING_C[0] + r0 * math.cos(a), RING_C[1] + r0 * math.sin(a)),
+                     (RING_C[0] + r1 * math.cos(a), RING_C[1] + r1 * math.sin(a))))
+        u = k * step / 360.0 * RING_TILES
+        uvs.append(((u, 0.0), (u, 1.0)))
+    return rows, uvs, EN.materials()["basalt"]
 
 
 def _edge_frame():
@@ -282,8 +349,9 @@ def build_forecourt(col):
               {"name": "pink-buff edge band", "ring": S.ribbon(EDGE, -BAND_PINK, 0.0), "mat": "pal:" + PINK_BUFF, "uv": None},
               {"name": "ochre edge band", "ring": S.ribbon(EDGE, -BAND_PINK - BAND_OCHRE, -BAND_PINK), "mat": "pal:" + OCHRE,
                "uv": None},
-              {"name": "dark sett ring", "ring": _circle(RING_C, RING_R, 48), "mat": "pal:setts_dark", "uv": None},
-              {"name": "setts inside the ring", "ring": _circle(RING_C, RING_R - RING_BAND, 48), "mat": "calcada", "uv": uv},
+              # V20d: the ring of basalt cubes as two half rings (each with continuous polar UVs)
+              {"name": "basalt ring, north half", "ring": ring_arc(0.0, 180.0), "mat": "basalt", "uv": None, "uvf": ring_uv(0.0)},
+              {"name": "basalt ring, south half", "ring": ring_arc(180.0, 360.0), "mat": "basalt", "uv": None, "uvf": ring_uv(180.0)},
               # Rua da Holanda's first metres: asphalt between two pale kerb lines
               {"name": "R. da Holanda", "ring": list(NP.HOLANDA), "mat": "asphalt", "uv": ((0.0, 0.0), (0.0, 1.0), 2.0, 2.0)}]
     (hx0, hy0), (hx1, _), (_, hy1) = NP.HOLANDA[0], NP.HOLANDA[1], NP.HOLANDA[2]
@@ -612,9 +680,265 @@ def build_street(col):
     pal([(bx + 0.03, by - 0.18, z + 1.2), (bx + 0.03, by + 0.18, z + 1.2), (bx + 0.03, by + 0.18, z + 1.7), (bx + 0.03, by - 0.18, z + 1.7)],
         "grey_back", (1, 0, 0))
     _clear("bus stop post", [NP.BUS_STOP])
+    # --- V20d: the low white seat wall of the path beside the dry field (N01: 0.45 x 0.5 m, along the field's
+    # south edge and north-north-east beside R. da Holanda), and the blank black sign slab at its corner ---
+    k1 = NP.HOLANDA_KERBS[1] + NP.STRIP_EAST + NP.PATH_W                 # the path's east edge = the wall's west face
+    sw, sh = NP.SEAT_WALL_W, NP.SEAT_WALL_H
+    legs = [[(NP.SEAT_WALL_EAST_X, NP.SEAT_WALL_SOUTH_Y + sw / 2), (k1 + sw / 2, NP.SEAT_WALL_SOUTH_Y + sw / 2)]]
+    ys = [NP.SEAT_WALL_SOUTH_Y + sw] + [y for y in (NP.HOLANDA_BEND, 230.0, NP.HOLANDA_ROW[1]) if y > NP.SEAT_WALL_SOUTH_Y]
+    legs.append([(k1 + sw / 2 + NP.holanda_dx(y), y) for y in ys])
+    wall_pts = []
+    for line in legs:
+        for pa, pb in zip(line, line[1:]):
+            d = math.hypot(pb[0] - pa[0], pb[1] - pa[1])
+            n = max(1, int(math.ceil(d / 6.0)))
+            wu = ((pb[0] - pa[0]) / d, (pb[1] - pa[1]) / d)
+            for k in range(n):
+                qa = (pa[0] + (pb[0] - pa[0]) * k / n, pa[1] + (pb[1] - pa[1]) * k / n)
+                qb = (pa[0] + (pb[0] - pa[0]) * (k + 1) / n, pa[1] + (pb[1] - pa[1]) * (k + 1) / n)
+                g = min(E.ground_z(*qa), E.ground_z(*qb))
+                pbox(((qa[0] + qb[0]) / 2, (qa[1] + qb[1]) / 2), wu, d / n / 2 + 0.005, sw / 2, g - 0.25, max(g, z) + sh,
+                     "render_white")
+                wall_pts += [qa, qb]
+    _clear("seat wall beside the field (V20d)", wall_pts)
+    sx, sy = NP.SIGN_SLAB
+    g = E.ground_z(sx, sy)
+    pbox((sx, sy), (0.0, 1.0), 0.8, 0.15, g - 0.2, g + 1.3, "black")
+    _clear("black sign slab at the field (V20d)", [NP.SIGN_SLAB])
     obj = m.build("North_Street", col, EN.materials())
     print(f"  north (V18j): street objects {sum(len(p.vertices) - 2 for p in obj.data.polygons)} triangles (louvre screen, "
           f"basement stair and railing, {len(NP.BOXES)} boxes, {len(NP.BENCHES)} bench blocks, bus stop post)")
+
+
+# =====================================================================================================
+# V20d: the villas north of the dry field, their gardens, and the apartment blocks along Rua da Holanda beyond the
+# world's edge (plan and sources: north_plan.py, section V20d)
+# =====================================================================================================
+def owns_house(b):
+    """env_buildings.build_one hook: True for the villas that build_house makes."""
+    return b["id"] in NP.HOUSES
+
+
+def _part_rect(part):
+    """An exact rectangle from four measured corners (counter-clockwise): (origin, u along edge 0, length, v, width)."""
+    c0, c1, c2, c3 = part
+    la, lb = math.hypot(c1[0] - c0[0], c1[1] - c0[1]), math.hypot(c2[0] - c3[0], c2[1] - c3[1])
+    u = ((c1[0] - c0[0]) / la, (c1[1] - c0[1]) / la)
+    v = (-u[1], u[0])
+    w = ((c3[0] - c0[0]) * v[0] + (c3[1] - c0[1]) * v[1] + (c2[0] - c1[0]) * v[0] + (c2[1] - c1[1]) * v[1]) / 2
+    return c0, u, (la + lb) / 2, v, w
+
+
+def build_house(b, index):
+    """V20d: a two-storey villa or terraced pair on its OSM footprint (north_plan.HOUSES): rendered walls (white or
+    ochre per unit), a hip roof of orange tiles with HOUSE_EAVE overhang and a fascia, punched windows with white
+    surrounds on both storeys, a front door towards the garden, a chimney. Returns (volume, details) meshes like
+    env_buildings.build_one (it used to be a generic 10.5 m flat-roofed block in the OSM default colours)."""
+    import env_campus as EC
+    vol, det = EC.Mesh(), EC.Mesh()
+    spec = NP.HOUSES[b["id"]]
+    ochre = EC.UMBER                       # a slot that houses never use; finish() maps it to the ochre render below
+    colour = {"white": EC.WALL, "ochre": ochre}
+    tris_before = 0
+    for k, (part, walls) in enumerate(zip(spec["parts"], spec["walls"])):
+        o, u, length, v, width = _part_rect(part)
+        corners = [o, (o[0] + u[0] * length, o[1] + u[1] * length),
+                   (o[0] + u[0] * length + v[0] * width, o[1] + u[1] * length + v[1] * width),
+                   (o[0] + v[0] * width, o[1] + v[1] * width)]
+        g = min(E.ground_z(*c) for c in corners)
+        z0, top = g - 0.6, g + spec["storeys"] * NP.HOUSE_STOREY + 0.3
+        units = len(walls)
+
+        def at(a, s_):
+            return (o[0] + u[0] * a + v[0] * s_, o[1] + u[1] * a + v[1] * s_)
+        long_u = length >= width
+        # walls round the counter-clockwise ring (0,0) -> (L,0) -> (L,W) -> (0,W); the long sides split into units,
+        # the ends in the colour of the unit they belong to (Mesh.wall: visible from the right of a -> b)
+        if long_u:
+            cuts = [length * j / units for j in range(units + 1)]
+            for j in range(units):
+                vol.wall(at(cuts[j], 0.0), at(cuts[j + 1], 0.0), z0, top, colour[walls[j]])
+                vol.wall(at(cuts[j + 1], width), at(cuts[j], width), z0, top, colour[walls[j]])
+            vol.wall(at(length, 0.0), at(length, width), z0, top, colour[walls[-1]])
+            vol.wall(at(0.0, width), at(0.0, 0.0), z0, top, colour[walls[0]])
+        else:
+            cuts = [width * j / units for j in range(units + 1)]
+            for j in range(units):
+                vol.wall(at(length, cuts[j]), at(length, cuts[j + 1]), z0, top, colour[walls[j]])
+                vol.wall(at(0.0, cuts[j + 1]), at(0.0, cuts[j]), z0, top, colour[walls[j]])
+            vol.wall(at(0.0, 0.0), at(length, 0.0), z0, top, colour[walls[0]])
+            vol.wall(at(length, width), at(0.0, width), z0, top, colour[walls[-1]])
+        # hip roof over the rectangle grown by the eave
+        e = NP.HOUSE_EAVE
+        la, wa = (length, width) if long_u else (width, length)
+        ax_u = u if long_u else v
+        ax_v = v if long_u else u
+        cx, cy = at(length / 2, width / 2)
+        hl, hw = la / 2 + e, wa / 2 + e
+        rise = hw * math.tan(math.radians(NP.HOUSE_PITCH))
+        ridge = max(hl - hw, 0.0)
+
+        def p3(a, s_, z):
+            return (cx + ax_u[0] * a + ax_v[0] * s_, cy + ax_u[1] * a + ax_v[1] * s_, z)
+        ez = top
+        eaves = [p3(-hl, -hw, ez), p3(hl, -hw, ez), p3(hl, hw, ez), p3(-hl, hw, ez)]
+        r0, r1 = p3(-ridge, 0.0, ez + rise), p3(ridge, 0.0, ez + rise)
+        vol.up([eaves[0], eaves[1], r1, r0], EC.TILES)
+        vol.up([eaves[2], eaves[3], r0, r1], EC.TILES)
+        vol.up([eaves[1], eaves[2], r1], EC.TILES)
+        vol.up([eaves[3], eaves[0], r0], EC.TILES)
+        fascia = [p3(-hl, -hw, ez - 0.18), p3(hl, -hw, ez - 0.18), p3(hl, hw, ez - 0.18), p3(-hl, hw, ez - 0.18)]
+        for a_, b_, fa, fb in zip(eaves, eaves[1:] + eaves[:1], fascia, fascia[1:] + fascia[:1]):
+            mid = ((a_[0] + b_[0]) / 2, (a_[1] + b_[1]) / 2)
+            vol.towards([fa, fb, b_, a_], EC.WALL, (2 * mid[0] - cx, 2 * mid[1] - cy, ez - 0.09))      # the fascia
+        inner = [p3(-hl + e, -hw + e, ez - 0.18), p3(hl - e, -hw + e, ez - 0.18), p3(hl - e, hw - e, ez - 0.18),
+                 p3(-hl + e, hw - e, ez - 0.18)]
+        for a_, b_, fa, fb in zip(fascia, fascia[1:] + fascia[:1], inner, inner[1:] + inner[:1]):
+            vol.down([a_, b_, fb, fa], EC.WALL)                                           # the soffit under the eave
+        # windows with white surrounds, two storeys; a front door in the middle of each unit on the garden side
+        # (the side facing south-ish: the long side whose outward normal has the larger -y component)
+        sides = [((0.0, 0.0), (length, 0.0)), ((length, 0.0), (length, width)), ((length, width), (0.0, width)),
+                 ((0.0, width), (0.0, 0.0))]
+        for (a0, s0), (a1, s1) in sides:
+            pa, pb = at(a0, s0), at(a1, s1)
+            seg = math.hypot(pb[0] - pa[0], pb[1] - pa[1])
+            nx, ny = (pb[1] - pa[1]) / seg, -(pb[0] - pa[0]) / seg                          # outward (ring is ccw)
+            mx, my = (pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2
+            if nx * (mx - cx) + ny * (my - cy) < 0:
+                nx, ny = -nx, -ny
+            count = int((seg - 1.4) // 3.1)
+            if count < 1:
+                continue
+            front = ny < -0.6
+            for s_ in range(spec["storeys"]):
+                zb = g + s_ * NP.HOUSE_STOREY
+                for w in range(count):
+                    t = (0.7 + 1.55 + w * 3.1 + (seg - 1.4 - count * 3.1) / 2) / seg
+                    door = front and s_ == 0 and w == count // 2
+                    half, lo, hi = (0.55, zb + 0.05, zb + 2.25) if door else (0.55, zb + 0.95, zb + 2.25)
+                    q0 = (pa[0] + (pb[0] - pa[0]) * t - (pb[0] - pa[0]) / seg * half, pa[1] + (pb[1] - pa[1]) * t - (pb[1] - pa[1]) / seg * half)
+                    q1 = (pa[0] + (pb[0] - pa[0]) * t + (pb[0] - pa[0]) / seg * half, pa[1] + (pb[1] - pa[1]) * t + (pb[1] - pa[1]) / seg * half)
+                    for off, grow_, slot in ((0.025, 0.12, EC.WALL), (0.045, 0.0, EC.DARK)):
+                        ga = (q0[0] - (pb[0] - pa[0]) / seg * grow_ + nx * off, q0[1] - (pb[1] - pa[1]) / seg * grow_ + ny * off)
+                        gb = (q1[0] + (pb[0] - pa[0]) / seg * grow_ + nx * off, q1[1] + (pb[1] - pa[1]) / seg * grow_ + ny * off)
+                        det.towards([(*ga, lo - grow_), (*gb, lo - grow_), (*gb, hi + grow_ * 0.6), (*ga, hi + grow_ * 0.6)],
+                                    slot, (ga[0] + nx * 5, ga[1] + ny * 5, lo))
+        if k == 0:                                                                          # a chimney on the ridge
+            ch = p3(ridge * 0.45 if ridge > 0.5 else 0.0, hw * 0.25, 0.0)
+            det.box((ch[0], ch[1]), ax_u, 0.35, 0.3, ez + rise * 0.6, ez + rise + 0.75, EC.WALL, EC.DARKROOF)
+        EC.note_clear(f"villa {b['id']} part {k}", corners)
+    volume, details = vol.finish("B_" + b["id"]), det.finish("BD_" + b["id"])
+    ochre_mat = E.material("B_wall_2", "#E3C891", 0.9)                  # env_buildings.OTHER_WALLS[2], the ochre render
+    for mesh in (volume, details):
+        for i, m in enumerate(mesh.materials):
+            if m and m.name == "W_B_wall_umber":
+                mesh.materials[i] = ochre_mat
+    print(f"  north (V20d): villa {b['id']}: {len(spec['parts'])} parts, {spec['storeys']} storeys, "
+          f"{sum(len(p.vertices) - 2 for p in volume.polygons)} + {sum(len(p.vertices) - 2 for p in details.polygons)} triangles")
+    return volume, details
+
+
+def build_gardens(col):
+    """V20d: North_Gardens: the tall hedge that closes the villas' gardens to the dry field, the hedges between the
+    plots, the pools with a pale coping (orthophoto); leaf cards over the hedges (env_vegetation.hedge_leaves)."""
+    import env_streets as ST
+    import env_vegetation as V
+    m = EN_Faces()
+    d = NP.HEDGE_DEPTH / 2
+    (ax, ay), (bx, by) = NP.GARDEN_LINE
+    L = math.hypot(bx - ax, by - ay)
+    gu = ((bx - ax) / L, (by - ay) / L)
+    gn = (-gu[1], gu[0])                                       # into the gardens (north)
+    hedges = [(list(NP.GARDEN_LINE), NP.HEDGE_H)]
+    for x in NP.GARDEN_DIVIDERS:
+        y = NP.garden_y(x)
+        end = None
+        for t in [0.5 * k for k in range(1, 60)]:              # up to 0.6 m before the next house wall
+            px, py = x + gn[0] * t, y + gn[1] * t
+            if any(_in_house(px + gn[0] * 0.6, py + gn[1] * 0.6, h) for h in NP.HOUSES):
+                end = t
+                break
+        hedges.append(([(x + gn[0] * 0.5, y + gn[1] * 0.5), (x + gn[0] * (end or 12.0), y + gn[1] * (end or 12.0))], NP.DIVIDER_H))
+    leaves = []
+    for line, h in hedges:
+        for pa, pb in zip(line, line[1:]):
+            seg = math.hypot(pb[0] - pa[0], pb[1] - pa[1])
+            uu = ((pb[0] - pa[0]) / seg, (pb[1] - pa[1]) / seg)
+            n = max(1, int(math.ceil(seg / 6.0)))
+            for k in range(n):
+                c = (pa[0] + (pb[0] - pa[0]) * (k + 0.5) / n, pa[1] + (pb[1] - pa[1]) * (k + 0.5) / n)
+                g0 = min(E.ground_z(pa[0] + (pb[0] - pa[0]) * k / n, pa[1] + (pb[1] - pa[1]) * k / n),
+                         E.ground_z(pa[0] + (pb[0] - pa[0]) * (k + 1) / n, pa[1] + (pb[1] - pa[1]) * (k + 1) / n))
+                m.box(c, uu, seg / n / 2 + 0.01, d, g0 - 0.3, g0 + h - 0.15, "hedge")
+        leaves += V.hedge_box_faces(line, NP.HEDGE_DEPTH, lambda x, y: E.ground_z(x, y), lambda x, y, hh=h: E.ground_z(x, y) + hh)
+    _clear("garden hedges north of the field", [p for line, _h in hedges for p in line], 20.0)
+    for x0, y0, x1, y1 in NP.POOLS:
+        g = E.ground_z((x0 + x1) / 2, (y0 + y1) / 2)
+        cop = 0.35
+        ring_o = [(x0 - cop, y0 - cop), (x1 + cop, y0 - cop), (x1 + cop, y1 + cop), (x0 - cop, y1 + cop)]
+        ring_i = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+        for a_, b_, ia, ib in zip(ring_o, ring_o[1:] + ring_o[:1], ring_i, ring_i[1:] + ring_i[:1]):
+            m.face([(*a_, g + 0.08), (*b_, g + 0.08), (*ib, g + 0.08), (*ia, g + 0.08)], "palette", (0, 0, 1),
+                   [ST.pal_uv("kerb")] * 4)
+        m.face([(*p, g + 0.03) for p in ring_i], "palette", (0, 0, 1), [ST.pal_uv("bin_blue")] * 4)
+    mats = dict(EN_materials())
+    mats["hedge"] = ST.mat("hedge")
+    obj = m.build("North_Gardens", col, mats)
+    leaf = V.hedge_leaves("North_GardenHedgeLeaves", leaves, "hedge", "broad", card=1.1, cover=2.6, seed=2020, fins=0.45)
+    if leaf:                    # into World_North: env_coast seeds its hedges by the count of World_HedgeLeaves' objects
+        for c in list(leaf.users_collection):
+            c.objects.unlink(leaf)
+        col.objects.link(leaf)
+    print(f"  north (V20d): gardens {len(obj.data.polygons)} faces ({len(hedges)} hedges, {len(NP.POOLS)} pools), hedge "
+          f"leaves {len(leaf.data.polygons) if leaf else 0} faces")
+
+
+def _in_house(x, y, hid):
+    for part in NP.HOUSES[hid]["parts"]:
+        if NP.inside(x, y, list(part)):
+            return True
+    return False
+
+
+def EN_Faces():
+    import env_entrance as EN
+    return EN.Faces()
+
+
+def EN_materials():
+    import env_entrance as EN
+    return EN.materials()
+
+
+def build_far_housing(col):
+    """V20d (called from env_backdrop.build_outer_buildings, which leaves these out): the apartment blocks along Rua
+    da Holanda north of the world's edge as the two at the forecourt (env_campus.build_housing), storeys per block."""
+    import env_campus as EC
+    import campus_plan as CP
+    keep = CP.HOUSING_STOREYS
+    n = 0
+    try:
+        from world_data import load_osm, way_points, polygon_area
+        elements, nodes, _ways = load_osm()
+        for e in elements:
+            wid = "w" + str(e.get("id"))
+            if e["type"] != "way" or wid not in NP.FAR_HOUSING:
+                continue
+            ring = way_points(e, nodes)
+            if len(ring) > 1 and ring[0] == ring[-1]:
+                ring = ring[:-1]
+            if polygon_area(ring) < 0:
+                ring = ring[::-1]
+            CP.HOUSING_STOREYS = NP.FAR_HOUSING[wid]
+            vol, det = EC.build_housing({"id": wid, "points": [list(p) for p in ring]})
+            obj = E.new_object("B_" + wid + "_far", vol, col)
+            if det.polygons:
+                E.new_object("BD_" + wid + "_far", det, col).parent = obj
+            n += 1
+    finally:
+        CP.HOUSING_STOREYS = keep
+    print(f"  north (V20d): {n} apartment blocks along R. da Holanda beyond the world's edge as white 4-5 storey blocks")
+    return n
 
 
 def road_look_lawn():
@@ -652,6 +976,7 @@ def build():
     else:
         print("  north: the dark ring is built only beside the road (RING_ON_ROAD = False, see env_north.py)")
     build_structures(col)
+    build_gardens(col)                     # V20d: the villas' hedges and pools (the villas: env_buildings -> build_house)
 
 
 # =====================================================================================================
@@ -663,6 +988,43 @@ def _posts():
     return P.kerb_posts()
 
 
+def _holanda_dressing(protos, cars):
+    """V20d: what stands in Rua da Holanda (north_plan, section V20d): cars nose-in in the bays west of the asphalt
+    (BAY_SHARE of them, a fixed draw), one car along the east kerb, the blue P sign with the stone block bollard at
+    the corner, slim steel bollards along the kerb, two scooters at the seat wall, two street lamps. Placements."""
+    import random
+    import street_plan as S
+    rng = random.Random(2020)
+    out = []
+
+    def z_at(x, y):
+        return round(NP.LEVEL if on_sheet(x, y) else E.ground_z(x, y), 3)
+
+    def add(proto, x, y, rot, scale=1.0, dz=0.0, limit=CLEAR):
+        if proto not in protos:
+            return
+        _clear(f"R. da Holanda: {proto}", [(x, y)], limit)
+        out.append({"proto": proto, "x": round(x, 3), "y": round(y, 3), "z": round(z_at(x, y) + dz, 3),
+                    "rot_z": round(rot, 4), "scale": scale})
+    if cars:
+        for k, (x, y, nose) in enumerate(NP.holanda_bays()):
+            if rng.random() > NP.BAY_SHARE:
+                continue
+            add(cars[rng.randrange(len(cars))], x + rng.uniform(-0.15, 0.15), y + rng.uniform(-0.12, 0.12),
+                math.atan2(nose[1], nose[0]) + math.radians(rng.uniform(-3.0, 3.0)), limit=CAR_CLEAR)
+        add(cars[5 % len(cars)], NP.LAY_BY_CAR[0], NP.LAY_BY_CAR[1], math.radians(92.0), limit=CAR_CLEAR)
+    add("Prop_SignParking", NP.PARKING_SIGN[0], NP.PARKING_SIGN[1], -math.pi)              # its face (+y) to the south
+    add("Prop_BollardStone", NP.STONE_BOLLARD[0], NP.STONE_BOLLARD[1], math.radians(12.0), 1.4)
+    for x, y in NP.SLIM_BOLLARDS:
+        add("Prop_BollardSlim", x, y, 0.0, 1.0, 0.04)
+    for x, y, bearing in NP.SCOOTERS:
+        name = "Prop_AIScooter" if "Prop_AIScooter" in protos else "Prop_AIEScooter"
+        add(name, x, y, math.radians(90.0 - bearing))
+    for x, y in NP.STREET_LAMPS:
+        add("Prop_LampSidewalk", x + NP.holanda_dx(y), y, math.radians(180.0))             # the arm over the street
+    return out
+
+
 def dress(veg, props, protos):
     """Edits the dressing lists after env_entrance.dress and rewrites the two placement files."""
     import env_street_objects as SO
@@ -672,6 +1034,13 @@ def dress(veg, props, protos):
     solids = [waste_ring(0.8), stair_ring()[0], _circle(SEAT_RING_C, SEAT_RING_R + 0.6, 16),
               S.ribbon(PARK_PATH, -1.6, 1.6), S.ribbon(EDGE, -BAND_PINK - BAND_OCHRE - 1.1, 0.0)]
     solids += [well_ring(0.6), _circle(NP.BUS_STOP, 0.8, 8)]                 # V18j: the street's and the forecourt's new solids
+    k0, k1 = NP.HOLANDA_KERBS                                                 # V20d: the garden hedge, R. da Holanda's
+    kw = k1 + NP.STRIP_EAST + NP.PATH_W                                       # bays and asphalt, the seat wall
+    solids += [S.ribbon(NP.GARDEN_LINE, -1.0, 1.0), NP.holanda_band(k0 - NP.BAY_DEPTH - 0.3, k1 + 0.3),
+               NP.holanda_band(kw - 0.4, kw + NP.SEAT_WALL_W + 0.4, NP.SEAT_WALL_SOUTH_Y - 0.4),
+               [(kw - 0.4, NP.SEAT_WALL_SOUTH_Y - 0.4), (NP.SEAT_WALL_EAST_X + 0.4, NP.SEAT_WALL_SOUTH_Y - 0.4),
+                (NP.SEAT_WALL_EAST_X + 0.4, NP.SEAT_WALL_SOUTH_Y + NP.SEAT_WALL_W + 0.4),
+                (kw - 0.4, NP.SEAT_WALL_SOUTH_Y + NP.SEAT_WALL_W + 0.4)]]
     solids += [_rect(c, NP.U, NP.BOX_SIZE[0] / 2 + 0.6, NP.BOX_SIZE[1] / 2 + 0.6) for c in NP.BOXES]
     solids += [_rect((x, y), (math.sin(math.radians(b)), math.cos(math.radians(b))), NP.BENCH_SIZE[0] / 2 + 0.5, NP.BENCH_SIZE[1] / 2 + 0.5)
                for x, y, b in NP.BENCHES]
@@ -756,6 +1125,9 @@ def dress(veg, props, protos):
             if abs(z - p["z"]) > 0.005:
                 items[k] = dict(p, z=round(z, 3))
                 n_rez += 1
+    n_v20 = len(added)
+    added += _holanda_dressing(protos, cars)                    # V20d: Rua da Holanda's parking row and corner
+    n_v20 = len(added) - n_v20
     props2 += added
     n_saplings = 0
     if "Veg_PlazaTree" in protos:                         # Milestone's west lawn: a few staked saplings (N06, N14):
@@ -790,6 +1162,14 @@ def dress(veg, props, protos):
                 _REPORT.append(("trees on Milestone's lawn and behind the north wall", S.route_distance(x, y) - 2.5))
                 veg2.append({"proto": "Veg_Olive_B" if k % 2 and "Veg_Olive_B" in protos else "Veg_Olive", "x": x, "y": y,
                              "z": round(ST.ground(x, y), 3), "rot_z": round(1.1 * k, 4), "scale": sc})
+    # V20d: the umbrella pine at the apartment block's corner (real crown r 4.5 m over the street; at scale 0.8 the
+    # crown starts 4.1 m up, so its trunk may stand 7.0 m from the line, 3 m outside the road), the garden trees
+    for x, y, proto, sc in [(NP.CORNER_PINE[0], NP.CORNER_PINE[1], "Veg_UmbrellaPine", 0.8)] + list(NP.GARDEN_TREES):
+        if proto in protos and S.route_distance(x, y) >= (7.0 if (x, y) == NP.CORNER_PINE else E.KEEP_CLEAR + 2.5):
+            _REPORT.append(("V20d trees at R. da Holanda and in the gardens", S.route_distance(x, y) - 2.5))
+            veg2.append({"proto": proto, "x": x, "y": y, "z": round(E.ground_z(x, y), 3),
+                         "rot_z": round(0.7 * x % 6.283, 4), "scale": sc})
+    print(f"  north dressing (V20d): {n_v20} parked cars, signs, bollards, scooters and lamps at R. da Holanda")
     for fname, items in (("placements_vegetation.json", veg2), ("placements_props.json", props2)):
         path = os.path.join(E.OUT, fname)
         if not os.path.exists(path):

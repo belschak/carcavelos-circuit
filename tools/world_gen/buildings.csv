@@ -27,11 +27,11 @@ w205127348,,no,yes,3.0,,,default,,,
 w213239659,,no,yes,1.0,5.3,,ortho-estimate,,,V10b: tiled-roof house on the promenade's land side (ortho_west); env_beachfront.py
 w228164466,,no,yes,3.0,,,default,,,
 w228164470,,no,yes,3.0,,,default,,,
-w228204161,,no,yes,3.0,,,default,,,
-w228204163,,no,yes,3.0,,,default,,,
-w228204164,,no,yes,3.0,,,default,,,
-w228204167,,no,yes,3.0,,,default,,,
-w228204169,,no,yes,3.0,,,default,,,
+w228204161,,no,yes,2.0,,,orthophoto + Street View N02 (V20d),,,"V20d: two-storey villa / terraced pair with an orange hip roof behind its garden hedge (orthophoto pools and roofs, Street View N02 Jun 2019); built by env_north.build_house from north_plan.HOUSES"
+w228204163,,no,yes,2.0,,,orthophoto + Street View N02 (V20d),,,"V20d: two-storey villa / terraced pair with an orange hip roof behind its garden hedge (orthophoto pools and roofs, Street View N02 Jun 2019); built by env_north.build_house from north_plan.HOUSES"
+w228204164,,no,yes,2.0,,,orthophoto + Street View N02 (V20d),,,"V20d: two-storey villa / terraced pair with an orange hip roof behind its garden hedge (orthophoto pools and roofs, Street View N02 Jun 2019); built by env_north.build_house from north_plan.HOUSES"
+w228204167,,no,yes,2.0,,,orthophoto + Street View N02 (V20d),,,"V20d: two-storey villa / terraced pair with an orange hip roof behind its garden hedge (orthophoto pools and roofs, Street View N02 Jun 2019); built by env_north.build_house from north_plan.HOUSES"
+w228204169,,no,yes,2.0,,,orthophoto + Street View N02 (V20d),,,"V20d: two-storey villa / terraced pair with an orange hip roof behind its garden hedge (orthophoto pools and roofs, Street View N02 Jun 2019); built by env_north.build_house from north_plan.HOUSES"
 w228205972,,no,yes,1.0,,,osm-tags,,,"V10b: fort wall (OSM barrier=city_wall): low sloped rampart, env_beachfront.py"
 w482697583,,no,yes,1.0,2.7,,ortho-estimate,,,V10b: kiosk beside the cove pavilion; env_beachfront.py
 w482697584,,no,yes,1.0,5.1,,ortho+photo-estimate,,,"V10b: cove pavilion, one storey with a terracotta hip roof (ortho_south, K02); env_beachfront.py"
