@@ -39,7 +39,7 @@ MODELS = ["CampusWorld.fbx", "TrackSurface.fbx", "RouteGuide.fbx", "Dressing_Pro
 ROAD_LIFT = 0.06            # env_track.ROAD_LIFT: road surface above track_z
 CHECKPOINTS = 12
 WORLD_LIT_SHADER = "CarcavelosCircuit/WorldLit"     # Assets/_Project/Visuals/Shaders/WorldLit.shader (URP Lit if missing)
-EXTRA_TEXTURES = ["sky_panorama.png"]   # make_sky.py: skybox + reflections (CampusWorldBuilder.AddSunAndSky)
+EXTRA_TEXTURES = ["sky_panorama.png", "sky_sunset.png"]   # make_sky.py (--mood sunset): skybox + reflections (CampusWorldBuilder)
 
 # The grass tufts have no Blender material (CampusWorldBuilder builds them): their entry for materials.json.
 GRASS_TUFT = {"name": "W_grass_tuft", "colour": [1.0, 1.0, 1.0], "metallic": 0.0, "albedo": "grass_tuft_cutout_albedo.png",

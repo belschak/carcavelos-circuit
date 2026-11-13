@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using CarcavelosCircuit.RaceFlow;
+using CarcavelosCircuit.Shared;
 using CarcavelosCircuit.Track;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -34,7 +35,11 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string PrefabDir = Root + "/Prefabs";
         private const string SettingsDir = Root + "/Settings";
         private const string SkyTexture = TexDir + "/sky_panorama.png";       // world-gen/make_sky.py
+        private const string SunsetSkyTexture = TexDir + "/sky_sunset.png";   // V28: make_sky.py --mood sunset
         private const string LookProfile = SettingsDir + "/CampusWorld_Look.asset";
+        private const string SunsetLookProfile = SettingsDir + "/CampusWorld_Look_Sunset.asset";
+        private const string NoonLookAsset = SettingsDir + "/Look_Noon.asset";
+        private const string SunsetLookAsset = SettingsDir + "/Look_Sunset.asset";
         // Golden hour (design pass 2026-11-09): low warm sun from the west-south-west. Must match make_sky.py.
         // V18l (Luc, 12 Nov: "summer at the beach", much harder shadows with contrast): a high summer-afternoon sun
         // from the south-west instead of golden hour. Must match make_sky.py (and so make_shadowmap.py).
@@ -43,6 +48,21 @@ namespace CarcavelosCircuit.Visuals.Editor
         // a little darker so far walls do not glow. 0.0008 per metre: 21 % at 300 m, 55 % at 1 km.
         private static readonly Color HazeColour = new Color(0.80f, 0.86f, 0.92f);   // V18l: the summer sky's pale blue horizon
         private const float HazeDensity = 0.0008f;
+        // Noon sky light (V20e): a bright, only slightly blue sky fill, a neutral horizon, a warm bounce from the paving.
+        private static readonly Color NoonSkyFill = new Color(0.60f, 0.66f, 0.76f);       // #A8A8C2-ish (V18l #668CCC)
+        private static readonly Color NoonHorizonFill = new Color(0.64f, 0.65f, 0.66f);   // (V18l 0.52/0.58/0.66)
+        private static readonly Color NoonGroundFill = new Color(0.55f, 0.45f, 0.33f);
+        // V28 sunset (Luc, 13 Nov; Alessandro asked "can we set the time to sunset?"): the sun just above the sea in the
+        // west-south-west. Must match make_sky.py MOODS["sunset"]. Low enough for long orange light and long
+        // shadows, high enough that the track is not all in the shade of the campus buildings.
+        private const float SunsetAzimuth = 250f, SunsetElevation = 6f;
+        private static readonly Color SunsetSunColour = new Color(1f, 0.62f, 0.36f);       // #FF9E5C, deep orange
+        private const float SunsetSunIntensity = 1.7f, SunsetShadowStrength = 0.75f;
+        private static readonly Color SunsetSkyFill = new Color(0.42f, 0.40f, 0.56f);      // violet dusk sky in the shade
+        private static readonly Color SunsetHorizonFill = new Color(0.78f, 0.56f, 0.46f);  // pink-orange band at eye height
+        private static readonly Color SunsetGroundFill = new Color(0.45f, 0.33f, 0.25f);
+        private static readonly Color SunsetHaze = new Color(0.93f, 0.68f, 0.52f);         // the painted horizon, a bit darker
+        private const float SunsetHazeDensity = 0.0011f;
         private const string ScenePath = "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity";
         private const string WorldPrefabPath = Root + "/CampusWorld.prefab";
         private const string WorldRootName = "CampusWorld";                  // root of the prefab and of its instance
@@ -144,6 +164,24 @@ namespace CarcavelosCircuit.Visuals.Editor
             EditorApplication.Exit(failures == 0 ? 0 : 1);
         }
 
+        // V28 batch mode: -executeMethod CarcavelosCircuit.Visuals.Editor.CampusWorldBuilder.ShotsOnly
+        // -campusWorldShots <folder> [-campusWorldMood sunset]: the kart's-eye views of the built scene, no rebuild.
+        public static void ShotsOnly()
+        {
+            int failures = 0;
+            try
+            {
+                EditorSceneManager.OpenScene(ScenePath);
+                RenderShots(Argument("-campusWorldShots"));
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                failures++;
+            }
+            EditorApplication.Exit(failures == 0 ? 0 : 1);
+        }
+
         // ---------- importers ----------
         private static void ConfigureImporters()
         {
@@ -156,7 +194,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                     continue;
                 }
                 string file = Path.GetFileName(path);
-                if (path == SkyTexture)
+                if (path == SkyTexture || path == SunsetSkyTexture)
                 {
                     continue;                                                   // a cubemap, see below
                 }
@@ -182,21 +220,9 @@ namespace CarcavelosCircuit.Visuals.Editor
             }
             // The painted sky (2:1 lat-long picture) becomes a cubemap: the skybox and the reflections on glass
             // and gloss use it, so no lighting bake is needed.
-            if (AssetImporter.GetAtPath(SkyTexture) is TextureImporter sky)
+            foreach (string skyPath in new[] { SkyTexture, SunsetSkyTexture })   // V28: one painted sky per mood
             {
-                sky.textureType = TextureImporterType.Default;
-                sky.textureShape = TextureImporterShape.TextureCube;
-                var cube = new TextureImporterSettings();
-                sky.ReadTextureSettings(cube);
-                cube.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
-                cube.cubemapConvolution = TextureImporterCubemapConvolution.Specular;   // blurred mips: glossy reflections
-                sky.SetTextureSettings(cube);
-                sky.sRGBTexture = true;
-                sky.mipmapEnabled = true;
-                sky.wrapMode = TextureWrapMode.Clamp;
-                sky.maxTextureSize = 1024;                                      // per cube face
-                WebTextureBudget.Apply(sky, Path.GetFileName(SkyTexture));      // V24: 512 per face on the Web
-                sky.SaveAndReimport();
+                ImportSky(skyPath);
             }
             foreach (string name in Models)
             {
@@ -213,6 +239,26 @@ namespace CarcavelosCircuit.Visuals.Editor
                 mi.importBlendShapes = false;
                 mi.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;
                 mi.SaveAndReimport();
+            }
+        }
+
+        private static void ImportSky(string path)
+        {
+            if (AssetImporter.GetAtPath(path) is TextureImporter sky)
+            {
+                sky.textureType = TextureImporterType.Default;
+                sky.textureShape = TextureImporterShape.TextureCube;
+                var cube = new TextureImporterSettings();
+                sky.ReadTextureSettings(cube);
+                cube.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
+                cube.cubemapConvolution = TextureImporterCubemapConvolution.Specular;   // blurred mips: glossy reflections
+                sky.SetTextureSettings(cube);
+                sky.sRGBTexture = true;
+                sky.mipmapEnabled = true;
+                sky.wrapMode = TextureWrapMode.Clamp;
+                sky.maxTextureSize = 1024;                                      // per cube face
+                WebTextureBudget.Apply(sky, Path.GetFileName(path));            // V24: 512 per face on the Web
+                sky.SaveAndReimport();
             }
         }
 
@@ -1071,21 +1117,109 @@ namespace CarcavelosCircuit.Visuals.Editor
             // apart hard (cool blue shadows against hot, nearly white sunlight); the ground bounce stays warm.
             // V20e (Luc, 13 Nov: "the difference between shade and light is far too harsh, make it more fluid"; the
             // hall and the shaded plazas read deep blue): a brighter, much less blue sky fill, a neutral horizon.
-            so.FindProperty("skyColour").colorValue = new Color(0.60f, 0.66f, 0.76f);       // #A8A8C2-ish (V18l #668CCC)
-            so.FindProperty("horizonColour").colorValue = new Color(0.64f, 0.65f, 0.66f);   // (V18l 0.52/0.58/0.66)
-            so.FindProperty("groundColour").colorValue = new Color(0.55f, 0.45f, 0.33f);    // warm bounce from the paving
+            so.FindProperty("skyColour").colorValue = NoonSkyFill;
+            so.FindProperty("horizonColour").colorValue = NoonHorizonFill;
+            so.FindProperty("groundColour").colorValue = NoonGroundFill;                   // warm bounce from the paving
             so.FindProperty("hazeColour").colorValue = HazeColour;                          // the sky's horizon colour
             so.FindProperty("hazeDensity").floatValue = HazeDensity;
             so.FindProperty("skybox").objectReferenceValue = skybox;
             so.FindProperty("reflection").objectReferenceValue = cube;                     // glass and gloss reflect the sky
-            so.ApplyModifiedPropertiesWithoutUndo();
-            lighting.ApplyIfActiveScene();                         // the preview scene is active here: save it with the look
             var look = new GameObject("Look (global volume)");
             look.transform.SetParent(root.transform, false);
             Volume volume = look.AddComponent<Volume>();
             volume.isGlobal = true;
             volume.priority = 1f;
             volume.sharedProfile = BuildLookProfile();
+            // V28: time of day. Noon = everything above; the player's choice on the start screen switches at runtime.
+            TimeOfDayLook[] looks = BuildTimeOfDayLooks(sun, skybox, cube, volume.sharedProfile);
+            so.FindProperty("lookVolume").objectReferenceValue = volume;
+            SerializedProperty list = so.FindProperty("looks");
+            list.arraySize = looks.Length;
+            for (int i = 0; i < looks.Length; i++)
+            {
+                list.GetArrayElementAtIndex(i).objectReferenceValue = looks[i];
+            }
+            so.FindProperty("editorMood").enumValueIndex = (int)TimeOfDay.Noon;              // scenes are saved at noon
+            so.ApplyModifiedPropertiesWithoutUndo();
+            lighting.ApplyIfActiveScene();                         // the preview scene is active here: save it with the look
+        }
+
+        // V28: one TimeOfDayLook asset per mood. Updated in place, so their GUIDs (and the prefab's links) stay.
+        private static TimeOfDayLook[] BuildTimeOfDayLooks(Light sun, Material noonSky, Cubemap noonCube, VolumeProfile noonGrade)
+        {
+            TimeOfDayLook noon = LookAsset(NoonLookAsset);
+            noon.mood = TimeOfDay.Noon;
+            noon.sunAzimuth = SunAzimuth;
+            noon.sunElevation = SunElevation;
+            noon.sunColour = sun.color;
+            noon.sunIntensity = sun.intensity;
+            noon.shadowStrength = sun.shadowStrength;
+            noon.skyColour = NoonSkyFill;
+            noon.horizonColour = NoonHorizonFill;
+            noon.groundColour = NoonGroundFill;
+            noon.skybox = noonSky;
+            noon.reflection = noonCube;
+            noon.hazeColour = HazeColour;
+            noon.hazeDensity = HazeDensity;
+            noon.profile = noonGrade;
+            noon.bakedShadowKeep = 1f;                             // the ground shadow map was baked for this sun
+            EditorUtility.SetDirty(noon);
+
+            TimeOfDayLook sunset = LookAsset(SunsetLookAsset);
+            sunset.mood = TimeOfDay.Sunset;
+            sunset.sunAzimuth = SunsetAzimuth;
+            sunset.sunElevation = SunsetElevation;
+            sunset.sunColour = SunsetSunColour;
+            sunset.sunIntensity = SunsetSunIntensity;
+            sunset.shadowStrength = SunsetShadowStrength;
+            sunset.skyColour = SunsetSkyFill;
+            sunset.horizonColour = SunsetHorizonFill;
+            sunset.groundColour = SunsetGroundFill;
+            Cubemap sunsetCube = AssetDatabase.LoadAssetAtPath<Cubemap>(SunsetSkyTexture);
+            if (sunsetCube == null)
+            {
+                Debug.LogWarning("CampusWorldBuilder: no " + SunsetSkyTexture + " (make_sky.py --mood sunset), sunset uses the noon sky.");
+            }
+            sunset.skybox = sunsetCube != null ? SkyMaterial("Sky_Sunset", sunsetCube) : noonSky;
+            sunset.reflection = sunsetCube != null ? sunsetCube : noonCube;
+            sunset.hazeColour = SunsetHaze;
+            sunset.hazeDensity = SunsetHazeDensity;
+            // A softer, warmer grade: orange highlights, violet shade, a touch less contrast than noon.
+            sunset.profile = BuildLookProfile(SunsetLookProfile, 0.05f, 16f, 14f, 10f,
+                                              new Vector4(0.97f, 0.96f, 1.06f, -0.02f), new Vector4(1.06f, 0.99f, 0.90f, 0.02f));
+            sunset.bakedShadowKeep = 0f;                           // the baked noon shadows point the wrong way now
+            EditorUtility.SetDirty(sunset);
+            AssetDatabase.SaveAssets();
+            return new[] { noon, sunset };
+        }
+
+        private static TimeOfDayLook LookAsset(string path)
+        {
+            EnsureFolder(SettingsDir);
+            TimeOfDayLook look = AssetDatabase.LoadAssetAtPath<TimeOfDayLook>(path);
+            if (look == null)
+            {
+                look = ScriptableObject.CreateInstance<TimeOfDayLook>();
+                AssetDatabase.CreateAsset(look, path);
+            }
+            return look;
+        }
+
+        private static Material SkyMaterial(string name, Cubemap cube)
+        {
+            EnsureFolder(MatDir);
+            string path = MatDir + "/" + name + ".mat";
+            Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null)
+            {
+                mat = new Material(Shader.Find("Skybox/Cubemap"));
+                AssetDatabase.CreateAsset(mat, path);
+            }
+            mat.SetTexture("_Tex", cube);
+            mat.SetFloat("_Exposure", 1f);
+            mat.SetFloat("_Rotation", 0f);
+            EditorUtility.SetDirty(mat);
+            return mat;
         }
 
         // Tonemapping + a grade, made by code so every laptop gets the same look. Bloom stays in Role 4's
@@ -1098,24 +1232,33 @@ namespace CarcavelosCircuit.Visuals.Editor
 
         private static VolumeProfile BuildLookProfile()
         {
+            return BuildLookProfile(LookProfile, LookExposure, LookContrast, LookSaturation, 2f,
+                                    new Vector4(0.99f, 1.0f, 1.03f, -0.01f),    // V20e: nearly neutral, lifted shade (V18l: 0.93/0.98/1.10/-0.07)
+                                    new Vector4(1.03f, 1.0f, 0.96f, 0.02f));    // warm, bright sunlit tops
+        }
+
+        // V28: the same grade for every mood, with the mood's numbers.
+        private static VolumeProfile BuildLookProfile(string path, float exposure, float contrast, float saturation,
+                                                      float temperature, Vector4 shadows, Vector4 highlights)
+        {
             EnsureFolder(SettingsDir);
-            if (AssetDatabase.LoadAssetAtPath<VolumeProfile>(LookProfile) != null)
+            if (AssetDatabase.LoadAssetAtPath<VolumeProfile>(path) != null)
             {
-                AssetDatabase.DeleteAsset(LookProfile);
+                AssetDatabase.DeleteAsset(path);
             }
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            AssetDatabase.CreateAsset(profile, LookProfile);
+            AssetDatabase.CreateAsset(profile, path);
             Tonemapping tone = profile.Add<Tonemapping>(true);
             tone.mode.Override(TonemappingMode.ACES);
             ColorAdjustments grade = profile.Add<ColorAdjustments>(true);
-            grade.postExposure.Override(LookExposure);
-            grade.contrast.Override(LookContrast);
-            grade.saturation.Override(LookSaturation);
+            grade.postExposure.Override(exposure);
+            grade.contrast.Override(contrast);
+            grade.saturation.Override(saturation);
             WhiteBalance warm = profile.Add<WhiteBalance>(true);
-            warm.temperature.Override(2f);
+            warm.temperature.Override(temperature);
             ShadowsMidtonesHighlights split = profile.Add<ShadowsMidtonesHighlights>(true);
-            split.shadows.Override(new Vector4(0.99f, 1.0f, 1.03f, -0.01f));        // V20e: nearly neutral, lifted shade (V18l: 0.93/0.98/1.10/-0.07)
-            split.highlights.Override(new Vector4(1.03f, 1.0f, 0.96f, 0.02f));       // warm, bright sunlit tops
+            split.shadows.Override(shadows);
+            split.highlights.Override(highlights);
             foreach (VolumeComponent c in profile.components)
             {
                 c.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
@@ -1534,10 +1677,38 @@ namespace CarcavelosCircuit.Visuals.Editor
                                          RenderSettings.defaultReflectionMode == DefaultReflectionMode.Custom &&
                                          RenderSettings.customReflectionTexture != null));
 
+            // V28: the sunset look switches sun, sky, haze and grade, and noon brings back exactly today's look.
+            bool moods = true;
+            CampusWorldLighting lighting = second.GetComponent<CampusWorldLighting>();
+            Volume volume = second.GetComponentInChildren<Volume>();
+            TimeOfDayLook sunsetLook = lighting.LookFor(TimeOfDay.Sunset);
+            if (sunsetLook == null || lighting.LookFor(TimeOfDay.Noon) == null)
+            {
+                moods = false;
+            }
+            else
+            {
+                Quaternion noonSun = RenderSettings.sun.transform.rotation;
+                VolumeProfile noonGrade = volume.sharedProfile;
+                lighting.ShowInEditor(TimeOfDay.Sunset);
+                bool sunsetOn = Mathf.Approximately(RenderSettings.fogDensity, SunsetHazeDensity) &&
+                                Quaternion.Angle(RenderSettings.sun.transform.rotation, sunsetLook.SunRotation) < 0.1f &&
+                                Vector3.Dot(-RenderSettings.sun.transform.forward, Vector3.up) < 0.15f &&   // low sun
+                                volume.sharedProfile == sunsetLook.profile && volume.sharedProfile != noonGrade &&
+                                (!painted || AssetDatabase.LoadAssetAtPath<Cubemap>(SunsetSkyTexture) == null ||
+                                 RenderSettings.skybox.name == "Sky_Sunset");
+                lighting.ShowInEditor(TimeOfDay.Noon);
+                bool noonBack = Mathf.Approximately(RenderSettings.fogDensity, HazeDensity) &&
+                                Quaternion.Angle(RenderSettings.sun.transform.rotation, noonSun) < 0.1f &&
+                                volume.sharedProfile == noonGrade && (!painted || RenderSettings.skybox.name == "Sky_Painted");
+                moods = sunsetOn && noonBack;
+                report.AppendLine("time of day: sunset applied " + sunsetOn + ", noon back " + noonBack);
+            }
+
             SceneManager.SetActiveScene(preview);
             EditorSceneManager.CloseScene(holder, true);
             report.AppendLine("light in a scene with only the prefab: applied " + applied + ", other active scene left alone " + leftAlone);
-            return applied && leftAlone ? 0 : 1;
+            return applied && leftAlone && moods ? 0 : 1;
         }
 
         // Kart's-eye views at a few places of the lap, for comparing with the Blender renders.
@@ -1554,6 +1725,15 @@ namespace CarcavelosCircuit.Visuals.Editor
             cam.GetUniversalAdditionalCameraData().renderPostProcessing = true;    // the grade, as in the race
             var rt = new RenderTexture(1280, 720, 24) { antiAliasing = 4 };
             cam.targetTexture = rt;
+            // V28: -campusWorldMood sunset renders the sunset look (not saved: the scene stays at noon)
+            string moodName = Argument("-campusWorldMood");
+            TimeOfDay mood = string.Equals(moodName, "sunset", StringComparison.OrdinalIgnoreCase) ? TimeOfDay.Sunset : TimeOfDay.Noon;
+            CampusWorldLighting lighting = UnityEngine.Object.FindAnyObjectByType<CampusWorldLighting>();
+            if (lighting != null)
+            {
+                lighting.ShowInEditor(mood);
+            }
+            string suffix = mood == TimeOfDay.Noon ? "" : "_" + mood.ToString().ToLowerInvariant();
             string extra = Argument("-campusWorldShotS");                          // e.g. "60,575" (metres)
             float[] stations = string.IsNullOrEmpty(extra)
                 ? new[] { 16f, 60f, 100f, 150f, 200f, 330f, 470f, 575f, 610f, 700f, 860f, 965f, 1060f, 1100f, 1150f, 1260f }
@@ -1571,7 +1751,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 var tex = new Texture2D(1280, 720, TextureFormat.RGB24, false);
                 tex.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0);
                 tex.Apply();
-                File.WriteAllBytes(Path.Combine(folder, "unity_s" + ((int)s).ToString("0000") + ".png"), tex.EncodeToPNG());
+                File.WriteAllBytes(Path.Combine(folder, "unity_s" + ((int)s).ToString("0000") + suffix + ".png"), tex.EncodeToPNG());
                 UnityEngine.Object.DestroyImmediate(tex);
             }
             RenderTexture.active = null;
