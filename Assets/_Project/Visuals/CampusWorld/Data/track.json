@@ -1,22 +1,38 @@
 {
-"note": "Unity axes; y = road surface height. checkpoints[0] = start/finish line. Indices into points.",
+"note": "Unity axes; y = road surface height. checkpoints[0] = start/finish line. Indices into points. checkpoint_widths = trigger width across the road (m), one per checkpoint.",
 "length_m": 1394.0,
 "jump_index": 82,
 "start_index": 0,
 "spawn_index": 693,
 "checkpoints": [
 0,
-57,
-113,
-169,
-225,
-284,
-340,
-396,
-452,
-499,
-556,
-622
+14,
+79,
+122,
+168,
+205,
+234,
+291,
+405,
+462,
+506,
+559,
+595
+],
+"checkpoint_widths": [
+12.0,
+12.0,
+12.0,
+28.0,
+16.0,
+16.0,
+14.0,
+22.0,
+18.0,
+12.0,
+28.0,
+14.0,
+18.0
 ],
 "points": [
 {
@@ -6291,6 +6307,18 @@
 "s": 1392.0,
 "zone": "upper plaza",
 "tunnel": false
+}
+],
+"boost_pads": [
+{
+"name": "shortcut jump",
+"kind": "jump",
+"x": 81.72,
+"y": 14.56,
+"z": 52.598,
+"yaw": 340.24,
+"width": 3.5,
+"length": 3.0
 }
 ]
 }

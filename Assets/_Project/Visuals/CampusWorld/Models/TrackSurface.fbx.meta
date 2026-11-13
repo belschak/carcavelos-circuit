@@ -117,6 +117,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_north_basalt
+    second: {fileID: 2100000, guid: 2d842f04d9ad04dd7ab1170997647268, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_plaza_terracotta
     second: {fileID: 2100000, guid: 70e713d00742e4df1b6d751b136449ef, type: 2}
   - first:
@@ -169,6 +174,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: W_sign_white
     second: {fileID: 2100000, guid: fafe7686088e445d0b4b1d74154e89e3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: W_start_banner
+    second: {fileID: 2100000, guid: 6a2ad2434bd0a4d98b70f259aed81d56, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

@@ -397,6 +397,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: W_north_basalt
+    second: {fileID: 2100000, guid: 2d842f04d9ad04dd7ab1170997647268, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: W_north_buff
     second: {fileID: 2100000, guid: 7cba8d2eee6eb47c692d5100429d1f03, type: 2}
   - first:

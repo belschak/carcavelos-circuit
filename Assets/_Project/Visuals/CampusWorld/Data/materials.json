@@ -1938,6 +1938,56 @@
    "smoothness": 0.1
   },
   {
+   "name": "W_north_basalt",
+   "colour": [
+    0.392,
+    0.3808,
+    0.3658
+   ],
+   "metallic": 0.0,
+   "albedo": "north_basalt_albedo.png",
+   "normal": "north_basalt_normal.png",
+   "normal_strength": 0.6,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.2
+  },
+  {
+   "name": "W_street_hedge",
+   "colour": [
+    0.2555,
+    0.3103,
+    0.2447
+   ],
+   "metallic": 0.0,
+   "albedo": "street_hedge_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.05
+  },
+  {
    "name": "W_granite_kerb",
    "colour": [
     0.5519,
@@ -3519,31 +3569,6 @@
    "smoothness": 0.1
   },
   {
-   "name": "W_street_hedge",
-   "colour": [
-    0.2555,
-    0.3103,
-    0.2447
-   ],
-   "metallic": 0.0,
-   "albedo": "street_hedge_albedo.png",
-   "normal": null,
-   "normal_strength": 1.0,
-   "emission": null,
-   "alpha": 1.0,
-   "alpha_clip": 0.0,
-   "double_sided": false,
-   "tint": false,
-   "world_lit": {
-    "shader": "CarcavelosCircuit/WorldLit",
-    "ground_shadow": false,
-    "always_shaded": false,
-    "world_uv": []
-   },
-   "metallic_smoothness": null,
-   "smoothness": 0.05
-  },
-  {
    "name": "W_street_rust",
    "colour": [
     0.5519,
@@ -4067,6 +4092,31 @@
    },
    "metallic_smoothness": null,
    "smoothness": 0.1
+  },
+  {
+   "name": "W_start_banner",
+   "colour": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "metallic": 0.0,
+   "albedo": "start_banner_albedo.png",
+   "normal": null,
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": true,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.4
   },
   {
    "name": "W_tunnel_light",
