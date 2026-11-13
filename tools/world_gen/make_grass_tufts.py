@@ -126,10 +126,32 @@ def in_building(x, y):
                for b in BUILDINGS)
 
 
+# V23s (Luc, 13 Nov, q7: "on the right the grass somehow sticks out over the sidewalk"): the lawn mask has 0.5 m
+# pixels and a tuft's blades reach about 0.6 m, so tufts at the mask's edge hung over the calcada. Along the Avenida
+# Marginal (SIDEWALK_BOX, generator metres) a tuft now keeps PAVING_GAP from every paved street layer (street_plan).
+SIDEWALK_BOX = (-262.0, -62.0, -128.0, 6.0)
+PAVING_GAP = 0.9
+
+
+def near_paving(x, y):
+    if not (SIDEWALK_BOX[0] <= x <= SIDEWALK_BOX[2] and SIDEWALK_BOX[1] <= y <= SIDEWALK_BOX[3]):
+        return False
+    import street_plan
+    for k in range(8):
+        a = k * math.pi / 4
+        lay = street_plan.layer_at(x + PAVING_GAP * math.cos(a), y + PAVING_GAP * math.sin(a))
+        if lay and lay.get("mat"):
+            return True
+    lay = street_plan.layer_at(x, y)
+    return bool(lay and lay.get("mat"))
+
+
 def allowed(x, y):
     """The rules for one tuft. Returns None if it may stand here, else the rule it breaks."""
     if lawn(x, y) < LAWN_MIN:
         return "not lawn"
+    if near_paving(x, y):
+        return "paving"
     if route_clearance(x, y) < ROAD_GAP:
         return "road"
     if path_clearance(x, y) < PATH_GAP:

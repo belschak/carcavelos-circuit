@@ -60,8 +60,8 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // False for modifier keys (Shift, Ctrl, Alt, Windows/Cmd), function keys (F1 to F24), system keys
-        // (Escape, Tab, Caps Lock, Print Screen ...) and the menu keys O, C, M, P (they open settings, credits,
-        // mute or pause, and must not also start the race). Public so an Edit Mode test can check the list.
+        // (Escape, Tab, Caps Lock, Print Screen ...) and the menu keys O, C, M, P, T (they open settings, credits,
+        // mute, pause or switch the time of day, and must not also start the race). Public so an Edit Mode test can check the list.
         public static bool CountsAsStartKey(Key key)
         {
             if ((key >= Key.F1 && key <= Key.F12) || (key >= Key.F13 && key <= Key.F24))
@@ -90,6 +90,7 @@ namespace CarcavelosCircuit.RaceFlow
                 case Key.O: // settings
                 case Key.C: // credits
                 case Key.M: // mute
+                case Key.T: // time of day (V28)
                 case Key.P: // pause (RaceManager reads it on its own, see PausePressed)
                     return false;
                 default:
@@ -132,6 +133,13 @@ namespace CarcavelosCircuit.RaceFlow
         {
             Keyboard keyboard = GameKeyboard();
             return keyboard != null && keyboard.cKey.wasPressedThisFrame;
+        }
+
+        // T = next time of day (noon, sunset) on the start screen (V28, Luc's light moods).
+        public static bool TimeOfDayPressed()
+        {
+            Keyboard keyboard = GameKeyboard();
+            return keyboard != null && keyboard.tKey.wasPressedThisFrame;
         }
 
         // P = pause or continue, during the countdown and the race (audit 9). Never Escape: it leaves fullscreen.

@@ -3,6 +3,7 @@
     "rootNamespace": "CarcavelosCircuit.Visuals.Editor",
     "references": [
         "CarcavelosCircuit.Track",
+        "CarcavelosCircuit.Shared",
         "CarcavelosCircuit.RaceFlow",
         "CarcavelosCircuit.Visuals",
         "Unity.RenderPipelines.Core.Runtime",

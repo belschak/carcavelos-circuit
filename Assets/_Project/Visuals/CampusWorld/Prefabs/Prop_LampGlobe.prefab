@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1118009563655510668}
   - component: {fileID: 1865865198754621376}
+  - component: {fileID: 187361139738422247}
   m_Layer: 0
   m_Name: Prop_LampGlobe
   m_TagString: Untagged
@@ -56,6 +57,25 @@ CapsuleCollider:
   m_Height: 3.93
   m_Direction: 1
   m_Center: {x: 0, y: 1.965, z: 0}
+--- !u!205 &187361139738422247
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1539029690663711166}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 1.8149999, z: 0}
+  m_Size: 3.93
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 1500553415846829606}
+  m_Enabled: 1
 --- !u!1 &2460543816820919330
 GameObject:
   m_ObjectHideFlags: 0

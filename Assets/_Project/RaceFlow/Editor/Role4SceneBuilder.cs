@@ -25,6 +25,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         private const string Root = "Assets/_Project/";
         public const string SettingsPath = Root + "RaceFlow/Settings/RaceSettings.asset";
         private const string ItemSettingsPath = Root + "RaceFlow/Settings/ItemSettings.asset"; // item boxes (task R7)
+        private const string ItemIconFolder = Root + "Visuals/Items/Icons/"; // Luc's HUD icons (request Q16)
         public const string LeaderboardConfigPath = Root + "RaceFlow/Settings/LeaderboardConfig.asset"; // task R10, EMPTY in the repo
         private const string ThemePath = Root + "RaceFlow/UI/RaceHudTheme.tss";
         private const string PanelPath = Root + "RaceFlow/UI/RaceHudPanelSettings.asset";
@@ -235,7 +236,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             return settings;
         }
 
-        // Item box tuning (task R7). Kept if it exists, like RaceSettings.
+        // Item box tuning (task R7). Kept if it exists, like RaceSettings; only the four HUD icons are filled in.
         private static ItemSettings CreateItemSettings()
         {
             ItemSettings settings = AssetDatabase.LoadAssetAtPath<ItemSettings>(ItemSettingsPath);
@@ -244,8 +245,32 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 settings = ScriptableObject.CreateInstance<ItemSettings>();
                 AssetDatabase.CreateAsset(settings, ItemSettingsPath);
             }
+            SetItemIcons(settings);
             EditorUtility.SetDirty(settings);
             return settings;
+        }
+
+        // Luc's item icons (request Q16, Role 3): Visuals/Items/Icons/<ItemKind>.png. A missing PNG leaves its slot
+        // empty, and the HUD then draws that item's icon in code (UI/ItemIcon.cs), so a rebuild never breaks.
+        private static void SetItemIcons(ItemSettings settings)
+        {
+            SerializedObject so = new SerializedObject(settings);
+            so.FindProperty("espressoIcon").objectReferenceValue = ItemIconPicture("Espresso");
+            so.FindProperty("seagullDeliveryIcon").objectReferenceValue = ItemIconPicture("SeagullDelivery");
+            so.FindProperty("carcavelosWaveIcon").objectReferenceValue = ItemIconPicture("CarcavelosWave");
+            so.FindProperty("deansListIcon").objectReferenceValue = ItemIconPicture("DeansList");
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static Texture2D ItemIconPicture(string itemName)
+        {
+            string path = ItemIconFolder + itemName + ".png";
+            Texture2D picture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (picture == null)
+            {
+                Debug.LogWarning("Role4SceneBuilder: item icon " + path + " not found, the HUD draws that icon in code.");
+            }
+            return picture;
         }
 
         // The item boxes' material. Emission is switched on in the asset, so the Web build keeps the emissive shader
@@ -805,7 +830,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             hudToGhost.ApplyModifiedPropertiesWithoutUndo();
 
             BuildItems(manager, panel);
-            Role4RacersBuilder.Build(manager, settings, panel); // every racer on the grid, positions + minimap (R8, R9)
+            Role4RacersBuilder.Build(manager, settings, panel, kartPrefab); // every racer on the grid, positions + minimap (R8, R9), bots (V10)
             CarcavelosCircuit.Ambience.Editor.AmbienceBuilder.AddToScene(); // waves + surfers on the beach (R12)
 
             EditorSceneManager.SaveScene(scene, MainScenePath);
@@ -894,6 +919,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             SerializedObject sho = new SerializedObject(slotHud);
             sho.FindProperty("raceManager").objectReferenceValue = manager;
             sho.FindProperty("items").objectReferenceValue = itemSystem;
+            sho.FindProperty("settings").objectReferenceValue = itemSettings;
             sho.ApplyModifiedPropertiesWithoutUndo();
 
             if (itemSettings == null || boxMaterial == null)

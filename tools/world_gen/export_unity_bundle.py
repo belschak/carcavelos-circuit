@@ -39,7 +39,7 @@ MODELS = ["CampusWorld.fbx", "TrackSurface.fbx", "RouteGuide.fbx", "Dressing_Pro
 ROAD_LIFT = 0.06            # env_track.ROAD_LIFT: road surface above track_z
 CHECKPOINTS = 12
 WORLD_LIT_SHADER = "CarcavelosCircuit/WorldLit"     # Assets/_Project/Visuals/Shaders/WorldLit.shader (URP Lit if missing)
-EXTRA_TEXTURES = ["sky_panorama.png"]   # make_sky.py: skybox + reflections (CampusWorldBuilder.AddSunAndSky)
+EXTRA_TEXTURES = ["sky_panorama.png", "sky_sunset.png"]   # make_sky.py (--mood sunset): skybox + reflections (CampusWorldBuilder)
 
 # The grass tufts have no Blender material (CampusWorldBuilder builds them): their entry for materials.json.
 GRASS_TUFT = {"name": "W_grass_tuft", "colour": [1.0, 1.0, 1.0], "metallic": 0.0, "albedo": "grass_tuft_cutout_albedo.png",
@@ -223,11 +223,36 @@ def unity_track():
 # run-up. Written into track.json "boost_pads"; CampusWorldBuilder.AddBoostPads adds them after its own jump and tunnel
 # pads (a ray down puts each on the surface). Unity axes: x east, y up (the driving surface), z north; yaw in degrees
 # clockwise from north (Quaternion.Euler(0, yaw, 0)); width across, length along the driving direction, in metres.
+# V23s: + the pads on the race line itself (street_plan.ROUTE_PADS, kind "straight": two on the Avenida Marginal after
+# the roundabout, one in the car park's aisle), y = the road surface at the pad's route point.
 def boost_pads():
     import plaza_plan
-    return [{"name": p["name"], "kind": p["kind"], "x": round(p["x"], 3), "y": round(plaza_plan.DECK_Z, 3),
+    import street_plan
+    pads = [{"name": p["name"], "kind": p["kind"], "x": round(p["x"], 3), "y": round(plaza_plan.DECK_Z, 3),
              "z": round(p["y"], 3), "yaw": round(p["heading"], 2), "width": round(p["width"], 2),
              "length": round(p["length"], 2)} for p in plaza_plan.BOOST_PADS]
+    pads += [{"name": p["name"], "kind": p["kind"], "x": round(p["x"], 3), "y": round(p["track_z"] + ROAD_LIFT, 3),
+              "z": round(p["y"], 3), "yaw": round(p["heading"], 2), "width": round(p["width"], 2),
+              "length": round(p["length"], 2)} for p in street_plan.route_pads()]
+    return pads
+
+
+# V21a (start plaza): centre lines of the Nova Kart walls package V21b builds (WhiteGuardrailBuilder reads them; an
+# absent or empty list = no wall). Written into track.json "barriers": [{"name", "points": [[x, y, z], ...]}], Unity
+# axes (x east, y = paving height under the wall, z north), a polyline along the wall's centre line. The lines are
+# start_plan.barriers(); their heights come from the built world (env_route_signs.write_barriers ->
+# out/start_barriers.json). Without that file (an older build) the road height of the nearest route point is used.
+def barriers():
+    import start_plan
+    path = os.path.join(OUT, "start_barriers.json")
+    if os.path.exists(path):
+        return [{"name": b["name"], "points": [[round(x, 3), round(z, 3), round(y, 3)] for x, y, z in b["points"]]}
+                for b in json.load(open(path))["barriers"]]
+    print("  barriers: no out/start_barriers.json (run build_world.py); heights from the route instead")
+    pts = json.load(open(os.path.join(HERE, "route.json")))["points"]
+    road = lambda x, y: min(pts, key=lambda p: (p["x"] - x) ** 2 + (p["y"] - y) ** 2)["track_z"] + ROAD_LIFT
+    return [{"name": b["name"], "points": [[round(x, 3), round(road(x, y), 3), round(y, 3)] for x, y in b["points"]]}
+            for b in start_plan.barriers()]
 
 
 def main():
@@ -303,6 +328,7 @@ def main():
     json.dump(dressing, open(os.path.join(data, "dressing.json"), "w"), indent=0)
     track = unity_track()
     track["boost_pads"] = boost_pads()                         # V20b: the plaza shortcut's jump pad
+    track["barriers"] = barriers()                             # V21a: wall centre lines at the start plaza (for V21b)
     json.dump(track, open(os.path.join(data, "track.json"), "w"), indent=0)
     json.dump({"instances": info["instances"], "objects": info["objects"]}, open(os.path.join(data, "check.json"), "w"), indent=1)
     size = sum(os.path.getsize(os.path.join(r, f)) for r, _, fs in os.walk(BUNDLE) for f in fs)

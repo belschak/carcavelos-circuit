@@ -38,6 +38,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
             Assert.IsTrue(race.IsSetUp, "the race was not set up in time");
             items = Object.FindAnyObjectByType<ItemSystem>();
             Assert.IsNotNull(items, "Main.unity has no Items object (Role4SceneBuilder)");
+            yield return BotsOffForTests.RemoveFromRace(SetUpTimeoutSeconds); // the item rules on an empty road
             yield return null; // ItemSystem places the boxes on its first Update after the set-up
 
             // The robot must not change a real player's records or coach tips on this computer (same as RaceSmokeTests).

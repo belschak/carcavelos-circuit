@@ -8,8 +8,10 @@ namespace CarcavelosCircuit.RaceFlow
     // On the "Racers" object in Main.unity. When RaceManager has set the race up it
     // - makes the player's kart an IRacer (PlayerRacer, IsPlayer = true),
     // - finds the track's progress (Role 2's ITrackProgress, else a line through the checkpoints),
-    // - puts every registered bot on its grid slot behind the SpawnPoint (RacerGrid), at set-up, at the race start
-    //   and on every Retry; a bot that registers later waits for the next of those (no teleport mid-race),
+    // - puts every racer on its grid slot at the SpawnPoint (RacerGrid: pairs side by side, bots from the front, the
+    //   player LAST; alone = time trial = slot 0, front row left), at set-up, at the race start and on every Retry,
+    //   and before the race (Ready) whenever a racer joins or leaves; a bot that registers during a race waits for
+    //   the next start or Retry (no teleport mid-race),
     // - switches every bot's input on only while Racing (exactly like the player's), off on pause and at the finish,
     // - keeps the live standings (RaceStandings) that the positions readout and the minimap show.
     // Bots never get the player's checkpoints, timer, medals or items: RaceManager.IsKartCollider only counts the player.
@@ -38,6 +40,7 @@ namespace CarcavelosCircuit.RaceFlow
         private bool isSetUp;
         private RaceState lastState = RaceState.Ready;
         private int testBotsSpawned;
+        private int racersOnTheGrid = -1; // how many racers the grid was last laid out for
 
         public bool IsSetUp { get { return isSetUp; } }
         public ITrackProgress Progress { get { return progress; } } // null if the track has neither T8 nor checkpoints
@@ -50,7 +53,7 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (raceManager != null)
             {
-                raceManager.Restarted += PutBotsOnTheGrid;
+                raceManager.Restarted += PutEveryoneOnTheGrid;
             }
         }
 
@@ -58,7 +61,7 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (raceManager != null)
             {
-                raceManager.Restarted -= PutBotsOnTheGrid;
+                raceManager.Restarted -= PutEveryoneOnTheGrid;
             }
         }
 
@@ -74,10 +77,13 @@ namespace CarcavelosCircuit.RaceFlow
             }
 
             // The race starts (first countdown after the start screen): everyone onto the grid.
+            // Before that (Ready, nobody drives yet) the grid also follows racers who join or leave, so the player
+            // already waits in the last slot when the countdown begins.
             RaceState state = raceManager.State;
-            if (lastState == RaceState.Ready && state == RaceState.Countdown)
+            if ((lastState == RaceState.Ready && state == RaceState.Countdown)
+                || (state == RaceState.Ready && RacerRegistry.All.Count != racersOnTheGrid))
             {
-                PutBotsOnTheGrid();
+                PutEveryoneOnTheGrid();
             }
             lastState = state;
 
@@ -116,13 +122,15 @@ namespace CarcavelosCircuit.RaceFlow
                 player = kart.AddComponent<PlayerRacer>(); // registers itself (OnEnable)
             }
             SpawnTestBots(settings.DevTestBots);
-            PutBotsOnTheGrid();
+            PutEveryoneOnTheGrid();
             lastState = raceManager.State;
         }
 
-        // Every bot onto its slot, standing still, input off. The player is put on slot 0 by RaceManager itself
-        // (the SpawnPoint), so the time trial starts exactly as before. Also the start of new standings.
-        private void PutBotsOnTheGrid()
+        // Every racer onto its slot, standing still. RaceManager has just put the player on the SpawnPoint (set-up,
+        // Retry); the SpawnPoint is the middle of the front row, so we move the player on to its slot: slot 0 alone
+        // (time trial), else the last slot behind every bot. The player's input stays RaceManager's business; the bots'
+        // input goes off. Also the start of new standings.
+        private void PutEveryoneOnTheGrid()
         {
             if (!isSetUp)
             {
@@ -130,17 +138,29 @@ namespace CarcavelosCircuit.RaceFlow
             }
             IReadOnlyList<IRacer> racers = RacerRegistry.All;
             grid.KeepOnly(racers);
+            racersOnTheGrid = racers.Count;
             Transform spawn = raceManager.Track.SpawnPoint;
+            // Bots first: the player's slot depends on which slots the bots hold.
+            for (int i = 0; i < racers.Count; i++)
+            {
+                if (!racers[i].IsPlayer)
+                {
+                    grid.Assign(racers[i]);
+                }
+            }
             for (int i = 0; i < racers.Count; i++)
             {
                 int slot = grid.Assign(racers[i]);
                 IKartState kart = racers[i].Kart;
-                if (racers[i].IsPlayer || kart == null)
+                if (kart == null)
                 {
                     continue;
                 }
                 kart.ResetTo(grid.SlotPosition(slot, spawn.position, spawn.rotation), spawn.rotation);
-                kart.InputEnabled = false;
+                if (!racers[i].IsPlayer)
+                {
+                    kart.InputEnabled = false;
+                }
             }
             standings.Reset();
         }

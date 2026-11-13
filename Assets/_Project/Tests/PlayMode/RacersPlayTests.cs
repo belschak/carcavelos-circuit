@@ -41,6 +41,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
             Assert.IsTrue(roster.IsSetUp, "the roster was not set up in time");
             hud = Object.FindAnyObjectByType<PositionsHud>();
             Assert.IsNotNull(hud, "Main.unity has no PositionsHud");
+            yield return BotsOffForTests.RemoveFromRace(SetUpTimeoutSeconds); // RaceFlow alone + its dev test bots
 
             // The robot must not change a real player's records or coach tips on this computer (same as RaceSmokeTests).
             string[] keys = { "CarcavelosCircuit.Best." + race.TrackName, GhostLoader.SaveKey(race.TrackName) };
@@ -146,7 +147,13 @@ namespace CarcavelosCircuit.Tests.PlayMode
             yield return WaitPhysics();
             Assert.AreEqual(RaceState.Countdown, race.State);
             AssertOnTheirSlots(bots, "after Retry");
-            Assert.Less(Vector3.Distance(Flat(race.KartTransform.position), Flat(race.Track.SpawnPoint.position)), 0.5f, "the player is back on the SpawnPoint");
+            Vector3 playerSlot;
+            Assert.IsTrue(roster.TryGetSlotPosition(roster.Player, out playerSlot), "the player has a slot after Retry");
+            Assert.Less(Vector3.Distance(Flat(race.KartTransform.position), Flat(playerSlot)), 0.5f, "the player is back on its slot");
+            // V23: the player starts last, behind both bots: slot 2 = second row left (2 m left, 3 m back; RaceSettings).
+            Transform spawnPoint = race.Track.SpawnPoint;
+            Vector3 lastSlot = spawnPoint.position + spawnPoint.rotation * RacerGrid.OffsetOf(2, 2f, 3f);
+            Assert.Less(Vector3.Distance(Flat(playerSlot), Flat(lastSlot)), 0.05f, "with two bots the player's slot is the third (last) one");
             for (int i = 0; i < bots.Count; i++)
             {
                 Assert.IsFalse(bots[i].Kart.InputEnabled, "no bot drives in the retry countdown");

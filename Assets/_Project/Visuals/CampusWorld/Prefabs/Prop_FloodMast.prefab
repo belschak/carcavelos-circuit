@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3827293788499439723}
   - component: {fileID: 8952912784350376285}
+  - component: {fileID: 8578024002460281135}
   m_Layer: 0
   m_Name: Prop_FloodMast
   m_TagString: Untagged
@@ -54,6 +55,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.6, y: 13.7, z: 1.0800002}
   m_Center: {x: 0, y: 6.65, z: 0}
+--- !u!205 &8578024002460281135
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5584865111595443858}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 6.65, z: 0}
+  m_Size: 13.7
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 3362169194166228000}
+  m_Enabled: 1
 --- !u!1 &8590885801739141562
 GameObject:
   m_ObjectHideFlags: 0

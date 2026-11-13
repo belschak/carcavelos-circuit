@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using CarcavelosCircuit.RaceFlow;
+using CarcavelosCircuit.Shared;
 using CarcavelosCircuit.Track;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -34,7 +35,11 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string PrefabDir = Root + "/Prefabs";
         private const string SettingsDir = Root + "/Settings";
         private const string SkyTexture = TexDir + "/sky_panorama.png";       // world-gen/make_sky.py
+        private const string SunsetSkyTexture = TexDir + "/sky_sunset.png";   // V28: make_sky.py --mood sunset
         private const string LookProfile = SettingsDir + "/CampusWorld_Look.asset";
+        private const string SunsetLookProfile = SettingsDir + "/CampusWorld_Look_Sunset.asset";
+        private const string NoonLookAsset = SettingsDir + "/Look_Noon.asset";
+        private const string SunsetLookAsset = SettingsDir + "/Look_Sunset.asset";
         // Golden hour (design pass 2026-11-09): low warm sun from the west-south-west. Must match make_sky.py.
         // V18l (Luc, 12 Nov: "summer at the beach", much harder shadows with contrast): a high summer-afternoon sun
         // from the south-west instead of golden hour. Must match make_sky.py (and so make_shadowmap.py).
@@ -43,9 +48,25 @@ namespace CarcavelosCircuit.Visuals.Editor
         // a little darker so far walls do not glow. 0.0008 per metre: 21 % at 300 m, 55 % at 1 km.
         private static readonly Color HazeColour = new Color(0.80f, 0.86f, 0.92f);   // V18l: the summer sky's pale blue horizon
         private const float HazeDensity = 0.0008f;
+        // Noon sky light (V20e): a bright, only slightly blue sky fill, a neutral horizon, a warm bounce from the paving.
+        private static readonly Color NoonSkyFill = new Color(0.60f, 0.66f, 0.76f);       // #A8A8C2-ish (V18l #668CCC)
+        private static readonly Color NoonHorizonFill = new Color(0.64f, 0.65f, 0.66f);   // (V18l 0.52/0.58/0.66)
+        private static readonly Color NoonGroundFill = new Color(0.55f, 0.45f, 0.33f);
+        // V28 sunset (Luc, 13 Nov; Alessandro asked "can we set the time to sunset?"): the sun just above the sea in the
+        // west-south-west. Must match make_sky.py MOODS["sunset"]. Low enough for long orange light and long
+        // shadows, high enough that the track is not all in the shade of the campus buildings.
+        private const float SunsetAzimuth = 250f, SunsetElevation = 6f;
+        private static readonly Color SunsetSunColour = new Color(1f, 0.62f, 0.36f);       // #FF9E5C, deep orange
+        private const float SunsetSunIntensity = 1.7f, SunsetShadowStrength = 0.75f;
+        private static readonly Color SunsetSkyFill = new Color(0.42f, 0.40f, 0.56f);      // violet dusk sky in the shade
+        private static readonly Color SunsetHorizonFill = new Color(0.78f, 0.56f, 0.46f);  // pink-orange band at eye height
+        private static readonly Color SunsetGroundFill = new Color(0.45f, 0.33f, 0.25f);
+        private static readonly Color SunsetHaze = new Color(0.93f, 0.68f, 0.52f);         // the painted horizon, a bit darker
+        private const float SunsetHazeDensity = 0.0011f;
         private const string ScenePath = "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity";
         private const string WorldPrefabPath = Root + "/CampusWorld.prefab";
         private const string WorldRootName = "CampusWorld";                  // root of the prefab and of its instance
+        private const string AtriumPianoPrefab = "Assets/_Project/Track/Piano/AtriumPiano.prefab"; // Noah's T10 (request Q18)
         private static readonly string[] Models = { "CampusWorld", "TrackSurface", "RouteGuide", "Dressing_Prototypes" };
 
         [Serializable] private class Emission { public float[] colour; public float strength; }
@@ -97,7 +118,10 @@ namespace CarcavelosCircuit.Visuals.Editor
         {
             public float length_m; public int jump_index, start_index, spawn_index; public int[] checkpoints; public TrackPoint[] points;
             public float[] checkpoint_widths;   // V20a: trigger width per checkpoint (m); missing or <= 0 = road width + 4 m
+            public BoostPadSpot[] boost_pads;   // V20b: pads off the race line (export_unity_bundle.boost_pads)
         }
+        // V20b: one extra boost pad: position (y = driving surface), yaw in degrees clockwise from north, size in metres.
+        [Serializable] private class BoostPadSpot { public string name, kind; public float x, y, z, yaw, width, length; }
         // V19 promenade shortcut (tools/world_gen/promenade_shortcut_plan.py -> Data/shortcuts.json), Unity x/z.
         [Serializable] private class XZ { public float x, z; }
         [Serializable] private class ShortcutLine { public string name; public float width; public XZ[] points; }
@@ -109,6 +133,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         public static void Build()
         {
             ConfigureImporters();
+            WebMeshBudget.ConfigureHallImporter();                              // V26: hall without tangents (no normal maps)
             Dictionary<string, Material> materials = BuildMaterials();
             RemapModelMaterials(materials);
             Dictionary<string, GameObject> prefabs = BuildPrefabs();
@@ -140,6 +165,24 @@ namespace CarcavelosCircuit.Visuals.Editor
             EditorApplication.Exit(failures == 0 ? 0 : 1);
         }
 
+        // V28 batch mode: -executeMethod CarcavelosCircuit.Visuals.Editor.CampusWorldBuilder.ShotsOnly
+        // -campusWorldShots <folder> [-campusWorldMood sunset]: the kart's-eye views of the built scene, no rebuild.
+        public static void ShotsOnly()
+        {
+            int failures = 0;
+            try
+            {
+                EditorSceneManager.OpenScene(ScenePath);
+                RenderShots(Argument("-campusWorldShots"));
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                failures++;
+            }
+            EditorApplication.Exit(failures == 0 ? 0 : 1);
+        }
+
         // ---------- importers ----------
         private static void ConfigureImporters()
         {
@@ -152,7 +195,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                     continue;
                 }
                 string file = Path.GetFileName(path);
-                if (path == SkyTexture)
+                if (path == SkyTexture || path == SunsetSkyTexture)
                 {
                     continue;                                                   // a cubemap, see below
                 }
@@ -173,24 +216,14 @@ namespace CarcavelosCircuit.Visuals.Editor
                 ti.wrapMode = file.StartsWith("ground_colour", StringComparison.Ordinal) || cutout || !tiles ? TextureWrapMode.Clamp : TextureWrapMode.Repeat;
                 ti.mipmapEnabled = true;
                 ti.anisoLevel = file.Contains("_detail_") ? 8 : 4;               // ground detail is seen at very flat angles
+                WebTextureBudget.Apply(ti, file);                                // V24: smaller sizes in the Web build only
                 ti.SaveAndReimport();
             }
             // The painted sky (2:1 lat-long picture) becomes a cubemap: the skybox and the reflections on glass
             // and gloss use it, so no lighting bake is needed.
-            if (AssetImporter.GetAtPath(SkyTexture) is TextureImporter sky)
+            foreach (string skyPath in new[] { SkyTexture, SunsetSkyTexture })   // V28: one painted sky per mood
             {
-                sky.textureType = TextureImporterType.Default;
-                sky.textureShape = TextureImporterShape.TextureCube;
-                var cube = new TextureImporterSettings();
-                sky.ReadTextureSettings(cube);
-                cube.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
-                cube.cubemapConvolution = TextureImporterCubemapConvolution.Specular;   // blurred mips: glossy reflections
-                sky.SetTextureSettings(cube);
-                sky.sRGBTexture = true;
-                sky.mipmapEnabled = true;
-                sky.wrapMode = TextureWrapMode.Clamp;
-                sky.maxTextureSize = 1024;                                      // per cube face
-                sky.SaveAndReimport();
+                ImportSky(skyPath);
             }
             foreach (string name in Models)
             {
@@ -207,6 +240,26 @@ namespace CarcavelosCircuit.Visuals.Editor
                 mi.importBlendShapes = false;
                 mi.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;
                 mi.SaveAndReimport();
+            }
+        }
+
+        private static void ImportSky(string path)
+        {
+            if (AssetImporter.GetAtPath(path) is TextureImporter sky)
+            {
+                sky.textureType = TextureImporterType.Default;
+                sky.textureShape = TextureImporterShape.TextureCube;
+                var cube = new TextureImporterSettings();
+                sky.ReadTextureSettings(cube);
+                cube.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
+                cube.cubemapConvolution = TextureImporterCubemapConvolution.Specular;   // blurred mips: glossy reflections
+                sky.SetTextureSettings(cube);
+                sky.sRGBTexture = true;
+                sky.mipmapEnabled = true;
+                sky.wrapMode = TextureWrapMode.Clamp;
+                sky.maxTextureSize = 1024;                                      // per cube face
+                WebTextureBudget.Apply(sky, Path.GetFileName(path));            // V24: 512 per face on the Web
+                sky.SaveAndReimport();
             }
         }
 
@@ -448,6 +501,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             EnsureFolder(PrefabDir);
             var result = new Dictionary<string, GameObject>();
             GameObject model = Model("Dressing_Prototypes");
+            PropRenderBudget.Reset();
             foreach (MeshFilter source in model.GetComponentsInChildren<MeshFilter>(true))
             {
                 string kind = source.gameObject.name;
@@ -459,9 +513,11 @@ namespace CarcavelosCircuit.Visuals.Editor
                 visual.AddComponent<MeshFilter>().sharedMesh = source.sharedMesh;
                 visual.AddComponent<MeshRenderer>().sharedMaterials = source.GetComponent<MeshRenderer>().sharedMaterials;
                 AddDressingCollider(root, visual.GetComponent<MeshRenderer>().bounds, kind);
+                PropRenderBudget.Apply(root, visual.GetComponent<MeshRenderer>(), kind);   // V27: shadows and draw distance
                 result[kind] = PrefabUtility.SaveAsPrefabAsset(root, PrefabDir + "/" + kind + ".prefab");
                 UnityEngine.Object.DestroyImmediate(root);
             }
+            Debug.Log(PropRenderBudget.Summary());
             return result;
         }
 
@@ -563,10 +619,12 @@ namespace CarcavelosCircuit.Visuals.Editor
             {
                 Debug.Log("CampusWorldBuilder: " + fenceFree);
             }
+            AddAtriumPiano(root);   // Q18: Noah's piano sound (T10) at the grand piano in the hall
 
             AddTunnelGuards(root, JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json")));
             AddGrassTufts(root);
             AddSunAndSky(root);
+            Debug.Log("CampusWorldBuilder: " + WebMeshBudget.Finish(root));    // V26: leaner generated meshes for the Web build
             // One prefab for everything you see and drive on. Saving over the old file keeps its GUID, so the
             // instance in Role 2's Track_Campus stays linked and shows the new world after every rebuild.
             PrefabUtility.SaveAsPrefabAssetAndConnect(root, WorldPrefabPath, InteractionMode.AutomatedAction);
@@ -578,6 +636,22 @@ namespace CarcavelosCircuit.Visuals.Editor
             AddWaveBoxSpots(preview);
             AddPreviewCamera(preview, data);
             EditorSceneManager.SaveScene(scene, ScenePath);
+        }
+
+        // Request Q18 (Role 2, T10): Noah's AtriumPiano prefab is an invisible trigger sphere with a 3D sound at the
+        // grand piano by the hall's west glass. It carries its own world position, so it only needs a parent. It goes
+        // into the world prefab, so Track_Campus and Main get it too. Without the prefab or the hall nothing is added.
+        private static void AddAtriumPiano(GameObject root)
+        {
+            GameObject piano = AssetDatabase.LoadAssetAtPath<GameObject>(AtriumPianoPrefab);
+            if (piano == null || !NovaHallInsert.HasHall())
+            {
+                Debug.Log("CampusWorldBuilder: no atrium piano sound (" + AtriumPianoPrefab + " missing or no hall)");
+                return;
+            }
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(piano, root.transform);
+            go.name = "AtriumPiano";
+            Debug.Log("CampusWorldBuilder: atrium piano sound at " + go.transform.position);
         }
 
         // The tunnel walls lean outwards at 45 degrees. A kart that touches such a wall is thrown up it like a ramp.
@@ -692,6 +766,169 @@ namespace CarcavelosCircuit.Visuals.Editor
             }
             tso.FindProperty("spawnPoint").objectReferenceValue = spawn.transform;
             tso.ApplyModifiedPropertiesWithoutUndo();
+
+            AddBoostPads(race, data);
+            AddCheckpointGates(race, data);
+        }
+
+        // Boost pads (task V11, BoostPadPlan): two before the jump so the kart flies far, a chain in the tunnel.
+        // Each pad sits on the road surface found by a ray and leans with it (the tunnel floor climbs a little).
+        private static void AddBoostPads(GameObject race, TrackData data)
+        {
+            Material material = BoostPadMaterial();
+            var group = new GameObject("BoostPads");
+            group.transform.SetParent(race.transform, false);
+
+            float[] s = data.points.Select(p => p.s).ToArray();
+            var distances = new List<float>(BoostPadPlan.JumpPads(data.points[data.jump_index].s));
+            int jumpPads = distances.Count;   // the first ones are the jump pads, they get the stronger boost
+            bool[] covered = data.points.Select(p => p.tunnel).ToArray();
+            foreach (int[] run in BoostPadPlan.CoveredRuns(covered))
+            {
+                distances.AddRange(BoostPadPlan.TunnelPads(s[run[0]], s[run[1]]));
+            }
+
+            Physics.SyncTransforms();
+            for (int n = 0; n < distances.Count; n++)
+            {
+                int i = BoostPadPlan.ClosestPoint(s, data.length_m, distances[n]);
+                bool jump = n < jumpPads;
+                TrackPoint p = data.points[i];
+                Vector3 position = Pos(p);
+                Vector3 up = Vector3.up;
+                if (Physics.Raycast(position + Vector3.up * 1.5f, Vector3.down, out RaycastHit hit, 4f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    position = hit.point;
+                    up = hit.normal;
+                }
+                var go = new GameObject((jump ? "BoostPad jump s=" : "BoostPad s=") + p.s.ToString("0"));
+                go.transform.SetParent(group.transform, false);
+                go.transform.SetPositionAndRotation(position,
+                    Quaternion.LookRotation(Vector3.ProjectOnPlane(Forward(data, i), up).normalized, up));
+                go.AddComponent<BoostPad>().Configure(new Vector2(Mathf.Min(4.5f, p.width - 1f), 3f), material,
+                    jump ? BoostPadPlan.JumpBoostSeconds : BoostPadPlan.TunnelBoostSeconds,
+                    jump ? BoostPadPlan.JumpSpeedMultiplier : BoostPadPlan.TunnelSpeedMultiplier);
+            }
+            // V20b: pads that are not on the race line, from track.json "boost_pads" (the jump pad on the plaza
+            // shortcut's run-up). Same ray onto the surface and the same strength as the jump pads above.
+            int extra = 0;
+            foreach (BoostPadSpot spot in data.boost_pads ?? new BoostPadSpot[0])
+            {
+                Vector3 position = new Vector3(spot.x, spot.y, spot.z);
+                Vector3 forward = Quaternion.Euler(0f, spot.yaw, 0f) * Vector3.forward;
+                Vector3 up = Vector3.up;
+                if (Physics.Raycast(position + Vector3.up * 1.5f, Vector3.down, out RaycastHit hit, 4f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    position = hit.point;
+                    up = hit.normal;
+                }
+                bool jump = spot.kind == "jump";
+                var go = new GameObject("BoostPad " + spot.kind + " " + spot.name);
+                go.transform.SetParent(group.transform, false);
+                go.transform.SetPositionAndRotation(position, Quaternion.LookRotation(Vector3.ProjectOnPlane(forward, up).normalized, up));
+                go.AddComponent<BoostPad>().Configure(new Vector2(spot.width, spot.length), material,
+                    jump ? BoostPadPlan.JumpBoostSeconds : BoostPadPlan.TunnelBoostSeconds,
+                    jump ? BoostPadPlan.JumpSpeedMultiplier : BoostPadPlan.TunnelSpeedMultiplier);
+                extra++;
+            }
+            Debug.Log("CampusWorldBuilder: " + distances.Count + " boost pads" + (extra > 0 ? " + " + extra + " off the race line" : "") + ".");
+        }
+
+        // URP Lit with emission on, so the Web build keeps the glowing shader variant. The chevrons come in code.
+        private static Material BoostPadMaterial()
+        {
+            const string path = "Assets/_Project/Visuals/BoostPads/BoostPad.mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                Shader lit = Shader.Find("Universal Render Pipeline/Lit");
+                material = new Material(lit != null ? lit : Shader.Find("Standard"));
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.SetColor("_BaseColor", Color.white);
+            material.SetFloat("_Smoothness", 0.35f);
+            material.SetColor("_EmissionColor", new Color(0.8f, 0.8f, 0.8f, 1f));
+            material.EnableKeyword("_EMISSION");
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        // Checkpoint gates (task V13): a waving "NOVA KART" feather banner on each side of the road at every
+        // checkpoint, so the player sees where to drive through. Each pole foot sits on the ground found by a ray;
+        // a pole that would stand inside a wall (tunnel, ramp walls) moves in towards the road until it is free.
+        private static void AddCheckpointGates(GameObject race, TrackData data)
+        {
+            Material pole = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "/W_gloss_black.mat");
+            Material cloth = CheckpointBannerMaterial();
+            var group = new GameObject("CheckpointGates");
+            group.transform.SetParent(race.transform, false);
+            Physics.SyncTransforms();
+            int moved = 0;
+            for (int c = 0; c < data.checkpoints.Length; c++)
+            {
+                int i = data.checkpoints[c];
+                TrackPoint p = data.points[i];
+                var gate = new GameObject("Gate " + c + (c == 0 ? " (start-finish)" : ""));
+                gate.transform.SetParent(group.transform, false);
+                gate.transform.SetPositionAndRotation(Pos(p), Quaternion.LookRotation(Forward(data, i)));
+                float offset = CheckpointGatePlan.PostOffset(p.width);
+                Vector3 left = GateFoot(gate.transform, -1f, offset, p.width, ref moved);
+                Vector3 right = GateFoot(gate.transform, 1f, offset, p.width, ref moved);
+                gate.AddComponent<CheckpointGate>().Configure(left, right, pole, cloth);
+            }
+            Debug.Log("CampusWorldBuilder: " + data.checkpoints.Length + " checkpoint gates (" + moved + " poles moved in from a wall).");
+        }
+
+        // Local foot position of one pole: as far out as planned, or nearer the road if a wall is there, on the ground.
+        private static Vector3 GateFoot(Transform gate, float side, float offset, float roadWidth, ref int moved)
+        {
+            const float step = 0.25f;
+            float minimum = roadWidth * 0.5f - 0.2f;                 // never further in than the road edge
+            float d = offset;
+            while (d > minimum && Physics.CheckCapsule(gate.TransformPoint(new Vector3(side * d, 0.6f, 0f)),
+                       gate.TransformPoint(new Vector3(side * d, 2.6f, 0f)), 0.2f, ~(1 << 2), QueryTriggerInteraction.Ignore))
+            {
+                d -= step;
+            }
+            if (d < offset)
+            {
+                moved++;
+            }
+            Vector3 top = gate.TransformPoint(new Vector3(side * d, 2f, 0f));
+            float y = 0f;
+            if (Physics.Raycast(top, Vector3.down, out RaycastHit hit, 6f, ~(1 << 2), QueryTriggerInteraction.Ignore))
+            {
+                y = gate.InverseTransformPoint(hit.point).y;
+            }
+            return new Vector3(side * d, y, 0f);
+        }
+
+        // URP Lit with the banner picture (tools/textures/make_checkpoint_banner.py), clamped so no edge bleeds over.
+        private static Material CheckpointBannerMaterial()
+        {
+            const string folder = "Assets/_Project/Visuals/CheckpointGates";
+            const string picture = folder + "/CheckpointBanner.png";
+            const string path = folder + "/CheckpointBanner.mat";
+            var importer = (TextureImporter)AssetImporter.GetAtPath(picture);
+            if (importer != null && (importer.wrapMode != TextureWrapMode.Clamp || importer.maxTextureSize != 1024))
+            {
+                importer.wrapMode = TextureWrapMode.Clamp;
+                importer.maxTextureSize = 1024;
+                importer.SaveAndReimport();
+            }
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                Shader lit = Shader.Find("Universal Render Pipeline/Lit");
+                material = new Material(lit != null ? lit : Shader.Find("Standard"));
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(picture));
+            material.SetColor("_BaseColor", Color.white);
+            material.SetFloat("_Smoothness", 0.15f);
+            EditorUtility.SetDirty(material);
+            return material;
         }
 
         // 3D grass tufts (Data/grass_tufts.json from make_grass_tufts.py; nothing happens without that file or the
@@ -901,21 +1138,109 @@ namespace CarcavelosCircuit.Visuals.Editor
             // apart hard (cool blue shadows against hot, nearly white sunlight); the ground bounce stays warm.
             // V20e (Luc, 13 Nov: "the difference between shade and light is far too harsh, make it more fluid"; the
             // hall and the shaded plazas read deep blue): a brighter, much less blue sky fill, a neutral horizon.
-            so.FindProperty("skyColour").colorValue = new Color(0.60f, 0.66f, 0.76f);       // #A8A8C2-ish (V18l #668CCC)
-            so.FindProperty("horizonColour").colorValue = new Color(0.64f, 0.65f, 0.66f);   // (V18l 0.52/0.58/0.66)
-            so.FindProperty("groundColour").colorValue = new Color(0.55f, 0.45f, 0.33f);    // warm bounce from the paving
+            so.FindProperty("skyColour").colorValue = NoonSkyFill;
+            so.FindProperty("horizonColour").colorValue = NoonHorizonFill;
+            so.FindProperty("groundColour").colorValue = NoonGroundFill;                   // warm bounce from the paving
             so.FindProperty("hazeColour").colorValue = HazeColour;                          // the sky's horizon colour
             so.FindProperty("hazeDensity").floatValue = HazeDensity;
             so.FindProperty("skybox").objectReferenceValue = skybox;
             so.FindProperty("reflection").objectReferenceValue = cube;                     // glass and gloss reflect the sky
-            so.ApplyModifiedPropertiesWithoutUndo();
-            lighting.ApplyIfActiveScene();                         // the preview scene is active here: save it with the look
             var look = new GameObject("Look (global volume)");
             look.transform.SetParent(root.transform, false);
             Volume volume = look.AddComponent<Volume>();
             volume.isGlobal = true;
             volume.priority = 1f;
             volume.sharedProfile = BuildLookProfile();
+            // V28: time of day. Noon = everything above; the player's choice on the start screen switches at runtime.
+            TimeOfDayLook[] looks = BuildTimeOfDayLooks(sun, skybox, cube, volume.sharedProfile);
+            so.FindProperty("lookVolume").objectReferenceValue = volume;
+            SerializedProperty list = so.FindProperty("looks");
+            list.arraySize = looks.Length;
+            for (int i = 0; i < looks.Length; i++)
+            {
+                list.GetArrayElementAtIndex(i).objectReferenceValue = looks[i];
+            }
+            so.FindProperty("editorMood").enumValueIndex = (int)TimeOfDay.Noon;              // scenes are saved at noon
+            so.ApplyModifiedPropertiesWithoutUndo();
+            lighting.ApplyIfActiveScene();                         // the preview scene is active here: save it with the look
+        }
+
+        // V28: one TimeOfDayLook asset per mood. Updated in place, so their GUIDs (and the prefab's links) stay.
+        private static TimeOfDayLook[] BuildTimeOfDayLooks(Light sun, Material noonSky, Cubemap noonCube, VolumeProfile noonGrade)
+        {
+            TimeOfDayLook noon = LookAsset(NoonLookAsset);
+            noon.mood = TimeOfDay.Noon;
+            noon.sunAzimuth = SunAzimuth;
+            noon.sunElevation = SunElevation;
+            noon.sunColour = sun.color;
+            noon.sunIntensity = sun.intensity;
+            noon.shadowStrength = sun.shadowStrength;
+            noon.skyColour = NoonSkyFill;
+            noon.horizonColour = NoonHorizonFill;
+            noon.groundColour = NoonGroundFill;
+            noon.skybox = noonSky;
+            noon.reflection = noonCube;
+            noon.hazeColour = HazeColour;
+            noon.hazeDensity = HazeDensity;
+            noon.profile = noonGrade;
+            noon.bakedShadowKeep = 1f;                             // the ground shadow map was baked for this sun
+            EditorUtility.SetDirty(noon);
+
+            TimeOfDayLook sunset = LookAsset(SunsetLookAsset);
+            sunset.mood = TimeOfDay.Sunset;
+            sunset.sunAzimuth = SunsetAzimuth;
+            sunset.sunElevation = SunsetElevation;
+            sunset.sunColour = SunsetSunColour;
+            sunset.sunIntensity = SunsetSunIntensity;
+            sunset.shadowStrength = SunsetShadowStrength;
+            sunset.skyColour = SunsetSkyFill;
+            sunset.horizonColour = SunsetHorizonFill;
+            sunset.groundColour = SunsetGroundFill;
+            Cubemap sunsetCube = AssetDatabase.LoadAssetAtPath<Cubemap>(SunsetSkyTexture);
+            if (sunsetCube == null)
+            {
+                Debug.LogWarning("CampusWorldBuilder: no " + SunsetSkyTexture + " (make_sky.py --mood sunset), sunset uses the noon sky.");
+            }
+            sunset.skybox = sunsetCube != null ? SkyMaterial("Sky_Sunset", sunsetCube) : noonSky;
+            sunset.reflection = sunsetCube != null ? sunsetCube : noonCube;
+            sunset.hazeColour = SunsetHaze;
+            sunset.hazeDensity = SunsetHazeDensity;
+            // A softer, warmer grade: orange highlights, violet shade, a touch less contrast than noon.
+            sunset.profile = BuildLookProfile(SunsetLookProfile, 0.05f, 16f, 14f, 10f,
+                                              new Vector4(0.97f, 0.96f, 1.06f, -0.02f), new Vector4(1.06f, 0.99f, 0.90f, 0.02f));
+            sunset.bakedShadowKeep = 0f;                           // the baked noon shadows point the wrong way now
+            EditorUtility.SetDirty(sunset);
+            AssetDatabase.SaveAssets();
+            return new[] { noon, sunset };
+        }
+
+        private static TimeOfDayLook LookAsset(string path)
+        {
+            EnsureFolder(SettingsDir);
+            TimeOfDayLook look = AssetDatabase.LoadAssetAtPath<TimeOfDayLook>(path);
+            if (look == null)
+            {
+                look = ScriptableObject.CreateInstance<TimeOfDayLook>();
+                AssetDatabase.CreateAsset(look, path);
+            }
+            return look;
+        }
+
+        private static Material SkyMaterial(string name, Cubemap cube)
+        {
+            EnsureFolder(MatDir);
+            string path = MatDir + "/" + name + ".mat";
+            Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null)
+            {
+                mat = new Material(Shader.Find("Skybox/Cubemap"));
+                AssetDatabase.CreateAsset(mat, path);
+            }
+            mat.SetTexture("_Tex", cube);
+            mat.SetFloat("_Exposure", 1f);
+            mat.SetFloat("_Rotation", 0f);
+            EditorUtility.SetDirty(mat);
+            return mat;
         }
 
         // Tonemapping + a grade, made by code so every laptop gets the same look. Bloom stays in Role 4's
@@ -928,24 +1253,33 @@ namespace CarcavelosCircuit.Visuals.Editor
 
         private static VolumeProfile BuildLookProfile()
         {
+            return BuildLookProfile(LookProfile, LookExposure, LookContrast, LookSaturation, 2f,
+                                    new Vector4(0.99f, 1.0f, 1.03f, -0.01f),    // V20e: nearly neutral, lifted shade (V18l: 0.93/0.98/1.10/-0.07)
+                                    new Vector4(1.03f, 1.0f, 0.96f, 0.02f));    // warm, bright sunlit tops
+        }
+
+        // V28: the same grade for every mood, with the mood's numbers.
+        private static VolumeProfile BuildLookProfile(string path, float exposure, float contrast, float saturation,
+                                                      float temperature, Vector4 shadows, Vector4 highlights)
+        {
             EnsureFolder(SettingsDir);
-            if (AssetDatabase.LoadAssetAtPath<VolumeProfile>(LookProfile) != null)
+            if (AssetDatabase.LoadAssetAtPath<VolumeProfile>(path) != null)
             {
-                AssetDatabase.DeleteAsset(LookProfile);
+                AssetDatabase.DeleteAsset(path);
             }
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            AssetDatabase.CreateAsset(profile, LookProfile);
+            AssetDatabase.CreateAsset(profile, path);
             Tonemapping tone = profile.Add<Tonemapping>(true);
             tone.mode.Override(TonemappingMode.ACES);
             ColorAdjustments grade = profile.Add<ColorAdjustments>(true);
-            grade.postExposure.Override(LookExposure);
-            grade.contrast.Override(LookContrast);
-            grade.saturation.Override(LookSaturation);
+            grade.postExposure.Override(exposure);
+            grade.contrast.Override(contrast);
+            grade.saturation.Override(saturation);
             WhiteBalance warm = profile.Add<WhiteBalance>(true);
-            warm.temperature.Override(2f);
+            warm.temperature.Override(temperature);
             ShadowsMidtonesHighlights split = profile.Add<ShadowsMidtonesHighlights>(true);
-            split.shadows.Override(new Vector4(0.99f, 1.0f, 1.03f, -0.01f));        // V20e: nearly neutral, lifted shade (V18l: 0.93/0.98/1.10/-0.07)
-            split.highlights.Override(new Vector4(1.03f, 1.0f, 0.96f, 0.02f));       // warm, bright sunlit tops
+            split.shadows.Override(shadows);
+            split.highlights.Override(highlights);
             foreach (VolumeComponent c in profile.components)
             {
                 c.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
@@ -1364,10 +1698,38 @@ namespace CarcavelosCircuit.Visuals.Editor
                                          RenderSettings.defaultReflectionMode == DefaultReflectionMode.Custom &&
                                          RenderSettings.customReflectionTexture != null));
 
+            // V28: the sunset look switches sun, sky, haze and grade, and noon brings back exactly today's look.
+            bool moods = true;
+            CampusWorldLighting lighting = second.GetComponent<CampusWorldLighting>();
+            Volume volume = second.GetComponentInChildren<Volume>();
+            TimeOfDayLook sunsetLook = lighting.LookFor(TimeOfDay.Sunset);
+            if (sunsetLook == null || lighting.LookFor(TimeOfDay.Noon) == null)
+            {
+                moods = false;
+            }
+            else
+            {
+                Quaternion noonSun = RenderSettings.sun.transform.rotation;
+                VolumeProfile noonGrade = volume.sharedProfile;
+                lighting.ShowInEditor(TimeOfDay.Sunset);
+                bool sunsetOn = Mathf.Approximately(RenderSettings.fogDensity, SunsetHazeDensity) &&
+                                Quaternion.Angle(RenderSettings.sun.transform.rotation, sunsetLook.SunRotation) < 0.1f &&
+                                Vector3.Dot(-RenderSettings.sun.transform.forward, Vector3.up) < 0.15f &&   // low sun
+                                volume.sharedProfile == sunsetLook.profile && volume.sharedProfile != noonGrade &&
+                                (!painted || AssetDatabase.LoadAssetAtPath<Cubemap>(SunsetSkyTexture) == null ||
+                                 RenderSettings.skybox.name == "Sky_Sunset");
+                lighting.ShowInEditor(TimeOfDay.Noon);
+                bool noonBack = Mathf.Approximately(RenderSettings.fogDensity, HazeDensity) &&
+                                Quaternion.Angle(RenderSettings.sun.transform.rotation, noonSun) < 0.1f &&
+                                volume.sharedProfile == noonGrade && (!painted || RenderSettings.skybox.name == "Sky_Painted");
+                moods = sunsetOn && noonBack;
+                report.AppendLine("time of day: sunset applied " + sunsetOn + ", noon back " + noonBack);
+            }
+
             SceneManager.SetActiveScene(preview);
             EditorSceneManager.CloseScene(holder, true);
             report.AppendLine("light in a scene with only the prefab: applied " + applied + ", other active scene left alone " + leftAlone);
-            return applied && leftAlone ? 0 : 1;
+            return applied && leftAlone && moods ? 0 : 1;
         }
 
         // Kart's-eye views at a few places of the lap, for comparing with the Blender renders.
@@ -1384,6 +1746,15 @@ namespace CarcavelosCircuit.Visuals.Editor
             cam.GetUniversalAdditionalCameraData().renderPostProcessing = true;    // the grade, as in the race
             var rt = new RenderTexture(1280, 720, 24) { antiAliasing = 4 };
             cam.targetTexture = rt;
+            // V28: -campusWorldMood sunset renders the sunset look (not saved: the scene stays at noon)
+            string moodName = Argument("-campusWorldMood");
+            TimeOfDay mood = string.Equals(moodName, "sunset", StringComparison.OrdinalIgnoreCase) ? TimeOfDay.Sunset : TimeOfDay.Noon;
+            CampusWorldLighting lighting = UnityEngine.Object.FindAnyObjectByType<CampusWorldLighting>();
+            if (lighting != null)
+            {
+                lighting.ShowInEditor(mood);
+            }
+            string suffix = mood == TimeOfDay.Noon ? "" : "_" + mood.ToString().ToLowerInvariant();
             string extra = Argument("-campusWorldShotS");                          // e.g. "60,575" (metres)
             float[] stations = string.IsNullOrEmpty(extra)
                 ? new[] { 16f, 60f, 100f, 150f, 200f, 330f, 470f, 575f, 610f, 700f, 860f, 965f, 1060f, 1100f, 1150f, 1260f }
@@ -1401,7 +1772,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 var tex = new Texture2D(1280, 720, TextureFormat.RGB24, false);
                 tex.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0);
                 tex.Apply();
-                File.WriteAllBytes(Path.Combine(folder, "unity_s" + ((int)s).ToString("0000") + ".png"), tex.EncodeToPNG());
+                File.WriteAllBytes(Path.Combine(folder, "unity_s" + ((int)s).ToString("0000") + suffix + ".png"), tex.EncodeToPNG());
                 UnityEngine.Object.DestroyImmediate(tex);
             }
             RenderTexture.active = null;
