@@ -223,11 +223,18 @@ def unity_track():
 # run-up. Written into track.json "boost_pads"; CampusWorldBuilder.AddBoostPads adds them after its own jump and tunnel
 # pads (a ray down puts each on the surface). Unity axes: x east, y up (the driving surface), z north; yaw in degrees
 # clockwise from north (Quaternion.Euler(0, yaw, 0)); width across, length along the driving direction, in metres.
+# V23s: + the pads on the race line itself (street_plan.ROUTE_PADS, kind "straight": two on the Avenida Marginal after
+# the roundabout, one in the car park's aisle), y = the road surface at the pad's route point.
 def boost_pads():
     import plaza_plan
-    return [{"name": p["name"], "kind": p["kind"], "x": round(p["x"], 3), "y": round(plaza_plan.DECK_Z, 3),
+    import street_plan
+    pads = [{"name": p["name"], "kind": p["kind"], "x": round(p["x"], 3), "y": round(plaza_plan.DECK_Z, 3),
              "z": round(p["y"], 3), "yaw": round(p["heading"], 2), "width": round(p["width"], 2),
              "length": round(p["length"], 2)} for p in plaza_plan.BOOST_PADS]
+    pads += [{"name": p["name"], "kind": p["kind"], "x": round(p["x"], 3), "y": round(p["track_z"] + ROAD_LIFT, 3),
+              "z": round(p["y"], 3), "yaw": round(p["heading"], 2), "width": round(p["width"], 2),
+              "length": round(p["length"], 2)} for p in street_plan.route_pads()]
+    return pads
 
 
 # V21a (start plaza): centre lines of the Nova Kart walls package V21b builds (WhiteGuardrailBuilder reads them; an

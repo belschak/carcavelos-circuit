@@ -180,6 +180,97 @@ def route_distance(x, y):
     return best
 
 
+# V23s (Luc, 13 Nov, q7 / q8: "you still see these imprints of the track ... it should look like a normal street where
+# you then have to turn left"). The paving stopped KEEP_OUT (4.95 m) from the centreline and the road's shoulder ends
+# at 4.90 m: through that 5 cm slot the shaded ground under the road showed as a dark line, two arcs across the
+# Marginal's asphalt that drew the race line into the left turn. On the route points of SEAM_RUNS the street's
+# paving is now cut SEAM_TUCK closer, so it runs on under the shoulder's outer edge (below it: nothing new to drive
+# on or to hit). Paving only; the paint keeps the standard keep-out. The road itself is untouched.
+SEAM_RUNS = [(193, 246)]   # the Avenida Marginal's westbound carriageway, the median gap and the entry throat
+SEAM_TUCK = 0.17
+_seam_segs = []
+
+
+def keep_out_at(x, y):
+    """The paving's keep-out at (x, y): KEEP_OUT, or KEEP_OUT - SEAM_TUCK where the nearest piece of road is in SEAM_RUNS."""
+    if not _seam_segs:
+        for a, b in SEAM_RUNS:
+            for i in range(a, b):
+                p, q = ROUTE[i], ROUTE[i + 1]
+                _seam_segs.append((p["x"], p["y"], q["x"], q["y"]))
+    near = min(seg_distance(x, y, *seg) for seg in _seam_segs)
+    if near > KEEP_OUT + 1.0 or near > route_distance(x, y) + 1e-6:
+        return KEEP_OUT
+    return KEEP_OUT - SEAM_TUCK
+
+
+# V23s (Luc, 13 Nov, q15 "here two more boost pads", q16 "here one boost pad is enough"): boost pads on the race line,
+# as data like V20b's jump pad (track.json "boost_pads", kind "straight"; the BoostPad itself is Unity's, task V11,
+# so nothing is painted here). i = route.json index of the pad's middle; the pad lies square to the driving direction
+# there. Street markings flagged road=True that would lie under a pad are left out (paint below), so no pad sits on
+# paint; the zebras are kept clear by the choice of i (route_pads() checks every pad against every marking).
+#   marginal 1 / 2   Avenida Marginal westbound, after the roundabout's west-arm zebra (route points 185-187): 22 m
+#                    after it, and 38 m further on, 38 m before the turn-in to the Capricciosa (route point 236).
+#                    Further west the race line crosses the lane line and the bend begins.
+#   car park         the car park's main aisle towards the fort, 14 m before its zebra (route points 286-289) and
+#                    26 m before checkpoint 7.
+ROUTE_PADS = [
+    dict(name="marginal 1", kind="straight", i=198, width=3.5, length=3.0),
+    dict(name="marginal 2", kind="straight", i=217, width=3.5, length=3.0),
+    dict(name="car park", kind="straight", i=279, width=3.5, length=3.0),
+]
+PAD_PAINT_GAP = 0.3        # m of bare road round a pad
+
+
+def _pad_frame(pad):
+    p, a, b = ROUTE[pad["i"]], ROUTE[pad["i"] - 1], ROUTE[pad["i"] + 1]
+    f = unit(b["x"] - a["x"], b["y"] - a["y"])
+    return p, f, (f[1], -f[0])
+
+
+def pad_ring(pad, grow=0.0):
+    p, f, r = _pad_frame(pad)
+    hl, hw = pad["length"] / 2 + grow, pad["width"] / 2 + grow
+    return [(p["x"] + f[0] * sl * hl + r[0] * sw * hw, p["y"] + f[1] * sl * hl + r[1] * sw * hw)
+            for sl, sw in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+
+
+def _rings_touch(a, b):
+    def cross(p, q, r, s):
+        d1 = (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])
+        d2 = (q[0] - p[0]) * (s[1] - p[1]) - (q[1] - p[1]) * (s[0] - p[0])
+        d3 = (s[0] - r[0]) * (p[1] - r[1]) - (s[1] - r[1]) * (p[0] - r[0])
+        d4 = (s[0] - r[0]) * (q[1] - r[1]) - (s[1] - r[1]) * (q[0] - r[0])
+        return d1 * d2 < 0 and d3 * d4 < 0
+    if any(inside(x, y, b) for x, y in a) or any(inside(x, y, a) for x, y in b):
+        return True
+    return any(cross(p, q, r, s) for p, q in zip(a, a[1:] + a[:1]) for r, s in zip(b, b[1:] + b[:1]))
+
+
+def under_pad(ring):
+    """True if a marking's ring reaches under a boost pad (its footprint grown by PAD_PAINT_GAP)."""
+    return any(_rings_touch(ring, pad_ring(pad, PAD_PAINT_GAP)) for pad in ROUTE_PADS)
+
+
+def route_pads():
+    """[{name, kind, x, y (generator metres), track_z, heading (bearing, degrees clockwise from north), width,
+    length, i}] for export_unity_bundle.boost_pads(). Stops the run if a pad lies on a marking of the road."""
+    out = []
+    for pad in ROUTE_PADS:
+        p, f, _r = _pad_frame(pad)
+        ring = pad_ring(pad)
+        hit = [q["colour"] for q in PAINT if q["road"] and _rings_touch(ring, q["ring"])]
+        if hit:
+            raise SystemExit(f"boost pad '{pad['name']}' at route point {pad['i']} lies on road paint: {sorted(set(hit))}")
+        out.append({"name": pad["name"], "kind": pad["kind"], "x": p["x"], "y": p["y"], "track_z": p["track_z"],
+                    "heading": math.degrees(math.atan2(f[0], f[1])) % 360.0, "width": pad["width"],
+                    "length": pad["length"], "i": pad["i"]})
+    return out
+
+
+PADS_CLEARED = []          # colours of the markings left out under the pads (log)
+
+
 LAYERS, PAINT = [], []
 
 # Flat colours of the palette texture (make_street_textures.py street_palette; 8 x 8 cells, in this order). Markings,
@@ -215,8 +306,11 @@ def paint(colour, ring, road=False):
     """road (V18r): this marking may lie on the race road (inside KEEP_OUT). Where it does, env_streets hands it to
     Track_EdgeLines (flush paint on the road, no collider); every other marking is cut off at the keep-out.
     road="fill": only the part inside the keep-out is painted (paving that the road's shoulder has cut away)."""
-    PAINT.append({"colour": colour, "ring": [(float(x), float(y)) for x, y in ring],
-                  "road": road if road == "fill" else bool(road)})
+    ring = [(float(x), float(y)) for x, y in ring]
+    if road and under_pad(ring):                 # V23s: no marking under a boost pad (ROUTE_PADS)
+        PADS_CLEARED.append(colour)
+        return
+    PAINT.append({"colour": colour, "ring": ring, "road": road if road == "fill" else bool(road)})
 
 
 def paint_ribbon(colour, line, d0, d1, seg=6.0, road=False):
@@ -416,11 +510,16 @@ def marginal():
     layer("D carriageways", "asphalt", ribbon(whole, EB[0], WB[1]), asphalt_uv)
     layer("D north sidewalk", "calcada", ribbon(whole, N_WALK[0], N_WALK[1]))
     # from the roundabout to x -205 the race line lies on the north sidewalk's line: the sidewalk runs beside the road
-    layer("D north sidewalk beside the road", "calcada", route_ribbon(183, 222, -1, KEEP_OUT - 0.1, KEEP_OUT + 2.1))
+    # V23s (Luc, q7): it ended at point 222, where the real sidewalk is still under the road; only a sliver of it was
+    # left between the road and the dust lot's grass up to point 234, and the asphalt seemed to bulge out to the
+    # right. It now runs on to point 234, where the real sidewalk is clear of the road (its kerb 0.3 m outside this one): one sidewalk, 2.2 m all the way.
+    layer("D north sidewalk beside the road", "calcada", route_ribbon(183, 234, -1, KEEP_OUT - 0.1, KEEP_OUT + 2.1))
     for x0, x1 in ((-418.0, MOUTH_X[0]), (MOUTH_X[1], -148.4)):
         layer("D south sidewalk", "calcada", ribbon(cut(MEDIAN, med_s(x0), med_s(x1)), S_WALK[0], S_WALK[1]))
     # kerb lines (flush pale stone bands; the raised kerbs are built from RAISED where the track is far enough)
-    paint_ribbon("kerb", whole, N_WALK[0] - 0.02, N_WALK[0] + 0.16)
+    # (V23s: not between x -226.5 and -163, where the real kerb line lies under the road or under the sidewalk beside it)
+    for x0, x1 in ((-418.0, -226.5), (-163.0, -148.4)):
+        paint_ribbon("kerb", cut(MEDIAN, med_s(x0), med_s(x1)), N_WALK[0] - 0.02, N_WALK[0] + 0.16)
     for x0, x1 in ((-418.0, MOUTH_X[0]), (MOUTH_X[1], -148.4)):
         paint_ribbon("kerb", cut(MEDIAN, med_s(x0), med_s(x1)), S_WALK[1] - 0.16, S_WALK[1] + 0.02)
     # The median. The race line runs 6 m north of it from the roundabout on, drifts onto it and crosses it at

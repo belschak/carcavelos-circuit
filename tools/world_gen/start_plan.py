@@ -95,7 +95,9 @@ def grid_slots(route=None):
 # ---------------------------------------------------------------------------------------------------------------
 TURN_STEP_DEG = 5.0                     # a route point belongs to a bend when the line turns more than this at it
 MEDIAN_TURN_GAP = -2.0                  # m from the U-turn chord centre to the median's west end; -2 = 2 m past it, 4.1 m from the inner road edge (Luc: visible from point 667, turn stays open)
-MEDIAN_POOL_GAP = 0.6                   # m between the median's east end and the entrance pool's rim (no kart fits)
+MEDIAN_LENGTH = 12.0                    # V23s (Luc, 13 Nov, q4: "the wall is far too long"): a short divider at the U-turn end only, 10-14 m; the
+                                        # home straight, the grid and the START gate are open again. None = the V21a wall up to the pool
+MEDIAN_POOL_GAP = 0.6                   # m between the east end and the entrance pool's rim (only reached with MEDIAN_LENGTH = None)
 POOL_RIM = 0.3                          # env_entrance: the pool's ring grown by its rim
 
 
@@ -148,7 +150,8 @@ def _ray_ring(o, d, ring):
 
 def median(route=None):
     """The straight wall between the two legs: from MEDIAN_TURN_GAP east of the U-turn's centre, along the bisector
-    of the home straight and the westbound leg, to MEDIAN_POOL_GAP before the entrance pool's rim. [(x, y), (x, y)]."""
+    of the home straight and the westbound leg, MEDIAN_LENGTH long (V23s: a short divider at the U-turn end), never
+    further than MEDIAN_POOL_GAP before the entrance pool's rim. [(x, y), (x, y)]."""
     route = route or _route()
     pts, n, start = route["points"], len(route["points"]), route.get("start_index", 0)
     first, last, c, _r = uturn(route)
@@ -166,6 +169,8 @@ def median(route=None):
         t_end = t_pool - POOL_RIM - MEDIAN_POOL_GAP
         while _ring_dist((c[0] + d[0] * t_end, c[1] + d[1] * t_end), pool) < POOL_RIM + MEDIAN_POOL_GAP:
             t_end -= 0.05
+    if MEDIAN_LENGTH is not None:
+        t_end = min(t_end, MEDIAN_TURN_GAP + MEDIAN_LENGTH)
     return [(c[0] + d[0] * t, c[1] + d[1] * t) for t in (MEDIAN_TURN_GAP, t_end)]
 
 

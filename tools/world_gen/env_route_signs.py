@@ -57,7 +57,10 @@ SIZES = {   # width, height, lift (bottom over the ground), thickness, post offs
     "big": dict(w=3.6, h=1.2, lift=0.6, t=0.10, posts=(-1.3, 1.3), post=0.06),
     "fork": dict(w=6.0, h=2.0, lift=0.9, t=0.14, posts=(-2.5, 0.0, 2.5), post=0.08),
     "overhead": dict(w=3.2, h=1.4, lift=4.0, t=0.12, posts=(0.9,), post=0.09),   # mast 0.9 m right of the middle
-    # (V20 integration: 3.2 m wide, 4 m up, so on V20b's axis it stays off the race road and the chase camera passes under)
+    # (V20 integration: 3.2 m wide, 4 m up, so on V20b's axis it stays off the race road and the chase camera passes under;
+    # V23s: no board uses it any more, Luc's q12: "an absolute catastrophe")
+    "half": dict(w=3.0, h=1.0, lift=0.6, t=0.10, posts=(-1.1, 1.1), post=0.06),    # V23s: half the fork board (Luc, q9)
+    "wall": dict(w=1.44, h=1.0, lift=1.1, t=0.06, posts=(), post=0.0),             # V23s: flat on a wall, no posts (q12)
 }
 
 # Lanes that are not the race line but must stay clear: lists of (centre polyline, half width in m).
@@ -92,13 +95,25 @@ SIGNS = [
     dict(id="RB2", shot="s05", type="right", size="big", at=(-91.5, -44.0), face_from=(-97.3, -28.9),
          note="on the splitter island where a wrong left turn would go (east side of the ring)"),
     # s07 hairpin: "put more left signs here so that nobody drives straight on"
-    dict(id="H2", shot="s07", type="left", size="normal", near=(-219.0, -24.0), side=-1, offset=7.5,
-         face_from=(-208.2, -29.3), note="early, on the verge left of the Marginal at idx ~232"),
+    # V23s (Luc, 13 Nov, q7): H2 stood 7.5 m left of the race line at idx ~232 = on the eastbound carriageway ("the
+    # sign on the far left stands in the middle of the road"); it is gone. H3 is his new one: "on the far right, so
+    # that you don't keep driving straight on": a big left board across the right lane of the westbound carriageway,
+    # past the median gap, facing the driver on the approach. Its place is the one constant CAP_STRAIGHT_ON below
+    # (Luc will mark the exact spot).
+    dict(id="H3", shot="q7", type="left", size="big", at="cap_straight_on", face_from=(-215.4, -25.9),
+         note="far right: across the westbound carriageway's right lane where the Marginal goes straight on (idx 236-242)"),
     dict(id="H1", shot="s07", type="left", size="big", at=(-253.0, -15.5), face_from=(-228.4, -20.6),
          note="straight ahead where a kart that misses the hairpin would go on along the Marginal"),
     # s09 fork with the yellow markings: one big two-way board in the middle
-    dict(id="F1", shot="s09", type="two_way", size="fork", at=(-118.5, -138.5), face_from=(-156.4, -116.5),
-         note="on the lawn wedge between the walkway (left branch) and the race band (right branch)"),
+    # V23s (Luc, 13 Nov, q9 / q10): the 6 m board on three posts on the lawn wedge (-118.5, -138.5) is gone ("the one
+    # behind it, the one with three posts, you can leave out"). Instead two smaller two-way boards before the fork:
+    # F1 half as wide "exactly at the corner left of this yellow crossing", F0 where the tall lamp post stood, right
+    # of the wooden post fence and left of the purple planters ("an arrow that goes left and right, because you can
+    # go down to the beach or straight on to the tunnel"; package V23c removes the mast and the bollards there).
+    dict(id="F1", shot="q9", type="two_way", size="half", at=(-143.2, -117.8), face_from=(-158.0, -115.3),
+         note="on the dark square beside the yellow box's north corner, left of the race band at idx ~321"),
+    dict(id="F0", shot="q10", type="two_way", size="normal", at=(-135.36, -122.84), face_from=(-152.0, -120.0),
+         note="the flood mast's place between the timber posts and the flower troughs, left of the race band at idx ~326"),
     # ... and a series along the right branch towards the beach tunnel (with the corner signs at s 686 and 762)
     dict(id="F2", shot="s09", type="left", size="normal", near=(-125.4, -147.3), side=1, offset=7.5,
          face_from=(-137.8, -131.7), note="sea side of the bend at idx ~338, before the corner sign at s 686"),
@@ -109,8 +124,13 @@ SIGNS = [
     dict(id="T1", shot="s12", type="left", size="big", at=(120.2, -26.6), face_from=(95.3, -44.5),
          note="lower plaza, outside the left turn at idx 480-486, in front of the picnic tables"),
     # s14: "again a sign that you can go left and right" (shortcut left, main line right)
-    dict(id="P1", shot="s14", type="two_way", size="overhead", at="shortcut_fork", face_from=(98.85, 14.41),
-         note="one mast between the shortcut's pad lane and the main line, board 3 m up, facing checkpoint 10"),
+    # V23s (Luc, 13 Nov, q12: "smaller, above all a bit narrower, and on the ground ... placed so that you can't
+    # drive into it ... maybe right of the ramp. You can also consider putting it on the wall behind"): between the
+    # kicker and the main line there are 2.1 m of deck, too little for a board with FORK_GAP on both sides, so the
+    # board hangs flat on the south face of the bridge's west pier, right of the kicker's lip: "< >", 1.44 x 1.0 m,
+    # 1.1 to 2.1 m over the deck, no post, nothing to drive into (the pier is a wall anyway).
+    dict(id="P1", shot="q12", type="two_way", size="wall", at="pier_face",
+         note="flat on the bridge pier's south face, right of the kicker's lip; jump lane left of it, main line right"),
     # s19 / s20 north plaza: "shortly before the cars please arrows to the left, and after turning left again to the left"
     dict(id="N1", shot="s19", type="left", size="big", at=(84.5, 163.5), face_from=(69.6, 159.8),
          note="in front of the parked cars, facing the atrium exit door D5"),
@@ -118,7 +138,10 @@ SIGNS = [
          note="outside the second left turn (idx 616-626), after the corner sign at s 1186"),
 ]
 
-SHORTCUT_FORK = (-14.0, 2.0)     # P1's middle: plaza_plan.sc_point(s, u) on V20b's jump axis, 3.5 m before the pad, where
+CAP_STRAIGHT_ON = (-240.6, -9.1)  # H3's middle (V23s): the ONE place to move when Luc marks the spot (generator x, y =
+                                  # track.json x, z). Now: 5.0 m north of the median's line at x -243, i.e. the middle of
+                                  # the westbound carriageway's right lane, 10 m past the race road's outer edge.
+SHORTCUT_FORK = (-14.0, 2.0)     # (V20; unused since V23s) the overhead board's middle: plaza_plan.sc_point(s, u) on V20b's jump axis, 3.5 m before the pad, where
                                  # the shortcut leaves the main line; mast 0.9 m further right, at u 2.5 (V20 integration)
 
 
@@ -160,6 +183,13 @@ def resolve(sign):
     if sign.get("at") == "shortcut_fork":
         import plaza_plan as P
         c = Vector((*P.sc_point(*SHORTCUT_FORK), 0))
+    elif sign.get("at") == "cap_straight_on":
+        c = Vector((*CAP_STRAIGHT_ON, 0))
+    elif sign.get("at") == "pier_face":            # V23s: flat on the south face of the bridge's west pier (plaza_plan.PIER)
+        import plaza_plan as P
+        a, b = Vector((*P.PIER[0], 0)), Vector((*P.PIER[1], 0))
+        f = Vector((*P.PASSAGE_DIR, 0)).normalized()             # from the driver into the wall
+        return (a + b) / 2 - f * (SIZES[sign["size"]]["t"] / 2 + 0.02), f
     elif "at" in sign:
         c = Vector((sign["at"][0], sign["at"][1], 0))
     else:
@@ -227,13 +257,19 @@ def add_board(bm, sign, c, f):
     z_ref = E.nearest_route_point(c.x, c.y)["track_z"]
     feet = [c + u * pu for pu in s["posts"]]
     grounds = [ground_at(p.x, p.y, z_ref) for p in feet]
+    if not feet:                                                # V23s: a wall board hangs over the plaza deck
+        import plaza_plan as P
+        grounds = [P.DECK_Z]
     z0 = max(grounds) + sign.get("lift", s["lift"])
     add_box(bm, c, u, f, s["w"] / 2, s["t"] / 2, z0, z0 + s["h"], 0)                       # board (white)
     for p, g in zip(feet, grounds):                                                        # posts behind it
         add_box(bm, p + f * (s["t"] / 2 + s["post"] + 0.01), u, f, s["post"], s["post"], g - 0.1, z0 + s["h"] * 0.6, 2)
     front = c - f * (s["t"] / 2 + 0.01)
     vm, h = z0 + s["h"] / 2, s["h"]
-    if sign["type"] == "two_way":
+    if sign["type"] == "two_way" and s["w"] < 2.9 * h:          # V23s: a narrow board carries one chevron each way, "< >"
+        for u0, point in ((-0.45 * h, -1), (0.45 * h, 1)):
+            chevron(bm, front, u, f, u0, point, vm, h)
+    elif sign["type"] == "two_way":
         sp = 0.8 * h
         for u0, point in ((-1.5 * sp, -1), (-0.5 * sp, -1), (0.5 * sp, 1), (1.5 * sp, 1)):
             chevron(bm, front, u, f, u0, point, vm, h)
@@ -261,6 +297,8 @@ def check(sign, c, f, u, feet):
     near = {k: v for k, v in lane.items() if v < 6.0}
     need = FORK_GAP if sign["type"] == "two_way" else GAP
     low = road < need or any(v < need for v in near.values())
+    if sign["size"] == "wall":                     # V23s: flat on a wall that stands there anyway (6 cm proud of it):
+        low = road < 0.5                           # the wall bounds the lanes, the board only must not reach the road
     if sign["size"] == "overhead":                 # the board itself must not reach over the race road
         over = min(road_clearance(p.x, p.y) for p in (c + u * (s["w"] / 2), c - u * (s["w"] / 2)))
         low = low or over < 0.0
