@@ -165,6 +165,9 @@ def build_one(b, index):
         return env_beachfront.build_one(b, index)
     if env_campus.owns(b):                              # V10c2
         return env_campus.build_one(b, index)
+    import env_north                                    # V20d: the villas north of the forecourt's field
+    if env_north.owns_house(b):
+        return env_north.build_house(b, index)
     if b.get("osm_building") == "roof":
         return build_canopy(b, index)
     pts = b["points"]

@@ -178,8 +178,9 @@ FAN_CLEAR = 10.0           # m from the race centreline: nothing solid stands cl
 FAN_I = (650, 678)         # route points with the full FAN_CLEAR ...
 FAN_TAPER = 7              # ... back to the usual 6.6 m over this many points before and after (the start line: 685 = 0)
 FAN_NO_SIGN = (655, 676)   # no chevron board beside these route points (it stood 1.2 m outside the road, in the drift zone)
-CENTRE_RING = dict(r=3.4, band=0.4)        # flush ring of dark setts round LOOP_C (the campus' forecourt has the same
-                                           # motif): it marks the middle to go round; None = no ring
+CENTRE_RING = None         # V18h had dict(r=3.4, band=0.4): a flush ring of dark setts round LOOP_C as a marker to go
+                           # round. V20d (Luc's playtest, "odd black markings ... improve all that from Google Maps"): not
+                           # on Google (sat20 mosaic, Street View N14) and not in the survey, so gone; None = no ring
 RIM_LAMP = (322.0, FAN_R + 1.3)            # bearing from LOOP_C, radius: the loop's lamp and bin stand on the lawn bank
 RIM_BIN = (314.5, FAN_R + 1.2)             # behind the rim (they stood inside the loop)
 TREE_EDGE_S = 7.1          # trees the plaza pushes out go no closer to B's planted strip than this (band frame, m)

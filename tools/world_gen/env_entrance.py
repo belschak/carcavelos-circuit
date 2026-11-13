@@ -134,6 +134,7 @@ def materials():
         # steel strip at the lawn, R. da Holanda's asphalt, the terrain's own material for the sheet's hems
         "buff": env_streets._textured("north_buff", "#B3AB95", "north_buff", 0.9),
         "grating": env_streets._textured("north_grating", "#8C908C", "north_grating", 0.55),
+        "basalt": env_streets._textured("north_basalt", "#64615D", "north_basalt", 0.8),    # V20d: the ring's basalt band
         "rust": env_streets.mat("rust"),
         "asphalt": env_streets.mat("asphalt"),
         "ground_map": env_streets.mat("ground_map"),
