@@ -11,6 +11,11 @@
 #   UNITY_PASSWORD = the Unity account's password
 # Without them the run stops at the first step with a clear message (no failed build).
 # Optional, for the online leaderboard (task R10): LEADERBOARD_URL and LEADERBOARD_ANON_KEY (backend/supabase/README.md).
+#
+# Public URL (V6, G5): every build of main is also published on GitHub Pages, so the deployed game is always the
+# newest main commit (course rule: main = the deployed app). One-time setting by the repo owner, before the first
+# deploy: Settings > Pages > Build and deployment > Source = "GitHub Actions". Address:
+# https://belschak.github.io/carcavelos-circuit/  Builds started by hand on another branch are never published.
 
 name: Web build
 
@@ -33,6 +38,8 @@ jobs:
     timeout-minutes: 90
     env:
       HAS_LICENSE: ${{ secrets.UNITY_LICENSE != '' && secrets.UNITY_EMAIL != '' && secrets.UNITY_PASSWORD != '' }}
+    outputs:
+      built: ${{ env.HAS_LICENSE }}
     steps:
       - name: Check the Unity secrets
         run: |
@@ -88,3 +95,30 @@ jobs:
           path: Build-Web
           if-no-files-found: error
           retention-days: 14
+
+      # The same files again, packed the way GitHub Pages wants them (only for main, see the top of this file).
+      - name: Pack the build for GitHub Pages
+        if: env.HAS_LICENSE == 'true' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: Build-Web
+
+  # Publishes the packed build at the public URL. A separate job, because only this step may write to Pages.
+  pages:
+    needs: web
+    if: github.ref == 'refs/heads/main' && needs.web.outputs.built == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      pages: write # publish the site
+      id-token: write # proves to Pages that this run comes from this repository
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Set up GitHub Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - name: Publish
+        id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
