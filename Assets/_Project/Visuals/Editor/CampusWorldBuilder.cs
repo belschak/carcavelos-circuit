@@ -97,7 +97,10 @@ namespace CarcavelosCircuit.Visuals.Editor
         {
             public float length_m; public int jump_index, start_index, spawn_index; public int[] checkpoints; public TrackPoint[] points;
             public float[] checkpoint_widths;   // V20a: trigger width per checkpoint (m); missing or <= 0 = road width + 4 m
+            public BoostPadSpot[] boost_pads;   // V20b: pads off the race line (export_unity_bundle.boost_pads)
         }
+        // V20b: one extra boost pad: position (y = driving surface), yaw in degrees clockwise from north, size in metres.
+        [Serializable] private class BoostPadSpot { public string name, kind; public float x, y, z, yaw, width, length; }
         // V19 promenade shortcut (tools/world_gen/promenade_shortcut_plan.py -> Data/shortcuts.json), Unity x/z.
         [Serializable] private class XZ { public float x, z; }
         [Serializable] private class ShortcutLine { public string name; public float width; public XZ[] points; }
@@ -694,6 +697,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             tso.ApplyModifiedPropertiesWithoutUndo();
 
             AddBoostPads(race, data);
+            AddCheckpointGates(race, data);
         }
 
         // Boost pads (task V11, BoostPadPlan): two before the jump so the kart flies far, a chain in the tunnel.
@@ -734,7 +738,29 @@ namespace CarcavelosCircuit.Visuals.Editor
                     jump ? BoostPadPlan.JumpBoostSeconds : BoostPadPlan.TunnelBoostSeconds,
                     jump ? BoostPadPlan.JumpSpeedMultiplier : BoostPadPlan.TunnelSpeedMultiplier);
             }
-            Debug.Log("CampusWorldBuilder: " + distances.Count + " boost pads.");
+            // V20b: pads that are not on the race line, from track.json "boost_pads" (the jump pad on the plaza
+            // shortcut's run-up). Same ray onto the surface and the same strength as the jump pads above.
+            int extra = 0;
+            foreach (BoostPadSpot spot in data.boost_pads ?? new BoostPadSpot[0])
+            {
+                Vector3 position = new Vector3(spot.x, spot.y, spot.z);
+                Vector3 forward = Quaternion.Euler(0f, spot.yaw, 0f) * Vector3.forward;
+                Vector3 up = Vector3.up;
+                if (Physics.Raycast(position + Vector3.up * 1.5f, Vector3.down, out RaycastHit hit, 4f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    position = hit.point;
+                    up = hit.normal;
+                }
+                bool jump = spot.kind == "jump";
+                var go = new GameObject("BoostPad " + spot.kind + " " + spot.name);
+                go.transform.SetParent(group.transform, false);
+                go.transform.SetPositionAndRotation(position, Quaternion.LookRotation(Vector3.ProjectOnPlane(forward, up).normalized, up));
+                go.AddComponent<BoostPad>().Configure(new Vector2(spot.width, spot.length), material,
+                    jump ? BoostPadPlan.JumpBoostSeconds : BoostPadPlan.TunnelBoostSeconds,
+                    jump ? BoostPadPlan.JumpSpeedMultiplier : BoostPadPlan.TunnelSpeedMultiplier);
+                extra++;
+            }
+            Debug.Log("CampusWorldBuilder: " + distances.Count + " boost pads" + (extra > 0 ? " + " + extra + " off the race line" : "") + ".");
         }
 
         // URP Lit with emission on, so the Web build keeps the glowing shader variant. The chevrons come in code.
@@ -753,6 +779,85 @@ namespace CarcavelosCircuit.Visuals.Editor
             material.SetColor("_EmissionColor", new Color(0.8f, 0.8f, 0.8f, 1f));
             material.EnableKeyword("_EMISSION");
             material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        }
+
+        // Checkpoint gates (task V13): a waving "NOVA KART" feather banner on each side of the road at every
+        // checkpoint, so the player sees where to drive through. Each pole foot sits on the ground found by a ray;
+        // a pole that would stand inside a wall (tunnel, ramp walls) moves in towards the road until it is free.
+        private static void AddCheckpointGates(GameObject race, TrackData data)
+        {
+            Material pole = AssetDatabase.LoadAssetAtPath<Material>(MatDir + "/W_gloss_black.mat");
+            Material cloth = CheckpointBannerMaterial();
+            var group = new GameObject("CheckpointGates");
+            group.transform.SetParent(race.transform, false);
+            Physics.SyncTransforms();
+            int moved = 0;
+            for (int c = 0; c < data.checkpoints.Length; c++)
+            {
+                int i = data.checkpoints[c];
+                TrackPoint p = data.points[i];
+                var gate = new GameObject("Gate " + c + (c == 0 ? " (start-finish)" : ""));
+                gate.transform.SetParent(group.transform, false);
+                gate.transform.SetPositionAndRotation(Pos(p), Quaternion.LookRotation(Forward(data, i)));
+                float offset = CheckpointGatePlan.PostOffset(p.width);
+                Vector3 left = GateFoot(gate.transform, -1f, offset, p.width, ref moved);
+                Vector3 right = GateFoot(gate.transform, 1f, offset, p.width, ref moved);
+                gate.AddComponent<CheckpointGate>().Configure(left, right, pole, cloth);
+            }
+            Debug.Log("CampusWorldBuilder: " + data.checkpoints.Length + " checkpoint gates (" + moved + " poles moved in from a wall).");
+        }
+
+        // Local foot position of one pole: as far out as planned, or nearer the road if a wall is there, on the ground.
+        private static Vector3 GateFoot(Transform gate, float side, float offset, float roadWidth, ref int moved)
+        {
+            const float step = 0.25f;
+            float minimum = roadWidth * 0.5f - 0.2f;                 // never further in than the road edge
+            float d = offset;
+            while (d > minimum && Physics.CheckCapsule(gate.TransformPoint(new Vector3(side * d, 0.6f, 0f)),
+                       gate.TransformPoint(new Vector3(side * d, 2.6f, 0f)), 0.2f, ~(1 << 2), QueryTriggerInteraction.Ignore))
+            {
+                d -= step;
+            }
+            if (d < offset)
+            {
+                moved++;
+            }
+            Vector3 top = gate.TransformPoint(new Vector3(side * d, 2f, 0f));
+            float y = 0f;
+            if (Physics.Raycast(top, Vector3.down, out RaycastHit hit, 6f, ~(1 << 2), QueryTriggerInteraction.Ignore))
+            {
+                y = gate.InverseTransformPoint(hit.point).y;
+            }
+            return new Vector3(side * d, y, 0f);
+        }
+
+        // URP Lit with the banner picture (tools/textures/make_checkpoint_banner.py), clamped so no edge bleeds over.
+        private static Material CheckpointBannerMaterial()
+        {
+            const string folder = "Assets/_Project/Visuals/CheckpointGates";
+            const string picture = folder + "/CheckpointBanner.png";
+            const string path = folder + "/CheckpointBanner.mat";
+            var importer = (TextureImporter)AssetImporter.GetAtPath(picture);
+            if (importer != null && (importer.wrapMode != TextureWrapMode.Clamp || importer.maxTextureSize != 1024))
+            {
+                importer.wrapMode = TextureWrapMode.Clamp;
+                importer.maxTextureSize = 1024;
+                importer.SaveAndReimport();
+            }
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                Shader lit = Shader.Find("Universal Render Pipeline/Lit");
+                material = new Material(lit != null ? lit : Shader.Find("Standard"));
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(picture));
+            material.SetColor("_BaseColor", Color.white);
+            material.SetFloat("_Smoothness", 0.15f);
             EditorUtility.SetDirty(material);
             return material;
         }
