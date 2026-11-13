@@ -15,6 +15,7 @@ namespace CarcavelosCircuit.Driving
     // heading can change. The model (Visual) tilts to the slope and levels out in the air, only for looks.
     // Item boosts (Role 4's item boxes, IKartBoost): RaceFlow adds boost time from outside; the faster multiplier
     // of the drift boost and the item boost wins while the boost runs.
+    // Trick (D11): Shift in the air spins the model once; finished before landing = a short boost (TrickRule).
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(SphereCollider))]
     public class KartController : MonoBehaviour, IKartState, IKartBoost
@@ -36,6 +37,10 @@ namespace CarcavelosCircuit.Driving
         private bool driftHeld;        // drift key (Space) is down
         private float boostSecondsLeft;
         private float itemBoostMultiplier = 1f; // from an item (IKartBoost), 1 = no item boost running
+        private float airSeconds;      // how long the kart has been in the air (for the wobble of the model)
+        private TrickRule trick;       // D11: one trick per jump, boost on a clean landing
+        private bool trickPressed;     // the trick key (Shift) was pressed since the last physics step
+        private bool wasGrounded = true; // grounded in the last physics step (to notice take-off and landing)
         private bool grounded;
         private Vector3 groundNormal = Vector3.up;
 
@@ -89,6 +94,7 @@ namespace CarcavelosCircuit.Driving
             {
                 drift = new DriftCharge(tuning.Stage1Seconds, tuning.Stage2Seconds,
                     tuning.Stage1BoostSeconds, tuning.Stage2BoostSeconds);
+                trick = new TrickRule(tuning.TrickSeconds, tuning.TrickBoostSeconds);
             }
         }
 
@@ -117,6 +123,12 @@ namespace CarcavelosCircuit.Driving
             if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) steerInput += 1f;
             if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) steerInput -= 1f;
             driftHeld = keyboard.spaceKey.isPressed;
+
+            // Trick key: remember the press until the next physics step uses it (a press is shorter than a frame).
+            if (keyboard.leftShiftKey.wasPressedThisFrame || keyboard.rightShiftKey.wasPressedThisFrame)
+            {
+                trickPressed = true;
+            }
         }
 
         private void FixedUpdate()
@@ -137,6 +149,7 @@ namespace CarcavelosCircuit.Driving
                 }
             }
             UpdateDrift(dt);
+            UpdateTrick(dt);
             body.angularVelocity = Vector3.zero; // a wall hit must not spin the kart, only steering turns it
 
             if (!grounded)
@@ -251,10 +264,40 @@ namespace CarcavelosCircuit.Driving
             }
 
             // Key released: a charged drift gives a boost, an early release gives nothing.
-            float earned = drift.Release();
-            if (earned > boostSecondsLeft)
+            GiveBoost(drift.Release());
+        }
+
+        // Trick (D11): Shift in the air starts it, landing pays out (or not). Called every physics step.
+        // TrickRule has the rules (one per jump, finished before landing = boost), unit tested.
+        private void UpdateTrick(float dt)
+        {
+            if (trick == null)
             {
-                boostSecondsLeft = earned;
+                return;
+            }
+            if (wasGrounded && !grounded)
+            {
+                trick.TakeOff(); // just left the ground: a new jump
+            }
+            if (trickPressed && InputActive)
+            {
+                trick.TryStart(!grounded); // refused on the ground or for a second trick in the same jump
+            }
+            trickPressed = false; // one press = one try, also when it was refused
+            trick.Tick(dt);
+            if (!wasGrounded && grounded)
+            {
+                GiveBoost(trick.Land()); // just landed: a finished trick gives a boost, a late one nothing
+            }
+            wasGrounded = grounded;
+        }
+
+        // The one boost path for drifts and tricks: the longer boost wins, boosts never stack up endlessly.
+        private void GiveBoost(float seconds)
+        {
+            if (seconds > boostSecondsLeft)
+            {
+                boostSecondsLeft = seconds;
             }
         }
 
@@ -275,16 +318,39 @@ namespace CarcavelosCircuit.Driving
             body.MoveRotation(Quaternion.Euler(0f, turnDegrees, 0f) * body.rotation);
         }
 
-        // Looks only: the model leans to the slope under the kart and levels out again in the air.
-        // The physics body never tilts, so this cannot affect driving or flipping.
+        // Looks only: on the ground the model leans to the slope under the kart. In the air (D10) the nose goes up
+        // while rising and down while falling, with a small wobble (FlyingPose has the rules, unit tested), and the
+        // model is level again after landing. The physics body never tilts, so this cannot affect driving or flipping.
         private void LateUpdate()
         {
-            if (visual == null || tuning == null)
+            if (visual == null || tuning == null || body == null)
             {
                 return;
             }
-            Quaternion level = Quaternion.FromToRotation(Vector3.up, groundNormal) * transform.rotation;
-            visual.rotation = Quaternion.Slerp(visual.rotation, level, tuning.VisualTiltSpeed * Time.deltaTime);
+
+            Quaternion target = Quaternion.FromToRotation(Vector3.up, groundNormal) * transform.rotation;
+            if (grounded)
+            {
+                airSeconds = 0f;
+            }
+            else
+            {
+                airSeconds += Time.deltaTime;
+                float pitch = FlyingPose.PitchDegrees(grounded, body.linearVelocity.y,
+                    tuning.MaxAirPitchDegrees, tuning.AirPitchFullSpeed);
+                float roll = FlyingPose.RollDegrees(grounded, airSeconds,
+                    tuning.AirWobbleDegrees, tuning.AirWobbleHertz);
+                // In Unity a positive turn around the sideways axis lowers the nose, so nose up is minus pitch.
+                target = transform.rotation * Quaternion.Euler(-pitch, 0f, roll);
+            }
+            if (trick != null && trick.IsRunning)
+            {
+                // Trick (D11): one full turn of the model. Set directly, because a smooth blend would take the
+                // short way round and undo the spin.
+                visual.rotation = target * Quaternion.Euler(0f, 360f * trick.Progress01, 0f);
+                return;
+            }
+            visual.rotation = Quaternion.Slerp(visual.rotation, target, tuning.VisualTiltSpeed * Time.deltaTime);
         }
 
         // One ray from the centre of the ball straight down. Checkpoint triggers are ignored.
@@ -323,6 +389,11 @@ namespace CarcavelosCircuit.Driving
             {
                 drift.Cancel();
             }
+            if (trick != null)
+            {
+                trick.Reset(); // a trick never survives a retry or a recovery
+            }
+            trickPressed = false;
         }
 
         // IKartBoost (Role 4's item boxes): adds boost time, so boosts chain; the faster multiplier wins.
