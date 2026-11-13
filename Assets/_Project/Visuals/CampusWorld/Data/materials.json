@@ -1938,6 +1938,81 @@
    "smoothness": 0.2
   },
   {
+   "name": "W_ai_S2_barstool",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "S2_barstool_albedo.jpg",
+   "normal": "S2_barstool_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.45
+  },
+  {
+   "name": "W_ai_S1_bistroset",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "S1_bistroset_albedo.jpg",
+   "normal": "S1_bistroset_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.45
+  },
+  {
+   "name": "W_ai_P2_escooter",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "P2_escooter_albedo.jpg",
+   "normal": "P2_escooter_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.55
+  },
+  {
    "name": "W_ai_S3_foodtruck",
    "colour": [
     0.9035,
@@ -1986,6 +2061,56 @@
    },
    "metallic_smoothness": null,
    "smoothness": 0.45
+  },
+  {
+   "name": "W_ai_V1_scooter",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "V1_scooter_albedo.jpg",
+   "normal": "V1_scooter_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.45
+  },
+  {
+   "name": "W_ai_B4_surfrack",
+   "colour": [
+    0.9035,
+    0.9035,
+    0.9035
+   ],
+   "metallic": 0.0,
+   "albedo": "B4_surfrack_albedo.jpg",
+   "normal": "B4_surfrack_normal.png",
+   "normal_strength": 1.0,
+   "emission": null,
+   "alpha": 1.0,
+   "alpha_clip": 0.0,
+   "double_sided": false,
+   "tint": false,
+   "world_lit": {
+    "shader": "CarcavelosCircuit/WorldLit",
+    "ground_shadow": false,
+    "always_shaded": false,
+    "world_uv": []
+   },
+   "metallic_smoothness": null,
+   "smoothness": 0.4
   },
   {
    "name": "W_ai_B5_volleynet",
