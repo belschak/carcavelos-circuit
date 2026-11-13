@@ -46,6 +46,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string ScenePath = "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity";
         private const string WorldPrefabPath = Root + "/CampusWorld.prefab";
         private const string WorldRootName = "CampusWorld";                  // root of the prefab and of its instance
+        private const string AtriumPianoPrefab = "Assets/_Project/Track/Piano/AtriumPiano.prefab"; // Noah's T10 (request Q18)
         private static readonly string[] Models = { "CampusWorld", "TrackSurface", "RouteGuide", "Dressing_Prototypes" };
 
         [Serializable] private class Emission { public float[] colour; public float strength; }
@@ -569,6 +570,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             {
                 Debug.Log("CampusWorldBuilder: " + fenceFree);
             }
+            AddAtriumPiano(root);   // Q18: Noah's piano sound (T10) at the grand piano in the hall
 
             AddTunnelGuards(root, JsonUtility.FromJson<TrackData>(File.ReadAllText(DataDir + "/track.json")));
             AddGrassTufts(root);
@@ -585,6 +587,22 @@ namespace CarcavelosCircuit.Visuals.Editor
             AddWaveBoxSpots(preview);
             AddPreviewCamera(preview, data);
             EditorSceneManager.SaveScene(scene, ScenePath);
+        }
+
+        // Request Q18 (Role 2, T10): Noah's AtriumPiano prefab is an invisible trigger sphere with a 3D sound at the
+        // grand piano by the hall's west glass. It carries its own world position, so it only needs a parent. It goes
+        // into the world prefab, so Track_Campus and Main get it too. Without the prefab or the hall nothing is added.
+        private static void AddAtriumPiano(GameObject root)
+        {
+            GameObject piano = AssetDatabase.LoadAssetAtPath<GameObject>(AtriumPianoPrefab);
+            if (piano == null || !NovaHallInsert.HasHall())
+            {
+                Debug.Log("CampusWorldBuilder: no atrium piano sound (" + AtriumPianoPrefab + " missing or no hall)");
+                return;
+            }
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(piano, root.transform);
+            go.name = "AtriumPiano";
+            Debug.Log("CampusWorldBuilder: atrium piano sound at " + go.transform.position);
         }
 
         // The tunnel walls lean outwards at 45 degrees. A kart that touches such a wall is thrown up it like a ramp.
