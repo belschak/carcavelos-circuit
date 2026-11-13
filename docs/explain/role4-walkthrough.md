@@ -643,6 +643,17 @@ Files (all Role 4, own folder `Assets/_Project/Ambience/`, asmdef `CarcavelosCir
 - Question: "Why are the panels pictures and not CSS?" Answer: "USS has no box-shadow or gradient. One small picture per plate, cut into 9 parts, gives the gradient, the cream stroke and the hard shadow at any size, and our own code draws it (`PlateArt`), so there is no third-party art."
 - Question: "Why two fonts, and are we allowed to ship them?" Answer: "One loud display face for big moments, one condensed face for numbers that must not jitter. Both are SIL Open Font License 1.1: free to use and ship in a game, as long as the licence file goes with them (`OFL.txt` next to each font) and we do not sell the font on its own. They are in THIRD_PARTY.md and on the credits page."
 
+
+### 3.38 Name tags in Main + Trick and Item buttons on phones (requests Q21 + Q22, 2026-11-13)
+
+**Q22, name tags (Role 1's D9).** Alessandro's `Driving/NameTagManager` floats every racer's name over their kart (not over the player's own, faded near and far). `Role4SceneBuilder.BuildNameTags` adds one root object `NameTags` with that component to Main, points its **View Camera** at the race camera and sets its **Tag Font** to the HUD's Barlow Condensed ExtraBold, so the names look like the arcade UI. `BuilderComponents` knows the object, so the hand-edit guard covers it. The manager finds racers through `RacerRegistry` by itself: Role 4 only places it, Role 1 owns how it looks and fades.
+- Why the editor assembly now references `CarcavelosCircuit.Driving`: to add the component by its type (no string lookups). Only the editor builder does; the runtime `RaceFlow` assembly still never references Driving and still talks to the kart only through the Shared contracts.
+- Test: `RacersPlayTests.NameTags_OneForEveryRacer_HiddenOverThePlayer` (Main has the manager, one tag per racer with 2 dev test bots, bot tags show the cleaned name in the HUD font, the player's tag is hidden).
+
+**Q21, Trick button (Role 1's D11).** In the air, Shift starts a trick (one spin; finished before landing = a short boost). The touch overlay (P9) gets a **Trick** button above the steer buttons: a tap sends one left-Shift key press (`ShiftLeft`, keyCode 16, location 1), exactly like a keyboard, so no game code knows about touch. It sits on the left because in the air the left thumb has little to steer, while the right thumb stays on Gas. It has no `data-slide`, so a thumb sliding over the steer buttons never starts a trick by accident. The **Item** button (E, task R7) was still hidden from before the item boxes existed; it is shown now. The page legend and tips mention Shift/Trick and E/Item.
+- Limits: the in-game key bar (HUD) does not list Shift and E yet, only the page legend under the game does. A trick can only be started in the air, so the button does nothing on the ground (same as the Shift key).
+- Question: "Why does the phone button send a key instead of calling the game?" Answer: "Then the kart code has one input path for keyboard and phone, and the button works without a single line of C#. The same trick as the other P9 buttons."
+
 ---
 
 ## 4. Tests
