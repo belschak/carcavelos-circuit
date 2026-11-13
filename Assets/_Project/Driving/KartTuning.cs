@@ -8,15 +8,15 @@ namespace CarcavelosCircuit.Driving
     public class KartTuning : ScriptableObject
     {
         [Header("Speed")]
-        [SerializeField, Tooltip("Top speed going forward, in metres per second (25 m/s = 90 km/h)")]
-        private float maxSpeed = 25f;
+        [SerializeField, Tooltip("Top speed going forward, in metres per second (18 m/s = 65 km/h; D7 lowered it from 25 so a first lap is controllable)")]
+        private float maxSpeed = 18f;
 
         [SerializeField, Tooltip("Top speed in reverse, in metres per second")]
         private float maxReverseSpeed = 8f;
 
         [Header("Pedals")]
         [SerializeField, Tooltip("How fast the kart gains speed with the gas pressed, in m/s per second")]
-        private float acceleration = 14f;
+        private float acceleration = 10f;
 
         [SerializeField, Tooltip("How fast the kart slows down when you press brake while moving forward, in m/s per second")]
         private float brakeDeceleration = 30f;
@@ -77,8 +77,8 @@ namespace CarcavelosCircuit.Driving
         [SerializeField, Tooltip("Charge speed when you steer into the drift (1 = normal)")]
         private float chargeRateIntoTurn = 1.3f;
 
-        [SerializeField, Tooltip("Top speed multiplier while boosting (1.35 = 35 % faster)")]
-        private float boostSpeedMultiplier = 1.35f;
+        [SerializeField, Tooltip("Top speed multiplier while boosting (1.45 = 45 % faster; raised from 1.35 in D7 so a boost still feels strong at the lower top speed)")]
+        private float boostSpeedMultiplier = 1.45f;
 
         [SerializeField, Tooltip("How fast the kart gains speed while boosting, in m/s per second")]
         private float boostAcceleration = 40f;

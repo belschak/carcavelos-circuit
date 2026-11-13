@@ -245,11 +245,38 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.IsNull(GhostRecording.FromSaveString(null, Track, Checkpoints));
             Assert.IsNull(GhostRecording.FromSaveString("", Track, Checkpoints));
             Assert.IsNull(GhostRecording.FromSaveString("no ghost recorded yet", Track, Checkpoints));
-            Assert.IsNull(GhostRecording.FromSaveString("G2|Track_Campus|8|1.000|1|0,0,0,0,0,0", Track, Checkpoints)); // newer format
-            Assert.IsNull(GhostRecording.FromSaveString("G1|Track_Campus|8|1.000|2|0,0,0,0,0,0", Track, Checkpoints)); // count says 2, has 1
-            Assert.IsNull(GhostRecording.FromSaveString("G1|Track_Campus|8|1.000|1|0,0,x,0,0,0", Track, Checkpoints));
-            Assert.IsNull(GhostRecording.FromSaveString("G1|Track_Campus|8|1.000|1|0,0,0", Track, Checkpoints));
-            Assert.IsNotNull(GhostRecording.FromSaveString("G1|Track_Campus|8|1.000|1|0,0,0,0,0,0", Track, Checkpoints));
+            Assert.IsNull(GhostRecording.FromSaveString("G3|Track_Campus|8|0|1.000|1|0,0,0,0,0,0", Track, Checkpoints)); // newer format
+            Assert.IsNull(GhostRecording.FromSaveString("G2|Track_Campus|8|0|1.000|2|0,0,0,0,0,0", Track, Checkpoints)); // count says 2, has 1
+            Assert.IsNull(GhostRecording.FromSaveString("G2|Track_Campus|8|0|1.000|1|0,0,x,0,0,0", Track, Checkpoints));
+            Assert.IsNull(GhostRecording.FromSaveString("G2|Track_Campus|8|0|1.000|1|0,0,0", Track, Checkpoints));
+            Assert.IsNull(GhostRecording.FromSaveString("G2|Track_Campus|8|long|1.000|1|0,0,0,0,0,0", Track, Checkpoints)); // stamp not a number
+            Assert.IsNotNull(GhostRecording.FromSaveString("G2|Track_Campus|8|0|1.000|1|0,0,0,0,0,0", Track, Checkpoints));
+        }
+
+        [Test]
+        public void GhostFromBeforeTheLayoutStamp_G1_IsDropped()
+        {
+            // Luc's V14 ghost from the 11 Nov playtest looked like this: same name, same 12 checkpoints, old road.
+            Assert.IsNull(GhostRecording.FromSaveString("G1|Track_Campus|8|1.000|1|0,0,0,0,0,0", Track, Checkpoints));
+        }
+
+        [Test]
+        public void LayoutStamp_SameRoad_Loads_OtherRoad_IsIgnored()
+        {
+            GhostRecording onV14 = new GhostRecording(Track, Checkpoints, 1364);
+            onV14.Record(0f, Vector3.zero, Quaternion.identity);
+            onV14.Record(0.05f, Vector3.forward, Quaternion.identity);
+            string text = onV14.ToSaveString();
+            StringAssert.StartsWith("G2|Track_Campus|8|1364|", text);
+
+            GhostRecording loaded = GhostRecording.FromSaveString(text, Track, Checkpoints, 1364);
+            Assert.IsNotNull(loaded, "same road");
+            Assert.AreEqual(1364, loaded.LayoutStamp);
+            Assert.IsNotNull(GhostRecording.FromSaveString(text, Track, Checkpoints, 1366), "2 m off = still the same road");
+            Assert.IsNull(GhostRecording.FromSaveString(text, Track, Checkpoints, 1408), "V15 road is 44 m longer");
+            Assert.IsNull(GhostRecording.FromSaveString(text, Track, Checkpoints, 1367), "3 m off = another road");
+            Assert.IsNotNull(GhostRecording.FromSaveString(text, Track, Checkpoints, TrackLayout.Unknown),
+                "track without its own line: name + checkpoints decide");
         }
 
         private static void AssertX(GhostRecording recording, float time, float expectedX)

@@ -1,3 +1,4 @@
+using CarcavelosCircuit.Shared;
 using UnityEngine;
 
 namespace CarcavelosCircuit.RaceFlow
@@ -6,10 +7,12 @@ namespace CarcavelosCircuit.RaceFlow
     // when the countdown starts it glides down behind the kart, and after the finish it rises back up over the map
     // behind the results card. While driving the chase camera has the camera; this script only switches it off
     // while it flies. Works on any track: everything is measured from the track's checkpoints.
+    // V28 (Luc's time of day): when the player picks NOON or SUNSET on the start screen, the camera glides to a shot
+    // over the campus out to the sea with the sun in the picture, holds it, and glides back into the orbit.
     [RequireComponent(typeof(Camera))]
     public class MapFlyover : MonoBehaviour
     {
-        private enum Mode { Orbit, FlyIn, WaitForOutro, Outro, Chase }
+        private enum Mode { Orbit, FlyIn, WaitForOutro, Outro, Chase, Preview }
 
         [SerializeField, Tooltip("Reads the race state and the track's checkpoints")]
         private RaceManager raceManager;
@@ -29,6 +32,12 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("Seconds for the rise from behind the kart up over the map")]
         private float outroSeconds = 3f;
 
+        [SerializeField, Tooltip("V28: seconds for the glide to the sea shot after a time-of-day change")]
+        private float previewGlideSeconds = 2f;
+
+        [SerializeField, Tooltip("V28: seconds the sea shot is held before the camera glides back into the orbit")]
+        private float previewHoldSeconds = 4f;
+
         [SerializeField, Tooltip("Lowest height above the track for the overview, in metres (small tracks)")]
         private float minHeight = 35f;
 
@@ -45,6 +54,29 @@ namespace CarcavelosCircuit.RaceFlow
         private float waitUntil;
         private Vector3 fromPosition;
         private Quaternion fromRotation;
+        private bool previewWanted;     // set by the mood change, started in LateUpdate (after the sun has turned)
+        private Vector3 previewPosition;
+        private Quaternion previewRotation;
+
+        // True while the camera floats high over the map (start screen orbit, rise after the finish); RaceCameraLook
+        // softens the far background then, like a camera lens. False during the glide down, so it clears in time.
+        public bool IsOverview { get { return mode == Mode.Orbit || mode == Mode.Outro; } }
+
+        private void OnEnable()
+        {
+            TimeOfDayChoice.Changed += OnMoodChanged;
+        }
+
+        private void OnDisable()
+        {
+            TimeOfDayChoice.Changed -= OnMoodChanged;
+        }
+
+        // Only on the start screen (orbit, or a preview already running): never during the race or the outro.
+        private void OnMoodChanged(TimeOfDay mood)
+        {
+            previewWanted = mode == Mode.Orbit || mode == Mode.Preview;
+        }
 
         private void LateUpdate()
         {
@@ -66,7 +98,20 @@ namespace CarcavelosCircuit.RaceFlow
                 OnStateEntered(lastState, before);
             }
 
-            if (mode == Mode.Orbit)
+            if (previewWanted)
+            {
+                previewWanted = false;
+                if (mode == Mode.Orbit || mode == Mode.Preview)
+                {
+                    StartPreview();
+                }
+            }
+
+            if (mode == Mode.Preview)
+            {
+                Preview();
+            }
+            else if (mode == Mode.Orbit)
             {
                 if (!raceManager.ReducedMotion)
                 {
@@ -152,6 +197,29 @@ namespace CarcavelosCircuit.RaceFlow
             if (progress >= 1f)
             {
                 mode = Mode.Orbit;
+            }
+        }
+
+        private void StartPreview()
+        {
+            Light sun = RenderSettings.sun;
+            Vector3 towardsSun = sun != null ? -sun.transform.forward : new Vector3(0f, 0.5f, -1f).normalized;
+            float fov = GetComponent<Camera>().fieldOfView;
+            FlyoverPath.PreviewPose(centre, radius, towardsSun, fov, minHeight, out previewPosition, out previewRotation);
+            StartGlide(Mode.Preview);
+            float glide = raceManager.ReducedMotion ? 0f : previewGlideSeconds;
+            waitUntil = Time.unscaledTime + glide + previewHoldSeconds;
+        }
+
+        // Glide to the sea shot (a cut with reduced motion), hold it, then glide back into the orbit (Outro).
+        private void Preview()
+        {
+            progress = raceManager.ReducedMotion ? 1f : progress + Time.unscaledDeltaTime / Mathf.Max(0.01f, previewGlideSeconds);
+            transform.position = FlyoverPath.Glide(fromPosition, previewPosition, progress, 0f);
+            transform.rotation = Quaternion.Slerp(fromRotation, previewRotation, FlyoverPath.Ease(progress));
+            if (Time.unscaledTime >= waitUntil)
+            {
+                StartGlide(Mode.Outro);
             }
         }
 

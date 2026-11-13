@@ -143,6 +143,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                     return new[] { typeof(Transform), typeof(CinemachineCamera), typeof(CinemachineFollow), typeof(CinemachineRotationComposer) };
                 case "PostProcessing":
                     return new[] { typeof(Transform), typeof(Volume) };
+                case "CameraLook": // AAA camera look: three extra volumes + RaceCameraLook (help by Luc's Claude)
+                    return new[] { typeof(Transform), typeof(Volume), typeof(RaceCameraLook) };
                 case "RaceSystems":
                     return new[] { typeof(Transform), typeof(RaceManager), typeof(RaceBootstrap), typeof(AudioSource), typeof(RaceSounds) };
                 case "HUD":
@@ -288,23 +290,21 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             return panel;
         }
 
-        // Kept if it already exists, so Role 3's tuning survives a rebuild.
+        // Bloom + vignette for the race camera. Since the "AAA camera look" the numbers live in code
+        // (RaceCameraLookBuilder), so every rebuild and every Web build gets the same look.
         private static VolumeProfile CreateVolumeProfile()
         {
-            VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(VolumeProfilePath);
-            if (profile != null)
-            {
-                return profile;
-            }
-            profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            AssetDatabase.CreateAsset(profile, VolumeProfilePath);
-            Bloom bloom = profile.Add<Bloom>(true);
-            bloom.threshold.Override(0.9f);   // only very bright pixels glow
-            bloom.intensity.Override(0.6f);
-            bloom.scatter.Override(0.6f);
-            AssetDatabase.AddObjectToAsset(bloom, profile); // the effect is stored inside the profile file
-            AssetDatabase.SaveAssets();
-            return profile;
+            return RaceCameraLookBuilder.BuildBaseProfile();
+        }
+
+        // A global volume with a profile (the camera look's extra layers). Higher priority = blended on top.
+        private static Volume AddGlobalVolume(GameObject go, VolumeProfile profile, float priority)
+        {
+            Volume volume = go.AddComponent<Volume>();
+            volume.isGlobal = true;
+            volume.priority = priority;
+            volume.sharedProfile = profile;
+            return volume;
         }
 
         // Web build rules for all clips (Decompress On Load, Preload, Normalize off, AAC on Web): see AudioImportSetup.
@@ -747,6 +747,23 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             fso.FindProperty("raceManager").objectReferenceValue = manager;
             fso.FindProperty("chaseCamera").objectReferenceValue = chase;
             fso.ApplyModifiedPropertiesWithoutUndo();
+
+            // AAA camera look (help by Luc's Claude): speed rush, high-end extras (PC/Mac) and the soft background
+            // over the map, three global volumes on one object; RaceCameraLook drives their weights.
+            RaceCameraLookBuilder.TunePcPipeline();
+            GameObject lookObject = new GameObject("CameraLook");
+            Volume speedVolume = AddGlobalVolume(lookObject, RaceCameraLookBuilder.BuildSpeedProfile(), 2f);
+            Volume highEndVolume = AddGlobalVolume(lookObject, RaceCameraLookBuilder.BuildHighEndProfile(), 2f);
+            Volume overviewVolume = AddGlobalVolume(lookObject, RaceCameraLookBuilder.BuildOverviewProfile(), 3f);
+            RaceCameraLook cameraLook = lookObject.AddComponent<RaceCameraLook>();
+            SerializedObject lso = new SerializedObject(cameraLook);
+            lso.FindProperty("raceManager").objectReferenceValue = manager;
+            lso.FindProperty("flyover").objectReferenceValue = flyover;
+            lso.FindProperty("raceCamera").objectReferenceValue = cam;
+            lso.FindProperty("speedVolume").objectReferenceValue = speedVolume;
+            lso.FindProperty("highEndVolume").objectReferenceValue = highEndVolume;
+            lso.FindProperty("overviewVolume").objectReferenceValue = overviewVolume;
+            lso.ApplyModifiedPropertiesWithoutUndo();
 
             SerializedObject sso = new SerializedObject(sounds);
             sso.FindProperty("raceManager").objectReferenceValue = manager;

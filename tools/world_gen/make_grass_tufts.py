@@ -15,6 +15,9 @@ Tufts stand only on lawn (mask R), in three places:
     in clumps with gaps (a slow noise decides where grass grows thick);
   - around the feet of trees, benches, lamps and bins within 70 m of the track;
   - along building walls within 50 m of the track.
+  - V16h: "far" tufts on every lawn up to FAR_REACH metres from the track: sparse, larger clumps of one cross of two
+    cards (4 triangles), in their own 32 m cells that stay visible to FAR_CULL = 150 m, so lawns keep a broken
+    silhouette and texture where the fine tufts are already hidden. They have their own budget (FAR_VISIBLE_BUDGET).
 Never on the road, on a path, in a tunnel or inside a building: verify() checks every tuft again and the run fails
 if one breaks a rule. dressing.json = Unity's Data/dressing.json or, by default, the placements in out/.
 """
@@ -22,6 +25,8 @@ import json
 import math
 import os
 import random
+
+import plaza_plan
 import sys
 
 import numpy as np
@@ -44,6 +49,11 @@ EDGE_TRIES = 60                 # tries per route point (2 m) and side; lawn, cl
 TRIS_SMALL, TRIS_BIG, CELL, CULL = 12, 24, 16.0, 65.0   # as in CampusWorldBuilder.AddGrassTufts
 BIG_BAND = 2.0                  # tufts in the first metres of the fringe are fuller (24 triangles) and larger
 TOTAL_BUDGET, VISIBLE_BUDGET = 150000, 60000    # triangles: all tufts / inside the cull distance at the worst point
+
+# V16h: the far LOD
+FAR_REACH, FAR_STEP, FAR_KEEP = 110.0, 2.4, 0.6     # metres from the road edge; grid of the candidates; share kept where grass is thick
+TRIS_FAR, FAR_CELL, FAR_CULL = 4, 32.0, 150.0       # as in CampusWorldBuilder.AddGrassTufts
+FAR_VISIBLE_BUDGET = 11000                          # triangles of far tufts inside FAR_CULL at the worst point
 
 COLOUR_FILE = sys.argv[3] if len(sys.argv) > 3 else os.path.join(HERE, "textures", "ground_colour.png")
 COLOUR = np.asarray(Image.open(COLOUR_FILE).convert("RGB"))
@@ -116,16 +126,40 @@ def in_building(x, y):
                for b in BUILDINGS)
 
 
+# V23s (Luc, 13 Nov, q7: "on the right the grass somehow sticks out over the sidewalk"): the lawn mask has 0.5 m
+# pixels and a tuft's blades reach about 0.6 m, so tufts at the mask's edge hung over the calcada. Along the Avenida
+# Marginal (SIDEWALK_BOX, generator metres) a tuft now keeps PAVING_GAP from every paved street layer (street_plan).
+SIDEWALK_BOX = (-262.0, -62.0, -128.0, 6.0)
+PAVING_GAP = 0.9
+
+
+def near_paving(x, y):
+    if not (SIDEWALK_BOX[0] <= x <= SIDEWALK_BOX[2] and SIDEWALK_BOX[1] <= y <= SIDEWALK_BOX[3]):
+        return False
+    import street_plan
+    for k in range(8):
+        a = k * math.pi / 4
+        lay = street_plan.layer_at(x + PAVING_GAP * math.cos(a), y + PAVING_GAP * math.sin(a))
+        if lay and lay.get("mat"):
+            return True
+    lay = street_plan.layer_at(x, y)
+    return bool(lay and lay.get("mat"))
+
+
 def allowed(x, y):
     """The rules for one tuft. Returns None if it may stand here, else the rule it breaks."""
     if lawn(x, y) < LAWN_MIN:
         return "not lawn"
+    if near_paving(x, y):
+        return "paving"
     if route_clearance(x, y) < ROAD_GAP:
         return "road"
     if path_clearance(x, y) < PATH_GAP:
         return "path"
     if in_building(x, y):
         return "building"
+    if plaza_plan.area(x, y, 1.0):
+        return "plaza"                                      # V10i: the paved upper plaza, its courtyard and stairs
     return None
 
 
@@ -145,18 +179,22 @@ def place(dressing):
     rng = random.Random(SEED)
     tufts, tried = [], 0
 
-    def add(x, y, scale, big=0):
+    def add(x, y, scale, big=0, far=0):
         nonlocal tried
         tried += 1
         x, y = round(x, 2), round(y, 2)                     # the numbers as written, so verify() sees the same
         if allowed(x, y) is None:
             r, g, b = ground_colour(x, y)
-            tufts.append({"x": x, "z": y, "yaw": round(rng.uniform(0, 360), 1), "s": round(scale, 2), "r": r, "g": g, "b": b, "big": big})
+            tufts.append({"x": x, "z": y, "yaw": round(rng.uniform(0, 360), 1), "s": round(scale, 2), "r": r, "g": g, "b": b,
+                          "big": big, "far": far})
 
     n = len(ROUTE)
     for i, p in enumerate(ROUTE):                           # along the track, denser close to the road edge
         if p["tunnel"] or p["building"]:
             continue
+        # V10i: random numbers keyed on the place, not on the order of the lap: a route change in one section
+        # leaves the tufts everywhere else exactly where they were
+        rng = random.Random(f"{SEED}|route|{p['x']}|{p['y']}")
         a, b = ROUTE[i - 1], ROUTE[(i + 1) % n]
         tx, ty = b["x"] - a["x"], b["y"] - a["y"]
         length = math.hypot(tx, ty) or 1.0
@@ -174,6 +212,7 @@ def place(dressing):
     for proto, x, y in dressing:                            # around the feet of trees, benches, lamps, bins
         rule = next((v for k, v in FEET.items() if proto.startswith(k)), None)
         if rule and route_clearance(x, y) < TREE_NEAR:
+            rng = random.Random(f"{SEED}|feet|{proto}|{x}|{y}")
             count, r0, r1 = rule
             for _ in range(count):
                 az, r = rng.uniform(0, 2 * math.pi), rng.uniform(r0, r1)
@@ -184,6 +223,7 @@ def place(dressing):
             length = math.hypot(x2 - x1, y2 - y1)
             if length < 1.0 or route_clearance((x1 + x2) / 2, (y1 + y2) / 2) > WALL_NEAR:
                 continue
+            rng = random.Random(f"{SEED}|wall|{x1}|{y1}|{x2}|{y2}")
             nx, ny = (y2 - y1) / length, -(x2 - x1) / length
             if inside((x1 + x2) / 2 + nx * 0.3, (y1 + y2) / 2 + ny * 0.3, poly):
                 nx, ny = -nx, -ny
@@ -191,6 +231,20 @@ def place(dressing):
                 t = (k + rng.random()) * 0.6 / length
                 off = rng.uniform(0.3, 0.7)
                 add(x1 + (x2 - x1) * t + nx * off, y1 + (y2 - y1) * t + ny * off, rng.uniform(0.9, 1.3))
+    # V16h: the far LOD: a jittered grid over the lawns round the lap, kept where the clump noise says grass is thick
+    gx0, gy0 = math.floor((RX.min() - FAR_REACH) / FAR_STEP), math.floor((RY.min() - FAR_REACH) / FAR_STEP)
+    gx1, gy1 = math.ceil((RX.max() + FAR_REACH) / FAR_STEP), math.ceil((RY.max() + FAR_REACH) / FAR_STEP)
+    for gy in range(gy0, gy1):
+        for gx in range(gx0, gx1):
+            rng = random.Random(f"{SEED}|far|{gx}|{gy}")
+            x, y = (gx + rng.random()) * FAR_STEP, (gy + rng.random()) * FAR_STEP
+            if not (X0 < x < X1 and Y0 < y < Y1) or lawn(x, y) < LAWN_MIN:
+                continue
+            if rng.random() > FAR_KEEP * min(max(0.3 + 1.6 * (clump(x, y) - 0.3), 0.0), 1.0) / 0.8:
+                continue
+            c = route_clearance(x, y)
+            if EDGE_REACH + 1.0 < c < FAR_REACH:
+                add(x, y, rng.uniform(1.7, 2.5), far=1)
     return tufts, tried
 
 
@@ -206,16 +260,23 @@ def verify(tufts):
 
 def budget(tufts):
     """Triangles of all tufts, and of the tufts in the cells inside the cull distance at the worst route point."""
-    cells = {}
+    cells, far = {}, {}
     for t in tufts:
+        if t.get("far"):
+            key = (math.floor(t["x"] / FAR_CELL), math.floor(t["z"] / FAR_CELL))
+            far[key] = far.get(key, 0) + TRIS_FAR
+            continue
         key = (math.floor(t["x"] / CELL), math.floor(t["z"] / CELL))
         cells[key] = cells.get(key, 0) + (TRIS_BIG if t["big"] else TRIS_SMALL)
-    worst = (0, 0.0)
+    worst, worst_far = (0, 0.0), (0, 0.0)
     for p in ROUTE[::2]:
         n = sum(c for (i, j), c in cells.items()
                 if math.hypot((i + 0.5) * CELL - p["x"], (j + 0.5) * CELL - p["y"]) < CULL + CELL * 0.7)
         worst = max(worst, (n, p["s"]))
-    return sum(cells.values()), worst[0], worst[1], len(cells)
+        n = sum(c for (i, j), c in far.items()
+                if math.hypot((i + 0.5) * FAR_CELL - p["x"], (j + 0.5) * FAR_CELL - p["y"]) < FAR_CULL + FAR_CELL * 0.7)
+        worst_far = max(worst_far, (n, p["s"]))
+    return sum(cells.values()), worst[0], worst[1], len(cells), sum(far.values()), worst_far[0], worst_far[1], len(far)
 
 
 def main():
@@ -225,14 +286,16 @@ def main():
     clear = min(route_clearance(t["x"], t["z"]) for t in tufts)
     print(f"grass tufts: {len(tufts)} placed of {tried} tried; nearest to the road edge {clear:.2f} m; "
           f"rule check: {sum(broken.values())} problems {broken or ''}")
-    total, visible, at, cells = budget(tufts)
+    total, visible, at, cells, far_total, far_visible, far_at, far_cells = budget(tufts)
     print(f"  triangles: {total} in all (budget {TOTAL_BUDGET}), {visible} inside the cull distance at the worst point "
           f"(s = {at:.0f} m, budget {VISIBLE_BUDGET}); {cells} cells")
-    if broken or total > TOTAL_BUDGET or visible > VISIBLE_BUDGET:
+    print(f"  far LOD (V16h): {far_total // TRIS_FAR} tufts, {far_total} triangles in all, {far_visible} inside {FAR_CULL:.0f} m at the "
+          f"worst point (s = {far_at:.0f} m, budget {FAR_VISIBLE_BUDGET}); {far_cells} cells of {FAR_CELL:.0f} m")
+    if broken or total > TOTAL_BUDGET or visible > VISIBLE_BUDGET or far_visible > FAR_VISIBLE_BUDGET:
         sys.exit(1)
     os.makedirs(os.path.dirname(out), exist_ok=True)
     json.dump({"note": "Unity axes (x east, z north); yaw in degrees; s = uniform scale; r, g, b = ground colour under "
-                       "the tuft (sRGB 0-255); big = 1: fuller tuft at the track edge. Height comes from a ray onto the ground in CampusWorldBuilder.", "tufts": tufts}, open(out, "w"), indent=0)
+                       "the tuft (sRGB 0-255); big = 1: fuller tuft at the track edge; far = 1: far LOD clump (one cross, own cells). Height comes from a ray onto the ground in CampusWorldBuilder.", "tufts": tufts}, open(out, "w"), indent=0)
     print("  ->", out)
 
 

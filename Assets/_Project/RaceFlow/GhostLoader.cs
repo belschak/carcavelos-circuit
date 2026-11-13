@@ -10,17 +10,25 @@ namespace CarcavelosCircuit.RaceFlow
             return "CarcavelosCircuit.Ghost." + trackName;
         }
 
-        // ownSave = the player's ghost text from PlayerPrefs ("" if none), shippedText = the Dean's ghost file.
-        // A ghost from another track or another checkpoint count is skipped. isShipped tells the caller whose it is.
+        // For a track without a racing line of its own (layout stamp unknown).
         public static GhostRecording Choose(string ownSave, string shippedText, string trackName, int checkpointCount, out bool isShipped)
         {
+            return Choose(ownSave, shippedText, trackName, checkpointCount, TrackLayout.Unknown, out isShipped);
+        }
+
+        // ownSave = the player's ghost text from PlayerPrefs ("" if none), shippedText = the Dean's ghost file.
+        // A ghost from another track, checkpoint count or road (layout stamp, TrackLayout) is skipped.
+        // isShipped tells the caller whose it is.
+        public static GhostRecording Choose(string ownSave, string shippedText, string trackName, int checkpointCount,
+            int liveLayoutStamp, out bool isShipped)
+        {
             isShipped = false;
-            GhostRecording own = GhostRecording.FromSaveString(ownSave, trackName, checkpointCount);
+            GhostRecording own = GhostRecording.FromSaveString(ownSave, trackName, checkpointCount, liveLayoutStamp);
             if (own != null && own.Count > 1)
             {
                 return own;
             }
-            GhostRecording shipped = GhostRecording.FromSaveString(shippedText, trackName, checkpointCount);
+            GhostRecording shipped = GhostRecording.FromSaveString(shippedText, trackName, checkpointCount, liveLayoutStamp);
             if (shipped != null && shipped.Count > 1)
             {
                 isShipped = true;

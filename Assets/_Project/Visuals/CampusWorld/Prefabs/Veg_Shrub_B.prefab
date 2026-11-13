@@ -49,7 +49,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2562015857799871873}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -66,8 +66,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9b6fb66eddb7c427a9c70380410c8bf6, type: 2}
-  - {fileID: 2100000, guid: 257e440f72f73479d94fd05fb92dfd6b, type: 2}
+  - {fileID: 2100000, guid: d31445a535fce4982a24c35a79cb787d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -100,6 +99,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7631097107843222839}
+  - component: {fileID: 6018725074033837318}
   m_Layer: 0
   m_Name: Veg_Shrub_B
   m_TagString: Untagged
@@ -123,3 +123,22 @@ Transform:
   - {fileID: 7525810479742246094}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!205 &6018725074033837318
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5584790432687122971}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0.045195937, y: 0.46012145, z: 0.016489983}
+  m_Size: 2.8765233
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 2947195684688177058}
+  m_Enabled: 1

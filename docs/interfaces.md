@@ -86,6 +86,7 @@ public void Reset();
 - Recovery (key R): kart goes to `GetRespawnPoint(LastValidCheckpoint)`, timer keeps running, no checkpoint is awarded.
 - HUD: countdown, lap timer, final time, boost cue, retry button.
 - Audio: engine pitch from `IKartState.Speed / MaxSpeed`, drift/boost SFX from the state flags, music. Sound only starts after the first click or key press (browser rule).
+- Wave boxes (V19, 2026-11-12): a `WaveBoxSpot` (`RaceFlow/WaveBoxSpot.cs`, marker only) in the track scene = one turquoise item box that always gives the Carcavelos Wave. `ItemSystem` places it with the same rules as the row boxes (ground below, no wall inside). Role 3's `CampusWorldBuilder` puts three at the bottom of the beach dip, beside the promenade shortcut; a scene without spots has none.
 
 ## Round 2 (Role 4, 2026-11-11): racers, track progress, bot input
 Added for bots (V10), positions + minimap (R9), name tags (D9). All in `Assets/_Project/Shared/`, all new files, nothing above changes. Decision: `docs/decisions.md` 2026-11-11.
@@ -136,7 +137,7 @@ Who does what:
 - **Track (Role 2)**: `TrackProgress : MonoBehaviour, ITrackProgress` on the same object as `TrackInfo`. Anyone finds it with `trackInfo.GetComponent<ITrackProgress>()`. The easiest version builds a `TrackPolyline` from points along the middle of the road (more points in corners) and forwards the calls to it. Until it exists, RaceFlow builds a `TrackPolyline` from the checkpoint positions (rougher, but it works).
 - **Driving (Role 1)**: `KartController` implements `IKartDrivable`. `InputSource == null` = keyboard and phone buttons exactly as today. Set = read `InputSource.ReadInput().Clamped()` once per frame instead. `InputEnabled` still wins (off = no input from anyone). Same physics, same `KartTuning`, so a bot is never faster than a player by code.
 - **Bots (Role 3)**: a bot = a normal `Kart` prefab instance plus a bot script that implements `IKartInputSource` and `IRacer`, sets itself as the kart's `InputSource`, and registers in `OnEnable` / unregisters in `OnDisable`. Bots never touch `InputEnabled` or `ResetTo`: RaceFlow does that for every racer.
-- **RaceFlow (Role 4)**: owns the race for all registered racers: grid slots behind the `SpawnPoint` (2 m sideways, 3 m back per row), `InputEnabled` on at GO and off at the finish, Retry puts every racer back on its slot. The player's kart registers as `IRacer` with `IsPlayer = true`. Positions = laps done, then distance along the lap (further = ahead); the minimap draws `RacingLine` and a dot per racer.
+- **RaceFlow (Role 4)**: owns the race for all registered racers: grid slots at the `SpawnPoint` in pairs side by side (front row centred on it, 2 m left and right; 3 m back per row; bots from the front, the player last, alone = slot 0), `InputEnabled` on at GO and off at the finish, Retry puts every racer back on its slot. The player's kart registers as `IRacer` with `IsPlayer = true`. Positions = laps done, then distance along the lap (further = ahead); the minimap draws `RacingLine` and a dot per racer.
 - **Visual rules for names**: made-up names and cartoon characters only (no real people's photos, no Nintendo or F1 names). Real professors' names only with their OK.
 
 ## Controls (proposal, confirm at kickoff)
