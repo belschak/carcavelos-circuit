@@ -4,11 +4,13 @@ No Blender here: env_route_signs.py paints and builds from it, export_unity_bund
 into track.json, and a render or check script can read it too. Everything is derived from route.json, so it follows
 the route if the start loop ever moves. Generator metres: x east, y north (track.json: x, z).
 
-  grid_slots()   the ten start positions, exactly where RaceFlow/RacerGrid.cs puts the karts: slot 0 = the SpawnPoint
-                 (CampusWorldBuilder.AddRaceParts: track point spawn_index, facing Forward() = from point -2 to
-                 point +2), slot k >= 1: row (k + 1) // 2, GRID_SIDE m to the right (odd k) or left (even k),
-                 GRID_ROW m back per row. GRID_SIDE / GRID_ROW are read from RaceSettings.asset (gridSidewaysMetres,
-                 gridRowMetres), so the paint moves with the numbers Role 4 sets there.
+  grid_slots()   the ten start positions, exactly where RaceFlow/RacerGrid.cs puts the karts. V23 (Luc: "put 1 and 2
+                 side by side, and in general all of them side by side"): pairs in rows, the front row centred on
+                 the SpawnPoint (CampusWorldBuilder.AddRaceParts: track point spawn_index, facing Forward() = from
+                 point -2 to point +2). Slot k (box number k + 1): row k // 2, GRID_SIDE m to the left (even k = odd
+                 box number) or right (odd k), GRID_ROW m back per row. GRID_SIDE / GRID_ROW are read from
+                 RaceSettings.asset (gridSidewaysMetres, gridRowMetres), so the paint moves with the numbers Role 4
+                 sets there. slot_offset() is RacerGrid.OffsetOf() in Python: KEEP THE TWO IN SYNC.
   barriers()     centre lines of the Nova Kart walls package V21b builds in Unity (WhiteGuardrailBuilder reads
                  track.json "barriers"): the median between the westbound leg and the home straight, and the
                  outside of the U-turn.
@@ -23,7 +25,8 @@ REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
 RACE_SETTINGS = os.path.join(REPO, "Assets", "_Project", "RaceFlow", "Settings", "RaceSettings.asset")
 
 SLOTS = 10                              # Luc: "say 10 positions"
-BOX_W, BOX_L, BOX_LINE = 1.7, 2.3, 0.12   # bracket around a kart of about 1.4 x 2.0 m; painted line width
+BOX_W, BOX_L, BOX_LINE = 1.7, 2.3, 0.12   # box around a kart of about 1.4 x 2.0 m, centred on the slot; painted line width
+BOX_SIDE = 1.0                          # V23, F1 style: line across the front + side lines this long running back, open behind
 SPAWN_BACK = 4                          # export_unity_bundle.unity_track: spawn = start - 4 points (8 m behind the line)
 
 # --- barriers ---------------------------------------------------------------------------------------------------
@@ -63,10 +66,16 @@ def spawn_frame(route=None):
 
 
 def slot_offset(slot, side, row):
-    """RacerGrid.SlotOffset: (metres to the right, metres forward)."""
-    if slot <= 0:
-        return 0.0, 0.0
-    return (side if slot % 2 == 1 else -side), -((slot + 1) // 2) * row
+    """RacerGrid.OffsetOf (Assets/_Project/RaceFlow/RacerGrid.cs), the one grid formula: (metres to the right, metres
+    forward) of a slot seen from the SpawnPoint. Pairs side by side: even slot = left, odd slot = right, row = slot // 2.
+    KEEP IN SYNC with the C# (its test RacerGridTests.SlotOffsets_AreTheTableTheGeneratorPaints has SLOT_TABLE_2_3)."""
+    slot = max(slot, 0)
+    return (-side if slot % 2 == 0 else side), -(slot // 2) * row
+
+
+# slot_offset(k, 2, 3) for k = 0..9, the same table as in RacerGridTests.cs; checked at import so the two cannot drift
+SLOT_TABLE_2_3 = [(-2, 0), (2, 0), (-2, -3), (2, -3), (-2, -6), (2, -6), (-2, -9), (2, -9), (-2, -12), (2, -12)]
+assert [slot_offset(k, 2.0, 3.0) for k in range(10)] == SLOT_TABLE_2_3, "start_plan.slot_offset differs from RacerGrid"
 
 
 def grid_slots(route=None):

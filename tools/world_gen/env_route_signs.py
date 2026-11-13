@@ -28,9 +28,11 @@ props ignored). Signs inside the hall are package C's (atrium arrows), not here.
 V21a (Luc's second free-roam drive of 13 Nov 2026, luc_notes/2026-11-13_playtest2 p1 / p2), data in start_plan.py:
 
   grid boxes         ten start positions painted on the home straight, Boost Orange, exactly where RacerGrid puts the
-                     karts (slot 0 = the SpawnPoint): an open bracket of 1.7 x 2.3 m, line 0.12 m, open towards the
-                     start line, and the position number 1-10 in the gap in front of it. Flush paint in
-                     Track_EdgeLines like the start line, 1 cm higher (a drain channel's paint crosses row 2).
+                     karts. V23 (Luc's third drive, luc_notes/2026-11-13_playtest3 q4 / q5): pairs side by side, the
+                     front row centred on the SpawnPoint, odd numbers left; F1-style boxes of 1.7 x 2.3 m: a line
+                     across the front (the start line's side), 1.0 m side lines running back, open behind; the
+                     position number 1-10 beside the box on the outside. Flush paint in Track_EdgeLines like the
+                     start line, 1 cm higher (a drain channel's paint crosses the grid).
   U-turn boards      four left boards (uturn_signs) behind the outside wall of the U-turn before the home straight:
                      U1 straight ahead of the westbound leg, U2 at the apex, U3 and U4 round to where the home
                      straight starts. A sign may now give "lift" (board bottom over the ground; these stand 0.95 m
@@ -461,8 +463,8 @@ def add_start_line():
 # Say 10 positions.")
 # ---------------------------------------------------------------------------------------------------------------
 GRID_LIFT = 0.05                 # over the road: 1 cm above the other flush paint (drain channel under row 2)
-DIGIT_H, DIGIT_W, DIGIT_T = 0.44, 0.24, 0.065      # position numbers: seven-segment digits, read from behind
-DIGIT_GAP = 0.13                 # between the bracket's open end and its number; also between the digits of "10"
+DIGIT_H, DIGIT_W, DIGIT_T = 0.60, 0.32, 0.09       # position numbers: seven-segment digits, read from behind
+DIGIT_GAP = 0.16                 # between the box's side and its number; also between the digits of "10"
 _SEG = {"a": (0, 1, "h"), "g": (0, 0, "h"), "d": (0, -1, "h"),           # (u, v in half units, across or upright)
         "f": (-1, 0.5, "v"), "b": (1, 0.5, "v"), "e": (-1, -0.5, "v"), "c": (1, -0.5, "v")}
 _DIGITS = {"0": "abcdef", "1": "bc", "2": "abged", "3": "abgcd", "4": "fgbc", "5": "afgcd", "6": "afgedc",
@@ -484,14 +486,22 @@ def _digit_rects(ch, u0, v0):
 
 
 def grid_rects(slot):
-    """The paint of one slot in its own frame (u right, v ahead, origin = the kart's position)."""
+    """The paint of one slot in its own frame (u right, v ahead, origin = the kart's position).
+    V23, F1 style (Luc: "these U's should be the other way round, take Formula 1 as the example"): one line across
+    the FRONT (the side facing the start line; the kart's nose stops behind it and it drives out across it) and two
+    short side lines running back from its ends, open behind. The footprint BOX_W x BOX_L stays centred on the slot.
+    The number stands the F1 way: beside the box on the outside of the grid (left of the left box, right of the right
+    box), level with the front line, so no kart of the pair covers it and it reads from the chase camera."""
     hw, hl, t = start_plan.BOX_W / 2, start_plan.BOX_L / 2, start_plan.BOX_LINE
-    rects = [(-hw, hw, -hl, -hl + t), (-hw, -hw + t, -hl + t, hl), (hw - t, hw, -hl + t, hl)]   # back, left, right
+    back = hl - t - start_plan.BOX_SIDE
+    rects = [(-hw, hw, hl - t, hl), (-hw, -hw + t, back, hl - t), (hw - t, hw, back, hl - t)]   # front, left, right
     text = str(slot + 1)
-    v0 = hl + DIGIT_GAP + DIGIT_H / 2
     total = len(text) * DIGIT_W + (len(text) - 1) * DIGIT_GAP
+    out = -1.0 if slot % 2 == 0 else 1.0                 # start_plan.slot_offset: even slot = left column
+    u_mid = out * (hw + DIGIT_GAP + total / 2)
+    v0 = hl - DIGIT_H / 2
     for k, ch in enumerate(text):
-        rects += _digit_rects(ch, -total / 2 + DIGIT_W / 2 + k * (DIGIT_W + DIGIT_GAP), v0)
+        rects += _digit_rects(ch, u_mid - total / 2 + DIGIT_W / 2 + k * (DIGIT_W + DIGIT_GAP), v0)
     return rects
 
 
@@ -526,15 +536,15 @@ def add_grid_boxes():
                 face.normal_flip()
             made += 1
         corners = [c + r * u + f * v for u0, u1, v0, v1 in rects for u in (u0, u1) for v in (v0, v1)]
-        edge = min(road_clearance(q.x, q.y) for q in corners)            # negative = on the road
+        edge = max(road_clearance(q.x, q.y) for q in corners)            # negative = on the road; the corner nearest the edge
         worst = min(worst, -edge)
         ahead = min((Vector((gate_p["x"], gate_p["y"], 0)) - q).dot(gate_f) for q in corners)
         lines.append(f"    slot {s['slot']} (number {s['slot'] + 1}) at ({s['x']:.2f}, {s['y']:.2f}), paint "
                      f"{-edge:.2f} m inside the road edge, {ahead:.2f} m before the start line")
     bm.to_mesh(mesh)
     bm.free()
-    print(f"  grid boxes (V21a): {len(slots)} boxes {start_plan.BOX_W} x {start_plan.BOX_L} m (line "
-          f"{start_plan.BOX_LINE} m) with numbers, {made} quads in Track_EdgeLines, {GRID_LIFT * 100:.0f} cm over the "
+    print(f"  grid boxes (V21a, V23 pairs + F1 style): {len(slots)} boxes {start_plan.BOX_W} x {start_plan.BOX_L} m (line "
+          f"{start_plan.BOX_LINE} m, sides {start_plan.BOX_SIDE} m) with numbers, {made} quads in Track_EdgeLines, {GRID_LIFT * 100:.0f} cm over the "
           f"road; RacerGrid {side:g} m sideways, {row:g} m per row (RaceSettings.asset); all paint at least "
           f"{worst:.2f} m inside the road edge")
     print("\n".join(lines))
