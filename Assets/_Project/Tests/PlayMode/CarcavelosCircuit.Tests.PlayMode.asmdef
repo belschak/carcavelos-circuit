@@ -5,6 +5,7 @@
         "UnityEngine.TestRunner",
         "CarcavelosCircuit.Shared",
         "CarcavelosCircuit.Track",
+        "CarcavelosCircuit.Driving",
         "CarcavelosCircuit.RaceFlow",
         "CarcavelosCircuit.Visuals",
         "Unity.Cinemachine"

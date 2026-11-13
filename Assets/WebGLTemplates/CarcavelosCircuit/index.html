@@ -97,6 +97,8 @@
         <ul class="cc-controls" aria-label="Controls">
           <li><span class="cc-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span class="cc-or">or</span><span class="cc-keys"><kbd aria-label="Arrow keys">&larr;&uarr;&darr;&rarr;</kbd></span><span class="cc-key-text">Drive</span></li>
           <li><kbd class="cc-wide">Space</kbd><span class="cc-key-text">Drift, let go = boost</span></li>
+          <li><kbd class="cc-wide">Shift</kbd><span class="cc-key-text">Trick in the air</span></li>
+          <li><kbd>E</kbd><span class="cc-key-text">Use item</span></li>
           <li><kbd>R</kbd><span class="cc-key-text">Recover</span></li>
           <li><kbd class="cc-wide">Enter</kbd><span class="cc-key-text">Retry</span></li>
           <li><kbd>P</kbd><span class="cc-key-text">Pause</span></li>
@@ -109,6 +111,8 @@
           <li><span class="cc-keys"><kbd aria-label="Left and right buttons">&larr; &rarr;</kbd></span><span class="cc-key-text">Steer</span></li>
           <li><kbd class="cc-wide">Gas</kbd><kbd class="cc-wide">Brake</kbd><span class="cc-key-text">Drive</span></li>
           <li><kbd class="cc-wide">Drift</kbd><span class="cc-key-text">Hold in a corner, let go = boost</span></li>
+          <li><kbd class="cc-wide">Trick</kbd><span class="cc-key-text">Tap in the air</span></li>
+          <li><kbd class="cc-wide">Item</kbd><span class="cc-key-text">Use your item</span></li>
         </ul>
       </div>
 
@@ -125,7 +129,10 @@
     <!-- Touch controls (task P9): only on phones and tablets. Each button "presses" the keyboard key(s) in data-keys,
          the same keys the game already reads, so no game code knows about touch. Script: "Touch controls" below. -->
     <div id="cc-touch" hidden>
+      <!-- Trick (D11, request Q21): a tap = one Shift press. Above the steer buttons, because in the air the left thumb
+           has little to steer. No data-slide, so a sliding steer thumb never starts a trick by accident. -->
       <div class="cc-touch-steer">
+        <button class="cc-touch-button cc-touch-trick" type="button" data-keys="ShiftLeft" aria-label="Trick (in the air)">Trick</button>
         <button class="cc-touch-button" type="button" data-keys="KeyA" data-slide aria-label="Steer left">
           <svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -136,8 +143,8 @@
 
       <!-- Drift also holds the gas, so one thumb can drift while the other steers. -->
       <div class="cc-touch-pedals">
-        <!-- Reserved for item boxes: remove "hidden" once the game reads E as "use item". -->
-        <button class="cc-touch-button cc-touch-item" type="button" data-keys="KeyE" aria-label="Use item" hidden>Item</button>
+        <!-- Item boxes (R7): the game reads E as "use item". -->
+        <button class="cc-touch-button cc-touch-item" type="button" data-keys="KeyE" aria-label="Use item">Item</button>
         <button class="cc-touch-button cc-touch-brake" type="button" data-keys="KeyS" data-slide aria-label="Brake and reverse">Brake</button>
         <button class="cc-touch-button cc-touch-drift" type="button" data-keys="KeyW Space" data-slide aria-label="Drift">Drift</button>
         <button class="cc-touch-button cc-touch-gas" type="button" data-keys="KeyW" data-slide aria-label="Gas">Gas</button>
@@ -206,6 +213,7 @@
         "Drift longer: blue sparks, then orange sparks, then a bigger boost.",
         "Off the track? Press R to go back to the last checkpoint.",
         "Press Enter after the finish to try again.",
+        "In the air, press Shift for a trick. Land it for a boost.",
         "Your best lap is saved in this browser."
       ];
       var touchTips = [
@@ -213,6 +221,7 @@
         "Drift longer: blue sparks, then orange sparks, then a bigger boost.",
         "Off the track? Tap Recover to go back to the last checkpoint.",
         "Slide your thumb between Gas and Drift without lifting it.",
+        "In the air, tap Trick. Land it for a boost.",
         "Your best lap is saved in this browser."
       ];
       var tipIndex = 0;
@@ -403,7 +412,8 @@
         Space: { key: " ", keyCode: 32 },     // drift
         KeyR: { key: "r", keyCode: 82 },      // recover
         Enter: { key: "Enter", keyCode: 13 }, // retry
-        KeyE: { key: "e", keyCode: 69 }       // use item (reserved)
+        KeyE: { key: "e", keyCode: 69 },      // use item
+        ShiftLeft: { key: "Shift", keyCode: 16, location: 1 } // trick in the air (left Shift)
       };
       var touchPanel = document.getElementById("cc-touch");
       var heldCount = {};      // key code -> how many fingers hold it (Gas and Drift both hold W)
@@ -413,6 +423,7 @@
       function sendKey(type, code) {
         canvas.dispatchEvent(new KeyboardEvent(type, {
           code: code, key: KEYS[code].key, keyCode: KEYS[code].keyCode, which: KEYS[code].keyCode,
+          location: KEYS[code].location || 0, shiftKey: code === "ShiftLeft" && type === "keydown",
           bubbles: true, cancelable: true
         }));
       }
