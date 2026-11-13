@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using CarcavelosCircuit.Driving;
 using CarcavelosCircuit.RaceFlow;
 using CarcavelosCircuit.Shared;
 using NUnit.Framework;
@@ -9,7 +10,7 @@ using UnityEngine.TestTools;
 
 namespace CarcavelosCircuit.Tests.PlayMode
 {
-    // Role 4 Play Mode tests (tasks R8 + R9): the real game (Main.unity + the track RaceBootstrap picks) with two of
+    // Role 4 Play Mode tests (tasks R8 + R9, name tags in Main: Q22): the real game (Main.unity + the track RaceBootstrap picks) with two of
     // RaceFlow's dev test bots. Checks the race flow for every racer: grid slots, input only while Racing, Retry puts
     // everyone back, bots never pass the player's checkpoints, and the HUD shows positions and the minimap.
     public class RacersPlayTests
@@ -151,6 +152,42 @@ namespace CarcavelosCircuit.Tests.PlayMode
             {
                 Assert.IsFalse(bots[i].Kart.InputEnabled, "no bot drives in the retry countdown");
             }
+        }
+
+        // Request Q22: Role 1's name tags (D9) are in Main. One tag per racer, the bots' tags show their names in
+        // the HUD font, the player's own tag stays hidden.
+        [UnityTest]
+        public IEnumerator NameTags_OneForEveryRacer_HiddenOverThePlayer()
+        {
+            NameTagManager manager = Object.FindAnyObjectByType<NameTagManager>();
+            Assert.IsNotNull(manager, "Main.unity has Role 1's NameTagManager (Role4SceneBuilder, request Q22)");
+
+            roster.SpawnTestBots(2);
+            yield return null; // the manager rebuilds its tags in LateUpdate after RacerRegistry changed
+            yield return null;
+            NameTag[] tags = manager.GetComponentsInChildren<NameTag>(true);
+            Assert.AreEqual(RacerRegistry.Count, tags.Length, "one tag per racer (player + 2 test bots)");
+
+            int botTags = 0;
+            for (int i = 0; i < tags.Length; i++)
+            {
+                IRacer racer = tags[i].Racer;
+                Assert.IsNotNull(racer, "every tag follows a racer");
+                TextMesh text = tags[i].GetComponent<TextMesh>();
+                Assert.IsNotNull(text);
+                Assert.AreEqual("BarlowCondensed-ExtraBold", text.font.name, "the builder gives the tags the HUD font");
+                if (racer.IsPlayer)
+                {
+                    Assert.IsFalse(tags[i].GetComponent<MeshRenderer>().enabled, "no tag over the player's own kart");
+                }
+                else
+                {
+                    botTags++;
+                    Assert.AreEqual(NameTagRules.CleanName(racer.DisplayName).ToUpperInvariant(), text.text);
+                    Assert.IsNotEmpty(text.text, racer.DisplayName + " has an empty tag");
+                }
+            }
+            Assert.AreEqual(2, botTags);
         }
 
         // ---------- helpers ----------

@@ -1,4 +1,5 @@
 using CarcavelosCircuit.Audio;
+using CarcavelosCircuit.Driving;
 using CarcavelosCircuit.Shared;
 using CarcavelosCircuit.Shared.Editor;
 using CarcavelosCircuit.Track;
@@ -38,6 +39,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         private const string TrackScenePath = Root + "RaceFlow/Scenes/RaceFlow_PlaceholderTrack.unity";
         private const string VolumeProfilePath = Root + "RaceFlow/Settings/RaceCameraVolume.asset";
         private const string DeansGhostPath = Root + "RaceFlow/Settings/DeansGhost.txt"; // shipped team ghost (DeansGhostExporter)
+        private const string NameTagFontPath = Root + "RaceFlow/UI/Fonts/BarlowCondensed/BarlowCondensed-ExtraBold.ttf"; // HUD font (R15)
+        private const string NameTagsRootName = "NameTags"; // Role 1's name tags (D9), request Q22
 
         [MenuItem("Carcavelos Circuit/Build Role 4 Scenes")]
         public static void BuildAll()
@@ -154,6 +157,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                     return new[] { typeof(Transform), typeof(ItemSystem), typeof(AudioSource), typeof(UIDocument), typeof(ItemSlotHud) };
                 case "Ambience":
                     return new[] { typeof(Transform), typeof(CarcavelosCircuit.Ambience.SeasideAmbience) }; // waves + surfers (R12)
+                case NameTagsRootName:
+                    return new[] { typeof(Transform), typeof(NameTagManager) }; // Role 1's name tags (D9, Q22)
                 default:
                     return null;
             }
@@ -790,6 +795,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             BuildItems(manager, panel);
             Role4RacersBuilder.Build(manager, settings, panel); // every racer on the grid, positions + minimap (R8, R9)
             CarcavelosCircuit.Ambience.Editor.AmbienceBuilder.AddToScene(); // waves + surfers on the beach (R12)
+            BuildNameTags(cam); // a name above every other racer's kart (Role 1's D9, request Q22)
 
             EditorSceneManager.SaveScene(scene, MainScenePath);
 
@@ -883,6 +889,26 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             {
                 throw new System.Exception("Role4SceneBuilder: ItemSettings or the ItemBox material is missing.");
             }
+        }
+
+        // ---------- name tags (Role 1's task D9, request Q22) ----------
+
+        // The "NameTags" root object: Role 1's NameTagManager finds every racer through RacerRegistry by itself and
+        // floats a name above each kart except the player's. We only add it once, point it at the race camera and
+        // give it the HUD font, so the names look like the rest of the arcade UI. Role 1 tunes it in NameTagManager.
+        private static void BuildNameTags(Camera raceCamera)
+        {
+            Font font = AssetDatabase.LoadAssetAtPath<Font>(NameTagFontPath);
+            if (font == null)
+            {
+                throw new System.Exception("Role4SceneBuilder: " + NameTagFontPath + " is missing (HUD font, task R15).");
+            }
+            GameObject tagsObject = new GameObject(NameTagsRootName);
+            NameTagManager tags = tagsObject.AddComponent<NameTagManager>();
+            SerializedObject nso = new SerializedObject(tags);
+            nso.FindProperty("viewCamera").objectReferenceValue = raceCamera;
+            nso.FindProperty("tagFont").objectReferenceValue = font;
+            nso.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // ---------- ghost (stretch item, docs/decisions.md) ----------
