@@ -181,126 +181,47 @@ PERGOLA_ROWS = 3
 PERGOLA_COLUMN = 0.2
 
 # ---------------------------------------------------------------------------------------------------------------
-# Skylights: flush frosted glass, drivable (survey 4.2). S3 and S4 lie inside the fence.
+# V20b (Luc's playtest 2026-11-13, s13-s16): the shortcut JUMPS over the sunken courtyard instead of dropping into
+# it. One straight axis from the plaza run-up into the middle of the atrium entry door D4: a real boost pad (a
+# BoostPad in Unity, track.json "boost_pads") -> the V14b kicker beside skylight S3, its lip in a gap of the
+# courtyard's south fence -> flight over the courtyard (Floor 0) -> landing on the plaza deck, which now covers the
+# old courtyard's north part and the climb's place -> straight on, past the frosted glass S4 and a light well along
+# the hall, over skylight S5 into the door. No stair-ramp any more (V14b's climb, its slot and the hedge funnel are
+# gone). Flight numbers (KartController + playtest KartTuning, 50 Hz): see the atlas report V20b.
 # ---------------------------------------------------------------------------------------------------------------
-SKYLIGHTS = {
-    "S2": [(92.8, 9.2), (100.3, 9.2), (102.7, 16.2), (95.2, 16.2)],
-    "S1": [(88.7, 17.7), (96.6, 17.7), (99.8, 27.4), (91.9, 27.4)],
-    "S3": [(75.1, 55.5), (81.1, 55.5), (81.1, 61.0), (75.1, 61.0)],
-    "S5": [(62.4, 98.4), (68.1, 98.4), (68.1, 106.7), (62.4, 106.7)],
-}
-# V16 (survey V15: panes about 1.35 x 1.5-2.7 m, grey glazing bars, a bright steel edge): panes along the ring's
-# first and second edge. The outlines stay (the deck's mesh and collider do not change); only the UVs follow the panes.
-# The steel edge is the half glazing bar that lies on the outline (a separate strip of paint over the glass would
-# cross the race line 4 cm above the driving surface, which qa_geometry counts as "covered").
-SKYLIGHT_PANES = {"S2": (6, 4), "S1": (6, 5), "S3": (4, 3), "S5": (4, 6)}
+SC_DOOR = (62.87, 106.99)            # middle of the atrium entry door D4 (out/HallDoors.json, Noah's hall)
+SC_RUN = (85.5, 44.0)                # a point of the run-up (0.7 m west of V14b's axis, so the line ends in the
+                                     # door's middle: V14b's axis passed 1 m from its left frame)
+_sc = _unit(*SC_RUN, *SC_DOOR)
+SC_DIR = _sc[:2]                     # driving direction (bearing 339.7, the Gallery's own is 338.8)
+SC_RIGHT = (SC_DIR[1], -SC_DIR[0])                              # to the right of it (east)
+SC_BEARING = math.degrees(math.atan2(SC_DIR[0], SC_DIR[1])) % 360.0
 
-# ---------------------------------------------------------------------------------------------------------------
-# Sunken courtyard (Floor 0) beside the Gallery, its fence, the stair down
-# ---------------------------------------------------------------------------------------------------------------
-_S3N = 61.2                          # the courtyard starts north of skylight S3
+_S3N = 61.2                          # the courtyard starts north of skylight S3 (its south wall, y = 61.2)
 COURT_SOUTH_EDGE = ((72.9, _S3N), (81.9, _S3N))
 
-# ---------------------------------------------------------------------------------------------------------------
-# V14b: the courtyard shortcut (Luc's yellow line). One straight axis, bearing 338 (22 degrees west of north,
-# parallel to the Gallery): a kicker on the plaza beside skylight S3 whose lip stands in a gap of the courtyard
-# fence -> flight into the courtyard (Floor 0) -> a stair-ramp up to the plaza that tops out 9 m before the red
-# line's checkpoint 10. The climb replaces the S4 platform and the court's north strip (see the report V14b).
-# ---------------------------------------------------------------------------------------------------------------
-SC_BEARING = math.radians(22.0)
-SC_DIR = (-math.sin(SC_BEARING), math.cos(SC_BEARING))          # driving direction (north-north-west)
-SC_RIGHT = (SC_DIR[1], -SC_DIR[0])                              # to the right of it (east)
-CLIMB_TOP = (65.4, 95.5)             # middle of the climb's top edge (plaza level)
-CLIMB_LEN = 23.5                     # m in plan
-CLIMB_HALF = 3.0                     # m: half the lane between its walls (the real stair down is 6.0 m wide)
-CLIMB_SLOPE = 0.20                   # even part
-CLIMB_SAG_M = 4.0                    # vertical curve at the foot
-CLIMB_CREST_M = 10.0                 # ... and at the top (radius 50 m), ending exactly at the top edge
-CLIMB_RISERS = 22                    # visible steps (21 treads of 1.12 m)
-CLIMB_FOOT = (CLIMB_TOP[0] - SC_DIR[0] * CLIMB_LEN, CLIMB_TOP[1] - SC_DIR[1] * CLIMB_LEN)
-# Luc, 2026-11-11: "you jump over the ramp, land, and the stairs should then be a bit further to the right, not
-# straight ahead". A kart at 15 m/s and more lands ON the climb (the court is 26 m long, the flight 14 to 33 m), so
-# the climb cannot leave the flight line, and its top cannot go east (4 m from the red line there). So the stair
-# opens like a fan to the right: its west wall stays, its east side starts at the bridge's pier (the shaded side of
-# the court) and runs in to the old 3 m at the top. At the foot it is 8.5 m wide and its middle lies 2.2 m right of
-# the flight line (before: 0.9 m); the wall-to-wall width where fast karts land is 7 m and more.
-CLIMB_EAST_FOOT = 5.5                # m right of the axis at the foot (the pier's face is at 5.56)
-CLIMB_EAST_TOP = CLIMB_HALF          # ... and at the top
-
-
-def _fan(s):
-    """How much wider than CLIMB_HALF the climb's right half is at s (1 before the foot: kicker, pad, court)."""
-    if s < 0.0:
-        return 1.0
-    t = min(s, CLIMB_LEN) / CLIMB_LEN
-    return (CLIMB_EAST_FOOT + (CLIMB_EAST_TOP - CLIMB_EAST_FOOT) * t) / CLIMB_HALF
-
-
-def climb_point(s, u):
-    """s metres up the climb from its foot (negative = before it, in the courtyard and on the plaza), u to the right.
-    On the climb u runs from -CLIMB_HALF (west wall) to +CLIMB_HALF (east side), and the right half is stretched by
-    _fan(s): every row of steps, of the collider and of the walls follows the fan without knowing about it."""
-    if u > 0.0:
-        u *= _fan(s)
-    return (CLIMB_FOOT[0] + SC_DIR[0] * s + SC_RIGHT[0] * u, CLIMB_FOOT[1] + SC_DIR[1] * s + SC_RIGHT[1] * u)
-
-
-def climb_frame(x, y):
-    """Inverse of climb_point: (s, u) with u in the climb's own -CLIMB_HALF .. CLIMB_HALF on the climb."""
-    dx, dy = x - CLIMB_FOOT[0], y - CLIMB_FOOT[1]
-    s, u = dx * SC_DIR[0] + dy * SC_DIR[1], dx * SC_RIGHT[0] + dy * SC_RIGHT[1]
-    return s, (u / _fan(s) if u > 0.0 else u)
-
-
-def climb_metres(x, y):
-    """(s, metres to the right of the axis): the plain frame, for measuring (landing spots, flight line)."""
-    dx, dy = x - CLIMB_FOOT[0], y - CLIMB_FOOT[1]
-    return dx * SC_DIR[0] + dy * SC_DIR[1], dx * SC_RIGHT[0] + dy * SC_RIGHT[1]
-
-
-def climb_profile(s):
-    """Driving height (track_z) on the climb: level, sag curve, even slope, crest curve, level (like stair_profile)."""
-    v0 = CLIMB_SAG_M / 2
-    v1 = v0 + (FLOOR1 - FLOOR0) / CLIMB_SLOPE
-    g, a, c = CLIMB_SLOPE, CLIMB_SAG_M / 2, CLIMB_CREST_M / 2
-    if s <= v0 - a:
-        return FLOOR0
-    if s < v0 + a:
-        return FLOOR0 + g * (s - (v0 - a)) ** 2 / (4 * a)
-    if s <= v1 - c:
-        return FLOOR0 + g * (s - v0)
-    if s < v1 + c:
-        return FLOOR1 - g * (v1 + c - s) ** 2 / (4 * c)
-    return FLOOR1
-
-
-def climb_judder(s):
-    """The same soft ripple as on the main stairs, one per visible step, on the even slope only."""
-    tread = CLIMB_LEN / (CLIMB_RISERS - 1)
-    lo = CLIMB_SAG_M
-    hi = CLIMB_SAG_M / 2 + (FLOOR1 - FLOOR0) / CLIMB_SLOPE - CLIMB_CREST_M / 2 - JUDDER_END * tread
-    fade = max(0.0, min(1.0, (s - lo) / (2 * tread), (hi - s) / (2 * tread)))
-    return JUDDER_M * fade * (0.5 - 0.5 * math.cos(2 * math.pi * s / tread))
-
-
-def on_climb(x, y, margin=0.0):
-    s, u = climb_frame(x, y)
-    return -margin <= s <= CLIMB_LEN + margin and abs(u) <= CLIMB_HALF + margin
-
-
-CLIMB_LANE = [climb_point(0, -CLIMB_HALF), climb_point(0, CLIMB_HALF), climb_point(CLIMB_LEN, CLIMB_HALF),
-              climb_point(CLIMB_LEN, -CLIMB_HALF)]
-CLIMB_FENCE_TO = CLIMB_LEN - 5.9     # the railings beside the slot end where it is less than 0.35 m deep
-
-# the kicker: 0.9 m west of the axis (its east cheek clears the bridge's pier wall), rising 0.70 m: a parabola over
-# the first 3 m, then an even 14 % (8 degrees) to the lip. The lip stands in a gap of the fence, up to 1.7 m out
-# over the courtyard on a solid pier, so a kart that is too slow simply drops into the courtyard behind the wall.
-KICK_U = (-3.1, 1.3)                 # across the axis (4.4 m wide; 1.4 m from the pier wall on its right)
+# the kicker (V14b's, 0.4 m narrower on its west side so skylight S3 fits beside it as in reality): rising 0.70 m,
+# a parabola over the first 3 m, then an even 14 % (8 degrees) to the lip. The lip stands in a gap of the fence, up to
+# 1.5 m out over the courtyard on a solid pier. The axis frame's origin is the middle of the lip (s = 0).
+KICK_U = (-2.6, 1.3)                 # across the axis (3.9 m wide; 0.6 m from the bridge's pier wall on its right)
 KICK_LEN = 6.5
 KICK_RISE = 0.70
 KICK_EASE = 3.0
-KICK_LIP_S = (_S3N + 0.15 - CLIMB_FOOT[1] - SC_RIGHT[1] * KICK_U[0]) / SC_DIR[1]   # its west corner 0.15 m past the wall
-KICK_START_S = KICK_LIP_S - KICK_LEN
+_lip_t = (_S3N + 0.15 - SC_RUN[1] - SC_RIGHT[1] * KICK_U[0]) / SC_DIR[1]     # its west corner 0.15 m past the wall
+SC_LIP = (SC_RUN[0] + SC_DIR[0] * _lip_t, SC_RUN[1] + SC_DIR[1] * _lip_t)
+KICK_LIP_S = 0.0
+KICK_START_S = -KICK_LEN
+
+
+def sc_point(s, u):
+    """s metres along the shortcut's axis from the middle of the kicker's lip (negative = the run-up), u to the right."""
+    return (SC_LIP[0] + SC_DIR[0] * s + SC_RIGHT[0] * u, SC_LIP[1] + SC_DIR[1] * s + SC_RIGHT[1] * u)
+
+
+def sc_frame(x, y):
+    """Inverse of sc_point: (s, u)."""
+    dx, dy = x - SC_LIP[0], y - SC_LIP[1]
+    return dx * SC_DIR[0] + dy * SC_DIR[1], dx * SC_RIGHT[0] + dy * SC_RIGHT[1]
 
 
 def kick_profile(t):
@@ -310,34 +231,13 @@ def kick_profile(t):
     return m * t * t / (2 * KICK_EASE) if t < KICK_EASE else m * (t - KICK_EASE / 2)
 
 
-KICK_RING = [climb_point(KICK_START_S, KICK_U[0]), climb_point(KICK_START_S, KICK_U[1]),
-             climb_point(KICK_LIP_S, KICK_U[1]), climb_point(KICK_LIP_S, KICK_U[0])]
+KICK_RING = [sc_point(KICK_START_S, KICK_U[0]), sc_point(KICK_START_S, KICK_U[1]),
+             sc_point(KICK_LIP_S, KICK_U[1]), sc_point(KICK_LIP_S, KICK_U[0])]
 
 
 def _cross_y(a, b, y):
     t = (y - a[1]) / (b[1] - a[1])
     return (a[0] + (b[0] - a[0]) * t, y)
-
-
-KICK_W61 = _cross_y(KICK_RING[0], KICK_RING[3], _S3N)           # where its cheeks cross the courtyard's south wall
-KICK_E61 = _cross_y(KICK_RING[1], KICK_RING[2], _S3N)
-KICK_ON_DECK = [KICK_RING[0], KICK_RING[1], KICK_E61, KICK_W61]
-KICK_PIER = [KICK_W61, KICK_E61, KICK_RING[2], KICK_RING[3]]    # the part out over the courtyard
-
-
-def on_kicker(x, y):
-    s, u = climb_frame(x, y)
-    return KICK_START_S <= s <= KICK_LIP_S and KICK_U[0] <= u <= KICK_U[1]
-
-
-# where a boost pad belongs once PR #72 is merged: a painted area without function, 8 m before the kicker
-PAD_S = (KICK_START_S - 13.0, KICK_START_S - 8.0)
-PAD_U = (-2.6, 0.8)
-PAD_CENTRE = climb_point((PAD_S[0] + PAD_S[1]) / 2, (PAD_U[0] + PAD_U[1]) / 2)
-
-FENCE_SOUTH = [KICK_E61, COURT_SOUTH_EDGE[1], PIER[0]]           # east of the kicker, on to the bridge's west pier
-FENCE_SOUTH_W = [COURT_SOUTH_EDGE[0], KICK_W61]                  # west of it (S3 is open plaza now)
-_DIAG = ((80.1, 82.4), (71.9, 87.0))                             # the courtyard's north-east wall (underpass mouth in it)
 
 
 def _meet(p, d, a, b):
@@ -347,28 +247,97 @@ def _meet(p, d, a, b):
     return (p[0] + d[0] * t, p[1] + d[1] * t)
 
 
-_EAST_DIR = (CLIMB_LANE[2][0] - CLIMB_LANE[1][0], CLIMB_LANE[2][1] - CLIMB_LANE[1][1])    # along the fan's east side
-CLIMB_Q = _meet(CLIMB_LANE[1], _EAST_DIR, *_DIAG)                 # the lane's east side meets the north-east wall
-CLIMB_Q_S = climb_frame(*CLIMB_Q)[0]
-CLIMB_QW = climb_point(CLIMB_Q_S, -CLIMB_HALF)                    # ... the point across the lane from it
-_S4W = (65.16, 81.2)                                              # on the Gallery's roof edge
-CLIMB_LW = _meet(CLIMB_LANE[0], SC_DIR, _S4W, (_S4W[0] + 1.0, _S4W[1]))    # the lane's west side at y = 81.2
-CLIMB_LW_S = climb_frame(*CLIMB_LW)[0]
-FENCE_NORTH = [PIER[3], _DIAG[0], CLIMB_Q, climb_point(CLIMB_FENCE_TO, CLIMB_HALF)]
-FENCE_CLIMB_W = [_S4W, CLIMB_LW, climb_point(CLIMB_FENCE_TO, -CLIMB_HALF)]
-# the one void (counter-clockwise): the court; the climb's foot stands in it, its upper part is a slot in the deck.
-# (V10i had the S4 platform and a second void north of it here; the climb took their place.)
-COURT_SOUTH = [COURT_SOUTH_EDGE[0], COURT_SOUTH_EDGE[1], PIER[0], PIER[3], _DIAG[0], (79.2, 82.9), (74.5, 85.54), CLIMB_Q,
-               CLIMB_QW, CLIMB_LW, _S4W, (65.4, 80.6), (67.6, 74.7), (69.7, 75.0), (72.1, 63.2)]
-COURT_OPEN_EDGE = (CLIMB_Q, CLIMB_QW)                             # no wall: the climb goes on into the slot here
-CLIMB_SLOT = [CLIMB_QW, CLIMB_Q, CLIMB_LANE[2], CLIMB_LANE[3]]
-# hedge boxes along the last metres of the slot's west side (no railing there) and 8 m on across the plaza: whoever
-# comes up the climb passes checkpoint 10 (route point 551, trigger 6 m to each side) at most 5.2 m left of its middle
-# V14 + hall: the red line now runs into the middle of the hall's atrium door (hall_join.py), so the last box no
-# longer points at (63.3, 102.0), which is on that line now: it ends 5.7 m left of checkpoint 10's middle (its trigger reaches 6 m; a kart beside the box passes 4.6 m left at most) and from
-# there a second run leads to the door's left frame (the white fence is left out on this side, fence_free.py).
-FUNNEL = [climb_point(CLIMB_FENCE_TO + 0.5, -CLIMB_HALF - 0.6), climb_point(CLIMB_LEN, -CLIMB_HALF - 0.6), (61.8, 98.4), (59.6, 105.2)]
-COURTS = [COURT_SOUTH]
+KICK_W61 = _cross_y(KICK_RING[0], KICK_RING[3], _S3N)           # where its cheeks cross the courtyard's south wall
+KICK_E61 = _cross_y(KICK_RING[1], KICK_RING[2], _S3N)
+KICK_ON_DECK = [KICK_RING[0], KICK_RING[1], KICK_E61, KICK_W61]
+KICK_PIER = [KICK_W61, KICK_E61, KICK_RING[2], KICK_RING[3]]    # the part out over the courtyard
+
+
+def on_kicker(x, y):
+    s, u = sc_frame(x, y)
+    return KICK_START_S <= s <= KICK_LIP_S and KICK_U[0] <= u <= KICK_U[1]
+
+
+# The landing: the deck's edge across the courtyard, square to the axis, LAND_S after the lip. With the kicker above
+# (0.70 m, 8 degrees) a kart's ball comes down to deck level 13.0 m after the lip at 20 m/s (top speed), 8.2 m at
+# 15 m/s, 6.7 m at 13 m/s and 29.2 m with the jump pad (32 m/s), so 6 m clears from about 12.4 m/s on.
+LAND_S = 6.0
+
+
+def _hall_hit(s, ring=MAIN_EAST):
+    """Where the line s = const of the axis frame meets the hall's outline on the left (west) of the axis:
+    (point, index of the outline segment)."""
+    p = sc_point(s, 0.0)
+    best = None
+    for k, (a, b) in enumerate(zip(ring, ring[1:])):
+        ex, ey = b[0] - a[0], b[1] - a[1]
+        det = SC_RIGHT[0] * ey - ex * SC_RIGHT[1]                  # p - t SC_RIGHT = a + w (b - a)
+        if abs(det) < 1e-9:
+            continue
+        qx, qy = a[0] - p[0], a[1] - p[1]
+        t = (-qx * ey + ex * qy) / det
+        w = (-SC_RIGHT[0] * qy + SC_RIGHT[1] * qx) / det
+        if t > 0 and -1e-9 <= w <= 1 + 1e-9 and (best is None or t < best[0]):
+            best = (t, (p[0] - SC_RIGHT[0] * t, p[1] - SC_RIGHT[1] * t), k)
+    return best[1], best[2]
+
+
+LAND_W, _LW_SEG = _hall_hit(LAND_S)                               # the landing edge meets the hall's outline ...
+LAND_E = _meet(sc_point(LAND_S, 0.0), SC_RIGHT, PIER[0], PIER[3])  # ... and the bridge's pier wall
+_GALLERY_EDGE = ((72.9, _S3N), (65.16, 81.2))                      # the old main building's Gallery deck edge (V10 integration)
+# the sunken courtyard that is left (Floor 0): from the fence beside S3 to the landing edge, hall to pier
+COURT_SOUTH = [COURT_SOUTH_EDGE[0], COURT_SOUTH_EDGE[1], PIER[0], LAND_E, LAND_W] + \
+    [MAIN_EAST[k] for k in range(_LW_SEG, 2, -1)]
+FENCE_SOUTH = [KICK_E61, COURT_SOUTH_EDGE[1], PIER[0]]           # east of the kicker, on to the bridge's west pier
+FENCE_SOUTH_W = [COURT_SOUTH_EDGE[0], KICK_W61]                  # west of it
+
+# The run-out after the landing is plaza deck all the way to the door. The real place along the hall (orthophoto,
+# Luc's satellite view s16): the sunken cafe court, frosted glass panes (S4) at y 81.4-86.4, a light well at y 86-95,
+# then skylight S5 in front of the door. The well stays west of the landing lane behind a railing (LANE_W: the kicker's
+# west edge plus 1.8 m for a kart that leaves the lip 3.5 degrees off the axis and lands with the pad, 29 m on).
+LANE_W = -4.4
+WELL_S = (26.2, 34.6)                # the light well (Floor 0) along the hall: s range
+WELL_IN = [sc_point(WELL_S[0], LANE_W), sc_point(WELL_S[1], LANE_W)]
+WELL_SOUTH, _WS_SEG = _hall_hit(WELL_S[0])
+WELL_NORTH, _WN_SEG = _hall_hit(WELL_S[1])
+WELL = [WELL_SOUTH, WELL_IN[0], WELL_IN[1], WELL_NORTH] + [MAIN_EAST[k] for k in range(_WN_SEG, _WS_SEG, -1)]
+FENCE_WELL = [WELL_SOUTH, WELL_IN[0], WELL_IN[1], WELL_NORTH]
+COURTS = [COURT_SOUTH, WELL]
+
+# The jump pad (a BoostPad, task V11): on the flat run-up 2 m before the kicker, so a kart that crosses it at any speed
+# leaves the lip at the pad's full 32 m/s (x1.6 for 1.0 s, BoostPadPlan) and lands 29 m on, 18 m before the door.
+PAD_S = (KICK_START_S - 5.0, KICK_START_S - 2.0)
+PAD_U = (-2.4, 1.1)
+PAD_CENTRE = sc_point((PAD_S[0] + PAD_S[1]) / 2, (PAD_U[0] + PAD_U[1]) / 2)
+BOOST_PADS = [{"x": PAD_CENTRE[0], "y": PAD_CENTRE[1], "heading": SC_BEARING, "width": PAD_U[1] - PAD_U[0],
+               "length": PAD_S[1] - PAD_S[0], "kind": "jump", "name": "shortcut jump"}]
+
+# ---------------------------------------------------------------------------------------------------------------
+# Skylights: flush frosted glass, drivable (survey 4.2), as rectangles (V20b, Luc s13: "make the glass straight to the
+# stairs"; V10i's S1 and S2 were parallelograms that reached 1 m into the hall). S1 and S2 are square to the stairs,
+# S3, S4 and S5 to the shortcut's axis (= the Gallery, as on the orthophoto); every corner stays 0.5 m or more off the
+# hall's outline (checked in env_plaza.build_deck). Corner order: (left, near), (right, near), (right, far), (left, far).
+# ---------------------------------------------------------------------------------------------------------------
+def _rect(point, s0, s1, u0, u1):
+    return [point(s0, u0), point(s0, u1), point(s1, u1), point(s1, u0)]
+
+
+SKYLIGHTS = {
+    # stair frame (s from the first riser up the stairs, u to the right): on the orthophoto S2 is about 7 x 8.5 m
+    # round (100.4, 14.1) = 4.7 m after the last riser and 2.7 m right of the stairs' axis, S1 5.4 x 9.8 m round
+    # (95.5, 22.8) = 14.7 m after it, also 2.7 m right; here S2 starts 0.8 m after the last riser
+    "S2": _rect(stair_point, STAIR_LEN + 0.8, STAIR_LEN + 8.8, -0.7, 6.1),
+    "S1": _rect(stair_point, STAIR_LEN + 9.8, STAIR_LEN + 19.6, 0.0, 5.4),
+    # shortcut frame: S3 beside the kicker (real x 74-78, y 56-61), S4 the panes between the court and the well
+    # (real x 67.9-72.9, y 81.4-86.4), S5 in front of the door (real x 62.5-69.3, y 97.5-105)
+    "S3": _rect(sc_point, -5.6, -0.9, -5.1, -2.9),
+    "S4": _rect(sc_point, 20.0, 25.4, -4.2, 1.2),
+    "S5": _rect(sc_point, 37.0, 44.0, -2.6, 4.0),
+}
+# V16 (survey V15: panes about 1.35 x 1.5-2.7 m, grey glazing bars, a bright steel edge): panes along the ring's
+# first and second edge (across, along). The steel edge is the half glazing bar that lies on the outline (a separate
+# strip of paint over the glass would cross the race line 4 cm above the driving surface: qa_geometry "covered").
+SKYLIGHT_PANES = {"S2": (5, 4), "S1": (4, 5), "S3": (2, 3), "S4": (4, 3), "S5": (5, 4)}
 # Stair down to Floor 0 (the slot): a parallelogram beside the race line (4.9 m from the centreline, the stair stays
 # on the right as in Luc's drawing 10), 6.5 m wide, 10 m long. Steps go down to the south; at the bottom a level
 # landing, from there an underpass under the plaza (and under the race line) to the courtyard. Open at the top
@@ -430,11 +399,14 @@ TREE_ROW = ((133.0, 35.0), (104.0, 112.0))                          # row of tre
 _east_dir = _unit(*TREE_ROW[0], *TREE_ROW[1])[:2]
 DECK_SE = _edge_point(G_WEST[3], G_WEST[4], 137.5)
 DECK_NE = _hit(DECK_SE, _east_dir, MAIN_EAST[16], (MAIN_EAST[16][0] + 0.931, MAIN_EAST[16][1] + 0.365))
-DECK = [EDGE_W, TOP_W, TOP_E, EDGE_E, G_WEST[1], G_WEST[2], G_WEST[3], DECK_SE, DECK_NE, MAIN_EAST[16], MAIN_EAST[15],
-        MAIN_EAST[14], MAIN_EAST[13], MAIN_EAST[12], MAIN_EAST[11], MAIN_EAST[10], MAIN_EAST[9], MAIN_EAST[8], MAIN_EAST[7],
-        _S4W, CLIMB_LW, CLIMB_LANE[3], CLIMB_LANE[2], CLIMB_Q, _DIAG[0], PIER[3],
-        PIER[0], (81.9, _S3N), (72.9, _S3N), MAIN_EAST[2]]             # V14b: the climb's slot is a notch in the deck
-DECK_ISLANDS = []
+DECK = [EDGE_W, TOP_W, TOP_E, EDGE_E, G_WEST[1], G_WEST[2], G_WEST[3], DECK_SE, DECK_NE] + \
+    [MAIN_EAST[k] for k in range(16, _WN_SEG, -1)] + [WELL_NORTH, WELL_IN[1], WELL_IN[0], WELL_SOUTH] + \
+    [MAIN_EAST[k] for k in range(_WS_SEG, _LW_SEG, -1)] + \
+    [LAND_W, LAND_E, PIER[0], (81.9, _S3N), (72.9, _S3N), MAIN_EAST[2]]   # V20b: the court and the well are notches
+# V20b (Blender only): between the landing edge and y = 81 the hall's outline (MAIN_EAST) bulges 1.2 m east of the old
+# main building's Gallery deck (its straight edge _GALLERY_EDGE); the court used to fill that sliver, now the deck does.
+# In Unity it lies inside Noah's hall and NovaHallInsert cuts it with the rest of the plaza's meshes in the outline.
+DECK_ISLANDS = [[_meet(sc_point(LAND_S, 0.0), SC_RIGHT, *_GALLERY_EDGE), LAND_W] + [MAIN_EAST[k] for k in range(_LW_SEG + 1, 6)]]
 # low paving (Floor 0) in the voids beside the stairs: west up to the Gallery, east up to Horizon Hall
 _low_w = _hit(STAIR_FOOT, STAIR_RIGHT, MAIN_EAST[0], MAIN_EAST[1])
 LOW_WEST = [FOOT_W, TOP_W, EDGE_W, MAIN_EAST[1]] + ([_low_w] if stair_frame(*_low_w)[1] < -STAIR_HALF - 0.3 else [])
@@ -448,16 +420,15 @@ _GV = lambda p: _C.MAIN_UV(*p)[1]                                   # noqa: E731
 _UD, _US = _C.GALLERY_DEEP - 0.3, _C.GALLERY_SHALLOW - 0.3          # 0.3 m inside the two wall lines
 _VB0, _VB1 = _C.GALLERY_BREAK
 _CS = (72.9, _S3N)
-UNDER_COURT_SOUTH = [_CS, MAIN_EAST[3], MAIN_EAST[4], MAIN_EAST[5], MAIN_EAST[6], _S4W, _C.MAIN(_US, _GV(_S4W)),
-                     _C.MAIN(_US, _VB1), _C.MAIN(30.0, _VB1), _C.MAIN(30.0, _VB0), _C.MAIN(_UD, _VB0),
-                     _C.MAIN(_UD, _GV(_CS))]
+UNDER_COURT_SOUTH = [_CS] + [MAIN_EAST[k] for k in range(3, _LW_SEG + 1)] + \
+    [LAND_W, _C.MAIN(_UD, _GV(LAND_W)), _C.MAIN(_UD, _GV(_CS))]     # V20b: the court ends at the landing edge
 UNDER_STAIR_WEST = [LOW_WEST[-1], MAIN_EAST[1], EDGE_W, _C.MAIN(_UD, _GV(EDGE_W)), _C.MAIN(_UD, _GV(LOW_WEST[-1]))]
-UNDERS = [UNDER_COURT_SOUTH, UNDER_STAIR_WEST]     # (V14b: no void north of y = 81.2 any more)
-UNDER_ENDS = [(_CS, UNDER_COURT_SOUTH[-1], UNDER_COURT_SOUTH), (_S4W, UNDER_COURT_SOUTH[6], UNDER_COURT_SOUTH),
+UNDERS = [UNDER_COURT_SOUTH, UNDER_STAIR_WEST]     # (V14b: no void north of y = 81.2 any more; V20b: of the landing)
+UNDER_ENDS = [(_CS, UNDER_COURT_SOUTH[-1], UNDER_COURT_SOUTH), (LAND_W, UNDER_COURT_SOUTH[-2], UNDER_COURT_SOUTH),
               (EDGE_W, UNDER_STAIR_WEST[3], UNDER_STAIR_WEST)]
 UNDER_TOP = FLOOR1 - 0.45            # the end walls stop inside the Gallery deck's band (FLOOR1 - 0.5 .. + 0.1)
 # ... and the Gallery deck's edge over the courtyard gets the courtyard's fence (no kart drops in from that deck)
-FENCE_GALLERY = [[_CS, _S4W]]
+FENCE_GALLERY = [[_CS, _meet(sc_point(LAND_S, 0.0), SC_RIGHT, *_GALLERY_EDGE)]]   # V20b: up to the landing edge
 LOWS = [LOW_WEST, LOW_EAST] + UNDERS
 # planted barrier across the gap between the library and Horizon Hall (Luc: the way to the gym is off the map)
 # V16 (survey V15): the plaza is paved in bays of about 5 m on the building grid (bearing 340 / 70)
@@ -477,11 +448,16 @@ EAST_LAMPS = 5
 LAMP_H = 5.5
 # furniture that is really there (survey V15, E1 2.5 and E2 2.5 / 2.6), as far as Luc's shortcut leaves room:
 # dark conical pots (0.9 m across, 0.75 m high) in a group of three at the stair top, east of the east railing; two
-# of the four potted young olives of the real row at (65..70, 93..97), which is the top of the shortcut's climb in
-# the game: they stand in the pocket beside the climb's east railing instead. (pot, olive in it?)
+# of the four potted young olives of the real row at (65..70, 93..97): dressing_reality.py places that row (V20b: along
+# the hall, left of the shortcut's landing lane). (pot, olive in it?)
 POT_R, POT_H = 0.45, 0.75
-POTS = [((107.6, 14.6), False), ((108.5, 15.5), False), ((107.3, 16.2), False),
-        ((74.45, 86.1), True), ((73.5, 87.72), True)]
+POTS = [((107.6, 14.6), False), ((108.5, 15.5), False), ((107.3, 16.2), False)]
+# the old tub olive of the survey ((75, 80), on the court's floor): V14b put it at (78.4, 79.6), where its crown went
+# through the library's north block and the court's wall (Luc, s15: "the tree clips into the wall"). V20b: in a big tub on
+# the deck east of the landing lane, north of the library (its trunk 4.9 m right of the axis, the kicker's right edge
+# is at 1.3 m), the crown (3.7 m across) clear of every wall (checked in env_plaza.dress)
+TUB_OLIVE = (77.0, 82.0)          # (s 19.3, u 4.9 in the axis frame)
+TUB_R, TUB_H, TUB_OLIVE_SCALE = 0.7, 0.6, 0.62
 # long low dark benches (2.5 x 0.5 x 0.42 m): the real ones stand along the library's west face near the loggia, where
 # the race line passes 4.7 to 6.5 m from that wall: they stand in the loggia (u east along its front, v into it, turn)
 BENCHES = [(4.0, 4.9, 0.0), (8.0, 4.9, 0.0), (12.0, 4.9, 0.0), (2.6, 3.3, 90.0)]
@@ -552,10 +528,8 @@ def surface_z(x, y):
     """Height of the built surface at (x, y) where this plan owns the ground, else None."""
     if on_stairs(x, y):
         return stair_profile(stair_frame(x, y)[0]) + LIFT
-    if on_climb(x, y):
-        return climb_profile(climb_frame(x, y)[0]) + LIFT
     if on_kicker(x, y):
-        return DECK_Z + kick_profile(climb_frame(x, y)[0] - KICK_START_S)
+        return DECK_Z + kick_profile(sc_frame(x, y)[0] - KICK_START_S)
     if in_court(x, y) or in_low(x, y):
         return LOW_Z
     if inside(x, y, STAIR_DOWN):
@@ -597,7 +571,7 @@ def terrain_z(x, y, natural):
     """Height of a terrain node: below Floor 0 near the courtyard, the voids beside the stairs, the stair slot and
     the underpass; below the deck under it; level with the deck just outside its open edges, blending back to the
     natural ground over EDGE_BLEND."""
-    lows = COURTS + LOWS + [CLIMB_LANE, STAIR_DOWN, UNDERPASS,
+    lows = COURTS + LOWS + [STAIR_DOWN,
                             [stair_point(-3, -STAIR_HALF), stair_point(-3, STAIR_HALF), TOP_E, TOP_W]]
     if any(inside(x, y, c) or poly_distance(x, y, c) <= LOW_REACH for c in lows):
         return FLOOR0 - 0.15
