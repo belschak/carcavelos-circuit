@@ -96,6 +96,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         [Serializable] private class TrackData
         {
             public float length_m; public int jump_index, start_index, spawn_index; public int[] checkpoints; public TrackPoint[] points;
+            public float[] checkpoint_widths;   // V20a: trigger width per checkpoint (m); missing or <= 0 = road width + 4 m
         }
         [Serializable] private class BoxCheck { public string name; public float[] min; public float[] max; }
         [Serializable] private class CheckData { public BoxCheck[] instances; public BoxCheck[] objects; }
@@ -633,7 +634,9 @@ namespace CarcavelosCircuit.Visuals.Editor
                 cp.transform.SetPositionAndRotation(Pos(p) + Vector3.up * 2f, Quaternion.LookRotation(Forward(data, i)));
                 BoxCollider trigger = cp.AddComponent<BoxCollider>();
                 trigger.isTrigger = true;
-                trigger.size = new Vector3(p.width + 4f, 6f, 1f);
+                // V20a: per-checkpoint width from track.json (pin_checkpoints.py), e.g. wall to wall at the plaza fork
+                bool hasWidth = data.checkpoint_widths != null && c < data.checkpoint_widths.Length && data.checkpoint_widths[c] > 0f;
+                trigger.size = new Vector3(hasWidth ? data.checkpoint_widths[c] : p.width + 4f, 6f, 1f);
                 int after = (i + 2) % data.points.Length;                             // about 4 m further on
                 var respawn = new GameObject("RespawnPoint");
                 respawn.transform.SetParent(cp.transform, false);

@@ -24,6 +24,7 @@ import env_common as E          # noqa: E402  shared helpers (terrain, materials
 import env_terrain              # noqa: E402
 import env_track                # noqa: E402
 import env_trackside            # noqa: E402
+import env_route_signs          # noqa: E402
 import env_tunnel               # noqa: E402
 import env_buildings            # noqa: E402
 import env_backdrop             # noqa: E402
@@ -619,6 +620,7 @@ def main():
     build_route_guide()
     env_track.build()
     env_trackside.build()                  # edge lines + corner signs (readability), exported with the track
+    env_route_signs.build()                # V20a: route signs, start gate, chequered start line (Luc, 13 Nov)
     env_tunnel.build()
     env_coast.build()                      # V16e: forecourt walls, terrace, details, railings (after the tunnel)
     carve_drive_throughs()

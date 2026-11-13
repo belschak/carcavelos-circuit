@@ -210,9 +210,13 @@ def unity_track():
     def u(p):
         return {"x": round(p["x"], 3), "y": round(p["track_z"] + ROAD_LIFT, 3), "z": round(p["y"], 3),
                 "width": p.get("width", 8.0), "s": p["s"], "zone": p["zone"], "tunnel": bool(p["tunnel"])}
-    return {"note": "Unity axes; y = road surface height. checkpoints[0] = start/finish line. Indices into points.",
+    # V20a: trigger width per checkpoint (checkpoint_anchors.json "width"; CampusWorldBuilder.AddRaceParts reads it,
+    # pin_checkpoints.py rewrites it after the hall steps)
+    widths = pin_checkpoints.widths_for(pts, cps)
+    return {"note": "Unity axes; y = road surface height. checkpoints[0] = start/finish line. Indices into points. "
+                    "checkpoint_widths = trigger width across the road (m), one per checkpoint.",
             "length_m": route["length_m"], "jump_index": jump, "start_index": start, "spawn_index": spawn,
-            "checkpoints": cps, "points": [u(p) for p in pts]}
+            "checkpoints": cps, "checkpoint_widths": widths, "points": [u(p) for p in pts]}
 
 
 def main():
