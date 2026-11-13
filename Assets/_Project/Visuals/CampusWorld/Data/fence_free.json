@@ -43,6 +43,18 @@
    "to": 246,
    "side": 0,
    "why": "gap in the Avenida Marginal's median (agreed with Noah)"
+  },
+  {
+   "from": 305,
+   "to": 318,
+   "side": -1,
+   "why": "V19 promenade shortcut mouth: the straight lane along the parking aisle leaves or joins here"
+  },
+  {
+   "from": 382,
+   "to": 388,
+   "side": -1,
+   "why": "V19 promenade shortcut mouth: the straight lane along the parking aisle leaves or joins here"
   }
  ]
 }
