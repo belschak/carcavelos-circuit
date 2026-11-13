@@ -957,7 +957,13 @@ def road_look(key):
 def paving_z(x, y):
     import env_streets as ST
     import street_plan as S
-    return ST.ground(x, y) + ST.lift_at(S.route_distance(x, y))
+    import env_covebank
+    # V20e (Luc, 13 Nov, beach café: "the ground looks broken"): beside the cove's sea wall the 5 m ground sags
+    # towards the sand (a grid cell spans the wall), so the paving buckled down to the kerb in steep shards. On the
+    # land side near the kerb it now holds the promenade's level (env_covebank.land_beside_cove, as the corridor does).
+    g = ST.ground(x, y)
+    g = max(g, env_covebank.land_beside_cove(x, y, g))
+    return g + ST.lift_at(S.route_distance(x, y))
 
 
 def build_paving():

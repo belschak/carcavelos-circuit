@@ -280,6 +280,20 @@ def build_mesh():
                 faces.append((vid(a, b), vid(a + 1, b), vid(a + 1, b + 1), vid(a, b + 1)))
     if not faces:
         return
+    # V20e (Luc, 13 Nov, beach café: "the ground looks broken"): on the land side of the kerb the lattice rose a few
+    # cm through the promenade paving beside the cove stairs (jagged grey points). There it stays 5 cm under it.
+    import env_coast
+    clamped = 0
+    edge = {k for (a, b), k in index.items() if _on_edge(a, b)}       # shared with the 5 m terrain: left alone
+    for k, (x, y, z) in enumerate(verts):
+        if k in edge or coast.in_cove(x, y):
+            continue
+        top = env_coast.paving_z(x, y) - 0.05
+        if z > top:
+            verts[k] = (x, y, top)
+            clamped += 1
+    if clamped:
+        print(f"  cove bank: {clamped} land-side vertices kept under the promenade paving (V20e)")
     mesh = bpy.data.meshes.new("GroundCoveBank")
     mesh.from_pydata(verts, [], faces)
     mesh.materials.append(E.material("ground_map", "#A6AA82", roughness=0.95))

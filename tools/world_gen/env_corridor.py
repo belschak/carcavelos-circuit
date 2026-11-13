@@ -504,6 +504,37 @@ def is_cut_face(p, o0, o1):
     return profile_height(p, mid, E.coarse_ground_z) < E.coarse_ground_z(p["x"] + _nrm(p)[0] * mid, p["y"] + _nrm(p)[1] * mid) - 0.3
 
 
+def _kerb_distance(x, y):
+    best = 1e9
+    for (ax, ay), (bx, by) in zip(coast.COVE_KERB, coast.COVE_KERB[1:]):
+        dx, dy = bx - ax, by - ay
+        L = dx * dx + dy * dy
+        t = 0.0 if L == 0 else max(0.0, min(1.0, ((x - ax) * dx + (y - ay) * dy) / L))
+        best = min(best, math.hypot(x - ax - t * dx, y - ay - t * dy))
+    return best
+
+
+def _drop_over_cove(bm):
+    """V20e (Luc, 13 Nov, at the beach café: "the ground bottom right looks broken"): next to the café the rows
+    cross the cove kerb less than HOLD_FROM from the centreline, so env_covebank.hold_back leaves them, and their
+    outer samples ran on over the sea wall at promenade height: a slanted, jagged sheet 0.7-1 m above the cove's
+    sand, poking out beside the promenade stairs. Every vertex inside the cove and more than KERB_BANK beyond the
+    kerb goes down onto the cove's sand (coast.cove_z, as profile_height does next to the kerb), never up."""
+    if not coast.COVE_KERB:
+        return
+    moved = 0
+    for v in bm.verts:
+        x, y = v.co.x, v.co.y
+        if not (_near_cove(x, y) and coast.in_cove(x, y)) or _kerb_distance(x, y) <= KERB_BANK + 0.05:
+            continue
+        sand = coast.cove_z(x, y, env_terrain.kerb_height) - 0.03
+        if v.co.z > sand + 0.02:
+            v.co.z = sand
+            moved += 1
+    if moved:
+        print(f"  corridor: {moved} vertices over the cove beyond its kerb lowered onto the sand (V20e)")
+
+
 def build_mesh():
     pts = _state["pts"]
     n = len(pts)
@@ -569,6 +600,7 @@ def build_mesh():
     for f, (ox, oy) in skirt_faces:                  # skirts face outwards
         if f.normal.x * ox + f.normal.y * oy < 0:
             f.normal_flip()
+    _drop_over_cove(bm)
     mesh = bpy.data.meshes.new("Ground_Corridor")
     bm.to_mesh(mesh)
     bm.free()

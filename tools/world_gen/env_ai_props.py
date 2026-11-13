@@ -76,6 +76,7 @@ NEW_PLACES = (
     ("Prop_AIEScooter", -230.9, -34.5, 48.0, "paving"),
 )
 BEACH_BAR = (-46.0, -147.0, 9.0)       # the beach bar terrace: its tables and chairs become AI bistro sets (centre, radius)       # Prop_BikeRack: three bikes beside its hoops (x of each)
+MAX_CAR_TILT = 9.0                    # degrees; a parked car on a steeper embankment is left out (V20e)
 ROUGHNESS = {"C": 0.35, "B": 0.6, "P": 0.45}                  # paint a little glossy, beach wood and canvas matt
 
 
@@ -120,6 +121,88 @@ def _fit(data, how, turn=True):
     s = metres / {"width": size.y, "height": size.z, "span": max(size.x, size.y)}[kind]
     data.transform(Matrix.Scale(s, 4))
     return size * s
+
+
+def _upright_parasol(data, span, edge=2.05):
+    """V20e (Luc, 13 Nov: "the café parasols must stand upright, otherwise it looks buggy"): the Tripo parasol leans
+    its canopy about 20 degrees on a tilt joint and its pole is bent. Three steps: (1) turn the whole model about
+    the pole's top until the canopy is level; (2) move every pole vertex sideways, height by height, so the pole
+    runs straight down under the canopy's top; (3) scale to `span` across the canopy and lengthen the pole so the
+    canopy's lowest edge hangs at `edge` metres (a café parasol you can sit under). The pole's foot ends at the
+    origin (the placement point: the hole of a café table), the lowest point at z = 0."""
+    import numpy as np
+    co = np.array([v.co[:] for v in data.vertices])
+    h = co[:, 2].max()
+    apex = co[co[:, 2].argmax()].copy()
+    far = np.hypot(co[:, 0] - apex[0], co[:, 1] - apex[1]) > 0.35
+    canopy = co[far & (co[:, 2] > 0.3 * h)]
+    n = np.linalg.svd(canopy - canopy.mean(0), full_matrices=False)[2][2]
+    n = Vector(n if n[2] > 0 else -n)
+    tilt = math.degrees(n.angle(Vector((0, 0, 1))))
+    level = n.rotation_difference(Vector((0, 0, 1))).to_matrix().to_4x4()
+    pa = Vector(apex)
+    data.transform(Matrix.Translation(pa) @ level @ Matrix.Translation(-pa))
+    co = np.array([v.co[:] for v in data.vertices])
+    apex = co[co[:, 2].argmax()].copy()
+    d = np.hypot(co[:, 0] - apex[0], co[:, 1] - apex[1])
+    low = co[d > 0.35][:, 2].min()                     # the canopy's lowest edge after levelling
+    # the pole: everything below the canopy edge, and the thin core inside the canopy
+    z0 = co[:, 2].min()
+    bins = np.arange(z0, apex[2] + 0.06, 0.06)
+    lean = 0.0
+    for k in range(len(bins) - 1):
+        inb = (co[:, 2] >= bins[k]) & (co[:, 2] < bins[k + 1])
+        core = inb & ((co[:, 2] < low - 0.02) | (d < 0.12))
+        if not core.any():
+            continue
+        c = co[core][:, :2]
+        cx, cy = np.median(c[:, 0]), np.median(c[:, 1])
+        near = core & (np.hypot(co[:, 0] - cx, co[:, 1] - cy) < 0.2)
+        lean = max(lean, math.hypot(cx - apex[0], cy - apex[1]))
+        co[near, 0] -= cx - apex[0]
+        co[near, 1] -= cy - apex[1]
+    co[:, 0] -= apex[0]
+    co[:, 1] -= apex[1]
+    co[:, 2] -= co[:, 2].min()
+    reach = 2.0 * np.hypot(co[:, 0], co[:, 1]).max()
+    co *= span / reach
+    r = np.hypot(co[:, 0], co[:, 1])
+    low = co[r > 0.35 * span / reach][:, 2].min()
+    lift = max(0.0, edge - low)
+    co[co[:, 2] > low - 0.15, 2] += lift
+    for v, c in zip(data.vertices, co):
+        v.co = Vector(c)
+    # (2b) the Tripo pole is a thin, ragged voxel shell: replace the part under the canopy by a clean round pole
+    # (8 sides, 3 cm radius) in the old pole's colour (all its UVs on one texel of the old pole)
+    hub = low + lift
+    bm = bmesh.new()
+    bm.from_mesh(data)
+    uvl = bm.loops.layers.uv.active
+    pole = [v for v in bm.verts if v.co.xy.length < 0.15 and v.co.z < hub - 0.12]
+    uv = None
+    for v in pole:
+        for l in v.link_loops:
+            if uvl is not None:
+                uv = l[uvl].uv.copy()
+                break
+        if uv is not None and 0.3 * hub < v.co.z < 0.7 * hub:
+            break
+    bmesh.ops.delete(bm, geom=pole, context="VERTS")
+    ring = []
+    for z in (0.0, hub + 0.05):
+        ring.append([bm.verts.new((0.03 * math.cos(k * math.pi / 4), 0.03 * math.sin(k * math.pi / 4), z)) for k in range(8)])
+    mat = max(0, data.polygons[0].material_index if len(data.polygons) else 0)
+    made = [bm.faces.new((ring[0][k], ring[0][(k + 1) % 8], ring[1][(k + 1) % 8], ring[1][k])) for k in range(8)]
+    made.append(bm.faces.new(list(reversed(ring[0]))))
+    for f in made:
+        f.material_index = mat
+        if uvl is not None and uv is not None:
+            for l in f.loops:
+                l[uvl].uv = uv
+    bmesh.ops.recalc_face_normals(bm, faces=made)
+    bm.to_mesh(data)
+    bm.free()
+    return tilt, lean
 
 
 def _material(model, variant):
@@ -196,6 +279,9 @@ def swap(protos):
             continue
         data = _mesh(model)
         size = _fit(data, how)
+        if model == "B1_parasol":
+            tilt = _upright_parasol(data, how[1])
+            report.append(f"parasol stood up (canopy {tilt[0]:.0f} deg level, pole bend {tilt[1]:.2f} m straight)")
         data.materials.clear()
         data.materials.append(_material(model, variant))
         data = _decimate(data, _budget(name, NEAR_TRIS))
@@ -274,17 +360,38 @@ def _wheel_ground(proto, p):
     zs = []
     for ax, ay in corners:
         z = _ground_hit(p["x"] + c * ax - s_ * ay, p["y"] + s_ * ax + c * ay, p["z"] + 2.5)
-        zs.append(z if z is not None and abs(z - p["z"]) < 0.6 else None)
-    known = sorted(z for z in zs if z is not None)
-    if len(known) < 2:
+        zs.append(z if z is not None and abs(z - p["z"]) < 1.0 else None)
+    # V20e (Luc, 13 Nov: cars on the Marginal's north lot still float): the old rule replaced every wheel more than
+    # 25 cm off the median by the median, so on a real slope (an embankment, 0.6 m from rear to front) the front
+    # pair was lifted to the rear's height and hung in the air. Now: the plane through all four wheels; when one
+    # wheel sits off that plane by more than 8 cm (a kerb, a bay edge, no hit), the plane through the other three.
+    pts = [(ax, ay, z) for (ax, ay), z in zip(corners, zs) if z is not None]
+    if len(pts) < 3:
         return p
-    med = known[len(known) // 2]
-    zs = [med if z is None or abs(z - med) > 0.25 else z for z in zs]
-    front, rear = (zs[0] + zs[1]) / 2, (zs[2] + zs[3]) / 2
-    left, right = (zs[0] + zs[2]) / 2, (zs[1] + zs[3]) / 2
-    pitch = math.atan2(front - rear, 2 * hx)                       # nose up > 0
-    roll = math.atan2(left - right, 2 * hy)                        # left side up > 0
-    return dict(p, z=round(sum(zs) / 4, 3), rot_y=round(-pitch, 4), rot_x=round(roll, 4))
+
+    def plane(q):
+        # z = a + b*x + c*y through the points (least squares); 3 or 4 points
+        n = len(q)
+        sx = sum(t[0] for t in q); sy = sum(t[1] for t in q); sz = sum(t[2] for t in q)
+        sxx = sum(t[0] ** 2 for t in q); syy = sum(t[1] ** 2 for t in q); sxy = sum(t[0] * t[1] for t in q)
+        sxz = sum(t[0] * t[2] for t in q); syz = sum(t[1] * t[2] for t in q)
+        m = Matrix(((n, sx, sy), (sx, sxx, sxy), (sy, sxy, syy)))
+        if abs(m.determinant()) < 1e-9:
+            return None
+        return m.inverted() @ Vector((sz, sxz, syz))
+
+    k = plane(pts)
+    if k is None:
+        return p
+    off = [abs(k[0] + k[1] * x + k[2] * y - z) for x, y, z in pts]
+    if len(pts) == 4 and max(off) > 0.08:
+        worst = off.index(max(off))
+        k = plane([t for j, t in enumerate(pts) if j != worst]) or k
+    pitch = math.atan(k[1])                                         # nose up > 0
+    roll = math.atan(k[2])                                          # left side up > 0
+    if math.degrees(math.hypot(pitch, roll)) > MAX_CAR_TILT:
+        return None                                                 # too steep to park: leave the car out
+    return dict(p, z=round(k[0], 3), rot_y=round(-pitch, 4), rot_x=round(roll, 4))
 
 
 def far_variants(props, protos):
@@ -302,7 +409,7 @@ def far_variants(props, protos):
             elif not (at_bar and p["proto"] == "Prop_BistroChair"):
                 kept.append(p)
         props = kept + [dict(t, proto="Prop_AIBistroSet") for t in bar_tables]
-    out, far, dupes, cars = [], 0, 0, []
+    out, far, dupes, steep, cars = [], 0, 0, 0, []
     for p in props:
         if p["proto"].startswith("Prop_Car"):          # two dressing steps put a car on the same bay twice (2 spots)
             if any(math.hypot(p["x"] - q[0], p["y"] - q[1]) < 0.8 for q in cars):
@@ -310,6 +417,9 @@ def far_variants(props, protos):
                 continue
             cars.append((p["x"], p["y"]))
             p = _wheel_ground(protos.get(p["proto"]), p)
+            if p is None:
+                steep += 1
+                continue
         name = p["proto"]
         if name in protos and (name in SWAPS or name == "Prop_BikeRack") and S.route_distance(p["x"], p["y"]) > NEAR_M:
             fname = name + "_Far"
@@ -343,5 +453,5 @@ def far_variants(props, protos):
     data["counts"] = counts
     json.dump(data, open(path, "w"), indent=1)
     print(f"  ai props (V18m): {far} placements further than {NEAR_M:.0f} m from the route use the _Far versions; "
-          f"{dupes} doubled cars removed; {len(bar_tables)} beach bar tables are bistro sets")
+          f"{dupes} doubled cars removed, {steep} cars on embankments steeper than {MAX_CAR_TILT:.0f} deg left out; {len(bar_tables)} beach bar tables are bistro sets")
     return out
