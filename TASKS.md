@@ -19,7 +19,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | D3 | Drift that charges a boost; release when charged = short boost; early release = nothing | Wed 11 | done (Alessandro, 2026-11-10) |
 | D4 | Ramp jump: airborne state, lands upright, no flipping; `IsGrounded` | Wed 11 | done (Alessandro, 2026-11-10) |
 | D5 | `ResetTo(position, rotation)` for recovery and retry (zero velocity, clear drift/boost) | Wed 11 | done (Alessandro, PR #56) |
-| D6 | All tuning values in `KartTuning` ScriptableObject; tune on the grey campus track | Fri 13 | in review (Alessandro, PR #59) |
+| D6 | All tuning values in `KartTuning` ScriptableObject; tune on the grey campus track | Fri 13 | done (Alessandro, 2026-11-13, PR #59) |
 
 ## Role 2: Campus track + race rules (Noah)
 | ID | Task | Due | Status |
@@ -63,8 +63,8 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 ### Role 1: Alessandro
 | ID | Task | Due | Status |
 |---|---|---|---|
-| D7 | **Slower driving, first** (medals, bots and lap times depend on it): lower top speed and acceleration in `KartTuning` so the campus lap feels controllable; post the new top speed in the group | Wed 11 | in review (Alessandro, 2026-11-11, PR #73) |
-| D8 | `IKartDrivable` on `KartController`: when `InputSource` is set the kart reads `InputSource.ReadInput().Clamped()` instead of the keyboard; `InputEnabled` still wins. Luc's bots need it | Thu 12 | todo |
+| D7 | **Slower driving, first** (medals, bots and lap times depend on it): lower top speed and acceleration in `KartTuning` so the campus lap feels controllable; post the new top speed in the group | Wed 11 | done (Alessandro, 2026-11-13, PR #73) |
+| D8 | `IKartDrivable` on `KartController`: when `InputSource` is set the kart reads `InputSource.ReadInput().Clamped()` instead of the keyboard; `InputEnabled` still wins. Luc's bots need it | Thu 12 | in review (Alessandro, 2026-11-11, PR #75) |
 | D9 | Name tags above every kart (reads `IRacer.DisplayName` + `MapColor` from `RacerRegistry`), always facing the camera, hidden for the player's own kart, fade with distance | Fri 13 | todo |
 | D10 | Flying animation in the air: the kart body tilts with the jump (nose up on take-off, down before landing), small wobble, lands upright (`IsGrounded` unchanged) | Fri 13 | todo |
 | D11 | Trick after a jump: a key in the air spins/flips the model only; a clean landing gives a small boost (same boost path as drift), a trick still running at landing gives nothing. Edit Mode tests for the rule | Fri 13 | todo |
