@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3914557387170186935}
   - component: {fileID: 2070471459575107305}
+  - component: {fileID: 7952455868512208396}
   m_Layer: 0
   m_Name: Prop_SignCrossing
   m_TagString: Untagged
@@ -54,6 +55,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.6, y: 2.75, z: 0.10531092}
   m_Center: {x: 0, y: 1.2249999, z: 0.022344567}
+--- !u!205 &7952455868512208396
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3587059188662511322}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 1.2249999, z: 0.022344567}
+  m_Size: 2.75
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 691498187269083453}
+  m_Enabled: 1
 --- !u!1 &3826311465923407531
 GameObject:
   m_ObjectHideFlags: 0

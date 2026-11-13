@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8753804237109605635}
   - component: {fileID: 4230435473755318527}
+  - component: {fileID: 1944282926775203311}
   m_Layer: 0
   m_Name: Prop_LampRoad
   m_TagString: Untagged
@@ -56,6 +57,25 @@ CapsuleCollider:
   m_Height: 9.584554
   m_Direction: 1
   m_Center: {x: 0, y: 4.792277, z: 0}
+--- !u!205 &1944282926775203311
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5878088705296083222}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 1.045, y: 4.6422772, z: 0}
+  m_Size: 9.584554
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 1823956783345969019}
+  m_Enabled: 1
 --- !u!1 &7867116143140155128
 GameObject:
   m_ObjectHideFlags: 0

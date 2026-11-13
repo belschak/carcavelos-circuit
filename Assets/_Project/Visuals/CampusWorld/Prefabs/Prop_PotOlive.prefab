@@ -104,6 +104,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2255578330992571855}
   - component: {fileID: 8999476754298094519}
+  - component: {fileID: 4838394102055170101}
   m_Layer: 0
   m_Name: Prop_PotOlive
   m_TagString: Untagged
@@ -148,3 +149,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.1371288, y: 2.548089, z: 0.9897101}
   m_Center: {x: -0.025684327, y: 1.2240446, z: -0.008964404}
+--- !u!205 &4838394102055170101
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7417695271237862912}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: -0.025684357, y: 1.2240446, z: -0.008964419}
+  m_Size: 2.548089
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 4792065829163099319}
+  m_Enabled: 1

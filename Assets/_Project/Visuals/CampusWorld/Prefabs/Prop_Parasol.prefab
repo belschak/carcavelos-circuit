@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3542550822925532699}
   - component: {fileID: 3121572629888030714}
+  - component: {fileID: 4560937706577743434}
   m_Layer: 0
   m_Name: Prop_Parasol
   m_TagString: Untagged
@@ -56,6 +57,25 @@ CapsuleCollider:
   m_Height: 2.953789
   m_Direction: 1
   m_Center: {x: 0, y: 1.4768945, z: 0}
+--- !u!205 &4560937706577743434
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4547055915041087837}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: -0.07524276, y: 1.4768945, z: -0.05292988}
+  m_Size: 2.953789
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 5653845236372054409}
+  m_Enabled: 1
 --- !u!1 &6702122486642297849
 GameObject:
   m_ObjectHideFlags: 0

@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2314639949056287318}
   - component: {fileID: 1987280683509501005}
+  - component: {fileID: 2709146710807514780}
   m_Layer: 0
   m_Name: Veg_FanPalm
   m_TagString: Untagged
@@ -56,6 +57,25 @@ CapsuleCollider:
   m_Height: 11.6599245
   m_Direction: 1
   m_Center: {x: 0, y: 5.8299623, z: 0}
+--- !u!205 &2709146710807514780
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6168975505668384815}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0.21880555, y: 5.4298205, z: -0.2197547}
+  m_Size: 11.6599245
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 6304709119718076184}
+  m_Enabled: 1
 --- !u!1 &8311156520623492092
 GameObject:
   m_ObjectHideFlags: 0

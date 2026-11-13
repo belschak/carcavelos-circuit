@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7649976224361579900}
   - component: {fileID: 6746092301901268624}
+  - component: {fileID: 1285254472227132666}
   m_Layer: 0
   m_Name: Prop_StonePile
   m_TagString: Untagged
@@ -54,6 +55,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 3.2490954, y: 0.6141804, z: 2.4567394}
   m_Center: {x: 0.23244554, y: 0.186272, z: 0.12177324}
+--- !u!205 &1285254472227132666
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6127474128072273720}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0.23244548, y: 0.186272, z: 0.12177324}
+  m_Size: 3.2490954
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 5836716996295234611}
+  m_Enabled: 1
 --- !u!1 &8621366600320298707
 GameObject:
   m_ObjectHideFlags: 0
@@ -103,7 +123,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8621366600320298707}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0

@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5280197578556997399}
   - component: {fileID: 3844449319533812298}
+  - component: {fileID: 9015400097426552978}
   m_Layer: 0
   m_Name: Prop_LampAvenue
   m_TagString: Untagged
@@ -56,6 +57,25 @@ CapsuleCollider:
   m_Height: 10.75
   m_Direction: 1
   m_Center: {x: 0, y: 5.375, z: 0}
+--- !u!205 &9015400097426552978
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6967096969830008992}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 5.2250004, z: 0}
+  m_Size: 10.75
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 4834285808251911222}
+  m_Enabled: 1
 --- !u!1 &9134908406615724740
 GameObject:
   m_ObjectHideFlags: 0
