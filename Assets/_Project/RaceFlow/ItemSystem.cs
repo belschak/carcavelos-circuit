@@ -15,7 +15,8 @@ namespace CarcavelosCircuit.RaceFlow
     //   Seagull Delivery = lifebuoy rings on the road ahead (RingPath, SeagullRing), each ring = a short boost.
     //   Dean's List = a golden boost, plus a shield (BumpShield, DeansHalo) that gives the speed back after a bump.
     // Retry empties the slot, clears rings and shield and puts every box back; recovery (R) keeps your item.
-    // Like the rest of RaceFlow it only talks to the kart through its contracts and to the track through checkpoints.
+    // Like the rest of RaceFlow it only talks to the kart through its contracts and to the track through checkpoints
+    // and its racing line (ITrackProgress, for the Seagull rings).
     public class ItemSystem : MonoBehaviour
     {
         [SerializeField]
@@ -76,9 +77,11 @@ namespace CarcavelosCircuit.RaceFlow
 
         private readonly ItemSlot slot = new ItemSlot();
         private readonly List<ItemBox> boxes = new List<ItemBox>();
+        private static readonly Color WaveTurquoise = new Color(0.08f, 0.80f, 0.86f, 1f); // Luc's wave (UI/ItemIcon.cs)
         private readonly List<SeagullRing> rings = new List<SeagullRing>();
         private readonly BumpShield shield = new BumpShield();
         private Material liveMaterial;    // copy of boxMaterial with the tile texture
+        private Material waveMaterial;    // the same, tinted turquoise: the wave boxes (WaveBoxSpot)
         private Texture2D tileTexture;
         private Material ringRed;
         private Material ringWhite;
@@ -176,7 +179,7 @@ namespace CarcavelosCircuit.RaceFlow
             Play(boxBreak, 1f);
             int[] weights = ItemOdds.WeightsFor(raceManager.HasSplitDelta, raceManager.LastSplitDelta,
                 settings.LevelSeconds, settings.FarBehindSeconds);
-            ItemKind item = ItemOdds.Pick(weights, UnityEngine.Random.value);
+            ItemKind item = ItemOdds.PickForBox(box.GivesWave, weights, UnityEngine.Random.value);
             slot.TryStartRoll(item, settings.RollSeconds); // false while the slot is busy: the box still breaks, no item
         }
 
@@ -251,6 +254,7 @@ namespace CarcavelosCircuit.RaceFlow
         {
             // Runtime-made textures and materials are not cleaned up by Unity on their own.
             if (liveMaterial != null) Destroy(liveMaterial);
+            if (waveMaterial != null) Destroy(waveMaterial);
             if (tileTexture != null) Destroy(tileTexture);
             if (ringRed != null) Destroy(ringRed);
             if (ringWhite != null) Destroy(ringWhite);
@@ -318,13 +322,14 @@ namespace CarcavelosCircuit.RaceFlow
         private void DropRings()
         {
             ClearRings();
-            Vector3[] path = RoadAhead();
             int count = Mathf.Max(1, settings.RingCount);
             float[] distances = new float[count];
             for (int i = 0; i < count; i++)
             {
                 distances[i] = settings.RingFirstMetres + i * settings.RingSpacingMetres;
             }
+            bool onTrackLine;
+            Vector3[] path = RoadAhead(distances[count - 1] + RingPath.StepMetres, out onTrackLine);
             Vector3[] positions = new Vector3[count];
             Vector3[] facings = new Vector3[count];
             RingPath.Place(path, distances, positions, facings);
@@ -333,20 +338,29 @@ namespace CarcavelosCircuit.RaceFlow
             ringsCollected = 0;
             for (int i = 0; i < count; i++)
             {
-                if (TryPlaceRing(positions[i], facings[i], ringsDropped))
+                if (TryPlaceRing(positions[i], facings[i], ringsDropped, onTrackLine))
                 {
                     ringsDropped++;
                 }
             }
         }
 
-        // Where the rings go: straight ahead of the kart's nose, where the player is looking.
+        // Where the rings go: along the track's own racing line when it has one (T8) and the kart is on it, so they
+        // follow the bends, the hall and the stairs (on the V15 line a straight line put half of them off the road,
+        // 2026-11-11). Otherwise straight ahead of the kart's nose, where the player is looking.
         // (First version went kart -> next checkpoint -> the one after; in the web build that line cut the bend
         // and put the rings on the grass, 2026-11-10. A ring that would stand in a wall is skipped.)
-        private Vector3[] RoadAhead()
+        private Vector3[] RoadAhead(float metres, out bool onTrackLine)
         {
             Vector3 kart = raceManager.KartTransform.position;
             Vector3 forward = raceManager.KartTransform.forward;
+            ITrackProgress line = TrackProgressSource.OwnOf(raceManager.Track); // never the checkpoint fallback
+            Vector3[] alongTrack = RingPath.AlongTrack(line, kart, forward, metres);
+            onTrackLine = alongTrack != null;
+            if (onTrackLine)
+            {
+                return alongTrack;
+            }
             forward.y = 0f;
             if (forward.sqrMagnitude < 0.0001f)
             {
@@ -356,12 +370,19 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // Like a box: only where there is ground below and no wall inside the ring.
-        private bool TryPlaceRing(Vector3 spot, Vector3 facing, int number)
+        // On the racing line the spot is the road surface itself: the ray starts just 2 m above it (under the hall
+        // and tunnel ceilings) and the ground must be close below the line (no ring over the jump gap).
+        private bool TryPlaceRing(Vector3 spot, Vector3 facing, int number, bool onTrackLine)
         {
             RaycastHit hit;
-            if (!Physics.Raycast(spot + Vector3.up * 4f, Vector3.down, out hit, 14f, ~0, QueryTriggerInteraction.Ignore))
+            float above = onTrackLine ? 2f : 4f;
+            if (!Physics.Raycast(spot + Vector3.up * above, Vector3.down, out hit, 14f, ~0, QueryTriggerInteraction.Ignore))
             {
                 return false; // off the edge of the world
+            }
+            if (onTrackLine && !RingPath.IsGroundNearLine(spot.y, hit.point.y))
+            {
+                return false; // a gap under the line (the jump): nobody drives through a ring up there
             }
             Vector3 centre = hit.point + Vector3.up * (settings.RingRadius + 0.15f);
             int notItems = ~(1 << 2); // everything except the Ignore Raycast layer (boxes, rings)
@@ -453,7 +474,21 @@ namespace CarcavelosCircuit.RaceFlow
                     rows++;
                 }
             }
-            Debug.Log("ItemSystem: " + boxes.Count + " item boxes in " + rows + " rows.");
+            // V19: one box on every WaveBoxSpot the track scene has (none = only the rows). Same placement rules.
+            waveMaterial = new Material(liveMaterial);
+            waveMaterial.name = "ItemBox wave (live)";
+            waveMaterial.SetColor("_BaseColor", WaveTurquoise);
+            waveMaterial.SetColor("_EmissionColor", WaveTurquoise * 0.45f);
+            WaveBoxSpot[] waveSpots = FindObjectsByType<WaveBoxSpot>(FindObjectsSortMode.None);
+            int waves = 0;
+            for (int k = 0; k < waveSpots.Length; k++)
+            {
+                if (TryPlaceBox(waveSpots[k].transform.position, 900 + k, true))
+                {
+                    waves++;
+                }
+            }
+            Debug.Log("ItemSystem: " + boxes.Count + " item boxes in " + rows + " rows, " + waves + " wave boxes.");
         }
 
         // A one-colour copy of the box material (same shader, so the Web build already has it), glowing a little.
@@ -469,27 +504,29 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // A box only goes where there is ground below it and no wall or building inside it.
-        private void TryPlaceBox(Vector3 spot, int number)
+        // givesWave: a wave box (always the Carcavelos Wave, turquoise). Returns false when the spot was skipped.
+        private bool TryPlaceBox(Vector3 spot, int number, bool givesWave = false)
         {
             RaycastHit hit;
             Vector3 rayStart = spot + Vector3.up * 3f;
             if (!Physics.Raycast(rayStart, Vector3.down, out hit, 12f, ~0, QueryTriggerInteraction.Ignore))
             {
-                return; // off the edge of the world
+                return false; // off the edge of the world
             }
             Vector3 position = hit.point + Vector3.up * settings.HoverHeight;
             int notBoxes = ~(1 << 2); // everything except the Ignore Raycast layer (other boxes)
             if (Physics.CheckSphere(position, settings.BoxSize * 0.6f, notBoxes, QueryTriggerInteraction.Ignore))
             {
-                return; // inside a wall, a tree or a building
+                return false; // inside a wall, a tree or a building
             }
 
             GameObject go = new GameObject("ItemBox " + number);
             go.transform.SetParent(transform, false);
             go.transform.position = position;
             ItemBox box = go.AddComponent<ItemBox>();
-            box.SetUp(this, liveMaterial, settings.BoxSize, number * 0.7f);
+            box.SetUp(this, givesWave ? waveMaterial : liveMaterial, settings.BoxSize, number * 0.7f, givesWave);
             boxes.Add(box);
+            return true;
         }
     }
 }

@@ -37,6 +37,13 @@ namespace CarcavelosCircuit.RaceFlow
             return behindSeconds < farBehindSeconds ? Behind : FarBehind;
         }
 
+        // What a box gives: a wave box (a WaveBoxSpot on the track, V19) always the Carcavelos Wave, whatever the
+        // odds; every other box rolls the odds with Pick.
+        public static ItemKind PickForBox(bool waveBox, int[] weights, float roll01)
+        {
+            return waveBox ? ItemKind.CarcavelosWave : Pick(weights, roll01);
+        }
+
         // roll01 = a random number from 0 (inclusive) to 1 (exclusive), e.g. UnityEngine.Random.value.
         // Passed in from outside so a test can pick the exact number.
         // Walks along the weights: the roll lands in one item's share (a weight of 0 never wins).
