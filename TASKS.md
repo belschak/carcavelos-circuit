@@ -82,8 +82,8 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 |---|---|---|---|
 | T7 | Barriers / guardrails along the road (your draft #63) so karts cannot fall off or cut corners | Fri 13 | done (Noah, #63) |
 | T8 | **`TrackProgress` implements `ITrackProgress`** on the `TrackInfo` root: racing line in driving order (start line first), `DistanceAlongLap`, `PointAt`, `DirectionAt`. May wrap `Shared/TrackPolyline`. Positions, minimap and bots read it | Wed 11 | done (Noah, #76) |
-| T9 | Realistic main building inside: atrium, KPMG gallery, staircase (from your help PRs #44/#45), made by your own builder under `Track/` as a prefab; Luc places it in the campus world (request Q18) | Tue 17 | in review (Noah, 2026-11-11): the hall is built by Noah's generator in help PR #45 (atrium, timber gallery, bridge, wide staircase, stage) and placed in the campus world by Luc's V12 #77, so no separate prefab under `Track/` |
-| T10 | Piano in the atrium + piano sounds when a kart drives past or hits it (clip + script in your folder, CC0 or own recording, listed in `THIRD_PARTY.md`) | Tue 17 | todo |
+| T9 | Realistic main building inside: atrium, KPMG gallery, staircase (from your help PRs #44/#45), made by your own builder under `Track/` as a prefab; Luc places it in the campus world (request Q18) | Tue 17 | done (Noah, #80): the hall is built by Noah's generator in help PR #45 and placed in the campus world by Luc's V12 #77 |
+| T10 | Piano in the atrium + piano sounds when a kart drives past or hits it (clip + script in your folder, CC0 or own recording, listed in `THIRD_PARTY.md`) | Tue 17 | in review (Noah, 2026-11-11) |
 | T11 | Volleyball fields on the beach (nets, lines, posts; colliders, placed beside the racing line, not on it) | Tue 17 | todo |
 
 ### Role 3: Luc
