@@ -347,7 +347,9 @@ SKYLIGHT_PANES = {"S2": (5, 4), "S1": (4, 5), "S3": (2, 3), "S4": (4, 3), "S5": 
 # on the right as in Luc's drawing 10), 6.5 m wide, 10 m long. Steps go down to the south; at the bottom a level
 # landing, from there an underpass under the plaza (and under the race line) to the courtyard. Open at the top
 # (north), so a later lower path (jump into the courtyard, through it, up this stair) only needs a ramp at S3.
-SLOT_ORIGIN = (86.75, 91.38)         # south-west corner
+# V23 (Luc q13, 13 Nov: "a bit further right, it is not as far left as now"): 0.8 m west (towards the race line, as the
+# orthophoto has it), was (86.75, 91.38); its west side now keeps ~0.4 m to the 8 m road edge (route points 545-548).
+SLOT_ORIGIN = (86.15, 90.85)         # south-west corner
 SLOT_DIR = (-0.663, 0.749)           # uphill (north-north-west), parallel to the race line there
 SLOT_RIGHT = (0.749, 0.663)
 SLOT_LEN, SLOT_W, SLOT_LANDING = 10.0, 6.5, 2.5
