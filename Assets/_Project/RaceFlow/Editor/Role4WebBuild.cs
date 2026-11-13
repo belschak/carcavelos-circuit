@@ -110,6 +110,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
 
             // Hosting: uncompressed files work on any static host. GitHub Pages gzips them on the fly (and cannot send the
             // header Unity's own .gz files need); itch.io serves them too. -webHost=itch builds pre-gzipped files instead.
+            // The textures themselves are crunched for the Web by WebTextureCrunch (gzip barely shrinks DXT data).
             PlayerSettings.WebGL.compressionFormat = gzipForItch ? WebGLCompressionFormat.Gzip : WebGLCompressionFormat.Disabled;
             PlayerSettings.WebGL.decompressionFallback = false;
             PlayerSettings.WebGL.nameFilesAsHashes = true; // a new build never mixes with old cached files
@@ -146,6 +147,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 + ", splash=" + PlayerSettings.SplashScreen.show
                 + ", staticBatching=" + PlayerSettings.GetStaticBatchingForPlatform(BuildTarget.WebGL)
                 + ", template=" + PlayerSettings.WebGL.template
+                + ", worldTextures=crunch q50, normals max 512 (WebTextureCrunch v" + new WebTextureCrunch().GetVersion() + ")"
                 + ", webPipeline=" + (webPipeline != null ? webPipeline.name : "none (see the error above)"));
         }
 
