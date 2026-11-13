@@ -42,6 +42,27 @@ namespace CarcavelosCircuit.RaceFlow
             return centre + new Vector3(Mathf.Cos(a) * distance, height, Mathf.Sin(a) * distance);
         }
 
+        // V28 mood preview: a shot from above the land side of the track, looking past the campus out to the sea in
+        // the sun's direction, tilted so the sun sits in the top quarter of the picture (a low sunset sun: mostly
+        // campus and sea; the high noon sun: more sky, tilt capped so the campus stays in the picture).
+        // towardsSun = unit vector to the sun (from RenderSettings.sun); straight up or zero = look south.
+        public static void PreviewPose(Vector3 centre, float radius, Vector3 towardsSun, float verticalFov, float minHeight,
+                                       out Vector3 position, out Quaternion rotation)
+        {
+            Vector3 flat = new Vector3(towardsSun.x, 0f, towardsSun.z);
+            if (flat.sqrMagnitude < 1e-6f)
+            {
+                flat = Vector3.back;                                         // -z = south, the sea at Carcavelos
+            }
+            flat.Normalize();
+            float elevation = towardsSun.sqrMagnitude > 1e-6f ? Mathf.Asin(Mathf.Clamp(towardsSun.normalized.y, -1f, 1f)) * Mathf.Rad2Deg : 30f;
+            float distance = Mathf.Max(radius * 0.7f, minHeight);
+            float height = Mathf.Max(radius * 0.25f, minHeight);
+            position = centre - flat * distance + Vector3.up * height;
+            float pitch = Mathf.Clamp(elevation - 0.375f * verticalFov, -35f, 16f);   // sun 3/4 of the way to the top
+            rotation = Quaternion.LookRotation(flat) * Quaternion.Euler(-pitch, 0f, 0f);
+        }
+
         // Smooth start and smooth stop (smoothstep): 0 -> 0, 0.5 -> 0.5, 1 -> 1, never outside 0..1.
         public static float Ease(float t)
         {
