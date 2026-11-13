@@ -85,5 +85,30 @@ namespace CarcavelosCircuit.Tests.EditMode
                 Assert.AreNotEqual(ItemKind.None, ItemOdds.Pick(w, i / 100f));
             }
         }
+
+        // Wave boxes (V19 promenade shortcut, help PR for Role 4): a box on a WaveBoxSpot always gives the Wave.
+        [Test]
+        public void PickForBox_WaveBox_GivesWaveForEveryRoll()
+        {
+            foreach (float roll in new[] { 0f, 0.5f, 0.999f })
+            {
+                Assert.AreEqual(ItemKind.CarcavelosWave, ItemOdds.PickForBox(true, new[] { 100, 0, 0, 0 }, roll), "roll " + roll);
+            }
+        }
+
+        [Test]
+        public void PickForBox_WaveBox_EvenWhenAhead()
+        {
+            int[] ahead = ItemOdds.WeightsFor(true, -10f, 1f, 5f);
+            Assert.AreEqual(ItemKind.CarcavelosWave, ItemOdds.PickForBox(true, ahead, 0f));
+        }
+
+        [Test]
+        public void PickForBox_NormalBox_SameAsPick()
+        {
+            int[] level = { 40, 30, 22, 8 };
+            Assert.AreEqual(ItemKind.Espresso, ItemOdds.PickForBox(false, level, 0.1f));
+            Assert.AreEqual(ItemKind.DeansList, ItemOdds.PickForBox(false, level, 0.95f));
+        }
     }
 }

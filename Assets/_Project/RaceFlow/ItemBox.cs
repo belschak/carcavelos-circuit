@@ -27,11 +27,13 @@ namespace CarcavelosCircuit.RaceFlow
         private float popInTime = -1f;   // seconds since it came back, -1 = not growing
 
         public bool IsAvailable { get { return state.IsAvailable; } }
+        public bool GivesWave { get; private set; } // a wave box (WaveBoxSpot): always the Carcavelos Wave
 
         // Called once by ItemSystem right after AddComponent.
-        public void SetUp(ItemSystem owner, Material material, float boxSize, float phase)
+        public void SetUp(ItemSystem owner, Material material, float boxSize, float phase, bool givesWave = false)
         {
             system = owner;
+            GivesWave = givesWave;
             size = boxSize;
             bobPhase = phase;
             gameObject.layer = 2; // "Ignore Raycast": the kart's ground ray and the camera never see the boxes

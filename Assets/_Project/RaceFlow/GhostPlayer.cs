@@ -162,7 +162,8 @@ namespace CarcavelosCircuit.RaceFlow
             loadedOwnText = ownText;
             string shippedText = shippedGhost == null ? "" : shippedGhost.text;
             bool isShipped;
-            ghost = GhostLoader.Choose(ownText, shippedText, raceManager.TrackName, raceManager.CheckpointCount, out isShipped);
+            ghost = GhostLoader.Choose(ownText, shippedText, raceManager.TrackName, raceManager.CheckpointCount,
+                raceManager.LayoutStamp, out isShipped);
             IsShippedGhost = isShipped;
             shownAlpha = -1f; // the colour may have changed (own blue or Dean's gold): set it again
         }

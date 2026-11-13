@@ -18,11 +18,19 @@ namespace CarcavelosCircuit.RaceFlow
         // Best medal ever earned here. Kept even if the medal times are made harder later (re-tuning).
         public Medal BestMedal { get; private set; } = Medal.None;
 
+        // The road this record belongs to (TrackLayout stamp), saved with it.
+        public int LayoutStamp { get; private set; }
+
         private readonly float[] bestSplits;     // checkpoint times of the best lap (-1 = unknown)
         private readonly float[] currentSplits;  // checkpoint times of the lap we are driving now
 
-        public PersonalBest(int checkpointCount)
+        public PersonalBest(int checkpointCount) : this(checkpointCount, TrackLayout.Unknown)
         {
+        }
+
+        public PersonalBest(int checkpointCount, int layoutStamp)
+        {
+            LayoutStamp = layoutStamp;
             int count = checkpointCount < 0 ? 0 : checkpointCount;
             bestSplits = new float[count];
             currentSplits = new float[count];
@@ -83,7 +91,8 @@ namespace CarcavelosCircuit.RaceFlow
             return true;
         }
 
-        // Turns the record into text for PlayerPrefs, e.g. "41.250|10.5;22.25;-1|2" (time | splits | medal number).
+        // Turns the record into text for PlayerPrefs, e.g. "41.250|10.5;22.25;-1|2|1408" (time | splits | medal number |
+        // layout stamp).
         // InvariantCulture = always a dot as decimal sign (a Portuguese laptop would write a comma).
         public string ToSaveString()
         {
@@ -97,20 +106,38 @@ namespace CarcavelosCircuit.RaceFlow
                 text += bestSplits[i].ToString(CultureInfo.InvariantCulture);
             }
             text += "|" + ((int)BestMedal).ToString(CultureInfo.InvariantCulture);
+            text += "|" + LayoutStamp.ToString(CultureInfo.InvariantCulture);
             return text;
+        }
+
+        // For a track without a racing line of its own (layout stamp unknown).
+        public static PersonalBest FromSaveString(string text, int checkpointCount)
+        {
+            return FromSaveString(text, checkpointCount, TrackLayout.Unknown);
         }
 
         // The opposite of ToSaveString. Broken text simply gives "no record yet".
         // Saves from before medals existed ("41.25|10.5;22.25") load with BestMedal = None.
-        public static PersonalBest FromSaveString(string text, int checkpointCount)
+        // A record from another road (TrackLayout.Matches; saves without a stamp count as unknown) also gives
+        // "no record yet": a time from a shorter road could never be beaten, so no new ghost would ever be saved.
+        public static PersonalBest FromSaveString(string text, int checkpointCount, int liveLayoutStamp)
         {
-            PersonalBest result = new PersonalBest(checkpointCount);
+            PersonalBest result = new PersonalBest(checkpointCount, liveLayoutStamp);
             if (string.IsNullOrEmpty(text))
             {
                 return result;
             }
 
             string[] parts = text.Split('|');
+            int savedLayout = TrackLayout.Unknown;
+            if (parts.Length > 3 && !int.TryParse(parts[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out savedLayout))
+            {
+                return result; // a broken stamp: we cannot tell which road
+            }
+            if (!TrackLayout.Matches(savedLayout, liveLayoutStamp))
+            {
+                return result;
+            }
             float best;
             if (!float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out best) || best <= 0f)
             {

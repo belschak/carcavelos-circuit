@@ -24,6 +24,18 @@ namespace CarcavelosCircuit.RaceFlow
             return FromCheckpoints(checkpointsInDrivingOrder);
         }
 
+        // Only the track's own progress (T8), never the checkpoint fallback; null if it has none or it is not usable.
+        // For callers that need the real road: the Seagull rings and the layout stamp of saves (TrackLayout).
+        public static ITrackProgress OwnOf(Component trackRoot)
+        {
+            if (trackRoot == null)
+            {
+                return null;
+            }
+            ITrackProgress own = trackRoot.GetComponent<ITrackProgress>();
+            return IsUsable(own) ? own : null;
+        }
+
         // The fallback: a closed line through the checkpoints. null for fewer than 3 usable points (no lap to measure).
         public static ITrackProgress FromCheckpoints(IList<Vector3> checkpointsInDrivingOrder)
         {
