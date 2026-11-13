@@ -86,6 +86,7 @@ public void Reset();
 - Recovery (key R): kart goes to `GetRespawnPoint(LastValidCheckpoint)`, timer keeps running, no checkpoint is awarded.
 - HUD: countdown, lap timer, final time, boost cue, retry button.
 - Audio: engine pitch from `IKartState.Speed / MaxSpeed`, drift/boost SFX from the state flags, music. Sound only starts after the first click or key press (browser rule).
+- Wave boxes (V19, 2026-11-12): a `WaveBoxSpot` (`RaceFlow/WaveBoxSpot.cs`, marker only) in the track scene = one turquoise item box that always gives the Carcavelos Wave. `ItemSystem` places it with the same rules as the row boxes (ground below, no wall inside). Role 3's `CampusWorldBuilder` puts three at the bottom of the beach dip, beside the promenade shortcut; a scene without spots has none.
 
 ## Round 2 (Role 4, 2026-11-11): racers, track progress, bot input
 Added for bots (V10), positions + minimap (R9), name tags (D9). All in `Assets/_Project/Shared/`, all new files, nothing above changes. Decision: `docs/decisions.md` 2026-11-11.

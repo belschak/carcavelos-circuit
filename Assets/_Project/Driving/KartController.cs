@@ -149,6 +149,13 @@ namespace CarcavelosCircuit.Driving
                     itemBoostMultiplier = 1f; // the item boost is used up
                 }
             }
+            // Input switched off (finish line, results, pause): a running boost ends too, so the kart rolls out
+            // by itself instead of being pushed on for the rest of the boost.
+            if (!InputActive)
+            {
+                boostSecondsLeft = 0f;
+                itemBoostMultiplier = 1f; // forget the item multiplier too, or it would carry over to the next item
+            }
             UpdateDrift(dt);
             body.angularVelocity = Vector3.zero; // a wall hit must not spin the kart, only steering turns it
 
