@@ -37,6 +37,7 @@ import env_streets              # noqa: E402  V10f: the street section rebuilt f
 import env_street_objects       # noqa: E402
 import env_ai_props             # noqa: E402
 import env_capricciosa          # noqa: E402  V16g: Capricciosa forecourt, sea wall, car-park corner
+import env_promenade_shortcut   # noqa: E402  V19: Luc's red shortcut along the parking aisle
 import env_campus               # noqa: E402  V10c2: campus buildings, courtyards, pools
 import env_plaza                # noqa: E402  V10i: upper plaza, stairs, sunken courtyard
 import env_campus_east          # noqa: E402  V18g: its dress() hook (east grounds as on Google Maps)
@@ -317,6 +318,7 @@ def build_dressing():
     veg, props = env_capricciosa.dress(veg, props, protos)        # V16g: builds its statics, then its own dressing
     props = env_ai_props.far_variants(props, protos)       # V18m: lighter AI models away from the route
     veg = env_vegetation.big_shrubs(veg, protos)           # V18n: big bushes get the prototype with small leaves
+    veg, props = env_promenade_shortcut.dress(veg, props, protos)  # V19: nothing on the promenade shortcut (last: writes the final lists)
     env_vegetation.instance_for_preview(veg, protos)
     env_props.instance_for_preview(props, protos)
     print(f"  dressing: {len(protos)} prototypes, {len(veg)} plants, {len(props)} props")
@@ -623,6 +625,7 @@ def main():
     env_route_signs.build()                # V20a: route signs, start gate, chequered start line (Luc, 13 Nov)
     env_tunnel.build()
     env_coast.build()                      # V16e: forecourt walls, terrace, details, railings (after the tunnel)
+    env_promenade_shortcut.build()         # V19: shortcut paint + ground check (after the coast statics)
     carve_drive_throughs()
     env_interior.dress(PASSAGE_RUNS, PASSAGE_WIDTH, PASSAGE_WIDTHS)
     env_backdrop.build(heights)

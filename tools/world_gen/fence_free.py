@@ -25,6 +25,7 @@ import math
 import os
 
 import coast
+import promenade_shortcut_plan
 import street_plan
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -101,6 +102,10 @@ def main():
            and abs(p["z"] - street_plan.med_pt(p["x"], 0.0)[1]) < 12.0]
     if gap:
         add(min(gap) - 1, max(gap) + 2, 0, "gap in the Avenida Marginal's median (agreed with Noah)")
+    # V19: the promenade shortcut leaves and rejoins on the left; every left fence piece within its CLEAR stays out
+    lane = promenade_shortcut_plan.centreline()
+    for a, b in promenade_shortcut_plan.free_runs(n - 1, lambda k: fence_point(pts, k, -1), lane):
+        add(a, b, -1, "V19 promenade shortcut mouth: the straight lane along the parking aisle leaves or joins here")
     out = {"note": "Pieces of the white fence that the campus world leaves out (tools/world_gen/fence_free.py). "
                    "A piece = fence between route points k and k + 1, from <= k < to; side +1 right, -1 left, 0 both.",
            "points": n, "free": free}
