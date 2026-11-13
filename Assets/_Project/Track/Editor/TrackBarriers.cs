@@ -13,6 +13,13 @@ namespace CarcavelosCircuit.Track.Editor
     {
         public static List<Vector3[]> Read(string json)
         {
+            return Read(json, null);
+        }
+
+        // V22w: the same, and "names" (if given) gets the name of every line that was read, in the same order
+        // ("" for a line without a name). WhiteGuardrailBuilder uses the name to pick the look (wall or tyres).
+        public static List<Vector3[]> Read(string json, List<string> names)
+        {
             List<Vector3[]> lines = new List<Vector3[]>();
             int key = json == null ? -1 : json.IndexOf("\"barriers\"");
             int start = key < 0 ? -1 : json.IndexOf('[', key);
@@ -23,6 +30,10 @@ namespace CarcavelosCircuit.Track.Editor
             // Depth 1 = the list of barriers, 2 = the points of one barrier, 3 = the three numbers of one point.
             int depth = 0;
             bool inText = false;
+            int textStart = -1;
+            bool nameFollows = false;   // the last text was the key "name": the next text is the name itself
+            string name = "";           // name of the barrier being read
+            int lineOfThisBarrier = -1; // its place in "lines", once its points are read (the name may come after them)
             int numberStart = -1;
             bool broken = false;
             List<float> numbers = new List<float>();
@@ -39,6 +50,16 @@ namespace CarcavelosCircuit.Track.Editor
                     else if (c == '"')
                     {
                         inText = false;
+                        string text = json.Substring(textStart, i - textStart);
+                        if (depth == 1 && nameFollows)
+                        {
+                            name = text;
+                            if (names != null && lineOfThisBarrier >= 0)
+                            {
+                                names[lineOfThisBarrier] = name;
+                            }
+                        }
+                        nameFollows = depth == 1 && !nameFollows && text == "name";
                     }
                     continue;
                 }
@@ -67,6 +88,13 @@ namespace CarcavelosCircuit.Track.Editor
                 if (c == '"')
                 {
                     inText = true;
+                    textStart = i + 1;
+                }
+                else if (c == '{' && depth == 1)
+                {
+                    name = "";               // a new barrier starts
+                    lineOfThisBarrier = -1;
+                    nameFollows = false;
                 }
                 else if (c == '[')
                 {
@@ -88,6 +116,11 @@ namespace CarcavelosCircuit.Track.Editor
                         if (line.Count >= 2)
                         {
                             lines.Add(line.ToArray()); // a wall needs at least two points
+                            if (names != null)
+                            {
+                                names.Add(name);
+                                lineOfThisBarrier = lines.Count - 1;
+                            }
                         }
                         line.Clear();
                     }

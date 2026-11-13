@@ -20,6 +20,10 @@ namespace CarcavelosCircuit.Track.Editor
     //  - nothing to see in the zones of HiddenFenceZones (terrace deck: the terrace has its own metal railings);
     //    only the invisible collision wall stays there, because those railings have no collider of their own,
     //  - extra walls along the lines of the optional "barriers" list in track.json (child object "NovaKartBarriers").
+    // V22w (Luc's reference models, done by Luc's Claude):
+    //  - the Nova Kart wall has a new shape (NovaKartWall: foot, orange stripe, rounded top, end pieces),
+    //  - barrier lines whose name is in TyreBarriers are a row of tyre stacks instead of the wall
+    //    (TrackProps.TyreWall, child object "NovaKartTyres"); their collision wall stays, on the tyres' road side.
     public static class WhiteGuardrailBuilder
     {
         private const string DataPath = "Assets/_Project/Visuals/CampusWorld/Data/track.json";
@@ -51,6 +55,9 @@ namespace CarcavelosCircuit.Track.Editor
         private const int StraightPieces = 12;      // the wall is one straight line over this many route points before a hall door
         public const string KartWallName = "NovaKartWalls";       // child object: the walls along the route and in the hall
         public const string BarrierName = "NovaKartBarriers";     // child object: the walls along track.json "barriers"
+        public const string TyreName = "NovaKartTyres";           // child object: the tyre stacks along some of those lines
+        // Barrier lines (by their name in track.json) that are tyre stacks instead of the Nova Kart wall.
+        private static readonly string[] TyreBarriers = { "uturn_outside" };
         private const float HallJoin = 2f;          // the outside fence stops this close to a post of the hall course
         private const float HallReach = 6f;         // ... and then gets one more board to the hall's end post, if this near
 
@@ -99,24 +106,32 @@ namespace CarcavelosCircuit.Track.Editor
             posts += AddSide(fence, wall, 1f);
             posts += AddSide(fence, wall, -1f);
             posts += AddHall(fence, wall);
-            NovaMesh kartMesh = new NovaMesh();
-            float kartMetres = kartWall.Build(kartMesh);
+            float kartMetres = kartWall.Build();
 
             // Extra walls from track.json "barriers" (for example the median of the start plaza). They get their own
             // object and their own collision wall, in the middle of the line because karts pass on both sides.
+            // A line named in TyreBarriers is a row of tyre stacks instead; its collision wall stands on the side of
+            // the tyres that faces the road, because a tyre is wider than the wall.
             NovaKartWall barriers = new NovaKartWall();
+            TrackProps.TyreWall tyres = new TrackProps.TyreWall();
             NovaMesh barrierWall = new NovaMesh();
-            List<Vector3[]> barrierLines = TrackBarriers.Read(json);
-            foreach (Vector3[] line in barrierLines)
+            List<string> barrierNames = new List<string>();
+            List<Vector3[]> barrierLines = TrackBarriers.Read(json, barrierNames);
+            for (int l = 0; l < barrierLines.Count; l++)
             {
-                barriers.AddLine(line);
+                Vector3[] line = barrierLines[l];
+                bool asTyres = System.Array.IndexOf(TyreBarriers, barrierNames[l]) >= 0 && tyres.AddLine(line);
+                if (!asTyres)
+                {
+                    barriers.AddLine(line);
+                }
                 for (int k = 0; k + 1 < line.Length; k++)
                 {
-                    AddWall(barrierWall, line[k], line[k + 1], Vector3.zero);
+                    Vector3 shift = asTyres ? TowardsRoad(line[k], line[k + 1]) * (TrackProps.TyreRadius + TrackProps.TyreInward - WallThickness * 0.5f) : Vector3.zero;
+                    AddWall(barrierWall, line[k], line[k + 1], shift);
                 }
             }
-            NovaMesh barrierMesh = new NovaMesh();
-            float barrierMetres = barriers.Build(barrierMesh);
+            float barrierMetres = barriers.Build();
 
             Mesh fenceMesh = SaveMesh(fence.ToMesh("WhiteGuardrails_Fence"), MeshFolder + "/WhiteGuardrails_Fence.asset");
             Mesh wallMesh = SaveMesh(wall.ToMesh("WhiteGuardrails_Wall"), MeshFolder + "/WhiteGuardrails_Wall.asset");
@@ -126,36 +141,73 @@ namespace CarcavelosCircuit.Track.Editor
             root.AddComponent<MeshRenderer>().sharedMaterial = WhiteMaterial();
             root.AddComponent<MeshCollider>().sharedMesh = wallMesh; // simple solid wall, so the kart cannot slip between the boards
             GameObjectUtility.SetStaticEditorFlags(root, StaticEditorFlags.BatchingStatic);
-            if (kartMesh.VertexCount > 0)
+            if (kartWall.VertexCount > 0)
             {
                 // Its collision wall is part of the root's wall mesh, like the white fence's.
-                AddChild(root, KartWallName, SaveMesh(kartMesh.ToMesh(KartWallName), MeshFolder + "/" + KartWallName + ".asset"), null);
+                AddChild(root, KartWallName, SaveMesh(kartWall.ToMesh(KartWallName), MeshFolder + "/" + KartWallName + ".asset"),
+                    null, NovaKartWall.Material());
             }
-            if (barrierMesh.VertexCount > 0)
+            if (barrierWall.VertexCount > 0)
             {
-                AddChild(root, BarrierName, SaveMesh(barrierMesh.ToMesh(BarrierName), MeshFolder + "/" + BarrierName + ".asset"),
-                    SaveMesh(barrierWall.ToMesh(BarrierName + "_Wall"), MeshFolder + "/" + BarrierName + "_Wall.asset"));
+                // The collision wall of all barrier lines, and the walls you see (none if every line is tyres).
+                AddChild(root, BarrierName,
+                    barriers.VertexCount > 0 ? SaveMesh(barriers.ToMesh(BarrierName), MeshFolder + "/" + BarrierName + ".asset") : null,
+                    SaveMesh(barrierWall.ToMesh(BarrierName + "_Wall"), MeshFolder + "/" + BarrierName + "_Wall.asset"), NovaKartWall.Material());
+            }
+            if (tyres.VertexCount > 0)
+            {
+                AddChild(root, TyreName, SaveMesh(tyres.ToMesh(TyreName), MeshFolder + "/" + TyreName + ".asset"), null, TrackProps.Material());
             }
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             Object.DestroyImmediate(root);
             AssetDatabase.SaveAssets();
             Debug.Log("WhiteGuardrailBuilder: saved " + PrefabPath + " with " + posts + " white fence posts, "
                 + kartMetres.ToString("F0") + " m of Nova Kart wall (" + hall.posts.Length + " hall posts followed) and "
-                + barrierLines.Count + " barrier lines (" + barrierMetres.ToString("F0") + " m). Drag it into the scene at position 0, 0, 0.");
+                + barrierLines.Count + " barrier lines (" + barrierMetres.ToString("F0") + " m of wall, " + tyres.Stacks
+                + " tyre stacks). Drag it into the scene at position 0, 0, 0.");
         }
 
-        // A child of the fence object that draws one mesh in the Nova Kart wall look, with its own collider if given.
-        private static void AddChild(GameObject root, string name, Mesh mesh, Mesh colliderMesh)
+        // A child of the fence object that draws one mesh (if given) with this material, with its own collider if given.
+        private static void AddChild(GameObject root, string name, Mesh mesh, Mesh colliderMesh, Material material)
         {
             GameObject child = new GameObject(name);
             child.transform.SetParent(root.transform, false);
-            child.AddComponent<MeshFilter>().sharedMesh = mesh;
-            child.AddComponent<MeshRenderer>().sharedMaterial = NovaKartWall.Material();
+            if (mesh != null)
+            {
+                child.AddComponent<MeshFilter>().sharedMesh = mesh;
+                child.AddComponent<MeshRenderer>().sharedMaterial = material;
+            }
             if (colliderMesh != null)
             {
                 child.AddComponent<MeshCollider>().sharedMesh = colliderMesh;
             }
             GameObjectUtility.SetStaticEditorFlags(child, StaticEditorFlags.BatchingStatic);
+        }
+
+        // Flat unit vector at right angles to the piece a-b, pointing to the side where the race road is
+        // (towards the nearest route point). Zero if the piece has no length.
+        private static Vector3 TowardsRoad(Vector3 a, Vector3 b)
+        {
+            Vector3 along = b - a;
+            along.y = 0f;
+            if (along.sqrMagnitude < 0.0001f)
+            {
+                return Vector3.zero;
+            }
+            Vector3 sideways = Vector3.Cross(Vector3.up, along.normalized);
+            Vector3 mid = (a + b) * 0.5f;
+            int nearest = 0;
+            float best = float.MaxValue;
+            for (int i = 0; i < points.Length; i++)
+            {
+                float d = (Pos(i) - mid).sqrMagnitude;
+                if (d < best)
+                {
+                    best = d;
+                    nearest = i;
+                }
+            }
+            return Vector3.Dot(Pos(nearest) - mid, sideways) >= 0f ? sideways : -sideways;
         }
 
         // V21 (Luc: "the fence is curved for no reason, make it straight up to the entrance"): where the route enters

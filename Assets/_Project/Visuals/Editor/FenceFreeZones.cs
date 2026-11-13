@@ -14,8 +14,9 @@ namespace CarcavelosCircuit.Visuals.Editor
     // (what you see, and the invisible wall behind it), and every cut is closed with a post like his.
     // Without the data file or the fence nothing happens.
     // V21: the Nova Kart wall of the start plaza and the hall (child "NovaKartWalls" of the fence, WhiteGuardrailBuilder)
-    // is left out on the same pieces, and each cut is closed with an orange end post like the wall's own. The walls
-    // along track.json "barriers" (child "NovaKartBarriers") are never trimmed: they are placed by hand.
+    // is left out on the same pieces, and each cut is closed with an end piece like the wall's own (V22w:
+    // NovaKartWall.AddEndCap). The walls and tyre stacks along track.json "barriers" (children "NovaKartBarriers",
+    // "NovaKartTyres") are never trimmed: they are placed by hand.
     public static class FenceFreeZones
     {
         private const string Root = "Assets/_Project/Visuals/CampusWorld";
@@ -90,12 +91,12 @@ namespace CarcavelosCircuit.Visuals.Editor
             MeshFilter mf = fence.GetComponent<MeshFilter>();
             MeshCollider mc = fence.GetComponent<MeshCollider>();
             int cutFence, cutWall = 0, posts;
-            Mesh seen = Trim(mf.sharedMesh, fence, true, PostSize, PostHeight, Vector2.zero, out cutFence, out posts);
+            Mesh seen = Trim(mf.sharedMesh, fence, true, false, out cutFence, out posts);
             AssetDatabase.CreateAsset(seen, OutDir + "/WhiteGuardrails_Fence_trimmed.asset");
             mf.sharedMesh = seen;
             if (mc != null && mc.sharedMesh != null)
             {
-                Mesh wall = Trim(mc.sharedMesh, fence, false, PostSize, PostHeight, Vector2.zero, out cutWall, out _);
+                Mesh wall = Trim(mc.sharedMesh, fence, false, false, out cutWall, out _);
                 AssetDatabase.CreateAsset(wall, OutDir + "/WhiteGuardrails_Wall_trimmed.asset");
                 mc.sharedMesh = wall;
             }
@@ -108,8 +109,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 string fencePosts = postLog;
                 postLog = "";
                 int cutKart, kartPosts;
-                Mesh kartSeen = Trim(kartFilter.sharedMesh, kart, true, NovaKartWall.EndPostSize, NovaKartWall.EndPostHeight,
-                                     NovaKartWall.OrangeUv, out cutKart, out kartPosts);
+                Mesh kartSeen = Trim(kartFilter.sharedMesh, kart, true, true, out cutKart, out kartPosts);
                 AssetDatabase.CreateAsset(kartSeen, OutDir + "/NovaKartWalls_trimmed.asset");
                 kartFilter.sharedMesh = kartSeen;
                 kartLog = "; Nova Kart wall: " + cutKart + " triangles off, " + kartPosts + " end posts added (" + postLog.Trim() + ")";
@@ -125,9 +125,8 @@ namespace CarcavelosCircuit.Visuals.Editor
         }
 
         // The mesh without the triangles that belong to a free piece; for the visible fence, an end post at every cut
-        // (postSize square, postHeight high, postUv = its spot on the texture: white fence post or Nova Kart wall end post).
-        private static Mesh Trim(Mesh src, Transform owner, bool addPosts, float postSize, float postHeight, Vector2 postUv,
-                                 out int removed, out int posts)
+        // (kartWall = false: a white post like the fence's own; true: the Nova Kart wall's end piece).
+        private static Mesh Trim(Mesh src, Transform owner, bool addPosts, bool kartWall, out int removed, out int posts)
         {
             Vector3[] v = src.vertices;
             int[] tri = src.triangles;
@@ -164,8 +163,18 @@ namespace CarcavelosCircuit.Visuals.Editor
                         int kept = free[k] ? before : k;
                         if (free[k] != free[before] && HadFence(owner, v, tri, kept, side))
                         {
-                            AddPost(verts, normals, uvs, keep, owner.InverseTransformPoint(FencePoint(k, side)), postSize, postHeight, postUv,
-                                    hasNormals, hasUv);
+                            Vector3 foot = owner.InverseTransformPoint(FencePoint(k, side));
+                            if (kartWall && hasNormals && hasUv)
+                            {
+                                // The end piece points away from the kept piece, into the gap.
+                                int far = free[k] ? before : (k + 1) % n;
+                                Vector3 outward = owner.InverseTransformVector(FencePoint(k, side) - FencePoint(far, side));
+                                NovaKartWall.AddEndCap(verts, normals, uvs, keep, foot, outward);
+                            }
+                            else
+                            {
+                                AddPost(verts, normals, uvs, keep, foot, PostSize, PostHeight, Vector2.zero, hasNormals, hasUv);
+                            }
                             postLog += " " + k + (side > 0 ? "R" : "L");
                             posts++;
                         }
