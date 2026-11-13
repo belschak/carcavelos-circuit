@@ -13,6 +13,9 @@ namespace CarcavelosCircuit.Visuals.Editor
     // his builder are NOT changed: the fence instance inside the campus world gets trimmed copies of its two meshes
     // (what you see, and the invisible wall behind it), and every cut is closed with a post like his.
     // Without the data file or the fence nothing happens.
+    // V21: the Nova Kart wall of the start plaza and the hall (child "NovaKartWalls" of the fence, WhiteGuardrailBuilder)
+    // is left out on the same pieces, and each cut is closed with an orange end post like the wall's own. The walls
+    // along track.json "barriers" (child "NovaKartBarriers") are never trimmed: they are placed by hand.
     public static class FenceFreeZones
     {
         private const string Root = "Assets/_Project/Visuals/CampusWorld";
@@ -87,14 +90,30 @@ namespace CarcavelosCircuit.Visuals.Editor
             MeshFilter mf = fence.GetComponent<MeshFilter>();
             MeshCollider mc = fence.GetComponent<MeshCollider>();
             int cutFence, cutWall = 0, posts;
-            Mesh seen = Trim(mf.sharedMesh, fence, true, out cutFence, out posts);
+            Mesh seen = Trim(mf.sharedMesh, fence, true, PostSize, PostHeight, Vector2.zero, out cutFence, out posts);
             AssetDatabase.CreateAsset(seen, OutDir + "/WhiteGuardrails_Fence_trimmed.asset");
             mf.sharedMesh = seen;
             if (mc != null && mc.sharedMesh != null)
             {
-                Mesh wall = Trim(mc.sharedMesh, fence, false, out cutWall, out _);
+                Mesh wall = Trim(mc.sharedMesh, fence, false, PostSize, PostHeight, Vector2.zero, out cutWall, out _);
                 AssetDatabase.CreateAsset(wall, OutDir + "/WhiteGuardrails_Wall_trimmed.asset");
                 mc.sharedMesh = wall;
+            }
+            // V21: the Nova Kart wall on the same pieces (its collision wall is in the wall mesh trimmed above).
+            string kartLog = "";
+            Transform kart = fence.Find(WhiteGuardrailBuilder.KartWallName);
+            MeshFilter kartFilter = kart != null ? kart.GetComponent<MeshFilter>() : null;
+            if (kartFilter != null && kartFilter.sharedMesh != null)
+            {
+                string fencePosts = postLog;
+                postLog = "";
+                int cutKart, kartPosts;
+                Mesh kartSeen = Trim(kartFilter.sharedMesh, kart, true, NovaKartWall.EndPostSize, NovaKartWall.EndPostHeight,
+                                     NovaKartWall.OrangeUv, out cutKart, out kartPosts);
+                AssetDatabase.CreateAsset(kartSeen, OutDir + "/NovaKartWalls_trimmed.asset");
+                kartFilter.sharedMesh = kartSeen;
+                kartLog = "; Nova Kart wall: " + cutKart + " triangles off, " + kartPosts + " end posts added (" + postLog.Trim() + ")";
+                postLog = fencePosts;
             }
             int pieces = 0;
             for (int k = 0; k < n; k++)
@@ -102,11 +121,13 @@ namespace CarcavelosCircuit.Visuals.Editor
                 pieces += (freeRight[k] ? 1 : 0) + (freeLeft[k] ? 1 : 0);
             }
             return "white fence left out on " + pieces + " pieces (" + list.free.Length + " places): " + cutFence + " fence and " + cutWall +
-                   " wall triangles off, " + posts + " end posts added (route point and side:" + postLog + ")";
+                   " wall triangles off, " + posts + " end posts added (route point and side:" + postLog + ")" + kartLog;
         }
 
-        // The mesh without the triangles that belong to a free piece; for the visible fence, an end post at every cut.
-        private static Mesh Trim(Mesh src, Transform owner, bool addPosts, out int removed, out int posts)
+        // The mesh without the triangles that belong to a free piece; for the visible fence, an end post at every cut
+        // (postSize square, postHeight high, postUv = its spot on the texture: white fence post or Nova Kart wall end post).
+        private static Mesh Trim(Mesh src, Transform owner, bool addPosts, float postSize, float postHeight, Vector2 postUv,
+                                 out int removed, out int posts)
         {
             Vector3[] v = src.vertices;
             int[] tri = src.triangles;
@@ -143,7 +164,8 @@ namespace CarcavelosCircuit.Visuals.Editor
                         int kept = free[k] ? before : k;
                         if (free[k] != free[before] && HadFence(owner, v, tri, kept, side))
                         {
-                            AddPost(verts, normals, uvs, keep, owner.InverseTransformPoint(FencePoint(k, side)), hasNormals, hasUv);
+                            AddPost(verts, normals, uvs, keep, owner.InverseTransformPoint(FencePoint(k, side)), postSize, postHeight, postUv,
+                                    hasNormals, hasUv);
                             postLog += " " + k + (side > 0 ? "R" : "L");
                             posts++;
                         }
@@ -260,10 +282,10 @@ namespace CarcavelosCircuit.Visuals.Editor
 
         // A square post like WhiteGuardrailBuilder.AddPost (foot a bit below the road).
         private static void AddPost(List<Vector3> verts, List<Vector3> normals, List<Vector2> uvs, List<int> tris, Vector3 foot,
-                                    bool hasNormals, bool hasUv)
+                                    float size, float height, Vector2 uv, bool hasNormals, bool hasUv)
         {
-            float h = PostSize * 0.5f;
-            Vector3 lo = foot + new Vector3(-h, PostBottom, -h), hi = foot + new Vector3(h, PostHeight, h);
+            float h = size * 0.5f;
+            Vector3 lo = foot + new Vector3(-h, PostBottom, -h), hi = foot + new Vector3(h, height, h);
             Vector3[] dirs = { Vector3.right, Vector3.left, Vector3.up, Vector3.down, Vector3.forward, Vector3.back };
             foreach (Vector3 nrm in dirs)
             {
@@ -284,7 +306,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                     }
                     if (hasUv)
                     {
-                        uvs.Add(Vector2.zero);
+                        uvs.Add(uv);
                     }
                 }
                 // u x w = nrm in Unity's left-handed axes: (0, 1, 2) runs clockwise seen from outside = a front face.

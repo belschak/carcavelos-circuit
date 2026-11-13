@@ -230,6 +230,24 @@ def boost_pads():
              "length": round(p["length"], 2)} for p in plaza_plan.BOOST_PADS]
 
 
+# V21a (start plaza): centre lines of the Nova Kart walls package V21b builds (WhiteGuardrailBuilder reads them; an
+# absent or empty list = no wall). Written into track.json "barriers": [{"name", "points": [[x, y, z], ...]}], Unity
+# axes (x east, y = paving height under the wall, z north), a polyline along the wall's centre line. The lines are
+# start_plan.barriers(); their heights come from the built world (env_route_signs.write_barriers ->
+# out/start_barriers.json). Without that file (an older build) the road height of the nearest route point is used.
+def barriers():
+    import start_plan
+    path = os.path.join(OUT, "start_barriers.json")
+    if os.path.exists(path):
+        return [{"name": b["name"], "points": [[round(x, 3), round(z, 3), round(y, 3)] for x, y, z in b["points"]]}
+                for b in json.load(open(path))["barriers"]]
+    print("  barriers: no out/start_barriers.json (run build_world.py); heights from the route instead")
+    pts = json.load(open(os.path.join(HERE, "route.json")))["points"]
+    road = lambda x, y: min(pts, key=lambda p: (p["x"] - x) ** 2 + (p["y"] - y) ** 2)["track_z"] + ROAD_LIFT
+    return [{"name": b["name"], "points": [[round(x, 3), round(road(x, y), 3), round(y, 3)] for x, y in b["points"]]}
+            for b in start_plan.barriers()]
+
+
 def main():
     for m in MODELS:
         if not os.path.exists(os.path.join(OUT, m)):
@@ -303,6 +321,7 @@ def main():
     json.dump(dressing, open(os.path.join(data, "dressing.json"), "w"), indent=0)
     track = unity_track()
     track["boost_pads"] = boost_pads()                         # V20b: the plaza shortcut's jump pad
+    track["barriers"] = barriers()                             # V21a: wall centre lines at the start plaza (for V21b)
     json.dump(track, open(os.path.join(data, "track.json"), "w"), indent=0)
     json.dump({"instances": info["instances"], "objects": info["objects"]}, open(os.path.join(data, "check.json"), "w"), indent=1)
     size = sum(os.path.getsize(os.path.join(r, f)) for r, _, fs in os.walk(BUNDLE) for f in fs)
