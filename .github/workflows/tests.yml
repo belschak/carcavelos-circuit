@@ -64,6 +64,7 @@ jobs:
           customImage: unityci/editor:ubuntu-6000.3.28f1-webgl-3
           testMode: all
           artifactsPath: test-results
+          githubToken: "" # no check run: that needs checks: write; the job summary below shows the counts instead
 
       # One line per mode on the run page: total, passed, failed (read from the NUnit XML files).
       - name: Summary
