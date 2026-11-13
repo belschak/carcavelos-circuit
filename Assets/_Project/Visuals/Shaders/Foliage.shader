@@ -11,6 +11,10 @@
 // hard), a warm yellow-green glow when you look at a tree against the low sun (light through the leaves), and the
 // inside and the lower part of a crown darker than its sunny top (the sway weights double as a height in the tree).
 // Cost: one texture read per pixel, a handful of sines per vertex, no specular term (cheaper than URP Lit).
+// V18n leaf cards (_Crown = 1; env_vegetation.leaf_shell): crowns, shrubs and hedges are shells of small cutout cards
+// whose normals are baked to point out of the crown, so both faces of a card are lit by that normal (no flip, no
+// back-face glow) and the crown reads as one soft volume. A card seen nearly edge-on would show as a streak: its
+// leaves fade out by the angle between the card (screen-space derivative of the position) and the view.
 // Made by CampusWorldBuilder.BuildMaterials from the "wind" block in Data/materials.json; if this shader is
 // missing, the trees stay URP Lit and stand still.
 Shader "CarcavelosCircuit/Foliage"
@@ -29,6 +33,7 @@ Shader "CarcavelosCircuit/Foliage"
         _Shrink ("Grass tufts sink away: from m, to m, 1 / (to - from) or 0 = off, unused", Vector) = (0, 0, 0, 0)
         _Translucency ("V17 light through the leaves (linear rgb)", Color) = (0.62, 0.66, 0.16, 1)
         _Leaf ("V17: wrap 0..1, glow strength, crown base darkness, -", Vector) = (0.4, 0.9, 0.4, 0)
+        [Toggle] _Crown ("V18n leaf cards: baked crown normals on both faces, edge-on cards fade", Float) = 0
     }
     SubShader
     {
@@ -40,7 +45,7 @@ Shader "CarcavelosCircuit/Foliage"
         CBUFFER_START(UnityPerMaterial)
             half4 _BaseColor, _Translucency, _Leaf;
             float4 _Wind, _WindSpeed, _Shrink;
-            half _Cutoff, _BackShade, _AlphaClip, _Cull, _FlipBack;
+            half _Cutoff, _BackShade, _AlphaClip, _Cull, _FlipBack, _Crown;
         CBUFFER_END
         float _WindTimeOffset;            // global, 0 in the game; the editor's shot renderer steps it to show motion
         float _ShotTimeFreeze;            // global, 0 in the game; 1 = ignore the running clock (repeatable shots)
@@ -71,6 +76,22 @@ Shader "CarcavelosCircuit/Foliage"
         {
             #if defined(_ALPHATEST_ON)
             clip(SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv).a - _Cutoff);
+            #endif
+        }
+
+        // V18n: 1 for a card seen face-on, 0 for one seen edge-on (only with _Crown; fragment stage only)
+        half CardFacing(float3 pw)
+        {
+            float3 flat = cross(ddy(pw), ddx(pw));
+            half facing = abs(dot(normalize(flat + 1e-12), normalize(_WorldSpaceCameraPos - pw)));
+            return lerp(1.0, smoothstep(0.1, 0.38, facing), _Crown);
+        }
+
+        // Alpha clip of the passes the camera sees (the shadow pass keeps Clip: a shadow has no view angle)
+        void ClipSeen(float2 uv, float3 pw)
+        {
+            #if defined(_ALPHATEST_ON)
+            clip(SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv).a * CardFacing(pw) - _Cutoff);
             #endif
         }
         ENDHLSL
@@ -131,9 +152,9 @@ Shader "CarcavelosCircuit/Foliage"
             {
                 half4 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv);
                 #if defined(_ALPHATEST_ON)
-                clip(tex.a - _Cutoff);
+                clip(tex.a * CardFacing(i.positionWS) - _Cutoff);
                 #endif
-                half front = IS_FRONT_VFACE(face, 1.0, 0.0);
+                half front = lerp(IS_FRONT_VFACE(face, 1.0, 0.0), 1.0, _Crown);   // V18n: a crown card has no back
                 half3 N = normalize(i.normalWS) * lerp(1.0, front * 2.0 - 1.0, _FlipBack);   // the underside looks down
                 half3 albedo = tex.rgb * _BaseColor.rgb * i.tint * lerp(_BackShade, 1.0, front);
 
@@ -230,17 +251,18 @@ Shader "CarcavelosCircuit/Foliage"
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma multi_compile_instancing
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; float2 sway : TEXCOORD1; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
-            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; UNITY_VERTEX_OUTPUT_STEREO };
+            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float3 positionWS : TEXCOORD1; UNITY_VERTEX_OUTPUT_STEREO };
             Varyings DepthVert(Attributes v)
             {
                 Varyings o;
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-                o.positionCS = TransformWorldToHClip(Sway(TransformObjectToWorld(v.positionOS.xyz), v.sway, v.color.a));
+                o.positionWS = Sway(TransformObjectToWorld(v.positionOS.xyz), v.sway, v.color.a);
+                o.positionCS = TransformWorldToHClip(o.positionWS);
                 o.uv = v.uv;
                 return o;
             }
-            half4 DepthFrag(Varyings i) : SV_Target { Clip(i.uv); return i.positionCS.z; }
+            half4 DepthFrag(Varyings i) : SV_Target { ClipSeen(i.uv, i.positionWS); return i.positionCS.z; }
             ENDHLSL
         }
 
@@ -256,20 +278,21 @@ Shader "CarcavelosCircuit/Foliage"
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma multi_compile_instancing
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; float2 sway : TEXCOORD1; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
-            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; half3 normalWS : TEXCOORD1; UNITY_VERTEX_OUTPUT_STEREO };
+            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; half3 normalWS : TEXCOORD1; float3 positionWS : TEXCOORD2; UNITY_VERTEX_OUTPUT_STEREO };
             Varyings NormalsVert(Attributes v)
             {
                 Varyings o;
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-                o.positionCS = TransformWorldToHClip(Sway(TransformObjectToWorld(v.positionOS.xyz), v.sway, v.color.a));
+                o.positionWS = Sway(TransformObjectToWorld(v.positionOS.xyz), v.sway, v.color.a);
+                o.positionCS = TransformWorldToHClip(o.positionWS);
                 o.normalWS = TransformObjectToWorldNormal(v.normalOS);
                 o.uv = v.uv;
                 return o;
             }
             half4 NormalsFrag(Varyings i, FRONT_FACE_TYPE face : FRONT_FACE_SEMANTIC) : SV_Target
             {
-                Clip(i.uv);
+                ClipSeen(i.uv, i.positionWS);
                 return half4(normalize(i.normalWS) * lerp(1.0, IS_FRONT_VFACE(face, 1.0, -1.0), _FlipBack), 0.0);
             }
             ENDHLSL
