@@ -10,9 +10,10 @@ namespace CarcavelosCircuit.Track.Editor
     {
         private const string PrefabPath = "Assets/_Project/Track/Piano/AtriumPiano.prefab";
 
-        // Where nova_hall.py puts the piano (PIANO_U 93, o 5.4), in Unity world metres: x east, y up, z north.
-        // y = hall floor (FLOOR_Z 14.56) + 1 m, the middle of the piano body.
-        private static readonly Vector3 PianoPosition = new Vector3(40.71f, 15.56f, 74.82f);
+        // Where nova_hall.py puts the piano (PIANO_U 84.3, PIANO_O 7.6 since Luc's V21c), in Unity world metres:
+        // x east, y up, z north. y = hall floor (FLOOR_Z 14.56) + 1 m, the middle of the piano body.
+        // Was (40.71, 15.56, 74.82) at PIANO_U 93, o 5.4; the piano moved 8.7 m north and 2.2 m towards the lane.
+        private static readonly Vector3 PianoPosition = new Vector3(39.72f, 15.56f, 83.74f);
         private const float PianoYaw = 69.4f; // the piano's long side, along the west glass
 
         [MenuItem("Carcavelos Circuit/Build Atrium Piano (Role 2)")]
