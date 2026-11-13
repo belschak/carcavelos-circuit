@@ -28,6 +28,9 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField]
         private ItemSystem items;
 
+        [SerializeField, Tooltip("Item tuning; its HUD icons (Luc's PNGs, request Q16) replace the code-drawn ones")]
+        private ItemSettings settings;
+
         private VisualElement root;
         private VisualElement slot;
         private ItemIcon icon;
@@ -309,6 +312,7 @@ namespace CarcavelosCircuit.RaceFlow
             icon = new ItemIcon();
             icon.style.width = 72f;
             icon.style.height = 72f;
+            GivePictures(icon, settings);
             slot.Add(icon);
 
             badge = MakeLabel("x3", 20f, HudColors.Ink);
@@ -345,6 +349,19 @@ namespace CarcavelosCircuit.RaceFlow
             callout.style.opacity = 0f;
             callout.style.transformOrigin = new TransformOrigin(Length.Percent(100f), Length.Percent(50f)); // pop from the right edge
             column.Add(callout);
+        }
+
+        // Luc's four item pictures from ItemSettings (request Q16). An item without a picture keeps its code-drawn icon.
+        private static void GivePictures(ItemIcon target, ItemSettings itemSettings)
+        {
+            if (itemSettings == null)
+            {
+                return;
+            }
+            target.SetPicture(ItemKind.Espresso, itemSettings.IconFor(ItemKind.Espresso));
+            target.SetPicture(ItemKind.SeagullDelivery, itemSettings.IconFor(ItemKind.SeagullDelivery));
+            target.SetPicture(ItemKind.CarcavelosWave, itemSettings.IconFor(ItemKind.CarcavelosWave));
+            target.SetPicture(ItemKind.DeansList, itemSettings.IconFor(ItemKind.DeansList));
         }
 
         private static Label MakeLabel(string text, float size, Color colour)
