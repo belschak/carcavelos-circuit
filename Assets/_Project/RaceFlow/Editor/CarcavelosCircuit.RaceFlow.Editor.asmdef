@@ -5,6 +5,7 @@
         "CarcavelosCircuit.Shared",
         "CarcavelosCircuit.Shared.Editor",
         "CarcavelosCircuit.RaceFlow",
+        "CarcavelosCircuit.Visuals",
         "CarcavelosCircuit.Track",
         "CarcavelosCircuit.Audio",
         "CarcavelosCircuit.Ambience",

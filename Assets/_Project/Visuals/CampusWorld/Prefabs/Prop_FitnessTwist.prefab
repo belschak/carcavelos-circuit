@@ -100,6 +100,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8382711731194477991}
   - component: {fileID: 3100820188371606120}
+  - component: {fileID: 582566291513758721}
   m_Layer: 0
   m_Name: Prop_FitnessTwist
   m_TagString: Untagged
@@ -144,3 +145,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.58, y: 1.4, z: 0.6}
   m_Center: {x: 0, y: 0.59999996, z: 0}
+--- !u!205 &582566291513758721
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6309968997186979905}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 0.59999996, z: 0}
+  m_Size: 1.58
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 3456909626796530560}
+  m_Enabled: 1

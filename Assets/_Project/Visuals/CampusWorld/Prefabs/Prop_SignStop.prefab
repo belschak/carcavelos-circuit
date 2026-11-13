@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8692061333160805742}
   - component: {fileID: 6540078074228868946}
+  - component: {fileID: 1625732337936130110}
   m_Layer: 0
   m_Name: Prop_SignStop
   m_TagString: Untagged
@@ -54,6 +55,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.6282381, y: 3.17, z: 0.10531092}
   m_Center: {x: 0, y: 1.435, z: 0.022344567}
+--- !u!205 &1625732337936130110
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2455328177861982568}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 1.435, z: 0.022344567}
+  m_Size: 3.17
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 8332676453032983175}
+  m_Enabled: 1
 --- !u!1 &7700521391812598120
 GameObject:
   m_ObjectHideFlags: 0

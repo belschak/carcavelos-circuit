@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3198579885023403337}
   - component: {fileID: 1516770952900812882}
+  - component: {fileID: 4038623407392745478}
   m_Layer: 0
   m_Name: Prop_Billboard
   m_TagString: Untagged
@@ -54,6 +55,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 8, y: 5.7999997, z: 0.27000052}
   m_Center: {x: 0, y: 2.7, z: -0.11499992}
+--- !u!205 &4038623407392745478
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 17919005220503855}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 2.7, z: -0.11499992}
+  m_Size: 8
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 1152343935163944313}
+  m_Enabled: 1
 --- !u!1 &901235071782518153
 GameObject:
   m_ObjectHideFlags: 0

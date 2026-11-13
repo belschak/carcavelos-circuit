@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3421270603327482488}
   - component: {fileID: 853295951266576412}
+  - component: {fileID: 7011583663365536632}
   m_Layer: 0
   m_Name: Prop_ScreenBox
   m_TagString: Untagged
@@ -54,6 +55,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 3, y: 4.15, z: 0.29000023}
   m_Center: {x: 0, y: 1.925, z: 0}
+--- !u!205 &7011583663365536632
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2859911371503303544}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 1.925, z: 0}
+  m_Size: 4.15
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 8899054040096084167}
+  m_Enabled: 1
 --- !u!1 &8565252461988845298
 GameObject:
   m_ObjectHideFlags: 0

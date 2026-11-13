@@ -100,6 +100,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1910105750176594036}
   - component: {fileID: 2548094971200285500}
+  - component: {fileID: 737718877645451466}
   m_Layer: 0
   m_Name: Prop_LampMast
   m_TagString: Untagged
@@ -146,3 +147,22 @@ CapsuleCollider:
   m_Height: 17.2
   m_Direction: 1
   m_Center: {x: 0, y: 8.6, z: 0}
+--- !u!205 &737718877645451466
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5527526004657797303}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 8.4, z: 0}
+  m_Size: 17.2
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 3711035122061274351}
+  m_Enabled: 1

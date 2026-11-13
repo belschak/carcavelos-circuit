@@ -65,5 +65,46 @@ namespace CarcavelosCircuit.Tests.EditMode
             Vector3 middle = FlyoverPath.Glide(from, to, 0.5f, 12f);
             Assert.AreEqual(51f + 12f, middle.y, 0.001f); // halfway height + the full hump
         }
+
+        // V28 mood preview: from the land side, looking towards the sun, a low sun in the strip along the top edge.
+        [Test]
+        public void PreviewPose_LowSun_StandsOppositeTheSunAndLooksAtIt()
+        {
+            Vector3 towardsSun = new Vector3(-0.94f, 0.1f, -0.34f).normalized;    // low, west-south-west
+            Vector3 position;
+            Quaternion rotation;
+            FlyoverPath.PreviewPose(Vector3.zero, 300f, towardsSun, 60f, 35f, out position, out rotation);
+            Vector3 flatSun = new Vector3(towardsSun.x, 0f, towardsSun.z).normalized;
+            Assert.Less(Vector3.Dot(new Vector3(position.x, 0f, position.z).normalized, flatSun), -0.99f, "camera on the far side");
+            Assert.AreEqual(75f, position.y, 0.01f);                               // radius * 0.25
+            Vector3 look = rotation * Vector3.forward;
+            Assert.Greater(Vector3.Dot(new Vector3(look.x, 0f, look.z).normalized, flatSun), 0.99f, "looks towards the sun");
+            Assert.Less(look.y, 0f, "a low sun: looks down onto the campus");
+            float sunAboveCentre = Vector3.SignedAngle(look, towardsSun, rotation * Vector3.right) * -1f;
+            Assert.That(sunAboveCentre, Is.InRange(22f, 29f), "sun in the strip along the top edge, inside the 60 deg picture");
+        }
+
+        [Test]
+        public void PreviewPose_HighSun_TiltIsCappedSoTheCampusStaysInThePicture()
+        {
+            Vector3 towardsSun = new Vector3(-0.53f, 0.67f, -0.53f).normalized;    // noon: 42 deg high, south-west
+            Vector3 position;
+            Quaternion rotation;
+            FlyoverPath.PreviewPose(Vector3.zero, 300f, towardsSun, 60f, 35f, out position, out rotation);
+            Vector3 look = rotation * Vector3.forward;
+            float pitch = Mathf.Asin(look.y) * Mathf.Rad2Deg;
+            Assert.AreEqual(-10f, pitch, 0.01f, "the noon sun is out of the picture anyway: look down onto campus and sea");
+        }
+
+        [Test]
+        public void PreviewPose_SunStraightUp_LooksSouthToTheSea()
+        {
+            Vector3 position;
+            Quaternion rotation;
+            FlyoverPath.PreviewPose(Vector3.zero, 10f, Vector3.up, 60f, 35f, out position, out rotation);
+            Vector3 look = rotation * Vector3.forward;
+            Assert.Less(look.z, -0.9f);
+            Assert.AreEqual(35f, position.y, 0.01f, "small track: at least minHeight");
+        }
     }
 }
