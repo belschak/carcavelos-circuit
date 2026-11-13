@@ -15,7 +15,8 @@ namespace CarcavelosCircuit.RaceFlow
     //   Seagull Delivery = lifebuoy rings on the road ahead (RingPath, SeagullRing), each ring = a short boost.
     //   Dean's List = a golden boost, plus a shield (BumpShield, DeansHalo) that gives the speed back after a bump.
     // Retry empties the slot, clears rings and shield and puts every box back; recovery (R) keeps your item.
-    // Like the rest of RaceFlow it only talks to the kart through its contracts and to the track through checkpoints.
+    // Like the rest of RaceFlow it only talks to the kart through its contracts and to the track through checkpoints
+    // and its racing line (ITrackProgress, for the Seagull rings).
     public class ItemSystem : MonoBehaviour
     {
         [SerializeField]
@@ -318,13 +319,14 @@ namespace CarcavelosCircuit.RaceFlow
         private void DropRings()
         {
             ClearRings();
-            Vector3[] path = RoadAhead();
             int count = Mathf.Max(1, settings.RingCount);
             float[] distances = new float[count];
             for (int i = 0; i < count; i++)
             {
                 distances[i] = settings.RingFirstMetres + i * settings.RingSpacingMetres;
             }
+            bool onTrackLine;
+            Vector3[] path = RoadAhead(distances[count - 1] + RingPath.StepMetres, out onTrackLine);
             Vector3[] positions = new Vector3[count];
             Vector3[] facings = new Vector3[count];
             RingPath.Place(path, distances, positions, facings);
@@ -333,20 +335,29 @@ namespace CarcavelosCircuit.RaceFlow
             ringsCollected = 0;
             for (int i = 0; i < count; i++)
             {
-                if (TryPlaceRing(positions[i], facings[i], ringsDropped))
+                if (TryPlaceRing(positions[i], facings[i], ringsDropped, onTrackLine))
                 {
                     ringsDropped++;
                 }
             }
         }
 
-        // Where the rings go: straight ahead of the kart's nose, where the player is looking.
+        // Where the rings go: along the track's own racing line when it has one (T8) and the kart is on it, so they
+        // follow the bends, the hall and the stairs (on the V15 line a straight line put half of them off the road,
+        // 2026-11-11). Otherwise straight ahead of the kart's nose, where the player is looking.
         // (First version went kart -> next checkpoint -> the one after; in the web build that line cut the bend
         // and put the rings on the grass, 2026-11-10. A ring that would stand in a wall is skipped.)
-        private Vector3[] RoadAhead()
+        private Vector3[] RoadAhead(float metres, out bool onTrackLine)
         {
             Vector3 kart = raceManager.KartTransform.position;
             Vector3 forward = raceManager.KartTransform.forward;
+            ITrackProgress line = TrackProgressSource.OwnOf(raceManager.Track); // never the checkpoint fallback
+            Vector3[] alongTrack = RingPath.AlongTrack(line, kart, forward, metres);
+            onTrackLine = alongTrack != null;
+            if (onTrackLine)
+            {
+                return alongTrack;
+            }
             forward.y = 0f;
             if (forward.sqrMagnitude < 0.0001f)
             {
@@ -356,12 +367,19 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // Like a box: only where there is ground below and no wall inside the ring.
-        private bool TryPlaceRing(Vector3 spot, Vector3 facing, int number)
+        // On the racing line the spot is the road surface itself: the ray starts just 2 m above it (under the hall
+        // and tunnel ceilings) and the ground must be close below the line (no ring over the jump gap).
+        private bool TryPlaceRing(Vector3 spot, Vector3 facing, int number, bool onTrackLine)
         {
             RaycastHit hit;
-            if (!Physics.Raycast(spot + Vector3.up * 4f, Vector3.down, out hit, 14f, ~0, QueryTriggerInteraction.Ignore))
+            float above = onTrackLine ? 2f : 4f;
+            if (!Physics.Raycast(spot + Vector3.up * above, Vector3.down, out hit, 14f, ~0, QueryTriggerInteraction.Ignore))
             {
                 return false; // off the edge of the world
+            }
+            if (onTrackLine && !RingPath.IsGroundNearLine(spot.y, hit.point.y))
+            {
+                return false; // a gap under the line (the jump): nobody drives through a ring up there
             }
             Vector3 centre = hit.point + Vector3.up * (settings.RingRadius + 0.15f);
             int notItems = ~(1 << 2); // everything except the Ignore Raycast layer (boxes, rings)

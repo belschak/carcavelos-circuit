@@ -32,7 +32,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             if (recording == null)
             {
-                recording = new GhostRecording(raceManager.TrackName, raceManager.CheckpointCount);
+                recording = new GhostRecording(raceManager.TrackName, raceManager.CheckpointCount, raceManager.LayoutStamp);
             }
 
             // A new attempt starts on GO (also after a retry): throw the old recording away.

@@ -20,11 +20,14 @@ namespace CarcavelosCircuit.RaceFlow
         public const float TeleportMetres = 8f;
 
         // First part of every save string. Raise the number if the format ever changes, old saves are then ignored.
-        private const string FormatTag = "G1";
+        // G2 (2026-11-11) added the layout stamp, so every G1 ghost (recorded before the stamp) is dropped once.
+        private const string FormatTag = "G2";
 
-        // Which track and checkpoint count the lap was driven on; a ghost from another layout is ignored.
+        // Which track, checkpoint count and road (TrackLayout stamp) the lap was driven on; a ghost from another
+        // layout is ignored.
         public string TrackName { get; private set; }
         public int CheckpointCount { get; private set; }
+        public int LayoutStamp { get; private set; }
 
         // The official lap time of this lap, set by the recorder at the finish (-1 = not finished).
         public float LapSeconds { get; set; } = -1f;
@@ -45,9 +48,15 @@ namespace CarcavelosCircuit.RaceFlow
         private Quaternion lastFrameRotation;
 
         public GhostRecording(string trackName, int checkpointCount)
+            : this(trackName, checkpointCount, TrackLayout.Unknown)
+        {
+        }
+
+        public GhostRecording(string trackName, int checkpointCount, int layoutStamp)
         {
             TrackName = trackName == null ? "" : trackName;
             CheckpointCount = checkpointCount;
+            LayoutStamp = layoutStamp;
         }
 
         // Starts an empty recording (keeps the lists' memory, so a retry creates no garbage).
@@ -152,8 +161,8 @@ namespace CarcavelosCircuit.RaceFlow
             return step / SampleInterval;
         }
 
-        // Text for PlayerPrefs, for example "G1|Track_Campus|8|41.25|840|120,30,-450,0,900,0;95,0,12,0,4,0;...".
-        // Header: format, track, checkpoint count, lap time, sample count. Then one group per sample:
+        // Text for PlayerPrefs, for example "G2|Track_Campus|8|1408|41.25|840|120,30,-450,0,900,0;95,0,12,0,4,0;...".
+        // Header: format, track, checkpoint count, layout stamp (TrackLayout), lap time, sample count. Then one group per sample:
         // position in centimetres and rotation (pitch, yaw, roll) in tenths of a degree, as whole numbers.
         // The first group is the real value, every later group only the CHANGE since the sample before
         // ("95" instead of "3245"): about 20 characters per sample, a 60 s lap is roughly 25 KB.
@@ -164,6 +173,7 @@ namespace CarcavelosCircuit.RaceFlow
             text.Append(FormatTag).Append('|');
             text.Append(TrackName).Append('|');
             text.Append(CheckpointCount.ToString(CultureInfo.InvariantCulture)).Append('|');
+            text.Append(LayoutStamp.ToString(CultureInfo.InvariantCulture)).Append('|');
             text.Append(LapSeconds.ToString("0.000", CultureInfo.InvariantCulture)).Append('|');
             text.Append(Count.ToString(CultureInfo.InvariantCulture)).Append('|');
 
@@ -194,16 +204,23 @@ namespace CarcavelosCircuit.RaceFlow
             return text.ToString();
         }
 
-        // The opposite of ToSaveString. Returns null for empty or broken text, an old format, or a ghost that was
-        // recorded on another track or with another number of checkpoints (the track was changed since).
+        // For a track without a racing line of its own (layout stamp unknown): name + checkpoint count decide.
         public static GhostRecording FromSaveString(string text, string trackName, int checkpointCount)
+        {
+            return FromSaveString(text, trackName, checkpointCount, TrackLayout.Unknown);
+        }
+
+        // The opposite of ToSaveString. Returns null for empty or broken text, an old format, or a ghost that was
+        // recorded on another track, with another number of checkpoints or on another road (TrackLayout.Matches):
+        // the track was changed since, and the ghost would drive through walls.
+        public static GhostRecording FromSaveString(string text, string trackName, int checkpointCount, int liveLayoutStamp)
         {
             if (string.IsNullOrEmpty(text))
             {
                 return null;
             }
             string[] parts = text.Trim().Split('|');
-            if (parts.Length != 6 || parts[0] != FormatTag)
+            if (parts.Length != 7 || parts[0] != FormatTag)
             {
                 return null;
             }
@@ -212,23 +229,26 @@ namespace CarcavelosCircuit.RaceFlow
                 return null;
             }
             int savedCheckpoints;
+            int savedLayout;
             float lapSeconds;
             int count;
             if (!int.TryParse(parts[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out savedCheckpoints)
                 || savedCheckpoints != checkpointCount
-                || !float.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out lapSeconds)
-                || !int.TryParse(parts[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out count)
+                || !int.TryParse(parts[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out savedLayout)
+                || !TrackLayout.Matches(savedLayout, liveLayoutStamp)
+                || !float.TryParse(parts[4], NumberStyles.Float, CultureInfo.InvariantCulture, out lapSeconds)
+                || !int.TryParse(parts[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out count)
                 || count < 1 || count > MaxSamples)
             {
                 return null;
             }
 
-            string[] groups = parts[5].Split(';');
+            string[] groups = parts[6].Split(';');
             if (groups.Length != count)
             {
                 return null;
             }
-            GhostRecording result = new GhostRecording(trackName, checkpointCount);
+            GhostRecording result = new GhostRecording(trackName, checkpointCount, savedLayout);
             result.LapSeconds = lapSeconds;
             int[] values = new int[6]; // running totals: first group = real values, later groups = changes
             for (int i = 0; i < count; i++)
