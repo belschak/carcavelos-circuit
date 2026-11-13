@@ -38,7 +38,8 @@ SIZES = {   # width, height, lift (bottom over the ground), thickness, post offs
     "normal": dict(w=2.4, h=0.8, lift=0.5, t=0.08, posts=(-0.8, 0.8), post=0.04),
     "big": dict(w=3.6, h=1.2, lift=0.6, t=0.10, posts=(-1.3, 1.3), post=0.06),
     "fork": dict(w=6.0, h=2.0, lift=0.9, t=0.14, posts=(-2.5, 0.0, 2.5), post=0.08),
-    "overhead": dict(w=4.4, h=1.6, lift=3.0, t=0.12, posts=(0.9,), post=0.09),   # mast 0.9 m right of the middle
+    "overhead": dict(w=3.2, h=1.4, lift=4.0, t=0.12, posts=(0.9,), post=0.09),   # mast 0.9 m right of the middle
+    # (V20 integration: 3.2 m wide, 4 m up, so on V20b's axis it stays off the race road and the chase camera passes under)
 }
 
 # Lanes that are not the race line but must stay clear: lists of (centre polyline, half width in m).
@@ -56,8 +57,13 @@ LANES = {
 
 def _shortcut_lane():
     import plaza_plan as P
-    return [([P.climb_point(s, -0.9) for s in (-60.0, -45.0, P.KICK_START_S)], 1.7),
-            ([P.climb_point(s, -0.9) for s in (P.KICK_START_S, P.KICK_LIP_S)], 2.2)]
+    # V20 integration: V20b replaced V14b's climb by the jump over the courtyard (plaza_plan.sc_point: s along the
+    # jump axis, 0 = kicker lip). Run-up with the pad, the kicker, and the flight and run-out into door D4.
+    pad_u = (P.PAD_U[0] + P.PAD_U[1]) / 2
+    ku = (P.KICK_U[0] + P.KICK_U[1]) / 2
+    return [([P.sc_point(s, pad_u) for s in (-60.0, -45.0, P.KICK_START_S)], (P.PAD_U[1] - P.PAD_U[0]) / 2),
+            ([P.sc_point(s, ku) for s in (P.KICK_START_S, P.KICK_LIP_S)], (P.KICK_U[1] - P.KICK_U[0]) / 2),
+            ([P.sc_point(s, ku) for s in (P.KICK_LIP_S, 30.0)], 2.5)]
 
 
 # Luc's places, in driving order. 'shot' = his screenshot; idx = the final track.json index nearby (V20 build).
@@ -94,8 +100,8 @@ SIGNS = [
          note="outside the second left turn (idx 616-626), after the corner sign at s 1186"),
 ]
 
-SHORTCUT_FORK = (-24.0, 1.6)     # P1's middle: plaza_plan.climb_point(s, u), between the pad's end and the kicker;
-                                 # its mast stands 0.9 m further right, at u 2.5: 1.6 m from the pad lane and the road
+SHORTCUT_FORK = (-14.0, 2.0)     # P1's middle: plaza_plan.sc_point(s, u) on V20b's jump axis, 3.5 m before the pad, where
+                                 # the shortcut leaves the main line; mast 0.9 m further right, at u 2.5 (V20 integration)
 
 
 def _seg_dist(p, a, b):
@@ -135,7 +141,7 @@ def resolve(sign):
     """Board centre (Vector, z 0) and f = unit vector from the driver towards the board (ground plane)."""
     if sign.get("at") == "shortcut_fork":
         import plaza_plan as P
-        c = Vector((*P.climb_point(*SHORTCUT_FORK), 0))
+        c = Vector((*P.sc_point(*SHORTCUT_FORK), 0))
     elif "at" in sign:
         c = Vector((sign["at"][0], sign["at"][1], 0))
     else:
