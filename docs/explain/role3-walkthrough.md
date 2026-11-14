@@ -32,3 +32,22 @@ The rules, in the order a bot asks them every frame:
 **Limits.** Bots do not use items (item boxes count only for the player; open task O2). They know only the racing line, not the road edges, so their lanes stay within 2.2 m of it. They plan with a copy of the kart's turn rate (`BotSettings`), so a change to `KartTuning` needs the same number there. A bot that cannot get out after three tries is put back on the line (the only time a bot calls `ResetTo`, like the player's Recover key).
 
 **How it could change.** Difficulty levels = one factor on every profile's pace. Item use = a bot "presses E" when it holds an item and a kart is ahead. Different characters = a model per profile instead of the shared rookie driver (task O3).
+
+## Light far kart (task V32)
+
+**What.** Karts further away than about 13 m are drawn as a light copy: 34,000 instead of 111,000 triangles and 8 instead of 41 draw calls per kart (body, four tyres, driver). With five bots on track that is most of the karts most of the time. Unity blends the two versions over a short stretch (cross-fade), so the swap is not visible; from about 260 m a kart is not drawn at all.
+
+**How it is built.**
+
+| File | Job |
+|---|---|
+| `tools/kart_lod/make_kart_lod.py` | Blender script. Body: splits `Kart_Classic.fbx` by material, simplifies each part (Decimate, 20 %, number and checkers 60 %), points every part except the body paint at one cell of a colour palette. Tyre: measures the outline of `Tyre_Slick.fbx` with rays, spins it into a round shell (40 steps, 2,320 triangles) and bakes the full tyre onto it with Cycles: an ID map (which material where), a normal map (spokes, letters) and ambient occlusion (grooves, the deep brake disc). Writes `Kart_Classic_Far.fbx`, `Tyre_Slick_Far.fbx` and the maps |
+| `tools/kart_lod/palette.json` | Which material sits in which palette cell, and each tyre material's ID colour (shared by the Blender script and Unity) |
+| `Visuals/Kart/Editor/NovaKartVisualBuilder.cs` | Paints the 16 x 16 pixel palette textures and the far tyre's colour and metal maps (ID colour = that material's real look, darkened by the baked shade) from the real kart materials, puts the far copies next to the full ones and adds the `LODGroup`; `BuildAndCheck` measures that both versions line up (within 1 cm) and that the far one is cheap |
+| `Tests/EditMode/KartLevelOfDetailTests.cs` | The built prefab has two levels with cross-fade, the far one is under 35 % of the triangles, the driver is in both, bot paint reaches the far body, painting nothing paints nothing |
+
+**Why this way.** Draw calls cost the web build more than triangles, so the far kart uses one material instead of 23: a palette texture, where each face shows exactly its old colour, needs no texture baking and cannot blur. The tyre is different: simplifying a round tyre makes it angular (the first try looked like a polygon), so it is rebuilt round and gets its detail from baked textures, the usual way games make distant wheels. The colours still come from the Unity materials, so a colour change reaches the far tyre on the next build. The body paint stays its own material so `BotKartPaint` still recolours distant bots. The driver keeps its full model in both levels because the hand IK needs the full rig.
+
+**Limits.** The far kart's steering wheel does not turn (the tyres still roll and steer). Thin parts like bolts are gone from the body; the tyre's grooves and spokes are only painted on (shade and normal map), which is invisible at 13 m. Black spots in the shade map (bake rays grazing the tyre's inside) are ignored by the builder. Numbers come from the meshes; the frame-rate gain in the browser has not been measured yet.
+
+**How it could change.** Other karts from the roster: run the script with their FBX and add their materials to `palette.json`. A second, even lighter level (or a far driver) if the bots ever get more. The switch distance is one number (`NearUntil`) in the builder.
