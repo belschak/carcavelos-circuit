@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6872585790318242756}
   - component: {fileID: 108863048754156056}
+  - component: {fileID: 7191922095571570163}
   m_Layer: 0
   m_Name: KartEffects
   m_TagString: Untagged
@@ -66,3 +67,19 @@ MonoBehaviour:
   blueFlameCore: {r: 0.82, g: 0.93, b: 1, a: 1}
   orangeFlame: {r: 1, g: 0.5, b: 0.1, a: 1}
   orangeFlameCore: {r: 1, g: 0.9, b: 0.65, a: 1}
+--- !u!114 &7191922095571570163
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3189030453612006904}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ba1c52664d50428bbaa45606b6ad0d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarcavelosCircuit.Visuals::CarcavelosCircuit.Visuals.ItemFx
+  look: {fileID: 11400000, guid: 04c83a209ad5547d3b9ce6d16ee0a1fc, type: 2}
+  waveSeconds: 3
+  espressoSeconds: 2
+  teleportDistance: 8
