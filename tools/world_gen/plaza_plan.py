@@ -119,7 +119,9 @@ LIB_SOUTH_WING = [(105.0, 34.0), (123.3, 40.6), (114.8, 68.3), (92.8, 64.8)]
 LIB_NORTH_BLOCK = [(80.8, 63.0), (115.9, 68.2), (113.9, 84.1), (79.4, 79.1)]
 LIB_TOP = FLOOR1 + 8.8              # roof (23.3 m)
 LIB_FLOOR2 = FLOOR1 + 3.6           # top of the glazed ground floor = underside of the white upper wall
-PASSAGE_CLEAR = 3.4                 # m under the bridge
+# V36b (Gaussian splat of IMG_7725 207-209 s, phone height as scale, +-7 %): the soffit of the real bridge is 4.4 m over
+# the plaza (one clear plane, n = 135 points; 4.25-4.4 in the splat itself). Was 3.4. Method: V36 (splat_reference.md)
+PASSAGE_CLEAR = 4.4                 # m under the bridge
 PASSAGE_HALF = 4.8                  # m from the passage axis to its walls
 PASSAGE_AXIS = ((86.8, 63.9), (85.3, 79.95))     # middle of the bridge's south and north edge
 
