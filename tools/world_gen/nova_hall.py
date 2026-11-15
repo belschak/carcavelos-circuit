@@ -48,6 +48,12 @@ LONG_END_U = 209.8           # the long room runs through the whole wing to its 
 # entrance front tops out at 9.8 m and the atrium's roof trusses at 10.1-11.1 m over the floor; 12.5 put the trusses at
 # 10.9-12.35 m and the roof at 13.3 m, 3.5 m over the real front. Was 12.5. (docs: tools/world_gen/splat_reference.md)
 ATRIUM_H = 10.8              # clear height under the atrium roof
+# V36 (same splat): the west entrance front is lower than the atrium behind it. Its white fascia runs from 8.0 to 9.8 m
+# (FRONT_H + 0.8; the banner zone below it is the upper glass band), then the roof steps up to the atrium's. The step
+# stands at the footprint's corner (8.31, 161.93), where the north wall's short west piece ends, so the north wall
+# steps there too. Where the real step stands was not measured (the splat shows the front, not the roof behind it).
+FRONT_H = 9.0                # wall height of the atrium's west front (top of its fascia = FRONT_H + 0.8 = 9.8 m)
+FRONT_DEPTH = 5.65           # the lower roof strip reaches this far in from the west front (o)
 LONG_H = 11.0                # clear height of the long room
 LOW_CEILING_END = 80.0       # first part of the long room has a flat ceiling at LOW_Z
 LOW_Z = 4.6
@@ -727,7 +733,8 @@ def shell(m, f, polys, door_map):
                     north_canopy(m, f, inside, H)
                     canopy_done = True
                 continue
-            facade(m, a, b, inside, H, door_map.get(edge_key(a, b), []), style)
+            edge_h = FRONT_H if (poly is atrium and mid_o < FRONT_DEPTH) else H    # V36: the lower west front
+            facade(m, a, b, inside, edge_h, door_map.get(edge_key(a, b), []), style)
 
 
 # ---------- atrium ----------
@@ -739,7 +746,17 @@ def atrium_roof(m, f, poly):
     def cut(part, axis, limit, keep_below):
         return K.clip_polygon(part, lambda p: (limit - f.uo(*p)[axis]) if keep_below else (f.uo(*p)[axis] - limit))
 
-    east = cut(poly, 1, go0, False)                                      # everything east of the field's west edge
+    # V36: the strip behind the lower west front gets its own roof at FRONT_H; a white step wall joins it to the rest
+    front = cut(poly, 1, FRONT_DEPTH, True)
+    if len(front) >= 3 and abs(K.signed_area(front)) > 0.01:
+        K.polygon_face(m, front, FRONT_H, "deck_dark", up=False)
+        K.polygon_face(m, front, FRONT_H + 0.8, "concrete", up=True)
+    us = [f.uo(*p)[0] for p in front]
+    su0, su1 = min(us), min(max(us), SPLIT_U - 0.15)
+    K.wall_o(m, f, FRONT_DEPTH, su0, su1, FRONT_H + 0.8, ATRIUM_H + 0.8, "wall", facing=-1)   # outside, over the strip
+    K.wall_o(m, f, FRONT_DEPTH, su0, su1, FRONT_H, ATRIUM_H, "wall", facing=1)              # inside, down to the strip
+    poly = cut(poly, 1, FRONT_DEPTH, False)
+    east = cut(poly, 1, go0, False)                                     # everything east of the field's west edge
     middle = cut(cut(east, 0, gu0, False), 0, gu1, True)
     for part, material in ((cut(poly, 1, go0, True), "deck_dark"), (cut(east, 0, gu0, True), "soffit"),
                            (cut(east, 0, gu1, False), "soffit"), (cut(middle, 1, go1, False), "soffit")):
@@ -755,7 +772,7 @@ def atrium_roof(m, f, poly):
     K.wall_o(m, f, go1, gu0, gu1, ATRIUM_H, top, "steel_white", facing=-1)
     trusses = K.Frame().samples(3.0, SPLIT_U - 3.0, 6.0)
     for u in trusses:                                                    # trusses across the whole block
-        K.truss(m, f, u, 0.5, 67.8, ATRIUM_H - 1.6, ATRIUM_H - 0.15, bays=16)
+        K.truss(m, f, u, FRONT_DEPTH + 0.3, 67.8, ATRIUM_H - 1.6, ATRIUM_H - 0.15, bays=15)   # V36: behind the step (was o 0.5, 16 bays)
     for o in (10.0, 22.0, 34.0, 46.0, 58.0):
         K.rod(m, f, (0.5, o, ATRIUM_H - 0.4), (SPLIT_U - 0.5, o, ATRIUM_H - 0.4), 0.2, "steel_white", 0.36)
     for a, b in zip(trusses, trusses[1:]):                               # under the glass: a truss every ~2.8 m ..
@@ -1043,9 +1060,10 @@ def artwork_wall(m, f):
     """White wall between atrium and long room (IMG_7722): colourful artwork, two double doors, the open passage D2."""
     u = SPLIT_U
     o_end = 29.7                                                         # east end of the wall (where the wing starts)
+    top = max(ATRIUM_H, LONG_H) + 0.8                                   # V36: up to the higher roof (no slit at the long room)
     for o0, o1 in ((0.0, D2_O[0]), (D2_O[1], o_end)):
-        K.block(m, f, u - 0.15, u + 0.15, o0, o1, 0.0, ATRIUM_H + 0.8, "wall")
-    K.block(m, f, u - 0.15, u + 0.15, D2_O[0], D2_O[1], LOW_Z, ATRIUM_H + 0.8, "wall")
+        K.block(m, f, u - 0.15, u + 0.15, o0, o1, 0.0, top, "wall")
+    K.block(m, f, u - 0.15, u + 0.15, D2_O[0], D2_O[1], LOW_Z, top, "wall")
     for o0 in (19.5, 22.7):                                              # double doors
         K.block(m, f, u - 0.2, u - 0.15, o0, o0 + 2.6, 0.0, 2.4, "table")
         K.block(m, f, u - 0.22, u - 0.2, o0 + 1.29, o0 + 1.31, 0.0, 2.4, "steel_dark")

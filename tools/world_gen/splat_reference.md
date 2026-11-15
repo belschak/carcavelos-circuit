@@ -30,15 +30,16 @@ Walking footage gives several pieces with COLMAP's default thresholds; lower `ab
 
 | What | Real (splat, +-7 %) | World before | Change |
 |---|---|---|---|
-| Roof edge of the west entrance front | top 9.8 m, frame underside 8.8-9.0 m | glass to 12.5 m, roof top 13.3 m | `ATRIUM_H` 12.5 -> 10.8 (roof top 11.6 m) |
+| Roof edge of the west entrance front | top 9.8 m, frame underside 8.8-9.0 m, banner 5.6-8.0 m | glass to 12.5 m, roof top 13.3 m | own lower front: `FRONT_H` 9.0 (white fascia 8.0-9.8 m, upper glass band 5.8-8.0 m), a lower roof strip `FRONT_DEPTH` 5.65 m deep, then a white step up to the atrium roof (11.6 m). The step's place is the footprint corner, not measured |
 | Atrium roof trusses (south part, 54-71 s) | 10.1-11.1 m | 10.9-12.35 m | same (now 9.2-10.65 m) |
 | Entrance zone under the bridge (24-29 s) | structure up to 10.3 m | | |
 | Low ceiling before the long room (72-80 s) | 4.3-4.5 m | `LOW_Z` 4.6 | none (inside the error) |
 | Entrance front | banner screen from 4.0 to 9.8 m on the roof-edge line, open below; glass doors 4.5 m behind it (covered porch) | full-height glass on the OSM line | **not changed**: moving the glass back moves door D1, the route and the rails (proposal below) |
 
 `buildings.csv` (old campus block, roof 24.5 m = 10.0 m over the plaza) already matched the real front.
-Check: same vertex counts, `HallDoors.json` and `HallRailingCourse.json` byte-identical, only `Hall_Roof`,
-`Hall_Shell` and `Hall_Structure` lower.
+Also fixed: the wall between atrium and long room ended at the atrium's roof (11.6 m) under the long room's (11.8 m),
+a 20 cm slit; it now goes up to the higher roof.
+Check: same objects, `HallDoors.json` and `HallRailingCourse.json` byte-identical; only roof, shell and structure change.
 
 **Proposal (not done, needs Noah):** the west entrance as the real 4.5 m deep porch: glass and doors 4.5 m into the
 building, the banner screen from 4.0 to 9.8 m on the OSM line. Changes D1, `hall_join.join_west`, the entry rails.
