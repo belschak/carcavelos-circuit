@@ -19,7 +19,9 @@ $PY make_capricciosa_textures.py  # V16g: cap_rubble (rubble sea wall, parapet, 
 $PY make_veg_textures.py     # V18n: veg_leaves_cutout_albedo (leaf atlas for the leaf cards of shrubs, crowns, hedges: env_vegetation.py)
 $PY make_entrance_textures.py  # V15a: entrance plaza textures (calcada, drains, planks, edging)
 $PY make_plaza_textures.py   # V10i/V16: upper plaza textures (ochre paving, terracotta stairs, skylight glass)
-$PY make_sky.py            # painted golden-hour sky -> textures/sky_panorama.png (Unity skybox + reflections)
+$BL -b -P make_far_horizon.py -- noon     # V35: far land 3-45 km (EEVEE panorama) -> out/far_horizon_raw_noon.png
+$BL -b -P make_far_horizon.py -- sunset   # ... and for the sunset mood (needs Blender 5.3 for EEVEE panoramas)
+$PY make_sky.py            # painted golden-hour sky (+ the far land, if rendered) -> textures/sky_panorama.png (Unity skybox + reflections)
 $PY make_groundmap.py      # ground colour map from the OSM shapes and the traced coast -> textures/ground_colour.png, ground_mask_data.png
 $BL -b -P build_world.py   # -> out/CampusWorld.blend, CampusWorld.fbx, TrackSurface.fbx, RouteGuide.fbx, previews
 $BL -b out/CampusWorld.blend -P make_shadowmap.py   # V16h: bakes the sun's shadows and the sky occlusion onto the ground -> out/ground_shade_*.npy (about 3 min)
@@ -195,6 +197,7 @@ First block in `route_profile.json "section_overrides"`, `"type": "curve"` (`rou
 | `env_materials.py` | puts `textures/*.png` on the materials; marks `W_ground_map` for `Ground.shader` (test 2026-11-10): lawn strokes and patches, sand ripples and grain, a sheen on the wet band at the waterline, rock shelves with strata lines (mask alpha = 1 - rock; V10d: steep faces darker and greyer with layer lines by height, tops lighter, rock below about 1.3 m above the sea wet and dark; the sand is painted paler and less saturated in `make_groundmap.py`, judged in Unity: dry #E8D3AE, cove #DBC6A2, wet #C1AB89), from `ground_mask_data.png` (`make_groundmap.py`) and the tiling `ground_detail*_data.png` (`make_textures.py ground_detail`), through the `ground` block in materials.json |
 | `env_render.py` | beauty renders (physical sky, golden-hour sun from the west-south-west, as in Unity) |
 | `make_sky.py` | painted sky panorama (2048 x 1024, Unity lat-long mapping, sun at azimuth 245 / 19 degrees like the Unity sun) |
+| `make_far_horizon.py` | V35: the real land 3-45 km away (Sintra, Cascais, Caparica, Arrabida) from `dem/far/` (AWS Terrain Tiles, zoom 11), with earth curvature, sun and air haze, rendered by Blender 5.3's EEVEE equirectangular camera from the lap's centre; `make_sky.py` lays it over the painted sky. Subtle on purpose: hazy land a few pixels high over the sea |
 
 Unity import check (6000.3.28f1, 2026-11-08): world 92 meshes / about 101,000 triangles / 3.5 MB FBX, track 1,438 triangles, guide 1,186. Since 2026-11-09 the track has 4,154 triangles in Blender (edge lines and corner signs; not re-imported in Unity yet). Textures ≤ 1024 px except the mural and the ground map (2048).
 
