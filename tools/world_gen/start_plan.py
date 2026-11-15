@@ -94,11 +94,14 @@ def grid_slots(route=None):
 # Barriers (p1: "arrows and a barrier to the left, so you know where the home straight is")
 # ---------------------------------------------------------------------------------------------------------------
 TURN_STEP_DEG = 5.0                     # a route point belongs to a bend when the line turns more than this at it
-MEDIAN_TURN_GAP = -2.0                  # m from the U-turn chord centre to the median's west end; -2 = 2 m past it, 4.1 m from the inner road edge (Luc: visible from point 667, turn stays open)
-MEDIAN_LENGTH = 12.0                    # V23s (Luc, 13 Nov, q4: "the wall is far too long"): a short divider at the U-turn end only, 10-14 m; the
-                                        # home straight, the grid and the START gate are open again. None = the V21a wall up to the pool
-MEDIAN_POOL_GAP = 0.6                   # m between the east end and the entrance pool's rim (only reached with MEDIAN_LENGTH = None)
-POOL_RIM = 0.3                          # env_entrance: the pool's ring grown by its rim
+# V31 (Luc, 14 Nov: "the wall stands on its own and does not connect to the finish line; connect it, but it does not
+# need to reach so far back; the plaza stays open, but it must be clear where to drive onto the straight"): the median
+# now starts at the START gate's left pylon and runs back along the home straight's left side, MEDIAN_LENGTH long.
+# Before (V23s) it was a free 12 m piece at the U-turn end, 12 m away from the gate.
+GATE_HALF = 6.0                         # m from the centreline to each START gate pylon's middle (env_route_signs builds the gate)
+GATE_PYLON = 0.35                       # half size of a pylon: the wall's east end touches its back face
+MEDIAN_LENGTH = 14.0                    # m from the pylon's middle back along the straight; its west end is about 9 m short of
+                                        # where the V23s piece ended (the U-turn mouth and the plaza stay open)
 
 
 def _bearing_step(pts, i):
@@ -133,45 +136,52 @@ def _unit(dx, dy):
     return dx / d, dy / d
 
 
-def _ray_ring(o, d, ring):
-    """Smallest t >= 0 with o + t d on the closed ring (None if the ray misses it)."""
-    best = None
-    for (ax, ay), (bx, by) in zip(ring, ring[1:] + ring[:1]):
-        ex, ey = bx - ax, by - ay
-        den = d[0] * ey - d[1] * ex
-        if abs(den) < 1e-9:
-            continue
-        t = ((ax - o[0]) * ey - (ay - o[1]) * ex) / den
-        u = ((ax - o[0]) * d[1] - (ay - o[1]) * d[0]) / den
-        if t >= 0 and 0 <= u <= 1 and (best is None or t < best):
-            best = t
-    return best
+def gate_frame(route=None):
+    """The START gate's frame as env_route_signs.start_frame builds it: line centre (x, y), unit forward, unit right."""
+    route = route or _route()
+    pts, n, i = route["points"], len(route["points"]), route.get("start_index", 0)
+    p, a, b = pts[i], pts[(i - 1) % n], pts[(i + 1) % n]
+    fx, fy = _unit(b["x"] - a["x"], b["y"] - a["y"])
+    return (p["x"], p["y"]), (fx, fy), (fy, -fx)
+
+
+def left_pylon(route=None):
+    """(x, y) of the middle of the START gate's left pylon (the side of the westbound leg and the plaza)."""
+    (cx, cy), _f, (rx, ry) = gate_frame(route)
+    return cx - rx * GATE_HALF, cy - ry * GATE_HALF
 
 
 def median(route=None):
-    """The straight wall between the two legs: from MEDIAN_TURN_GAP east of the U-turn's centre, along the bisector
-    of the home straight and the westbound leg, MEDIAN_LENGTH long (V23s: a short divider at the U-turn end), never
-    further than MEDIAN_POOL_GAP before the entrance pool's rim. [(x, y), (x, y)]."""
+    """The wall between the home straight and the plaza (V31): from the back face of the START gate's left pylon,
+    back along the home straight GATE_HALF m left of the racing line (the pylon's line, 2 m outside the road edge),
+    until it is MEDIAN_LENGTH m from the pylon's middle. Follows the route points, so it bends if the straight ever
+    does. [(x, y), ...] east end first."""
     route = route or _route()
     pts, n, start = route["points"], len(route["points"]), route.get("start_index", 0)
-    first, last, c, _r = uturn(route)
-    home = _unit(pts[start]["x"] - pts[(last + 1) % n]["x"], pts[start]["y"] - pts[(last + 1) % n]["y"])
-    lead = pts[(first - 1 - (start - last - 1)) % n]            # as far before the bend as the start line is after it
-    west = _unit(lead["x"] - pts[(first - 1) % n]["x"], lead["y"] - pts[(first - 1) % n]["y"])
-    d = _unit(home[0] + west[0], home[1] + west[1])
-    import campus_plan
-    pool = list(campus_plan.A_POOL)
-    t_pool = _ray_ring(c, d, pool)
-    if t_pool is None:                                          # no pool on the line: as long as the home straight
-        t_end = math.hypot(pts[start]["x"] - c[0], pts[start]["y"] - c[1])
-    else:
-        # the ray meets the pool's west side at an angle: step back until the wall's end is clear of the rim
-        t_end = t_pool - POOL_RIM - MEDIAN_POOL_GAP
-        while _ring_dist((c[0] + d[0] * t_end, c[1] + d[1] * t_end), pool) < POOL_RIM + MEDIAN_POOL_GAP:
-            t_end -= 0.05
-    if MEDIAN_LENGTH is not None:
-        t_end = min(t_end, MEDIAN_TURN_GAP + MEDIAN_LENGTH)
-    return [(c[0] + d[0] * t, c[1] + d[1] * t) for t in (MEDIAN_TURN_GAP, t_end)]
+    (px, py), (fx, fy), _r = gate_frame(route)
+    px, py = left_pylon(route)
+    out = [(px - fx * GATE_PYLON, py - fy * GATE_PYLON)]
+    run, last = GATE_PYLON, out[0]
+    i = start - 1
+    while run < MEDIAN_LENGTH - 1e-9:
+        rx, ry = right_of(pts, i)
+        p = pts[i % n]
+        q = (p["x"] - rx * GATE_HALF, p["y"] - ry * GATE_HALF)
+        step = math.hypot(q[0] - last[0], q[1] - last[1])
+        if run + step >= MEDIAN_LENGTH - 0.25:              # the last piece: end exactly at MEDIAN_LENGTH, no stub
+            t = (MEDIAN_LENGTH - run) / step
+            q = (last[0] + (q[0] - last[0]) * t, last[1] + (q[1] - last[1]) * t)
+            step = MEDIAN_LENGTH - run
+        out.append(q)
+        run += step
+        last = q
+        i -= 1
+    # drop points that lie on the straight line between their neighbours (within 2 cm): a straight wall is 2 points
+    keep = [out[0]]
+    for k in range(1, len(out) - 1):
+        if _seg_dist(out[k], keep[-1], out[k + 1]) > 0.02:
+            keep.append(out[k])
+    return keep + [out[-1]]
 
 
 def _seg_dist(p, a, b):
@@ -179,10 +189,6 @@ def _seg_dist(p, a, b):
     ll = dx * dx + dy * dy
     t = 0.0 if ll == 0 else max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / ll))
     return math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy)
-
-
-def _ring_dist(p, ring):
-    return min(_seg_dist(p, a, b) for a, b in zip(ring, ring[1:] + ring[:1]))
 
 
 def road_clearance(x, y, route=None):
