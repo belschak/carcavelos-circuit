@@ -37,6 +37,9 @@ namespace CarcavelosCircuit.Visuals
 
         public bool IsActive { get { return time >= 0f; } }
 
+        // The gull's own root (scene root, world space), for ItemFx's shader warm-up.
+        public Transform Root { get { return root; } }
+
         public SeagullFx(ItemFxLook look)
         {
             root = new GameObject("SeagullFx").transform; // scene root: world space
