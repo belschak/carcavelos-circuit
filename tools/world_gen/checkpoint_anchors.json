@@ -1,5 +1,5 @@
 {
- "source": "V20 (Luc's playtest of 13 Nov 2026, luc_notes/2026-11-13_playtest/s01-s20): 13 checkpoints on the places Luc chose, in driving order; Unity axes (x east, z north). The export and pin_checkpoints.py put each checkpoint on the route point nearest to its anchor (order along the lap checked). 'width' = trigger width across the road in metres (track.json checkpoint_widths; CampusWorldBuilder.AddRaceParts, fallback road width + 4 m). 'v20_index' = the index in the final track.json (after hall_route.py and hall_join.py) when the anchors were set. Before V20: 12 checkpoints on Noah's places of role3/V9-world-look (d2cae87).",
+ "source": "V20 (Luc's playtest of 13 Nov 2026, luc_notes/2026-11-13_playtest/s01-s20): 13 checkpoints on the places Luc chose, in driving order; Unity axes (x east, z north). The export and pin_checkpoints.py put each checkpoint on the route point nearest to its anchor (order along the lap checked). 'width' = trigger width across the road in metres (track.json checkpoint_widths; CampusWorldBuilder.AddRaceParts, fallback road width + 4 m). 'v20_index' = the index in the final track.json (after hall_route.py and hall_join.py) when the anchors were set. Before V20: 12 checkpoints on Noah's places of role3/V9-world-look (d2cae87). V33: an anchor may carry a 'shift' (metres, + = right of the driving direction) that moves the trigger's centre sideways (track.json checkpoint_shifts).",
  "checkpoints": [
   {
    "n": 0,
@@ -29,9 +29,9 @@
    "n": 3,
    "x": -79.25,
    "z": 44.05,
-   "width": 28.0,
+   "width": 44.0,
    "v20_index": 122,
-   "where": "end of the lawn path, between the two low walls where it crosses the pale strip before the avenue (s04); very wide, so a kart crossing the lawn anywhere passes it"
+   "where": "end of the lawn path, between the two low walls where it crosses the pale strip before the avenue (s04); very wide, so a kart crossing the lawn anywhere passes it V33 (Luc, 15 Nov): 28 -> 44 m, the poles now stand at its edges, so the whole lawn crossing counts and looks like it."
   },
   {
    "n": 4,
@@ -39,7 +39,8 @@
    "z": -38.29,
    "width": 16.0,
    "v20_index": 168,
-   "where": "roundabout entry, just after the north arm's zebra, before the right turn (s05)"
+   "where": "roundabout entry, just after the north arm's zebra, before the right turn (s05) V33: shifted 3 m right (left edge 5 m = at the new roundabout_inside wall, right edge 11 m), so its left banner pole stands at the wall, not behind it.",
+   "shift": 3.0
   },
   {
    "n": 5,
@@ -107,11 +108,12 @@
   },
   {
    "n": 13,
-   "x": -48.52,
-   "z": 140.55,
-   "width": 12.0,
-   "v20_index": 678,
-   "where": "V23 (Luc, 13 Nov): apex of the U-turn before the home straight; with the 12 m start median a kart could cut from the westbound leg straight onto the home straight (~35 m shorter), and this checkpoint makes that cut miss a checkpoint. No item-box row (rows only after every 2nd checkpoint)"
+   "x": -47.72,
+   "z": 144.44,
+   "width": 24.74,
+   "v20_index": 676,
+   "where": "V23 (Luc, 13 Nov): apex of the U-turn before the home straight; with the 12 m start median a kart could cut from the westbound leg straight onto the home straight (~35 m shorter), and this checkpoint makes that cut miss a checkpoint. No item-box row (rows only after every 2nd checkpoint) V33 (Luc, 15 Nov): 2 route points before the apex, where the start median's west end lies square to the driving direction, 18.44 m to the left: the trigger reaches from 6 m right of the line to 0.3 m past the wall's end (width 24.74, shift -6.37 = centre moved left), so the inner pole stands level with the wall's end and turning anywhere between the apex and the wall counts.",
+   "shift": -6.37
   }
  ]
 }

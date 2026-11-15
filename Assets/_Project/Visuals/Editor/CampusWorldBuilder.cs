@@ -118,6 +118,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         {
             public float length_m; public int jump_index, start_index, spawn_index; public int[] checkpoints; public TrackPoint[] points;
             public float[] checkpoint_widths;   // V20a: trigger width per checkpoint (m); missing or <= 0 = road width + 4 m
+            public float[] checkpoint_shifts;   // V33: trigger centre moved this far to the right of the route point (m); missing = 0
             public BoostPadSpot[] boost_pads;   // V20b: pads off the race line (export_unity_bundle.boost_pads)
         }
         // V20b: one extra boost pad: position (y = driving surface), yaw in degrees clockwise from north, size in metres.
@@ -738,9 +739,10 @@ namespace CarcavelosCircuit.Visuals.Editor
                 cp.transform.SetPositionAndRotation(Pos(p) + Vector3.up * 2f, Quaternion.LookRotation(Forward(data, i)));
                 BoxCollider trigger = cp.AddComponent<BoxCollider>();
                 trigger.isTrigger = true;
-                // V20a: per-checkpoint width from track.json (pin_checkpoints.py), e.g. wall to wall at the plaza fork
-                bool hasWidth = data.checkpoint_widths != null && c < data.checkpoint_widths.Length && data.checkpoint_widths[c] > 0f;
-                trigger.size = new Vector3(hasWidth ? data.checkpoint_widths[c] : p.width + 4f, 6f, 1f);
+                // V20a: per-checkpoint width from track.json (pin_checkpoints.py), e.g. wall to wall at the plaza fork;
+                // V33: and a sideways shift, so a checkpoint can reach further to one side (the U-turn: to the wall's end)
+                trigger.size = new Vector3(TriggerWidth(data, c, p), 6f, 1f);
+                trigger.center = new Vector3(TriggerShift(data, c), 0f, 0f);
                 int after = (i + 2) % data.points.Length;                             // about 4 m further on
                 var respawn = new GameObject("RespawnPoint");
                 respawn.transform.SetParent(cp.transform, false);
@@ -872,12 +874,26 @@ namespace CarcavelosCircuit.Visuals.Editor
                 var gate = new GameObject("Gate " + c + (c == 0 ? " (start-finish)" : ""));
                 gate.transform.SetParent(group.transform, false);
                 gate.transform.SetPositionAndRotation(Pos(p), Quaternion.LookRotation(Forward(data, i)));
-                float offset = CheckpointGatePlan.PostOffset(p.width);
-                Vector3 left = GateFoot(gate.transform, -1f, offset, p.width, ref moved);
-                Vector3 right = GateFoot(gate.transform, 1f, offset, p.width, ref moved);
+                // V33: the poles stand at the trigger's real edges (wide checkpoints look wide), pulled in from walls
+                float half = TriggerWidth(data, c, p) * 0.5f, shift = TriggerShift(data, c);
+                Vector3 left = GateFoot(gate.transform, -1f, CheckpointGatePlan.PostOffsetForTrigger(p.width, half - shift), p.width, ref moved);
+                Vector3 right = GateFoot(gate.transform, 1f, CheckpointGatePlan.PostOffsetForTrigger(p.width, half + shift), p.width, ref moved);
                 gate.AddComponent<CheckpointGate>().Configure(left, right, pole, cloth);
             }
             Debug.Log("CampusWorldBuilder: " + data.checkpoints.Length + " checkpoint gates (" + moved + " poles moved in from a wall).");
+        }
+
+        // Trigger width of checkpoint c across the road (track.json checkpoint_widths, else road width + 4 m).
+        private static float TriggerWidth(TrackData data, int c, TrackPoint p)
+        {
+            bool hasWidth = data.checkpoint_widths != null && c < data.checkpoint_widths.Length && data.checkpoint_widths[c] > 0f;
+            return hasWidth ? data.checkpoint_widths[c] : p.width + 4f;
+        }
+
+        // V33: how far the trigger's centre lies to the right of its route point (negative = left); 0 if not given.
+        private static float TriggerShift(TrackData data, int c)
+        {
+            return data.checkpoint_shifts != null && c < data.checkpoint_shifts.Length ? data.checkpoint_shifts[c] : 0f;
         }
 
         // Local foot position of one pole: as far out as planned, or nearer the road if a wall is there, on the ground.
