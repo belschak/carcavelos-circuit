@@ -78,6 +78,29 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void WarmupListsEveryMaterialOfBothVersionsOnce()
+        {
+            Assert.IsNotNull(kart.GetComponent<KartLodWarmup>(), "the kart model has no shader warm-up");
+            var materials = KartLodWarmup.MaterialsToWarm(kart.GetComponent<LODGroup>());
+            var names = new System.Collections.Generic.List<string>();
+            foreach (Material m in materials)
+            {
+                Assert.IsFalse(names.Contains(m.name), m.name + " is listed twice");
+                names.Add(m.name);
+            }
+            Assert.Contains("NK_KartLOD", names);      // far body
+            Assert.Contains("NT_TyreFar", names);      // far tyre
+            Assert.Contains("NK_Paint_Body", names);   // in both versions, listed once
+        }
+
+        [Test]
+        public void WarmupWithoutLevelsListsNothing()
+        {
+            // rejected input: a model without a LODGroup
+            Assert.AreEqual(0, KartLodWarmup.MaterialsToWarm(null).Count);
+        }
+
+        [Test]
         public void PaintingNothingPaintsNothing()
         {
             // rejected input: no kart at all

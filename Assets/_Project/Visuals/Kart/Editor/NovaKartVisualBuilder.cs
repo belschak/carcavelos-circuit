@@ -469,6 +469,8 @@ namespace CarcavelosCircuit.Visuals.Kart.Editor
             group.fadeMode = LODFadeMode.CrossFade;
             group.animateCrossFading = true;
             group.RecalculateBounds();
+            // the far materials and the fade are new to the browser: compile their shaders before the race starts
+            root.AddComponent<KartLodWarmup>();
         }
 
         // ---------- checks ----------
