@@ -394,7 +394,8 @@ namespace CarcavelosCircuit.RaceFlow
             go.transform.SetParent(transform, false);
             go.transform.SetPositionAndRotation(centre, Quaternion.LookRotation(facing, Vector3.up));
             SeagullRing ring = go.AddComponent<SeagullRing>();
-            ring.SetUp(this, ringRed, ringWhite, settings.RingRadius, 0.25f + number * 0.15f, settings.RingLifeSeconds);
+            ring.SetUp(this, ringRed, ringWhite, settings.RingRadius, 0.25f + number * 0.15f, settings.RingLifeSeconds,
+                settings.RingLook);
             rings.Add(ring);
             return true;
         }
@@ -445,9 +446,12 @@ namespace CarcavelosCircuit.RaceFlow
             ringRed = PlainColour("Ring red", new Color(0.86f, 0.12f, 0.10f, 1f), 0.25f);
             ringWhite = PlainColour("Ring white", new Color(0.97f, 0.96f, 0.93f, 1f), 0.2f);
             gold = PlainColour("Dean's List gold", new Color(1f, 0.76f, 0.15f, 1f), 0.6f);
-            halo = new GameObject("DeansHalo").AddComponent<DeansHalo>();
-            halo.transform.SetParent(transform, false);
-            halo.SetUp(raceManager.KartTransform, gold);
+            if (settings.CoinHalo) // V34: off when Role 3's ItemFx draws the laurel wreath; halo == null is handled
+            {
+                halo = new GameObject("DeansHalo").AddComponent<DeansHalo>();
+                halo.transform.SetParent(transform, false);
+                halo.SetUp(raceManager.KartTransform, gold);
+            }
 
             Vector3[] points = raceManager.TrackPoints;
             Vector3[] forwards = raceManager.TrackForwards;
@@ -524,7 +528,8 @@ namespace CarcavelosCircuit.RaceFlow
             go.transform.SetParent(transform, false);
             go.transform.position = position;
             ItemBox box = go.AddComponent<ItemBox>();
-            box.SetUp(this, givesWave ? waveMaterial : liveMaterial, settings.BoxSize, number * 0.7f, givesWave);
+            box.SetUp(this, givesWave ? waveMaterial : liveMaterial, settings.BoxSize, number * 0.7f, givesWave,
+                givesWave ? settings.WaveBoxLook : settings.BoxLook, settings.BoxGroundLook, settings.HoverHeight);
             boxes.Add(box);
             return true;
         }

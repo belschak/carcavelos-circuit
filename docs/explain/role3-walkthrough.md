@@ -52,3 +52,29 @@ The rules, in the order a bot asks them every frame:
 **Limits.** The far kart's steering wheel does not turn (the tyres still roll and steer). Thin parts like bolts are gone from the body; the tyre's grooves and spokes are only painted on (shade and normal map), which is invisible at 13 m. Black spots in the shade map (bake rays grazing the tyre's inside) are ignored by the builder. Measured in the web build on Luc's Mac (2560 x 1440, five bots, 60 s): 120 FPS and a 1 % low of 91 FPS with and without V32, because that Mac is held at its 120 Hz screen; with the warm-up no frame above 12 ms during the race. The gain shows on weaker laptops and phones, which have not been measured.
 
 **How it could change.** Other karts from the roster: run the script with their FBX and add their materials to `palette.json`. A second, even lighter level (or a far driver) if the bots ever get more. The switch distance is one number (`NearUntil`) in the builder.
+
+## Item effects and item boxes (task V34)
+
+**What.** Using an item now shows it round the kart, not only on the HUD. Carcavelos Wave: turquoise water rises round the kart, with a big crest behind whose white lip curls over the tail, walls of water at the sides and a low bow wave in front. Spray fans out both sides, mist and foam patches stay behind, and there is a splash when the wave forms and when it lands. Espresso: a caramel crema ring races over the road, two glowing crema trails come off the rear wheels, speed lines rush past and the exhaust burns hotter. Seagull Delivery: Nori, the courier gull, pops in over the kart, tosses a lifebuoy onto each ring spot and leaves with a barrel roll; driving through a ring sparkles. Dean's List: a gold laurel wreath turns round the kart under a floating mortarboard; a blocked bump throws the cap up with confetti, and when the shield runs out the wreath bursts into gold leaves. The item box is a rounded azulejo block with a glaze, a soft glow, sparkles and a ring of light on the road (own design: no question mark, no see-through cube).
+
+**How it is built.** Files in `Assets/_Project/Visuals/ItemFx/` and `Visuals/Items/`:
+
+| File | Job |
+|---|---|
+| `ItemFx.cs` | Sits on the `KartEffects` prefab, so it reaches the kart through RaceBootstrap's "Kart Attachments" like the drift sparks. Listens to Role 4's `ItemSystem` (`ItemUsed`, `RingCollected`, `ShieldBlocked`, `ShieldActive`) and the race (`Restarted`, `Recovered`) and runs the four effects. Quiet on any kart that is not the race's player kart |
+| `WaveRide.cs` + `WaveMesh.cs` | The wave: one ring mesh round the kart, rewritten every frame from a cross-section (`WaveMesh`, plain arrays, tested), two materials (water, foam band) + particles |
+| `EspressoFx.cs`, `SeagullFx.cs`, `DeansFx.cs` | The other three effects (plain classes, ItemFx ticks them) |
+| `ItemFxRules.cs` | The maths: envelopes, values round the kart, the gull's path, blink, toss, roll (Edit Mode tested) |
+| `FxParts.cs` | Particle systems and model copies made in code, silent until an effect emits |
+| `ItemFxLook.cs` + `.asset` | All materials and Luc's six item models (Items v01, Meshy) the effects draw with |
+| `Items/AzulejoTile.cs`, `Items/RoundedCube.cs` | The box face (drawn in code, two variants) and the rounded box body (tested) |
+| `Items/ItemBoxLookFx.cs` | The light on the road under a box: pulses, bursts when the box breaks, pops when it is back |
+| `Editor/ItemFxBuilder.cs` | Menu Carcavelos Circuit > Visuals > Build Item FX: textures, materials, prefabs, the look asset, then the KartEffects prefab |
+
+**Who does what.** RaceFlow (Role 4) still decides everything: which item, the boosts (through `IKartBoost`), the rings and the shield. ItemFx only draws. The boxes and rings are made by RaceFlow; they take Role 3's look prefabs through `ItemSettings` (box look, wave box look, ground look, ring look, coin ring off), filled by `Role4SceneBuilder`. That part is a help PR for Role 4. Without it, the boxes and rings keep their code-made look and the coin ring stays, so the merge order does not matter.
+
+**Why this way.** No scene and no RaceFlow logic change for the effects: one component on a prefab Luc already owns. Events instead of polling, so an effect starts on the exact frame the item does. The wave is a mesh, not a big particle cloud: two draw calls and almost no overdraw, and a test makes sure it never covers the kart from the chase camera. Only URP Lit and Particles Unlit are used, which the Web build already ships.
+
+**Limits.** The effects follow ItemSettings' default lengths (wave 3 s, Espresso 2 s, copied into ItemFx's Inspector) because ItemSystem does not expose its settings. The kart is not lifted onto the wave (the kart prefab is Role 1's). Bots have no items (O2), so they have no item effects.
+
+**How it could change.** Another item = one more effect class and one line in `ItemFx.Play`. Bigger or calmer effects = the numbers at the top of each effect class and the `WaveShape` defaults.

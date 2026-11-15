@@ -40,3 +40,12 @@ MonoBehaviour:
   bumpDropShare: 0.3
   levelSeconds: 0.5
   farBehindSeconds: 2
+  espressoIcon: {fileID: 2800000, guid: be2b5b13e6835483f83b6b68b9866dc4, type: 3}
+  seagullDeliveryIcon: {fileID: 2800000, guid: 5c7cb3832d7c44ce8978363f48ebaf4f, type: 3}
+  carcavelosWaveIcon: {fileID: 2800000, guid: e69443621972d44e6b1eb0bfb45ed727, type: 3}
+  deansListIcon: {fileID: 2800000, guid: 03aee2484ba9a45a8b3784de6c94df6a, type: 3}
+  boxLook: {fileID: 8463491180768205443, guid: ae40a5969966d43d18e4240077cbff08, type: 3}
+  waveBoxLook: {fileID: 216183906732301257, guid: b28f6ac39b9a94cafb8c0e6714801cd4, type: 3}
+  boxGroundLook: {fileID: 7281439800919398869, guid: 0270742dc1c1b406f9cec844537300cf, type: 3}
+  ringLook: {fileID: 5019049970125580531, guid: 8aa238548c8d3443fbf68fbcc6e5f764, type: 3}
+  coinHalo: 0

@@ -24,7 +24,9 @@ namespace CarcavelosCircuit.RaceFlow
         public bool IsCollected { get { return collected; } }
 
         // Called once by ItemSystem right after AddComponent.
-        public void SetUp(ItemSystem owner, Material red, Material white, float radius, float appearDelay, float life)
+        // look (task V34, optional): Role 3's lifebuoy (radius 1, standing in XY) instead of the eight cylinders.
+        public void SetUp(ItemSystem owner, Material red, Material white, float radius, float appearDelay, float life,
+            GameObject look = null)
         {
             system = owner;
             delay = appearDelay;
@@ -38,6 +40,12 @@ namespace CarcavelosCircuit.RaceFlow
 
             visual = new GameObject("Lifebuoy").transform;
             visual.SetParent(transform, false);
+            if (look != null)
+            {
+                ItemBox.AddLook(look, visual).transform.localScale = Vector3.one * radius;
+                visual.localScale = Vector3.zero; // grows in after the delay
+                return;
+            }
             float thickness = radius * 0.32f;
             float pieceLength = 2f * Mathf.PI * radius / Pieces * 1.08f; // a little overlap: no gaps at the joints
             for (int i = 0; i < Pieces; i++)

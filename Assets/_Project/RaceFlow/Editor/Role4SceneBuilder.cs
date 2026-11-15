@@ -246,6 +246,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 AssetDatabase.CreateAsset(settings, ItemSettingsPath);
             }
             SetItemIcons(settings);
+            SetItemLooks(settings);
             EditorUtility.SetDirty(settings);
             return settings;
         }
@@ -260,6 +261,32 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             so.FindProperty("carcavelosWaveIcon").objectReferenceValue = ItemIconPicture("CarcavelosWave");
             so.FindProperty("deansListIcon").objectReferenceValue = ItemIconPicture("DeansList");
             so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // Luc's item box, ground light and lifebuoy looks (task V34, Role 3's Visuals/Items/Prefabs/, made by
+        // Carcavelos Circuit > Visuals > Build Item FX). Missing = the looks made in code; with Role 3's item effects
+        // in place (ItemFxLook) the gold coin ring is switched off, because ItemFx draws a laurel wreath instead.
+        private static void SetItemLooks(ItemSettings settings)
+        {
+            SerializedObject so = new SerializedObject(settings);
+            so.FindProperty("boxLook").objectReferenceValue = ItemLook("ItemBoxLook");
+            so.FindProperty("waveBoxLook").objectReferenceValue = ItemLook("ItemBoxLook_Wave");
+            so.FindProperty("boxGroundLook").objectReferenceValue = ItemLook("ItemBoxGround");
+            so.FindProperty("ringLook").objectReferenceValue = ItemLook("SeagullRingLook");
+            bool itemFx = AssetDatabase.LoadMainAssetAtPath(Root + "Visuals/ItemFx/ItemFxLook.asset") != null;
+            so.FindProperty("coinHalo").boolValue = !itemFx;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static GameObject ItemLook(string prefabName)
+        {
+            string path = Root + "Visuals/Items/Prefabs/" + prefabName + ".prefab";
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab == null)
+            {
+                Debug.LogWarning("Role4SceneBuilder: " + path + " not found, that part keeps the look made in code.");
+            }
+            return prefab;
         }
 
         private static Texture2D ItemIconPicture(string itemName)

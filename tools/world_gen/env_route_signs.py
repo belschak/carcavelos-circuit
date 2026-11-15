@@ -384,8 +384,8 @@ def build_signs(col):
 # Start gate and start line (s01: "start line with a chequered flag and in general a gate with a bold START on it
 # and Nova Kart")
 # ---------------------------------------------------------------------------------------------------------------
-GATE_HALF = 6.0                  # m from the centreline to each pylon's middle (road half width 4 m)
-PYLON = 0.35                     # half size of a pylon
+GATE_HALF = start_plan.GATE_HALF  # 6 m from the centreline to each pylon's middle (road half width 4 m); V31: in start_plan,
+PYLON = start_plan.GATE_PYLON     # 0.35 m half size of a pylon; because the start median ends at the left pylon
 GATE_CLEAR, BANNER_H, BANNER_T = 5.4, 1.6, 0.3     # banner bottom over the road, height, thickness
 CAP = 0.4                        # Boost Orange cap on each pylon
 LINE_SQ, LINE_ROWS, LINE_LIFT = 0.5, 2, 0.04       # chequer squares, rows along the road, height over the road
@@ -624,8 +624,9 @@ def _thin(samples, corners):
     return [samples[i] for i in keep]
 
 
-def _obstacles(a, b, ground):
-    """Names of built things (not the ground) that reach into the wall's box between two samples."""
+def _obstacles(a, b, ground, allowed=()):
+    """Names of built things (not the ground) that reach into the wall's box between two samples; names starting with
+    one in allowed are left out (V31: the start median ends on purpose at the START gate's pylon)."""
     scene, deps = bpy.context.scene, bpy.context.evaluated_depsgraph_get()
     side = Vector(((b - a).y, -(b - a).x, 0)).normalized() * (start_plan.WALL_T / 2)
     found = set()
@@ -637,7 +638,8 @@ def _obstacles(a, b, ground):
             hit, loc, _n, _i, obj, _m = scene.ray_cast(deps, Vector((q.x, q.y, ground + WALL_H + 0.05)),
                                                        Vector((0, 0, -1)), distance=WALL_H)
             if hit and loc.z > ground + 0.08 and not obj.name.startswith(("Track_RouteGuide", "RouteGuide")) \
-                    and not (obj.users_collection and obj.users_collection[0].name == "Track_RouteGuide"):
+                    and not (obj.users_collection and obj.users_collection[0].name == "Track_RouteGuide") \
+                    and not obj.name.startswith(tuple(allowed)):
                 found.add(obj.name)
     return found
 
@@ -666,13 +668,23 @@ def write_barriers():
         seg = lambda q, pts_: min(_seg_dist((q.x, q.y), (a.x, a.y), (b.x, b.y)) for a, b in zip(pts_, pts_[1:]))
         gate = min(seg(p, samples) for p in pylons) - PYLON - start_plan.WALL_T / 2
         grid = min(seg(p, samples) for p in boxes) - start_plan.WALL_T / 2
+        # V31: the start median starts at the left pylon's back face on purpose (Luc: "connect it to the finish line")
+        joins = bar["name"] == "start_median"
         hits = set()
         for a, b in zip(samples, samples[1:]):
-            hits |= _obstacles(a, b, max(a.z, b.z))
+            hits |= _obstacles(a, b, max(a.z, b.z), ("Track_StartGate",) if joins else ())
         zs = [q.z for q in samples]
-        warn = "WARNING " if hits or road < 0.8 or gate < 1.0 or grid < 1.0 else ""
+        if joins:
+            pylon = Vector((*start_plan.left_pylon(E.ROUTE), 0))
+            off = (samples[0].xy - pylon.xy).length - PYLON
+            gate_txt = f"joins the gate's left pylon ({off:.2f} m from its face)"
+            gate_bad = abs(off) > 0.05
+        else:
+            gate_txt = f"to the gate's pylons {gate:.2f} m"
+            gate_bad = gate < 1.0
+        warn = "WARNING " if hits or road < 0.8 or gate_bad or grid < 1.0 else ""
         lines.append(f"    {warn}{bar['name']}: {len(kept)} points, {length:.1f} m, paving {min(zs):.2f}-{max(zs):.2f} m; "
-                     f"wall face to road edge {road:.2f} m, to the gate's pylons {gate:.2f} m, to the grid paint "
+                     f"wall face to road edge {road:.2f} m, {gate_txt}, to the grid paint "
                      f"{grid:.2f} m; in its way: {', '.join(sorted(hits)) or 'nothing'}")
         out.append({"name": bar["name"], "points": [[round(q.x, 3), round(q.y, 3), round(q.z, 3)] for q in kept]})
     path = os.path.join(E.OUT, "start_barriers.json")
