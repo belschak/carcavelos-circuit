@@ -57,7 +57,10 @@ so it is `nova_hall.py`'s long room (`PIANO_U` 84.3). 163 frames, one model, loc
 | Low ceiling before it (70-81 s) | 4.0-4.3 m | `LOW_Z` 4.6 | none (edge of the error) |
 | Width, east wall to the far west layer | about 28 m | OSM 30 m | none |
 | West facade zone | two vertical layers 4.5 m apart (doors, planters and railing in the inner one, the big X-braced frame in the outer one); verticals every ~2.0 m | glass on the OSM line, frame 0.45 and 1.5 m inside it, 3.0 m grid (`FACADE_FRAME_STEP`) | **not changed**: the sparse points do not show which layer is the glass; see proposal |
+| Space frame grid and tubes | verticals ~2.0 m apart; tubes clearly bolder than the model's (photos) | `FACADE_FRAME_STEP` 3.0, tubes 9 cm, diagonals 5 cm | 2.0 m, `FRAME_TUBE` 14 cm, `FRAME_DIAGONAL` 8 cm (thickness from the photos, not measured) |
+| Roof deck | dark grey; white trusses : deck = 2.6 in brightness | `deck` #85888E (1.7) | `deck` #5E5D5A |
+| Box on the east side | neutral warm dark grey (#5F5C56 where the white wall reads #B5B1AA) | `brown` #5B4638 | `brown` #6E6A64 (key kept) |
 
-**Proposal (not done):** a bolder space frame in the KPMG Gallery (2.0 m module, thicker tubes, the big raking
-round columns of the photos). Which of the two layers is the glass needs one look on site or a denser splat
+**Proposal (not done):** the big raking round columns of the photos, and the question which of the two facade layers
+is the glass. Which layer is the glass needs one look on site or a denser splat
 before the frame moves, because the west lane and the terrace door D3 run through that zone.

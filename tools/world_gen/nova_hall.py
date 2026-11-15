@@ -1319,7 +1319,11 @@ def entrance_seating(m, f):
 
 
 # ---------- long room ----------
-FACADE_FRAME_STEP = 3.0                     # grid of the steel space frame in front of the west glass
+# V36 (KPMG Gallery splat, IMG_7722 82-112 s): the frame's verticals stand about 2.0 m apart (was 3.0) and the tubes are
+# much bolder in the video than 9 cm (thickness from the photos, not measured: 14 cm, diagonals 8 cm, was 9 and 5).
+FACADE_FRAME_STEP = 2.0                     # grid of the steel space frame in front of the west glass
+FRAME_TUBE = 0.14
+FRAME_DIAGONAL = 0.08
 
 
 def twisted_sculpture(m, f, u, o, height, size=0.9, step=0.12, material="black"):
@@ -1351,21 +1355,21 @@ def space_frame(m, f, u0, u1):
     for layer_o in (0.45, 1.5):
         for u in us:
             if door0 < u < door1:
-                K.rod(m, f, (u, layer_o, DOOR_H + 1.4), (u, layer_o, H - 0.3), 0.09, "steel_white")
+                K.rod(m, f, (u, layer_o, DOOR_H + 1.4), (u, layer_o, H - 0.3), FRAME_TUBE, "steel_white")
             else:
-                K.rod(m, f, (u, layer_o, 0.2), (u, layer_o, H - 0.3), 0.09, "steel_white")
+                K.rod(m, f, (u, layer_o, 0.2), (u, layer_o, H - 0.3), FRAME_TUBE, "steel_white")
         for z in zs:
             if z < DOOR_H + 1.4:
-                K.rod(m, f, (u0, layer_o, z), (door0, layer_o, z), 0.09, "steel_white")
-                K.rod(m, f, (door1, layer_o, z), (u1, layer_o, z), 0.09, "steel_white")
+                K.rod(m, f, (u0, layer_o, z), (door0, layer_o, z), FRAME_TUBE, "steel_white")
+                K.rod(m, f, (door1, layer_o, z), (u1, layer_o, z), FRAME_TUBE, "steel_white")
             else:
-                K.rod(m, f, (u0, layer_o, z), (u1, layer_o, z), 0.09, "steel_white")
+                K.rod(m, f, (u0, layer_o, z), (u1, layer_o, z), FRAME_TUBE, "steel_white")
         for a, b in zip(us, us[1:]):
             for z0, z1 in zip(zs, zs[1:]):
                 if in_door(a, b, z0):
                     continue
-                K.rod(m, f, (a, layer_o, z0), (b, layer_o, z1), 0.05, "steel_white")
-                K.rod(m, f, (a, layer_o, z1), (b, layer_o, z0), 0.05, "steel_white")
+                K.rod(m, f, (a, layer_o, z0), (b, layer_o, z1), FRAME_DIAGONAL, "steel_white")
+                K.rod(m, f, (a, layer_o, z1), (b, layer_o, z0), FRAME_DIAGONAL, "steel_white")
     for u in us[::2]:
         for z in zs:
             if not in_door(u - 0.1, u + 0.1, z):

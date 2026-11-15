@@ -33,7 +33,8 @@ MATERIALS = {
     "soffit": _mat("N_soffit", "#F4F3EF", 0.9),
     "steel_white": _mat("N_steel_white", "#ECECE8", 0.5, 0.3),
     "steel_dark": _mat("N_steel_dark", "#2B2E33", 0.4, 0.6),
-    "deck": _mat("N_deck", "#85888E", 0.6, 0.4),               # roof deck underside, grey corrugated sheet
+    # V36 (KPMG Gallery splat): the deck is much darker than the white trusses (light/dark 2.6 in the video, was 1.7)
+    "deck": _mat("N_deck", "#5E5D5A", 0.6, 0.4),               # roof deck underside, dark grey corrugated sheet (was #85888E)
     # V18j (Luc's request): red-brown like the real joists (survey 2.3: #8a4a2a), was "#A8643A"
     "timber": _mat("N_timber", "#8E4E2C", 0.55),               # the wooden joists under the gallery
     "deck_dark": _mat("N_deck_dark", "#5A5D60", 0.6, 0.4),     # V18j (Luc's request): dark steel roof deck over the entrance zone
@@ -50,7 +51,9 @@ MATERIALS = {
     "mat": _mat("N_door_mat", "#2A2B2E", 0.95),
     "light": _mat("N_light", "#FFF6E2", 0.5, emission="#FFF6E2"),
     "exit": _mat("N_exit_sign", "#2FB36B", 0.5, emission="#2FB36B"),
-    "brown": _mat("N_brown_wall", "#5B4638", 0.8),             # dark brown recessed wall in the study hall
+    # V36 (KPMG Gallery splat): the box on the east side is a neutral warm dark grey, not brown (video #5F5C56 at the
+    # exposure where the white wall reads #B5B1AA). Key and material name kept so nothing else changes.
+    "brown": _mat("N_brown_wall", "#6E6A64", 0.8),             # dark grey box in the study hall (was brown #5B4638)
     "piano": _mat("N_piano", "#101113", 0.2, 0.2),
     "red": _mat("N_art_red", "#D84A3A", 0.8),
     "blue": _mat("N_art_blue", "#2F5FA8", 0.8),
