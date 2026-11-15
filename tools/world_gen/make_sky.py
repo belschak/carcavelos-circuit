@@ -2,6 +2,7 @@
 haze at the horizon, golden-hour sun from the west-south-west). Our own procedural picture, no photo.
 
 Run:  ~/Documents/nova/.media-tools/bin/python make_sky.py [--mood noon|sunset]
+      (V35: run make_far_horizon.py in Blender first for the far land on the horizon; without it the sky is as before)
 Out:  textures/sky_panorama.png  (noon, 2048 x 1024, equirectangular / lat-long)
       textures/sky_sunset.png    (V28 sunset: low orange sun over the sea, pink and violet sky)
 
@@ -65,10 +66,29 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--mood", choices=sorted(MOODS), default="noon")
     mood = ap.parse_args().mood
-    make(MOODS[mood])
+    make(MOODS[mood], mood)
 
 
-def make(p):
+def far_horizon(mood):
+    """V35: the far land rendered by make_far_horizon.py (Blender, out/far_horizon_raw_<mood>.png), turned into this
+    sky's mapping, or None if it was not rendered. Blender's equirectangular picture has north in the middle (u 0.5)
+    and east to the right like ours, so it only moves a quarter turn left (north to u 0.25); then it is scaled from
+    its double size down to W x H, which also smooths the far coastline."""
+    path = os.path.join(HERE, "out", f"far_horizon_raw_{mood}.png")
+    if not os.path.exists(path):
+        print(f"  no {path}: sky without the far horizon (run make_far_horizon.py -- {mood} in Blender first)")
+        return None
+    far = np.asarray(Image.open(path).convert("RGBA")).astype(np.float64) / 255.0
+    far = np.roll(far, -far.shape[1] // 4, axis=1)
+    rgb_part = far[..., :3] * far[..., 3:4]                  # premultiplied, so the scaling does not darken edges
+    small = [np.asarray(Image.fromarray((ch * 255 + 0.5).astype(np.uint8)).resize((W, H), Image.LANCZOS)) / 255.0
+             for ch in (rgb_part[..., 0], rgb_part[..., 1], rgb_part[..., 2], far[..., 3])]
+    alpha = np.clip(small[3], 0, 1)[..., None]
+    colour = np.stack(small[:3], axis=-1) / np.maximum(alpha, 1e-4)
+    return np.clip(colour, 0, 1), alpha
+
+
+def make(p, mood="noon"):
     SUN_AZIMUTH, SUN_ELEVATION = p["sun"]
     OUT = os.path.join(HERE, "textures", p["out"])
     rng = np.random.default_rng(SEED)
@@ -160,6 +180,11 @@ def make(p):
     shade = lerp(rgb(p["cloud_shade"]), rgb(p["cloud_lit"]), smoothstep(0.1, 0.65, tone)[..., None])   # lit tops
     shade = lerp(shade, rgb(p["cloud_sun"]), (p["cloud_sun_k"] * sunside * smoothstep(0.45, 1.0, tone))[..., None])
     img = lerp(img, shade, (dens * 0.97)[..., None])
+
+    # V35: the real land 3-45 km away (Sintra, Cascais, Caparica, Arrabida), in front of the low clouds
+    far = far_horizon(mood)
+    if far is not None:
+        img = lerp(img, far[0], far[1])
 
     img = np.clip(img, 0, 1)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
