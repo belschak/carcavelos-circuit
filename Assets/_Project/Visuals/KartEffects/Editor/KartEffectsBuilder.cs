@@ -20,6 +20,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string MaterialFolder = Root + "Materials/";
         private const string PrefabFolder = Root + "Prefabs/";
         private const string EffectsPrefabPath = PrefabFolder + "KartEffects.prefab";
+        private const string ItemFxLookPath = "Assets/_Project/Visuals/ItemFx/ItemFxLook.asset"; // V34, ItemFxBuilder
         private const string DemoScenePath = "Assets/_Project/Visuals/Scenes/KartEffects_Demo.unity";
         private const string KartVisualPath = "Assets/_Project/Visuals/Kart/Prefabs/KartVisual_Classic_Rookie.prefab"; // V3, used if it exists
         private const string BloomProfilePath = "Assets/_Project/RaceFlow/Settings/RaceCameraVolume.asset";      // Role 4's race camera bloom
@@ -167,6 +168,15 @@ namespace CarcavelosCircuit.Visuals.Editor
             fields.FindProperty("wheelEffectsPrefab").objectReferenceValue = wheel;
             fields.FindProperty("exhaustEffectsPrefab").objectReferenceValue = exhaust;
             fields.ApplyModifiedPropertiesWithoutUndo();
+            // V34: the item effects ride on the same prefab (ItemFxBuilder makes the look first; without it, none).
+            ItemFxLook look = AssetDatabase.LoadAssetAtPath<ItemFxLook>(ItemFxLookPath);
+            if (look != null)
+            {
+                ItemFx itemFx = root.AddComponent<ItemFx>();
+                SerializedObject itemFields = new SerializedObject(itemFx);
+                itemFields.FindProperty("look").objectReferenceValue = look;
+                itemFields.ApplyModifiedPropertiesWithoutUndo();
+            }
             return SavePrefab(root, EffectsPrefabPath);
         }
 

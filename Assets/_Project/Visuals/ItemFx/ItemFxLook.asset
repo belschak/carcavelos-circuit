@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0a393f9255604d98ad8da0301fed453, type: 3}
+  m_Name: ItemFxLook
+  m_EditorClassIdentifier: CarcavelosCircuit.Visuals::CarcavelosCircuit.Visuals.ItemFxLook
+  Water: {fileID: 2100000, guid: e53e40b4ce7ae4506a7cfbf1dcbc2514, type: 2}
+  Foam: {fileID: 2100000, guid: 4e40047e5d3fc43cdb4ef3b1b5a7d1e6, type: 2}
+  Droplet: {fileID: 2100000, guid: dc9edee52d5f244afb322c7a138d94a0, type: 2}
+  FoamPatch: {fileID: 2100000, guid: 72f5b755ab07c4969a2bf3f5e07501ae, type: 2}
+  Mist: {fileID: 2100000, guid: a87985b7ebbcd47c682b02ae82fa6386, type: 2}
+  Ring: {fileID: 2100000, guid: 1587be141e8654c22a422744ae0bee84, type: 2}
+  Trail: {fileID: 2100000, guid: 824c8c642aaf34e008bc7c4279e04f83, type: 2}
+  Spark: {fileID: 2100000, guid: 29ce21d7fe8c6488c82e32280c5a9a6e, type: 2}
+  Confetti: {fileID: 2100000, guid: 2bb47e284aada4019948b782850934d3, type: 2}
+  Seagull: {fileID: 2747220672334238384, guid: 4a98c98f7be4646688ee815140c212d0, type: 3}
+  SeagullWing: {fileID: 3433135012634530368, guid: 110f2b5fae95545f39352d0e7bf8f202, type: 3}
+  Lifebuoy: {fileID: 2848985154687535491, guid: ac4f84c654d2641708ce89f63b1f0fd2, type: 3}
+  Laurel: {fileID: 6111410410844569976, guid: 9f5ae4f11dac74d449051caf6327089e, type: 3}
+  Mortarboard: {fileID: 534760475182115108, guid: 07e35c42774f44bc8b124e994d005516, type: 3}
+  Tassel: {fileID: 1470275372157518849, guid: 5fc9b7e500c67451595e824d4e4c08f4, type: 3}
+  WaveTurquoise: {r: 0.08, g: 0.8, b: 0.86, a: 1}
+  FoamWhite: {r: 0.94, g: 0.99, b: 1, a: 1}
+  Crema: {r: 0.86, g: 0.55, b: 0.22, a: 1}
+  DeansGold: {r: 1, g: 0.76, b: 0.15, a: 1}
+  AtlanticBlue: {r: 0.18, g: 0.55, b: 0.84, a: 1}
+  LifebuoyRed: {r: 0.86, g: 0.12, b: 0.1, a: 1}
