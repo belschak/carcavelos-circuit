@@ -62,6 +62,9 @@ MATERIALS = {
     "stair": _mat("N_stair", "#F2F1EC", 0.55),                               # white stairs and gallery floors
     "azulejo": _mat("N_azulejo_pot", "#EEF1F6", 0.4),                        # white tall planters (blue pattern = "blue")
     "pit": _mat("N_pit", "#3A3530", 0.9),                                    # walls and floor of the stair void
+    # V36: placeholder for the banner over the main entrance, the light blue measured in the splat (median #AAB4C8).
+    # An original motif replaces it later; never the real banner (branding).
+    "banner": _mat("N_banner", "#AAB4C8", 0.7),
 }
 
 

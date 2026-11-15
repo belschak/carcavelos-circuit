@@ -54,6 +54,14 @@ ATRIUM_H = 10.8              # clear height under the atrium roof
 # steps there too. Where the real step stands was not measured (the splat shows the front, not the roof behind it).
 FRONT_H = 9.0                # wall height of the atrium's west front (top of its fascia = FRONT_H + 0.8 = 9.8 m)
 FRONT_DEPTH = 5.65           # the lower roof strip reaches this far in from the west front (o)
+# V36 (splat + IMG_7722 0-20 s): the west front has three parts, split at two corners of the OSM outline. North of
+# u 11.77 the closed white block with the NOVA name (light grey in the splat); u 11.77-39.0 the glazed entrance front
+# with the banner and a dark band carrying the space frame at the roof edge; south of u 39.0 a white wall with a dark
+# shop window on the ground floor ("glass_low").
+FRONT_SOLID_END_U = 11.77
+FRONT_GLASS_END_U = 39.0
+BANNER_U = (13.5, 37.0)      # the banner zone along u (splat: light blue points u 15-37.5) ..
+BANNER_Z = (5.6, 8.0)        # .. and from-to height (splat: 5.6-8.0 m)
 LONG_H = 11.0                # clear height of the long room
 LOW_CEILING_END = 80.0       # first part of the long room has a flat ceiling at LOW_Z
 LOW_Z = 4.6
@@ -499,7 +507,7 @@ def in_no_mullion_zone(p):
     return False
 
 
-def facade(m, a, b, inside, H, openings, style, posts=True):
+def facade(m, a, b, inside, H, openings, style, posts=True, banner=None):
     """One straight piece of outer wall from a to b. inside = unit normal pointing into the building.
     style 'glass': glazed ground floor, white band, glazed upper floor, white fascia; 'solid': white wall.
     openings: [(distance along the edge, width, name)] for doors."""
@@ -526,7 +534,7 @@ def facade(m, a, b, inside, H, openings, style, posts=True):
         s = c1
     pieces.append((s, L))
     top = 4.4                                                         # top of the ground floor band
-    glazed_ground = style in ("glass", "glass_low")                      # glass_low: glass on the ground floor only
+    glazed_ground = style in ("glass", "glass_low", "glass_front")       # glass_low: glass on the ground floor only
     for s0, s1 in pieces:
         band(s0, s1, 0.0, top, "glass" if glazed_ground else "wall")
         if glazed_ground and posts:                                  # V18j (Luc's request): posts=False = no dark posts
@@ -538,16 +546,43 @@ def facade(m, a, b, inside, H, openings, style, posts=True):
     for c0, c1 in cuts:
         band(c0, c1, DOOR_H + 0.4, top, "glass" if glazed_ground else "wall")
         door(m, P((c0 + c1) / 2, 0.0), (tx, ty), (nx, ny), c1 - c0)
-    if style == "glass":
+    if style in ("glass", "glass_front"):
         band(0, L, top, GALLERY_Z + 0.6, "wall")                       # white band at the first floor
         band(0, L, GALLERY_Z + 0.6, H - 1.0, "glass")
         for k in range(int(L / 1.6) + 1):
             m.box(P(k * 1.6, (GALLERY_Z + 0.6 + H - 1.0) / 2), 0.05, 0.06, (H - 1.0 - GALLERY_Z - 0.6) / 2, "steel_white", heading)
-        band(0, L, H - 1.0, H + 0.8, "wall")
+        band(0, L, H - 1.0, H + 0.8, "deck_dark" if style == "glass_front" else "wall")
+        if style == "glass_front":
+            front_frame_and_banner(m, P, L, (tx, ty), (nx, ny), H, banner)
     else:
         band(0, L, top, H + 0.8, "wall")
     m.face([P(0, H + 0.8), P(L, H + 0.8), P(L, H + 0.8, True), P(0, H + 0.8, True)], "wall", (0, 0, 1))  # wall top
     m.face([P(0, -PLINTH, True), P(L, -PLINTH, True), P(L, 0.0, True), P(0, 0.0, True)], "wall", (-nx, -ny, 0))   # plinth
+
+
+def front_frame_and_banner(m, P, L, t, n, H, banner):
+    """V36 (splat): the glazed main entrance front. A white space-frame strip 0.3 m in front of the dark band at the roof
+    edge (two chords, a zigzag of diagonals every 1.6 m), and the banner zone: a panel 0.12 m in front of the upper
+    glass (placeholder colour, see hall_kit 'banner')."""
+    def Q(s, z, extra):
+        p = P(s, z, True)
+        return (p[0] - n[0] * extra, p[1] - n[1] * extra, z)
+
+    z0, z1 = H - 0.9, H + 0.7
+    for z in (z0, z1):
+        m.beam(Q(0.0, z, 0.3), Q(L, z, 0.3), 0.12, 0.12, "steel_white")
+    k, s = 0, 0.0
+    while s < L - 0.01:
+        s1 = min(s + 1.6, L)
+        za, zb = (z0, z1) if k % 2 == 0 else (z1, z0)
+        m.beam(Q(s, za, 0.3), Q(s1, zb, 0.3), 0.08, 0.08, "steel_white")
+        k, s = k + 1, s1
+    if banner:
+        s0, s1 = banner
+        (b0, b1) = BANNER_Z
+        quad = [Q(s0, b0, 0.12), Q(s1, b0, 0.12), Q(s1, b1, 0.12), Q(s0, b1, 0.12)]
+        m.face(quad, "banner", (-n[0], -n[1], 0))                       # outside
+        m.face(list(reversed(quad)), "banner", (n[0], n[1], 0))         # back (seen through the glass)
 
 
 def door(m, c, t, n, width):
@@ -733,8 +768,18 @@ def shell(m, f, polys, door_map):
                     north_canopy(m, f, inside, H)
                     canopy_done = True
                 continue
-            edge_h = FRONT_H if (poly is atrium and mid_o < FRONT_DEPTH) else H    # V36: the lower west front
-            facade(m, a, b, inside, edge_h, door_map.get(edge_key(a, b), []), style)
+            edge_h, banner = H, None
+            if poly is atrium and mid_o < FRONT_DEPTH:                 # V36: the lower west front and its three parts
+                edge_h = FRONT_H
+                if mid_u >= SOLID_NORTH_U:
+                    style = "solid" if mid_u < FRONT_SOLID_END_U else ("glass_front" if mid_u < FRONT_GLASS_END_U else "glass_low")
+                if style == "glass_front":
+                    ua, ub = f.uo(*a)[0], f.uo(*b)[0]
+                    lo, hi = max(min(ua, ub), BANNER_U[0]), min(max(ua, ub), BANNER_U[1])
+                    if hi > lo:                                        # banner part on this edge, as distances along it
+                        s0, s1 = sorted(((lo - ua) / (ub - ua) * L, (hi - ua) / (ub - ua) * L))
+                        banner = (s0, s1)
+            facade(m, a, b, inside, edge_h, door_map.get(edge_key(a, b), []), style, banner=banner)
 
 
 # ---------- atrium ----------
