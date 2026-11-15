@@ -30,7 +30,10 @@ namespace CarcavelosCircuit.RaceFlow
         public bool GivesWave { get; private set; } // a wave box (WaveBoxSpot): always the Carcavelos Wave
 
         // Called once by ItemSystem right after AddComponent.
-        public void SetUp(ItemSystem owner, Material material, float boxSize, float phase, bool givesWave = false)
+        // look / ground (task V34, both optional): Role 3's box body (unit size, hangs in the spinning cube instead of
+        // the plain cube) and the light on the road (groundDrop metres below the box, does not spin or bob).
+        public void SetUp(ItemSystem owner, Material material, float boxSize, float phase, bool givesWave = false,
+            GameObject look = null, GameObject ground = null, float groundDrop = 0f)
         {
             system = owner;
             GivesWave = givesWave;
@@ -45,6 +48,19 @@ namespace CarcavelosCircuit.RaceFlow
 
             cube = MakeCube("Cube", transform, material, boxSize);
             cube.localRotation = Quaternion.Euler(25f, 0f, 35f); // tilted, so it shows three faces while it spins
+            if (look != null)
+            {
+                MeshRenderer lookRenderer = AddLook(look, cube).GetComponentInChildren<MeshRenderer>();
+                cube.GetComponent<MeshRenderer>().enabled = false; // the look draws the box now
+                if (lookRenderer != null)
+                {
+                    material = lookRenderer.sharedMaterial; // the shards show the same glaze
+                }
+            }
+            if (ground != null)
+            {
+                AddLook(ground, transform).transform.localPosition = Vector3.down * groundDrop;
+            }
 
             shards = new Transform[ShardCount];
             shardVelocity = new Vector3[ShardCount];
@@ -55,6 +71,21 @@ namespace CarcavelosCircuit.RaceFlow
                 shards[i] = MakeCube("Shard", transform, material, boxSize * 0.3f);
                 shards[i].gameObject.SetActive(false);
             }
+        }
+
+        // A copy of a look prefab under parent, on the Ignore Raycast layer like the rest of the box, without colliders.
+        public static GameObject AddLook(GameObject prefab, Transform parent)
+        {
+            GameObject copy = Instantiate(prefab, parent, false);
+            foreach (Transform t in copy.GetComponentsInChildren<Transform>(true))
+            {
+                t.gameObject.layer = 2;
+            }
+            foreach (Collider c in copy.GetComponentsInChildren<Collider>(true))
+            {
+                Destroy(c);
+            }
+            return copy;
         }
 
         // A primitive cube without its collider (the root's trigger is the only collider of a box).

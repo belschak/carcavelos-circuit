@@ -101,6 +101,24 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("Visuals/Items/Icons/DeansList.png")]
         private Texture2D deansListIcon;
 
+        [Header("Looks (Role 3's prefabs, task V34; empty = the look made in code here)")]
+        [SerializeField, Tooltip("Visuals/Items/Prefabs/ItemBoxLook.prefab: the box body, unit size (Role4SceneBuilder fills these)")]
+        private GameObject boxLook;
+        [SerializeField, Tooltip("Visuals/Items/Prefabs/ItemBoxLook_Wave.prefab: the same for wave boxes")]
+        private GameObject waveBoxLook;
+        [SerializeField, Tooltip("Visuals/Items/Prefabs/ItemBoxGround.prefab: the light on the road under each box")]
+        private GameObject boxGroundLook;
+        [SerializeField, Tooltip("Visuals/Items/Prefabs/SeagullRingLook.prefab: Luc's lifebuoy, radius 1, standing in XY")]
+        private GameObject ringLook;
+        [SerializeField, Tooltip("Off = no gold coin ring for Dean's List (Role 3's ItemFx draws a laurel wreath instead)")]
+        private bool coinHalo = true;
+
+        public GameObject BoxLook { get { return boxLook; } }
+        public GameObject WaveBoxLook { get { return waveBoxLook; } }
+        public GameObject BoxGroundLook { get { return boxGroundLook; } }
+        public GameObject RingLook { get { return ringLook; } }
+        public bool CoinHalo { get { return coinHalo; } }
+
         public int RowEveryCheckpoints { get { return rowEveryCheckpoints; } }
         public float RowAheadMetres { get { return rowAheadMetres; } }
         public int BoxesPerRow { get { return boxesPerRow; } }
