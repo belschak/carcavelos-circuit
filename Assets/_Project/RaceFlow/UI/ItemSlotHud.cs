@@ -10,7 +10,7 @@ namespace CarcavelosCircuit.RaceFlow
     // badge (only for an item with more than one use; none has that right now) and an "E" key cap. While the slot
     // rolls the icons spin; when the item is ready the tile pops and flashes sand; while you hold an item
     // it breathes gently. On use the item's name pops under the slot ("ESPRESSO!", "CARCAVELOS WAVE!" ...).
-    // Extras: the Wave sends a blue wave across the screen; the Seagull's rings count up ("RING 2/3", "PERFECT
+    // Extras: the Wave makes the screen edges glow turquoise (V34); the Seagull's rings count up ("RING 2/3", "PERFECT
     // DELIVERY!"); while the Dean's List shield is on the screen edge glows gold, and a bump shows "BLOCKED!".
     // Like RaceHud everything animates on real time (Time.unscaledTime), so the finish slow motion never slows it.
     [RequireComponent(typeof(UIDocument))]
@@ -19,7 +19,7 @@ namespace CarcavelosCircuit.RaceFlow
         private const float SlotSize = 112f;
         private const float PopSeconds = 0.35f;
         private const float CalloutSeconds = 0.9f;
-        private const float WaveSeconds = 0.6f;
+        private const float WaveSeconds = 1.1f;
         private static readonly Color Gold = new Color(1f, 0.78f, 0.2f, 1f); // the Dean's List coins (ItemSystem)
 
         [SerializeField]
@@ -212,7 +212,7 @@ namespace CarcavelosCircuit.RaceFlow
             callout.style.opacity = p < 0.7f ? 1f : 1f - (p - 0.7f) / 0.3f;
         }
 
-        // The Carcavelos Wave: a blue band rises from the bottom of the screen and fades out over the top.
+        // The Carcavelos Wave: the turquoise edge glow swells in and fades out (no movement, nothing over the road).
         private void UpdateWave(float now)
         {
             float since = now - waveAt;
@@ -222,8 +222,7 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
             float p = since / WaveSeconds;
-            wave.style.translate = new Translate(0f, Length.Percent(100f - 200f * p));
-            wave.style.opacity = 0.55f * Mathf.Sin(p * Mathf.PI);
+            wave.style.opacity = 0.9f * Mathf.Sin(p * Mathf.PI) * (1f - 0.4f * p);
         }
 
         // ---------- building the tree (once) ----------
@@ -243,7 +242,9 @@ namespace CarcavelosCircuit.RaceFlow
             root.style.overflow = Overflow.Hidden;
             documentRoot.Add(root);
 
-            // Carcavelos Wave screen wave (behind the slot): full width, starts below the screen.
+            // Carcavelos Wave screen cue (task V34): a soft turquoise glow round the screen edges, three frames inside
+            // each other that get fainter towards the middle. The wave itself is now drawn round the kart (Role 3's
+            // ItemFx), so the screen only hints at it and never covers the road.
             wave = new VisualElement();
             wave.name = "item-wave";
             wave.pickingMode = PickingMode.Ignore;
@@ -252,12 +253,26 @@ namespace CarcavelosCircuit.RaceFlow
             wave.style.right = 0f;
             wave.style.top = 0f;
             wave.style.bottom = 0f;
-            wave.style.backgroundColor = HudColors.WithAlpha(HudColors.Blue, 1f);
-            wave.style.borderTopLeftRadius = new Length(50f, LengthUnit.Percent);
-            wave.style.borderTopRightRadius = new Length(50f, LengthUnit.Percent);
-            wave.style.borderTopWidth = 14f;
-            wave.style.borderTopColor = HudColors.White;
             wave.style.opacity = 0f;
+            VisualElement frame = wave;
+            float[] alphas = { 0.55f, 0.3f, 0.12f };
+            for (int i = 0; i < alphas.Length; i++)
+            {
+                VisualElement inner = new VisualElement();
+                inner.pickingMode = PickingMode.Ignore;
+                inner.style.flexGrow = 1f;
+                Color edge = HudColors.WithAlpha(new Color(0.08f, 0.80f, 0.86f, 1f), alphas[i]); // Luc's wave turquoise
+                inner.style.borderLeftWidth = 22f;
+                inner.style.borderRightWidth = 22f;
+                inner.style.borderBottomWidth = 26f;
+                inner.style.borderTopWidth = 12f;
+                inner.style.borderLeftColor = edge;
+                inner.style.borderRightColor = edge;
+                inner.style.borderBottomColor = edge;
+                inner.style.borderTopColor = edge;
+                frame.Add(inner);
+                frame = inner;
+            }
             root.Add(wave);
 
             // Dean's List shield frame: a gold border round the whole screen, see-through in the middle.
