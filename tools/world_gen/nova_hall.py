@@ -44,7 +44,10 @@ NW_CORNER, NE_CORNER = (3.0, 160.0), (67.0, 184.0)
 # ---------- sizes (m) ----------
 SPLIT_U = 68.0               # line between the atrium block and the long room (through (28, 97) and (55, 107))
 LONG_END_U = 209.8           # the long room runs through the whole wing to its south facade (map: wing ends at u 210)
-ATRIUM_H = 12.5              # clear height under the atrium roof
+# V36 (Gaussian splat of IMG_7722 0-80 s, scaled by the phone's 1.45 m height, +-7 %): the real roof edge of the west
+# entrance front tops out at 9.8 m and the atrium's roof trusses at 10.1-11.1 m over the floor; 12.5 put the trusses at
+# 10.9-12.35 m and the roof at 13.3 m, 3.5 m over the real front. Was 12.5. (docs: tools/world_gen/splat_reference.md)
+ATRIUM_H = 10.8              # clear height under the atrium roof
 LONG_H = 11.0                # clear height of the long room
 LOW_CEILING_END = 80.0       # first part of the long room has a flat ceiling at LOW_Z
 LOW_Z = 4.6
