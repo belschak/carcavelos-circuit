@@ -1,0 +1,52 @@
+{
+  "_what": "Task V32, the far kart. materials: colour palette of the far kart body; cell i of a grid x grid palette holds the look of material i. make_kart_lod.py (Blender) points every face of the far body at its cell; NovaKartVisualBuilder (Unity) paints the cells from the real kart materials, so colours always match. NK_Paint_Body is not in the palette: it stays its own material, so BotKartPaint can still recolour the far kart. tyre_bake: the far tyre is baked; every full-tyre material glows in its ID colour in the ID map, and Unity swaps each ID colour for that material's real colour and metal values.",
+  "grid": 4,
+  "paint": "NK_Paint_Body",
+  "materials": [
+    "NK_Trim_Black",
+    "NK_Chassis_Dark",
+    "NK_Accent_Silver",
+    "NK_Metal",
+    "NK_Number_Plate",
+    "NK_Number_Ink",
+    "NK_Number_Red",
+    "NK_Glow",
+    "NK_Steel",
+    "NK_Steel_Bright"
+  ],
+  "tyre_bake": {
+    "size": 512,
+    "ids": [
+      {
+        "name": "NT_Tyre",
+        "r": 1,
+        "g": 0,
+        "b": 0
+      },
+      {
+        "name": "NT_Slick_Rim",
+        "r": 0,
+        "g": 1,
+        "b": 0
+      },
+      {
+        "name": "NT_Slick_Hub",
+        "r": 0,
+        "g": 0,
+        "b": 1
+      },
+      {
+        "name": "NT_Slick_Letter",
+        "r": 1,
+        "g": 1,
+        "b": 0
+      },
+      {
+        "name": "NT_Slick_Wall",
+        "r": 0,
+        "g": 1,
+        "b": 1
+      }
+    ]
+  }
+}
