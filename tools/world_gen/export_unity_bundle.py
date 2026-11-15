@@ -214,9 +214,11 @@ def unity_track():
     # pin_checkpoints.py rewrites it after the hall steps)
     widths = pin_checkpoints.widths_for(pts, cps)
     return {"note": "Unity axes; y = road surface height. checkpoints[0] = start/finish line. Indices into points. "
-                    "checkpoint_widths = trigger width across the road (m), one per checkpoint.",
+                    "checkpoint_widths = trigger width across the road (m), one per checkpoint. "
+                    "checkpoint_shifts = trigger centre moved right of the route point (m, V33).",
             "length_m": route["length_m"], "jump_index": jump, "start_index": start, "spawn_index": spawn,
-            "checkpoints": cps, "checkpoint_widths": widths, "points": [u(p) for p in pts]}
+            "checkpoints": cps, "checkpoint_widths": widths,
+            "checkpoint_shifts": pin_checkpoints.load_shifts() or [0.0] * len(cps), "points": [u(p) for p in pts]}
 
 
 # V20b (package B, plaza jump): extra boost pads that are not on the race line, e.g. the jump pad on the plaza shortcut's

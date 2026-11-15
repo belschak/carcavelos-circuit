@@ -30,6 +30,13 @@ def load_widths():
     return [a.get("width") for a in json.load(open(ANCHORS))["checkpoints"]]
 
 
+def load_shifts():
+    """V33: sideways shift of each trigger's centre (m, + = right of the driving direction; 0 where none)."""
+    if not os.path.exists(ANCHORS):
+        return None
+    return [round(float(a.get("shift", 0.0)), 2) for a in json.load(open(ANCHORS))["checkpoints"]]
+
+
 def widths_for(points, cps, road_width_key="width"):
     """checkpoint_widths for the pinned indices: the anchor's width, else the road width there + 4 m."""
     ws = load_widths() or [None] * len(cps)
@@ -61,10 +68,12 @@ def main():
     cps, dist = pin(track["points"], anchors, track.get("start_index", 0))
     track["checkpoints"] = cps
     track["checkpoint_widths"] = widths_for(track["points"], cps)
+    track["checkpoint_shifts"] = load_shifts()
     json.dump(track, open(path, "w"), indent=0)
     print("checkpoints", cps, "max distance to anchor %.2f m" % max(dist),
           " ".join(f"{d:.1f}" for d in dist))
     print("checkpoint_widths", track["checkpoint_widths"])
+    print("checkpoint_shifts", track["checkpoint_shifts"])
 
 
 if __name__ == "__main__":

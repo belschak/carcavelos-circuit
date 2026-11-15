@@ -12,8 +12,8 @@ the route if the start loop ever moves. Generator metres: x east, y north (track
                  RaceSettings.asset (gridSidewaysMetres, gridRowMetres), so the paint moves with the numbers Role 4
                  sets there. slot_offset() is RacerGrid.OffsetOf() in Python: KEEP THE TWO IN SYNC.
   barriers()     centre lines of the Nova Kart walls package V21b builds in Unity (WhiteGuardrailBuilder reads
-                 track.json "barriers"): the median between the westbound leg and the home straight, and the
-                 outside of the U-turn.
+                 track.json "barriers"): the median between the westbound leg and the home straight, the
+                 outside of the U-turn, and (V33) the inside of the race road through the roundabout.
 """
 import json
 import math
@@ -225,11 +225,33 @@ def uturn_outside(route=None):
     return out
 
 
+# V33 (Luc, 15 Nov: "make it clearer in the roundabout that you have to take the first exit right"): a Nova Kart
+# wall along the inside (left) of the race road through the roundabout, from the north arm's zebra to the west arm's
+# (street_plan.RB_NO_LINES, the same route points that carry no race edge lines). Turning left round the island, or
+# on into the other arms, runs into the wall; only the first exit to the right stays open.
+ROUNDABOUT_POINTS = (164, 187)          # generator route.json indices (street_plan.RB_NO_LINES)
+ROUNDABOUT_GAP = 1.0                    # m from the road's left edge to the wall's centre line, like UTURN_GAP
+
+
+def roundabout_inside(route=None):
+    """The wall along the left of the race road through the roundabout. [(x, y), ...] in driving order."""
+    route = route or _route()
+    pts, n = route["points"], len(route["points"])
+    out = []
+    for i in range(ROUNDABOUT_POINTS[0], ROUNDABOUT_POINTS[1] + 1):
+        p = pts[i % n]
+        rx, ry = right_of(pts, i)
+        off = p.get("width", 8.0) / 2 + ROUNDABOUT_GAP
+        out.append((p["x"] - rx * off, p["y"] - ry * off))      # minus right = left of the driving direction
+    return out
+
+
 def barriers(route=None):
     """[{name, points [(x, y), ...]}] in generator metres; heights come from the built world (env_route_signs)."""
     route = route or _route()
     return [{"name": "start_median", "points": median(route)},
-            {"name": "uturn_outside", "points": uturn_outside(route)}]
+            {"name": "uturn_outside", "points": uturn_outside(route)},
+            {"name": "roundabout_inside", "points": roundabout_inside(route)}]
 
 
 if __name__ == "__main__":
