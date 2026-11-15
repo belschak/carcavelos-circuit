@@ -27,6 +27,28 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void Banners_WideCheckpoint_StandAtItsRealEdge()
+        {
+            // V33: a 44 m checkpoint on an 8 m path shows its width: the pole stands 0.3 m inside the trigger edge
+            Assert.AreEqual(21.7f, CheckpointGatePlan.PostOffsetForTrigger(8f, 22f), 0.0001f);
+        }
+
+        [Test]
+        public void Banners_ShiftedCheckpoint_EachSideOnItsOwn()
+        {
+            // V33 U-turn: 24.74 m shifted 6.37 m left = 18.74 m to the left, 6.0 m to the right
+            Assert.AreEqual(18.44f, CheckpointGatePlan.PostOffsetForTrigger(8f, 24.74f / 2f + 6.37f), 0.001f);
+            Assert.AreEqual(5.7f, CheckpointGatePlan.PostOffsetForTrigger(8f, 24.74f / 2f - 6.37f), 0.001f);
+        }
+
+        [Test]
+        public void Banners_TriggerNarrowerThanTheRoad_StillOutsideTheRoad()
+        {
+            // rejected: a trigger edge inside the road never pulls a pole onto the road
+            Assert.AreEqual(CheckpointGatePlan.PostOffset(8f), CheckpointGatePlan.PostOffsetForTrigger(8f, 2f), 0.0001f);
+        }
+
+        [Test]
         public void TopEdge_StartsAtThePoleTop_AndFallsOutwards()
         {
             Assert.AreEqual(0f, CheckpointGatePlan.TopEdge(0f), 0.0001f);

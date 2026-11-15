@@ -69,6 +69,7 @@ namespace CarcavelosCircuit.Visuals
         private readonly List<ParticleSystem> ignitions = new List<ParticleSystem>();
         private Vector3 lastPosition;
         private bool isSetUp;
+        private ItemFx itemFx; // V34: the item effects on the same object (no fire on the wave, hotter on the Espresso)
 
         private void Start()
         {
@@ -116,6 +117,7 @@ namespace CarcavelosCircuit.Visuals
                     AddExhaust(transform, exhausts[i], Quaternion.LookRotation(Vector3.back, Vector3.up));
                 }
             }
+            itemFx = GetComponent<ItemFx>();
             lastPosition = transform.position;
             isSetUp = true;
         }
@@ -168,19 +170,23 @@ namespace CarcavelosCircuit.Visuals
         }
 
         // Flames while boosting, in the colour of the drift that gave the boost; sparks when a boost starts.
+        // V34: the Carcavelos Wave is water, so no fire while the kart rides it; the Espresso kick burns 1.6 x hotter.
         private void ShowBoost()
         {
             bool blue = rules.FlameStage == 1;
             Color outer = blue ? blueFlame : orangeFlame;
             Color core = blue ? blueFlameCore : orangeFlameCore;
+            bool onWave = itemFx != null && itemFx.WaveRiding;
+            float heat = KartEffectsRules.FlameHeat(itemFx != null && itemFx.EspressoKick);
+            bool showFlame = rules.ShowFlame && !onWave;
 
             for (int i = 0; i < flames.Count; i++)
             {
-                SetRate(flames[i], rules.ShowFlame ? flamePerSecond : 0f);
+                SetRate(flames[i], showFlame ? flamePerSecond * heat : 0f);
                 SetColours(flames[i], outer, Color.Lerp(outer, core, 0.3f));
-                SetRate(flameCores[i], rules.ShowFlame ? flamePerSecond * 0.6f : 0f);
+                SetRate(flameCores[i], showFlame ? flamePerSecond * 0.6f * heat : 0f);
                 SetColours(flameCores[i], core, Color.white);
-                if (rules.Ignition)
+                if (rules.Ignition && !onWave)
                 {
                     SetColours(ignitions[i], core, outer);
                     ignitions[i].Emit(ignitionSparks);

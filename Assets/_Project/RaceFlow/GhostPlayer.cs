@@ -229,7 +229,10 @@ namespace CarcavelosCircuit.RaceFlow
             for (int i = 0; i < filters.Length; i++)
             {
                 MeshRenderer meshRenderer = filters[i].GetComponent<MeshRenderer>();
-                if (meshRenderer != null && meshRenderer.enabled && filters[i].sharedMesh != null)
+                // "_Far" parts are Role 3's light copy for distant karts (V32, LODGroup): the ghost uses the full kart
+                // only, otherwise both copies would show on top of each other
+                bool farCopy = filters[i].name.EndsWith("_Far", System.StringComparison.Ordinal);
+                if (meshRenderer != null && meshRenderer.enabled && filters[i].sharedMesh != null && !farCopy)
                 {
                     AddPart(filters[i].sharedMesh, filters[i].transform, kart);
                     parts++;

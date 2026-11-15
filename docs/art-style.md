@@ -21,6 +21,8 @@ Use these hex values as the URP Lit **Base Color** (sRGB). Lighter or darker ste
 | 5 | Atlantic Blue | `#2D8CD6` | Sea, sky tint, **drift stage 1 sparks**, wrong-way and info signs |
 | 6 | Boost Orange | `#FF8A1F` | **Drift stage 2 sparks, boost flame**, route arrows, checkpoint gates, kerb stripes (with Kart White) |
 
+Item colours (task V34, only on items and their effects, never in the scenery): **Wave Turquoise** `#14CCDB` (Carcavelos Wave, wave boxes), **Dean's Gold** `#FFC226` (Dean's List), **Crema** `#DB8C38` (Espresso), **Azulejo Cobalt** `#143D9E` with Atlantic Blue and an **Ochre** `#E3A838` heart (item boxes), lifebuoy red `#DB1F1A` with Kart White (Seagull rings).
+
 Why these: white and black are already the kart, so it reads cleanly against any background. Blue and orange are the two "signal" colours and match `IKartState.DriftStage` (1 = blue sparks, 2 = orange sparks, `docs/interfaces.md`). Keep them rare in the scenery so a blue or orange flash always means "your drift is charging". Sand and blue come from the beach and the sea at Carcavelos.
 
 Chrome and metal parts are not a separate colour. They use Kart White or Gloss Black with Metallic up and Smoothness high.
