@@ -32,6 +32,7 @@ namespace CarcavelosCircuit.Visuals
         private RaceManager race;
         private bool listening;
         private bool notOurs;      // the race is set up and its kart is another one: stay quiet for good
+        private int warmFrames;    // > 0: still drawing every item material once in front of the camera
         private Vector3 lastPosition;
         private float speed;
 
@@ -131,6 +132,11 @@ namespace CarcavelosCircuit.Visuals
             {
                 return;
             }
+            if (warmFrames > 0)
+            {
+                warmFrames--;
+                WarmUp(Camera.main);
+            }
             Tick(Time.deltaTime, items.ShieldActive, items.ShieldSecondsLeft);
         }
 
@@ -172,6 +178,7 @@ namespace CarcavelosCircuit.Visuals
             race.Restarted += ClearAll;
             race.Recovered += ClearMoving;
             listening = true;
+            warmFrames = 3; // on the start screen, long before the first item
         }
 
         private void StopListening()
@@ -192,6 +199,64 @@ namespace CarcavelosCircuit.Visuals
                 race.Recovered -= ClearMoving;
             }
             listening = false;
+        }
+
+        // A Web build compiles each shader the first time it is drawn: 100-300 ms hitches on each item's first use
+        // (measured 2026-11-15). So, still on the start screen, every item material is drawn once, tiny, just in front
+        // of the camera: the meshes with Graphics.DrawMesh (no object is switched on), the particle systems with one
+        // invisible particle each. Nobody can see a 1 mm object.
+        public void WarmUp(Camera camera)
+        {
+            if (camera == null || wave == null)
+            {
+                return;
+            }
+            Vector3 spot = camera.transform.position + camera.transform.forward * (camera.nearClipPlane + 0.6f);
+            Matrix4x4 tiny = Matrix4x4.TRS(spot, Quaternion.identity, Vector3.one * 0.001f);
+            Transform[] roots = { transform, seagull.Root };
+            for (int k = 0; k < roots.Length; k++)
+            {
+                foreach (MeshFilter filter in roots[k].GetComponentsInChildren<MeshFilter>(true))
+                {
+                    MeshRenderer renderer = filter.GetComponent<MeshRenderer>();
+                    if (renderer == null || filter.sharedMesh == null)
+                    {
+                        continue;
+                    }
+                    Material[] materials = renderer.sharedMaterials;
+                    for (int m = 0; m < materials.Length && m < filter.sharedMesh.subMeshCount; m++)
+                    {
+                        if (materials[m] != null) Graphics.DrawMesh(filter.sharedMesh, tiny, materials[m], 0, camera, m);
+                    }
+                }
+                foreach (ParticleSystem system in roots[k].GetComponentsInChildren<ParticleSystem>(true))
+                {
+                    ParticleSystem.EmitParams p = new ParticleSystem.EmitParams { startSize = 0.001f, startLifetime = 0.05f };
+                    bool world = system.main.simulationSpace == ParticleSystemSimulationSpace.World;
+                    p.position = world ? spot : system.transform.InverseTransformPoint(spot);
+                    p.velocity = Vector3.zero;
+                    p.applyShapeToPosition = false;
+                    system.Emit(p, 1);
+                }
+            }
+            if (look.Trail != null)
+            {
+                Graphics.DrawMesh(Quad(), tiny, look.Trail, 0, camera); // the crema trails' material
+            }
+        }
+
+        private static Mesh warmQuad;
+
+        private static Mesh Quad()
+        {
+            if (warmQuad == null)
+            {
+                warmQuad = new Mesh { name = "ItemFxWarmQuad" };
+                warmQuad.vertices = new[] { new Vector3(-1f, -1f, 0f), new Vector3(-1f, 1f, 0f), new Vector3(1f, 1f, 0f), new Vector3(1f, -1f, 0f) };
+                warmQuad.uv = new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right };
+                warmQuad.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+            }
+            return warmQuad;
         }
 
         private Transform KartRoot()
