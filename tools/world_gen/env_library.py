@@ -31,7 +31,9 @@ BAY = 5.5
 PIER_W = 0.9
 INSET = 0.4                 # the ground-floor glazing stands this far behind the wall plane
 Z0 = P.DECK_Z - 0.05        # everything starts just under the deck
-ZG = P.FLOOR1 + 3.6         # top of the ground floor (underside of the upper wall)
+# V36b (same splat, IMG_7725 150-226 s): the head of the ground-floor glazing runs at 2.8 m over the plaza along about
+# 45 m of the west front; 3.0 keeps the plaza's 6 cm lift and a little air over the glass head. Was 3.6.
+ZG = P.FLOOR1 + 3.0         # top of the ground floor (underside of the upper wall)
 ZT = P.LIB_TOP              # roof of the south wing
 ZN = P.LIB_NORTH_TOP        # roof of the north block and the bridge (V16: 8.6 m over the plaza, V10i: 7.4)
 ZS = P.DECK_Z + P.PASSAGE_CLEAR      # soffit of the bridge
