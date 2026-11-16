@@ -86,6 +86,7 @@ namespace CarcavelosCircuit.RaceFlow
             if (chaseCamera != null)
             {
                 chaseCamera.SetTarget(kartObject.transform);
+                chaseCamera.FollowRace(raceManager); // the finish cinematic's camera swing (race modes, 16 Nov 2026)
                 raceManager.Restarted += chaseCamera.SnapBehindTarget;
                 raceManager.Recovered += chaseCamera.SnapBehindTarget; // R or a fall teleports the kart: cut, do not swoop
             }

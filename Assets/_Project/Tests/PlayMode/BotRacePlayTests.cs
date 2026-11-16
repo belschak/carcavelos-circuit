@@ -22,6 +22,9 @@ namespace CarcavelosCircuit.Tests.PlayMode
         private RaceManager race;
         private RaceRoster roster;
         private BotSquad squad;
+        private const string ModeKey = "CarcavelosCircuit.RaceMode"; // RaceManager's saved mode
+        private bool hadMode;
+        private int savedMode;
         private readonly Dictionary<string, string> savedStrings = new Dictionary<string, string>();
         private int savedCoachFlags;
         private bool hadCoachFlags;
@@ -31,11 +34,19 @@ namespace CarcavelosCircuit.Tests.PlayMode
         {
             yield return SceneManager.LoadSceneAsync("Main", LoadSceneMode.Single);
             float waited = 0f;
-            while ((squad == null || !squad.HasSpawned || roster == null || !roster.IsSetUp) && waited < SetUpTimeoutSeconds)
+            hadMode = PlayerPrefs.HasKey(ModeKey);
+            savedMode = PlayerPrefs.GetInt(ModeKey, 0);
+            while ((squad == null || !squad.HasSpawned || squad.Bots.Count == 0 || roster == null || !roster.IsSetUp) && waited < SetUpTimeoutSeconds)
             {
                 race = Object.FindAnyObjectByType<RaceManager>();
                 roster = Object.FindAnyObjectByType<RaceRoster>();
                 squad = Object.FindAnyObjectByType<BotSquad>();
+                if (race != null && race.IsSetUp && race.Mode != RaceMode.RaceVsBots)
+                {
+                    // The last mode played is saved; these tests need the bots (the mode is put back in Restore).
+                    string refused;
+                    race.TrySelectMode(RaceMode.RaceVsBots, out refused);
+                }
                 waited += Time.unscaledDeltaTime;
                 yield return null;
             }
@@ -66,6 +77,8 @@ namespace CarcavelosCircuit.Tests.PlayMode
             }
             if (hadCoachFlags) PlayerPrefs.SetInt(CoachKey, savedCoachFlags);
             else PlayerPrefs.DeleteKey(CoachKey);
+            if (hadMode) PlayerPrefs.SetInt(ModeKey, savedMode);
+            else PlayerPrefs.DeleteKey(ModeKey);
             PlayerPrefs.Save();
             savedStrings.Clear();
             yield return null;

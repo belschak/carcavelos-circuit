@@ -58,14 +58,26 @@ namespace CarcavelosCircuit.RaceFlow
         // Set by the HUD from the settings: with reduced motion the finish has no slow motion (task P6b).
         public bool ReducedMotion { get; set; }
 
+        // ---- Race modes and the finish cinematic (Luc, 16 Nov 2026) ----
+        public RaceMode Mode { get; private set; } = RaceModeRules.Default; // picked on the start screen, saved
+        // Set by Role 3's BotSquad while its autopilot drives the player's kart after the line (the finish
+        // cinematic): then the kart keeps its input in Results. Cleared on Retry and on the way back to the menu.
+        public bool PlayerOnAutopilot { get; set; }
+        // Written every frame by RaceRoster; after the finish they hold the place the player finished in.
+        public int PlayerPlace { get; set; }
+        public int RacersInRace { get; set; }
+        // Time.unscaledTime when the kart crossed the line, -1 = not finished (camera shot and HUD cinematic).
+        public float FinishRealTime { get; private set; } = -1f;
+
         // ---- Events (sounds and effects listen, the HUD mostly reads the values above) ----
         public event Action<int> CountdownStep;          // 3, 2, 1, 0 = GO
         public event Action<int> CheckpointPassed;       // index of the checkpoint that counted
         public event Action<float, bool> LapFinished;    // lap time, new record?
-        public event Action Restarted;
+        public event Action Restarted;                   // a new attempt: Retry, or Results -> start screen (BackToMenu)
         public event Action Recovered;                   // kart put back after R or a fall (respawn sound)
         public event Action Paused;                      // the pause started (focus lost or P), audit 19 pause cue
         public event Action Resumed;                     // the pause ended and the race runs again
+        public event Action<RaceMode> ModeChanged;       // a new mode was picked on the start screen
 
         private readonly RaceTimer timer = new RaceTimer();
         private readonly RunStats runStats = new RunStats();
@@ -78,6 +90,7 @@ namespace CarcavelosCircuit.RaceFlow
         private int savedCoachFlags;
         private CoachHint waitingCoachHint;    // a tip that waits until the hint chip is free
         private const string CoachSaveKey = "CarcavelosCircuit.CoachDone"; // one key for all tracks: it is about the player
+        private const string ModeSaveKey = "CarcavelosCircuit.RaceMode";    // the last mode played, for the next visit
         private RaceStateMachine stateMachine;
         private RaceRules rules;   // Role 2's lap rules (T5)
         private TrackInfo track;   // Role 2's track contract (T4) on the track scene's root
@@ -146,6 +159,10 @@ namespace CarcavelosCircuit.RaceFlow
             // Coach tips already shown in an earlier session are not shown again.
             savedCoachFlags = PlayerPrefs.GetInt(CoachSaveKey, 0);
             coach = new OnboardingCoach(savedCoachFlags, settings.CoachNoDriftSeconds);
+
+            // The last mode played. A save we cannot read (or Online, which is not playable) starts as Race vs Bots.
+            RaceMode saved = RaceModeRules.FromSaved(PlayerPrefs.GetInt(ModeSaveKey, (int)RaceModeRules.Default));
+            Mode = RaceModeRules.IsPlayable(saved) ? saved : RaceModeRules.Default;
 
             stateMachine = new RaceStateMachine(settings.CountdownFrom);
             stateMachine.StateChanged += OnStateChanged;
@@ -369,7 +386,7 @@ namespace CarcavelosCircuit.RaceFlow
 
             // Every frame, not only when the state changes: if the kart switched its own input on (for example in
             // its Start), this switches it off again before it can drive in Ready, Countdown or Results.
-            kart.InputEnabled = stateMachine.InputAllowed;
+            kart.InputEnabled = InputAllowedNow();
 
             // Ready screen: wait for the first key or click (browsers only allow sound after that).
             // Not while the settings or credits use the keys and the mouse.
@@ -398,6 +415,12 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
 
+            if (State == RaceState.Results && !MenuUsesInput && RaceKeys.BackToMenuPressed())
+            {
+                BackToMenu();
+                return;
+            }
+
             if (State == RaceState.Racing)
             {
                 bool fellOff = fallCheck.HasFallen(kartTransform.position.y, Time.time);
@@ -412,7 +435,7 @@ namespace CarcavelosCircuit.RaceFlow
         // automated race test (Tests/PlayMode). Does nothing outside the start screen.
         public void BeginRace()
         {
-            if (IsSetUp && State == RaceState.Ready && !pause.IsPaused)
+            if (IsSetUp && State == RaceState.Ready && !pause.IsPaused && RaceModeRules.IsPlayable(Mode))
             {
                 stateMachine.BeginCountdown(settings.CountdownStepSeconds);
             }
@@ -428,9 +451,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             EndPause(); // only a safety net: a paused race cannot normally be retried
             StopSlowMotion(); // Enter during the finish slow motion: the new attempt runs at full speed at once
-            PutKartOnStartGrid(); // ResetTo also clears drift and boost (temporary effects)
-            rules.Reset();
-            timer.Reset();
+            ClearRunForNewStart();
             LastLapWasRecord = false;
             HasSplitDelta = false;
             HintText = "";
@@ -439,6 +460,69 @@ namespace CarcavelosCircuit.RaceFlow
             runStats.Reset();
             stateMachine.BeginCountdown(settings.RetryCountdownStepSeconds);
             if (Restarted != null) Restarted();
+        }
+
+        // Kart on the grid, rules and timer cleared, finish cinematic over. Shared by Retry and BackToMenu.
+        private void ClearRunForNewStart()
+        {
+            PlayerOnAutopilot = false;
+            FinishRealTime = -1f;
+            PutKartOnStartGrid(); // ResetTo also clears drift and boost (temporary effects)
+            rules.Reset();
+            timer.Reset();
+        }
+
+        // Picks the mode for the next race. Only on the start screen, and only a playable mode: Online gives back
+        // the "coming soon" message for the HUD and changes nothing. Saved, so the next visit starts in it.
+        public bool TrySelectMode(RaceMode mode, out string message)
+        {
+            message = "";
+            if (!IsSetUp || State != RaceState.Ready)
+            {
+                return false;
+            }
+            if (!RaceModeRules.IsPlayable(mode))
+            {
+                message = RaceModeRules.ComingSoonMessage;
+                return false;
+            }
+            if (mode != Mode)
+            {
+                Mode = mode;
+                PlayerPrefs.SetInt(ModeSaveKey, (int)mode);
+                PlayerPrefs.Save();
+                if (ModeChanged != null) ModeChanged(mode);
+            }
+            return true;
+        }
+
+        // Results -> start screen, so the player can pick another mode. Public for the HUD's MENU button.
+        public void BackToMenu()
+        {
+            if (!IsSetUp || State != RaceState.Results)
+            {
+                return;
+            }
+            EndPause();
+            StopSlowMotion();
+            ClearRunForNewStart();
+            LastLapWasRecord = false;
+            HasSplitDelta = false;
+            HintText = "";
+            HintVisibleUntil = 0f;
+            waitingCoachHint = CoachHint.None;
+            runStats.Reset();
+            stateMachine.BackToReady();
+            kart.InputEnabled = false;
+            // Everyone who resets on Retry (grid, items, ghost, leaderboard form, camera, finish autopilot) resets
+            // here too; the state is Ready, so no countdown starts.
+            if (Restarted != null) Restarted();
+        }
+
+        // The player's kart drives while racing, and after the line only while the finish autopilot steers it.
+        private bool InputAllowedNow()
+        {
+            return stateMachine.InputAllowed || (State == RaceState.Results && PlayerOnAutopilot);
         }
 
         // Back to the last checkpoint that counted. The timer keeps running and no checkpoint is awarded.
@@ -510,6 +594,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             // The finish slow motion (task P6b) starts in the same physics step as the official time, which is
             // already taken, so slowing the game can never change the lap time.
+            FinishRealTime = Time.unscaledTime;
             if (!ReducedMotion)
             {
                 slowMotionStart = Time.unscaledTime;
@@ -560,7 +645,7 @@ namespace CarcavelosCircuit.RaceFlow
         // The kart may only drive while racing (rule from docs/interfaces.md).
         private void OnStateChanged(RaceState newState)
         {
-            kart.InputEnabled = stateMachine.InputAllowed;
+            kart.InputEnabled = InputAllowedNow();
             if (newState == RaceState.Racing)
             {
                 rules.StartLap();

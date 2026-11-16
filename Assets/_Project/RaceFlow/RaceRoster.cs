@@ -12,7 +12,8 @@ namespace CarcavelosCircuit.RaceFlow
     //   player LAST; alone = time trial = slot 0, front row left), at set-up, at the race start and on every Retry,
     //   and before the race (Ready) whenever a racer joins or leaves; a bot that registers during a race waits for
     //   the next start or Retry (no teleport mid-race),
-    // - switches every bot's input on only while Racing (exactly like the player's), off on pause and at the finish,
+    // - switches every bot's input on while Racing and after the player's finish (the bots race on behind the finish
+    //   cinematic), off on pause, on the grid and back on the start screen,
     // - keeps the live standings (RaceStandings) that the positions readout and the minimap show.
     // Bots never get the player's checkpoints, timer, medals or items: RaceManager.IsKartCollider only counts the player.
     // Optional dev test bots (RaceSettings > Dev Test Bots, 0 in the game) are spawned here too.
@@ -87,8 +88,9 @@ namespace CarcavelosCircuit.RaceFlow
             }
             lastState = state;
 
-            // Same rule as the player's kart: drive only while Racing, never while paused.
-            bool mayDrive = state == RaceState.Racing && !raceManager.IsPaused;
+            // Drive only while Racing, never while paused. After the player's finish the bots race on, so the
+            // finish cinematic (camera in front of the player) shows a living race, not karts frozen on the road.
+            bool mayDrive = (state == RaceState.Racing || state == RaceState.Results) && !raceManager.IsPaused;
             IReadOnlyList<IRacer> racers = RacerRegistry.All;
             for (int i = 0; i < racers.Count; i++)
             {
@@ -103,6 +105,9 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 standings.Update(racers, progress);
             }
+            // The finish cinematic shows this place in the middle of the screen (race modes, 16 Nov 2026).
+            raceManager.PlayerPlace = PlayerPosition;
+            raceManager.RacersInRace = RacerCount;
         }
 
         private void SetUp()

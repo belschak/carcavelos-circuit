@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using CarcavelosCircuit.RaceFlow;
+using CarcavelosCircuit.Shared;
 using UnityEngine;
 
 namespace CarcavelosCircuit.Visuals
@@ -10,6 +11,10 @@ namespace CarcavelosCircuit.Visuals
     // on it. The bots register as IRacer, and RaceRoster does the rest for them like for the player: grid slots
     // (bots in front, the player last), input only while Racing, back to the grid on Retry.
     // Every frame it also tells each bot how far it is ahead of the player, for the light rubber band.
+    // Race modes (Luc, 16 Nov 2026): bots only race in a mode that has them (RaceModeRules.HasBots): in Time Attack
+    // the squad leaves the grid on the start screen and comes back when Race vs Bots is picked again.
+    // Finish cinematic: after the player's line, FinishCruise drives the PLAYER's kart on by itself (a lap of honour
+    // for the camera in front of it) until Retry or the way back to the menu.
     public class BotSquad : MonoBehaviour
     {
         [SerializeField, Tooltip("RaceFlow's roster on this object: when it is set up, the track and the standings are known")]
@@ -25,10 +30,34 @@ namespace CarcavelosCircuit.Visuals
         private BotSettings settings;
 
         private readonly List<BotDriver> bots = new List<BotDriver>();
-        private bool spawned;
+        private bool spawned;           // set up once the track is there (bots or not, depending on the mode)
+        private bool spawnFailed;       // no prefab or no racing line: do not try again every frame
+        private bool keptOut;           // RemoveBots() was called (Play Mode tests): no respawn on the start screen
+        private BotTrackMap map;        // the racing line, shared by the bots and the finish cruise; null = none
+        private FinishCruise cruise;    // drives the player's kart after the line, null = the player drives
 
         public IReadOnlyList<BotDriver> Bots { get { return bots; } }
         public bool HasSpawned { get { return spawned; } }
+        public bool IsCruising { get { return cruise != null; } } // Play Mode test: the finish autopilot drives
+
+        private void OnEnable()
+        {
+            if (raceManager != null)
+            {
+                raceManager.LapFinished += OnPlayerFinished;
+                raceManager.Restarted += StopCruise;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (raceManager != null)
+            {
+                raceManager.LapFinished -= OnPlayerFinished;
+                raceManager.Restarted -= StopCruise;
+            }
+            StopCruise();
+        }
 
         private void Update()
         {
@@ -39,32 +68,62 @@ namespace CarcavelosCircuit.Visuals
                     return; // the track is still loading
                 }
                 spawned = true;
-                SpawnAll();
+                if (settings == null)
+                {
+                    settings = ScriptableObject.CreateInstance<BotSettings>(); // the defaults written in BotSettings.cs
+                }
+            }
+            FollowMode();
+            FeedRubberBand();
+            if (cruise != null)
+            {
+                cruise.Tick(Time.deltaTime);
+            }
+        }
+
+        // On the start screen the squad follows the picked mode: in or out of the race. Never during a race.
+        private void FollowMode()
+        {
+            if (raceManager.State != RaceState.Ready)
+            {
                 return;
             }
-            FeedRubberBand();
+            bool wanted = RaceModeRules.HasBots(raceManager.Mode) && !keptOut;
+            if (wanted && bots.Count == 0 && !spawnFailed)
+            {
+                SpawnAll();
+            }
+            else if (!wanted && bots.Count > 0)
+            {
+                DestroyBots(); // RaceRoster then moves the player to slot 0 (racing alone)
+            }
         }
 
         private void OnDestroy()
         {
-            RemoveBots();
+            DestroyBots();
+        }
+
+        // The racing line for the bots and the finish cruise, built once. Null if the track has none.
+        private BotTrackMap EnsureMap()
+        {
+            if (map == null && roster != null && roster.Progress != null)
+            {
+                BotTrackMap built = new BotTrackMap(roster.Progress);
+                if (built.IsValid)
+                {
+                    map = built;
+                }
+            }
+            return map;
         }
 
         private void SpawnAll()
         {
-            if (settings == null)
+            if (kartPrefab == null || EnsureMap() == null)
             {
-                settings = ScriptableObject.CreateInstance<BotSettings>(); // the defaults written in BotSettings.cs
-            }
-            if (kartPrefab == null || roster.Progress == null)
-            {
-                Debug.LogWarning("BotSquad: no kart prefab or no racing line (ITrackProgress), so no bots in this race.");
-                return;
-            }
-            BotTrackMap map = new BotTrackMap(roster.Progress);
-            if (!map.IsValid)
-            {
-                Debug.LogWarning("BotSquad: the racing line is too short for bots, so no bots in this race.");
+                spawnFailed = true;
+                Debug.LogWarning("BotSquad: no kart prefab or no usable racing line (ITrackProgress), so no bots in this race.");
                 return;
             }
             Transform spawn = raceManager.Track.SpawnPoint;
@@ -103,9 +162,53 @@ namespace CarcavelosCircuit.Visuals
             }
         }
 
-        // Takes every bot out of the race (tests, and a possible "race alone" option). RaceRoster then puts the
-        // player back on slot 0 before the next start.
+        // The player crossed the line: from now on FinishCruise drives the player's kart (RaceManager keeps its input
+        // on while PlayerOnAutopilot is set). Without a racing line the kart simply stops as before.
+        private void OnPlayerFinished(float lapSeconds, bool newRecord)
+        {
+            if (EnsureMap() == null || settings == null || raceManager.KartTransform == null)
+            {
+                return;
+            }
+            IKartDrivable drivable = raceManager.KartTransform.GetComponent<IKartDrivable>();
+            if (drivable == null)
+            {
+                return;
+            }
+            cruise = new FinishCruise(raceManager.KartTransform, raceManager.Kart, map, settings, FinishCruise.DefaultSpeedShare);
+            cruise.Begin();
+            drivable.InputSource = cruise;
+            raceManager.PlayerOnAutopilot = true;
+        }
+
+        // Retry, back to the menu, or this object goes away: the keyboard drives the player's kart again.
+        private void StopCruise()
+        {
+            if (cruise == null)
+            {
+                return;
+            }
+            cruise = null;
+            if (raceManager != null)
+            {
+                raceManager.PlayerOnAutopilot = false;
+                IKartDrivable drivable = raceManager.KartTransform != null ? raceManager.KartTransform.GetComponent<IKartDrivable>() : null;
+                if (drivable != null)
+                {
+                    drivable.InputSource = null;
+                }
+            }
+        }
+
+        // Takes every bot out of the race for good, whatever the mode (Play Mode tests that need an empty road).
+        // RaceRoster then puts the player back on slot 0 before the next start.
         public void RemoveBots()
+        {
+            keptOut = true;
+            DestroyBots();
+        }
+
+        private void DestroyBots()
         {
             for (int i = 0; i < bots.Count; i++)
             {

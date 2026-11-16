@@ -85,6 +85,18 @@ namespace CarcavelosCircuit.RaceFlow
             return true;
         }
 
+        // Results -> Ready: back to the start screen to pick another mode. Returns false from any other state
+        // (a countdown or a race is never thrown away by this key).
+        public bool BackToReady()
+        {
+            if (State != RaceState.Results)
+            {
+                return false;
+            }
+            SetState(RaceState.Ready);
+            return true;
+        }
+
         private void SetState(RaceState newState)
         {
             State = newState;
