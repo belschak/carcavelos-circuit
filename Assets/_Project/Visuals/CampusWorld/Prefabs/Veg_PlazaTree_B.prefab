@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5271126146668318798}
   - component: {fileID: 6950548444605547232}
+  - component: {fileID: 5208214698327769590}
   m_Layer: 0
   m_Name: Veg_PlazaTree_B
   m_TagString: Untagged
@@ -56,6 +57,25 @@ CapsuleCollider:
   m_Height: 6.6785965
   m_Direction: 1
   m_Center: {x: 0, y: 3.3392982, z: 0}
+--- !u!205 &5208214698327769590
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1796726338484446214}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0.049656868, y: 2.9856286, z: 0.074118376}
+  m_Size: 6.6785965
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 4617574639429239109}
+  m_Enabled: 1
 --- !u!1 &7343233899815417472
 GameObject:
   m_ObjectHideFlags: 0

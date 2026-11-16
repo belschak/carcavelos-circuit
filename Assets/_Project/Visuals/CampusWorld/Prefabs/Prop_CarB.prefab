@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3787923301198981369}
   - component: {fileID: 8596080732087689562}
+  - component: {fileID: 8929018886293731156}
   m_Layer: 0
   m_Name: Prop_CarB
   m_TagString: Untagged
@@ -54,6 +55,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 3.7908287, y: 1.4696321, z: 1.68044}
   m_Center: {x: 0.0006543994, y: 0.7347368, z: 0.0020269156}
+--- !u!205 &8929018886293731156
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6813841321222246482}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0.000654459, y: 0.7347368, z: 0.0020269156}
+  m_Size: 3.7908287
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 3959449387996629884}
+  m_Enabled: 1
 --- !u!1 &9170843331421960794
 GameObject:
   m_ObjectHideFlags: 0

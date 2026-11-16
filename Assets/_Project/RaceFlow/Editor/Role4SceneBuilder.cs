@@ -1,4 +1,5 @@
 using CarcavelosCircuit.Audio;
+using CarcavelosCircuit.Driving;
 using CarcavelosCircuit.Shared;
 using CarcavelosCircuit.Shared.Editor;
 using CarcavelosCircuit.Track;
@@ -25,6 +26,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         private const string Root = "Assets/_Project/";
         public const string SettingsPath = Root + "RaceFlow/Settings/RaceSettings.asset";
         private const string ItemSettingsPath = Root + "RaceFlow/Settings/ItemSettings.asset"; // item boxes (task R7)
+        private const string ItemIconFolder = Root + "Visuals/Items/Icons/"; // Luc's HUD icons (request Q16)
         public const string LeaderboardConfigPath = Root + "RaceFlow/Settings/LeaderboardConfig.asset"; // task R10, EMPTY in the repo
         private const string ThemePath = Root + "RaceFlow/UI/RaceHudTheme.tss";
         private const string PanelPath = Root + "RaceFlow/UI/RaceHudPanelSettings.asset";
@@ -38,6 +40,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         private const string TrackScenePath = Root + "RaceFlow/Scenes/RaceFlow_PlaceholderTrack.unity";
         private const string VolumeProfilePath = Root + "RaceFlow/Settings/RaceCameraVolume.asset";
         private const string DeansGhostPath = Root + "RaceFlow/Settings/DeansGhost.txt"; // shipped team ghost (DeansGhostExporter)
+        private const string NameTagFontPath = Root + "RaceFlow/UI/Fonts/BarlowCondensed/BarlowCondensed-ExtraBold.ttf"; // HUD font (R15)
+        private const string NameTagsRootName = "NameTags"; // Role 1's name tags (D9), request Q22
 
         [MenuItem("Carcavelos Circuit/Build Role 4 Scenes")]
         public static void BuildAll()
@@ -156,6 +160,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                     return new[] { typeof(Transform), typeof(ItemSystem), typeof(AudioSource), typeof(UIDocument), typeof(ItemSlotHud) };
                 case "Ambience":
                     return new[] { typeof(Transform), typeof(CarcavelosCircuit.Ambience.SeasideAmbience) }; // waves + surfers (R12)
+                case NameTagsRootName:
+                    return new[] { typeof(Transform), typeof(NameTagManager) }; // Role 1's name tags (D9, Q22)
                 default:
                     return null;
             }
@@ -235,7 +241,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             return settings;
         }
 
-        // Item box tuning (task R7). Kept if it exists, like RaceSettings.
+        // Item box tuning (task R7). Kept if it exists, like RaceSettings; only the four HUD icons are filled in.
         private static ItemSettings CreateItemSettings()
         {
             ItemSettings settings = AssetDatabase.LoadAssetAtPath<ItemSettings>(ItemSettingsPath);
@@ -244,8 +250,59 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 settings = ScriptableObject.CreateInstance<ItemSettings>();
                 AssetDatabase.CreateAsset(settings, ItemSettingsPath);
             }
+            SetItemIcons(settings);
+            SetItemLooks(settings);
             EditorUtility.SetDirty(settings);
             return settings;
+        }
+
+        // Luc's item icons (request Q16, Role 3): Visuals/Items/Icons/<ItemKind>.png. A missing PNG leaves its slot
+        // empty, and the HUD then draws that item's icon in code (UI/ItemIcon.cs), so a rebuild never breaks.
+        private static void SetItemIcons(ItemSettings settings)
+        {
+            SerializedObject so = new SerializedObject(settings);
+            so.FindProperty("espressoIcon").objectReferenceValue = ItemIconPicture("Espresso");
+            so.FindProperty("seagullDeliveryIcon").objectReferenceValue = ItemIconPicture("SeagullDelivery");
+            so.FindProperty("carcavelosWaveIcon").objectReferenceValue = ItemIconPicture("CarcavelosWave");
+            so.FindProperty("deansListIcon").objectReferenceValue = ItemIconPicture("DeansList");
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // Luc's item box, ground light and lifebuoy looks (task V34, Role 3's Visuals/Items/Prefabs/, made by
+        // Carcavelos Circuit > Visuals > Build Item FX). Missing = the looks made in code; with Role 3's item effects
+        // in place (ItemFxLook) the gold coin ring is switched off, because ItemFx draws a laurel wreath instead.
+        private static void SetItemLooks(ItemSettings settings)
+        {
+            SerializedObject so = new SerializedObject(settings);
+            so.FindProperty("boxLook").objectReferenceValue = ItemLook("ItemBoxLook");
+            so.FindProperty("waveBoxLook").objectReferenceValue = ItemLook("ItemBoxLook_Wave");
+            so.FindProperty("boxGroundLook").objectReferenceValue = ItemLook("ItemBoxGround");
+            so.FindProperty("ringLook").objectReferenceValue = ItemLook("SeagullRingLook");
+            bool itemFx = AssetDatabase.LoadMainAssetAtPath(Root + "Visuals/ItemFx/ItemFxLook.asset") != null;
+            so.FindProperty("coinHalo").boolValue = !itemFx;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static GameObject ItemLook(string prefabName)
+        {
+            string path = Root + "Visuals/Items/Prefabs/" + prefabName + ".prefab";
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab == null)
+            {
+                Debug.LogWarning("Role4SceneBuilder: " + path + " not found, that part keeps the look made in code.");
+            }
+            return prefab;
+        }
+
+        private static Texture2D ItemIconPicture(string itemName)
+        {
+            string path = ItemIconFolder + itemName + ".png";
+            Texture2D picture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (picture == null)
+            {
+                Debug.LogWarning("Role4SceneBuilder: item icon " + path + " not found, the HUD draws that icon in code.");
+            }
+            return picture;
         }
 
         // The item boxes' material. Emission is switched on in the asset, so the Web build keeps the emissive shader
@@ -805,8 +862,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             hudToGhost.ApplyModifiedPropertiesWithoutUndo();
 
             BuildItems(manager, panel);
-            Role4RacersBuilder.Build(manager, settings, panel); // every racer on the grid, positions + minimap (R8, R9)
+            Role4RacersBuilder.Build(manager, settings, panel, kartPrefab); // every racer on the grid, positions + minimap (R8, R9), bots (V10)
             CarcavelosCircuit.Ambience.Editor.AmbienceBuilder.AddToScene(); // waves + surfers on the beach (R12)
+            BuildNameTags(cam); // a name above every other racer's kart (Role 1's D9, request Q22)
 
             EditorSceneManager.SaveScene(scene, MainScenePath);
 
@@ -894,12 +952,33 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             SerializedObject sho = new SerializedObject(slotHud);
             sho.FindProperty("raceManager").objectReferenceValue = manager;
             sho.FindProperty("items").objectReferenceValue = itemSystem;
+            sho.FindProperty("settings").objectReferenceValue = itemSettings;
             sho.ApplyModifiedPropertiesWithoutUndo();
 
             if (itemSettings == null || boxMaterial == null)
             {
                 throw new System.Exception("Role4SceneBuilder: ItemSettings or the ItemBox material is missing.");
             }
+        }
+
+        // ---------- name tags (Role 1's task D9, request Q22) ----------
+
+        // The "NameTags" root object: Role 1's NameTagManager finds every racer through RacerRegistry by itself and
+        // floats a name above each kart except the player's. We only add it once, point it at the race camera and
+        // give it the HUD font, so the names look like the rest of the arcade UI. Role 1 tunes it in NameTagManager.
+        private static void BuildNameTags(Camera raceCamera)
+        {
+            Font font = AssetDatabase.LoadAssetAtPath<Font>(NameTagFontPath);
+            if (font == null)
+            {
+                throw new System.Exception("Role4SceneBuilder: " + NameTagFontPath + " is missing (HUD font, task R15).");
+            }
+            GameObject tagsObject = new GameObject(NameTagsRootName);
+            NameTagManager tags = tagsObject.AddComponent<NameTagManager>();
+            SerializedObject nso = new SerializedObject(tags);
+            nso.FindProperty("viewCamera").objectReferenceValue = raceCamera;
+            nso.FindProperty("tagFont").objectReferenceValue = font;
+            nso.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // ---------- ghost (stretch item, docs/decisions.md) ----------

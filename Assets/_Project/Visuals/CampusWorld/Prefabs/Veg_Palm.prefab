@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1785290221636233603}
   - component: {fileID: 8973861388977318659}
+  - component: {fileID: 8329930596598023166}
   m_Layer: 0
   m_Name: Veg_Palm
   m_TagString: Untagged
@@ -56,6 +57,25 @@ CapsuleCollider:
   m_Height: 9.7141285
   m_Direction: 1
   m_Center: {x: 0, y: 4.8570642, z: 0}
+--- !u!205 &8329930596598023166
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1378335681271388648}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: -0.09478855, y: 4.456855, z: 0.08242226}
+  m_Size: 9.7141285
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 5229735845658211166}
+  m_Enabled: 1
 --- !u!1 &7891289140608931499
 GameObject:
   m_ObjectHideFlags: 0

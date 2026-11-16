@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a89478107271428c8dda295445a6107, type: 3}
+  m_Name: Look_Noon
+  m_EditorClassIdentifier: CarcavelosCircuit.Visuals::CarcavelosCircuit.Visuals.TimeOfDayLook
+  mood: 0
+  sunAzimuth: 225
+  sunElevation: 42
+  sunColour: {r: 1, g: 0.95, b: 0.86, a: 1}
+  sunIntensity: 2.1
+  shadowStrength: 0.85
+  skyColour: {r: 0.6, g: 0.66, b: 0.76, a: 1}
+  horizonColour: {r: 0.64, g: 0.65, b: 0.66, a: 1}
+  groundColour: {r: 0.55, g: 0.45, b: 0.33, a: 1}
+  skybox: {fileID: 2100000, guid: ed3ff3ae1fd6e470288b63d111fb0ae3, type: 2}
+  reflection: {fileID: 8900000, guid: 791f5fc4090594dd7b1571da2a870b28, type: 3}
+  hazeColour: {r: 0.8, g: 0.86, b: 0.92, a: 1}
+  hazeDensity: 0.0008
+  profile: {fileID: 11400000, guid: 009703545258745fbacc696d56ff9329, type: 2}
+  bakedShadowKeep: 1

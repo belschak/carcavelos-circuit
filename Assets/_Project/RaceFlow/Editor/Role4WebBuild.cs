@@ -60,7 +60,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 FileUtil.DeleteFileOrDirectory(OutputFolder);
                 var options = new BuildPlayerOptions
                 {
-                    scenes = EditorBuildSettingsScene.GetActiveSceneList(EditorBuildSettings.scenes),
+                    scenes = WebScenes(),
                     locationPathName = OutputFolder,
                     target = BuildTarget.WebGL,
                     options = BuildOptions.None, // release build: no development player, no profiler
@@ -87,6 +87,28 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             }
         }
 
+        // V37: the scenes in the build list, minus the ones the race never loads on the Web. RaceBootstrap takes the first
+        // track scene that has a track (RaceSettings order: Track_Campus, Track_CampusWorld, Track_NovaCampus, ...), so
+        // with the campus world in the build Track_NovaCampus is never reached, yet all its meshes and textures were in
+        // the download. The editor and the build list keep it; only the Web player leaves it out.
+        public static readonly string[] WebSkipScenes = { "Assets/_Project/Track/Scenes/Track_NovaCampus.unity" };
+
+        public static string[] WebScenes()
+        {
+            string[] all = EditorBuildSettingsScene.GetActiveSceneList(EditorBuildSettings.scenes);
+            var kept = new System.Collections.Generic.List<string>();
+            bool hasWorld = System.Array.IndexOf(all, "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity") >= 0;
+            for (int i = 0; i < all.Length; i++)
+            {
+                if (hasWorld && System.Array.IndexOf(WebSkipScenes, all[i]) >= 0)
+                {
+                    continue; // never loaded while the campus world is in the build
+                }
+                kept.Add(all[i]);
+            }
+            return kept.ToArray();
+        }
+
         // One line per setting with the reason. These are the values decided in docs/decisions.md (P2).
         private static void ApplyWebSettings(bool gzipForItch)
         {
@@ -102,6 +124,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             // Mesh colliders are cooked at build time, not while the scene loads in the browser (single-threaded there;
             // the campus world has a mesh collider on every building).
             PlayerSettings.bakeCollisionMeshes = true;
+            // V37: drop the vertex data no shader in the build reads (e.g. tangents on materials without a normal map,
+            // a second UV set nobody samples). Unity decides per mesh from the materials it is drawn with.
+            PlayerSettings.stripUnusedMeshComponents = true;
             PlayerSettings.WebGL.wasm2023 = true; // native Wasm exceptions + SIMD; Chrome 95+, Firefox 100+, Safari 15.2+
             PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly;
             PlayerSettings.WebGL.linkerTarget = WebGLLinkerTarget.Wasm;
@@ -110,6 +135,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
 
             // Hosting: uncompressed files work on any static host. GitHub Pages gzips them on the fly (and cannot send the
             // header Unity's own .gz files need); itch.io serves them too. -webHost=itch builds pre-gzipped files instead.
+            // The textures themselves are crunched for the Web by WebTextureCrunch (gzip barely shrinks DXT data).
             PlayerSettings.WebGL.compressionFormat = gzipForItch ? WebGLCompressionFormat.Gzip : WebGLCompressionFormat.Disabled;
             PlayerSettings.WebGL.decompressionFallback = false;
             PlayerSettings.WebGL.nameFilesAsHashes = true; // a new build never mixes with old cached files
@@ -121,7 +147,10 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             PlayerSettings.WebGL.maximumMemorySize = 2048;
             PlayerSettings.WebGL.powerPreference = WebGLPowerPreference.HighPerformance;
             PlayerSettings.SplashScreen.show = false; // allowed on Unity 6 Personal, saves about 2 s per load
-            PlayerSettings.SetStaticBatchingForPlatform(BuildTarget.WebGL, true); // fewer draw calls once track meshes are Static
+            // V37: no static batching on the Web. It stored a second, merged copy of every static mesh in the scene data,
+            // which doubled the download (Web .data 126 -> 63 MB without it, 16 Nov). The SRP Batcher already keeps
+            // the draw calls cheap; set it back to true here if a Web fps check ever shows the CPU as the limit.
+            PlayerSettings.SetStaticBatchingForPlatform(BuildTarget.WebGL, false);
             PlayerSettings.defaultWebScreenWidth = 1280; // only the starting size; the template makes the canvas fill the window
             PlayerSettings.defaultWebScreenHeight = 720;
             PlayerSettings.WebGL.template = Template;
@@ -146,6 +175,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 + ", splash=" + PlayerSettings.SplashScreen.show
                 + ", staticBatching=" + PlayerSettings.GetStaticBatchingForPlatform(BuildTarget.WebGL)
                 + ", template=" + PlayerSettings.WebGL.template
+                + ", worldTextures=crunch q50, normals max 512 (WebTextureCrunch v" + new WebTextureCrunch().GetVersion() + ")"
                 + ", webPipeline=" + (webPipeline != null ? webPipeline.name : "none (see the error above)"));
         }
 

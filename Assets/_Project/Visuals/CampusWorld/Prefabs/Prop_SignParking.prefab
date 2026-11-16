@@ -100,6 +100,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7357450174934058484}
   - component: {fileID: 3462926586586122131}
+  - component: {fileID: 881631738288338517}
   m_Layer: 0
   m_Name: Prop_SignParking
   m_TagString: Untagged
@@ -144,3 +145,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.6, y: 2.65, z: 0.10531091}
   m_Center: {x: 0, y: 1.175, z: 0.022344563}
+--- !u!205 &881631738288338517
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7374331850061367914}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 1.175, z: 0.022344563}
+  m_Size: 2.65
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 7834516382822825732}
+  m_Enabled: 1

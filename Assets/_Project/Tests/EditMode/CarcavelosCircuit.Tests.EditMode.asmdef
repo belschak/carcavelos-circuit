@@ -10,6 +10,7 @@
         "CarcavelosCircuit.Audio",
         "CarcavelosCircuit.Ambience",
         "CarcavelosCircuit.Visuals",
+        "Unity.RenderPipelines.Core.Runtime",
         "Unity.InputSystem"
     ],
     "includePlatforms": [

@@ -1,4 +1,5 @@
 using System;
+using CarcavelosCircuit.Shared;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -7,6 +8,8 @@ namespace CarcavelosCircuit.RaceFlow
     // Task P7: everything around the race that is not the race. RaceHud creates it in OnEnable and calls Update().
     // - Settings card (key O or the SETTINGS button, start and results screen) and credits (key C or CREDITS, start screen).
     // - Mute (key M or the SOUND button, any time) with a short "SOUND OFF" / "SOUND ON" toast.
+    // - V28 time of day (key T or the NOON/SUNSET button, start screen): TimeOfDayChoice; the campus world (Role 3)
+    //   switches its light, MapFlyover shows it from above the sea.
     // - "PAUSED" overlay while RaceManager.IsPaused (the RaceManager does the pausing, this only shows it).
     // - The "reduce-motion" class on the HUD root (the USS removes slides, shakes and punches).
     // - Tells the RaceManager when a menu uses the keys and the mouse, so they do not also start the race.
@@ -27,6 +30,8 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly VisualElement startCredits;
         private readonly VisualElement startSound;
         private readonly Label startSoundText;
+        private readonly VisualElement startMood;
+        private readonly Label startMoodText;
         private readonly VisualElement resultsSettings;
         private readonly VisualElement settingsScreen;
         private readonly VisualElement settingsBg;
@@ -49,6 +54,12 @@ namespace CarcavelosCircuit.RaceFlow
         // step's click already plays at the new volume (an audible preview).
         public event Action<MenuSound> SoundRequested;
 
+        // Settings or credits are open (the mode picker then leaves the keys and clicks alone).
+        public bool IsMenuOpen
+        {
+            get { return settingsOpen || creditsOpen; }
+        }
+
         public bool ReducedMotion
         {
             get { return settings.ReducedMotion; }
@@ -62,6 +73,8 @@ namespace CarcavelosCircuit.RaceFlow
             startCredits = root.Q<VisualElement>("start-credits");
             startSound = root.Q<VisualElement>("start-sound");
             startSoundText = root.Q<Label>("start-sound-text");
+            startMood = root.Q<VisualElement>("start-mood");
+            startMoodText = root.Q<Label>("start-mood-text");
             resultsSettings = root.Q<VisualElement>("results-settings");
             settingsScreen = root.Q<VisualElement>("settings-screen");
             settingsBg = root.Q<VisualElement>("settings-bg");
@@ -94,6 +107,8 @@ namespace CarcavelosCircuit.RaceFlow
             resultsSettings.RegisterCallback<ClickEvent>(evt => OpenSettings(!settingsOpen));
             startCredits.RegisterCallback<ClickEvent>(evt => OpenCredits(!creditsOpen));
             startSound.RegisterCallback<ClickEvent>(evt => ToggleMute());
+            startMood.RegisterCallback<ClickEvent>(evt => NextMood());
+            startMoodText.text = TimeOfDayChoice.Label(TimeOfDayChoice.Current);
             settingsClose.RegisterCallback<ClickEvent>(evt => CloseMenus());
             settingsBg.RegisterCallback<ClickEvent>(evt => CloseMenus()); // a click next to the card closes it
             creditsClose.RegisterCallback<ClickEvent>(evt => CloseMenus());
@@ -126,6 +141,10 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 OpenCredits(!creditsOpen);
             }
+            else if (RaceKeys.TimeOfDayPressed() && state == RaceState.Ready && !settingsOpen && !creditsOpen)
+            {
+                NextMood();
+            }
             else if (settingsOpen)
             {
                 settingsPanel.HandleKeys();
@@ -144,6 +163,7 @@ namespace CarcavelosCircuit.RaceFlow
             HudFx.SetClickable(startSettings, ready && noMenu);
             HudFx.SetClickable(startCredits, ready && noMenu);
             HudFx.SetClickable(startSound, ready && noMenu);
+            HudFx.SetClickable(startMood, ready && noMenu);
             HudFx.SetClickable(resultsSettings, state == RaceState.Results && noMenu);
 
             // While a menu is open, or the mouse points at a menu button on the start screen, the keys and clicks
@@ -164,7 +184,8 @@ namespace CarcavelosCircuit.RaceFlow
             // Screen pixels start at the bottom left, the panel starts at the top left: flip y first.
             Vector2 point = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(mouse.x, Screen.height - mouse.y));
             VisualElement picked = panel.Pick(point);
-            return IsInside(picked, startSettings) || IsInside(picked, startCredits) || IsInside(picked, startSound);
+            return IsInside(picked, startSettings) || IsInside(picked, startCredits) || IsInside(picked, startSound) ||
+                   IsInside(picked, startMood);
         }
 
         private static bool IsInside(VisualElement element, VisualElement container)
@@ -231,6 +252,14 @@ namespace CarcavelosCircuit.RaceFlow
             HudFx.SetClickable(creditsCard, creditsOpen);
             HudFx.SetClickable(creditsClose, creditsOpen);
             creditsPanel.SetClickable(creditsOpen);
+        }
+
+        // V28: noon -> sunset -> noon. Saved at once; the world and the camera listen to TimeOfDayChoice.Changed.
+        private void NextMood()
+        {
+            TimeOfDayChoice.Set(TimeOfDayChoice.Next(TimeOfDayChoice.Current));
+            startMoodText.text = TimeOfDayChoice.Label(TimeOfDayChoice.Current);
+            PlaySound(MenuSound.Toggle);
         }
 
         private void ToggleMute()

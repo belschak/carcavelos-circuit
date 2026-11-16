@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2718860872306131633}
   - component: {fileID: 7879198068349789588}
+  - component: {fileID: 1164260603574719379}
   m_Layer: 0
   m_Name: Prop_LampMarginal
   m_TagString: Untagged
@@ -56,6 +57,25 @@ CapsuleCollider:
   m_Height: 11.75
   m_Direction: 1
   m_Center: {x: 0, y: 5.875, z: 0}
+--- !u!205 &1164260603574719379
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2690303075371964891}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 1.155, y: 5.7250004, z: -0.00000017881393}
+  m_Size: 11.75
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 670243000147706401}
+  m_Enabled: 1
 --- !u!1 &4973874367802954745
 GameObject:
   m_ObjectHideFlags: 0

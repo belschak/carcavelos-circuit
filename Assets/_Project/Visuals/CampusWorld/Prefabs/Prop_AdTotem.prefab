@@ -100,6 +100,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1747230041033320147}
   - component: {fileID: 8826190644921312324}
+  - component: {fileID: 8930937328531047565}
   m_Layer: 0
   m_Name: Prop_AdTotem
   m_TagString: Untagged
@@ -144,3 +145,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.2, y: 2.3500001, z: 0.26000008}
   m_Center: {x: 0, y: 1.025, z: 0}
+--- !u!205 &8930937328531047565
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5256907581562001372}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 1.025, z: 0}
+  m_Size: 2.3500001
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 2409907041783178970}
+  m_Enabled: 1

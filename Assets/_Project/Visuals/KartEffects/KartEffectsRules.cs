@@ -63,6 +63,14 @@ namespace CarcavelosCircuit.Visuals
         }
 
         // After a teleport (retry, recovery) everything starts fresh, like IKartState.ResetTo clears drift and boost.
+        // V34: how much more flame the Espresso kick gives (rate multiplier; 1 for every other boost).
+        public const float EspressoHeat = 1.6f;
+
+        public static float FlameHeat(bool espressoKick)
+        {
+            return espressoKick ? EspressoHeat : 1f;
+        }
+
         public void Reset()
         {
             ShowSmoke = false;

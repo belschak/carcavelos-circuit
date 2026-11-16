@@ -60,8 +60,8 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // False for modifier keys (Shift, Ctrl, Alt, Windows/Cmd), function keys (F1 to F24), system keys
-        // (Escape, Tab, Caps Lock, Print Screen ...) and the menu keys O, C, M, P (they open settings, credits,
-        // mute or pause, and must not also start the race). Public so an Edit Mode test can check the list.
+        // (Escape, Tab, Caps Lock, Print Screen ...) and the menu keys O, C, M, P, T (they open settings, credits,
+        // mute, pause or switch the time of day, and must not also start the race). Public so an Edit Mode test can check the list.
         public static bool CountsAsStartKey(Key key)
         {
             if ((key >= Key.F1 && key <= Key.F12) || (key >= Key.F13 && key <= Key.F24))
@@ -90,6 +90,7 @@ namespace CarcavelosCircuit.RaceFlow
                 case Key.O: // settings
                 case Key.C: // credits
                 case Key.M: // mute
+                case Key.T: // time of day (V28)
                 case Key.P: // pause (RaceManager reads it on its own, see PausePressed)
                     return false;
                 default:
@@ -134,6 +135,13 @@ namespace CarcavelosCircuit.RaceFlow
             return keyboard != null && keyboard.cKey.wasPressedThisFrame;
         }
 
+        // T = next time of day (noon, sunset) on the start screen (V28, Luc's light moods).
+        public static bool TimeOfDayPressed()
+        {
+            Keyboard keyboard = GameKeyboard();
+            return keyboard != null && keyboard.tKey.wasPressedThisFrame;
+        }
+
         // P = pause or continue, during the countdown and the race (audit 9). Never Escape: it leaves fullscreen.
         public static bool PausePressed()
         {
@@ -146,6 +154,25 @@ namespace CarcavelosCircuit.RaceFlow
         {
             Keyboard keyboard = GameKeyboard();
             return keyboard != null && keyboard.mKey.wasPressedThisFrame;
+        }
+
+        // Q = back to the main menu from the results (pick another mode). Only read in Results, so on the start
+        // screen Q is a normal "any key".
+        public static bool BackToMenuPressed()
+        {
+            Keyboard keyboard = GameKeyboard();
+            return keyboard != null && keyboard.qKey.wasPressedThisFrame;
+        }
+
+        // 1, 2, 3 on the start screen = pick that race mode (RaceMode + 1), 0 = none. Top row or number pad.
+        public static int ModeKeyPressed()
+        {
+            Keyboard keyboard = GameKeyboard();
+            if (keyboard == null) return 0;
+            if (keyboard.digit1Key.wasPressedThisFrame || keyboard.numpad1Key.wasPressedThisFrame) return 1;
+            if (keyboard.digit2Key.wasPressedThisFrame || keyboard.numpad2Key.wasPressedThisFrame) return 2;
+            if (keyboard.digit3Key.wasPressedThisFrame || keyboard.numpad3Key.wasPressedThisFrame) return 3;
+            return 0;
         }
 
         // Inside a menu: W/S or up/down choose a row, A/D or left/right change it (or turn a page).

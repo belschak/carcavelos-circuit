@@ -91,6 +91,34 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("This many seconds behind your best split (or more) gives the best odds")]
         private float farBehindSeconds = 2f;
 
+        [Header("HUD icons (Role 3's PNGs, request Q16; empty = the icon drawn in code, UI/ItemIcon.cs)")]
+        [SerializeField, Tooltip("Visuals/Items/Icons/Espresso.png (Role4SceneBuilder fills these four by itself)")]
+        private Texture2D espressoIcon;
+        [SerializeField, Tooltip("Visuals/Items/Icons/SeagullDelivery.png")]
+        private Texture2D seagullDeliveryIcon;
+        [SerializeField, Tooltip("Visuals/Items/Icons/CarcavelosWave.png")]
+        private Texture2D carcavelosWaveIcon;
+        [SerializeField, Tooltip("Visuals/Items/Icons/DeansList.png")]
+        private Texture2D deansListIcon;
+
+        [Header("Looks (Role 3's prefabs, task V34; empty = the look made in code here)")]
+        [SerializeField, Tooltip("Visuals/Items/Prefabs/ItemBoxLook.prefab: the box body, unit size (Role4SceneBuilder fills these)")]
+        private GameObject boxLook;
+        [SerializeField, Tooltip("Visuals/Items/Prefabs/ItemBoxLook_Wave.prefab: the same for wave boxes")]
+        private GameObject waveBoxLook;
+        [SerializeField, Tooltip("Visuals/Items/Prefabs/ItemBoxGround.prefab: the light on the road under each box")]
+        private GameObject boxGroundLook;
+        [SerializeField, Tooltip("Visuals/Items/Prefabs/SeagullRingLook.prefab: Luc's lifebuoy, radius 1, standing in XY")]
+        private GameObject ringLook;
+        [SerializeField, Tooltip("Off = no gold coin ring for Dean's List (Role 3's ItemFx draws a laurel wreath instead)")]
+        private bool coinHalo = true;
+
+        public GameObject BoxLook { get { return boxLook; } }
+        public GameObject WaveBoxLook { get { return waveBoxLook; } }
+        public GameObject BoxGroundLook { get { return boxGroundLook; } }
+        public GameObject RingLook { get { return ringLook; } }
+        public bool CoinHalo { get { return coinHalo; } }
+
         public int RowEveryCheckpoints { get { return rowEveryCheckpoints; } }
         public float RowAheadMetres { get { return rowAheadMetres; } }
         public int BoxesPerRow { get { return boxesPerRow; } }
@@ -121,6 +149,17 @@ namespace CarcavelosCircuit.RaceFlow
             if (kind == ItemKind.CarcavelosWave) return waveSeconds;
             if (kind == ItemKind.DeansList) return deansBoostSeconds;
             return 0f;
+        }
+
+        // Luc's picture for this item in the HUD slot (request Q16). null = no picture set (or ItemKind.None):
+        // ItemIcon then draws its own code-drawn icon, so the slot never stays empty.
+        public Texture2D IconFor(ItemKind kind)
+        {
+            if (kind == ItemKind.Espresso) return espressoIcon;
+            if (kind == ItemKind.SeagullDelivery) return seagullDeliveryIcon;
+            if (kind == ItemKind.CarcavelosWave) return carcavelosWaveIcon;
+            if (kind == ItemKind.DeansList) return deansListIcon;
+            return null;
         }
 
         // Top speed multiplier while that boost runs (1 = no boost).

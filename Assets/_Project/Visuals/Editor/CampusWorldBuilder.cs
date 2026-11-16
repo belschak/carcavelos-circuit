@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using CarcavelosCircuit.RaceFlow;
+using CarcavelosCircuit.Shared;
 using CarcavelosCircuit.Track;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -34,7 +35,11 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string PrefabDir = Root + "/Prefabs";
         private const string SettingsDir = Root + "/Settings";
         private const string SkyTexture = TexDir + "/sky_panorama.png";       // world-gen/make_sky.py
+        private const string SunsetSkyTexture = TexDir + "/sky_sunset.png";   // V28: make_sky.py --mood sunset
         private const string LookProfile = SettingsDir + "/CampusWorld_Look.asset";
+        private const string SunsetLookProfile = SettingsDir + "/CampusWorld_Look_Sunset.asset";
+        private const string NoonLookAsset = SettingsDir + "/Look_Noon.asset";
+        private const string SunsetLookAsset = SettingsDir + "/Look_Sunset.asset";
         // Golden hour (design pass 2026-11-09): low warm sun from the west-south-west. Must match make_sky.py.
         // V18l (Luc, 12 Nov: "summer at the beach", much harder shadows with contrast): a high summer-afternoon sun
         // from the south-west instead of golden hour. Must match make_sky.py (and so make_shadowmap.py).
@@ -43,6 +48,21 @@ namespace CarcavelosCircuit.Visuals.Editor
         // a little darker so far walls do not glow. 0.0008 per metre: 21 % at 300 m, 55 % at 1 km.
         private static readonly Color HazeColour = new Color(0.80f, 0.86f, 0.92f);   // V18l: the summer sky's pale blue horizon
         private const float HazeDensity = 0.0008f;
+        // Noon sky light (V20e): a bright, only slightly blue sky fill, a neutral horizon, a warm bounce from the paving.
+        private static readonly Color NoonSkyFill = new Color(0.60f, 0.66f, 0.76f);       // #A8A8C2-ish (V18l #668CCC)
+        private static readonly Color NoonHorizonFill = new Color(0.64f, 0.65f, 0.66f);   // (V18l 0.52/0.58/0.66)
+        private static readonly Color NoonGroundFill = new Color(0.55f, 0.45f, 0.33f);
+        // V28 sunset (Luc, 13 Nov; Alessandro asked "can we set the time to sunset?"): the sun just above the sea in the
+        // west-south-west. Must match make_sky.py MOODS["sunset"]. Low enough for long orange light and long
+        // shadows, high enough that the track is not all in the shade of the campus buildings.
+        private const float SunsetAzimuth = 250f, SunsetElevation = 6f;
+        private static readonly Color SunsetSunColour = new Color(1f, 0.62f, 0.36f);       // #FF9E5C, deep orange
+        private const float SunsetSunIntensity = 1.7f, SunsetShadowStrength = 0.75f;
+        private static readonly Color SunsetSkyFill = new Color(0.42f, 0.40f, 0.56f);      // violet dusk sky in the shade
+        private static readonly Color SunsetHorizonFill = new Color(0.78f, 0.56f, 0.46f);  // pink-orange band at eye height
+        private static readonly Color SunsetGroundFill = new Color(0.45f, 0.33f, 0.25f);
+        private static readonly Color SunsetHaze = new Color(0.93f, 0.68f, 0.52f);         // the painted horizon, a bit darker
+        private const float SunsetHazeDensity = 0.0011f;
         private const string ScenePath = "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity";
         private const string WorldPrefabPath = Root + "/CampusWorld.prefab";
         private const string WorldRootName = "CampusWorld";                  // root of the prefab and of its instance
@@ -98,6 +118,7 @@ namespace CarcavelosCircuit.Visuals.Editor
         {
             public float length_m; public int jump_index, start_index, spawn_index; public int[] checkpoints; public TrackPoint[] points;
             public float[] checkpoint_widths;   // V20a: trigger width per checkpoint (m); missing or <= 0 = road width + 4 m
+            public float[] checkpoint_shifts;   // V33: trigger centre moved this far to the right of the route point (m); missing = 0
             public BoostPadSpot[] boost_pads;   // V20b: pads off the race line (export_unity_bundle.boost_pads)
         }
         // V20b: one extra boost pad: position (y = driving surface), yaw in degrees clockwise from north, size in metres.
@@ -145,6 +166,24 @@ namespace CarcavelosCircuit.Visuals.Editor
             EditorApplication.Exit(failures == 0 ? 0 : 1);
         }
 
+        // V28 batch mode: -executeMethod CarcavelosCircuit.Visuals.Editor.CampusWorldBuilder.ShotsOnly
+        // -campusWorldShots <folder> [-campusWorldMood sunset]: the kart's-eye views of the built scene, no rebuild.
+        public static void ShotsOnly()
+        {
+            int failures = 0;
+            try
+            {
+                EditorSceneManager.OpenScene(ScenePath);
+                RenderShots(Argument("-campusWorldShots"));
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                failures++;
+            }
+            EditorApplication.Exit(failures == 0 ? 0 : 1);
+        }
+
         // ---------- importers ----------
         private static void ConfigureImporters()
         {
@@ -157,7 +196,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                     continue;
                 }
                 string file = Path.GetFileName(path);
-                if (path == SkyTexture)
+                if (path == SkyTexture || path == SunsetSkyTexture)
                 {
                     continue;                                                   // a cubemap, see below
                 }
@@ -183,21 +222,9 @@ namespace CarcavelosCircuit.Visuals.Editor
             }
             // The painted sky (2:1 lat-long picture) becomes a cubemap: the skybox and the reflections on glass
             // and gloss use it, so no lighting bake is needed.
-            if (AssetImporter.GetAtPath(SkyTexture) is TextureImporter sky)
+            foreach (string skyPath in new[] { SkyTexture, SunsetSkyTexture })   // V28: one painted sky per mood
             {
-                sky.textureType = TextureImporterType.Default;
-                sky.textureShape = TextureImporterShape.TextureCube;
-                var cube = new TextureImporterSettings();
-                sky.ReadTextureSettings(cube);
-                cube.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
-                cube.cubemapConvolution = TextureImporterCubemapConvolution.Specular;   // blurred mips: glossy reflections
-                sky.SetTextureSettings(cube);
-                sky.sRGBTexture = true;
-                sky.mipmapEnabled = true;
-                sky.wrapMode = TextureWrapMode.Clamp;
-                sky.maxTextureSize = 1024;                                      // per cube face
-                WebTextureBudget.Apply(sky, Path.GetFileName(SkyTexture));      // V24: 512 per face on the Web
-                sky.SaveAndReimport();
+                ImportSky(skyPath);
             }
             foreach (string name in Models)
             {
@@ -214,6 +241,26 @@ namespace CarcavelosCircuit.Visuals.Editor
                 mi.importBlendShapes = false;
                 mi.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;
                 mi.SaveAndReimport();
+            }
+        }
+
+        private static void ImportSky(string path)
+        {
+            if (AssetImporter.GetAtPath(path) is TextureImporter sky)
+            {
+                sky.textureType = TextureImporterType.Default;
+                sky.textureShape = TextureImporterShape.TextureCube;
+                var cube = new TextureImporterSettings();
+                sky.ReadTextureSettings(cube);
+                cube.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
+                cube.cubemapConvolution = TextureImporterCubemapConvolution.Specular;   // blurred mips: glossy reflections
+                sky.SetTextureSettings(cube);
+                sky.sRGBTexture = true;
+                sky.mipmapEnabled = true;
+                sky.wrapMode = TextureWrapMode.Clamp;
+                sky.maxTextureSize = 1024;                                      // per cube face
+                WebTextureBudget.Apply(sky, Path.GetFileName(path));            // V24: 512 per face on the Web
+                sky.SaveAndReimport();
             }
         }
 
@@ -455,6 +502,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             EnsureFolder(PrefabDir);
             var result = new Dictionary<string, GameObject>();
             GameObject model = Model("Dressing_Prototypes");
+            PropRenderBudget.Reset();
             foreach (MeshFilter source in model.GetComponentsInChildren<MeshFilter>(true))
             {
                 string kind = source.gameObject.name;
@@ -466,9 +514,11 @@ namespace CarcavelosCircuit.Visuals.Editor
                 visual.AddComponent<MeshFilter>().sharedMesh = source.sharedMesh;
                 visual.AddComponent<MeshRenderer>().sharedMaterials = source.GetComponent<MeshRenderer>().sharedMaterials;
                 AddDressingCollider(root, visual.GetComponent<MeshRenderer>().bounds, kind);
+                PropRenderBudget.Apply(root, visual.GetComponent<MeshRenderer>(), kind);   // V27: shadows and draw distance
                 result[kind] = PrefabUtility.SaveAsPrefabAsset(root, PrefabDir + "/" + kind + ".prefab");
                 UnityEngine.Object.DestroyImmediate(root);
             }
+            Debug.Log(PropRenderBudget.Summary());
             return result;
         }
 
@@ -689,9 +739,10 @@ namespace CarcavelosCircuit.Visuals.Editor
                 cp.transform.SetPositionAndRotation(Pos(p) + Vector3.up * 2f, Quaternion.LookRotation(Forward(data, i)));
                 BoxCollider trigger = cp.AddComponent<BoxCollider>();
                 trigger.isTrigger = true;
-                // V20a: per-checkpoint width from track.json (pin_checkpoints.py), e.g. wall to wall at the plaza fork
-                bool hasWidth = data.checkpoint_widths != null && c < data.checkpoint_widths.Length && data.checkpoint_widths[c] > 0f;
-                trigger.size = new Vector3(hasWidth ? data.checkpoint_widths[c] : p.width + 4f, 6f, 1f);
+                // V20a: per-checkpoint width from track.json (pin_checkpoints.py), e.g. wall to wall at the plaza fork;
+                // V33: and a sideways shift, so a checkpoint can reach further to one side (the U-turn: to the wall's end)
+                trigger.size = new Vector3(TriggerWidth(data, c, p), 6f, 1f);
+                trigger.center = new Vector3(TriggerShift(data, c), 0f, 0f);
                 int after = (i + 2) % data.points.Length;                             // about 4 m further on
                 var respawn = new GameObject("RespawnPoint");
                 respawn.transform.SetParent(cp.transform, false);
@@ -823,12 +874,26 @@ namespace CarcavelosCircuit.Visuals.Editor
                 var gate = new GameObject("Gate " + c + (c == 0 ? " (start-finish)" : ""));
                 gate.transform.SetParent(group.transform, false);
                 gate.transform.SetPositionAndRotation(Pos(p), Quaternion.LookRotation(Forward(data, i)));
-                float offset = CheckpointGatePlan.PostOffset(p.width);
-                Vector3 left = GateFoot(gate.transform, -1f, offset, p.width, ref moved);
-                Vector3 right = GateFoot(gate.transform, 1f, offset, p.width, ref moved);
+                // V33: the poles stand at the trigger's real edges (wide checkpoints look wide), pulled in from walls
+                float half = TriggerWidth(data, c, p) * 0.5f, shift = TriggerShift(data, c);
+                Vector3 left = GateFoot(gate.transform, -1f, CheckpointGatePlan.PostOffsetForTrigger(p.width, half - shift), p.width, ref moved);
+                Vector3 right = GateFoot(gate.transform, 1f, CheckpointGatePlan.PostOffsetForTrigger(p.width, half + shift), p.width, ref moved);
                 gate.AddComponent<CheckpointGate>().Configure(left, right, pole, cloth);
             }
             Debug.Log("CampusWorldBuilder: " + data.checkpoints.Length + " checkpoint gates (" + moved + " poles moved in from a wall).");
+        }
+
+        // Trigger width of checkpoint c across the road (track.json checkpoint_widths, else road width + 4 m).
+        private static float TriggerWidth(TrackData data, int c, TrackPoint p)
+        {
+            bool hasWidth = data.checkpoint_widths != null && c < data.checkpoint_widths.Length && data.checkpoint_widths[c] > 0f;
+            return hasWidth ? data.checkpoint_widths[c] : p.width + 4f;
+        }
+
+        // V33: how far the trigger's centre lies to the right of its route point (negative = left); 0 if not given.
+        private static float TriggerShift(TrackData data, int c)
+        {
+            return data.checkpoint_shifts != null && c < data.checkpoint_shifts.Length ? data.checkpoint_shifts[c] : 0f;
         }
 
         // Local foot position of one pole: as far out as planned, or nearer the road if a wall is there, on the ground.
@@ -887,11 +952,15 @@ namespace CarcavelosCircuit.Visuals.Editor
         // ground mesh (road, deck, roof, prop) is left out. A tuft = 3 small crosses of 2 upright cards (12 triangles),
         // or 4 crosses of 3 cards (24 triangles) for the "big" ones in the fringe at the track edge, with the grass
         // cutout, shifted 35 % towards the lawn colour under it (vertex colour; alpha = card height for the
-        // shader's sink-away). All tufts of a 16 m cell are merged into one mesh, and a LODGroup hides the cell
-        // beyond about 65 m (at LOD bias 1), so only the cells near the camera cost anything. No shadows cast.
+        // shader's sink-away). V39: the tufts are no longer merged into cell meshes but drawn as GPU instances of 9
+        // prototype meshes (GrassTuftShape) by GrassField, which keeps the 16 m cells hidden beyond about 65 m and only
+        // draws what is in view. No shadows cast. Download: ~36 bytes per tuft (GrassFieldData) instead of ~900.
         // V16h: tufts marked "far" are the far LOD: one cross of two cards (4 triangles), larger, in 32 m cells that stay
         // visible to 150 m (material W_grass_tuft_far: sinks away just before), so lawns keep texture further out.
         private const float TuftCell = 16f, TuftCullDistance = 65f, TuftFarCell = 32f, TuftFarCullDistance = 150f;
+        // V39: tufts a bit larger than the V16 cards (Luc: "more texture on the grass"): seen from the chase camera the
+        // 15-27 cm blades of the old size barely showed even at twice the count.
+        private const float TuftSize = 1.25f, TuftFarSize = 1.15f;
         private static readonly Color TuftLawn = new Color(143f / 255f, 179f / 255f, 122f / 255f).linear;   // the lawn the cutout was painted for
         private static readonly List<Vector3> tuftFeet = new List<Vector3>();
         private static int tuftsPlaced, tuftsLeftOut, tuftTriangles, tuftChunks;
@@ -938,78 +1007,67 @@ namespace CarcavelosCircuit.Visuals.Editor
                 tuftFeet.Add(hit.point);
                 tuftsPlaced++;
             }
-            var tuftRoot = new GameObject("GrassTufts");
-            tuftRoot.transform.SetParent(root.transform, false);
+            // V39: the tufts are GPU instances of 9 prototype meshes (GrassField), not baked cell meshes any more:
+            // 4 small, 3 big, 2 far shapes; each tuft = foot, turn, size, lawn tint (~36 bytes instead of ~900).
+            GrassTuftShape.Kind[] kinds =
+            {
+                GrassTuftShape.Kind.Small, GrassTuftShape.Kind.Small, GrassTuftShape.Kind.Small, GrassTuftShape.Kind.Small,
+                GrassTuftShape.Kind.Big, GrassTuftShape.Kind.Big, GrassTuftShape.Kind.Big,
+                GrassTuftShape.Kind.Far, GrassTuftShape.Kind.Far,
+            };
+            const int smallBase = 0, smallCount = 4, bigBase = 4, bigCount = 3, farBase = 7, farCount = 2;
+            var meshes = new Mesh[kinds.Length];
+            for (int m = 0; m < kinds.Length; m++)
+            {
+                meshes[m] = GrassTuftShape.ToMesh(GrassTuftShape.Build(kinds[m], m), "GrassTuft_" + kinds[m] + "_" + m);
+                if (m == 0) AssetDatabase.CreateAsset(meshes[m], meshPath);
+                else AssetDatabase.AddObjectToAsset(meshes[m], meshPath);
+            }
+            int placed = tuftsPlaced;
+            var field = ScriptableObject.CreateInstance<GrassFieldData>();
+            field.PositionTurn = new Vector4[placed];
+            field.SizeTint = new Vector4[placed];
+            field.Prototype = new byte[placed];
+            field.Far = new byte[placed];
+            int f = 0;
             foreach (KeyValuePair<Vector2Int, List<Vector4>> cell in cells)
             {
                 bool farCell = cell.Key.x > 50000;
-                float size = farCell ? TuftFarCell : TuftCell;
-                var origin = new Vector3((cell.Key.x - (farCell ? 100000 : 0) + 0.5f) * size, 0f, (cell.Key.y + 0.5f) * size);
-                var verts = new List<Vector3>(); var normals = new List<Vector3>();
-                var uv = new List<Vector2>(); var sway = new List<Vector2>(); var tris = new List<int>();
-                var colours = new List<Color>();
                 foreach (Vector4 p in cell.Value)
                 {
-                    Tuft t = data.tufts[(int)p.w];
-                    var rng = new System.Random(7919 * (int)p.w + 17);
-                    float R() => (float)rng.NextDouble();
+                    int index = (int)p.w;
+                    Tuft t = data.tufts[index];
                     Color here = new Color(t.r / 255f, t.g / 255f, t.b / 255f).linear;       // lawn colour under the tuft
                     var lawn = new Color(Mathf.Lerp(1f, Mathf.Clamp(here.r / TuftLawn.r, 0.6f, 1.5f), 0.35f),
                                          Mathf.Lerp(1f, Mathf.Clamp(here.g / TuftLawn.g, 0.6f, 1.5f), 0.35f),
                                          Mathf.Lerp(1f, Mathf.Clamp(here.b / TuftLawn.b, 0.6f, 1.5f), 0.35f));
-                    int crosses = farCell ? 1 : t.big > 0 ? 4 : 3, cards = t.big > 0 && !farCell ? 3 : 2;
-                    for (int cross = 0; cross < crosses; cross++)
-                    {
-                        float away = cross == 0 ? 0f : (0.1f + 0.14f * R()) * t.s, around = (t.yaw + cross * 120f + 60f * R()) * Mathf.Deg2Rad;
-                        Vector3 foot = new Vector3(p.x, p.y, p.z) - origin + new Vector3(Mathf.Cos(around), 0f, Mathf.Sin(around)) * away;
-                        float height = (0.15f + 0.12f * R()) * t.s, half = (0.15f + 0.07f * R()) * t.s, turn = R() * Mathf.PI;
-                        float half_u = R() < 0.5f ? 0f : 0.5f;                          // which of the two tufts in the texture
-                        for (int card = 0; card < cards; card++)
-                        {
-                            float a = turn + card * Mathf.PI / cards;
-                            var side = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * half;
-                            var lean = new Vector3(-Mathf.Sin(a), 0f, Mathf.Cos(a)) * (0.06f * (R() - 0.5f));
-                            int n = verts.Count;
-                            verts.Add(foot - side + Vector3.down * 0.04f); verts.Add(foot + side + Vector3.down * 0.04f);
-                            verts.Add(foot + side + lean + Vector3.up * height); verts.Add(foot - side + lean + Vector3.up * height);
-                            uv.Add(new Vector2(half_u, 0f)); uv.Add(new Vector2(half_u + 0.5f, 0f));
-                            uv.Add(new Vector2(half_u + 0.5f, 1f)); uv.Add(new Vector2(half_u, 1f));
-                            sway.Add(Vector2.zero); sway.Add(Vector2.zero); sway.Add(new Vector2(0f, 1f)); sway.Add(new Vector2(0f, 1f));
-                            for (int k = 0; k < 4; k++) normals.Add(Vector3.up);        // lit like the lawn under it
-                            for (int k = 0; k < 4; k++) colours.Add(new Color(lawn.r, lawn.g, lawn.b, height + 0.04f));
-                            tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2 });
-                        }
-                    }
+                    int proto = farCell ? farBase + GrassTuftShape.Variant(index, farCount)
+                              : t.big > 0 ? bigBase + GrassTuftShape.Variant(index, bigCount)
+                              : smallBase + GrassTuftShape.Variant(index, smallCount);
+                    field.PositionTurn[f] = new Vector4(p.x, p.y, p.z, t.yaw * Mathf.Deg2Rad);
+                    field.SizeTint[f] = new Vector4(t.s * (farCell ? TuftFarSize : TuftSize), lawn.r, lawn.g, lawn.b);
+                    field.Prototype[f] = (byte)proto;
+                    field.Far[f] = (byte)(farCell ? 1 : 0);
+                    tuftTriangles += meshes[proto].triangles.Length / 3;
+                    f++;
                 }
-                var mesh = new Mesh { name = (farCell ? "GrassTuftsFar_" : "GrassTufts_") + (cell.Key.x - (farCell ? 100000 : 0)) + "_" + cell.Key.y };
-                mesh.SetVertices(verts); mesh.SetNormals(normals); mesh.SetUVs(0, uv); mesh.SetUVs(1, sway);
-                mesh.SetColors(colours);
-                mesh.SetTriangles(tris, 0);
-                mesh.RecalculateBounds();
-                if (tuftChunks == 0)
-                {
-                    AssetDatabase.CreateAsset(mesh, meshPath);
-                }
-                else
-                {
-                    AssetDatabase.AddObjectToAsset(mesh, meshPath);
-                }
-                var go = new GameObject(mesh.name);
-                go.transform.SetParent(tuftRoot.transform, false);
-                go.transform.position = origin;
-                go.AddComponent<MeshFilter>().sharedMesh = mesh;
-                MeshRenderer r = go.AddComponent<MeshRenderer>();
-                r.sharedMaterial = farCell ? farMat : mat;
-                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                LODGroup lod = go.AddComponent<LODGroup>();
-                lod.SetLODs(new[] { new LOD(0.5f, new Renderer[] { r }) });
-                lod.RecalculateBounds();
-                // relative screen height of the cell at the cull distance, for a 60 degree camera
-                float shown = Mathf.Clamp(lod.size / (2f * (farCell ? TuftFarCullDistance : TuftCullDistance) * Mathf.Tan(30f * Mathf.Deg2Rad)), 0.01f, 0.9f);
-                lod.SetLODs(new[] { new LOD(shown, new Renderer[] { r }) });
-                tuftChunks++;
-                tuftTriangles += tris.Count / 3;
             }
+            string fieldPath = ModelsDir + "/GrassField.asset";
+            AssetDatabase.DeleteAsset(fieldPath);
+            AssetDatabase.CreateAsset(field, fieldPath);
+            foreach (Material m in new[] { mat, farMat })
+            {
+                if (m != null && !m.enableInstancing)
+                {
+                    m.enableInstancing = true; // GrassField draws with Graphics.DrawMeshInstanced
+                    EditorUtility.SetDirty(m);
+                }
+            }
+            var tuftRoot = new GameObject("GrassTufts");
+            tuftRoot.transform.SetParent(root.transform, false);
+            GrassField grass = tuftRoot.AddComponent<GrassField>();
+            grass.SetUp(field, meshes, farCount, mat, farMat);
+            tuftChunks = grass.CellCount;
             AssetDatabase.SaveAssets();
         }
 
@@ -1089,21 +1147,109 @@ namespace CarcavelosCircuit.Visuals.Editor
             // apart hard (cool blue shadows against hot, nearly white sunlight); the ground bounce stays warm.
             // V20e (Luc, 13 Nov: "the difference between shade and light is far too harsh, make it more fluid"; the
             // hall and the shaded plazas read deep blue): a brighter, much less blue sky fill, a neutral horizon.
-            so.FindProperty("skyColour").colorValue = new Color(0.60f, 0.66f, 0.76f);       // #A8A8C2-ish (V18l #668CCC)
-            so.FindProperty("horizonColour").colorValue = new Color(0.64f, 0.65f, 0.66f);   // (V18l 0.52/0.58/0.66)
-            so.FindProperty("groundColour").colorValue = new Color(0.55f, 0.45f, 0.33f);    // warm bounce from the paving
+            so.FindProperty("skyColour").colorValue = NoonSkyFill;
+            so.FindProperty("horizonColour").colorValue = NoonHorizonFill;
+            so.FindProperty("groundColour").colorValue = NoonGroundFill;                   // warm bounce from the paving
             so.FindProperty("hazeColour").colorValue = HazeColour;                          // the sky's horizon colour
             so.FindProperty("hazeDensity").floatValue = HazeDensity;
             so.FindProperty("skybox").objectReferenceValue = skybox;
             so.FindProperty("reflection").objectReferenceValue = cube;                     // glass and gloss reflect the sky
-            so.ApplyModifiedPropertiesWithoutUndo();
-            lighting.ApplyIfActiveScene();                         // the preview scene is active here: save it with the look
             var look = new GameObject("Look (global volume)");
             look.transform.SetParent(root.transform, false);
             Volume volume = look.AddComponent<Volume>();
             volume.isGlobal = true;
             volume.priority = 1f;
             volume.sharedProfile = BuildLookProfile();
+            // V28: time of day. Noon = everything above; the player's choice on the start screen switches at runtime.
+            TimeOfDayLook[] looks = BuildTimeOfDayLooks(sun, skybox, cube, volume.sharedProfile);
+            so.FindProperty("lookVolume").objectReferenceValue = volume;
+            SerializedProperty list = so.FindProperty("looks");
+            list.arraySize = looks.Length;
+            for (int i = 0; i < looks.Length; i++)
+            {
+                list.GetArrayElementAtIndex(i).objectReferenceValue = looks[i];
+            }
+            so.FindProperty("editorMood").enumValueIndex = (int)TimeOfDay.Noon;              // scenes are saved at noon
+            so.ApplyModifiedPropertiesWithoutUndo();
+            lighting.ApplyIfActiveScene();                         // the preview scene is active here: save it with the look
+        }
+
+        // V28: one TimeOfDayLook asset per mood. Updated in place, so their GUIDs (and the prefab's links) stay.
+        private static TimeOfDayLook[] BuildTimeOfDayLooks(Light sun, Material noonSky, Cubemap noonCube, VolumeProfile noonGrade)
+        {
+            TimeOfDayLook noon = LookAsset(NoonLookAsset);
+            noon.mood = TimeOfDay.Noon;
+            noon.sunAzimuth = SunAzimuth;
+            noon.sunElevation = SunElevation;
+            noon.sunColour = sun.color;
+            noon.sunIntensity = sun.intensity;
+            noon.shadowStrength = sun.shadowStrength;
+            noon.skyColour = NoonSkyFill;
+            noon.horizonColour = NoonHorizonFill;
+            noon.groundColour = NoonGroundFill;
+            noon.skybox = noonSky;
+            noon.reflection = noonCube;
+            noon.hazeColour = HazeColour;
+            noon.hazeDensity = HazeDensity;
+            noon.profile = noonGrade;
+            noon.bakedShadowKeep = 1f;                             // the ground shadow map was baked for this sun
+            EditorUtility.SetDirty(noon);
+
+            TimeOfDayLook sunset = LookAsset(SunsetLookAsset);
+            sunset.mood = TimeOfDay.Sunset;
+            sunset.sunAzimuth = SunsetAzimuth;
+            sunset.sunElevation = SunsetElevation;
+            sunset.sunColour = SunsetSunColour;
+            sunset.sunIntensity = SunsetSunIntensity;
+            sunset.shadowStrength = SunsetShadowStrength;
+            sunset.skyColour = SunsetSkyFill;
+            sunset.horizonColour = SunsetHorizonFill;
+            sunset.groundColour = SunsetGroundFill;
+            Cubemap sunsetCube = AssetDatabase.LoadAssetAtPath<Cubemap>(SunsetSkyTexture);
+            if (sunsetCube == null)
+            {
+                Debug.LogWarning("CampusWorldBuilder: no " + SunsetSkyTexture + " (make_sky.py --mood sunset), sunset uses the noon sky.");
+            }
+            sunset.skybox = sunsetCube != null ? SkyMaterial("Sky_Sunset", sunsetCube) : noonSky;
+            sunset.reflection = sunsetCube != null ? sunsetCube : noonCube;
+            sunset.hazeColour = SunsetHaze;
+            sunset.hazeDensity = SunsetHazeDensity;
+            // A softer, warmer grade: orange highlights, violet shade, a touch less contrast than noon.
+            sunset.profile = BuildLookProfile(SunsetLookProfile, 0.05f, 16f, 14f, 10f,
+                                              new Vector4(0.97f, 0.96f, 1.06f, -0.02f), new Vector4(1.06f, 0.99f, 0.90f, 0.02f));
+            sunset.bakedShadowKeep = 0f;                           // the baked noon shadows point the wrong way now
+            EditorUtility.SetDirty(sunset);
+            AssetDatabase.SaveAssets();
+            return new[] { noon, sunset };
+        }
+
+        private static TimeOfDayLook LookAsset(string path)
+        {
+            EnsureFolder(SettingsDir);
+            TimeOfDayLook look = AssetDatabase.LoadAssetAtPath<TimeOfDayLook>(path);
+            if (look == null)
+            {
+                look = ScriptableObject.CreateInstance<TimeOfDayLook>();
+                AssetDatabase.CreateAsset(look, path);
+            }
+            return look;
+        }
+
+        private static Material SkyMaterial(string name, Cubemap cube)
+        {
+            EnsureFolder(MatDir);
+            string path = MatDir + "/" + name + ".mat";
+            Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null)
+            {
+                mat = new Material(Shader.Find("Skybox/Cubemap"));
+                AssetDatabase.CreateAsset(mat, path);
+            }
+            mat.SetTexture("_Tex", cube);
+            mat.SetFloat("_Exposure", 1f);
+            mat.SetFloat("_Rotation", 0f);
+            EditorUtility.SetDirty(mat);
+            return mat;
         }
 
         // Tonemapping + a grade, made by code so every laptop gets the same look. Bloom stays in Role 4's
@@ -1116,24 +1262,33 @@ namespace CarcavelosCircuit.Visuals.Editor
 
         private static VolumeProfile BuildLookProfile()
         {
+            return BuildLookProfile(LookProfile, LookExposure, LookContrast, LookSaturation, 2f,
+                                    new Vector4(0.99f, 1.0f, 1.03f, -0.01f),    // V20e: nearly neutral, lifted shade (V18l: 0.93/0.98/1.10/-0.07)
+                                    new Vector4(1.03f, 1.0f, 0.96f, 0.02f));    // warm, bright sunlit tops
+        }
+
+        // V28: the same grade for every mood, with the mood's numbers.
+        private static VolumeProfile BuildLookProfile(string path, float exposure, float contrast, float saturation,
+                                                      float temperature, Vector4 shadows, Vector4 highlights)
+        {
             EnsureFolder(SettingsDir);
-            if (AssetDatabase.LoadAssetAtPath<VolumeProfile>(LookProfile) != null)
+            if (AssetDatabase.LoadAssetAtPath<VolumeProfile>(path) != null)
             {
-                AssetDatabase.DeleteAsset(LookProfile);
+                AssetDatabase.DeleteAsset(path);
             }
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            AssetDatabase.CreateAsset(profile, LookProfile);
+            AssetDatabase.CreateAsset(profile, path);
             Tonemapping tone = profile.Add<Tonemapping>(true);
             tone.mode.Override(TonemappingMode.ACES);
             ColorAdjustments grade = profile.Add<ColorAdjustments>(true);
-            grade.postExposure.Override(LookExposure);
-            grade.contrast.Override(LookContrast);
-            grade.saturation.Override(LookSaturation);
+            grade.postExposure.Override(exposure);
+            grade.contrast.Override(contrast);
+            grade.saturation.Override(saturation);
             WhiteBalance warm = profile.Add<WhiteBalance>(true);
-            warm.temperature.Override(2f);
+            warm.temperature.Override(temperature);
             ShadowsMidtonesHighlights split = profile.Add<ShadowsMidtonesHighlights>(true);
-            split.shadows.Override(new Vector4(0.99f, 1.0f, 1.03f, -0.01f));        // V20e: nearly neutral, lifted shade (V18l: 0.93/0.98/1.10/-0.07)
-            split.highlights.Override(new Vector4(1.03f, 1.0f, 0.96f, 0.02f));       // warm, bright sunlit tops
+            split.shadows.Override(shadows);
+            split.highlights.Override(highlights);
             foreach (VolumeComponent c in profile.components)
             {
                 c.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
@@ -1552,10 +1707,38 @@ namespace CarcavelosCircuit.Visuals.Editor
                                          RenderSettings.defaultReflectionMode == DefaultReflectionMode.Custom &&
                                          RenderSettings.customReflectionTexture != null));
 
+            // V28: the sunset look switches sun, sky, haze and grade, and noon brings back exactly today's look.
+            bool moods = true;
+            CampusWorldLighting lighting = second.GetComponent<CampusWorldLighting>();
+            Volume volume = second.GetComponentInChildren<Volume>();
+            TimeOfDayLook sunsetLook = lighting.LookFor(TimeOfDay.Sunset);
+            if (sunsetLook == null || lighting.LookFor(TimeOfDay.Noon) == null)
+            {
+                moods = false;
+            }
+            else
+            {
+                Quaternion noonSun = RenderSettings.sun.transform.rotation;
+                VolumeProfile noonGrade = volume.sharedProfile;
+                lighting.ShowInEditor(TimeOfDay.Sunset);
+                bool sunsetOn = Mathf.Approximately(RenderSettings.fogDensity, SunsetHazeDensity) &&
+                                Quaternion.Angle(RenderSettings.sun.transform.rotation, sunsetLook.SunRotation) < 0.1f &&
+                                Vector3.Dot(-RenderSettings.sun.transform.forward, Vector3.up) < 0.15f &&   // low sun
+                                volume.sharedProfile == sunsetLook.profile && volume.sharedProfile != noonGrade &&
+                                (!painted || AssetDatabase.LoadAssetAtPath<Cubemap>(SunsetSkyTexture) == null ||
+                                 RenderSettings.skybox.name == "Sky_Sunset");
+                lighting.ShowInEditor(TimeOfDay.Noon);
+                bool noonBack = Mathf.Approximately(RenderSettings.fogDensity, HazeDensity) &&
+                                Quaternion.Angle(RenderSettings.sun.transform.rotation, noonSun) < 0.1f &&
+                                volume.sharedProfile == noonGrade && (!painted || RenderSettings.skybox.name == "Sky_Painted");
+                moods = sunsetOn && noonBack;
+                report.AppendLine("time of day: sunset applied " + sunsetOn + ", noon back " + noonBack);
+            }
+
             SceneManager.SetActiveScene(preview);
             EditorSceneManager.CloseScene(holder, true);
             report.AppendLine("light in a scene with only the prefab: applied " + applied + ", other active scene left alone " + leftAlone);
-            return applied && leftAlone ? 0 : 1;
+            return applied && leftAlone && moods ? 0 : 1;
         }
 
         // Kart's-eye views at a few places of the lap, for comparing with the Blender renders.
@@ -1572,6 +1755,15 @@ namespace CarcavelosCircuit.Visuals.Editor
             cam.GetUniversalAdditionalCameraData().renderPostProcessing = true;    // the grade, as in the race
             var rt = new RenderTexture(1280, 720, 24) { antiAliasing = 4 };
             cam.targetTexture = rt;
+            // V28: -campusWorldMood sunset renders the sunset look (not saved: the scene stays at noon)
+            string moodName = Argument("-campusWorldMood");
+            TimeOfDay mood = string.Equals(moodName, "sunset", StringComparison.OrdinalIgnoreCase) ? TimeOfDay.Sunset : TimeOfDay.Noon;
+            CampusWorldLighting lighting = UnityEngine.Object.FindAnyObjectByType<CampusWorldLighting>();
+            if (lighting != null)
+            {
+                lighting.ShowInEditor(mood);
+            }
+            string suffix = mood == TimeOfDay.Noon ? "" : "_" + mood.ToString().ToLowerInvariant();
             string extra = Argument("-campusWorldShotS");                          // e.g. "60,575" (metres)
             float[] stations = string.IsNullOrEmpty(extra)
                 ? new[] { 16f, 60f, 100f, 150f, 200f, 330f, 470f, 575f, 610f, 700f, 860f, 965f, 1060f, 1100f, 1150f, 1260f }
@@ -1589,7 +1781,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 var tex = new Texture2D(1280, 720, TextureFormat.RGB24, false);
                 tex.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0);
                 tex.Apply();
-                File.WriteAllBytes(Path.Combine(folder, "unity_s" + ((int)s).ToString("0000") + ".png"), tex.EncodeToPNG());
+                File.WriteAllBytes(Path.Combine(folder, "unity_s" + ((int)s).ToString("0000") + suffix + ".png"), tex.EncodeToPNG());
                 UnityEngine.Object.DestroyImmediate(tex);
             }
             RenderTexture.active = null;

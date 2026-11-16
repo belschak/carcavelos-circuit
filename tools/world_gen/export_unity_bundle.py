@@ -39,7 +39,7 @@ MODELS = ["CampusWorld.fbx", "TrackSurface.fbx", "RouteGuide.fbx", "Dressing_Pro
 ROAD_LIFT = 0.06            # env_track.ROAD_LIFT: road surface above track_z
 CHECKPOINTS = 12
 WORLD_LIT_SHADER = "CarcavelosCircuit/WorldLit"     # Assets/_Project/Visuals/Shaders/WorldLit.shader (URP Lit if missing)
-EXTRA_TEXTURES = ["sky_panorama.png"]   # make_sky.py: skybox + reflections (CampusWorldBuilder.AddSunAndSky)
+EXTRA_TEXTURES = ["sky_panorama.png", "sky_sunset.png"]   # make_sky.py (--mood sunset): skybox + reflections (CampusWorldBuilder)
 
 # The grass tufts have no Blender material (CampusWorldBuilder builds them): their entry for materials.json.
 GRASS_TUFT = {"name": "W_grass_tuft", "colour": [1.0, 1.0, 1.0], "metallic": 0.0, "albedo": "grass_tuft_cutout_albedo.png",
@@ -214,9 +214,11 @@ def unity_track():
     # pin_checkpoints.py rewrites it after the hall steps)
     widths = pin_checkpoints.widths_for(pts, cps)
     return {"note": "Unity axes; y = road surface height. checkpoints[0] = start/finish line. Indices into points. "
-                    "checkpoint_widths = trigger width across the road (m), one per checkpoint.",
+                    "checkpoint_widths = trigger width across the road (m), one per checkpoint. "
+                    "checkpoint_shifts = trigger centre moved right of the route point (m, V33).",
             "length_m": route["length_m"], "jump_index": jump, "start_index": start, "spawn_index": spawn,
-            "checkpoints": cps, "checkpoint_widths": widths, "points": [u(p) for p in pts]}
+            "checkpoints": cps, "checkpoint_widths": widths,
+            "checkpoint_shifts": pin_checkpoints.load_shifts() or [0.0] * len(cps), "points": [u(p) for p in pts]}
 
 
 # V20b (package B, plaza jump): extra boost pads that are not on the race line, e.g. the jump pad on the plaza shortcut's

@@ -3,11 +3,13 @@
     "rootNamespace": "CarcavelosCircuit.Visuals.Editor",
     "references": [
         "CarcavelosCircuit.Track",
+        "CarcavelosCircuit.Shared",
         "CarcavelosCircuit.RaceFlow",
         "CarcavelosCircuit.Visuals",
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.RenderPipelines.Universal.Runtime",
-        "CarcavelosCircuit.Track.Editor"
+        "CarcavelosCircuit.Track.Editor",
+        "CarcavelosCircuit.Visuals.KartEffects.Editor"
     ],
     "includePlatforms": [
         "Editor"

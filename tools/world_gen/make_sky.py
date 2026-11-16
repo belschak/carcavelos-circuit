@@ -1,13 +1,17 @@
 """Painted sky panorama for the race (design reference 2026-11-09: deep blue sky, big puffy cumulus clouds, warm
 haze at the horizon, golden-hour sun from the west-south-west). Our own procedural picture, no photo.
 
-Run:  ~/Documents/nova/.media-tools/bin/python make_sky.py
-Out:  textures/sky_panorama.png  (2048 x 1024, equirectangular / lat-long)
+Run:  ~/Documents/nova/.media-tools/bin/python make_sky.py [--mood noon|sunset]
+      (V35: run make_far_horizon.py in Blender first for the far land on the horizon; without it the sky is as before)
+Out:  textures/sky_panorama.png  (noon, 2048 x 1024, equirectangular / lat-long)
+      textures/sky_sunset.png    (V28 sunset: low orange sun over the sea, pink and violet sky)
 
 Mapping = Unity's lat-long convention (Skybox/Panoramic, and the cubemap Unity makes from a 2:1 image):
 u = 0.25 + azimuth / 360 (azimuth clockwise from north; north = +z in Unity), v = 1 at the zenith.
-SUN_AZIMUTH / SUN_ELEVATION must match the directional light in CampusWorldBuilder.cs (AddSunAndSky).
+SUN_AZIMUTH / SUN_ELEVATION must match the directional light in CampusWorldBuilder.cs (AddSunAndSky; for sunset
+SunsetAzimuth / SunsetElevation in BuildTimeOfDayLooks).
 """
+import argparse
 import math
 import os
 
@@ -15,10 +19,34 @@ import numpy as np
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "textures", "sky_panorama.png")
 W, H = 2048, 1024
-SUN_AZIMUTH, SUN_ELEVATION = 225.0, 42.0   # V18l: high summer-afternoon sun (Luc, 12 Nov: "summer at the beach")
 SEED = 20261109
+
+# One palette per light mood (V28). "noon" is the look the game always had and must stay pixel for pixel the same.
+MOODS = {
+    "noon": dict(
+        out="sky_panorama.png",
+        sun=(225.0, 42.0),             # V18l: high summer-afternoon sun (Luc, 12 Nov: "summer at the beach")
+        sky=["#DCEAF3", "#8CC4EE", "#3E95E2", "#1F62C4"],     # horizon .. zenith
+        below=["#D9CDB6", "#A7A496"],
+        glare="#FFF7E8", glare_k=0.8, glare_w=(9.0, 35.0),
+        disc="#FFF6E6", disc_deg=(2.2, 1.2),
+        halo="#F4EBD8", halo_k=0.12, halo_w=70.0,
+        cloud_shade="#B4C3DC", cloud_lit="#FFFFFF", cloud_sun="#FFF6E4", cloud_sun_k=0.4,
+    ),
+    # V28 sunset (Luc, 13 Nov): the sun just above the sea in the west-south-west, an orange band along the horizon
+    # that turns pink and violet higher up, clouds lit pink and orange on the sun side with lilac undersides.
+    "sunset": dict(
+        out="sky_sunset.png",
+        sun=(250.0, 6.0),
+        sky=["#FFB27A", "#F49A86", "#9C7FB0", "#2E3F7C"],
+        below=["#C9906E", "#5E4F55"],
+        glare="#FFC27A", glare_k=1.1, glare_w=(12.0, 45.0),
+        disc="#FFF6DC", disc_deg=(3.4, 2.2),
+        halo="#FF9A52", halo_k=0.7, halo_w=60.0,
+        cloud_shade="#8A6E92", cloud_lit="#FFC9A8", cloud_sun="#FFB060", cloud_sun_k=0.7,
+    ),
+}
 
 
 def rgb(h):
@@ -35,6 +63,34 @@ def lerp(a, b, t):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--mood", choices=sorted(MOODS), default="noon")
+    mood = ap.parse_args().mood
+    make(MOODS[mood], mood)
+
+
+def far_horizon(mood):
+    """V35: the far land rendered by make_far_horizon.py (Blender, out/far_horizon_raw_<mood>.png), turned into this
+    sky's mapping, or None if it was not rendered. Blender's equirectangular picture has north in the middle (u 0.5)
+    and east to the right like ours, so it only moves a quarter turn left (north to u 0.25); then it is scaled from
+    its double size down to W x H, which also smooths the far coastline."""
+    path = os.path.join(HERE, "out", f"far_horizon_raw_{mood}.png")
+    if not os.path.exists(path):
+        print(f"  no {path}: sky without the far horizon (run make_far_horizon.py -- {mood} in Blender first)")
+        return None
+    far = np.asarray(Image.open(path).convert("RGBA")).astype(np.float64) / 255.0
+    far = np.roll(far, -far.shape[1] // 4, axis=1)
+    rgb_part = far[..., :3] * far[..., 3:4]                  # premultiplied, so the scaling does not darken edges
+    small = [np.asarray(Image.fromarray((ch * 255 + 0.5).astype(np.uint8)).resize((W, H), Image.LANCZOS)) / 255.0
+             for ch in (rgb_part[..., 0], rgb_part[..., 1], rgb_part[..., 2], far[..., 3])]
+    alpha = np.clip(small[3], 0, 1)[..., None]
+    colour = np.stack(small[:3], axis=-1) / np.maximum(alpha, 1e-4)
+    return np.clip(colour, 0, 1), alpha
+
+
+def make(p, mood="noon"):
+    SUN_AZIMUTH, SUN_ELEVATION = p["sun"]
+    OUT = os.path.join(HERE, "textures", p["out"])
     rng = np.random.default_rng(SEED)
     col = (np.arange(W) + 0.5) / W
     row = (np.arange(H) + 0.5) / H
@@ -45,10 +101,11 @@ def main():
     # sky gradient: warm haze at the horizon, soft blue, deep blue at the zenith
     t = np.clip(el / 90.0, 0, 1)[..., None]
     # V18l summer: a pale clear horizon (no warm haze) into a saturated deep blue
-    sky = lerp(rgb("#DCEAF3"), rgb("#8CC4EE"), smoothstep(0.0, 0.10, t))
-    sky = lerp(sky, rgb("#3E95E2"), smoothstep(0.08, 0.45, t))
-    sky = lerp(sky, rgb("#1F62C4"), smoothstep(0.4, 1.0, t))
-    below = lerp(rgb("#D9CDB6"), rgb("#A7A496"), smoothstep(0.0, 0.25, np.clip(-el / 90.0, 0, 1)[..., None]))
+    c = p["sky"]
+    sky = lerp(rgb(c[0]), rgb(c[1]), smoothstep(0.0, 0.10, t))
+    sky = lerp(sky, rgb(c[2]), smoothstep(0.08, 0.45, t))
+    sky = lerp(sky, rgb(c[3]), smoothstep(0.4, 1.0, t))
+    below = lerp(rgb(p["below"][0]), rgb(p["below"][1]), smoothstep(0.0, 0.25, np.clip(-el / 90.0, 0, 1)[..., None]))
     img = np.where((el >= 0)[..., None], sky, below)
 
     # sun: warm glow and a wide golden halo along the horizon on its side
@@ -57,11 +114,11 @@ def main():
     a, e = np.radians(az), np.radians(el)
     d = np.stack([np.sin(a) * np.cos(e), np.sin(e), np.cos(a) * np.cos(e)], axis=-1)
     ang = np.degrees(np.arccos(np.clip(d @ sun, -1, 1)))
-    glow = 0.55 * np.exp(-ang / 9.0) + 0.25 * np.exp(-ang / 35.0)
-    img = lerp(img, rgb("#FFF7E8"), np.clip(glow * 0.8, 0, 1)[..., None])                # V18l: white summer glare
-    img = lerp(img, rgb("#FFF6E6"), smoothstep(2.2, 1.2, ang)[..., None])          # small soft sun disc
-    side = np.exp(-(((az - SUN_AZIMUTH + 180) % 360 - 180) / 70.0) ** 2) * np.exp(-np.clip(el, 0, None) / 8.0)
-    img = lerp(img, rgb("#F4EBD8"), (0.12 * side * (el > -2))[..., None])                 # V18l: hardly any warm halo
+    glow = 0.55 * np.exp(-ang / p["glare_w"][0]) + 0.25 * np.exp(-ang / p["glare_w"][1])
+    img = lerp(img, rgb(p["glare"]), np.clip(glow * p["glare_k"], 0, 1)[..., None])       # V18l: white summer glare
+    img = lerp(img, rgb(p["disc"]), smoothstep(p["disc_deg"][0], p["disc_deg"][1], ang)[..., None])   # soft sun disc
+    side = np.exp(-(((az - SUN_AZIMUTH + 180) % 360 - 180) / p["halo_w"]) ** 2) * np.exp(-np.clip(el, 0, None) / 8.0)
+    img = lerp(img, rgb(p["halo"]), (p["halo_k"] * side * (el > -2))[..., None])          # warm halo along the horizon
 
     # cumulus: clusters of overlapping round puffs (a row along the flat base, smaller ones stacked on top),
     # each puff shaded from a lit top to a cool underside, the cluster warmer on the sun side
@@ -120,9 +177,14 @@ def main():
         dens[box] = np.maximum(cur, c_d)
         tone[box] = np.where(take, c_t, tone[box])
         sunside[box] = np.where(take, lit, sunside[box])
-    shade = lerp(rgb("#B4C3DC"), rgb("#FFFFFF"), smoothstep(0.1, 0.65, tone)[..., None])   # V18l: bright white cumulus
-    shade = lerp(shade, rgb("#FFF6E4"), (0.4 * sunside * smoothstep(0.45, 1.0, tone))[..., None])
+    shade = lerp(rgb(p["cloud_shade"]), rgb(p["cloud_lit"]), smoothstep(0.1, 0.65, tone)[..., None])   # lit tops
+    shade = lerp(shade, rgb(p["cloud_sun"]), (p["cloud_sun_k"] * sunside * smoothstep(0.45, 1.0, tone))[..., None])
     img = lerp(img, shade, (dens * 0.97)[..., None])
+
+    # V35: the real land 3-45 km away (Sintra, Cascais, Caparica, Arrabida), in front of the low clouds
+    far = far_horizon(mood)
+    if far is not None:
+        img = lerp(img, far[0], far[1])
 
     img = np.clip(img, 0, 1)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)

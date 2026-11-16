@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3841706211455255530}
   - component: {fileID: 2375766324227622696}
+  - component: {fileID: 765708009358362936}
   m_Layer: 0
   m_Name: Prop_AISurfRack
   m_TagString: Untagged
@@ -54,6 +55,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.736816, y: 2.3, z: 0.70729643}
   m_Center: {x: 0, y: 1.15, z: 0}
+--- !u!205 &765708009358362936
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4625818057437986088}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 1.15, z: 0}
+  m_Size: 2.3
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 1316896063225148833}
+  m_Enabled: 1
 --- !u!1 &5066885718506374660
 GameObject:
   m_ObjectHideFlags: 0

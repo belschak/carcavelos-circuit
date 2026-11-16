@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5814673627280873015}
   - component: {fileID: 5524157897973022765}
+  - component: {fileID: 1386695061577494222}
   m_Layer: 0
   m_Name: Prop_CabinetTerracotta
   m_TagString: Untagged
@@ -54,6 +55,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.3, y: 1.8000001, z: 1.0000002}
   m_Center: {x: 0, y: 0.8, z: 0}
+--- !u!205 &1386695061577494222
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4100058691446627037}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 0.8, z: 0}
+  m_Size: 2.3
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 113045641806888440}
+  m_Enabled: 1
 --- !u!1 &6431282155805732154
 GameObject:
   m_ObjectHideFlags: 0

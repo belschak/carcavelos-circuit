@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 673635299320894883}
   - component: {fileID: 5427873327993535560}
+  - component: {fileID: 8817455968103207008}
   m_Layer: 0
   m_Name: Prop_LampPlaza
   m_TagString: Untagged
@@ -56,6 +57,25 @@ CapsuleCollider:
   m_Height: 5.7
   m_Direction: 1
   m_Center: {x: 0, y: 2.85, z: 0}
+--- !u!205 &8817455968103207008
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1941247688817331414}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 2.65, z: 0}
+  m_Size: 5.7
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 329749912048855825}
+  m_Enabled: 1
 --- !u!1 &6925259920601343001
 GameObject:
   m_ObjectHideFlags: 0

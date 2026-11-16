@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1667393125461835656}
   - component: {fileID: 3903143327265678828}
+  - component: {fileID: 5757087639014896198}
   m_Layer: 0
   m_Name: Prop_BoardDirection
   m_TagString: Untagged
@@ -54,6 +55,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 3, y: 4.65, z: 0.180622}
   m_Center: {x: 0, y: 2.175, z: -0.07031088}
+--- !u!205 &5757087639014896198
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 699152385959970185}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0, y: 2.175, z: -0.07031088}
+  m_Size: 4.65
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 7724381268609902839}
+  m_Enabled: 1
 --- !u!1 &2348661894605511912
 GameObject:
   m_ObjectHideFlags: 0

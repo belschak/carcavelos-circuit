@@ -14,6 +14,16 @@ namespace CarcavelosCircuit.Visuals
         public const float MaxWave = 0.22f;       // the free edge never swings further than this
         public const float TopDrop = 0.6f;        // the top corner at the free edge is this much lower than the pole top
 
+        public const float InsideTrigger = 0.3f;  // V33: a pole stands this far inside its checkpoint's trigger edge
+
+        // V33 (Luc, 15 Nov): the poles show how wide the checkpoint really is. Distance from the route point to the
+        // pole on one side: the trigger's extent on that side minus a little, so a kart passing just inside a pole
+        // still counts; never closer than the old place just outside the road.
+        public static float PostOffsetForTrigger(float roadWidth, float triggerSide)
+        {
+            return Math.Max(PostOffset(roadWidth), triggerSide - InsideTrigger);
+        }
+
         // Distance from the road centre to each pole.
         public static float PostOffset(float roadWidth)
         {

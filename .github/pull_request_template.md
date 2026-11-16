@@ -24,4 +24,4 @@
 
 **Still needs a human playtest or browser check:**
 
-Reviewer: one teammate reads the diff, asks "explain this function", then approves.
+Reviewer: any one teammate reads the diff, asks "explain this function", then approves. No reaction within 3 hours: the author merges and posts in the group (AGENTS.md "Nobody waits for one person").

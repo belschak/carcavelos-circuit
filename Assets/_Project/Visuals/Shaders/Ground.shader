@@ -67,6 +67,7 @@ Shader "CarcavelosCircuit/Ground"
             float4 _Detail, _StrataTile, _NearRect, _BakedShadow, _Mid;
             half4 _Grass, _Sand, _WetSheen, _Rock, _RockFace, _RockWet, _RockWetTint, _Bare;
         CBUFFER_END
+        half _CampusBakedShadowDrop;   // V28 global (CampusWorldLighting): 1 = drop the baked noon shadow (sunset)
         ENDHLSL
 
         Pass
@@ -184,7 +185,7 @@ Shader "CarcavelosCircuit/Ground"
                 #endif
                 Light sun = GetMainLight(shadowCoord, pw, half4(1, 1, 1, 1));
                 // V16h: baked sun shadow beyond the realtime range; min() = never darker than one shadow
-                half bakedLit = lerp(1.0, lerp(1.0 - _BakedShadow.z, 1.0, ground.a), smoothstep(_BakedShadow.x, _BakedShadow.y, camDist));
+                half bakedLit = lerp(1.0, lerp(1.0 - _BakedShadow.z * (1.0 - _CampusBakedShadowDrop), 1.0, ground.a), smoothstep(_BakedShadow.x, _BakedShadow.y, camDist));
                 sun.shadowAttenuation = min(sun.shadowAttenuation, bakedLit);
                 half3 direct = sun.color * (sun.shadowAttenuation * saturate(dot(N, sun.direction)));
                 half3 sky = SampleSH(N);

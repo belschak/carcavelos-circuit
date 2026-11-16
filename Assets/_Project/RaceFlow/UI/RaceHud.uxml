@@ -152,6 +152,8 @@
             <ui:VisualElement name="start-layout" class="ts-layout">
                 <ui:VisualElement name="start-content" class="start-content ts-hero">
                     <ui:VisualElement name="title-lockup" class="ts-lockup">
+                        <!-- The game's name in bold above the track's name (Luc, 16 Nov) -->
+                        <ui:Label name="title-brand" text="NOVA KART" class="ts-brand f-display" />
                         <ui:VisualElement name="title-logo" class="ts-logo">
                             <ui:VisualElement name="title-letters" class="ts-letters" />
                             <ui:VisualElement name="title-glint-soft" class="ts-glint ts-glint--soft">
@@ -169,7 +171,7 @@
                     </ui:VisualElement>
                     <ui:Label name="press-any-key" text="PRESS ANY KEY" class="pill plate plate--orange ts-prompt f-display intro intro--4" />
                     <ui:Label name="start-best" text="" class="start-best ts-best chip f-num intro intro--5" />
-                    <!-- Menu buttons (task P7). The keys O, C and M do the same, and never start the race -->
+                    <!-- Menu buttons (task P7). The keys O, C, M and T do the same, and never start the race -->
                     <ui:VisualElement name="start-menu" class="menu-row ts-menu intro intro--6">
                         <ui:VisualElement name="start-settings" class="menu-pill plate">
                             <ui:VisualElement class="keycap keycap--small"><ui:Label text="O" class="f-ui" /></ui:VisualElement>
@@ -182,6 +184,11 @@
                         <ui:VisualElement name="start-sound" class="menu-pill plate">
                             <ui:VisualElement class="keycap keycap--small"><ui:Label text="M" class="f-ui" /></ui:VisualElement>
                             <ui:Label name="start-sound-text" text="SOUND ON" class="menu-pill-text f-ui" />
+                        </ui:VisualElement>
+                        <!-- V28 time of day (Luc): NOON / SUNSET, the camera then shows the campus in that light -->
+                        <ui:VisualElement name="start-mood" class="menu-pill plate">
+                            <ui:VisualElement class="keycap keycap--small"><ui:Label text="T" class="f-ui" /></ui:VisualElement>
+                            <ui:Label name="start-mood-text" text="NOON" class="menu-pill-text f-ui" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>

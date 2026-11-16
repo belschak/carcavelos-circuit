@@ -103,6 +103,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2857913931039597525}
   - component: {fileID: 6922155907528410383}
+  - component: {fileID: 184144659599067288}
   m_Layer: 0
   m_Name: Prop_PlanterRound
   m_TagString: Untagged
@@ -147,3 +148,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.8747541, y: 1.4914167, z: 0.87073743}
   m_Center: {x: 0.007968828, y: 0.6957084, z: 0.004391089}
+--- !u!205 &184144659599067288
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7147830741785331645}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0.007968843, y: 0.6957084, z: 0.004391074}
+  m_Size: 1.4914167
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 3016674243085696235}
+  m_Enabled: 1

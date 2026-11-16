@@ -31,6 +31,81 @@ namespace CarcavelosCircuit.Visuals.Editor
         private const string RailingProto = "Prop_RailingSegment";
         private const string DressingRoot = "Dressing";
 
+        // V37: mesh compression (quantised vertex data in the build; the editor keeps full floats). Low = positions in
+        // 20 bits, about 1 mm over a 1 km mesh: for the big world meshes, so road tiles and walls still meet exactly.
+        // Medium = 16 bits, about 1 mm over a few metres: for small models (props, kart, driver, items).
+        // Only the download shrinks: Unity unpacks the meshes into full floats while the scene loads.
+        public static readonly string[] WorldModels =
+        {
+            Root + "/Models/CampusWorld.fbx", HallModel,
+        };
+
+        public static readonly string[] SmallModels =
+        {
+            Root + "/Models/Dressing_Prototypes.fbx",
+            "Assets/_Project/Visuals/Kart/Models/Kart_Classic.fbx",
+            "Assets/_Project/Visuals/Kart/Models/Char_Rookie.fbx",
+        };
+
+        private const string ItemModelDir = "Assets/_Project/Visuals/Items/Models";
+
+        // Sets the compression on the model importers and on the generated hall cuts. Returns a line for the log.
+        // Called by CampusWorldBuilder (with ConfigureHallImporter) and from the menu.
+        public static string ConfigureCompression()
+        {
+            int changed = 0;
+            foreach (string path in WorldModels)
+            {
+                changed += SetModelCompression(path, ModelImporterMeshCompression.Low) ? 1 : 0;
+            }
+            foreach (string path in SmallModels)
+            {
+                changed += SetModelCompression(path, ModelImporterMeshCompression.Medium) ? 1 : 0;
+            }
+            foreach (string guid in AssetDatabase.FindAssets("t:Model", new[] { ItemModelDir }))
+            {
+                changed += SetModelCompression(AssetDatabase.GUIDToAssetPath(guid), ModelImporterMeshCompression.Medium) ? 1 : 0;
+            }
+            int cuts = 0;
+            foreach (string guid in AssetDatabase.FindAssets("t:Mesh", new[] { CutMeshDir }))
+            {
+                foreach (Mesh m in MeshesAt(AssetDatabase.GUIDToAssetPath(guid)))
+                {
+                    if (MeshUtility.GetMeshCompression(m) != ModelImporterMeshCompression.Low)
+                    {
+                        MeshUtility.SetMeshCompression(m, ModelImporterMeshCompression.Low);
+                        EditorUtility.SetDirty(m);
+                        cuts++;
+                    }
+                }
+            }
+            AssetDatabase.SaveAssets();
+            return "WebMeshBudget: mesh compression set on " + changed + " model importers and " + cuts + " generated meshes";
+        }
+
+        private static bool SetModelCompression(string path, ModelImporterMeshCompression level)
+        {
+            if (!(AssetImporter.GetAtPath(path) is ModelImporter mi) || mi.meshCompression == level)
+            {
+                return false;
+            }
+            mi.meshCompression = level;
+            mi.SaveAndReimport();
+            return true;
+        }
+
+        [MenuItem("Carcavelos Circuit/Visuals/Apply Web mesh compression")]
+        public static void ConfigureCompressionMenu()
+        {
+            Debug.Log(ConfigureCompression());
+        }
+
+        // Batch: -executeMethod CarcavelosCircuit.Visuals.Editor.WebMeshBudget.ConfigureCompressionBatch -quit
+        public static void ConfigureCompressionBatch()
+        {
+            ConfigureCompressionMenu();
+        }
+
         // Called first in CampusWorldBuilder.Build, before the hall is placed.
         public static void ConfigureHallImporter()
         {
@@ -78,6 +153,7 @@ namespace CarcavelosCircuit.Visuals.Editor
                 meshes++;
             }
             AssetDatabase.SaveAssets();
+            ConfigureCompression(); // V37: the freshly cut meshes get their compression again
             return "WebMeshBudget: " + meshes + " generated meshes " + (before / 1024) + " KB -> " + (after / 1024) + " KB, " +
                    editorOnly + " switched-off objects tagged EditorOnly";
         }

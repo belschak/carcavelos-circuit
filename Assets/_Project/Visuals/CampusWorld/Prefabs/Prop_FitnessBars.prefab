@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2084724484492150452}
   - component: {fileID: 5335564392373643103}
+  - component: {fileID: 6164613058881204376}
   m_Layer: 0
   m_Name: Prop_FitnessBars
   m_TagString: Untagged
@@ -54,6 +55,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.5814058, y: 2.1, z: 0.08559522}
   m_Center: {x: 0.0042971373, y: 0.95, z: -0.0000000018626451}
+--- !u!205 &6164613058881204376
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5684247111799500941}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0.0042971373, y: 0.95000005, z: 0}
+  m_Size: 2.1
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.0144
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 7260836359368084799}
+  m_Enabled: 1
 --- !u!1 &6109244363734092330
 GameObject:
   m_ObjectHideFlags: 0

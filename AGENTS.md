@@ -65,10 +65,19 @@ Four people and their AIs push into one repo every day. These steps keep everyon
 | `Assets/_Project/Tests/**` | each role adds tests for its own code only |
 Names and handles: `docs/team.md`. Need a change outside your paths? Add a row under "Requests between roles" in `TASKS.md` addressed to that role.
 
+## Nobody waits for one person (merging, decided 2026-11-13)
+The deadline is close, so no PR may sit because one person is busy. The owner rules above stay (who edits what); only waiting is removed.
+- **One approval from any teammate is enough to merge.** It does not have to be the owner. GitHub's automatic review request (CODEOWNERS) is only a heads-up, it never blocks.
+- **No reaction within 3 hours: merge it yourself**, then write one line in the WhatsApp group (PR number + what changed). Help PRs too: if the owner is away, the helper merges.
+- **David (Role 4) is offline Sat 14 + Sun 15 Nov 2026.** For those two days Role 4 paths (`RaceFlow/`, `Audio/`, `Ambience/`, `Main.unity`) are open to everyone: branch `help/role4-<task>-<name>`, PR, one teammate's OK or 3 h silence, merge. `Main.unity` is never hand-edited: run **Carcavelos Circuit > Build Role 4 Scenes** in Unity and commit the result. Still needs a group OK first: contracts (`Shared/`, `docs/interfaces.md`), `ProjectSettings/`, `Packages/`.
+- **No local Unity tests?** Push your branch also as `test/<your-name>` (`git push origin HEAD:test/<your-name>`) or press "Run workflow" on Actions > Tests: GitHub runs Edit Mode + Play Mode for you.
+- **How to merge:** "Squash and merge". Stacked PRs (B is built on A): merge A with "Create a merge commit", then B. Conflict: merge `main` into your branch (`git merge origin/main`), fix, push; never force-push.
+- **After a merge** Actions > Web build deploys https://belschak.github.io/carcavelos-circuit/ in about 15-20 min. If the build fails or the live game breaks: fix it with a new PR, or press "Revert" on the merged PR and merge that revert. Never leave `main` broken overnight.
+
 ## Helping another role (allowed, the owner stays the owner)
 Everyone does their own tasks first. Helping is welcome when the owner asked or agreed (chat or a `TASKS.md` request row):
 - Branch `help/role<N>-<task-id>-<your-name>`, commit messages start with `help(role<N>):` so everyone sees who did what for whom (AI help too: say "done by <name>'s Claude/ChatGPT" in the commit body).
-- Push, open a PR and request the owner as reviewer. **Only the owner merges it.** Never take over their task row or their scene.
+- Push, open a PR and request the owner as reviewer. The owner merges it; if the owner has not reacted within 3 hours, you merge it after one teammate's OK (see "Nobody waits for one person"). Never take over their task row or their scene.
 - Small fix in someone's open branch: only if they asked; push to their branch, then tell them in the group chat.
 
 ## Contracts: the only way modules talk
