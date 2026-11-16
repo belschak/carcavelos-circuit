@@ -578,11 +578,54 @@ def front_frame_and_banner(m, P, L, t, n, H, banner):
         m.beam(Q(s, za, 0.3), Q(s1, zb, 0.3), 0.08, 0.08, "steel_white")
         k, s = k + 1, s1
     if banner:
-        s0, s1 = banner
+        s0, s1, ua, ub, edge_len = banner
         (b0, b1) = BANNER_Z
         quad = [Q(s0, b0, 0.12), Q(s1, b0, 0.12), Q(s1, b1, 0.12), Q(s0, b1, 0.12)]
         m.face(quad, "banner", (-n[0], -n[1], 0))                       # outside
         m.face(list(reversed(quad)), "banner", (n[0], n[1], 0))         # back (seen through the glass)
+        banner_motif(m, Q, s0, s1, b0, b1, (-n[0], -n[1], 0), lambda s: ua + (ub - ua) * s / edge_len - BANNER_U[0])
+
+
+def banner_motif(m, Q, s0, s1, b0, b1, out, g):
+    """V36: an original motif on the entrance banner in the game's own look (never the real banner): a stylised
+    Carcavelos wave in azulejo blue with a white foam crest, three Boost Orange chevrons and a chequered-flag strip
+    along the top. Flat faces 2-4 cm in front of the banner panel, only materials the hall already has. The banner is
+    split over several facade edges; every piece draws the part of the motif that lies on it; g(s) = metres from the
+    banner's start, so the wave and the chequers run on without a jump from one edge to the next."""
+    L = s1 - s0
+    span = BANNER_U[1] - BANNER_U[0]
+    if L < 0.2:
+        return
+
+    def face(pts, mat, extra):
+        m.face([Q(s, z, extra) for s, z in pts], mat, out)
+
+    # the wave: a strip from the bottom up to a sine crest, in 0.5 m columns
+    def crest(s):
+        x = g(s)
+        return b0 + 0.95 + 0.45 * math.sin(2 * math.pi * x / 7.0) + 0.2 * math.sin(2 * math.pi * x / 2.9)
+    k = s0
+    while k < s1 - 0.01:
+        k1 = min(k + 0.5, s1)
+        face([(k, b0 + 0.15), (k1, b0 + 0.15), (k1, crest(k1)), (k, crest(k))], "blue", 0.14)
+        face([(k, crest(k)), (k1, crest(k1)), (k1, crest(k1) + 0.12), (k, crest(k) + 0.12)], "table", 0.15)
+        k = k1
+    # chequered strip along the top edge, 0.3 m squares in two rows
+    sq = 0.3
+    j = 0
+    while s0 + j * sq < s1 - 0.01:
+        a, c = s0 + j * sq, min(s0 + (j + 1) * sq, s1)
+        for row in (0, 1):
+            mat = "black" if (int(round(g((a + c) / 2) / sq - 0.5)) + row) % 2 == 0 else "table"
+            face([(a, b1 - 0.1 - (row + 1) * sq), (c, b1 - 0.1 - (row + 1) * sq), (c, b1 - 0.1 - row * sq), (a, b1 - 0.1 - row * sq)], mat, 0.14)
+        j += 1
+    # three chevrons pointing along the facade, in the upper middle; only on a piece long enough to hold them
+    if L >= 6.0 and span > 10.0:
+        mid, zc, h, w, t = s0 + L * 0.62, (b0 + b1) / 2 + 0.25, 0.55, 0.55, 0.28
+        for c in range(3):
+            x = mid + (c - 1) * 0.9
+            face([(x - w, zc + h), (x - w + t, zc + h), (x + t, zc), (x, zc)], "rail_orange", 0.16)
+            face([(x, zc), (x + t, zc), (x - w + t, zc - h), (x - w, zc - h)], "rail_orange", 0.16)
 
 
 def door(m, c, t, n, width):
@@ -778,7 +821,7 @@ def shell(m, f, polys, door_map):
                     lo, hi = max(min(ua, ub), BANNER_U[0]), min(max(ua, ub), BANNER_U[1])
                     if hi > lo:                                        # banner part on this edge, as distances along it
                         s0, s1 = sorted(((lo - ua) / (ub - ua) * L, (hi - ua) / (ub - ua) * L))
-                        banner = (s0, s1)
+                        banner = (s0, s1, ua, ub, L)       # + the edge's u range, so the motif runs on across edges
             facade(m, a, b, inside, edge_h, door_map.get(edge_key(a, b), []), style, banner=banner)
 
 
