@@ -156,6 +156,25 @@ namespace CarcavelosCircuit.RaceFlow
             return keyboard != null && keyboard.mKey.wasPressedThisFrame;
         }
 
+        // Q = back to the main menu from the results (pick another mode). Only read in Results, so on the start
+        // screen Q is a normal "any key".
+        public static bool BackToMenuPressed()
+        {
+            Keyboard keyboard = GameKeyboard();
+            return keyboard != null && keyboard.qKey.wasPressedThisFrame;
+        }
+
+        // 1, 2, 3 on the start screen = pick that race mode (RaceMode + 1), 0 = none. Top row or number pad.
+        public static int ModeKeyPressed()
+        {
+            Keyboard keyboard = GameKeyboard();
+            if (keyboard == null) return 0;
+            if (keyboard.digit1Key.wasPressedThisFrame || keyboard.numpad1Key.wasPressedThisFrame) return 1;
+            if (keyboard.digit2Key.wasPressedThisFrame || keyboard.numpad2Key.wasPressedThisFrame) return 2;
+            if (keyboard.digit3Key.wasPressedThisFrame || keyboard.numpad3Key.wasPressedThisFrame) return 3;
+            return 0;
+        }
+
         // Inside a menu: W/S or up/down choose a row, A/D or left/right change it (or turn a page).
         // -1, 0 or +1, so the menu code needs no if per key.
         public static int MenuVertical()

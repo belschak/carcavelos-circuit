@@ -120,6 +120,10 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly WrongWayDetector wrongWayDetector = new WrongWayDetector();
         private readonly StuckDetector stuckDetector = new StuckDetector();
         private HudMenus menus; // settings, credits, mute, pause overlay, reduced motion (task P7, UI/HudMenus.cs)
+        private ModePicker modePicker;       // RACE VS BOTS / TIME ATTACK / ONLINE RACE on the start screen (UI/ModePicker.cs)
+        private FinishOverlay finishOverlay; // checkered flag + place or lap time after the line (UI/FinishOverlay.cs)
+        private Label resultsHeadline;       // "FINISH" on the card, "2ND PLACE" in a race against the bots
+        private VisualElement resultsMenu;   // the MENU (Q) button on the results card: back to the mode choice
 
         // Menu sounds (audit 10): HudMenus says what happened, RaceSounds listens here and plays the clip.
         // RaceHud passes the event on because HudMenus is made new in every OnEnable, while this component stays.
@@ -127,6 +131,10 @@ namespace CarcavelosCircuit.RaceFlow
 
         // The WRONG WAY chip just appeared (audit 19). Fired once per show, so RaceSounds plays one warning, not one per frame.
         public event System.Action WrongWayShown;
+
+        // The results card starts to come in (after the finish cinematic, or earlier on a key). RaceSounds times
+        // the medal thud and the record sting from this moment.
+        public event System.Action ResultsCardShown;
 
         // What each label shows right now, so we only rebuild its text when this number changes.
         private readonly ShownNumber shownState = new ShownNumber();        // RaceState as int
@@ -178,6 +186,9 @@ namespace CarcavelosCircuit.RaceFlow
             retryButton.focusable = false; // after a mouse click it must not keep focus, or Space/Enter would press it again
             menus = new HudMenus(root, raceManager); // after IgnoreClicksDeep: it switches on the clicks of its own buttons
             menus.SoundRequested += OnMenuSound;
+            modePicker = new ModePicker(root, raceManager);     // after IgnoreClicksDeep, like the menus
+            finishOverlay = new FinishOverlay(hudRoot);
+            resultsMenu = MakeResultsMenuButton(root);
 
             // Narrow windows (4:3, 16:10): the HUD scales by height, so the panel gets less width than the 1280 reference.
             // Then the centred hint chip would cover the lap time and the key bar the drift panel: "hud--narrow" moves them.
@@ -273,6 +284,7 @@ namespace CarcavelosCircuit.RaceFlow
             ghostChip = root.Q<VisualElement>("ghost-chip");
             ghostChipName = root.Q<Label>("ghost-chip-name");
             ghostChipTime = root.Q<Label>("ghost-chip-time");
+            resultsHeadline = resultsCard.Q<Label>(className: "res-headline");
             hintIcon = root.Q<Label>("hint-icon");
             resultsMedalBadge = root.Q<VisualElement>("res-medal-badge");
             resultsMedalName = root.Q<Label>("res-medal-name");
@@ -544,6 +556,27 @@ namespace CarcavelosCircuit.RaceFlow
             // During the finish beat the card is not there yet, so the menus behave as in the race
             // (no results Settings button to click, the S key does nothing yet).
             menus.Update(state == RaceState.Results && !resultsShown ? RaceState.Racing : state);
+            modePicker.Update(state, menus.IsMenuOpen);
+            if (modePicker.UsesInput)
+            {
+                raceManager.MenuUsesInput = true; // this click or key picks a mode, it does not also start the race
+            }
+            HudFx.SetClickable(resultsMenu, resultsShown && !menus.IsMenuOpen);
+            if (resultsShown && !menus.IsMenuOpen && MouseOn(resultsMenu))
+            {
+                raceManager.MenuUsesInput = true; // the press on MENU must not also count as Q or a retry click
+            }
+
+            // The finish cinematic (flag, camera swing, place or time). A key or click after the first moment
+            // brings the results card early; Enter still retries and Q still goes to the menu (RaceManager).
+            float sinceFinish = raceManager.FinishRealTime >= 0f ? Time.unscaledTime - raceManager.FinishRealTime : -1f;
+            if (state == RaceState.Results && !resultsShown && FinishCinematic.MaySkip(sinceFinish) && RaceKeys.AnyKeyOrClickPressed())
+            {
+                ShowResultsCard();
+            }
+            finishOverlay.Update(state == RaceState.Results ? sinceFinish : -1f, resultsShown, menus.ReducedMotion,
+                raceManager.Mode, raceManager.PlayerPlace, raceManager.RacersInRace,
+                RaceTimer.ToMilliseconds(raceManager.LapSeconds), raceManager.LastLapWasRecord);
 
             if (state == RaceState.Ready)
             {
@@ -592,7 +625,7 @@ namespace CarcavelosCircuit.RaceFlow
             confettiTime = -1f;
             if (state == RaceState.Results)
             {
-                resultsShowTime = Time.unscaledTime + FinishMoment.BeatFor(menus.ReducedMotion);
+                resultsShowTime = Time.unscaledTime + FinishCinematic.ResultsCardDelay(menus.ReducedMotion);
                 resultsScreen.RemoveFromClassList("results--in");
             }
             else
@@ -617,6 +650,13 @@ namespace CarcavelosCircuit.RaceFlow
         private void ShowResultsCard()
         {
             resultsShown = true;
+            // Against the bots the card says the place; alone (or with an unknown place) it stays "FINISH".
+            int place = raceManager.PlayerPlace;
+            bool showPlace = RaceModeRules.ShowsPlace(raceManager.Mode) && RaceModeRules.HasKnownPlace(place, raceManager.RacersInRace);
+            if (resultsHeadline != null)
+            {
+                resultsHeadline.text = showPlace ? RaceModeRules.Ordinal(place) + " PLACE" : "FINISH";
+            }
             hudRoot.AddToClassList("st-results");
             HudFx.SetClickable(retryButton, true);
             resultsStartTime = Time.unscaledTime;
@@ -628,6 +668,53 @@ namespace CarcavelosCircuit.RaceFlow
                 if (resultsShown) resultsScreen.AddToClassList("results--in");
             }).ExecuteLater(33);
             confettiTime = celebrateLap ? resultsStartTime + FinishMoment.ConfettiDelay(raceManager.LastLapWasRecord) : -1f;
+            if (ResultsCardShown != null) ResultsCardShown();
+        }
+
+        // The MENU (Q) pill beside SETTINGS on the results card, built in code like the mode cards: back to the start
+        // screen to pick another mode. Same look as the other results pills.
+        private VisualElement MakeResultsMenuButton(VisualElement root)
+        {
+            VisualElement actions = root.Q<VisualElement>("res-actions");
+            VisualElement button = new VisualElement { name = "results-menu" };
+            button.AddToClassList("menu-pill");
+            button.AddToClassList("plate");
+            button.AddToClassList("menu-pill--results");
+            VisualElement keycap = new VisualElement();
+            keycap.AddToClassList("keycap");
+            keycap.AddToClassList("keycap--small");
+            Label key = new Label("Q");
+            key.AddToClassList("f-ui");
+            keycap.Add(key);
+            button.Add(keycap);
+            Label text = new Label("MENU");
+            text.AddToClassList("menu-pill-text");
+            text.AddToClassList("f-ui");
+            button.Add(text);
+            HudFx.IgnoreClicksDeep(button); // only the pill itself, and only while the card shows (Update)
+            actions.Add(button);
+            button.RegisterCallback<ClickEvent>(evt => raceManager.BackToMenu());
+            return button;
+        }
+
+        // Is the mouse over this element right now? (Same picking test as HudMenus.)
+        private bool MouseOn(VisualElement element)
+        {
+            IPanel panel = hudRoot.panel;
+            Vector2 mouse;
+            if (panel == null || !RaceKeys.TryGetMousePosition(out mouse))
+            {
+                return false;
+            }
+            Vector2 point = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(mouse.x, Screen.height - mouse.y));
+            for (VisualElement picked = panel.Pick(point); picked != null; picked = picked.parent)
+            {
+                if (picked == element)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // Starts the confetti when its stamp lands and moves it every frame (real time).
