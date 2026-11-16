@@ -119,7 +119,8 @@ namespace CarcavelosCircuit.Tests.PlayMode
             Assert.AreEqual(RaceState.Results, race.State, "crossing the line after all checkpoints ends the lap");
             Assert.AreEqual(1, finishedLaps, "exactly one lap time");
             Assert.Greater(finishedTime, 0f);
-            Assert.IsFalse(race.Kart.InputEnabled, "no driving on the results screen");
+            // After the line the player's keys do nothing; only the finish cruise (Role 3's BotSquad) may roll the kart on.
+            Assert.AreEqual(race.PlayerOnAutopilot, race.Kart.InputEnabled, "after the line the kart drives only on the finish autopilot");
 
             // The finish slow motion lasts 1.2 s of real time and must hand back full speed.
             yield return new WaitForSecondsRealtime(2f);

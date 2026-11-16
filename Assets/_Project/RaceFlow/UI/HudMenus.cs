@@ -54,6 +54,12 @@ namespace CarcavelosCircuit.RaceFlow
         // step's click already plays at the new volume (an audible preview).
         public event Action<MenuSound> SoundRequested;
 
+        // Settings or credits are open (the mode picker then leaves the keys and clicks alone).
+        public bool IsMenuOpen
+        {
+            get { return settingsOpen || creditsOpen; }
+        }
+
         public bool ReducedMotion
         {
             get { return settings.ReducedMotion; }

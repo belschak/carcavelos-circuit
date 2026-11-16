@@ -102,6 +102,22 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void BackToReady_OnlyFromResults()
+        {
+            RaceStateMachine machine = new RaceStateMachine(1);
+            Assert.IsFalse(machine.BackToReady(), "already on the start screen");
+            machine.BeginCountdown(1f);
+            Assert.IsFalse(machine.BackToReady(), "a countdown is never thrown away");
+            machine.Tick(1f);
+            Assert.IsFalse(machine.BackToReady(), "a race is never thrown away");
+            Assert.AreEqual(RaceState.Racing, machine.State);
+            machine.Finish();
+            Assert.IsTrue(machine.BackToReady(), "results -> start screen");
+            Assert.AreEqual(RaceState.Ready, machine.State);
+            Assert.IsFalse(machine.InputAllowed);
+        }
+
+        [Test]
         public void BadSettings_CannotFreezeTheRace()
         {
             RaceStateMachine machine = new RaceStateMachine(0); // treated as 1

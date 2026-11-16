@@ -4,8 +4,8 @@ using UnityEngine;
 namespace CarcavelosCircuit.RaceFlow
 {
     // The camera's big moments (David's must-have): on the start screen it circles high above the whole campus,
-    // when the countdown starts it glides down behind the kart, and after the finish it rises back up over the map
-    // behind the results card. While driving the chase camera has the camera; this script only switches it off
+    // when the countdown starts it glides down behind the kart, and after the finish (once the finish cinematic has
+    // shown the driver from the front) it rises back up over the map behind the results card. While driving the chase camera has the camera; this script only switches it off
     // while it flies. Works on any track: everything is measured from the track's checkpoints.
     // V28 (Luc's time of day): when the player picks NOON or SUNSET on the start screen, the camera glides to a shot
     // over the campus out to the sea with the sun in the picture, holds it, and glides back into the orbit.
@@ -146,7 +146,10 @@ namespace CarcavelosCircuit.RaceFlow
             }
             else if (state == RaceState.Results)
             {
-                waitUntil = Time.unscaledTime + (raceManager.ReducedMotion ? 0f : outroDelaySeconds);
+                // The finish cinematic (ChaseCameraRig's swing to the kart's front) plays first; the rise starts
+                // as the results card comes in, so the camera leaves the driver only when the card covers the road.
+                float cinematic = FinishCinematic.ResultsCardDelay(false) + 0.4f;
+                waitUntil = Time.unscaledTime + (raceManager.ReducedMotion ? 0f : Mathf.Max(outroDelaySeconds, cinematic));
                 mode = Mode.WaitForOutro; // the chase camera keeps the kart in view until then
             }
             else

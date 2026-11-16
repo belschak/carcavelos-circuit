@@ -8,7 +8,7 @@ namespace CarcavelosCircuit.RaceFlow
     // Audit 10: menu sounds (open, close, page turn, slider step, on/off, mute), asked for by the HUD's menus.
     // Audit 19: the checkpoint chime is 2 semitones higher when you are ahead of your best, 2 lower when behind;
     // one quiet warning each time the WRONG WAY chip appears; a short cue when the race pauses and resumes.
-    // Results card sounds wait for the finish beat (FinishMoment.BeatFor) and count in REAL time, because the
+    // Results card sounds wait for the card (RaceHud.ResultsCardShown, after the finish cinematic) and count in REAL time, because the
     // finish slow motion changes Time.timeScale (PlayDelayed and Time.unscaledTime both ignore it).
     // It listens to the RaceManager's events. The sound files live in Audio/Clips; their loudness is set in the
     // files (tools/audio-synth/process_wavs.py), so every sound plays at full volume here.
@@ -118,6 +118,7 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (hud != null) hud.MenuSoundRequested += OnMenuSound;
             if (hud != null) hud.WrongWayShown += OnWrongWayShown;
+            if (hud != null) hud.ResultsCardShown += OnResultsCardShown;
             raceManager.Paused += OnPaused;
             raceManager.Resumed += OnResumed;
             raceManager.CountdownStep += OnCountdownStep;
@@ -130,6 +131,7 @@ namespace CarcavelosCircuit.RaceFlow
         private void OnDisable()
         {
             if (hud != null) hud.MenuSoundRequested -= OnMenuSound;
+            if (hud != null) hud.ResultsCardShown -= OnResultsCardShown;
             if (hud != null) hud.WrongWayShown -= OnWrongWayShown;
             raceManager.Paused -= OnPaused;
             raceManager.Resumed -= OnResumed;
@@ -239,10 +241,25 @@ namespace CarcavelosCircuit.RaceFlow
         {
             Play(finishJingle);
             Duck(-12f, finishJingle);
+            stampAt = -1f;
+            sparkleAt = -1f;
+            if (hud == null)
+            {
+                // No HUD to tell us when the card comes in: assume the finish cinematic's usual timing.
+                ScheduleCardSounds(FinishCinematic.ResultsCardDelay(raceManager.ReducedMotion), newRecord);
+            }
+        }
 
-            // The results card comes in after the finish beat (0.6 s, none with reduced motion), and its stamps
-            // land at fixed times after that (FinishMoment, matched to RaceHud.uss).
-            float beat = FinishMoment.BeatFor(raceManager.ReducedMotion);
+        // The results card comes in (after the finish cinematic, or earlier on a key): its stamps land at fixed
+        // times after this moment (FinishMoment, matched to RaceHud.uss).
+        private void OnResultsCardShown()
+        {
+            ScheduleCardSounds(0f, raceManager.LastLapWasRecord);
+        }
+
+        // beat = seconds from now until the card comes in.
+        private void ScheduleCardSounds(float beat, bool newRecord)
+        {
             Medal medal = raceManager.LastMedal;
             if (medal != Medal.None)
             {
