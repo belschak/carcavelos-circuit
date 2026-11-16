@@ -30,6 +30,15 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void TheKeyThatLeftTheRoom_DoesNotAlsoStartARace()
+        {
+            Assert.IsTrue(ExternalStartRules.IsLeavingFrame(120, 120), "Q on the online results, same frame");
+            Assert.IsFalse(ExternalStartRules.IsLeavingFrame(121, 120), "the next key starts as offline");
+            Assert.IsFalse(ExternalStartRules.IsLeavingFrame(0, -1), "never left online: offline is untouched");
+            Assert.IsFalse(ExternalStartRules.MayStartFromKeys(false, RaceMode.RaceVsBots, ExternalStartRules.IsLeavingFrame(120, 120)));
+        }
+
+        [Test]
         public void RetryLeaveAndPause_OnlyWhileThePlayerOwnsTheRace()
         {
             Assert.IsTrue(ExternalStartRules.MayRetryOrLeave(false));

@@ -50,8 +50,12 @@ namespace CarcavelosCircuit.Online
         private int appliedRaceId;       // the race this screen is set up for (0 = lobby)
         private bool inRace;             // I am in that race's roster
         private bool countdownStarted;   // BeginRaceExternal was called for that race
+        private bool raceTimeUp;         // that race ran out of time (OnlineRaceLimitRules): still racing = DNF
+        private double raceEndSeconds = OnlineRaceLimitRules.NoFinisherLimitSeconds; // lap seconds after GO it closes
+        private bool timedOut;           // my own lap was cut off by the time limit: I watch the results from the grid
         private double autoStartReachedAt = -1.0;
         private bool runInBackgroundBefore;
+        private TimeOfDay lightBefore = TimeOfDay.Noon; // the player's own light, back on leave (the room only borrows it)
 
         public static OnlineRaceDirector Current { get { return current; } }
         public IOnlineSession Session { get { return session; } }
@@ -99,6 +103,7 @@ namespace CarcavelosCircuit.Online
             raceManager.ExternalStartOnly = true;    // the room starts the race, not a key
             raceManager.PauseOnFocusLoss = false;    // the others keep driving on the shared clock
             runInBackgroundBefore = Application.runInBackground;
+            lightBefore = TimeOfDayChoice.Current;
             Application.runInBackground = true;      // a tab in the background must keep sending poses
             raceManager.LapFinished += OnLapFinished;
 
@@ -176,7 +181,7 @@ namespace CarcavelosCircuit.Online
                 Close(); // the player picked another mode on the start screen (keys 1/2) or RaceManager left online
                 return;
             }
-            if (view != null && view.BlocksGameKeys)
+            if (view != null && (view.BlocksGameKeys || timedOut))
             {
                 RaceKeys.TextEntryActive = true; // the lobby owns the keyboard this frame (see the class comment)
             }
@@ -274,6 +279,7 @@ namespace CarcavelosCircuit.Online
             }
             RaceControl control = session.Control;
             ApplyControl(control);
+            CheckTimeLimit(control);
             SendPoseIfDue();
             double now = session.Now;
             foreach (KeyValuePair<int, ProxyKart> pair in proxies)
@@ -281,6 +287,7 @@ namespace CarcavelosCircuit.Online
                 if (pair.Value != null)
                 {
                     pair.Value.Show(now);
+                    pair.Value.SetVisible(OnlineProxyRules.Shows(pair.Value.HasPose, control, pair.Key));
                 }
             }
             UpdateAutopilot();
@@ -297,6 +304,7 @@ namespace CarcavelosCircuit.Online
             {
                 appliedRaceId = control.RaceId;
                 countdownStarted = false;
+                timedOut = false;
                 inRace = control.Contains(session.LocalId);
                 autopilot.Stop();
                 if (raceManager.State != RaceState.Ready)
@@ -310,15 +318,38 @@ namespace CarcavelosCircuit.Online
                 }
                 rows = BuildRows(control);
             }
-            bool due = control.RaceId > 0 && inRace && !countdownStarted && raceManager.State == RaceState.Ready
+            bool due = control.RaceId > 0 && inRace && !countdownStarted && !raceTimeUp && raceManager.State == RaceState.Ready
                 && OnlineStartRules.ShouldBeginCountdown(session.Now, control.StartAt, raceManager.CountdownFrom, OnlineStartRules.CountdownStepSeconds);
             if (due)
             {
-                countdownStarted = raceManager.BeginRaceExternal(OnlineStartRules.CountdownStepSeconds);
+                // A late control message gets shorter steps, so GO still lands on StartAt (review F2).
+                float step = OnlineStartRules.CountdownStepFor(session.Now, control.StartAt, raceManager.CountdownFrom);
+                countdownStarted = raceManager.BeginRaceExternal(step);
                 if (countdownStarted && view != null)
                 {
                     view.Hide();
                 }
+            }
+        }
+
+        // The race time limit (OnlineRaceLimitRules): the moment it runs out, everyone still on the road is DNF on
+        // every screen. If that is me, my lap ends: back on the grid, the room's results beside the start screen.
+        private void CheckTimeLimit(RaceControl control)
+        {
+            if (control.RaceId == 0 || control.RaceId != appliedRaceId)
+            {
+                return;
+            }
+            if (!raceTimeUp && OnlineRaceLimitRules.IsTimeUp(session.Now, control.StartAt, raceEndSeconds))
+            {
+                rows = BuildRows(control); // sets raceTimeUp
+            }
+            RaceState state = raceManager.State;
+            if (raceTimeUp && inRace && (state == RaceState.Countdown || state == RaceState.Racing))
+            {
+                autopilot.Stop();
+                raceManager.ResetToReadyExternal();
+                timedOut = true;
             }
         }
 
@@ -419,23 +450,16 @@ namespace CarcavelosCircuit.Online
             }
         }
 
-        // May the host start (again) right now? In the lobby from the start screen; after a race once my own
-        // results show (or, watching from the lobby, once everyone in the race is done).
+        // May the host start (again) right now? In the lobby from the start screen; after a race only once it is
+        // over for everyone (all finished or left, or the time limit ran out), never while someone still drives:
+        // the host's own finish is not enough, Enter on the results must not cut the others' lap (review F1).
         private bool CanStartNow(RaceControl control)
         {
             if (session == null || !session.IsMaster)
             {
                 return false;
             }
-            if (control.RaceId == 0)
-            {
-                return raceManager.State == RaceState.Ready;
-            }
-            if (inRace)
-            {
-                return raceManager.State == RaceState.Results;
-            }
-            return FinishOrderRules.AllDone(rows);
+            return OnlineStartRules.HostMayStart(control.RaceId, raceManager.State == RaceState.Ready, FinishOrderRules.AllDone(rows));
         }
 
         // A new race for everyone in the room right now: ids in join order = grid slots, GO in 4 s.
@@ -464,9 +488,9 @@ namespace CarcavelosCircuit.Online
                 return;
             }
             bool canStart = CanStartNow(control);
-            if (state == RaceState.Results)
+            if (state == RaceState.Results || timedOut)
             {
-                view.ShowResults(rows, session.LocalId, canStart);
+                view.ShowResults(rows, session.LocalId, canStart, ResultsWaitLine(control, canStart), timedOut ? "TIME UP: ROOM RESULTS" : "ROOM RESULTS");
                 return;
             }
             IReadOnlyList<OnlinePlayer> players = session.Players;
@@ -485,6 +509,21 @@ namespace CarcavelosCircuit.Online
                 status = "WAITING FOR THE HOST";
             }
             view.ShowRoom(room, players, session.LocalId, masterId, status, canStart);
+        }
+
+        // Under the room results: nothing for the host's START AGAIN, the time left while others still drive,
+        // else the wait for the host.
+        private string ResultsWaitLine(RaceControl control, bool canStart)
+        {
+            if (canStart)
+            {
+                return "";
+            }
+            if (control.RaceId > 0 && !FinishOrderRules.AllDone(rows))
+            {
+                return OnlineRaceLimitRules.ClosesLine(OnlineRaceLimitRules.SecondsLeft(session.Now, control.StartAt, raceEndSeconds));
+            }
+            return "WAITING FOR THE HOST";
         }
 
         // ---- Session events (main thread, see IOnlineSession) ----
@@ -575,10 +614,13 @@ namespace CarcavelosCircuit.Online
             proxies.Clear();
         }
 
-        // The results of the current race: everyone in the roster, present or not, finished or not.
+        // The results of the current race: everyone in the roster, present or not, finished or not, with the time
+        // limit applied (a lap after it is no finish, still racing after it = DNF). Also sets raceTimeUp/raceEndSeconds.
         private List<FinishRow> BuildRows(RaceControl control)
         {
             entries.Clear();
+            raceTimeUp = false;
+            raceEndSeconds = OnlineRaceLimitRules.NoFinisherLimitSeconds;
             if (control.RaceId == 0)
             {
                 return FinishOrderRules.Order(entries);
@@ -606,7 +648,8 @@ namespace CarcavelosCircuit.Online
                 double seconds = finished ? known.FinishSeconds : double.NaN;
                 entries.Add(new FinishEntry(id, name, present != null, finished, seconds));
             }
-            return FinishOrderRules.Order(entries);
+            List<FinishEntry> limited = OnlineRaceLimitRules.Apply(entries, session.Now, control.StartAt, out raceTimeUp, out raceEndSeconds);
+            return FinishOrderRules.Order(limited);
         }
 
         // ---- Lobby actions ----
@@ -641,7 +684,7 @@ namespace CarcavelosCircuit.Online
         private void JoinRoom(TimeOfDay wantedRoom, string cleanedName)
         {
             room = wantedRoom;
-            TimeOfDayChoice.Set(room);            // the room sets the light for everyone in it
+            TimeOfDayChoice.Set(room, false);     // the room sets the light for everyone in it, never saved (review F11)
             SettingsStore.SavePlayerName(cleanedName);
             SetPlayerName(cleanedName);
             DropSession();
@@ -657,6 +700,7 @@ namespace CarcavelosCircuit.Online
             appliedRaceId = 0;
             inRace = false;
             countdownStarted = false;
+            timedOut = false;
             rows.Clear();
             knownPlayers.Clear();
             connectStartedAt = Time.unscaledTime;
@@ -725,6 +769,8 @@ namespace CarcavelosCircuit.Online
             appliedRaceId = 0;
             inRace = false;
             countdownStarted = false;
+            timedOut = false;
+            raceTimeUp = false;
             autoStartReachedAt = -1.0;
             rows.Clear();
         }
@@ -750,6 +796,7 @@ namespace CarcavelosCircuit.Online
                 raceManager.LeaveOnlineMode();
             }
             Application.runInBackground = runInBackgroundBefore;
+            TimeOfDayChoice.Set(lightBefore);      // the player's own light again
             if (current == this)
             {
                 current = null;

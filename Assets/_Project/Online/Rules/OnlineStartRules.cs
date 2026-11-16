@@ -6,7 +6,8 @@ namespace CarcavelosCircuit.Online
     public static class OnlineStartRules
     {
         public const double StartLeadSeconds = 4.0;    // room for the message to reach everyone before 3-2-1 starts
-        public const float CountdownStepSeconds = 1f;  // the online countdown always counts in whole seconds
+        public const float CountdownStepSeconds = 1f;  // the online countdown counts in whole seconds when on time
+        public const float MinCountdownStepSeconds = 0.05f; // the quickest step for a client that is very late
         public const double AutoStartSeconds = 5.0;    // ?autostart=N: the host waits this long after the Nth player
         public const double AutoRematchSeconds = 8.0;  // ?autostart=N: results stay this long before the next round
 
@@ -24,8 +25,32 @@ namespace CarcavelosCircuit.Online
             return now >= startAt - steps * (double)step;
         }
 
+        // The length of one countdown step for a client that begins now, so GO still lands on StartAt when the
+        // control message came in late (bad Wi-Fi): steps = the time left / countdownFrom, at most the normal 1 s,
+        // at least 0.05 s (RaceStateMachine's own floor). Already past StartAt: the quickest countdown (RaceManager
+        // has no way to start the race clock part-way, so that client is a fraction of a second late, never 3 s).
+        public static float CountdownStepFor(double now, double startAt, int countdownFrom)
+        {
+            int steps = countdownFrom < 1 ? 1 : countdownFrom;
+            double step = (startAt - now) / steps;
+            if (double.IsNaN(step) || step < MinCountdownStepSeconds)
+            {
+                return MinCountdownStepSeconds;
+            }
+            return step > CountdownStepSeconds ? CountdownStepSeconds : (float)step;
+        }
+
+        // May the host start a race right now (button or Enter, and ?autostart)? Before the first race: from the
+        // start screen. After a race: only once it is over for everyone, that is every roster player finished or
+        // left, or the race time ran out (OnlineRaceLimitRules). Never while anyone is still racing, or the
+        // others would lose their lap.
+        public static bool HostMayStart(int raceId, bool atStartScreen, bool raceOver)
+        {
+            return raceId <= 0 ? atStartScreen : raceOver;
+        }
+
         // The phase the master should announce for a running race: Countdown until GO, Racing until everyone is
-        // done (finished or left), then Results.
+        // done (finished, left or out of time, see OnlineRaceLimitRules), then Results.
         public static OnlinePhase PhaseFor(RaceControl control, double now, bool allDone)
         {
             if (control == null || control.RaceId == 0)

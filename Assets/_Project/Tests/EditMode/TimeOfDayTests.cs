@@ -91,6 +91,17 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void Set_WithoutSave_ChangesTheLookButNotTheSavedChoice()
+        {
+            TimeOfDayChoice.Set(TimeOfDay.Noon);
+            Assert.IsTrue(TimeOfDayChoice.Set(TimeOfDay.Sunset, false), "the online Sunset room");
+            Assert.AreEqual(TimeOfDay.Sunset, TimeOfDayChoice.Current);
+            Assert.AreEqual((int)TimeOfDay.Noon, PlayerPrefs.GetInt(TimeOfDayChoice.PrefsKey, -1), "the offline choice is kept");
+            Assert.IsTrue(TimeOfDayChoice.Set(TimeOfDay.Noon), "leaving the room puts the offline light back");
+            Assert.AreEqual(TimeOfDay.Noon, TimeOfDayChoice.Current);
+        }
+
+        [Test]
         public void TowardsSun_PointsWhereTheSkyPaintsTheSun()
         {
             // azimuth clockwise from north (+z): 90 = east (+x), 180 = south (-z); elevation lifts it

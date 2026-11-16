@@ -74,9 +74,10 @@ mergeInto(LibraryManager.library, {
     return buffer;
   },
 
-  // The shared clock in seconds: wall time, the same for every tab on this machine (an offset keeps the number small).
+  // The shared clock in seconds: the system clock, the same for every tab on this machine (an offset keeps the
+  // number small). Not performance.now(): it is per tab and on some systems stops during sleep (review F10).
   OnlineBroadcastNow: function () {
-    return (performance.timeOrigin + performance.now() - 1700000000000) / 1000;
+    return (Date.now() - 1700000000000) / 1000;
   },
 
   // A random player id 1 .. 2147483646 for this tab.

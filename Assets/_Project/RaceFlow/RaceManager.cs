@@ -93,6 +93,7 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly RacePause pause = new RacePause();
         private readonly ShownPlace shownPlace = new ShownPlace();
         private bool pauseOnFocusLossFromScene = true; // the Inspector value, put back by LeaveOnlineMode
+        private int leftOnlineFrame = -1; // Time.frameCount of the last LeaveOnlineMode, -1 = never (its key must not start a race)
         private float timeScaleBeforePause = 1f;
         private bool frozen; // true while this script holds Time.timeScale at 0
         private float slowMotionStart = -1f; // Time.unscaledTime when the finish slow motion began, -1 = none (task P6b)
@@ -408,7 +409,8 @@ namespace CarcavelosCircuit.RaceFlow
             // Not while the settings or credits use the keys and the mouse, and never online (the host starts).
             if (State == RaceState.Ready)
             {
-                if (ExternalStartRules.MayStartFromKeys(ExternalStartOnly, Mode, MenuUsesInput) && RaceKeys.AnyKeyOrClickPressed())
+                bool leftOnlineNow = ExternalStartRules.IsLeavingFrame(Time.frameCount, leftOnlineFrame); // Q or BACK just left the room
+                if (ExternalStartRules.MayStartFromKeys(ExternalStartOnly, Mode, MenuUsesInput || leftOnlineNow) && RaceKeys.AnyKeyOrClickPressed())
                 {
                     BeginRace();
                 }
@@ -511,6 +513,7 @@ namespace CarcavelosCircuit.RaceFlow
         // the player leaves the room (Back, Q) or the connection fails.
         public void LeaveOnlineMode()
         {
+            leftOnlineFrame = Time.frameCount; // the Q or click that left the room does not also start a race this frame
             ExternalStartOnly = false;
             pauseOnFocusLoss = pauseOnFocusLossFromScene;
             ClearExternalPlace();

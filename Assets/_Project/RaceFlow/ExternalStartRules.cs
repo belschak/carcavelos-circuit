@@ -13,6 +13,13 @@ namespace CarcavelosCircuit.RaceFlow
             return !externalStartOnly && !menuUsesInput && RaceModeRules.StartsOnAnyKey(mode);
         }
 
+        // Was the online mode left in this very frame (RaceManager.LeaveOnlineMode)? Then the key or click that left
+        // (Q, BACK) must not also start an offline race in the same frame. leftOnlineFrame -1 = never left.
+        public static bool IsLeavingFrame(int frame, int leftOnlineFrame)
+        {
+            return leftOnlineFrame >= 0 && frame == leftOnlineFrame;
+        }
+
         // Enter = retry and Q = back to the menu (also the results card's buttons). Not while the lobby owns the race.
         public static bool MayRetryOrLeave(bool externalStartOnly)
         {

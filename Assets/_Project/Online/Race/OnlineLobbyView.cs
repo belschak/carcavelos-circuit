@@ -252,9 +252,10 @@ namespace CarcavelosCircuit.Online
         }
 
         // The room's order beside the HUD's results card. rows come from FinishOrderRules (same on every screen).
-        public void ShowResults(IReadOnlyList<FinishRow> rows, int localId, bool showStart)
+        // waitLine = the line instead of START AGAIN (the time left, or the wait for the host), headline = the title.
+        public void ShowResults(IReadOnlyList<FinishRow> rows, int localId, bool showStart, string waitLine, string headline)
         {
-            string sig = "results|" + localId + "|" + showStart;
+            string sig = "results|" + localId + "|" + showStart + "|" + waitLine + "|" + headline;
             for (int i = 0; rows != null && i < rows.Count; i++)
             {
                 sig += "|" + rows[i].Id + ":" + (int)rows[i].State + ":" + rows[i].Seconds.ToString("F3");
@@ -264,7 +265,7 @@ namespace CarcavelosCircuit.Online
                 return;
             }
             sideCard.Clear();
-            Label head = Caption("ROOM RESULTS", sideCard);
+            Label head = Caption(string.IsNullOrEmpty(headline) ? "ROOM RESULTS" : headline, sideCard);
             head.style.unityTextAlign = TextAnchor.MiddleCenter;
             for (int i = 0; rows != null && i < rows.Count; i++)
             {
@@ -278,7 +279,7 @@ namespace CarcavelosCircuit.Online
             }
             else
             {
-                Chip("WAITING FOR THE HOST", false, foot);
+                Chip(string.IsNullOrEmpty(waitLine) ? "WAITING FOR THE HOST" : waitLine, false, foot);
             }
             VisualElement keys = Row(sideCard);
             keys.style.marginTop = 10f;

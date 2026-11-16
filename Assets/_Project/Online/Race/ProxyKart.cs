@@ -26,6 +26,7 @@ namespace CarcavelosCircuit.Online
 
         public int PlayerId { get; private set; }
         public int PoseCount { get { return buffer.Count; } }
+        public bool HasPose { get { return hasShown; } } // false until the first pose could be drawn
 
         // ---- IKartState (read by the model, the name tag and the standings) ----
         public float Speed { get { return hasShown ? shown.Speed : 0f; } }
@@ -50,7 +51,8 @@ namespace CarcavelosCircuit.Online
         public bool IsPlayer { get { return false; } }
         public Color MapColor { get { return colour; } }
 
-        // Makes one proxy: an inactive object first, so OnEnable registers it with its name and colour already set.
+        // Makes one proxy, inactive: the director switches it on with SetVisible (OnlineProxyRules: not before its
+        // first pose, not a late joiner mid-race), and OnEnable then registers it with its name and colour set.
         // visualSource = my kart's "Visual" child to copy (null = a plain box), maxSpeed = my kart's top speed.
         public static ProxyKart Spawn(OnlinePlayer player, Transform visualSource, float maxSpeed)
         {
@@ -58,8 +60,17 @@ namespace CarcavelosCircuit.Online
             root.SetActive(false);
             ProxyKart proxy = root.AddComponent<ProxyKart>();
             proxy.SetUp(player, visualSource, maxSpeed);
-            root.SetActive(true);
             return proxy;
+        }
+
+        // Shown = drawn and counted as a racer (RacerRegistry); hidden = neither. Show() keeps the pose up to date
+        // either way, so it appears in the right place.
+        public void SetVisible(bool visible)
+        {
+            if (gameObject.activeSelf != visible)
+            {
+                gameObject.SetActive(visible);
+            }
         }
 
         private void SetUp(OnlinePlayer player, Transform visualSource, float topSpeed)
@@ -89,6 +100,7 @@ namespace CarcavelosCircuit.Online
             {
                 GameObject visual = Instantiate(visualSource.gameObject, transform, false); // false = keep the local offset
                 visual.name = VisualName;
+                visual.transform.localRotation = Quaternion.identity; // not my kart's lean of this moment (KartController tilts it)
                 return;
             }
             GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);

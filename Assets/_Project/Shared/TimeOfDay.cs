@@ -44,14 +44,23 @@ namespace CarcavelosCircuit.Shared
         // Picks a mood, saves it and tells the listeners. Returns false if it was already the mood.
         public static bool Set(TimeOfDay mood)
         {
+            return Set(mood, true);
+        }
+
+        // save false = only for now, the saved choice stays (an online room sets its own light, M2).
+        public static bool Set(TimeOfDay mood, bool save)
+        {
             mood = FromSaved((int)mood);
             if (mood == Current)
             {
                 return false;
             }
             current = mood;
-            PlayerPrefs.SetInt(PrefsKey, (int)mood);
-            PlayerPrefs.Save();
+            if (save)
+            {
+                PlayerPrefs.SetInt(PrefsKey, (int)mood);
+                PlayerPrefs.Save();
+            }
             if (Changed != null)
             {
                 Changed(mood);
