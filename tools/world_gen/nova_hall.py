@@ -44,7 +44,24 @@ NW_CORNER, NE_CORNER = (3.0, 160.0), (67.0, 184.0)
 # ---------- sizes (m) ----------
 SPLIT_U = 68.0               # line between the atrium block and the long room (through (28, 97) and (55, 107))
 LONG_END_U = 209.8           # the long room runs through the whole wing to its south facade (map: wing ends at u 210)
-ATRIUM_H = 12.5              # clear height under the atrium roof
+# V36 (Gaussian splat of IMG_7722 0-80 s, scaled by the phone's 1.45 m height, +-7 %): the real roof edge of the west
+# entrance front tops out at 9.8 m and the atrium's roof trusses at 10.1-11.1 m over the floor; 12.5 put the trusses at
+# 10.9-12.35 m and the roof at 13.3 m, 3.5 m over the real front. Was 12.5. (docs: tools/world_gen/splat_reference.md)
+ATRIUM_H = 10.8              # clear height under the atrium roof
+# V36 (same splat): the west entrance front is lower than the atrium behind it. Its white fascia runs from 8.0 to 9.8 m
+# (FRONT_H + 0.8; the banner zone below it is the upper glass band), then the roof steps up to the atrium's. The step
+# stands at the footprint's corner (8.31, 161.93), where the north wall's short west piece ends, so the north wall
+# steps there too. Where the real step stands was not measured (the splat shows the front, not the roof behind it).
+FRONT_H = 9.0                # wall height of the atrium's west front (top of its fascia = FRONT_H + 0.8 = 9.8 m)
+FRONT_DEPTH = 5.65           # the lower roof strip reaches this far in from the west front (o)
+# V36 (splat + IMG_7722 0-20 s): the west front has three parts, split at two corners of the OSM outline. North of
+# u 11.77 the closed white block with the NOVA name (light grey in the splat); u 11.77-39.0 the glazed entrance front
+# with the banner and a dark band carrying the space frame at the roof edge; south of u 39.0 a white wall with a dark
+# shop window on the ground floor ("glass_low").
+FRONT_SOLID_END_U = 11.77
+FRONT_GLASS_END_U = 39.0
+BANNER_U = (13.5, 37.0)      # the banner zone along u (splat: light blue points u 15-37.5) ..
+BANNER_Z = (5.6, 8.0)        # .. and from-to height (splat: 5.6-8.0 m)
 LONG_H = 11.0                # clear height of the long room
 LOW_CEILING_END = 80.0       # first part of the long room has a flat ceiling at LOW_Z
 LOW_Z = 4.6
@@ -490,7 +507,7 @@ def in_no_mullion_zone(p):
     return False
 
 
-def facade(m, a, b, inside, H, openings, style, posts=True):
+def facade(m, a, b, inside, H, openings, style, posts=True, banner=None):
     """One straight piece of outer wall from a to b. inside = unit normal pointing into the building.
     style 'glass': glazed ground floor, white band, glazed upper floor, white fascia; 'solid': white wall.
     openings: [(distance along the edge, width, name)] for doors."""
@@ -517,7 +534,7 @@ def facade(m, a, b, inside, H, openings, style, posts=True):
         s = c1
     pieces.append((s, L))
     top = 4.4                                                         # top of the ground floor band
-    glazed_ground = style in ("glass", "glass_low")                      # glass_low: glass on the ground floor only
+    glazed_ground = style in ("glass", "glass_low", "glass_front")       # glass_low: glass on the ground floor only
     for s0, s1 in pieces:
         band(s0, s1, 0.0, top, "glass" if glazed_ground else "wall")
         if glazed_ground and posts:                                  # V18j (Luc's request): posts=False = no dark posts
@@ -529,16 +546,86 @@ def facade(m, a, b, inside, H, openings, style, posts=True):
     for c0, c1 in cuts:
         band(c0, c1, DOOR_H + 0.4, top, "glass" if glazed_ground else "wall")
         door(m, P((c0 + c1) / 2, 0.0), (tx, ty), (nx, ny), c1 - c0)
-    if style == "glass":
+    if style in ("glass", "glass_front"):
         band(0, L, top, GALLERY_Z + 0.6, "wall")                       # white band at the first floor
         band(0, L, GALLERY_Z + 0.6, H - 1.0, "glass")
         for k in range(int(L / 1.6) + 1):
             m.box(P(k * 1.6, (GALLERY_Z + 0.6 + H - 1.0) / 2), 0.05, 0.06, (H - 1.0 - GALLERY_Z - 0.6) / 2, "steel_white", heading)
-        band(0, L, H - 1.0, H + 0.8, "wall")
+        band(0, L, H - 1.0, H + 0.8, "deck_dark" if style == "glass_front" else "wall")
+        if style == "glass_front":
+            front_frame_and_banner(m, P, L, (tx, ty), (nx, ny), H, banner)
     else:
         band(0, L, top, H + 0.8, "wall")
     m.face([P(0, H + 0.8), P(L, H + 0.8), P(L, H + 0.8, True), P(0, H + 0.8, True)], "wall", (0, 0, 1))  # wall top
     m.face([P(0, -PLINTH, True), P(L, -PLINTH, True), P(L, 0.0, True), P(0, 0.0, True)], "wall", (-nx, -ny, 0))   # plinth
+
+
+def front_frame_and_banner(m, P, L, t, n, H, banner):
+    """V36 (splat): the glazed main entrance front. A white space-frame strip 0.3 m in front of the dark band at the roof
+    edge (two chords, a zigzag of diagonals every 1.6 m), and the banner zone: a panel 0.12 m in front of the upper
+    glass (placeholder colour, see hall_kit 'banner')."""
+    def Q(s, z, extra):
+        p = P(s, z, True)
+        return (p[0] - n[0] * extra, p[1] - n[1] * extra, z)
+
+    z0, z1 = H - 0.9, H + 0.7
+    for z in (z0, z1):
+        m.beam(Q(0.0, z, 0.3), Q(L, z, 0.3), 0.12, 0.12, "steel_white")
+    k, s = 0, 0.0
+    while s < L - 0.01:
+        s1 = min(s + 1.6, L)
+        za, zb = (z0, z1) if k % 2 == 0 else (z1, z0)
+        m.beam(Q(s, za, 0.3), Q(s1, zb, 0.3), 0.08, 0.08, "steel_white")
+        k, s = k + 1, s1
+    if banner:
+        s0, s1, ua, ub, edge_len = banner
+        (b0, b1) = BANNER_Z
+        quad = [Q(s0, b0, 0.12), Q(s1, b0, 0.12), Q(s1, b1, 0.12), Q(s0, b1, 0.12)]
+        m.face(quad, "banner", (-n[0], -n[1], 0))                       # outside
+        m.face(list(reversed(quad)), "banner", (n[0], n[1], 0))         # back (seen through the glass)
+        banner_motif(m, Q, s0, s1, b0, b1, (-n[0], -n[1], 0), lambda s: ua + (ub - ua) * s / edge_len - BANNER_U[0])
+
+
+def banner_motif(m, Q, s0, s1, b0, b1, out, g):
+    """V36: an original motif on the entrance banner in the game's own look (never the real banner): a stylised
+    Carcavelos wave in azulejo blue with a white foam crest, three Boost Orange chevrons and a chequered-flag strip
+    along the top. Flat faces 2-4 cm in front of the banner panel, only materials the hall already has. The banner is
+    split over several facade edges; every piece draws the part of the motif that lies on it; g(s) = metres from the
+    banner's start, so the wave and the chequers run on without a jump from one edge to the next."""
+    L = s1 - s0
+    span = BANNER_U[1] - BANNER_U[0]
+    if L < 0.2:
+        return
+
+    def face(pts, mat, extra):
+        m.face([Q(s, z, extra) for s, z in pts], mat, out)
+
+    # the wave: a strip from the bottom up to a sine crest, in 0.5 m columns
+    def crest(s):
+        x = g(s)
+        return b0 + 0.95 + 0.45 * math.sin(2 * math.pi * x / 7.0) + 0.2 * math.sin(2 * math.pi * x / 2.9)
+    k = s0
+    while k < s1 - 0.01:
+        k1 = min(k + 0.5, s1)
+        face([(k, b0 + 0.15), (k1, b0 + 0.15), (k1, crest(k1)), (k, crest(k))], "blue", 0.14)
+        face([(k, crest(k)), (k1, crest(k1)), (k1, crest(k1) + 0.12), (k, crest(k) + 0.12)], "table", 0.15)
+        k = k1
+    # chequered strip along the top edge, 0.3 m squares in two rows
+    sq = 0.3
+    j = 0
+    while s0 + j * sq < s1 - 0.01:
+        a, c = s0 + j * sq, min(s0 + (j + 1) * sq, s1)
+        for row in (0, 1):
+            mat = "black" if (int(round(g((a + c) / 2) / sq - 0.5)) + row) % 2 == 0 else "table"
+            face([(a, b1 - 0.1 - (row + 1) * sq), (c, b1 - 0.1 - (row + 1) * sq), (c, b1 - 0.1 - row * sq), (a, b1 - 0.1 - row * sq)], mat, 0.14)
+        j += 1
+    # three chevrons pointing along the facade, in the upper middle; only on a piece long enough to hold them
+    if L >= 6.0 and span > 10.0:
+        mid, zc, h, w, t = s0 + L * 0.62, (b0 + b1) / 2 + 0.25, 0.55, 0.55, 0.28
+        for c in range(3):
+            x = mid + (c - 1) * 0.9
+            face([(x - w, zc + h), (x - w + t, zc + h), (x + t, zc), (x, zc)], "rail_orange", 0.16)
+            face([(x, zc), (x + t, zc), (x - w + t, zc - h), (x - w, zc - h)], "rail_orange", 0.16)
 
 
 def door(m, c, t, n, width):
@@ -724,7 +811,18 @@ def shell(m, f, polys, door_map):
                     north_canopy(m, f, inside, H)
                     canopy_done = True
                 continue
-            facade(m, a, b, inside, H, door_map.get(edge_key(a, b), []), style)
+            edge_h, banner = H, None
+            if poly is atrium and mid_o < FRONT_DEPTH:                 # V36: the lower west front and its three parts
+                edge_h = FRONT_H
+                if mid_u >= SOLID_NORTH_U:
+                    style = "solid" if mid_u < FRONT_SOLID_END_U else ("glass_front" if mid_u < FRONT_GLASS_END_U else "glass_low")
+                if style == "glass_front":
+                    ua, ub = f.uo(*a)[0], f.uo(*b)[0]
+                    lo, hi = max(min(ua, ub), BANNER_U[0]), min(max(ua, ub), BANNER_U[1])
+                    if hi > lo:                                        # banner part on this edge, as distances along it
+                        s0, s1 = sorted(((lo - ua) / (ub - ua) * L, (hi - ua) / (ub - ua) * L))
+                        banner = (s0, s1, ua, ub, L)       # + the edge's u range, so the motif runs on across edges
+            facade(m, a, b, inside, edge_h, door_map.get(edge_key(a, b), []), style, banner=banner)
 
 
 # ---------- atrium ----------
@@ -736,7 +834,17 @@ def atrium_roof(m, f, poly):
     def cut(part, axis, limit, keep_below):
         return K.clip_polygon(part, lambda p: (limit - f.uo(*p)[axis]) if keep_below else (f.uo(*p)[axis] - limit))
 
-    east = cut(poly, 1, go0, False)                                      # everything east of the field's west edge
+    # V36: the strip behind the lower west front gets its own roof at FRONT_H; a white step wall joins it to the rest
+    front = cut(poly, 1, FRONT_DEPTH, True)
+    if len(front) >= 3 and abs(K.signed_area(front)) > 0.01:
+        K.polygon_face(m, front, FRONT_H, "deck_dark", up=False)
+        K.polygon_face(m, front, FRONT_H + 0.8, "concrete", up=True)
+    us = [f.uo(*p)[0] for p in front]
+    su0, su1 = min(us), min(max(us), SPLIT_U - 0.15)
+    K.wall_o(m, f, FRONT_DEPTH, su0, su1, FRONT_H + 0.8, ATRIUM_H + 0.8, "wall", facing=-1)   # outside, over the strip
+    K.wall_o(m, f, FRONT_DEPTH, su0, su1, FRONT_H, ATRIUM_H, "wall", facing=1)              # inside, down to the strip
+    poly = cut(poly, 1, FRONT_DEPTH, False)
+    east = cut(poly, 1, go0, False)                                     # everything east of the field's west edge
     middle = cut(cut(east, 0, gu0, False), 0, gu1, True)
     for part, material in ((cut(poly, 1, go0, True), "deck_dark"), (cut(east, 0, gu0, True), "soffit"),
                            (cut(east, 0, gu1, False), "soffit"), (cut(middle, 1, go1, False), "soffit")):
@@ -752,7 +860,7 @@ def atrium_roof(m, f, poly):
     K.wall_o(m, f, go1, gu0, gu1, ATRIUM_H, top, "steel_white", facing=-1)
     trusses = K.Frame().samples(3.0, SPLIT_U - 3.0, 6.0)
     for u in trusses:                                                    # trusses across the whole block
-        K.truss(m, f, u, 0.5, 67.8, ATRIUM_H - 1.6, ATRIUM_H - 0.15, bays=16)
+        K.truss(m, f, u, FRONT_DEPTH + 0.3, 67.8, ATRIUM_H - 1.6, ATRIUM_H - 0.15, bays=15)   # V36: behind the step (was o 0.5, 16 bays)
     for o in (10.0, 22.0, 34.0, 46.0, 58.0):
         K.rod(m, f, (0.5, o, ATRIUM_H - 0.4), (SPLIT_U - 0.5, o, ATRIUM_H - 0.4), 0.2, "steel_white", 0.36)
     for a, b in zip(trusses, trusses[1:]):                               # under the glass: a truss every ~2.8 m ..
@@ -1040,9 +1148,10 @@ def artwork_wall(m, f):
     """White wall between atrium and long room (IMG_7722): colourful artwork, two double doors, the open passage D2."""
     u = SPLIT_U
     o_end = 29.7                                                         # east end of the wall (where the wing starts)
+    top = max(ATRIUM_H, LONG_H) + 0.8                                   # V36: up to the higher roof (no slit at the long room)
     for o0, o1 in ((0.0, D2_O[0]), (D2_O[1], o_end)):
-        K.block(m, f, u - 0.15, u + 0.15, o0, o1, 0.0, ATRIUM_H + 0.8, "wall")
-    K.block(m, f, u - 0.15, u + 0.15, D2_O[0], D2_O[1], LOW_Z, ATRIUM_H + 0.8, "wall")
+        K.block(m, f, u - 0.15, u + 0.15, o0, o1, 0.0, top, "wall")
+    K.block(m, f, u - 0.15, u + 0.15, D2_O[0], D2_O[1], LOW_Z, top, "wall")
     for o0 in (19.5, 22.7):                                              # double doors
         K.block(m, f, u - 0.2, u - 0.15, o0, o0 + 2.6, 0.0, 2.4, "table")
         K.block(m, f, u - 0.22, u - 0.2, o0 + 1.29, o0 + 1.31, 0.0, 2.4, "steel_dark")
@@ -1253,7 +1362,11 @@ def entrance_seating(m, f):
 
 
 # ---------- long room ----------
-FACADE_FRAME_STEP = 3.0                     # grid of the steel space frame in front of the west glass
+# V36 (KPMG Gallery splat, IMG_7722 82-112 s): the frame's verticals stand about 2.0 m apart (was 3.0) and the tubes are
+# much bolder in the video than 9 cm (thickness from the photos, not measured: 14 cm, diagonals 8 cm, was 9 and 5).
+FACADE_FRAME_STEP = 2.0                     # grid of the steel space frame in front of the west glass
+FRAME_TUBE = 0.14
+FRAME_DIAGONAL = 0.08
 
 
 def twisted_sculpture(m, f, u, o, height, size=0.9, step=0.12, material="black"):
@@ -1285,21 +1398,21 @@ def space_frame(m, f, u0, u1):
     for layer_o in (0.45, 1.5):
         for u in us:
             if door0 < u < door1:
-                K.rod(m, f, (u, layer_o, DOOR_H + 1.4), (u, layer_o, H - 0.3), 0.09, "steel_white")
+                K.rod(m, f, (u, layer_o, DOOR_H + 1.4), (u, layer_o, H - 0.3), FRAME_TUBE, "steel_white")
             else:
-                K.rod(m, f, (u, layer_o, 0.2), (u, layer_o, H - 0.3), 0.09, "steel_white")
+                K.rod(m, f, (u, layer_o, 0.2), (u, layer_o, H - 0.3), FRAME_TUBE, "steel_white")
         for z in zs:
             if z < DOOR_H + 1.4:
-                K.rod(m, f, (u0, layer_o, z), (door0, layer_o, z), 0.09, "steel_white")
-                K.rod(m, f, (door1, layer_o, z), (u1, layer_o, z), 0.09, "steel_white")
+                K.rod(m, f, (u0, layer_o, z), (door0, layer_o, z), FRAME_TUBE, "steel_white")
+                K.rod(m, f, (door1, layer_o, z), (u1, layer_o, z), FRAME_TUBE, "steel_white")
             else:
-                K.rod(m, f, (u0, layer_o, z), (u1, layer_o, z), 0.09, "steel_white")
+                K.rod(m, f, (u0, layer_o, z), (u1, layer_o, z), FRAME_TUBE, "steel_white")
         for a, b in zip(us, us[1:]):
             for z0, z1 in zip(zs, zs[1:]):
                 if in_door(a, b, z0):
                     continue
-                K.rod(m, f, (a, layer_o, z0), (b, layer_o, z1), 0.05, "steel_white")
-                K.rod(m, f, (a, layer_o, z1), (b, layer_o, z0), 0.05, "steel_white")
+                K.rod(m, f, (a, layer_o, z0), (b, layer_o, z1), FRAME_DIAGONAL, "steel_white")
+                K.rod(m, f, (a, layer_o, z1), (b, layer_o, z0), FRAME_DIAGONAL, "steel_white")
     for u in us[::2]:
         for z in zs:
             if not in_door(u - 0.1, u + 0.1, z):

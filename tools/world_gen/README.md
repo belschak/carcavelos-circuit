@@ -206,6 +206,7 @@ Unity import check (6000.3.28f1, 2026-11-08): world 92 meshes / about 101,000 tr
 - Map data © OpenStreetMap contributors (ODbL): credit in the game. Elevation: AWS Terrain Tiles (Terrarium, about 30 m), reshaped along the route with anchors from the walk videos.
 - Coast (waterline, beach zone, rock shelves): hand-traced vector shapes from the DGT OrtoSat2023 orthophoto and the team's beach photos (`coast_trace.json`); no image data is copied.
 - Building heights: estimates from the photos (±2 m) where `source = photo-estimate`, otherwise 3 storeys.
+- Splat checks (V36): Gaussian splats from the walk videos, measured in Blender 5.3 at true scale (±7 %); results and the open proposals in `splat_reference.md`. The splats themselves stay local (raw media).
 - The tunnel mural is an original design; the real murals, the surfer statue and the NOVA letters are other people's work or branding and are not copied.
 - No flicker by design: no two surfaces closer than ~4 cm outside the halls (OSM paths only in the ground colour map, 5 m ground sunk under the corridor with an edge skirt, the beach crosses the water plane at 8 % so sand and water are within 4 cm of each other only in a 0.5 m band at the waterline). Check with the layer test in NEXT.md history.
 - Unity: export_unity_bundle.py + CampusWorldBuilder.cs (self-test 2026-11-09: 1,074 trees, props and furniture placed, bounds equal to Blender to the millimetre, road collider under every checked route point). Not done yet: water shader, LODs, Role 2's TrackInfo instead of the race placeholders.
