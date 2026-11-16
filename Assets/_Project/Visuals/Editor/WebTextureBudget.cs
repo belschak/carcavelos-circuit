@@ -17,6 +17,7 @@ namespace CarcavelosCircuit.Visuals.Editor
     {
         public const string WebTarget = "WebGL";
         private const string TexDir = "Assets/_Project/Visuals/CampusWorld/Textures";
+        private const string KartTexDir = "Assets/_Project/Visuals/Kart/Textures"; // V37: the driver too
 
         // Props from the asset kit: B = beach, C = cars, P = bikes, S = street furniture, V = scooter.
         private static readonly Regex PropKit = new Regex(@"^([BCPSV]\d)_", RegexOptions.Compiled);
@@ -66,6 +67,20 @@ namespace CarcavelosCircuit.Visuals.Editor
             {
                 return 512;
             }
+            // V37: the driver fills ~150 px on screen behind the kart, but shipped 2048 px colour (2.7 MB) and 1024 px
+            // normal and gloss maps (1.3 MB each) in the Web build.
+            if (file == "Char_Rookie_BaseColor.png")
+            {
+                return 1024;
+            }
+            if (file == "Char_Rookie_Normal.png")
+            {
+                return 512;
+            }
+            if (file == "Char_Rookie_MetallicSmoothness.png")
+            {
+                return 256;
+            }
             return 0;
         }
 
@@ -108,7 +123,7 @@ namespace CarcavelosCircuit.Visuals.Editor
             var log = new StringBuilder("WebTextureBudget:\n");
             int changed = 0;
             int overridden = 0;
-            foreach (string guid in AssetDatabase.FindAssets("t:Texture", new[] { TexDir }))
+            foreach (string guid in AssetDatabase.FindAssets("t:Texture", new[] { TexDir, KartTexDir }))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 if (!(AssetImporter.GetAtPath(path) is TextureImporter importer))

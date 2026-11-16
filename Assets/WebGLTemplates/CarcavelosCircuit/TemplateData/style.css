@@ -157,6 +157,21 @@ html, body {
   animation: cc-rise 0.5s 0.08s ease-out both;
 }
 
+/* NOVA KART: the game's name, bold orange above the track's name (Luc, 16 Nov). */
+.cc-brand {
+  margin: 0 0 clamp(4px, 1vh, 10px);
+  font-family: var(--font-display);
+  font-size: clamp(30px, 6.2vw, 72px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  padding-left: 0.06em;
+  text-transform: uppercase;
+  color: var(--boost-orange);
+  text-shadow: 0 0.07em 0 var(--night), 0 0.16em 0.4em rgba(0, 0, 0, 0.35);
+  animation: cc-rise 0.5s 0.1s ease-out both;
+}
+
 .cc-title {
   margin: 0 0 clamp(22px, 4.5vh, 40px);
   display: flex;
