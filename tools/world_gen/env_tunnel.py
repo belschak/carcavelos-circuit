@@ -18,7 +18,15 @@ FOOTWAY_INNER = 0.065                    # footway height at the road edge: flus
 CEILING = 3.9                            # clear height
 WALL_FOOT_Z = 0.12                       # the mural walls stand on the footway's outer edge, this far over the road
 SLAB = 0.7
-CEIL_HALF = FLOOR_HALF + CEILING         # 45 degree walls
+CEIL_HALF = FLOOR_HALF + CEILING         # 45 degree walls (at both portals and in the transitions)
+# V36c (Gaussian splat of IMG_7725 0-105 s, splat_reference.md / splat survey): in the painted middle part the real walls
+# stand upright (85-92 degrees) with the mural up to the ceiling; only the north portal and the ramp lean at 45 degrees.
+# The middle now stands almost upright (VERTICAL_LEAN m wider at the ceiling than at the foot), both ends keep 45
+# degrees, so portals, headwalls and the ramp join as before. The ceiling stays at 3.9 m (real 2.7-3.0 m, but the
+# chase camera rides 3.0 m over the kart) and the floor width is unchanged.
+VERTICAL_LEAN = 0.25                     # m: top of the upright wall this far out from its foot
+END_45_SOUTH, END_45_NORTH = 12.0, 8.0   # m of tunnel at each end that keep the 45-degree walls
+WALL_BLEND = 6.0                         # m over which the wall turns from 45 degrees to upright
 MURAL_TILE_M = 12.0                      # one mural texture repeat along the wall
 HEADWALL_HALF = 14.0
 
@@ -48,14 +56,30 @@ def at(p, nrm, side, z):
     return (p["x"] + nrm[0] * side, p["y"] + nrm[1] * side, p["track_z"] + z)
 
 
+def top_half(s, s_south, s_north):
+    """V36c: half width of the tunnel at the ceiling at route distance s: 45-degree walls at both ends, almost upright
+    in the middle, a straight blend between them."""
+    upright = FLOOR_HALF + VERTICAL_LEAN
+    d = min((s - s_south) - END_45_SOUTH, (s_north - s) - END_45_NORTH)    # metres into the upright part
+    f = min(max(d / WALL_BLEND, 0.0), 1.0)
+    return CEIL_HALF + (upright - CEIL_HALF) * f
+
+
+def wall_x(top, z):
+    """Distance of the wall from the centre line at height z for a wall from (FLOOR_HALF, WALL_FOOT_Z) to (top, CEILING)."""
+    return FLOOR_HALF + (top - FLOOR_HALF) * (z - WALL_FOOT_Z) / (CEILING - WALL_FOOT_Z)
+
+
 def build_shell(pts, col):
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new("UVMap")
     rings = []
+    s_south, s_north = pts[0]["s"], pts[-1]["s"]
     for i, p in enumerate(pts):
         _, nrm = frame(pts, i)
+        top = top_half(p["s"], s_south, s_north)                       # V36c (was CEIL_HALF everywhere)
         rings.append((p, [bm.verts.new(at(p, nrm, s, z)) for s, z in (
-            (FLOOR_HALF, WALL_FOOT_Z), (CEIL_HALF, CEILING), (-CEIL_HALF, CEILING), (-FLOOR_HALF, WALL_FOOT_Z))]))
+            (FLOOR_HALF, WALL_FOOT_Z), (top, CEILING), (-top, CEILING), (-FLOOR_HALF, WALL_FOOT_Z))]))
     wall_len = math.hypot(CEIL_HALF - FLOOR_HALF, CEILING)
     for (pa, ra), (pb, rb) in zip(rings, rings[1:]):
         ua, ub = pa["s"] / MURAL_TILE_M, pb["s"] / MURAL_TILE_M
@@ -101,10 +125,11 @@ def build_lights(pts, col):
         f = (s - a["s"]) / max(b["s"] - a["s"], 1e-6)
         x, y, z = a["x"] + (b["x"] - a["x"]) * f, a["y"] + (b["y"] - a["y"]) * f, a["track_z"] + (b["track_z"] - a["track_z"]) * f
         t, nrm = frame(pts, i)
+        top = top_half(s, pts[0]["s"], pts[-1]["s"])                   # V36c: follow the wall's lean here
         for side in (1, -1):
-            # on the sloping wall, 0.12 to 0.30 m under the ceiling, 3 cm in front of it
+            # on the wall, 0.12 to 0.30 m under the ceiling, 4 cm in front of it
             lo, hi = CEILING - 0.30, CEILING - 0.12
-            corners = [(x + t[0] * al + nrm[0] * side * (FLOOR_HALF + h - 0.04), y + t[1] * al + nrm[1] * side * (FLOOR_HALF + h - 0.04),
+            corners = [(x + t[0] * al + nrm[0] * side * (wall_x(top, h) - 0.04), y + t[1] * al + nrm[1] * side * (wall_x(top, h) - 0.04),
                         z + h - 0.02) for al, h in ((-LIGHT_LEN / 2, lo), (LIGHT_LEN / 2, lo), (LIGHT_LEN / 2, hi), (-LIGHT_LEN / 2, hi))]
             face = bm.faces.new([bm.verts.new(c) for c in corners])
             face.normal_update()
