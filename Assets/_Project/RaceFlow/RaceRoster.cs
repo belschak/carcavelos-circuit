@@ -17,6 +17,8 @@ namespace CarcavelosCircuit.RaceFlow
     // - keeps the live standings (RaceStandings) that the positions readout and the minimap show.
     // Bots never get the player's checkpoints, timer, medals or items: RaceManager.IsKartCollider only counts the player.
     // Optional dev test bots (RaceSettings > Dev Test Bots, 0 in the game) are spawned here too.
+    // Online (M2) the lobby sets PlayerSlotOverride: the player stands on its slot in the room's roster, and the
+    // other players' karts (proxies, IsPlayer = false) are treated like bots here (their ResetTo does nothing).
     public class RaceRoster : MonoBehaviour
     {
         [SerializeField]
@@ -42,6 +44,7 @@ namespace CarcavelosCircuit.RaceFlow
         private RaceState lastState = RaceState.Ready;
         private int testBotsSpawned;
         private int racersOnTheGrid = -1; // how many racers the grid was last laid out for
+        private int playerSlotOverride = RacerGrid.NoOverride;
 
         public bool IsSetUp { get { return isSetUp; } }
         public ITrackProgress Progress { get { return progress; } } // null if the track has neither T8 nor checkpoints
@@ -50,11 +53,37 @@ namespace CarcavelosCircuit.RaceFlow
         public int PlayerPosition { get { return standings.PositionOf(player); } } // 1 = leading, 0 = unknown
         public int RacerCount { get { return standings.Count; } }
 
+        // Online (M2): the grid slot the room gave the player (index in its roster), -1 = off (behind the bots).
+        // Set on the start screen, the player moves there at once; else at the next start or rematch.
+        // Leaving the Online mode switches it off again.
+        public int PlayerSlotOverride
+        {
+            get { return playerSlotOverride; }
+            set
+            {
+                int wanted = value < 0 ? RacerGrid.NoOverride : value;
+                if (wanted == playerSlotOverride)
+                {
+                    return;
+                }
+                playerSlotOverride = wanted;
+                if (grid != null)
+                {
+                    grid.PlayerSlotOverride = wanted;
+                }
+                if (isSetUp && raceManager.State == RaceState.Ready)
+                {
+                    PutEveryoneOnTheGrid();
+                }
+            }
+        }
+
         private void OnEnable()
         {
             if (raceManager != null)
             {
                 raceManager.Restarted += PutEveryoneOnTheGrid;
+                raceManager.ModeChanged += OnModeChanged;
             }
         }
 
@@ -63,6 +92,16 @@ namespace CarcavelosCircuit.RaceFlow
             if (raceManager != null)
             {
                 raceManager.Restarted -= PutEveryoneOnTheGrid;
+                raceManager.ModeChanged -= OnModeChanged;
+            }
+        }
+
+        // An offline mode never keeps the online grid slot.
+        private void OnModeChanged(RaceMode mode)
+        {
+            if (mode != RaceMode.OnlineRace)
+            {
+                PlayerSlotOverride = RacerGrid.NoOverride;
             }
         }
 
@@ -114,6 +153,7 @@ namespace CarcavelosCircuit.RaceFlow
         {
             isSetUp = true;
             grid = new RacerGrid(settings.GridSidewaysMetres, settings.GridRowMetres);
+            grid.PlayerSlotOverride = playerSlotOverride; // the lobby may have set it before we were set up
             progress = TrackProgressSource.For(raceManager.Track, raceManager.TrackPoints);
             if (progress == null)
             {

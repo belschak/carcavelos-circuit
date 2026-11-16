@@ -10,8 +10,9 @@ namespace CarcavelosCircuit.RaceFlow
     // - Click or tap a card: that mode is picked and the race starts at once (one tap to the next step).
     // - Keys 1, 2, 3 pick a mode; the same key press then starts the race like any other key.
     // - Any other key or click starts the race in the highlighted mode (the last one played).
-    // - ONLINE RACE is not playable yet: its card is dimmed, picking it shows "ONLINE RACE IS COMING SOON" and
-    //   the race does not start (RaceManager.TrySelectMode refuses it too).
+    // - ONLINE RACE (M2) opens the online lobby instead of starting a race (OnlineRaceHooks.OpenLobby); the lobby
+    //   starts the race for everyone. In a build without the online part the card is dimmed and picking it shows
+    //   OnlineRaceHooks.UnavailableMessage (RaceManager.TrySelectMode refuses it too).
     public class ModePicker
     {
         private const float MessageSeconds = 2.2f;
@@ -24,14 +25,15 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly Label[] titles = new Label[Modes.Length];
         private readonly Label[] subtitles = new Label[Modes.Length];
         private readonly Label message;
-        private float messageUntil = -1f;  // real time until the "coming soon" chip hides
+        private float messageUntil = -1f;  // real time until the refused chip hides
         private bool usedInputThisFrame;   // a key or click this frame belonged to the picker (not "start the race")
         private RaceMode shownMode = (RaceMode)(-1);
+        private bool shownOnlineAvailable; // the Online assembly plugs in after the scene loaded: re-check in Update
 
         // True while a click or key belongs to the picker, so it must not ALSO start the race (RaceManager.MenuUsesInput).
         public bool UsesInput { get; private set; }
 
-        // The "coming soon" chip is on screen (Play Mode test).
+        // The refused chip ("ONLINE RACE NEEDS THE ONLINE BUILD") is on screen (Play Mode test).
         public bool IsMessageShown { get { return Time.unscaledTime < messageUntil; } }
 
         public ModePicker(VisualElement root, RaceManager raceManager)
@@ -54,7 +56,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             content.Insert(content.IndexOf(prompt), row); // the cards right above the "PRESS ANY KEY" plate
 
-            message = new Label(RaceModeRules.ComingSoonMessage) { name = "mode-message" };
+            message = new Label("") { name = "mode-message" };
             message.AddToClassList("chip");
             message.AddToClassList("f-ui");
             message.style.position = Position.Absolute;
@@ -73,10 +75,13 @@ namespace CarcavelosCircuit.RaceFlow
             // Nothing in the row catches clicks except the cards, and those only on the start screen (Update):
             // the hidden start screen must never swallow a tap meant for the phone's driving buttons.
             HudFx.IgnoreClicksDeep(row);
+            shownOnlineAvailable = OnlineRaceHooks.Available;
+            ShowAvailability(shownOnlineAvailable);
             ShowSelected(raceManager.Mode);
         }
 
-        // One mode card: number key, big title, small line. Picked = orange plate, Online = dimmed with "SOON".
+        // One mode card: number key, big title, small line. Picked = orange plate; a mode that cannot be picked
+        // (Online without the online build) is dimmed by ShowAvailability.
         private VisualElement MakeCard(int index)
         {
             RaceMode mode = Modes[index];
@@ -121,13 +126,23 @@ namespace CarcavelosCircuit.RaceFlow
             subtitles[index].style.color = HudColors.WithAlpha(HudColors.Cream, 0.8f);
             card.Add(subtitles[index]);
 
-            if (!RaceModeRules.IsPlayable(mode))
-            {
-                card.style.opacity = 0.62f;
-                subtitles[index].style.color = HudColors.Sun;
-            }
             card.RegisterCallback<ClickEvent>(evt => Pick(mode, true));
             return card;
+        }
+
+        // Dims the cards that cannot be picked right now (RaceModeRules.LooksDimmed): Online without the online
+        // build. The Online assembly plugs itself in after the scene loaded, so Update calls this again when it did.
+        private void ShowAvailability(bool onlineAvailable)
+        {
+            for (int i = 0; i < cards.Length; i++)
+            {
+                bool dimmed = RaceModeRules.LooksDimmed(Modes[i], onlineAvailable);
+                cards[i].style.opacity = dimmed ? 0.62f : 1f;
+                if (dimmed)
+                {
+                    subtitles[i].style.color = HudColors.Sun;
+                }
+            }
         }
 
         // Called by RaceHud.Update every frame (before RaceManager reads the keys, DefaultExecutionOrder -50).
@@ -146,6 +161,12 @@ namespace CarcavelosCircuit.RaceFlow
                     Pick(Modes[key - 1], false);
                 }
             }
+            if (shownOnlineAvailable != OnlineRaceHooks.Available)
+            {
+                shownOnlineAvailable = OnlineRaceHooks.Available;
+                ShowAvailability(shownOnlineAvailable);
+                ShowSelected(raceManager.Mode); // the subtitle colours depend on it too
+            }
             if (shownMode != raceManager.Mode)
             {
                 ShowSelected(raceManager.Mode);
@@ -157,16 +178,26 @@ namespace CarcavelosCircuit.RaceFlow
             usedInputThisFrame = false;
         }
 
-        // Pick a mode. A playable mode by click starts the race straight away; by key the key press itself starts
-        // it (RaceManager sees it as "any key"). Online: show the message and keep this input away from the race.
-        private void Pick(RaceMode mode, bool byClick)
+        // Pick a mode. An offline mode by click starts the race straight away; by key the key press itself starts
+        // it (RaceManager sees it as "any key"). Online opens the lobby instead (click or key), and the input stays
+        // away from the race. A refused mode (Online without the online build): show the message, same thing.
+        // Public for the Play Mode test (RaceModesPlayTests).
+        public void Pick(RaceMode mode, bool byClick)
         {
             string refused;
             if (raceManager.TrySelectMode(mode, out refused))
             {
                 messageUntil = -1f;
                 ShowSelected(mode);
-                if (byClick)
+                if (RaceModeRules.OpensLobby(mode))
+                {
+                    usedInputThisFrame = true; // the "3" key or the click must not start a local race
+                    if (OnlineRaceHooks.OpenLobby != null)
+                    {
+                        OnlineRaceHooks.OpenLobby(raceManager);
+                    }
+                }
+                else if (byClick)
                 {
                     raceManager.BeginRace();
                 }
@@ -196,7 +227,7 @@ namespace CarcavelosCircuit.RaceFlow
                 {
                     titles[i].style.unityTextOutlineWidth = StyleKeyword.Null; // back to the f-display outline
                 }
-                if (RaceModeRules.IsPlayable(Modes[i]))
+                if (!RaceModeRules.LooksDimmed(Modes[i], shownOnlineAvailable))
                 {
                     subtitles[i].style.color = picked ? HudColors.Ink : HudColors.WithAlpha(HudColors.Cream, 0.8f);
                 }

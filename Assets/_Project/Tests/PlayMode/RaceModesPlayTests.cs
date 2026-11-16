@@ -71,15 +71,9 @@ namespace CarcavelosCircuit.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Modes_OnlineRefused_TimeAttackAlone_BotsComeBack()
+        public IEnumerator Modes_TimeAttackAlone_BotsComeBack()
         {
             string message;
-            Assert.IsFalse(race.TrySelectMode(RaceMode.OnlineRace, out message), "online is not playable yet");
-            Assert.AreEqual(RaceModeRules.ComingSoonMessage, message);
-            Assert.AreNotEqual(RaceMode.OnlineRace, race.Mode, "a refused mode changes nothing");
-            yield return null;
-            Assert.AreEqual(RaceState.Ready, race.State, "picking Online does not start a race");
-
             Assert.IsTrue(race.TrySelectMode(RaceMode.TimeAttack, out message));
             yield return WaitFrames(3); // BotSquad removes the bots, Destroy at the end of the frame, roster re-grids
             Assert.AreEqual(0, squad.Bots.Count, "no bots in Time Attack");
@@ -95,6 +89,109 @@ namespace CarcavelosCircuit.Tests.PlayMode
             Assert.AreEqual(RaceState.Countdown, race.State);
             Assert.IsFalse(race.TrySelectMode(RaceMode.TimeAttack, out message), "no mode change once the countdown runs");
             Assert.AreEqual(RaceMode.RaceVsBots, race.Mode);
+        }
+
+        // M2 online race: without the online build the Online card is refused; with it, picking Online opens the
+        // lobby (OnlineRaceHooks.OpenLobby) instead of a countdown, and Online is never saved as the last mode.
+        [UnityTest]
+        public IEnumerator Online_RefusedWithoutTheOnlineBuild_OpensTheLobbyWithIt_NeverSaved()
+        {
+            System.Action<RaceManager> hookBefore = OnlineRaceHooks.OpenLobby;
+            try
+            {
+                string message;
+                OnlineRaceHooks.OpenLobby = null; // a build without the online part
+                Assert.IsFalse(OnlineRaceHooks.Available);
+                Assert.IsFalse(race.TrySelectMode(RaceMode.OnlineRace, out message), "no online build = refused");
+                Assert.AreEqual(OnlineRaceHooks.UnavailableMessage, message);
+                Assert.AreNotEqual(RaceMode.OnlineRace, race.Mode, "a refused mode changes nothing");
+                yield return null;
+                Assert.AreEqual(RaceState.Ready, race.State, "picking Online does not start a race");
+
+                RaceHud hud = Object.FindAnyObjectByType<RaceHud>();
+                Assert.IsNotNull(hud, "Main.unity has no RaceHud");
+                hud.ModePicker.Pick(RaceMode.OnlineRace, true);
+                Assert.IsTrue(hud.ModePicker.IsMessageShown, "the card answers with the refused chip");
+                Assert.AreNotEqual(RaceMode.OnlineRace, race.Mode);
+                yield return null;
+                Assert.AreEqual(RaceState.Ready, race.State);
+
+                RaceManager opened = null;
+                OnlineRaceHooks.OpenLobby = manager => opened = manager;
+                Assert.IsTrue(OnlineRaceHooks.Available);
+                PlayerPrefs.SetInt(ModeKey, (int)RaceMode.TimeAttack);
+                hud.ModePicker.Pick(RaceMode.OnlineRace, true);
+                Assert.AreSame(race, opened, "picking Online opens the lobby for this race");
+                Assert.AreEqual(RaceMode.OnlineRace, race.Mode);
+                Assert.AreEqual((int)RaceMode.TimeAttack, PlayerPrefs.GetInt(ModeKey), "Online is never saved as the last mode");
+                yield return WaitFrames(3);
+                Assert.AreEqual(RaceState.Ready, race.State, "no countdown: the lobby starts the race");
+                Assert.AreEqual(0, squad.Bots.Count, "no bots online");
+
+                race.BeginRace();
+                yield return null;
+                Assert.AreEqual(RaceState.Ready, race.State, "a key or click never starts an online race");
+            }
+            finally
+            {
+                OnlineRaceHooks.OpenLobby = hookBefore;
+            }
+        }
+
+        // M2 online race: while the lobby owns the race (ExternalStartOnly) only its calls move the race.
+        [UnityTest]
+        public IEnumerator Online_TheLobbyStartsResetsAndPlacesTheRace_KeysDoNothing()
+        {
+            System.Action<RaceManager> hookBefore = OnlineRaceHooks.OpenLobby;
+            try
+            {
+                string message;
+                OnlineRaceHooks.OpenLobby = manager => { };
+                Assert.IsTrue(race.TrySelectMode(RaceMode.OnlineRace, out message));
+                race.ExternalStartOnly = true;
+                race.PauseOnFocusLoss = false;
+                yield return WaitFrames(3);
+
+                Assert.IsTrue(race.BeginRaceExternal(0.05f), "the lobby starts the countdown");
+                Assert.AreEqual(RaceState.Countdown, race.State);
+                Assert.IsFalse(race.BeginRaceExternal(0.05f), "only from the start screen");
+                yield return WaitForState(RaceState.Racing, 10f);
+                Assert.AreEqual(RaceState.Racing, race.State);
+                Assert.IsTrue(race.Kart.InputEnabled, "the player drives their own kart as always");
+
+                race.Retry();
+                yield return null;
+                Assert.AreEqual(RaceState.Racing, race.State, "Enter-retry does nothing while the lobby owns the race");
+
+                race.SetExternalPlace(3, 7);
+                Assert.AreEqual(3, race.PlayerPlace, "the room's place is shown");
+                Assert.AreEqual(7, race.RacersInRace);
+                yield return null;
+                Assert.AreEqual(3, race.PlayerPlace, "RaceRoster's frame update does not undo it");
+
+                race.ResetToReadyExternal();
+                yield return null;
+                Assert.AreEqual(RaceState.Ready, race.State, "rematch: back on the grid");
+                Assert.AreEqual(0, race.CheckpointsPassed);
+                Assert.IsFalse(race.Kart.InputEnabled, "nobody drives on the start screen");
+                Assert.AreNotEqual(7, race.RacersInRace, "the room's place is cleared with the reset");
+                Assert.AreEqual(RaceMode.OnlineRace, race.Mode, "still in the room");
+
+                race.BeginRace();
+                yield return null;
+                Assert.AreEqual(RaceState.Ready, race.State, "keys still do nothing");
+
+                race.LeaveOnlineMode();
+                yield return WaitFrames(3);
+                Assert.AreEqual(RaceState.Ready, race.State);
+                Assert.AreNotEqual(RaceMode.OnlineRace, race.Mode, "back in the last offline mode");
+                Assert.IsFalse(race.ExternalStartOnly, "the keys are the player's again");
+                Assert.IsTrue(race.PauseOnFocusLoss, "pause on focus loss is back to the scene's value");
+            }
+            finally
+            {
+                OnlineRaceHooks.OpenLobby = hookBefore;
+            }
         }
 
         [UnityTest]

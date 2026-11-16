@@ -5,6 +5,6 @@ namespace CarcavelosCircuit.RaceFlow
     {
         RaceVsBots = 0, // the five bots race with you, the finish shows your place
         TimeAttack = 1, // alone against the clock (and the ghost), the finish shows your lap time
-        OnlineRace = 2  // shown on the menu, not playable yet: "coming soon"
+        OnlineRace = 2  // people race live in an online room (M2); never saved as the last mode (RaceModeRules.IsRemembered)
     }
 }

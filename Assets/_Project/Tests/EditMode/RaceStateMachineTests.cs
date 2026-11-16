@@ -125,5 +125,52 @@ namespace CarcavelosCircuit.Tests.EditMode
             machine.Tick(0.1f);
             Assert.AreEqual(RaceState.Racing, machine.State);
         }
+
+        // M2 online race: the lobby's rematch and "leave the room" go back to Ready from anywhere.
+        [Test]
+        public void ResetToReady_FromAnyState_FalseWhenAlreadyThere()
+        {
+            RaceStateMachine machine = new RaceStateMachine(3);
+            Assert.IsFalse(machine.ResetToReady(), "already on the start screen");
+
+            machine.BeginCountdown(1f);
+            machine.Tick(1.5f);
+            Assert.AreEqual(RaceState.Countdown, machine.State);
+            Assert.IsTrue(machine.ResetToReady(), "the room left during the countdown");
+            Assert.AreEqual(RaceState.Ready, machine.State);
+            Assert.AreEqual(0, machine.CountdownNumber, "no countdown number left on the HUD");
+            Assert.IsFalse(machine.InputAllowed);
+
+            machine.BeginCountdown(1f);
+            machine.Tick(3f);
+            Assert.AreEqual(RaceState.Racing, machine.State);
+            Assert.IsTrue(machine.ResetToReady(), "the room left mid-race");
+            Assert.AreEqual(RaceState.Ready, machine.State);
+
+            machine.BeginCountdown(1f);
+            machine.Tick(3f);
+            machine.Finish();
+            Assert.IsTrue(machine.ResetToReady(), "rematch after the results");
+            Assert.AreEqual(RaceState.Ready, machine.State);
+        }
+
+        [Test]
+        public void ResetToReady_ReportsTheChange_AndTheNextCountdownIsWhole()
+        {
+            RaceStateMachine machine = new RaceStateMachine(3);
+            List<RaceState> states = new List<RaceState>();
+            machine.StateChanged += state => states.Add(state);
+            machine.BeginCountdown(1f);
+            machine.Tick(1.2f); // half way through the old countdown
+            machine.ResetToReady();
+            CollectionAssert.AreEqual(new[] { RaceState.Countdown, RaceState.Ready }, states);
+
+            List<int> steps = new List<int>();
+            machine.CountdownStep += number => steps.Add(number);
+            machine.BeginCountdown(1f);
+            machine.Tick(3f);
+            CollectionAssert.AreEqual(new[] { 3, 2, 1, 0 }, steps, "the leftover of the old countdown is gone");
+            Assert.AreEqual(RaceState.Racing, machine.State);
+        }
     }
 }

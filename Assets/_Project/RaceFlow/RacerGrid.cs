@@ -15,6 +15,7 @@ namespace CarcavelosCircuit.RaceFlow
     // - Bots take the slots from the front: 0, 1, 2 ... A bot keeps its slot for the whole session, so Retry always
     //   puts it back on the same spot. A freed slot (a bot left) goes to the next bot that needs one, lowest first.
     // - The player always starts LAST, in the slot right behind the last bot. Alone (time trial) that is slot 0.
+    // - Online (M2, no bots) PlayerSlotOverride puts the player on the slot the room gave it instead.
     public class RacerGrid
     {
         private readonly float sidewaysMetres;
@@ -22,6 +23,10 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly List<IRacer> racers = new List<IRacer>(); // racers[i] holds slots[i]
         private readonly List<int> slots = new List<int>();
         private const int NoStoredSlot = -1; // the player's entry in slots (see SlotOf)
+        private int playerSlotOverride = NoOverride;
+
+        // PlayerSlotOverride value for "no override".
+        public const int NoOverride = -1;
 
         public RacerGrid(float sidewaysMetres, float rowMetres)
         {
@@ -73,11 +78,24 @@ namespace CarcavelosCircuit.RaceFlow
             return racer.IsPlayer ? PlayerSlot : slots[i];
         }
 
-        // Where the player starts: behind every bot (highest bot slot + 1), or TimeTrialSlot if there is no bot.
+        // Online (M2): the player's grid slot is the index in the room's roster, the same on every screen.
+        // -1 (or any negative number) = off: the player goes behind the bots as usual.
+        public int PlayerSlotOverride
+        {
+            get { return playerSlotOverride; }
+            set { playerSlotOverride = value < 0 ? NoOverride : value; }
+        }
+
+        // Where the player starts: the override if one is set, else behind every bot (highest bot slot + 1),
+        // or TimeTrialSlot if there is no bot.
         public int PlayerSlot
         {
             get
             {
+                if (playerSlotOverride >= 0)
+                {
+                    return playerSlotOverride;
+                }
                 int last = TimeTrialSlot - 1;
                 for (int i = 0; i < slots.Count; i++)
                 {

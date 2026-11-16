@@ -136,6 +136,9 @@ namespace CarcavelosCircuit.RaceFlow
         // the medal thud and the record sting from this moment.
         public event System.Action ResultsCardShown;
 
+        // The mode cards on the start screen (Play Mode test: picking ONLINE RACE opens the lobby). Null before OnEnable.
+        public ModePicker ModePicker { get { return modePicker; } }
+
         // What each label shows right now, so we only rebuild its text when this number changes.
         private readonly ShownNumber shownState = new ShownNumber();        // RaceState as int
         private readonly ShownNumber shownTimer = new ShownNumber();        // lap time in ms (fraction label)

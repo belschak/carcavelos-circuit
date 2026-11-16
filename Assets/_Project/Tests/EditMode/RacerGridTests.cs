@@ -191,5 +191,40 @@ namespace CarcavelosCircuit.Tests.EditMode
             grid.KeepOnly(null);
             Assert.AreEqual(0, grid.Count, "nobody racing = no slots");
         }
+
+        // M2 online race: the room gives the player its slot (index in the roster), the same on every screen.
+        [Test]
+        public void Online_ThePlayerTakesTheSlotTheRoomGave()
+        {
+            RacerGrid grid = new RacerGrid(2f, 3f);
+            TestRacer you = new TestRacer("You", true, false);
+            Assert.AreEqual(RacerGrid.NoOverride, grid.PlayerSlotOverride, "off by default");
+            grid.PlayerSlotOverride = 4;
+            Assert.AreEqual(4, grid.PlayerSlot, "alone on the grid, still slot 4");
+            Assert.AreEqual(4, grid.Assign(you));
+            Assert.AreEqual(4, grid.SlotOf(you));
+            AssertVector(new Vector3(-2f, 0f, -6f), grid.SlotOffset(grid.SlotOf(you))); // box 5 = third row left
+            grid.PlayerSlotOverride = 0;
+            Assert.AreEqual(0, grid.SlotOf(you), "slot 0 is a real slot, not 'off'");
+        }
+
+        [Test]
+        public void Online_TheOverrideBeatsTheBots_AndOffPutsThePlayerBehindThemAgain()
+        {
+            RacerGrid grid = new RacerGrid(2f, 3f);
+            TestRacer you = new TestRacer("You", true, false);
+            grid.Assign(new TestRacer("A", false, false));
+            grid.Assign(new TestRacer("B", false, false));
+            grid.Assign(you);
+            Assert.AreEqual(2, grid.SlotOf(you), "behind the two bots");
+            grid.PlayerSlotOverride = 1;
+            Assert.AreEqual(1, grid.SlotOf(you), "the room's slot wins, even next to a bot (online has no bots)");
+            grid.PlayerSlotOverride = -1;
+            Assert.AreEqual(RacerGrid.NoOverride, grid.PlayerSlotOverride);
+            Assert.AreEqual(2, grid.SlotOf(you), "off = behind the bots as usual");
+            grid.PlayerSlotOverride = -7;
+            Assert.AreEqual(RacerGrid.NoOverride, grid.PlayerSlotOverride, "any negative number = off");
+            Assert.AreEqual(2, grid.SlotOf(you));
+        }
     }
 }

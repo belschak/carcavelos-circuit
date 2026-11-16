@@ -6,7 +6,6 @@ namespace CarcavelosCircuit.RaceFlow
     {
         public const RaceMode Default = RaceMode.RaceVsBots;
         public const int ModeCount = 3;
-        public const string ComingSoonMessage = "ONLINE RACE IS COMING SOON";
 
         // The mode a saved number stands for. Anything we never saved (old save, edited PlayerPrefs) = the default.
         public static RaceMode FromSaved(int saved)
@@ -18,13 +17,89 @@ namespace CarcavelosCircuit.RaceFlow
             return (RaceMode)saved;
         }
 
-        // Can the player start a race in this mode today? Online is on the menu but not built yet.
+        // The mode the game starts in on the next visit. Only an offline mode is remembered (IsRemembered), so a
+        // saved Online (or a number we never saved) starts as the default: Online always starts from the lobby.
+        public static RaceMode StartMode(int saved)
+        {
+            RaceMode mode = FromSaved(saved);
+            return IsRemembered(mode) ? mode : Default;
+        }
+
+        // Can the player race in this mode? All three since M2 (Online races through the online lobby).
         public static bool IsPlayable(RaceMode mode)
+        {
+            return mode == RaceMode.RaceVsBots || mode == RaceMode.TimeAttack || mode == RaceMode.OnlineRace;
+        }
+
+        // May the start screen switch to this mode right now? Online also needs the online build (OnlineRaceHooks):
+        // without it the card answers with a message and nothing changes. An unknown number is refused silently.
+        public static bool CanPick(RaceMode mode, bool onlineAvailable, out string message)
+        {
+            message = "";
+            if (!IsPlayable(mode))
+            {
+                return false;
+            }
+            if (mode == RaceMode.OnlineRace && !onlineAvailable)
+            {
+                message = OnlineRaceHooks.UnavailableMessage;
+                return false;
+            }
+            return true;
+        }
+
+        // Is the mode saved in PlayerPrefs as "the last mode played"? Online is not: the next visit must not start
+        // in a lobby that may not connect.
+        public static bool IsRemembered(RaceMode mode)
         {
             return mode == RaceMode.RaceVsBots || mode == RaceMode.TimeAttack;
         }
 
-        // Do the bots race in this mode? (Online would race people, not bots.)
+        // Does picking this mode open the online lobby instead of starting the countdown?
+        public static bool OpensLobby(RaceMode mode)
+        {
+            return mode == RaceMode.OnlineRace;
+        }
+
+        // Does any key or click on the start screen start the race? Not online: there the host starts it for everyone.
+        public static bool StartsOnAnyKey(RaceMode mode)
+        {
+            return mode == RaceMode.RaceVsBots || mode == RaceMode.TimeAttack;
+        }
+
+        // Item boxes and items. Not online: other players only see your pose, not your boosts or rings.
+        public static bool HasItems(RaceMode mode)
+        {
+            return mode != RaceMode.OnlineRace;
+        }
+
+        // The ghost kart (record and replay). Not online: the real people are on the road.
+        public static bool HasGhost(RaceMode mode)
+        {
+            return mode != RaceMode.OnlineRace;
+        }
+
+        // Personal best, medals and the ghost save. Not online: a lap there may have been bumped or held up by
+        // others, so it never replaces your time trial record.
+        public static bool KeepsRecords(RaceMode mode)
+        {
+            return mode != RaceMode.OnlineRace;
+        }
+
+        // The "SAVE YOUR TIME" form for the leaderboard. Not online: the online room shows its own results.
+        public static bool UsesLeaderboard(RaceMode mode)
+        {
+            return mode != RaceMode.OnlineRace;
+        }
+
+        // Is the mode card dimmed? An unknown mode, or Online in a build without the online part.
+        public static bool LooksDimmed(RaceMode mode, bool onlineAvailable)
+        {
+            string unused;
+            return !CanPick(mode, onlineAvailable, out unused);
+        }
+
+        // Do the bots race in this mode? (Online races people, not bots.)
         public static bool HasBots(RaceMode mode)
         {
             return mode == RaceMode.RaceVsBots;
@@ -55,7 +130,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 case RaceMode.RaceVsBots: return "BEAT 5 RIVALS";
                 case RaceMode.TimeAttack: return "YOU VS THE CLOCK";
-                case RaceMode.OnlineRace: return "COMING SOON";
+                case RaceMode.OnlineRace: return "RACE YOUR CLASS LIVE";
                 default: return "";
             }
         }
