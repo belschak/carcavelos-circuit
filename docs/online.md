@@ -24,10 +24,14 @@ The App ID is not a secret in the strict sense (every Photon client build contai
 
 ## For developers: the online race in your local editor
 1. Free Photon account at https://www.photonengine.com, download **Photon Fusion 2.1.4** (`.unitypackage`) from https://www.photonengine.com/sdks#fusion and import it into the project (it lands in `Assets/Photon/`, which Git ignores).
-2. Add `CARCAVELOS_FUSION` to Project Settings > Player > Scripting Define Symbols (WebGL and Standalone), or run **Carcavelos Circuit > Online > Apply SDK define** if present.
-3. Fusion > Network Project Config: add `CarcavelosCircuit.Online.Fusion` to "Assemblies To Weave" (the private SDK repo used by CI already contains this setting).
+2. The first import adds the package `com.unity.nuget.mono-cecil` and the `FUSION_*` defines by itself and creates `Assets/Photon/Fusion/Resources/NetworkProjectConfig.fusion` + `PhotonAppSettings.asset`.
+3. Add `CARCAVELOS_FUSION` to Project Settings > Player > Scripting Define Symbols (WebGL and Standalone); without it the assembly `CarcavelosCircuit.Online.Fusion` is skipped and Online says it needs the online build. Weaving needs no setting: the asmdef carries `FUSION_FORCE_WEAVING` (and the private SDK copy used by CI also lists the assembly in "Assemblies To Weave").
 4. App ID: ask David for the Fusion App ID of the "Carcavelos Circuit" app (or create your own free Fusion 2 app in the Photon dashboard) and put it into `Assets/Photon/Fusion/Resources/PhotonAppSettings.asset` (App Id Fusion) or into `Assets/_Project/Online/Resources/CarcavelosPhotonAppId.txt` (ignored by Git).
 5. Play: pick ONLINE RACE. For a two-player test on one machine, build to WebGL and open two tabs, or use `?net=local` in two tabs of the Web build without Photon.
+
+## How it is tested
+- Edit Mode tests cover the rules under the transport: pose codec + buffer, race control codec, rooms, URL flags, start rules, finish order (ties, DNF), loopback session (join, full room, master hand-over, leave).
+- No test can reference Fusion (the public CI has no SDK), so the Photon adapter is tested by the CI Web build plus two or more browser tabs on the live link.
 
 ## Limits
 - Free plan: 100 concurrent users on the one App ID across both rooms; above that Photon refuses the connection (`MaxCcuReached`), the game shows "server full".
