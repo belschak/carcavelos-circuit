@@ -43,17 +43,23 @@ ROAD_GAP = 1.0                  # metres between the road edge and the nearest t
 PATH_GAP = 0.5                  # same for every other road and footpath
 EDGE_REACH = 6.0                # tufts along the track: up to this far outside the road edge
 TREE_NEAR, WALL_NEAR = 70.0, 50.0
-FEET = {"Veg_UmbrellaPine": (10, 0.55, 1.2), "Veg_Palm": (10, 0.75, 1.4), "Veg_Olive": (8, 0.5, 1.1),
-        "Prop_Bench": (7, 0.9, 1.4), "Prop_Lamp": (4, 0.3, 0.6), "Prop_Bin": (3, 0.4, 0.6)}   # count, ring from, to (m)
-EDGE_TRIES = 60                 # tries per route point (2 m) and side; lawn, clumps and distance thin them out
+WALL_STEP = 0.4                 # metres between tufts along a wall (V39: 0.6)
+FEET = {"Veg_UmbrellaPine": (20, 0.55, 1.2), "Veg_Palm": (20, 0.75, 1.4), "Veg_Olive": (16, 0.5, 1.1),
+        "Prop_Bench": (12, 0.9, 1.4), "Prop_Lamp": (7, 0.3, 0.6), "Prop_Bin": (5, 0.4, 0.6)}   # count, ring from, to (m); V39: about 2x
+# V39 (Luc, 16 Nov: "more tufts, it lifts the whole map"): the tufts are GPU instances now (a few prototype meshes +
+# 32 bytes per tuft), so density no longer costs download. Along the track more tries per place keep every V23 tuft
+# where it was (the random numbers are keyed on the place) and only add new ones; the denser wall rows and the finer
+# far grid place theirs anew.
+EDGE_TRIES = 150                # tries per route point (2 m) and side; lawn, clumps and distance thin them out (V23: 60)
 TRIS_SMALL, TRIS_BIG, CELL, CULL = 12, 24, 16.0, 65.0   # as in CampusWorldBuilder.AddGrassTufts
 BIG_BAND = 2.0                  # tufts in the first metres of the fringe are fuller (24 triangles) and larger
-TOTAL_BUDGET, VISIBLE_BUDGET = 150000, 60000    # triangles: all tufts / inside the cull distance at the worst point
+TOTAL_BUDGET, VISIBLE_BUDGET = 400000, 60000    # triangles: all tufts / inside the cull distance at the worst point
+                                                # (V39: instances, so the total only costs memory, not download)
 
 # V16h: the far LOD
-FAR_REACH, FAR_STEP, FAR_KEEP = 110.0, 2.4, 0.6     # metres from the road edge; grid of the candidates; share kept where grass is thick
+FAR_REACH, FAR_STEP, FAR_KEEP = 110.0, 1.4, 0.6     # metres from the road edge; grid of the candidates; share kept where grass is thick (V39: step 2.4 -> 1.4)
 TRIS_FAR, FAR_CELL, FAR_CULL = 4, 32.0, 150.0       # as in CampusWorldBuilder.AddGrassTufts
-FAR_VISIBLE_BUDGET = 11000                          # triangles of far tufts inside FAR_CULL at the worst point
+FAR_VISIBLE_BUDGET = 26000                          # triangles of far tufts inside FAR_CULL at the worst point (V39: 11000)
 
 COLOUR_FILE = sys.argv[3] if len(sys.argv) > 3 else os.path.join(HERE, "textures", "ground_colour.png")
 COLOUR = np.asarray(Image.open(COLOUR_FILE).convert("RGB"))
@@ -227,8 +233,8 @@ def place(dressing):
             nx, ny = (y2 - y1) / length, -(x2 - x1) / length
             if inside((x1 + x2) / 2 + nx * 0.3, (y1 + y2) / 2 + ny * 0.3, poly):
                 nx, ny = -nx, -ny
-            for k in range(int(length / 0.6)):
-                t = (k + rng.random()) * 0.6 / length
+            for k in range(int(length / WALL_STEP)):
+                t = (k + rng.random()) * WALL_STEP / length
                 off = rng.uniform(0.3, 0.7)
                 add(x1 + (x2 - x1) * t + nx * off, y1 + (y2 - y1) * t + ny * off, rng.uniform(0.9, 1.3))
     # V16h: the far LOD: a jittered grid over the lawns round the lap, kept where the clump noise says grass is thick
