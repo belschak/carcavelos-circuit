@@ -31,6 +31,28 @@
     align-items: stretch;
 }
 
+/* ---------- NOVA KART: the game's name, bold orange above CARCAVELOS, lands first like a stamp (Luc, 16 Nov) ---------- */
+.ts-brand {
+    font-size: 64px;
+    letter-spacing: 6px;
+    color: var(--cc-orange);
+    -unity-text-outline-width: 5px;
+    -unity-text-outline-color: var(--ink);
+    text-shadow: 0 7px 0 rgba(14, 34, 56, 0.85);
+    margin-bottom: -6px;
+    align-self: flex-start;
+    opacity: 0;
+    scale: 1.6 1.6;
+    transition-property: opacity, scale;
+    transition-duration: 160ms, 320ms;
+    transition-timing-function: ease-out, ease-out-back;
+}
+
+.intro-in .ts-brand {
+    opacity: 1;
+    scale: 1 1;
+}
+
 /* ---------- Logo: CARCAVELOS, one Label per letter (TitleScreen) ---------- */
 .ts-logo {
     flex-direction: row;

@@ -9,7 +9,8 @@ namespace CarcavelosCircuit.RaceFlow
     // - Last checkpoint passed: the music glides up one semitone and gets a bit louder (the "final stretch" lift).
     // - Finish: race music fades out under the jingle, then the calm results loop starts.
     // - Ducking: RaceSounds calls Duck() so the music dips under beeps, chimes and jingles.
-    // - The engine and kart effects get quieter on the results screen (KartAudio.SetMixLevels).
+    // - The engine and kart effects are silent on the title screen, start with the countdown and get quieter on the
+    //   results screen (KartAudio.SetMixLevels).
     // - Seaside ambience (audit 12): waves and distant gulls loop quietly the whole time, a bit lower while racing
     //   (the engine and the music fill the space) and a bit higher on the results screen (a calm beach).
     // - Browser tab hidden or game window unfocused: all sound pauses (AudioListener.pause).
@@ -89,8 +90,10 @@ namespace CarcavelosCircuit.RaceFlow
         {
             raceLevel = new LevelFade(titleDb);
             resultsLevel = new LevelFade(Decibels.Silent);
-            engineLevel = new LevelFade(0f);
-            effectsLevel = new LevelFade(0f);
+            // Title screen: the kart is silent (Luc, 16 Nov: the idling engine ran the whole time on the start screen).
+            // The engine starts with the countdown (OnCountdownStep) and is at full level from GO.
+            engineLevel = new LevelFade(Decibels.Silent);
+            effectsLevel = new LevelFade(Decibels.Silent);
             ambienceLevel = new LevelFade(ambienceTitleDb);
             duck = new DuckEnvelope(200f, 15f); // down in about 0.03 s, back up at 15 dB per second
         }
