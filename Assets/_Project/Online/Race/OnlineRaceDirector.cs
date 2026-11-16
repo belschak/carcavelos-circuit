@@ -279,6 +279,13 @@ namespace CarcavelosCircuit.Online
             }
             RaceControl control = session.Control;
             ApplyControl(control);
+            if (control.RaceId == 0 && roster != null)
+            {
+                // Lobby: stand on the slot the first race will give me (no pile-up in box 1). The setter re-places the
+                // kart when the slot changes (someone joined or left) and does nothing otherwise; a real race's slot
+                // comes from ApplyControl above, this line never runs then.
+                roster.PlayerSlotOverride = OnlineStartRules.LobbySlot(session.Players, session.LocalId);
+            }
             CheckTimeLimit(control);
             SendPoseIfDue();
             double now = session.Now;
@@ -465,12 +472,7 @@ namespace CarcavelosCircuit.Online
         // A new race for everyone in the room right now: ids in join order = grid slots, GO in 4 s.
         private void StartRace()
         {
-            IReadOnlyList<OnlinePlayer> players = session.Players;
-            int[] ids = new int[players.Count];
-            for (int i = 0; i < players.Count; i++)
-            {
-                ids[i] = players[i].Id;
-            }
+            int[] ids = OnlineStartRules.RosterFor(session.Players);
             RaceControl next = new RaceControl(session.Control.RaceId + 1, OnlinePhase.Countdown, OnlineStartRules.StartAtFor(session.Now), ids);
             session.MasterSetControl(next);
         }

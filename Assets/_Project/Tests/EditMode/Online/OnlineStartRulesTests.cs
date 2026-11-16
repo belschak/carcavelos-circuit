@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using CarcavelosCircuit.Online;
 using NUnit.Framework;
 
@@ -64,6 +65,38 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.IsFalse(OnlineStartRules.AutoStartHasEnough(3, 2));
             Assert.IsTrue(OnlineStartRules.AutoStartHasEnough(3, 3));
             Assert.IsTrue(OnlineStartRules.AutoStartHasEnough(3, 7));
+        }
+
+        // Lobby (before the first race): everyone on their own slot, the one the first race gives them.
+        [Test]
+        public void LobbySlot_IsTheIndexInTheFirstRacesRoster()
+        {
+            List<OnlinePlayer> players = new List<OnlinePlayer>
+            {
+                new OnlinePlayer(7, "Host", 0, 1.0), new OnlinePlayer(3, "B", 1, 2.0), new OnlinePlayer(9, "C", 2, 3.0)
+            };
+            RaceControl first = new RaceControl(1, OnlinePhase.Countdown, 10.0, OnlineStartRules.RosterFor(players));
+            CollectionAssert.AreEqual(new[] { 7, 3, 9 }, first.Roster, "join order, the host first");
+            for (int i = 0; i < players.Count; i++)
+            {
+                Assert.AreEqual(i, OnlineStartRules.LobbySlot(players, players[i].Id));
+                Assert.AreEqual(first.IndexOf(players[i].Id), OnlineStartRules.LobbySlot(players, players[i].Id));
+            }
+        }
+
+        [Test]
+        public void LobbySlot_MovesUpWhenSomeoneAheadLeaves_AndIsOffWhenNotInTheRoom()
+        {
+            List<OnlinePlayer> players = new List<OnlinePlayer>
+            {
+                new OnlinePlayer(7, "Host", 0, 1.0), new OnlinePlayer(3, "B", 1, 2.0), new OnlinePlayer(9, "C", 2, 3.0)
+            };
+            Assert.AreEqual(2, OnlineStartRules.LobbySlot(players, 9));
+            players.RemoveAt(1);
+            Assert.AreEqual(1, OnlineStartRules.LobbySlot(players, 9), "B left: C moves up one slot");
+            Assert.AreEqual(-1, OnlineStartRules.LobbySlot(players, 42), "not in the room = no override");
+            Assert.AreEqual(-1, OnlineStartRules.LobbySlot(null, 7));
+            Assert.AreEqual(0, OnlineStartRules.RosterFor(null).Length);
         }
     }
 }

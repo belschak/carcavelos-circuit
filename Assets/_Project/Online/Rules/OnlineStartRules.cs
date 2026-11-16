@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace CarcavelosCircuit.Online
 {
     // When things happen in an online race, all on the room's shared clock (plain C#, tested in
@@ -38,6 +40,35 @@ namespace CarcavelosCircuit.Online
                 return MinCountdownStepSeconds;
             }
             return step > CountdownStepSeconds ? CountdownStepSeconds : (float)step;
+        }
+
+        // The roster of a race the master starts now: the room's players in join order (IOnlineSession.Players is
+        // sorted that way, the master first). A player's index in it is their grid slot (RaceRoster.PlayerSlotOverride).
+        public static int[] RosterFor(IReadOnlyList<OnlinePlayer> players)
+        {
+            int count = players == null ? 0 : players.Count;
+            int[] ids = new int[count];
+            for (int i = 0; i < count; i++)
+            {
+                ids[i] = players[i].Id;
+            }
+            return ids;
+        }
+
+        // My grid slot before the first race (lobby, RaceId 0): the slot the first race will give me (my index in
+        // RosterFor), so every kart stands on its own grid slot instead of all in box 1. -1 = not in the room (yet),
+        // which RaceRoster reads as "no override" (slot 0).
+        public static int LobbySlot(IReadOnlyList<OnlinePlayer> players, int localId)
+        {
+            int[] ids = RosterFor(players);
+            for (int i = 0; i < ids.Length; i++)
+            {
+                if (ids[i] == localId)
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         // May the host start a race right now (button or Enter, and ?autostart)? Before the first race: from the

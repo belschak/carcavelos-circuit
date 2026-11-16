@@ -9,6 +9,7 @@ namespace CarcavelosCircuit.RaceFlow
     // Slot 0 = box 1 = front row left, slot 1 = box 2 = front row right, slot 2 = box 3 = second row left, and so on.
     // The front row is centred on the SpawnPoint (the SpawnPoint itself is the free middle between boxes 1 and 2).
     // Numbers in RaceSettings (docs/interfaces.md: 2 m sideways, 3 m back per row).
+    // Slots 10 .. 14 (online rooms of 15) have no box: a middle column between the box columns (see MiddleSlots).
     // KEEP IN SYNC: tools/world_gen/start_plan.py slot_offset() is the same formula in Python; the generator paints
     // the boxes with it. Change one, change the other (RacerGridTests.SlotOffsets_AreTheTableTheGeneratorPaints).
     // Who stands where:
@@ -47,6 +48,16 @@ namespace CarcavelosCircuit.RaceFlow
             return OffsetOf(slot, sidewaysMetres, rowMetres);
         }
 
+        // The ten boxes painted on the start plaza (start_plan.py SLOTS): slots 0 .. 9, pairs side by side.
+        public const int PaintedSlots = 10;
+
+        // Online rooms hold 15 players (OnlineRooms.MaxPlayers), five more than the boxes. The straight behind the
+        // SpawnPoint ends about 13 m back (the last box row is 12 m back), then the U-turn starts. So the five extra
+        // slots do not go further back: they stand in a middle column on the SpawnPoint's line, between the two box
+        // columns, half a row behind each box row (1.5, 4.5, 7.5, 10.5, 13.5 m back with 3 m rows). Nothing is
+        // painted there. With 2 m sideways a 1.4 m kart in the middle keeps 0.6 m to the karts left and right.
+        public const int MiddleSlots = 5;
+
         // The one grid formula (mirrored by start_plan.py slot_offset, see the note at the top).
         public static Vector3 OffsetOf(int slot, float sidewaysMetres, float rowMetres)
         {
@@ -54,7 +65,16 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 slot = 0;
             }
-            int row = slot / 2;                    // 0,1 -> front row; 2,3 -> second row ...
+            if (slot >= PaintedSlots && slot < PaintedSlots + MiddleSlots)
+            {
+                int middle = slot - PaintedSlots;  // 0 = just behind the front row ... 4 = just behind the last box row
+                return new Vector3(0f, 0f, -(middle + 0.5f) * rowMetres);
+            }
+            if (slot >= PaintedSlots + MiddleSlots)
+            {
+                slot -= MiddleSlots;  // 16 or more racers (never today): pairs again, behind the last box row
+            }
+            int row = slot / 2;                   // 0,1 -> front row; 2,3 -> second row ...
             float side = slot % 2 == 0 ? -1f : 1f; // even slot (odd box number) = left, odd slot = right
             return new Vector3(side * sidewaysMetres, 0f, -row * rowMetres);
         }

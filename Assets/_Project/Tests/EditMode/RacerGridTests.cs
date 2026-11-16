@@ -57,6 +57,56 @@ namespace CarcavelosCircuit.Tests.EditMode
             }
         }
 
+        // Online rooms hold 15 (OnlineRooms.MaxPlayers). The straight behind the SpawnPoint ends about 13 m back, then
+        // the U-turn starts, so slots 10 .. 14 stand in a middle column between the box columns, half a row behind each
+        // box row. start_plan.py carries the same table (SLOT_TABLE_MIDDLE_2_3).
+        private const int OnlineRoom = 15;
+
+        [Test]
+        public void OnlineSlots10To14_StandInAMiddleColumn_BetweenTheBoxes()
+        {
+            float[] back = { -1.5f, -4.5f, -7.5f, -10.5f, -13.5f };
+            RacerGrid grid = new RacerGrid(2f, 3f);
+            for (int i = 0; i < back.Length; i++)
+            {
+                AssertVector(new Vector3(0f, 0f, back[i]), grid.SlotOffset(RacerGrid.PaintedSlots + i));
+            }
+            Assert.AreEqual(OnlineRoom, RacerGrid.PaintedSlots + RacerGrid.MiddleSlots, "one slot per online seat");
+        }
+
+        // A kart is about 1.4 x 2.0 m (the boxes are 1.7 x 2.3); checked with 1.5 x 2.2 to keep some air.
+        [Test]
+        public void NoTwoSlots_Overlap_EvenWithMoreThanAnOnlineRoom()
+        {
+            const float kartWidth = 1.5f;
+            const float kartLength = 2.2f;
+            RacerGrid grid = new RacerGrid(2f, 3f);
+            for (int a = 0; a < OnlineRoom + 5; a++)
+            {
+                for (int b = a + 1; b < OnlineRoom + 5; b++)
+                {
+                    Vector3 d = grid.SlotOffset(a) - grid.SlotOffset(b);
+                    bool apart = Mathf.Abs(d.x) >= kartWidth || Mathf.Abs(d.z) >= kartLength;
+                    Assert.IsTrue(apart, "slots " + a + " and " + b + " overlap: " + d);
+                }
+            }
+        }
+
+        // Every online slot stays on the straight: no further back than the last box row plus half a row (13.5 m, the
+        // U-turn starts at about 13 m to 14 m), and no wider than the box columns (the road is 8 m wide).
+        [Test]
+        public void AllOnlineSlots_StayOnTheStraight_BehindTheSpawnPoint()
+        {
+            RacerGrid grid = new RacerGrid(2f, 3f);
+            for (int slot = 0; slot < OnlineRoom; slot++)
+            {
+                Vector3 offset = grid.SlotOffset(slot);
+                Assert.LessOrEqual(offset.z, 0f, "slot " + slot + " is not ahead of the front row");
+                Assert.GreaterOrEqual(offset.z, -13.5f, "slot " + slot + " is not in the U-turn");
+                Assert.LessOrEqual(Mathf.Abs(offset.x), 2f, "slot " + slot + " is inside the box columns");
+            }
+        }
+
         [Test]
         public void NegativeSlot_IsTreatedAsSlotZero()
         {
