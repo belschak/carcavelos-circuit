@@ -6,14 +6,18 @@ namespace CarcavelosCircuit.Online
     // Poses come about 15 times per second, the screen draws 60 times per second, so we show the kart a little in the
     // past (RenderDelaySeconds behind the shared clock) and blend between the two poses around that moment. Then the
     // kart moves smoothly even when packets arrive unevenly.
+    // Why 0.22 s (Luc's review, 16 Nov 2026): a pose is ready only after the send gap (1/15 s = 67 ms) plus the trip
+    // sender -> Photon (Amsterdam) -> us, and campus Wi-Fi adds jitter on top. 0.12 s was too tight: the kart ran out
+    // of poses, extrapolated and jumped. 0.22 s covers about 150 ms of trip + jitter; the price is that the others are
+    // shown 0.1 s further in the past, which nobody notices in a kart race.
     // - A pose older than (or as old as) the newest one is dropped: newest wins, a late or doubled packet is ignored.
     // - After the newest pose the kart keeps moving in a straight line for at most MaxExtrapolationSeconds, then it
     //   holds still (a sender whose Wi-Fi drops does not fly off into the sea).
     // Plain C#, tested in Edit Mode (PoseBufferTests).
     public class PoseBuffer
     {
-        public const double RenderDelaySeconds = 0.12;
-        public const double MaxExtrapolationSeconds = 0.25;
+        public const double RenderDelaySeconds = 0.22;
+        public const double MaxExtrapolationSeconds = 0.3;
         public const int Capacity = 32; // about 2 s at 15 Hz, more than we ever need
 
         private readonly KartPose[] poses = new KartPose[Capacity];

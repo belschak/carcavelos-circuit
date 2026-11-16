@@ -4,8 +4,9 @@ namespace CarcavelosCircuit.Online.Fusion
 {
     // Fusion's reasons for not being in a room, in the lobby's words (IOnlineSession.Status and FailReason).
     // A full room is its own status, so the lobby can offer the other room; everything else is Failed with one
-    // plain line the player can act on. The free Photon plan is capped at 100 players across both rooms: above
-    // that the cloud answers MaxCcuReached, which the player sees as "server full".
+    // plain line the player can act on. Our App ID runs Photon's free 100 CCU plan (checked in the dashboard on
+    // 16 Nov 2026): at most 100 open game pages across both rooms; above that the cloud answers MaxCcuReached,
+    // which the player sees as "server full".
     public static class FusionFailMessages
     {
         public static OnlineStatus StatusOf(ShutdownReason reason)

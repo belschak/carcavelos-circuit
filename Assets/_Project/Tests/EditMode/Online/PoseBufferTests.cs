@@ -70,10 +70,33 @@ namespace CarcavelosCircuit.Tests.EditMode
             KartPose shown;
             Assert.IsTrue(buffer.TrySample(2.1, out shown));
             Assert.AreEqual(11f, shown.Position.x, 0.001f, "0.1 s ahead at 10 m/s");
-            Assert.IsTrue(buffer.TrySample(2.25, out shown));
-            Assert.AreEqual(12.5f, shown.Position.x, 0.001f, "the most we ever extrapolate");
+            float most = 10f + 10f * (float)PoseBuffer.MaxExtrapolationSeconds;
+            Assert.IsTrue(buffer.TrySample(2.0 + PoseBuffer.MaxExtrapolationSeconds, out shown));
+            Assert.AreEqual(most, shown.Position.x, 0.001f, "the most we ever extrapolate");
             Assert.IsTrue(buffer.TrySample(5.0, out shown));
-            Assert.AreEqual(12.5f, shown.Position.x, 0.001f, "after that the kart holds still");
+            Assert.AreEqual(most, shown.Position.x, 0.001f, "after that the kart holds still");
+        }
+
+        // Luc's review: on campus Wi-Fi a pose can arrive up to ~150 ms after it was sent (trip + jitter). With poses
+        // every 1/15 s, the moment we draw (now - RenderDelaySeconds) must still lie between two received poses, so the
+        // kart is blended, never extrapolated or frozen.
+        [Test]
+        public void RenderDelay_CoversSendGapPlusSlowWifi()
+        {
+            const double sendGap = 1.0 / 15.0;
+            const double lateness = 0.15;
+            Assert.GreaterOrEqual(PoseBuffer.RenderDelaySeconds, 0.2, "Luc's 0.2 to 0.25 s");
+            for (double now = 1.0; now < 3.0; now += 1.0 / 60.0)
+            {
+                // What has arrived by "now": every pose sent at least "lateness" ago.
+                PoseBuffer buffer = new PoseBuffer();
+                for (int i = 0; i * sendGap <= now - lateness; i++)
+                {
+                    buffer.Add(At(i * sendGap, (float)(i * sendGap * 10.0)));
+                }
+                double drawAt = now - PoseBuffer.RenderDelaySeconds;
+                Assert.Less(drawAt, buffer.NewestTime, "at " + now + " s the kart would run out of poses");
+            }
         }
 
         [Test]
