@@ -93,6 +93,8 @@ namespace CarcavelosCircuit.Tests.EditMode
         [Test]
         public void Set_WithoutSave_ChangesTheLookButNotTheSavedChoice()
         {
+            // Set only saves a change, so leave Noon first: then Noon is really the saved offline choice.
+            TimeOfDayChoice.Set(TimeOfDay.Sunset);
             TimeOfDayChoice.Set(TimeOfDay.Noon);
             Assert.IsTrue(TimeOfDayChoice.Set(TimeOfDay.Sunset, false), "the online Sunset room");
             Assert.AreEqual(TimeOfDay.Sunset, TimeOfDayChoice.Current);

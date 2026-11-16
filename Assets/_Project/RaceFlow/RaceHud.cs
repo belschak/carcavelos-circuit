@@ -506,7 +506,9 @@ namespace CarcavelosCircuit.RaceFlow
             float nextSeconds = raceManager.MedalSeconds(next);
             string nextTime = nextSeconds > 0f ? HudFormat.Time(RaceTimer.ToMilliseconds(nextSeconds)) : "";
             resultsMedalNext.text = ResultsCopy.MedalLine(medal, bestBefore, best, next, nextTime);
-            resultsMedalNext.style.display = resultsMedalNext.text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            // Online laps save no medal or best (M2), so the "next medal" line would promise something that never happens.
+            bool show = resultsMedalNext.text.Length > 0 && raceManager.Mode != RaceMode.OnlineRace;
+            resultsMedalNext.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         // Lap report: four numbers from RunStats. Nothing measured shows a dim "-" (ResultsCopy), never a broken-looking "0".
