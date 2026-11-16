@@ -596,16 +596,24 @@ kbd.cc-wide { padding: 0 11px; font-size: 12px; letter-spacing: 0.08em; }
   transform: scale(0.94);
 }
 
+/* Left thumb: steer left/right at the bottom, the Trick button (D11, Q21) above them, as wide as both. */
 .cc-touch-steer {
   position: fixed;
   left: var(--pad-side);
   bottom: var(--pad-bottom);
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas: "trick trick" "left right";
+  gap: 10px 12px;
 }
 .cc-touch-steer .cc-touch-button { width: calc(var(--size) * 1.1); }
+.cc-touch-steer .cc-touch-trick {
+  grid-area: trick;
+  width: 100%;
+  height: calc(var(--size) * 0.62);
+}
 
-/* Right thumb: Gas at the bottom right, Drift beside it, Brake above Gas, the reserved Item slot above Drift. */
+/* Right thumb: Gas at the bottom right, Drift beside it, Brake above Gas, Item (R7, E) above Drift. */
 .cc-touch-pedals {
   position: fixed;
   right: var(--pad-side);
