@@ -952,11 +952,15 @@ namespace CarcavelosCircuit.Visuals.Editor
         // ground mesh (road, deck, roof, prop) is left out. A tuft = 3 small crosses of 2 upright cards (12 triangles),
         // or 4 crosses of 3 cards (24 triangles) for the "big" ones in the fringe at the track edge, with the grass
         // cutout, shifted 35 % towards the lawn colour under it (vertex colour; alpha = card height for the
-        // shader's sink-away). All tufts of a 16 m cell are merged into one mesh, and a LODGroup hides the cell
-        // beyond about 65 m (at LOD bias 1), so only the cells near the camera cost anything. No shadows cast.
+        // shader's sink-away). V39: the tufts are no longer merged into cell meshes but drawn as GPU instances of 9
+        // prototype meshes (GrassTuftShape) by GrassField, which keeps the 16 m cells hidden beyond about 65 m and only
+        // draws what is in view. No shadows cast. Download: ~36 bytes per tuft (GrassFieldData) instead of ~900.
         // V16h: tufts marked "far" are the far LOD: one cross of two cards (4 triangles), larger, in 32 m cells that stay
         // visible to 150 m (material W_grass_tuft_far: sinks away just before), so lawns keep texture further out.
         private const float TuftCell = 16f, TuftCullDistance = 65f, TuftFarCell = 32f, TuftFarCullDistance = 150f;
+        // V39: tufts a bit larger than the V16 cards (Luc: "more texture on the grass"): seen from the chase camera the
+        // 15-27 cm blades of the old size barely showed even at twice the count.
+        private const float TuftSize = 1.25f, TuftFarSize = 1.15f;
         private static readonly Color TuftLawn = new Color(143f / 255f, 179f / 255f, 122f / 255f).linear;   // the lawn the cutout was painted for
         private static readonly List<Vector3> tuftFeet = new List<Vector3>();
         private static int tuftsPlaced, tuftsLeftOut, tuftTriangles, tuftChunks;
@@ -1003,78 +1007,67 @@ namespace CarcavelosCircuit.Visuals.Editor
                 tuftFeet.Add(hit.point);
                 tuftsPlaced++;
             }
-            var tuftRoot = new GameObject("GrassTufts");
-            tuftRoot.transform.SetParent(root.transform, false);
+            // V39: the tufts are GPU instances of 9 prototype meshes (GrassField), not baked cell meshes any more:
+            // 4 small, 3 big, 2 far shapes; each tuft = foot, turn, size, lawn tint (~36 bytes instead of ~900).
+            GrassTuftShape.Kind[] kinds =
+            {
+                GrassTuftShape.Kind.Small, GrassTuftShape.Kind.Small, GrassTuftShape.Kind.Small, GrassTuftShape.Kind.Small,
+                GrassTuftShape.Kind.Big, GrassTuftShape.Kind.Big, GrassTuftShape.Kind.Big,
+                GrassTuftShape.Kind.Far, GrassTuftShape.Kind.Far,
+            };
+            const int smallBase = 0, smallCount = 4, bigBase = 4, bigCount = 3, farBase = 7, farCount = 2;
+            var meshes = new Mesh[kinds.Length];
+            for (int m = 0; m < kinds.Length; m++)
+            {
+                meshes[m] = GrassTuftShape.ToMesh(GrassTuftShape.Build(kinds[m], m), "GrassTuft_" + kinds[m] + "_" + m);
+                if (m == 0) AssetDatabase.CreateAsset(meshes[m], meshPath);
+                else AssetDatabase.AddObjectToAsset(meshes[m], meshPath);
+            }
+            int placed = tuftsPlaced;
+            var field = ScriptableObject.CreateInstance<GrassFieldData>();
+            field.PositionTurn = new Vector4[placed];
+            field.SizeTint = new Vector4[placed];
+            field.Prototype = new byte[placed];
+            field.Far = new byte[placed];
+            int f = 0;
             foreach (KeyValuePair<Vector2Int, List<Vector4>> cell in cells)
             {
                 bool farCell = cell.Key.x > 50000;
-                float size = farCell ? TuftFarCell : TuftCell;
-                var origin = new Vector3((cell.Key.x - (farCell ? 100000 : 0) + 0.5f) * size, 0f, (cell.Key.y + 0.5f) * size);
-                var verts = new List<Vector3>(); var normals = new List<Vector3>();
-                var uv = new List<Vector2>(); var sway = new List<Vector2>(); var tris = new List<int>();
-                var colours = new List<Color>();
                 foreach (Vector4 p in cell.Value)
                 {
-                    Tuft t = data.tufts[(int)p.w];
-                    var rng = new System.Random(7919 * (int)p.w + 17);
-                    float R() => (float)rng.NextDouble();
+                    int index = (int)p.w;
+                    Tuft t = data.tufts[index];
                     Color here = new Color(t.r / 255f, t.g / 255f, t.b / 255f).linear;       // lawn colour under the tuft
                     var lawn = new Color(Mathf.Lerp(1f, Mathf.Clamp(here.r / TuftLawn.r, 0.6f, 1.5f), 0.35f),
                                          Mathf.Lerp(1f, Mathf.Clamp(here.g / TuftLawn.g, 0.6f, 1.5f), 0.35f),
                                          Mathf.Lerp(1f, Mathf.Clamp(here.b / TuftLawn.b, 0.6f, 1.5f), 0.35f));
-                    int crosses = farCell ? 1 : t.big > 0 ? 4 : 3, cards = t.big > 0 && !farCell ? 3 : 2;
-                    for (int cross = 0; cross < crosses; cross++)
-                    {
-                        float away = cross == 0 ? 0f : (0.1f + 0.14f * R()) * t.s, around = (t.yaw + cross * 120f + 60f * R()) * Mathf.Deg2Rad;
-                        Vector3 foot = new Vector3(p.x, p.y, p.z) - origin + new Vector3(Mathf.Cos(around), 0f, Mathf.Sin(around)) * away;
-                        float height = (0.15f + 0.12f * R()) * t.s, half = (0.15f + 0.07f * R()) * t.s, turn = R() * Mathf.PI;
-                        float half_u = R() < 0.5f ? 0f : 0.5f;                          // which of the two tufts in the texture
-                        for (int card = 0; card < cards; card++)
-                        {
-                            float a = turn + card * Mathf.PI / cards;
-                            var side = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * half;
-                            var lean = new Vector3(-Mathf.Sin(a), 0f, Mathf.Cos(a)) * (0.06f * (R() - 0.5f));
-                            int n = verts.Count;
-                            verts.Add(foot - side + Vector3.down * 0.04f); verts.Add(foot + side + Vector3.down * 0.04f);
-                            verts.Add(foot + side + lean + Vector3.up * height); verts.Add(foot - side + lean + Vector3.up * height);
-                            uv.Add(new Vector2(half_u, 0f)); uv.Add(new Vector2(half_u + 0.5f, 0f));
-                            uv.Add(new Vector2(half_u + 0.5f, 1f)); uv.Add(new Vector2(half_u, 1f));
-                            sway.Add(Vector2.zero); sway.Add(Vector2.zero); sway.Add(new Vector2(0f, 1f)); sway.Add(new Vector2(0f, 1f));
-                            for (int k = 0; k < 4; k++) normals.Add(Vector3.up);        // lit like the lawn under it
-                            for (int k = 0; k < 4; k++) colours.Add(new Color(lawn.r, lawn.g, lawn.b, height + 0.04f));
-                            tris.AddRange(new[] { n, n + 2, n + 1, n, n + 3, n + 2 });
-                        }
-                    }
+                    int proto = farCell ? farBase + GrassTuftShape.Variant(index, farCount)
+                              : t.big > 0 ? bigBase + GrassTuftShape.Variant(index, bigCount)
+                              : smallBase + GrassTuftShape.Variant(index, smallCount);
+                    field.PositionTurn[f] = new Vector4(p.x, p.y, p.z, t.yaw * Mathf.Deg2Rad);
+                    field.SizeTint[f] = new Vector4(t.s * (farCell ? TuftFarSize : TuftSize), lawn.r, lawn.g, lawn.b);
+                    field.Prototype[f] = (byte)proto;
+                    field.Far[f] = (byte)(farCell ? 1 : 0);
+                    tuftTriangles += meshes[proto].triangles.Length / 3;
+                    f++;
                 }
-                var mesh = new Mesh { name = (farCell ? "GrassTuftsFar_" : "GrassTufts_") + (cell.Key.x - (farCell ? 100000 : 0)) + "_" + cell.Key.y };
-                mesh.SetVertices(verts); mesh.SetNormals(normals); mesh.SetUVs(0, uv); mesh.SetUVs(1, sway);
-                mesh.SetColors(colours);
-                mesh.SetTriangles(tris, 0);
-                mesh.RecalculateBounds();
-                if (tuftChunks == 0)
-                {
-                    AssetDatabase.CreateAsset(mesh, meshPath);
-                }
-                else
-                {
-                    AssetDatabase.AddObjectToAsset(mesh, meshPath);
-                }
-                var go = new GameObject(mesh.name);
-                go.transform.SetParent(tuftRoot.transform, false);
-                go.transform.position = origin;
-                go.AddComponent<MeshFilter>().sharedMesh = mesh;
-                MeshRenderer r = go.AddComponent<MeshRenderer>();
-                r.sharedMaterial = farCell ? farMat : mat;
-                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                LODGroup lod = go.AddComponent<LODGroup>();
-                lod.SetLODs(new[] { new LOD(0.5f, new Renderer[] { r }) });
-                lod.RecalculateBounds();
-                // relative screen height of the cell at the cull distance, for a 60 degree camera
-                float shown = Mathf.Clamp(lod.size / (2f * (farCell ? TuftFarCullDistance : TuftCullDistance) * Mathf.Tan(30f * Mathf.Deg2Rad)), 0.01f, 0.9f);
-                lod.SetLODs(new[] { new LOD(shown, new Renderer[] { r }) });
-                tuftChunks++;
-                tuftTriangles += tris.Count / 3;
             }
+            string fieldPath = ModelsDir + "/GrassField.asset";
+            AssetDatabase.DeleteAsset(fieldPath);
+            AssetDatabase.CreateAsset(field, fieldPath);
+            foreach (Material m in new[] { mat, farMat })
+            {
+                if (m != null && !m.enableInstancing)
+                {
+                    m.enableInstancing = true; // GrassField draws with Graphics.DrawMeshInstanced
+                    EditorUtility.SetDirty(m);
+                }
+            }
+            var tuftRoot = new GameObject("GrassTufts");
+            tuftRoot.transform.SetParent(root.transform, false);
+            GrassField grass = tuftRoot.AddComponent<GrassField>();
+            grass.SetUp(field, meshes, farCount, mat, farMat);
+            tuftChunks = grass.CellCount;
             AssetDatabase.SaveAssets();
         }
 

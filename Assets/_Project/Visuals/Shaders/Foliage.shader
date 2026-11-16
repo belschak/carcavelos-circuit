@@ -47,6 +47,11 @@ Shader "CarcavelosCircuit/Foliage"
             float4 _Wind, _WindSpeed, _Shrink;
             half _Cutoff, _BackShade, _AlphaClip, _Cull, _FlipBack, _Crown;
         CBUFFER_END
+        // V39: the instanced grass tufts (GrassField) carry their lawn colour per instance. rgb = tint, a = 1 when set;
+        // everything drawn without it (trees, palms, old tuft meshes) reads a = 0 and keeps its vertex colour.
+        UNITY_INSTANCING_BUFFER_START(FoliageInstance)
+            UNITY_DEFINE_INSTANCED_PROP(float4, _InstanceTint)
+        UNITY_INSTANCING_BUFFER_END(FoliageInstance)
         float _WindTimeOffset;            // global, 0 in the game; the editor's shot renderer steps it to show motion
         float _ShotTimeFreeze;            // global, 0 in the game; 1 = ignore the running clock (repeatable shots)
         float _WindCalm;                  // global, 0 = wind as set on the material, 1 = no wind
@@ -143,6 +148,8 @@ Shader "CarcavelosCircuit/Foliage"
                 o.normalWS = TransformObjectToWorldNormal(v.normalOS);
                 o.uv = v.uv;
                 o.tint = v.color.rgb;
+                float4 instanceTint = UNITY_ACCESS_INSTANCED_PROP(FoliageInstance, _InstanceTint);
+                o.tint *= instanceTint.a > 0.5 ? (half3)instanceTint.rgb : half3(1.0, 1.0, 1.0);   // V39
                 o.height = max(v.sway.x, v.sway.y);
                 o.fogFactor = ComputeFogFactor(o.positionCS.z);
                 return o;
