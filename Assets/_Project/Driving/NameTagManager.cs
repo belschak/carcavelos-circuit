@@ -25,7 +25,7 @@ namespace CarcavelosCircuit.Driving
         private float heightAboveKart = 1.6f;
 
         [SerializeField, Tooltip("Size of the letters (TextMesh character size). Bigger = bigger letters; check it in Play Mode")]
-        private float letterSize = 0.08f;
+        private float letterSize = 0.06f;
 
         [SerializeField, Tooltip("Closer to the camera than this (m) the tag is hidden, so it never covers the road in front of you")]
         private float nearHideMetres = 3f;
