@@ -351,6 +351,7 @@
                 <ui:VisualElement class="credits-pages">
                     <!-- Page 1: the team, names and roles as in docs/team.md -->
                     <ui:VisualElement name="credits-page-1" class="credits-page">
+                        <ui:VisualElement class="credits-logo" />
                         <ui:Label text="THE TEAM" class="credits-head f-ui" />
                         <ui:VisualElement class="credits-team">
                             <ui:VisualElement class="credit-person">

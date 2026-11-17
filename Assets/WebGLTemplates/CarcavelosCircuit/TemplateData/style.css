@@ -782,7 +782,7 @@ html:not(.cc-racing) .cc-touch-tools .cc-touch-pill {
   --font-ui: "Barlow Condensed", "Bahnschrift", "Arial Narrow", system-ui, sans-serif;
 }
 
-#cc-loader { background: #22184F; grid-template-rows: 1fr auto auto; }
+#cc-loader { background: #22184F; grid-template-rows: 1fr auto auto; grid-template-columns: minmax(0, 1fr); }
 .cc-wave, .cc-sky, .cc-sun, .cc-sea, .cc-tiles { display: none; }
 .cc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -857,6 +857,8 @@ html:not(.cc-racing) .cc-touch-tools .cc-touch-pill {
   font-family: var(--font-display); font-weight: 400; font-size: clamp(26px, 3.4vw, 38px); letter-spacing: 0.06em;
   box-shadow: 0 8px 0 var(--ink), 0 18px 30px rgba(20, 8, 40, 0.45), inset 0 4px 0 rgba(255, 255, 255, 0.6);
 }
+.cc-play { animation: cc-pop 0.35s ease-out both, cc-play-breathe 1.8s 0.35s ease-in-out infinite; }
+@keyframes cc-play-breathe { 50% { scale: 1.045; } }
 .cc-play svg { color: var(--coral); width: 28px; height: 28px; }
 .cc-play:active { transform: translateY(6px); box-shadow: 0 2px 0 var(--ink), 0 8px 16px rgba(20, 8, 40, 0.4), inset 0 4px 0 rgba(255, 255, 255, 0.6); }
 .cc-play:focus-visible { outline: 3px solid var(--cream); }
@@ -873,7 +875,7 @@ html:not(.cc-racing) .cc-touch-tools .cc-touch-pill {
 /* ---------- Key dock ---------- */
 .cc-dock { padding: 0 16px max(12px, env(safe-area-inset-bottom)); display: flex; justify-content: center; }
 .cc-controls {
-  width: max-content; max-width: 100%; padding: 9px 18px 10px; border-radius: 18px; gap: 6px 16px;
+  width: fit-content; max-width: min(100%, 1180px); padding: 9px 18px 10px; border-radius: 18px; gap: 6px 16px;
   background: rgba(14, 34, 56, 0.84); border: 3px solid rgba(255, 246, 227, 0.16); box-shadow: 0 6px 0 rgba(8, 16, 30, 0.6);
 }
 kbd { background: var(--cream); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 3px 0 #8FA3B8; font-weight: 800; font-size: 14px; }
@@ -882,6 +884,15 @@ kbd { background: var(--cream); color: var(--ink); border: 2px solid var(--ink);
 
 @media (max-height: 640px), (max-width: 760px) {
   .cc-scene .pin { display: none; }
+}
+@media (max-height: 470px) {
+  .cc-dock { display: none; }
+  .cc-logo { width: min(520px, 92vw, 100vh); }
+  .cc-play-hint { margin-top: 8px; }
+}
+@media (max-width: 560px) {
+  .cc-controls { padding: 8px 12px 9px; gap: 6px 12px; }
+  .cc-controls li:nth-child(n+5) { display: none; } /* phones: drive, drift, trick, item */
 }
 @media (prefers-reduced-motion: reduce) {
   .cc-scene *, .cc-lg { animation: none !important; }
