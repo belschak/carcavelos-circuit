@@ -1,0 +1,59 @@
+{
+  "_what": "Driver select (17 Nov 2026): the far StreetGT kart and its Retro tyres, same format as palette.json (V32).",
+  "grid": 4,
+  "paint": "NK_Paint_Body",
+  "materials": [
+    "NK_Accent_Silver",
+    "NK_Chassis_Dark",
+    "NK_Flame2_Extra",
+    "NK_Flame_Extra",
+    "NK_Gold_Metal",
+    "NK_Metal",
+    "NK_Number_Plate",
+    "NK_Number_Red",
+    "NK_Steel",
+    "NK_Steel_Bright",
+    "NK_Trim_Black"
+  ],
+  "tyre_bake": {
+    "size": 512,
+    "ids": [
+      {
+        "name": "NT_Tyre",
+        "r": 1,
+        "g": 0,
+        "b": 0
+      },
+      {
+        "name": "NT_Retro_Rim",
+        "r": 0,
+        "g": 1,
+        "b": 0
+      },
+      {
+        "name": "NT_Retro_Hub",
+        "r": 0,
+        "g": 0,
+        "b": 1
+      },
+      {
+        "name": "NT_Retro_Letter",
+        "r": 1,
+        "g": 1,
+        "b": 0
+      },
+      {
+        "name": "NT_Retro_Wall",
+        "r": 0,
+        "g": 1,
+        "b": 1
+      },
+      {
+        "name": "NT_Retro_Chrome",
+        "r": 1,
+        "g": 0,
+        "b": 1
+      }
+    ]
+  }
+}
