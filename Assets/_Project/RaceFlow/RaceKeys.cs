@@ -119,7 +119,8 @@ namespace CarcavelosCircuit.RaceFlow
             return keyboard != null && keyboard.eKey.wasPressedThisFrame;
         }
 
-        // ---- Menu keys (task P7). Never Escape: in a browser it leaves fullscreen. ----
+        // ---- Menu keys (task P7). Escape only ever closes or goes back (BackPressed); in browser fullscreen the
+        //      browser takes it to leave fullscreen, so every menu also has a button and a second key. ----
 
         // O = open or close the settings (start and results screen).
         public static bool SettingsPressed()
@@ -195,6 +196,15 @@ namespace CarcavelosCircuit.RaceFlow
             return 0;
         }
 
+        // The left mouse button went down this frame (a click or, on a phone, a tap the page turns into a click).
+        // The menus only claim this press when it lands on one of their buttons (MenuInputRules.ClickBelongsToButton):
+        // a key pressed while the mouse merely rests on a button is still a key.
+        public static bool ClickPressed()
+        {
+            Mouse mouse = Mouse.current;
+            return mouse != null && mouse.leftButton.wasPressedThisFrame;
+        }
+
         // Where the mouse is, in screen pixels (0,0 = bottom left). False without a mouse.
         // The HUD uses it to see if the mouse points at a menu button before the click arrives.
         public static bool TryGetMousePosition(out Vector2 position)
@@ -204,7 +214,8 @@ namespace CarcavelosCircuit.RaceFlow
             return mouse != null;
         }
 
-        // Driver select (Luc, 17 Nov 2026): Enter or Space = READY, Escape or Backspace = back to the race modes.
+        // Driver select (Luc, 17 Nov 2026): Enter or Space = READY. Escape or Backspace = back: from the driver select
+        // to the race modes, and it closes the settings and the credits (team test 17 Nov 2026).
         public static bool ReadyPressed()
         {
             Keyboard keyboard = GameKeyboard();

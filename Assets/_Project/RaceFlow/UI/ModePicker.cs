@@ -7,15 +7,22 @@ namespace CarcavelosCircuit.RaceFlow
     // The three race modes on the start screen (Luc, 16 Nov 2026): RACE VS BOTS, TIME ATTACK, ONLINE RACE.
     // Built in code (like HudMenus' panels), so Main.unity and RaceHud.uxml need no change. RaceHud creates it and
     // calls Update() every frame.
-    // - Click or tap a card: that mode is picked and the driver select opens (one tap to the next step).
-    // - Keys 1, 2, 3 pick a mode; the same key press then starts the race like any other key.
+    // Mario Kart style (team test 17 Nov 2026): mode -> driver -> go, for EVERY mode.
+    // - Click or tap anywhere on a card: that mode is picked and the driver select opens (UI/DriverPicker).
+    //   The cards look like buttons: the mouse on a card lifts it (bigger, glass plate), a press pushes it in, and a
+    //   small arrow on every card says "this goes on". The keycaps 1 2 3 stay as a hint for the keyboard.
+    // - Keys 1, 2, 3 do the same as a click on that card.
     // - Any other key or click opens the driver select in the highlighted mode (the last one played).
-    // - ONLINE RACE (M2) opens the online lobby instead of the driver select (OnlineRaceHooks.OpenLobby); the lobby
-    //   starts the race for everyone. In a build without the online part the card is dimmed and picking it shows
-    //   OnlineRaceHooks.UnavailableMessage (RaceManager.TrySelectMode refuses it too).
+    // - ONLINE RACE (M2): the driver select comes first too; its READY then opens the online lobby (name + join,
+    //   OnlineRaceHooks.OpenLobby), where the room starts the race for everyone. In a build without the online part
+    //   the card is dimmed and picking it shows OnlineRaceHooks.UnavailableMessage (RaceManager.TrySelectMode refuses it too).
+    // - Only a real click on a card is the card's: a key pressed while the mouse rests on a card is a normal key
+    //   (MenuInputRules.ClickBelongsToButton; before, a parked mouse swallowed Space and Enter).
     public class ModePicker
     {
         private const float MessageSeconds = 2.2f;
+        private const float HoverScale = 1.08f;
+        private const float PressScale = 0.95f;
         private static readonly RaceMode[] Modes = { RaceMode.RaceVsBots, RaceMode.TimeAttack, RaceMode.OnlineRace };
 
         private readonly RaceManager raceManager;
@@ -24,14 +31,20 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly VisualElement[] cards = new VisualElement[Modes.Length];
         private readonly Label[] titles = new Label[Modes.Length];
         private readonly Label[] subtitles = new Label[Modes.Length];
+        private readonly TriangleMark[] arrows = new TriangleMark[Modes.Length];
         private readonly Label message;
         private float messageUntil = -1f;  // real time until the refused chip hides
         private bool usedInputThisFrame;   // a key or click this frame belonged to the picker (not "start the race")
         private RaceMode shownMode = (RaceMode)(-1);
         private bool shownOnlineAvailable; // the Online assembly plugs in after the scene loaded: re-check in Update
+        private int hovered = -1;          // the card under the mouse, -1 = none
+        private int pressed = -1;          // the card the mouse button went down on, -1 = none
 
         // True while a click or key belongs to the picker, so it must not ALSO start the race (RaceManager.MenuUsesInput).
         public bool UsesInput { get; private set; }
+
+        // The card under the mouse (Play Mode test and QA), -1 = none.
+        public int Hovered { get { return hovered; } }
 
         // The refused chip ("ONLINE RACE NEEDS THE ONLINE BUILD") is on screen (Play Mode test).
         public bool IsMessageShown { get { return Time.unscaledTime < messageUntil; } }
@@ -126,7 +139,27 @@ namespace CarcavelosCircuit.RaceFlow
             subtitles[index].style.color = HudColors.WithAlpha(HudColors.Cream, 0.8f);
             card.Add(subtitles[index]);
 
-            card.RegisterCallback<ClickEvent>(evt => Pick(mode, true));
+            // "This card goes on": a small arrow in the bottom right corner (TriangleMark turned to point right).
+            arrows[index] = new TriangleMark(HudColors.Cream, HudColors.WithAlpha(HudColors.Ink, 0.6f), 1.2f);
+            arrows[index].style.position = Position.Absolute;
+            arrows[index].style.right = 10f;
+            arrows[index].style.bottom = 13f;
+            arrows[index].style.width = 13f;
+            arrows[index].style.height = 15f;
+            arrows[index].style.rotate = new Rotate(Angle.Degrees(90f));
+            card.Add(arrows[index]);
+
+            // The whole card is the hit target: every child ignores clicks (HudFx.IgnoreClicksDeep in the
+            // constructor), so a press on the title, the subtitle or the keycap lands on the card itself.
+            card.RegisterCallback<PointerEnterEvent>(evt => SetHovered(index, true));
+            card.RegisterCallback<PointerLeaveEvent>(evt => SetHovered(index, false));
+            card.RegisterCallback<PointerDownEvent>(evt => SetPressed(index));
+            card.RegisterCallback<PointerUpEvent>(evt => SetPressed(-1));
+            card.RegisterCallback<ClickEvent>(evt =>
+            {
+                SetPressed(-1);
+                Pick(mode, true);
+            });
             return card;
         }
 
@@ -153,12 +186,28 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 HudFx.SetClickable(cards[i], active);
             }
+            if (!active && (hovered >= 0 || pressed >= 0))
+            {
+                hovered = -1; // a card that cannot be clicked must not stay lifted (no PointerLeave comes then)
+                pressed = -1;
+                ShowSelected(raceManager.Mode);
+            }
+            // A press on a card belongs to the card (its ClickEvent picks the mode on release). A key while the
+            // mouse only rests on a card is a key.
+            bool cardClick = active && MenuInputRules.ClickBelongsToButton(RaceKeys.ClickPressed(), MouseOnCard());
             if (active)
             {
                 int key = RaceKeys.ModeKeyPressed();
                 if (key > 0)
                 {
                     Pick(Modes[key - 1], false);
+                }
+                else if (!cardClick && RaceModeRules.OpensLobby(raceManager.Mode) && !raceManager.ExternalStartOnly
+                         && !raceManager.MenuUsesInput && RaceKeys.AnyKeyOrClickPressed())
+                {
+                    // Online highlighted (back from its driver select): "any key" goes to the driver select again,
+                    // like in the offline modes (RaceManager does that for them, it never starts an online race).
+                    Pick(raceManager.Mode, false);
                 }
             }
             if (shownOnlineAvailable != OnlineRaceHooks.Available)
@@ -173,15 +222,15 @@ namespace CarcavelosCircuit.RaceFlow
             }
             message.style.opacity = IsMessageShown ? 1f : 0f;
 
-            // The mouse on a card: its press must not start the race before the ClickEvent picks the mode.
-            UsesInput = active && (usedInputThisFrame || MouseOnCard());
+            UsesInput = active && (usedInputThisFrame || cardClick);
             usedInputThisFrame = false;
         }
 
-        // Pick a mode. An offline mode by click starts the race straight away; by key the key press itself starts
-        // it (RaceManager sees it as "any key"). Online opens the lobby instead (click or key), and the input stays
-        // away from the race. A refused mode (Online without the online build): show the message, same thing.
-        // Public for the Play Mode test (RaceModesPlayTests).
+        // Pick a mode (a click or tap on its card, or its key) and open the driver select for it. Every mode goes
+        // there first; READY on it starts the countdown, or online opens the lobby (UI/DriverPicker.Ready). The
+        // click or key is used up here, so the RaceManager does not see it as "any key" as well.
+        // A refused mode (Online without the online build): show the message, nothing else happens.
+        // Public for the Play Mode tests (RaceModesPlayTests, DriverSelectPlayTests). byClick only says where it came from.
         public void Pick(RaceMode mode, bool byClick)
         {
             string refused;
@@ -189,17 +238,10 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 messageUntil = -1f;
                 ShowSelected(mode);
-                if (RaceModeRules.OpensLobby(mode))
+                usedInputThisFrame = true;
+                if (MenuInputRules.OpensDriverSelect(mode, OnlineRaceHooks.Available))
                 {
-                    usedInputThisFrame = true; // the "3" key or the click must not start a local race
-                    if (OnlineRaceHooks.OpenLobby != null)
-                    {
-                        OnlineRaceHooks.OpenLobby(raceManager);
-                    }
-                }
-                else if (byClick)
-                {
-                    raceManager.RequestStart(); // opens the driver select (UI/DriverPicker), READY there starts
+                    raceManager.RequestStart(); // opens the driver select (UI/DriverPicker), READY there goes on
                 }
                 return;
             }
@@ -211,13 +253,48 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
+        private void SetHovered(int index, bool on)
+        {
+            if (on)
+            {
+                hovered = index;
+            }
+            else if (hovered == index)
+            {
+                hovered = -1;
+                if (pressed == index)
+                {
+                    pressed = -1; // dragged off the card: no click comes, the card springs back
+                }
+            }
+            ShowSelected(raceManager.Mode);
+        }
+
+        private void SetPressed(int index)
+        {
+            pressed = index;
+            ShowSelected(raceManager.Mode);
+        }
+
+        // Picked card orange; the card under the mouse lifted (bigger, and a glass plate if it is not the picked one);
+        // the pressed card pushed in. Inline scale beats the menu-pill hover scale, the USS transition still animates it.
         private void ShowSelected(RaceMode mode)
         {
             shownMode = mode;
+            bool reduced = hudRoot != null && hudRoot.ClassListContains("reduce-motion");
             for (int i = 0; i < cards.Length; i++)
             {
                 bool picked = Modes[i] == mode;
+                bool lifted = i == hovered;
                 cards[i].EnableInClassList("plate--orange", picked);
+                cards[i].EnableInClassList("plate--blue", lifted && !picked);
+                float scale = i == pressed ? PressScale : (lifted ? HoverScale : 1f);
+                if (reduced)
+                {
+                    scale = 1f; // reduced motion: the plate colour alone says "hovered"
+                }
+                cards[i].style.scale = new Scale(new Vector3(scale, scale, 1f));
+                arrows[i].SetFill(picked ? HudColors.Ink : (lifted ? HudColors.Orange : HudColors.Cream));
                 titles[i].style.color = picked ? HudColors.Ink : HudColors.Cream;
                 if (picked)
                 {

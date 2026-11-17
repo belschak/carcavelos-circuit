@@ -125,6 +125,9 @@ namespace CarcavelosCircuit.RaceFlow
 
         // The driver select on the start screen (Play Mode test DriverSelectPlayTests).
         public DriverPicker Drivers { get { return driverPicker; } }
+
+        // Settings and credits (Play Mode test: Escape closes them). Null before OnEnable.
+        public HudMenus Menus { get { return menus; } }
         private FinishOverlay finishOverlay; // checkered flag + place or lap time after the line (UI/FinishOverlay.cs)
         private Label resultsHeadline;       // "FINISH" on the card, "2ND PLACE" in a race against the bots
         private VisualElement resultsMenu;   // the MENU (Q) button on the results card: back to the mode choice
@@ -572,12 +575,14 @@ namespace CarcavelosCircuit.RaceFlow
             // During the finish beat the card is not there yet, so the menus behave as in the race
             // (no results Settings button to click, the S key does nothing yet).
             menus.Update(state == RaceState.Results && !resultsShown ? RaceState.Racing : state);
-            modePicker.Update(state, menus.IsMenuOpen || driverPicker.IsOpen);
+            // ClosedThisFrame: the Escape that just closed the settings must not also leave the driver select.
+            bool menuHasTheKeys = menus.IsMenuOpen || menus.ClosedThisFrame;
+            modePicker.Update(state, menuHasTheKeys || driverPicker.IsOpen);
             if (modePicker.UsesInput)
             {
                 raceManager.MenuUsesInput = true; // this click or key picks a mode, it does not also start the race
             }
-            driverPicker.Update(state, menus.IsMenuOpen);
+            driverPicker.Update(state, menuHasTheKeys);
             if (driverPicker.UsesInput)
             {
                 raceManager.MenuUsesInput = true; // the driver select owns the keys; only READY starts the race
@@ -812,10 +817,11 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        // Few, big words (task R15): a phone has no keys, a computer has no touch screen (usually).
+        // Few, big words (task R15): a phone has no keys, a computer has no touch screen (usually). Since the team test
+        // (17 Nov 2026) it points at the mode cards, which are the buttons (MenuInputRules.StartPrompt).
         public static string StartPrompt(bool isPhone)
         {
-            return isPhone ? "TAP TO START" : "PRESS ANY KEY";
+            return MenuInputRules.StartPrompt(isPhone);
         }
 
         private void UpdateTimes()

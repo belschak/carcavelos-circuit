@@ -8,7 +8,8 @@
         "CarcavelosCircuit.Driving",
         "CarcavelosCircuit.RaceFlow",
         "CarcavelosCircuit.Visuals",
-        "Unity.Cinemachine"
+        "Unity.Cinemachine",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

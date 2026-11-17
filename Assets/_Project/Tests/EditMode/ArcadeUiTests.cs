@@ -109,8 +109,9 @@ namespace CarcavelosCircuit.Tests.EditMode
         [Test]
         public void StartPrompt_FewWords_PhoneOrKeyboard()
         {
-            Assert.AreEqual("TAP TO START", RaceHud.StartPrompt(true));
-            Assert.AreEqual("PRESS ANY KEY", RaceHud.StartPrompt(false));
+            // Since the team test (17 Nov 2026) the plate points at the mode cards, which are the buttons.
+            Assert.AreEqual("TAP A MODE TO PLAY", RaceHud.StartPrompt(true));
+            Assert.AreEqual("CLICK A MODE TO PLAY", RaceHud.StartPrompt(false));
         }
 
         // ---------- Leaderboard: who slides in when ----------

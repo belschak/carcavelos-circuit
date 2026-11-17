@@ -7,8 +7,8 @@ namespace CarcavelosCircuit.RaceFlow
     // Nothing set here = no online build: the Online card says so and the game stays single player.
     public static class OnlineRaceHooks
     {
-        // Set by the Online assembly. ModePicker calls it when the player picks "ONLINE RACE" on the start screen:
-        // the online lobby opens instead of the local countdown.
+        // Set by the Online assembly. DriverPicker.Ready calls it after the player picked "ONLINE RACE" and then a
+        // driver (DriverChoice is saved first): the online lobby opens instead of the local countdown.
         public static Action<RaceManager> OpenLobby;
 
         public static bool Available => OpenLobby != null;
