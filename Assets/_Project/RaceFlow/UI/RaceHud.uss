@@ -2033,3 +2033,8 @@
 .hud--touch .stuck-chip .keycap {
     display: none;
 }
+
+/* Without the R keycap the two words of the STUCK chip need their own gap: "STUCK?  RECOVER". */
+.hud--touch .stuck-chip .stuck-title {
+    margin: 0 5px;
+}
