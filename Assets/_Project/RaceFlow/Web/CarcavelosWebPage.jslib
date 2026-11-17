@@ -7,6 +7,12 @@ mergeInto(LibraryManager.library, {
     window.dispatchEvent(new CustomEvent("cc-race-state", { detail: { racing: racing !== 0 } }));
   },
 
+  // 1 while the page shows its touch buttons (phone or tablet, index.html useTouchMode adds "cc-touch-mode"), else 0.
+  // The HUD then makes room for the thumbs (RaceHud.uss ".hud--touch") and the hints name buttons instead of keys.
+  CarcavelosTouchMode: function () {
+    return document.documentElement.classList.contains("cc-touch-mode") ? 1 : 0;
+  },
+
   // The browser's own text box for the leaderboard name (phones: their keyboard opens reliably there).
   // Returns the typed text, or the old name when the player cancels. The game checks the answer itself.
   CarcavelosPromptName: function (currentPointer) {

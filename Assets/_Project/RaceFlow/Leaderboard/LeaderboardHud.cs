@@ -120,8 +120,9 @@ namespace CarcavelosCircuit.RaceFlow
             }
             lastState = state;
 
-            // The page's touch buttons for driving only during a race, so on a phone they never cover the boards.
-            bool racing = state == RaceState.Countdown || state == RaceState.Racing;
+            // The page's touch buttons for driving only during a race (not while paused), so on a phone they never
+            // cover the boards or the PAUSED card.
+            bool racing = WebPage.PageSeesRacing(state, raceManager.IsPaused);
             if (racing != sentRacing)
             {
                 sentRacing = racing;

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace CarcavelosCircuit.RaceFlow
 {
-    // The two things the game tells the Web page around it (task R10/R11). The JavaScript side is
+    // The things the game and the Web page around it tell each other (task R10/R11, phone round 17.11). The JavaScript side is
     // RaceFlow/Web/CarcavelosWebPage.jslib (Unity copies it into the Web build) and the page template
     // (Assets/WebGLTemplates/CarcavelosCircuit). In the Editor and in tests every call does nothing.
     // 1. SendRaceState: is a race running (countdown or racing)? The page's touch buttons for driving only show then,
@@ -19,7 +19,32 @@ namespace CarcavelosCircuit.RaceFlow
 
         [DllImport("__Internal")]
         private static extern string CarcavelosPromptName(string current);
+
+        [DllImport("__Internal")]
+        private static extern int CarcavelosTouchMode();
 #endif
+
+        // 3. TouchMode (phone round 17.11): true while the page shows its touch buttons (phones, tablets, a touch laptop
+        //    after a touch). The HUD then moves the drift bar and the speedometer between the thumbs and hides key hints.
+        //    It can change during the game (a touch laptop: a key press switches back), so callers ask again now and then.
+        public static bool TouchMode
+        {
+            get
+            {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                return CarcavelosTouchMode() != 0;
+#else
+                return false;
+#endif
+            }
+        }
+
+        // What the page hears as "a race runs": the countdown or the race, but not while paused. So the touch buttons
+        // hide under the PAUSED card (no thumb covers it, and a tap on the game continues) and come back after it.
+        public static bool PageSeesRacing(RaceState state, bool paused)
+        {
+            return (state == RaceState.Countdown || state == RaceState.Racing) && !paused;
+        }
 
         // True in a Web build on a phone or tablet: then the name is typed in the browser's own text box.
         public static bool UsesNamePrompt

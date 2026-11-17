@@ -237,6 +237,21 @@ namespace CarcavelosCircuit.RaceFlow
             HudTextures.Destroy(glowRightTexture);
         }
 
+        // Phone round 17.11: while the page shows touch buttons, "hud--touch" moves the drift bar and the speedometer
+        // to the bottom centre (between the thumbs) and hides the key hints (RaceHud.uss, end of the file).
+        // Asked twice a second: it only changes on a touch laptop (touch on, key press off).
+        private float nextTouchCheck;
+
+        private void UpdateTouchLayout()
+        {
+            if (Time.unscaledTime < nextTouchCheck)
+            {
+                return;
+            }
+            nextTouchCheck = Time.unscaledTime + 0.5f;
+            hudRoot.EnableInClassList("hud--touch", WebPage.TouchMode);
+        }
+
         private void OnHudResized(GeometryChangedEvent evt)
         {
             hudRoot.EnableInClassList("hud--narrow", evt.newRect.width < NarrowHudWidth);
@@ -565,6 +580,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 EnterState(state);
             }
+            UpdateTouchLayout();
             if (state == RaceState.Results && !resultsShown && Time.unscaledTime >= resultsShowTime)
             {
                 ShowResultsCard(); // the finish beat is over (with reduced motion: at once, in this frame)

@@ -1986,3 +1986,50 @@
 .reduce-motion.st-finish .time-panel {
     scale: 1 1;
 }
+
+/* ---------- Touch screens (phone round 17.11) ----------
+   RaceHud adds "hud--touch" while the Web page shows its touch buttons (WebPage.TouchMode). The buttons fill both
+   bottom corners (steer left, gas/brake right; index.html + TemplateData/style.css, sized in these same HUD pixels),
+   so the two bottom-corner pieces move into the free middle, between the thumbs and under the kart. The position
+   plate (PositionsHud) stays at the bottom centre (about 150 x 62 px); the speedometer, smaller, sits right of it and
+   the drift meter, a bit narrower, above both. Measured to fit a 16:9 screen (1280 px wide): the buttons leave
+   468 to 860 px free there. The key hints go: the buttons carry their own names. */
+.hud--touch .drift-panel {
+    position: absolute;
+    left: 50%;
+    bottom: 102px;
+    translate: -50% 0;
+    min-width: 240px;
+}
+
+.hud--touch .drift-bar {
+    width: 240px;
+}
+
+.hud--touch .speed-gauge {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    margin-left: 87px;
+    width: 96px;
+    height: 96px;
+    border-radius: 48px;
+    border-width: 2px;
+}
+
+.hud--touch .speed-centre {
+    margin-top: 2px;
+}
+
+.hud--touch .speed {
+    font-size: 38px;
+}
+
+.hud--touch .speed-gauge .caption--small {
+    font-size: 12px;
+}
+
+.hud--touch .controls-hint,
+.hud--touch .stuck-chip .keycap {
+    display: none;
+}

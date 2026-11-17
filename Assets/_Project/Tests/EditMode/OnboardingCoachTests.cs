@@ -135,5 +135,14 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(HintKind.Praise, OnboardingCoach.KindFor(CoachHint.BigBoost));
             Assert.AreEqual(HintKind.Tip, OnboardingCoach.KindFor(CoachHint.HowToDrift));
         }
+
+        // Phone round 17.11: on a touch screen the tip names the DRIFT button, not the Space key.
+        [Test]
+        public void DriftTip_OnTouch_NamesTheButton()
+        {
+            StringAssert.Contains("DRIFT", OnboardingCoach.TextFor(CoachHint.HowToDrift, true));
+            StringAssert.DoesNotContain("SPACE", OnboardingCoach.TextFor(CoachHint.HowToDrift, true));
+            StringAssert.Contains("SPACE", OnboardingCoach.TextFor(CoachHint.HowToDrift));
+        }
     }
 }

@@ -568,15 +568,38 @@ kbd.cc-wide { padding: 0 11px; font-size: 12px; letter-spacing: 0.08em; }
   -webkit-tap-highlight-color: transparent;
 }
 
-/* The panel itself lets touches through to the game; only the buttons catch them. */
+/* The panel itself lets touches through to the game; only the buttons catch them.
+   Sizes (phone round 17.11): everything is measured in the game HUD's own unit --cc-r (1/720 of the canvas height,
+   set by measureHudUnit in index.html), so the buttons grow and shrink with the HUD and keep clear of it at every
+   phone size; clamp() keeps each target between a thumb-sized minimum (9 to 13 mm) and a tablet maximum.
+   HUD pieces to keep clear of (HUD px, 720 high): lap time + medal/ghost chips top left down to 240, checkpoints
+   + minimap + item slot top right down to 265, kart in the middle 350 to 470; on touch screens the game moves its
+   drift bar and speedometer to the bottom centre (RaceHud.uss ".hud--touch"), between the two thumbs. */
 #cc-touch {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  --pad-side: max(14px, env(safe-area-inset-left), env(safe-area-inset-right));
-  --pad-bottom: calc(max(84px, 25vh) + env(safe-area-inset-bottom)); /* above the HUD's drift bar and speedometer */
-  --size: clamp(60px, 17vmin, 84px);
+  --r: var(--cc-r, calc(100vh / 720));
+  --sa-l: env(safe-area-inset-left, 0px);
+  --sa-r: env(safe-area-inset-right, 0px);
+  --sa-t: env(safe-area-inset-top, 0px);
+  --sa-b: env(safe-area-inset-bottom, 0px);
+  --edge-l: max(12px, var(--sa-l));
+  --edge-r: max(12px, var(--sa-r));
+  --edge-b: max(10px, var(--sa-b));
+  --gap: max(7px, calc(16 * var(--r)));
+  /* Used all the time: biggest. */
+  --steer-w: clamp(86px, calc(214 * var(--r)), 136px);
+  --steer-h: clamp(78px, calc(196 * var(--r)), 124px);
+  --gas: clamp(78px, calc(206 * var(--r)), 128px);
+  --brake: clamp(64px, calc(176 * var(--r)), 108px);
+  /* Now and then: smaller, a short reach away. */
+  --drift-h: clamp(58px, calc(150 * var(--r)), 94px);
+  --item-h: clamp(52px, calc(132 * var(--r)), 84px);
+  --trick-h: clamp(42px, calc(92 * var(--r)), 58px);
+  /* Rare: small. */
+  --tool-h: clamp(40px, calc(88 * var(--r)), 50px);
 }
 
 .cc-touch-button, .cc-touch-pill {
@@ -585,109 +608,130 @@ kbd.cc-wide { padding: 0 11px; font-size: 12px; letter-spacing: 0.08em; }
   display: grid;
   place-items: center;
   padding: 0;
-  border: 2px solid rgba(234, 234, 236, 0.45);
-  background: rgba(18, 59, 94, 0.38);
-  color: var(--kart-white);
+  /* See-through so the track stays visible; no backdrop blur (it would redraw over the game every frame). */
+  border: 2px solid rgba(255, 255, 255, 0.42);
+  background: rgba(10, 14, 20, 0.30);
+  color: rgba(255, 255, 255, 0.92);
   font-family: var(--font-ui);
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   transition: transform 0.06s ease, background-color 0.06s ease;
 }
+.cc-touch-button svg, .cc-touch-pill svg { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7)); }
 
 .cc-touch-button {
-  width: var(--size);
-  height: var(--size);
-  border-radius: 22px;
-  font-size: 13px;
+  border-radius: 18px;
+  font-size: clamp(13px, calc(30 * var(--r)), 18px);
 }
 
 /* Pressed: orange, a little smaller (feels like a real button). */
 .cc-touch-button.cc-pressed, .cc-touch-pill.cc-pressed {
-  background: rgba(255, 138, 31, 0.78);
-  border-color: var(--boost-orange);
-  transform: scale(0.94);
+  background: rgba(255, 107, 44, 0.78);
+  border-color: #FF8A3D;
+  transform: scale(0.95);
 }
 
-/* Left thumb: steer left/right at the bottom, the Trick button (D11, Q21) above them, as wide as both. */
+/* Left thumb: steer left / right in the bottom left corner, Trick above them (as wide as both). */
 .cc-touch-steer {
   position: fixed;
-  left: var(--pad-side);
-  bottom: var(--pad-bottom);
+  left: var(--edge-l);
+  bottom: var(--edge-b);
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: var(--steer-w) var(--steer-w);
+  grid-template-rows: var(--trick-h) var(--steer-h);
   grid-template-areas: "trick trick" "left right";
-  gap: 10px 12px;
+  gap: var(--gap);
 }
-.cc-touch-steer .cc-touch-button { width: calc(var(--size) * 1.1); }
-.cc-touch-steer .cc-touch-trick {
-  grid-area: trick;
-  width: 100%;
-  height: calc(var(--size) * 0.62);
-}
+.cc-touch-left { grid-area: left; }
+.cc-touch-right { grid-area: right; }
+.cc-touch-left, .cc-touch-right { width: 100%; height: 100%; border-radius: 22px; }
+.cc-touch-left svg, .cc-touch-right svg { width: 46%; height: 46%; }
+.cc-touch-trick { grid-area: trick; width: 100%; height: 100%; border-radius: 14px; }
 
-/* Right thumb: Gas at the bottom right, Drift beside it, Brake above Gas, Item (R7, E) above Drift. */
+/* Right thumb: Gas in the very corner, Brake left of it, Drift above Gas, Item above Brake. */
 .cc-touch-pedals {
   position: fixed;
-  right: var(--pad-side);
-  bottom: var(--pad-bottom);
+  right: var(--edge-r);
+  bottom: var(--edge-b);
   display: grid;
-  grid-template-columns: auto auto;
-  grid-template-areas: "item brake" "drift gas";
-  gap: 10px;
+  grid-template-columns: var(--brake) var(--gas);
+  grid-template-rows: var(--drift-h) var(--gas);
+  grid-template-areas: "item drift" "brake gas";
+  gap: var(--gap);
   align-items: end;
-  justify-items: center;
 }
-.cc-touch-item { grid-area: item; }
-.cc-touch-brake { grid-area: brake; height: calc(var(--size) * 0.72); }
-.cc-touch-drift { grid-area: drift; }
-.cc-touch-gas {
-  grid-area: gas;
-  width: calc(var(--size) * 1.15);
-  height: calc(var(--size) * 1.15);
-  border-radius: 50%;
-  border-color: rgba(255, 138, 31, 0.8);
-  font-size: 15px;
+.cc-touch-gas { grid-area: gas; width: var(--gas); height: var(--gas); border-radius: 26px;
+  border-color: rgba(255, 138, 31, 0.85); font-size: clamp(15px, calc(36 * var(--r)), 21px); }
+.cc-touch-brake { grid-area: brake; width: var(--brake); height: var(--brake); }
+.cc-touch-drift { grid-area: drift; width: var(--gas); height: var(--drift-h); }
+.cc-touch-item { grid-area: item; width: var(--brake); height: var(--item-h); }
+
+/* Rare: Recover, Retry and fullscreen in one row on the left, between the lap time and Trick. */
+.cc-touch-tools {
+  position: fixed;
+  left: var(--edge-l);
+  bottom: calc(var(--edge-b) + var(--steer-h) + var(--trick-h) + 2 * var(--gap));
+  display: flex;
+  gap: var(--gap);
+}
+.cc-touch-pill {
+  height: var(--tool-h);
+  min-width: var(--tool-h);
+  padding: 0 14px 0 11px;
+  border-radius: 12px;
+  font-size: clamp(11px, calc(24 * var(--r)), 14px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cc-touch-pill svg { width: 20px; height: 20px; flex: none; }
+
+/* Pause: top left, just right of the lap time panel (HUD: 1600 px wide safe area in the middle, 34 px side padding,
+   lap time panel about 270 px wide, 26 px from the top). */
+.cc-touch-pause {
+  position: fixed;
+  top: calc(26 * var(--r));
+  left: calc(max(0px, (var(--cc-w, 100vw) - 1600 * var(--r)) / 2) + 324 * var(--r));
+  width: var(--tool-h);
+  padding: 0;
+  justify-content: center;
 }
 
-/* Start screen, results and menus (the game has not sent "racing"): no driving buttons, so they never cover the
-   title, the leaderboard or the name field (task R10/R11). The fullscreen button in the tools row stays. */
+/* Start screen, results and menus (the game has not sent "racing", also while paused): no driving buttons, so they
+   never cover the title, the leaderboard, the name field or the PAUSED card (task R10/R11). */
 html:not(.cc-racing) .cc-touch-steer,
 html:not(.cc-racing) .cc-touch-pedals,
-html:not(.cc-racing) .cc-touch-tools .cc-touch-pill {
+html:not(.cc-racing) .cc-touch-tools .cc-touch-pill,
+html:not(.cc-racing) .cc-touch-pause {
   visibility: hidden;
   pointer-events: none;
 }
 
-/* Recover, Retry (and fullscreen): small, top left, away from the thumbs. */
-.cc-touch-tools {
-  position: fixed;
-  left: var(--pad-side);
-  top: calc(env(safe-area-inset-top) + max(108px, 31vh)); /* under the lap time (the HUD scales with the height) */
-  display: flex;
-  gap: 8px;
-}
-.cc-touch-pill {
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 17px;
-  font-size: 11px;
-}
-
-/* In touch mode the fullscreen button joins Recover and Retry (top centre is where the countdown appears)
-   and stays visible (there is no mouse to bring it back). */
-.cc-touch-tools #cc-fullscreen {
+/* In touch mode the fullscreen button joins the Recover/Retry row during a race and sits in the top right corner on
+   the menus (the title, the ROUND 3 tag and the countdown stay free). It stays visible (no mouse to bring it back). */
+#cc-touch #cc-fullscreen {
   position: static;
   transform: none;
-  width: 34px;
-  height: 34px;
-  border: 2px solid rgba(234, 234, 236, 0.45);
-  border-radius: 17px;
-  background: rgba(18, 59, 94, 0.38);
+  width: var(--tool-h);
+  height: var(--tool-h);
+  border: 2px solid rgba(255, 255, 255, 0.42);
+  border-radius: 12px;
+  background: rgba(10, 14, 20, 0.30);
+  color: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   opacity: 1;
   pointer-events: auto;
+}
+html:not(.cc-racing) #cc-touch #cc-fullscreen {
+  position: fixed;
+  top: max(10px, var(--sa-t));
+  left: auto;
+  right: var(--edge-r);
 }
 
 /* "Turn your phone" hint: only in portrait, until closed. */
@@ -917,14 +961,10 @@ kbd { background: rgba(255, 255, 255, 0.08); color: var(--fe-text); border: 1px 
   #cc-panel-play, #cc-panel-loading { position: absolute; top: 58.5vh; left: max(clamp(24px, 6.5vw, 112px), env(safe-area-inset-left)); margin-top: 0; }
 }
 
-/* ---------- Touch controls and the fullscreen button: the same glass ---------- */
-.cc-touch-button, .cc-touch-pill, .cc-touch-tools #cc-fullscreen, #cc-fullscreen {
+/* ---------- The desktop fullscreen button: the same glass (touch buttons: see "Touch controls") ---------- */
+#cc-fullscreen {
   border: 1px solid rgba(255, 255, 255, 0.34); background: rgba(12, 15, 20, 0.46); color: var(--fe-text);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-family: var(--font-ui); font-weight: 800; letter-spacing: 0.14em; }
-.cc-touch-button { border-radius: 14px; }
-.cc-touch-pill, .cc-touch-tools #cc-fullscreen { border-radius: 8px; }
-#cc-fullscreen { border-radius: 8px; }
-.cc-touch-button.cc-pressed, .cc-touch-pill.cc-pressed { background: rgba(255, 107, 44, 0.82); border-color: var(--fe-accent-hi); }
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 8px; }
 
 /* ---------- Phones and small windows: centred column, captions off ---------- */
 @media (max-width: 760px) {

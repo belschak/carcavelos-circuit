@@ -676,7 +676,8 @@ namespace CarcavelosCircuit.RaceFlow
                 }
                 else if (rules.LastValidCheckpoint > 0)
                 {
-                    ShowHint("Missed a checkpoint! Press R to go back", HintKind.Warning, settings.HintSeconds);
+                    ShowHint(WebPage.TouchMode ? "Missed a checkpoint! Tap RECOVER to go back" : "Missed a checkpoint! Press R to go back",
+                        HintKind.Warning, settings.HintSeconds);
                 }
                 return;
             }
@@ -877,7 +878,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             if (racing && waitingCoachHint != CoachHint.None && Time.time >= HintVisibleUntil)
             {
-                ShowHint(OnboardingCoach.TextFor(waitingCoachHint), OnboardingCoach.KindFor(waitingCoachHint), settings.CoachHintSeconds);
+                ShowHint(OnboardingCoach.TextFor(waitingCoachHint, WebPage.TouchMode), OnboardingCoach.KindFor(waitingCoachHint), settings.CoachHintSeconds);
                 waitingCoachHint = CoachHint.None;
             }
             if (coach.DoneFlags != savedCoachFlags)
