@@ -15,15 +15,15 @@ MonoBehaviour:
   mood: 1
   sunAzimuth: 250
   sunElevation: 6
-  sunColour: {r: 1, g: 0.62, b: 0.36, a: 1}
-  sunIntensity: 1.7
+  sunColour: {r: 1, g: 0.55, b: 0.28, a: 1}
+  sunIntensity: 1.8
   shadowStrength: 0.75
-  skyColour: {r: 0.42, g: 0.4, b: 0.56, a: 1}
-  horizonColour: {r: 0.78, g: 0.56, b: 0.46, a: 1}
-  groundColour: {r: 0.45, g: 0.33, b: 0.25, a: 1}
+  skyColour: {r: 0.44, g: 0.36, b: 0.58, a: 1}
+  horizonColour: {r: 0.86, g: 0.52, b: 0.4, a: 1}
+  groundColour: {r: 0.48, g: 0.31, b: 0.22, a: 1}
   skybox: {fileID: 2100000, guid: 1430de7caaef8494f8f6ad9bcbbe5851, type: 2}
   reflection: {fileID: 8900000, guid: 54b16367fdf1a40dfab3b83d4c09c87e, type: 3}
-  hazeColour: {r: 0.93, g: 0.68, b: 0.52, a: 1}
-  hazeDensity: 0.0011
+  hazeColour: {r: 0.96, g: 0.6, b: 0.42, a: 1}
+  hazeDensity: 0.0013
   profile: {fileID: 11400000, guid: 2af568527dfb349d58870a90d82375e5, type: 2}
   bakedShadowKeep: 0

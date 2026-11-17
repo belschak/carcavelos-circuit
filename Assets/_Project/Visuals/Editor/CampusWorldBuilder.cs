@@ -56,13 +56,13 @@ namespace CarcavelosCircuit.Visuals.Editor
         // west-south-west. Must match make_sky.py MOODS["sunset"]. Low enough for long orange light and long
         // shadows, high enough that the track is not all in the shade of the campus buildings.
         private const float SunsetAzimuth = 250f, SunsetElevation = 6f;
-        private static readonly Color SunsetSunColour = new Color(1f, 0.62f, 0.36f);       // #FF9E5C, deep orange
-        private const float SunsetSunIntensity = 1.7f, SunsetShadowStrength = 0.75f;
-        private static readonly Color SunsetSkyFill = new Color(0.42f, 0.40f, 0.56f);      // violet dusk sky in the shade
-        private static readonly Color SunsetHorizonFill = new Color(0.78f, 0.56f, 0.46f);  // pink-orange band at eye height
-        private static readonly Color SunsetGroundFill = new Color(0.45f, 0.33f, 0.25f);
-        private static readonly Color SunsetHaze = new Color(0.93f, 0.68f, 0.52f);         // the painted horizon, a bit darker
-        private const float SunsetHazeDensity = 0.0011f;
+        private static readonly Color SunsetSunColour = new Color(1f, 0.55f, 0.28f);       // #FF8C47, deep orange-red (M2 sunset room, 17 Nov: was 0.62/0.36)
+        private const float SunsetSunIntensity = 1.8f, SunsetShadowStrength = 0.75f;
+        private static readonly Color SunsetSkyFill = new Color(0.44f, 0.36f, 0.58f);      // violet dusk sky in the shade
+        private static readonly Color SunsetHorizonFill = new Color(0.86f, 0.52f, 0.40f);  // orange-red band at eye height
+        private static readonly Color SunsetGroundFill = new Color(0.48f, 0.31f, 0.22f);
+        private static readonly Color SunsetHaze = new Color(0.96f, 0.60f, 0.42f);         // the painted horizon, a bit darker
+        private const float SunsetHazeDensity = 0.0013f;
         private const string ScenePath = "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity";
         private const string WorldPrefabPath = Root + "/CampusWorld.prefab";
         private const string WorldRootName = "CampusWorld";                  // root of the prefab and of its instance
@@ -1214,9 +1214,10 @@ namespace CarcavelosCircuit.Visuals.Editor
             sunset.reflection = sunsetCube != null ? sunsetCube : noonCube;
             sunset.hazeColour = SunsetHaze;
             sunset.hazeDensity = SunsetHazeDensity;
-            // A softer, warmer grade: orange highlights, violet shade, a touch less contrast than noon.
-            sunset.profile = BuildLookProfile(SunsetLookProfile, 0.05f, 16f, 14f, 10f,
-                                              new Vector4(0.97f, 0.96f, 1.06f, -0.02f), new Vector4(1.06f, 0.99f, 0.90f, 0.02f));
+            // A warmer grade: orange-red highlights, violet shade. M2 sunset room (17 Nov, David: "a nice orange/red
+            // sunset"): more saturation and warmth than V28 (was 16/14/10, highlights 1.06/0.99/0.90).
+            sunset.profile = BuildLookProfile(SunsetLookProfile, 0.05f, 18f, 26f, 18f,
+                                              new Vector4(0.96f, 0.94f, 1.08f, -0.02f), new Vector4(1.09f, 0.97f, 0.84f, 0.03f));
             sunset.bakedShadowKeep = 0f;                           // the baked noon shadows point the wrong way now
             EditorUtility.SetDirty(sunset);
             AssetDatabase.SaveAssets();
