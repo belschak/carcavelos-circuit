@@ -90,8 +90,10 @@ namespace CarcavelosCircuit.RaceFlow
         public const float MinGroundNormalY = 0.7f;      // flatter than ~45 degrees: road, not a wall or a guard side
         public const float JumpSlope = 0.3f;             // the line falls more than 30 cm per metre: a jump edge (stairs: < 0.1)
         public const float JumpDropMetres = 1.5f;        // ... and falls more than this in total
-        public const float ClearAfterJumpMetres = 34f;   // no row this close after a jump edge: the karts fly over it there
-        public const float MaxShareOfGap = 0.8f;         // a row moved out of a landing zone stays before the next checkpoint
+        // No row this close after a jump edge: the karts fly over it. With its two boost pads the terrace jump throws a
+        // kart about 47-61 m (BoostPadPlan), and the landing road runs straight for about 70 m after it.
+        public const float ClearAfterJumpMetres = 66f;
+        public const float MaxShareOfGap = 0.95f;        // a row moved out of a landing zone stays before the next checkpoint
 
         // Metres along the lap where the row stands: aheadMetres after the checkpoint, never more than 40 % of the
         // way to the next one (same rule as the straight-line row). gapMetres = lap metres to the next checkpoint.

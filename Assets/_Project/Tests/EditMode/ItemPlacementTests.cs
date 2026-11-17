@@ -46,6 +46,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             // Checkpoint 2 at 158 m, 86 m to checkpoint 3: the old row at 172 m was in the landing zone.
             float row = ItemBoxLayout.OutOfJumpLanding(158f, 172f, 86f, Terrace);
             Assert.GreaterOrEqual(row, 164f + ItemBoxLayout.ClearAfterJumpMetres - 1.01f, "clear of the landing");
+            Assert.GreaterOrEqual(row - 164f, 61f, "past the longest flight off the boosted terrace jump (BoostPadPlan)");
             Assert.LessOrEqual(row, 158f + 86f * ItemBoxLayout.MaxShareOfGap, "still before the next checkpoint");
         }
 
