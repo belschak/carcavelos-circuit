@@ -39,6 +39,7 @@ namespace CarcavelosCircuit.Visuals
         private FinishCruise cruise;    // drives the player's kart after the line, null = the player drives
 
         public IReadOnlyList<BotDriver> Bots { get { return bots; } }
+        public BotSettings Settings { get { return settings; } } // the online race builds the other players' karts from its kart list
         public bool HasSpawned { get { return spawned; } }
         public bool IsCruising { get { return cruise != null; } } // Play Mode test: the finish autopilot drives
 

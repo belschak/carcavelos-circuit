@@ -26,7 +26,8 @@ namespace CarcavelosCircuit.Online
         double Now { get; }
         IReadOnlyList<OnlinePlayer> Players { get; }
         RaceControl Control { get; }
-        void Join(string room, string name, int colourIndex);
+        // driverIndex = the picked driver (DriverRoster), so the others build my kart with that driver's model.
+        void Join(string room, string name, int colourIndex, int driverIndex);
         void Leave();
         void SendPose(in KartPose pose);
         void ReportFinish(int raceId, double lapSeconds);

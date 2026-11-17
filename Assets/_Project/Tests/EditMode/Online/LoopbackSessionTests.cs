@@ -30,9 +30,9 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             LoopbackSession a = new LoopbackSession();
             LoopbackSession b = new LoopbackSession();
-            a.Join("carcavelos-noon", "Ana", 0);
+            a.Join(OnlineRooms.SessionName, "Ana", 0, 2);
             clock += 1.0;
-            b.Join("carcavelos-noon", "Bo", 1);
+            b.Join(OnlineRooms.SessionName, "Bo", 1, 3);
             Assert.AreEqual(OnlineStatus.InRoom, a.Status);
             Assert.AreEqual(OnlineStatus.InRoom, b.Status);
             Assert.AreEqual(2, a.Players.Count);
@@ -41,6 +41,8 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(a.LocalId, b.Players[0].Id);
             Assert.AreEqual("Bo", a.Players[1].Name);
             Assert.AreEqual(1, a.Players[1].ColourIndex);
+            Assert.AreEqual(3, a.Players[1].DriverIndex, "Bo's driver travels with Bo: Ana's screen builds Amara's kart for him");
+            Assert.AreEqual(2, b.Players[0].DriverIndex, "and Bo's screen builds Nova's kart for Ana");
             Assert.AreNotEqual(a.LocalId, b.LocalId);
             Assert.AreEqual(101.0, a.Now, 0.0, "the shared clock");
         }
@@ -50,8 +52,8 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             LoopbackSession a = new LoopbackSession();
             LoopbackSession b = new LoopbackSession();
-            a.Join("carcavelos-noon", "Ana", 0);
-            b.Join("carcavelos-sunset", "Bo", 1);
+            a.Join("room-a", "Ana", 0, 0);
+            b.Join("room-b", "Bo", 1, 0);
             Assert.AreEqual(1, a.Players.Count);
             Assert.AreEqual(1, b.Players.Count);
             Assert.IsTrue(a.IsMaster);
@@ -64,9 +66,9 @@ namespace CarcavelosCircuit.Tests.EditMode
             LoopbackSession a = new LoopbackSession();
             LoopbackSession b = new LoopbackSession();
             LoopbackSession c = new LoopbackSession();
-            a.Join("r", "Ana", 0);
-            b.Join("r", "Bo", 1);
-            c.Join("r", "Cid", 2);
+            a.Join("r", "Ana", 0, 0);
+            b.Join("r", "Bo", 1, 0);
+            c.Join("r", "Cid", 2, 0);
             Assert.IsTrue(a.IsMaster);
             Assert.IsFalse(b.IsMaster);
             Assert.IsFalse(c.IsMaster);
@@ -83,8 +85,8 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             LoopbackSession a = new LoopbackSession();
             LoopbackSession b = new LoopbackSession();
-            a.Join("r", "Ana", 0);
-            b.Join("r", "Bo", 1);
+            a.Join("r", "Ana", 0, 0);
+            b.Join("r", "Bo", 1, 0);
             int changedOnB = 0;
             b.Changed += () => changedOnB++;
 
@@ -104,8 +106,8 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             LoopbackSession a = new LoopbackSession();
             LoopbackSession b = new LoopbackSession();
-            a.Join("r", "Ana", 0);
-            b.Join("r", "Bo", 1);
+            a.Join("r", "Ana", 0, 0);
+            b.Join("r", "Bo", 1, 0);
             List<int> seenByA = new List<int>();
             List<int> seenByB = new List<int>();
             a.PoseReceived += (id, pose) => seenByA.Add(id);
@@ -128,8 +130,8 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             LoopbackSession a = new LoopbackSession();
             LoopbackSession b = new LoopbackSession();
-            a.Join("r", "Ana", 0);
-            b.Join("r", "Bo", 1);
+            a.Join("r", "Ana", 0, 0);
+            b.Join("r", "Bo", 1, 0);
             a.MasterSetControl(new RaceControl(1, OnlinePhase.Countdown, 104.0, new[] { a.LocalId, b.LocalId }));
             int changedOnA = 0;
             a.Changed += () => changedOnA++;
@@ -153,8 +155,8 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             LoopbackSession a = new LoopbackSession();
             LoopbackSession b = new LoopbackSession();
-            a.Join("r", "Ana", 0);
-            b.Join("r", "Bo", 1);
+            a.Join("r", "Ana", 0, 0);
+            b.Join("r", "Bo", 1, 0);
             RaceControl race = new RaceControl(1, OnlinePhase.Countdown, 104.0, new[] { a.LocalId, b.LocalId });
             a.MasterSetControl(race);
             b.Leave();
@@ -177,18 +179,18 @@ namespace CarcavelosCircuit.Tests.EditMode
             for (int i = 0; i < OnlineRooms.MaxPlayers; i++)
             {
                 LoopbackSession s = new LoopbackSession();
-                s.Join("r", "P" + i, i);
+                s.Join("r", "P" + i, i, 0);
                 sessions.Add(s);
                 Assert.AreEqual(OnlineStatus.InRoom, s.Status);
             }
             LoopbackSession late = new LoopbackSession();
-            late.Join("r", "Late", 0);
+            late.Join("r", "Late", 0, 0);
             Assert.AreEqual(OnlineStatus.Full, late.Status);
             Assert.AreEqual(0, late.Players.Count);
             Assert.AreEqual(OnlineRooms.MaxPlayers, sessions[0].Players.Count, "the room did not grow");
             sessions[3].Leave();
             LoopbackSession next = new LoopbackSession();
-            next.Join("r", "Next", 0);
+            next.Join("r", "Next", 0, 0);
             Assert.AreEqual(OnlineStatus.InRoom, next.Status, "a freed seat can be taken");
         }
 
@@ -196,15 +198,15 @@ namespace CarcavelosCircuit.Tests.EditMode
         public void BadJoins_FailCleanly()
         {
             LoopbackSession a = new LoopbackSession();
-            a.Join("", "Ana", 0);
+            a.Join("", "Ana", 0, 0);
             Assert.AreEqual(OnlineStatus.Failed, a.Status);
             Assert.AreNotEqual("", a.FailReason);
             a.Leave();
             Assert.AreEqual(OnlineStatus.Idle, a.Status);
-            a.Join("r", null, 0);
+            a.Join("r", null, 0, 0);
             Assert.AreEqual(OnlineStatus.InRoom, a.Status);
             Assert.AreEqual("", a.Players[0].Name, "a missing name becomes empty, never null");
-            a.Join("r", "Twice", 0);
+            a.Join("r", "Twice", 0, 0);
             Assert.AreEqual(1, a.Players.Count, "joining again while in a room does nothing");
             a.Dispose();
             Assert.AreEqual(OnlineStatus.Idle, a.Status, "dispose = leave");
@@ -216,11 +218,43 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             LoopbackSession a = new LoopbackSession();
             LoopbackSession b = new LoopbackSession();
-            a.Join("r", "Ana", 0);
+            a.Join("r", "Ana", 0, 0);
             int playersSeenInHandler = -1;
             a.Changed += () => playersSeenInHandler = a.Players.Count;
-            b.Join("r", "Bo", 1);
+            b.Join("r", "Bo", 1, 0);
             Assert.AreEqual(2, playersSeenInHandler, "the handler already sees the newcomer");
         }
-    }
+
+        [Test]
+        public void DriverOutsideTheRoster_IsTheRookie()
+        {
+            LoopbackSession a = new LoopbackSession();
+            LoopbackSession b = new LoopbackSession();
+            a.Join(OnlineRooms.SessionName, "Ana", 0, 99);
+            b.Join(OnlineRooms.SessionName, "Bo", 1, -4);
+            Assert.AreEqual(0, b.Players[0].DriverIndex, "a broken or old client's number never breaks the kart");
+            Assert.AreEqual(0, a.Players[1].DriverIndex);
+        }
+
+        [Test]
+        public void OneRoom_TheWholeClassMeets()
+        {
+            // Feedback round 17 Nov 2026: one room for everyone, 15 seats, each player with their own driver.
+            LoopbackSession[] sessions = new LoopbackSession[OnlineRooms.MaxPlayers];
+            for (int i = 0; i < sessions.Length; i++)
+            {
+                sessions[i] = new LoopbackSession();
+                sessions[i].Join(OnlineRooms.SessionName, "P" + i, i, i % 4);
+            }
+            Assert.AreEqual(OnlineRooms.MaxPlayers, sessions[0].Players.Count, "all 15 in one room");
+            for (int i = 0; i < sessions.Length; i++)
+            {
+                Assert.AreEqual(OnlineStatus.InRoom, sessions[i].Status);
+                Assert.AreEqual(i % 4, sessions[0].Players[i].DriverIndex);
+            }
+            LoopbackSession sixteenth = new LoopbackSession();
+            sixteenth.Join(OnlineRooms.SessionName, "Late", 0, 1);
+            Assert.AreEqual(OnlineStatus.Full, sixteenth.Status, "the 16th waits for the next race");
+        }
+}
 }

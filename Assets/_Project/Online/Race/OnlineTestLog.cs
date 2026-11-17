@@ -46,9 +46,49 @@ namespace CarcavelosCircuit.Online
             return value.ToString("F" + decimals, CultureInfo.InvariantCulture);
         }
 
-        public static string Room(TimeOfDay room)
+        // The room token of every line. One room for the whole class since 17 Nov 2026 (OnlineRooms).
+        public static string Room()
         {
-            return room == TimeOfDay.Sunset ? "sunset" : "noon";
+            return OnlineRooms.SessionName;
+        }
+
+        // Which driver each other player's kart shows on this screen, for the RACE line: "id:Driver:model|..." in id
+        // order, so a test can check every screen built the same kart for the same player. "-" = no other karts.
+        public static string Karts(IEnumerable<KeyValuePair<int, string>> idAndDriver, IDictionary<int, string> idToModel)
+        {
+            List<int> ids = new List<int>();
+            Dictionary<int, string> drivers = new Dictionary<int, string>();
+            if (idAndDriver != null)
+            {
+                foreach (KeyValuePair<int, string> pair in idAndDriver)
+                {
+                    if (!drivers.ContainsKey(pair.Key))
+                    {
+                        ids.Add(pair.Key);
+                    }
+                    drivers[pair.Key] = pair.Value;
+                }
+            }
+            if (ids.Count == 0)
+            {
+                return "-";
+            }
+            ids.Sort();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < ids.Count; i++)
+            {
+                string model;
+                if (idToModel == null || !idToModel.TryGetValue(ids[i], out model) || string.IsNullOrEmpty(model))
+                {
+                    model = "-";
+                }
+                if (i > 0)
+                {
+                    sb.Append('|');
+                }
+                sb.Append(ids[i].ToString(CultureInfo.InvariantCulture)).Append(':').Append(Clean(drivers[ids[i]])).Append(':').Append(Clean(model));
+            }
+            return sb.ToString();
         }
 
         // The finish order as one token: name:seconds for a finish, name:RACING, name:DNF; in the rows' order.
@@ -83,9 +123,9 @@ namespace CarcavelosCircuit.Online
             return sb.ToString();
         }
 
-        public static string Result(TimeOfDay room, int raceId, string myName, IReadOnlyList<FinishRow> rows)
+        public static string Result(int raceId, string myName, IReadOnlyList<FinishRow> rows)
         {
-            return "RESULT room=" + Room(room) + " race=" + raceId.ToString(CultureInfo.InvariantCulture)
+            return "RESULT room=" + Room() + " race=" + raceId.ToString(CultureInfo.InvariantCulture)
                 + " me=" + Clean(myName) + " order=" + Order(rows);
         }
     }

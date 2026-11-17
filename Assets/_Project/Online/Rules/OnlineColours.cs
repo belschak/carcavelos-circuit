@@ -2,9 +2,11 @@ using UnityEngine;
 
 namespace CarcavelosCircuit.Online
 {
-    // The kart colours of the online room: fifteen that stay apart on the road, the minimap and the name tags
-    // (one per possible player, OnlineRooms.MaxPlayers). A player's colour index is picked at join and travels
-    // with the player, so everyone paints that kart the same.
+    // The room colours of the online race: fifteen that stay apart on the minimap and the name tags (one per possible
+    // player, OnlineRooms.MaxPlayers). A player's colour index is picked at join and travels with the player, so every
+    // screen shows that player in the same colour. Since 17 Nov 2026 the kart itself shows the player's driver in its
+    // own paint (ProxyKart), so the colour lives on the name tag (text over a dark shadow) and the map dot: every
+    // colour here is light enough to read as text (the old charcoal and brown were not).
     public static class OnlineColours
     {
         private static readonly Color[] Palette =
@@ -17,12 +19,12 @@ namespace CarcavelosCircuit.Online
             new Color(1.00f, 0.54f, 0.12f), // orange
             new Color(0.10f, 0.75f, 0.80f), // teal
             new Color(0.95f, 0.40f, 0.70f), // pink
-            new Color(0.55f, 0.35f, 0.15f), // brown
+            new Color(0.92f, 0.76f, 0.52f), // sand
             new Color(0.75f, 0.85f, 0.25f), // lime
             new Color(0.95f, 0.95f, 0.95f), // white
-            new Color(0.20f, 0.20f, 0.25f), // charcoal
+            new Color(0.78f, 0.62f, 1.00f), // lavender
             new Color(0.40f, 0.60f, 0.95f), // sky
-            new Color(0.80f, 0.20f, 0.45f), // wine
+            new Color(0.95f, 0.35f, 0.45f), // rose
             new Color(0.30f, 0.80f, 0.60f)  // mint
         };
 

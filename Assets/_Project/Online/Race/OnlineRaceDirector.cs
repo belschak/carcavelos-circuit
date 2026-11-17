@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using CarcavelosCircuit.RaceFlow;
 using CarcavelosCircuit.Shared;
+using CarcavelosCircuit.Visuals;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -13,7 +14,8 @@ namespace CarcavelosCircuit.Online
     // - drives the lobby pages (OnlineLobbyView) from the session's status, players and control,
     // - starts the local countdown so GO lands on the room's shared StartAt (OnlineStartRules), with the grid slot
     //   from the roster (RaceRoster.PlayerSlotOverride),
-    // - sends my kart's pose 15 times a second and moves the other players' ProxyKarts,
+    // - sends my kart's pose 15 times a second and moves the other players' ProxyKarts (each in its player's own
+    //   driver kart: the driver travels with the player, DriverChoice at join),
     // - reports my finish, builds the room's results (FinishOrderRules) and shows my place through RaceManager,
     // - as the master (host): starts the race, moves the phase on, starts again (rematch), ?autostart=N.
     // RaceManager stays the race brain; it only gets ExternalStartOnly (no key starts, no Enter-retry, no Q, no P)
@@ -44,7 +46,7 @@ namespace CarcavelosCircuit.Online
         private readonly List<FinishEntry> entries = new List<FinishEntry>();
         private readonly OnlineAutopilot autopilot = new OnlineAutopilot();
         private List<FinishRow> rows = new List<FinishRow>();
-        private TimeOfDay room = TimeOfDay.Noon;
+        private BotSettings kartModels;  // Role 3's kart list (BotSquad's BotSettings): the drivers' kart models
         private bool open;
         private bool autoJoinPending;
         private bool sessionDirty;
@@ -58,7 +60,8 @@ namespace CarcavelosCircuit.Online
         private bool timedOut;           // my own lap was cut off by the time limit: I watch the results from the grid
         private double autoStartReachedAt = -1.0;
         private bool runInBackgroundBefore;
-        private TimeOfDay lightBefore = TimeOfDay.Noon; // the player's own light, back on leave (the room only borrows it)
+        private TimeOfDay lightBefore = TimeOfDay.Noon; // the player's saved light, back on leave if the address changed it
+        private bool lightFromAddress;   // ?room=noon|sunset set the light for this visit (not saved): undo on leave
         // CCNET test lines (OnlineTestLog): what this screen already reported.
         private string myName = "";
         private bool joinLogged;
@@ -115,11 +118,20 @@ namespace CarcavelosCircuit.Online
             flags = urlFlags ?? OnlineUrlFlags.None;
             transportName = OnlineBootstrap.TransportName(flags);
             roster = FindAnyObjectByType<RaceRoster>();
+            BotSquad squad = FindAnyObjectByType<BotSquad>();
+            kartModels = squad != null ? squad.Settings : null;
 
             raceManager.ExternalStartOnly = true;    // the room starts the race, not a key
             raceManager.PauseOnFocusLoss = false;    // the others keep driving on the shared clock
             runInBackgroundBefore = Application.runInBackground;
             lightBefore = TimeOfDayChoice.Current;
+            lightFromAddress = false;
+            if (flags.HasLight)
+            {
+                // The old two-room links (?room=noon / ?room=sunset) still open with that light. Only for this visit:
+                // the light is the player's own look and never travels (one room for everyone, 17 Nov 2026).
+                lightFromAddress = TimeOfDayChoice.Set(flags.Light, false);
+            }
             Application.runInBackground = true;      // a tab in the background must keep sending poses
             raceManager.LapFinished += OnLapFinished;
 
@@ -129,6 +141,7 @@ namespace CarcavelosCircuit.Online
                 view.JoinRequested += OnJoinRequested;
                 view.BackRequested += Close;
                 view.StartRequested += OnStartRequested;
+                view.LightRequested += OnLightToggled;
             }
 
             if (transportName == null)
@@ -142,17 +155,13 @@ namespace CarcavelosCircuit.Online
                 NameProblem problem = PlayerNameRules.Check(flags.Name, out cleaned);
                 if (problem == NameProblem.None)
                 {
-                    JoinRoom(flags.Room, cleaned);
+                    JoinRoom(cleaned);
                 }
                 else
                 {
                     ShowRooms(flags.Name, PlayerNameRules.Message(problem));
                 }
                 return;
-            }
-            if (view != null && flags.HasRoom)
-            {
-                view.SelectedRoom = flags.Room;
             }
             ShowRooms(SettingsStore.LoadPlayerName(), "");
         }
@@ -211,7 +220,7 @@ namespace CarcavelosCircuit.Online
                 if (retryAt >= 0f && Time.unscaledTime >= retryAt)
                 {
                     retryAt = -1f;
-                    JoinRoom(room, myName, joinAttempt + 1);
+                    JoinRoom(myName, joinAttempt + 1);
                 }
                 return;
             }
@@ -224,9 +233,9 @@ namespace CarcavelosCircuit.Online
                     }
                     break;
                 case OnlineStatus.Full:
-                    OnlineTestLog.Write("STATUS full room=" + OnlineTestLog.Room(room));
+                    OnlineTestLog.Write("STATUS full room=" + OnlineTestLog.Room());
                     DropSession();
-                    ShowMessage(OnlineRooms.FullMessage(room));
+                    ShowMessage(OnlineRooms.FullMessage());
                     break;
                 case OnlineStatus.Failed:
                     string why = session.FailReason ?? "";
@@ -246,16 +255,16 @@ namespace CarcavelosCircuit.Online
             if (OnlineJoinRetry.ShouldRetry(reason, joinAttempt))
             {
                 int next = joinAttempt + 1;
-                OnlineTestLog.Write("STATUS retry room=" + OnlineTestLog.Room(room) + " attempt=" + next + " after=" + kind
+                OnlineTestLog.Write("STATUS retry room=" + OnlineTestLog.Room() + " attempt=" + next + " after=" + kind
                     + " reason=" + OnlineTestLog.Clean(reason));
                 retryAt = Time.unscaledTime + OnlineJoinRetry.RetryDelaySeconds;
                 if (view != null)
                 {
-                    view.ShowConnecting(room, OnlineJoinRetry.RetryLine(next));
+                    view.ShowConnecting(OnlineJoinRetry.RetryLine(next));
                 }
                 return;
             }
-            OnlineTestLog.Write("STATUS " + kind + " room=" + OnlineTestLog.Room(room) + " reason=" + OnlineTestLog.Clean(reason));
+            OnlineTestLog.Write("STATUS " + kind + " room=" + OnlineTestLog.Room() + " reason=" + OnlineTestLog.Clean(reason));
             ShowMessage(message);
         }
 
@@ -288,8 +297,9 @@ namespace CarcavelosCircuit.Online
             Begin(manager, flags);
         }
 
-        // Enter = join (rooms page) or START (the host); Q = leave. Read straight from the keyboard: RaceKeys is
-        // switched off while the lobby owns it. While the cursor is in the name field only Enter means something.
+        // Enter = join (rooms page) or START (the host); T = noon / sunset (my own look); Q = leave. Read straight from
+        // the keyboard: RaceKeys is switched off while the lobby owns it. While the cursor is in the name field only
+        // Enter means something.
         private void ReadKeys()
         {
             Keyboard keyboard = Keyboard.current;
@@ -303,15 +313,19 @@ namespace CarcavelosCircuit.Online
             {
                 if (enter)
                 {
-                    OnJoinRequested(view.SelectedRoom, view.TypedName);
+                    OnJoinRequested(view.TypedName);
                 }
                 return;
+            }
+            if (keyboard.tKey.wasPressedThisFrame && view.BlocksGameKeys)
+            {
+                OnLightToggled();
             }
             if (enter)
             {
                 if (view.Current == OnlineLobbyView.Page.Rooms)
                 {
-                    OnJoinRequested(view.SelectedRoom, view.TypedName);
+                    OnJoinRequested(view.TypedName);
                 }
                 else if (session != null && session.Status == OnlineStatus.InRoom)
                 {
@@ -389,19 +403,19 @@ namespace CarcavelosCircuit.Online
             {
                 joinLogged = true;
                 joinAttempt = 0; // in the room: a dropped connection later gets its own tries
-                OnlineTestLog.Write("JOIN room=" + OnlineTestLog.Room(room) + " name=" + OnlineTestLog.Clean(myName) + " id=" + session.LocalId
+                OnlineTestLog.Write("JOIN room=" + OnlineTestLog.Room() + " name=" + OnlineTestLog.Clean(myName) + " id=" + session.LocalId
                     + " players=" + session.Players.Count + " transport=" + transportName);
             }
             if (session.IsMaster && !masterLogged)
             {
-                OnlineTestLog.Write("HOST room=" + OnlineTestLog.Room(room) + " id=" + session.LocalId + " players=" + session.Players.Count);
+                OnlineTestLog.Write("HOST room=" + OnlineTestLog.Room() + " id=" + session.LocalId + " players=" + session.Players.Count);
             }
             masterLogged = session.IsMaster;
 
             RaceState state = raceManager.State;
             if (state == RaceState.Racing && lastLoggedState != RaceState.Racing && inRace && control.RaceId > 0)
             {
-                OnlineTestLog.Write("GO room=" + OnlineTestLog.Room(room) + " race=" + control.RaceId
+                OnlineTestLog.Write("GO room=" + OnlineTestLog.Room() + " race=" + control.RaceId
                     + " skew_ms=" + OnlineTestLog.Num((now - control.StartAt) * 1000.0, 0));
             }
             lastLoggedState = state;
@@ -424,13 +438,13 @@ namespace CarcavelosCircuit.Online
             if (control.RaceId > 0 && control.RaceId == appliedRaceId && resultLoggedRace != control.RaceId && FinishOrderRules.AllDone(rows))
             {
                 resultLoggedRace = control.RaceId;
-                OnlineTestLog.Write(OnlineTestLog.Result(room, control.RaceId, myName, rows) + " in=" + (inRace ? 1 : 0) + " " + raceSmooth.Line());
+                OnlineTestLog.Write(OnlineTestLog.Result(control.RaceId, myName, rows) + " in=" + (inRace ? 1 : 0) + " " + raceSmooth.Line());
             }
 
             if (Time.unscaledTime >= nextStatAt)
             {
                 nextStatAt = Time.unscaledTime + OnlineTestLog.StatEverySeconds;
-                OnlineTestLog.Write("STAT room=" + OnlineTestLog.Room(room) + " players=" + session.Players.Count + " proxies=" + proxies.Count
+                OnlineTestLog.Write("STAT room=" + OnlineTestLog.Room() + " players=" + session.Players.Count + " proxies=" + proxies.Count
                     + " race=" + control.RaceId + " state=" + state + " fps=" + OnlineTestLog.Num(1.0 / Mathf.Max(Time.smoothDeltaTime, 0.0001f), 0)
                     + " " + statSmooth.Line());
                 statSmooth.Reset();
@@ -450,8 +464,9 @@ namespace CarcavelosCircuit.Online
                 raceSmooth.Reset();
                 if (control.RaceId > 0)
                 {
-                    OnlineTestLog.Write("RACE room=" + OnlineTestLog.Room(room) + " race=" + control.RaceId + " in=" + (inRace ? 1 : 0)
-                        + " slot=" + control.IndexOf(session.LocalId) + " roster=" + control.RosterCount);
+                    OnlineTestLog.Write("RACE room=" + OnlineTestLog.Room() + " race=" + control.RaceId + " in=" + (inRace ? 1 : 0)
+                        + " slot=" + control.IndexOf(session.LocalId) + " roster=" + control.RosterCount
+                        + " driver=" + OnlineTestLog.Clean(DriverRoster.Get(DriverChoice.Index).Name) + " karts=" + KartsLine());
                 }
                 autopilot.Stop();
                 if (raceManager.State != RaceState.Ready)
@@ -650,7 +665,7 @@ namespace CarcavelosCircuit.Online
             {
                 status = "WAITING FOR THE HOST";
             }
-            view.ShowRoom(room, players, session.LocalId, masterId, status, canStart);
+            view.ShowRoom(players, session.LocalId, masterId, status, canStart, TimeOfDayChoice.Current);
         }
 
         // Under the room results: nothing for the host's START AGAIN, the time left while others still drive,
@@ -689,7 +704,7 @@ namespace CarcavelosCircuit.Online
             if (session != null && session.Status == OnlineStatus.InRoom && inRace && appliedRaceId > 0)
             {
                 session.ReportFinish(appliedRaceId, lapSeconds);
-                OnlineTestLog.Write("FINISH room=" + OnlineTestLog.Room(room) + " race=" + appliedRaceId + " lap=" + OnlineTestLog.Num(lapSeconds, 3));
+                OnlineTestLog.Write("FINISH room=" + OnlineTestLog.Room() + " race=" + appliedRaceId + " lap=" + OnlineTestLog.Num(lapSeconds, 3));
             }
         }
 
@@ -703,7 +718,7 @@ namespace CarcavelosCircuit.Online
             }
         }
 
-        // One ProxyKart per other player in the room, none for players who left.
+        // One ProxyKart per other player in the room, none for players who left. Each one in its player's driver kart.
         private void SyncProxies()
         {
             IReadOnlyList<OnlinePlayer> players = session.Players;
@@ -714,7 +729,7 @@ namespace CarcavelosCircuit.Online
                 OnlinePlayer player = players[i];
                 if (player.Id != session.LocalId && !proxies.ContainsKey(player.Id))
                 {
-                    proxies[player.Id] = ProxyKart.Spawn(player, visualSource, maxSpeed);
+                    proxies[player.Id] = ProxyKart.Spawn(player, visualSource, DriverModel(player.DriverIndex), maxSpeed);
                 }
             }
             List<int> gone = new List<int>();
@@ -743,6 +758,28 @@ namespace CarcavelosCircuit.Online
                     Destroy(proxy.gameObject);
                 }
             }
+        }
+
+        // The kart model of a driver (Role 3's list in BotSettings), null when the scene has no list.
+        private GameObject DriverModel(int driverIndex)
+        {
+            return kartModels != null ? kartModels.KartVisual(DriverRoster.Get(driverIndex).KartVisual) : null;
+        }
+
+        // "id:Driver:model|..." of the other karts on this screen, for the RACE test line (OnlineTestLog.Karts).
+        private string KartsLine()
+        {
+            List<KeyValuePair<int, string>> drivers = new List<KeyValuePair<int, string>>();
+            Dictionary<int, string> models = new Dictionary<int, string>();
+            foreach (KeyValuePair<int, ProxyKart> pair in proxies)
+            {
+                if (pair.Value != null)
+                {
+                    drivers.Add(new KeyValuePair<int, string>(pair.Key, DriverRoster.Get(pair.Value.DriverIndex).Name));
+                    models[pair.Key] = pair.Value.ModelName;
+                }
+            }
+            return OnlineTestLog.Karts(drivers, models);
         }
 
         private void DestroyProxies()
@@ -797,7 +834,7 @@ namespace CarcavelosCircuit.Online
 
         // ---- Lobby actions ----
 
-        private void OnJoinRequested(TimeOfDay wantedRoom, string typedName)
+        private void OnJoinRequested(string typedName)
         {
             if (session != null)
             {
@@ -813,7 +850,18 @@ namespace CarcavelosCircuit.Online
                 }
                 return;
             }
-            JoinRoom(wantedRoom, cleaned);
+            JoinRoom(cleaned);
+        }
+
+        // T or the light button in the lobby: noon <-> sunset, my own look only (saved, like T on the start screen).
+        private void OnLightToggled()
+        {
+            TimeOfDayChoice.Set(TimeOfDayChoice.Next(TimeOfDayChoice.Current));
+            lightFromAddress = false; // the player's own pick now: keep it after leaving
+            if (view != null)
+            {
+                view.ShowLight(TimeOfDayChoice.Current);
+            }
         }
 
         private void OnStartRequested()
@@ -824,13 +872,12 @@ namespace CarcavelosCircuit.Online
             }
         }
 
-        private void JoinRoom(TimeOfDay wantedRoom, string cleanedName, int attempt = 1)
+        // Into the one room (OnlineRooms) with my name, a room colour and my picked driver. The light stays mine.
+        private void JoinRoom(string cleanedName, int attempt = 1)
         {
             joinAttempt = attempt;
             retryAt = -1f;
             backedUpFor = 0.0;
-            room = wantedRoom;
-            TimeOfDayChoice.Set(room, false);     // the room sets the light for everyone in it, never saved (review F11)
             SettingsStore.SavePlayerName(cleanedName);
             SetPlayerName(cleanedName);
             DropSession();
@@ -861,9 +908,9 @@ namespace CarcavelosCircuit.Online
             nextPoseAt = 0f;
             if (view != null)
             {
-                view.ShowConnecting(room, attempt > 1 ? OnlineJoinRetry.RetryLine(attempt) : "CONNECTING...");
+                view.ShowConnecting(attempt > 1 ? OnlineJoinRetry.RetryLine(attempt) : "CONNECTING...");
             }
-            session.Join(OnlineRooms.SessionName(room), cleanedName, OnlineColours.RandomIndex(new System.Random()));
+            session.Join(OnlineRooms.SessionName, cleanedName, OnlineColours.RandomIndex(new System.Random()), DriverChoice.Index);
             sessionDirty = true;
         }
 
@@ -889,7 +936,7 @@ namespace CarcavelosCircuit.Online
                 Close();
                 return;
             }
-            view.ShowRooms(name, problem);
+            view.ShowRooms(name, problem, TimeOfDayChoice.Current);
         }
 
         private void ShowMessage(string text)
@@ -939,7 +986,7 @@ namespace CarcavelosCircuit.Online
             open = false;
             if (joinLogged)
             {
-                OnlineTestLog.Write("LEAVE room=" + OnlineTestLog.Room(room));
+                OnlineTestLog.Write("LEAVE room=" + OnlineTestLog.Room());
             }
             DropSession();
             if (view != null)
@@ -954,7 +1001,10 @@ namespace CarcavelosCircuit.Online
                 raceManager.LeaveOnlineMode();
             }
             Application.runInBackground = runInBackgroundBefore;
-            TimeOfDayChoice.Set(lightBefore);      // the player's own light again
+            if (lightFromAddress)
+            {
+                TimeOfDayChoice.Set(lightBefore, false); // the address only lent its light for the visit
+            }
             if (current == this)
             {
                 current = null;

@@ -26,7 +26,7 @@ namespace CarcavelosCircuit.Online
         public event Action Changed;
 
         // Joins at once: InRoom, or Full when the room already has OnlineRooms.MaxPlayers players.
-        public void Join(string roomName, string name, int colourIndex)
+        public void Join(string roomName, string name, int colourIndex, int driverIndex)
         {
             if (Status == OnlineStatus.InRoom || Status == OnlineStatus.Connecting)
             {
@@ -40,7 +40,7 @@ namespace CarcavelosCircuit.Online
                 return;
             }
             LoopbackRoom wanted = LoopbackHub.RoomOf(roomName);
-            OnlinePlayer me = new OnlinePlayer(id, name ?? "", colourIndex, Now);
+            OnlinePlayer me = new OnlinePlayer(id, name ?? "", colourIndex, Now, driverIndex);
             if (!wanted.Join(this, me))
             {
                 Status = OnlineStatus.Full;
