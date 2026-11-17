@@ -70,11 +70,11 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
-        public void Online_HasNoItemsNoGhostNoRecordsNoLeaderboardForm()
+        public void Online_HasItems_ButNoGhostNoRecordsNoLeaderboardForm()
         {
             Assert.IsTrue(RaceModeRules.HasItems(RaceMode.RaceVsBots));
             Assert.IsTrue(RaceModeRules.HasItems(RaceMode.TimeAttack));
-            Assert.IsFalse(RaceModeRules.HasItems(RaceMode.OnlineRace), "others only see your pose, not your boosts");
+            Assert.IsTrue(RaceModeRules.HasItems(RaceMode.OnlineRace), "online too: every item only acts on your own kart");
             Assert.IsTrue(RaceModeRules.HasGhost(RaceMode.TimeAttack));
             Assert.IsTrue(RaceModeRules.HasGhost(RaceMode.RaceVsBots));
             Assert.IsFalse(RaceModeRules.HasGhost(RaceMode.OnlineRace), "the real people are on the road");

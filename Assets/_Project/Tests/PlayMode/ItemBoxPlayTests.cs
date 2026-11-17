@@ -79,6 +79,35 @@ namespace CarcavelosCircuit.Tests.PlayMode
             yield return null;
         }
 
+        // Package C (17.11.2026): the team saw a row on the beach tunnel roof and missing boxes. Every planned box must
+        // stand, and every row box must stand on the road: close above the racing line's height, near the line.
+        [UnityTest]
+        public IEnumerator EveryPlannedBox_StandsOnTheRoad()
+        {
+            Assert.AreEqual(items.PlannedBoxes, items.BoxCount, "a box was skipped (see the ItemSystem warnings in the Console)");
+            ITrackProgress line = TrackProgressSource.OwnOf(race.Track);
+            if (line == null)
+            {
+                Assert.Ignore("this track has no racing line of its own");
+            }
+            for (int i = 0; i < items.BoxCount; i++)
+            {
+                ItemBox box = items.BoxAt(i);
+                if (box.GivesWave)
+                {
+                    continue; // wave boxes stand on the promenade shortcut, away from the racing line
+                }
+                Vector3 position = box.transform.position;
+                Vector3 onLine = line.PointAt(line.DistanceAlongLap(position));
+                Vector3 off = position - onLine;
+                float height = off.y;
+                off.y = 0f;
+                Assert.LessOrEqual(off.magnitude, 4.5f, box.name + " is off the road at " + position);
+                Assert.That(height, Is.InRange(-0.5f, 2.8f), box.name + " floats, sits on a roof or under the road at " + position);
+            }
+            yield return null;
+        }
+
         [UnityTest]
         public IEnumerator DrivingIntoABox_RollsAnItem_AndEUsesItAsABoost()
         {

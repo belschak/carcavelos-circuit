@@ -124,8 +124,8 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 return;
             }
-            // Same rule as the race layer of the HUD: visible in the countdown and while racing. Never in an online
-            // race (M2), which has no items (RaceModeRules.HasItems).
+            // Same rule as the race layer of the HUD: visible in the countdown and while racing, in every mode that
+            // has items (RaceModeRules.HasItems: online too since package C).
             RaceState state = raceManager.State;
             bool wantShown = raceManager.IsSetUp && RaceModeRules.HasItems(raceManager.Mode)
                 && (state == RaceState.Countdown || state == RaceState.Racing);

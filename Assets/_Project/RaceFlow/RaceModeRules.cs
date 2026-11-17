@@ -67,10 +67,12 @@ namespace CarcavelosCircuit.RaceFlow
             return mode == RaceMode.RaceVsBots || mode == RaceMode.TimeAttack;
         }
 
-        // Item boxes and items. Not online: other players only see your pose, not your boosts or rings.
+        // Item boxes and items: in every mode, online too (package C, 17.11.2026). Every item only acts on your own
+        // kart (a boost, your own rings, your own shield) and your kart's pose is synced, so the others see you speed
+        // up. The boxes are each player's own: one you break stays whole on the other screens.
         public static bool HasItems(RaceMode mode)
         {
-            return mode != RaceMode.OnlineRace;
+            return mode == RaceMode.RaceVsBots || mode == RaceMode.TimeAttack || mode == RaceMode.OnlineRace;
         }
 
         // The ghost kart (record and replay). Not online: the real people are on the road.
