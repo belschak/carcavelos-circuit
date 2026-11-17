@@ -78,6 +78,12 @@ namespace CarcavelosCircuit.RaceFlow
             AddWordCopy(softGlintLetters);
             AddPostcard();
             introStart = -1f;
+            // Photo mode (?photo=1 in the web page address): no menus and no HUD, only the game world, so we can
+            // take clean screenshots of our own map for the key art of the web page and the menus.
+            if (Application.absoluteURL.Contains("photo=1"))
+            {
+                root.style.display = DisplayStyle.None;
+            }
         }
 
         // The postcard: a cream card with a stamp, "ON THE TRACK" and the sight (USS: .pc in UI/Postcard.uss).
