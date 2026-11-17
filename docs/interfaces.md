@@ -143,4 +143,5 @@ Who does what:
 
 ## Controls (proposal, confirm at kickoff)
 W/A/S/D and arrow keys to drive, Space = drift, R = recover, Enter = start / retry, E = use the item in the HUD slot (item boxes, 2026-11-10; the phone's touch item button sends E).
+Start screen (2026-11-17): 1/2/3 pick a race mode, any other key opens the driver select; there A/D or left/right move the pick, Enter or Space = READY (starts the countdown), Escape or Backspace = back to the modes. On a phone the driver cards, READY and BACK are tapped, so no new touch key is needed.
 Touch (phones, task P9): the Web template's buttons send exactly these keys (Drift = Space + W, "use item" reserved as E), and a tap on the game is a mouse click. A new key in the game needs a matching button in `Assets/WebGLTemplates/CarcavelosCircuit/index.html` (the `KEYS` table) to work on a phone.

@@ -204,6 +204,20 @@ namespace CarcavelosCircuit.RaceFlow
             return mouse != null;
         }
 
+        // Driver select (Luc, 17 Nov 2026): Enter or Space = READY, Escape or Backspace = back to the race modes.
+        public static bool ReadyPressed()
+        {
+            Keyboard keyboard = GameKeyboard();
+            return keyboard != null && (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame
+                || keyboard.spaceKey.wasPressedThisFrame);
+        }
+
+        public static bool BackPressed()
+        {
+            Keyboard keyboard = GameKeyboard();
+            return keyboard != null && (keyboard.escapeKey.wasPressedThisFrame || keyboard.backspaceKey.wasPressedThisFrame);
+        }
+
         // Space flips an on/off row (Enter stays retry, so it is not used in menus).
         public static bool MenuTogglePressed()
         {

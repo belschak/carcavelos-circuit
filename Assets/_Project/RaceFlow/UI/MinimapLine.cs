@@ -15,7 +15,7 @@ namespace CarcavelosCircuit.RaceFlow
         private static readonly Color RoadColour = HudColors.Cream;                                // --cream
 
         private readonly bool isRoad;
-        private readonly Color trailColour;
+        private Color trailColour;
         private List<Vector2> points = new List<Vector2>(); // map pixels, in driving order, first = start line
         private int drawCount;                               // trail only: how many points to draw (from the start)
 
@@ -31,6 +31,16 @@ namespace CarcavelosCircuit.RaceFlow
             style.right = 0f;
             style.bottom = 0f;
             generateVisualContent += Draw;
+        }
+
+        // The trail in a new colour (driver select: the player's trail takes the picked driver's colour).
+        public void SetTrailColour(Color colour)
+        {
+            if (colour != trailColour)
+            {
+                trailColour = colour;
+                MarkDirtyRepaint();
+            }
         }
 
         public void SetPoints(List<Vector2> mapPoints)

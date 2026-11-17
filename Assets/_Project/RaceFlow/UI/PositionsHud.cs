@@ -47,6 +47,8 @@ namespace CarcavelosCircuit.RaceFlow
         private VisualElement dotLayer;
         private VisualElement playerMarker;
         private VisualElement playerHalo;
+        private VisualElement playerDot;
+        private Color shownPlayerColour;   // the driver colour on the dot, halo and trail right now
         private readonly List<VisualElement> botDots = new List<VisualElement>();
         private VisualElement positionBox;
         private Label positionNumber;
@@ -105,6 +107,21 @@ namespace CarcavelosCircuit.RaceFlow
             bool reduced = raceManager.ReducedMotion;
             UpdatePosition(now, reduced);
             UpdateMap(now, reduced);
+            ShowPlayerColour(PlayerRacer.CurrentColour);
+        }
+
+        // Driver select (Luc, 17 Nov 2026): dot, halo and trail in the picked driver's colour. Ring and arrow stay
+        // white, so the player is found on the map whatever the colour.
+        private void ShowPlayerColour(Color colour)
+        {
+            if (playerDot == null || colour == shownPlayerColour)
+            {
+                return;
+            }
+            shownPlayerColour = colour;
+            playerDot.style.backgroundColor = colour;
+            playerHalo.style.backgroundColor = HudColors.WithAlpha(colour, 0.3f);
+            trail.SetTrailColour(colour);
         }
 
         // ---------- position readout ----------
@@ -432,13 +449,14 @@ namespace CarcavelosCircuit.RaceFlow
             playerMarker.style.opacity = 0f;
             dotLayer.Add(playerMarker);
 
-            VisualElement playerDot = new VisualElement();
+            playerDot = new VisualElement();
             playerDot.pickingMode = PickingMode.Ignore;
             playerDot.style.width = 14f;
             playerDot.style.height = 14f;
             SetRadius(playerDot, 7f);
             SetBorder(playerDot, 2f, HudColors.Cream);
             playerDot.style.backgroundColor = PlayerRacer.PlayerColour;
+            shownPlayerColour = PlayerRacer.PlayerColour;
             playerMarker.Add(playerDot);
 
             TriangleMark arrow = new TriangleMark(Color.white, new Color(0f, 0f, 0f, 0.7f), 1.2f);

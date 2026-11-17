@@ -62,8 +62,15 @@ MonoBehaviour:
   driftLookMetres: 24
   driftMinBendDegrees: 50
   driftMaxBendDegrees: 130
+  driftMinRadius: 14
+  driftMaxClimb: 0.4
   driftMinSpeed01: 0.7
   stuckSeconds: 2
   reverseSeconds: 1.2
   maxReverseTries: 3
   fallMetres: 8
+  kartVisuals:
+  - {fileID: 1334426613601240720, guid: 010dad23a5224415cbc8acbefa0c8da6, type: 3}
+  - {fileID: 4467635624753753991, guid: 86c7c0ea0b42348ea84aaf06cb8083c0, type: 3}
+  - {fileID: 1948517495545112728, guid: faff625c7030d45bf9b2593f6552ab14, type: 3}
+  - {fileID: 8920987822261903398, guid: 6a7bfd67827344fbd90715f2e07df6ce, type: 3}

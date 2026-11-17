@@ -351,7 +351,8 @@ namespace CarcavelosCircuit.Visuals.Kart.Editor
         }
 
         // Metallic / smoothness / glow per material name (roster builder v12), the driver's textures and gloves.
-        private static void Look(Material m)
+        // Internal: NovaKartRosterBuilder (the other three drivers) uses the same look table.
+        internal static void Look(Material m)
         {
             string n = m.name;
             float metal = 0f, smooth = 0.5f;
@@ -713,7 +714,7 @@ namespace CarcavelosCircuit.Visuals.Kart.Editor
         }
 
         // ---------- helpers ----------
-        private static Transform Find(GameObject root, string name)
+        internal static Transform Find(GameObject root, string name)
         {
             Transform t = root.GetComponentsInChildren<Transform>(true).FirstOrDefault(x => x.name == name);
             if (t == null)
@@ -723,7 +724,7 @@ namespace CarcavelosCircuit.Visuals.Kart.Editor
             return t;
         }
 
-        private static Bounds Bounds(GameObject go)
+        internal static Bounds Bounds(GameObject go)
         {
             Renderer[] rs = go.GetComponentsInChildren<Renderer>(true);
             Bounds b = rs[0].bounds;
@@ -734,7 +735,7 @@ namespace CarcavelosCircuit.Visuals.Kart.Editor
             return b;
         }
 
-        private static void Set(Material m, string property, float value)
+        internal static void Set(Material m, string property, float value)
         {
             if (m.HasProperty(property))
             {

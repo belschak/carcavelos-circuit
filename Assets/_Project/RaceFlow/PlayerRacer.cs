@@ -8,8 +8,12 @@ namespace CarcavelosCircuit.RaceFlow
     // It registers itself in RacerRegistry while it is enabled.
     public class PlayerRacer : MonoBehaviour, IRacer
     {
-        // Orange = the kart's own accent colour and our "this is you" signal; the map dot also gets a white ring and an arrow.
+        // Orange = the kart's own accent colour, the Rookie's colour (DriverRoster). The map dot also gets a white ring
+        // and an arrow, so the player stays easy to find whatever driver was picked.
         public static readonly Color PlayerColour = HudColors.Orange;
+
+        // The colour of the picked driver (driver select, Luc 17 Nov 2026): map dot, trail and name tag.
+        public static Color CurrentColour { get { return DriverChoice.Current.Colour; } }
 
         private Transform root;        // cached: a destroyed kart then reads as null instead of throwing
         private IKartState kart;
@@ -20,7 +24,7 @@ namespace CarcavelosCircuit.RaceFlow
         public Transform Root { get { return root; } }
         public IKartState Kart { get { return kart; } }
         public bool IsPlayer { get { return true; } }
-        public Color MapColor { get { return PlayerColour; } }
+        public Color MapColor { get { return CurrentColour; } }
 
         private void Awake()
         {
