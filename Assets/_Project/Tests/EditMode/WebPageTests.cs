@@ -41,15 +41,22 @@ namespace CarcavelosCircuit.Tests.EditMode
 
         // Phone round 17.11: the page's touch buttons show in the countdown and the race, but not while paused
         // (the PAUSED card stays free, a tap continues), and never on the start screen or the results.
-        [TestCase(RaceState.Ready, false, false)]
-        [TestCase(RaceState.Countdown, false, true)]
-        [TestCase(RaceState.Racing, false, true)]
-        [TestCase(RaceState.Countdown, true, false)]
-        [TestCase(RaceState.Racing, true, false)]
-        [TestCase(RaceState.Results, false, false)]
-        public void PageSeesRacing_OnlyInAnUnpausedRace(RaceState state, bool paused, bool expected)
+        [TestCase(RaceState.Ready, false, WebPage.PageMenus)]
+        [TestCase(RaceState.Ready, true, WebPage.PageMenus)]
+        [TestCase(RaceState.Countdown, false, WebPage.PageRacing)]
+        [TestCase(RaceState.Racing, false, WebPage.PageRacing)]
+        [TestCase(RaceState.Countdown, true, WebPage.PagePaused)]
+        [TestCase(RaceState.Racing, true, WebPage.PagePaused)]
+        [TestCase(RaceState.Results, false, WebPage.PageMenus)]
+        public void PageRaceState_ButtonsOnlyInARunningRace(RaceState state, bool paused, int expected)
         {
-            Assert.AreEqual(expected, WebPage.PageSeesRacing(state, paused));
+            Assert.AreEqual(expected, WebPage.PageRaceState(state, paused));
+        }
+
+        [Test]
+        public void SendRaceState_WithAPageState_OutsideAWebBuild_DoesNothing()
+        {
+            Assert.DoesNotThrow(() => WebPage.SendRaceState(WebPage.PagePaused));
         }
     }
 }

@@ -573,12 +573,15 @@
       // The game says when a race runs (countdown or racing, task R10/R11: RaceFlow/Web/WebPage.cs sends the event
       // "cc-race-state"). Outside a race the driving buttons hide (style.css: html:not(.cc-racing)), so they never
       // cover the title, the leaderboard or the name field; every held key is let go first.
+      // While the race is paused the game sends racing: false and paused: true: the driving buttons hide under the
+      // PAUSED card (a tap on the game continues) and the fullscreen button keeps its race spot.
       window.addEventListener("cc-race-state", function (event) {
         var racing = !!(event.detail && event.detail.racing);
         if (!racing) {
           releaseAllFingers();
         }
         document.documentElement.classList.toggle("cc-racing", racing);
+        document.documentElement.classList.toggle("cc-paused", !!(event.detail && event.detail.paused));
       });
       document.addEventListener("visibilitychange", releaseAllFingers);
 

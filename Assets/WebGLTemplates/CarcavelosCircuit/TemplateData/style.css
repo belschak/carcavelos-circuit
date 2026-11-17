@@ -752,6 +752,9 @@ html:not(.cc-racing) #cc-touch #cc-fullscreen {
   left: auto;
   right: var(--edge-r);
 }
+/* Paused: the HUD stays on screen under the PAUSED card, so the button keeps its race spot (the hidden Recover and
+   Retry still hold their places in the row). */
+html.cc-paused #cc-touch #cc-fullscreen { position: static; }
 
 /* "Turn your phone" hint: only in portrait, until closed. */
 #cc-rotate {
