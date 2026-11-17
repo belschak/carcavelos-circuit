@@ -19,23 +19,165 @@
     <link rel="stylesheet" href="TemplateData/style.css">
   </head>
   <body>
-    <!-- Carcavelos Circuit Web template (Role 4, tasks P2 + P8). Plain HTML/CSS/JS: no web fonts, no images, no external requests.
+    <!-- Carcavelos Circuit Web template (Role 4, tasks P2 + P8). Plain HTML/CSS/JS: no external requests (fonts and logo pictures are in TemplateData).
          The canvas always fills the window; Unity renders at that size (capped device pixel ratio).
          Test the cards in a real build with ?test=mobile, ?test=nowebgl or ?test=error at the end of the address. -->
     <canvas id="cc-canvas" tabindex="-1" aria-label="Carcavelos Circuit game"></canvas>
 
     <div id="cc-loader">
-      <!-- Background: sky, rising sun (moves up with the loading progress), sea, azulejo tiles, calcada wave. Pure CSS. -->
-      <div class="cc-sky" aria-hidden="true"></div>
-      <div class="cc-sun" aria-hidden="true"></div>
-      <div class="cc-sea" aria-hidden="true"></div>
-      <div class="cc-tiles" aria-hidden="true"></div>
+      <!-- Background: the seaside track at sunset as one inline SVG ("Postcard" menu redesign): Fort of Sao Juliao with its
+           lighthouse, the Nova SBE campus, beach volley, surfers on the waves, a checkpoint gate, a kart drifting past
+           with sparks, the calcada wave pavement and palms. Animated with CSS only (style.css, "Scene"). -->
+      <svg class="cc-scene" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="g-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#22184F"/><stop offset=".34" stop-color="#5A2A72"/><stop offset=".6" stop-color="#D64E6C"/><stop offset=".82" stop-color="#FF8A45"/><stop offset="1" stop-color="#FFC765"/>
+          </linearGradient>
+          <radialGradient id="g-glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFD27A" stop-opacity=".9"/><stop offset="1" stop-color="#FF7A45" stop-opacity="0"/></radialGradient>
+          <linearGradient id="g-sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF0A6"/><stop offset=".6" stop-color="#FFB23E"/><stop offset="1" stop-color="#FF6E3A"/></linearGradient>
+          <linearGradient id="g-sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3B3A8A"/><stop offset=".25" stop-color="#26508F"/><stop offset="1" stop-color="#0F5E7E"/></linearGradient>
+          <linearGradient id="g-sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F3B784"/><stop offset="1" stop-color="#D98E64"/></linearGradient>
+          <linearGradient id="g-road" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3D3550"/><stop offset="1" stop-color="#2A2440"/></linearGradient>
+          <linearGradient id="g-vig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#140C30" stop-opacity=".55"/><stop offset=".35" stop-color="#140C30" stop-opacity="0"/></linearGradient>
+          <mask id="m-sunstr"><rect width="1600" height="900" fill="#fff"/><rect y="456" width="1600" height="6" fill="#000"/><rect y="476" width="1600" height="8" fill="#000"/><rect y="498" width="1600" height="11" fill="#000"/></mask>
+          <pattern id="p-kerb" width="40" height="10" patternUnits="userSpaceOnUse"><rect width="20" height="10" fill="#E6463C"/><rect x="20" width="20" height="10" fill="#FFF6E3"/></pattern>
+          <pattern id="p-calcada" width="120" height="60" patternUnits="userSpaceOnUse"><rect width="120" height="60" fill="#F2E6CF"/><path d="M0 22 Q30 2 60 22 T120 22 M0 50 Q30 30 60 50 T120 50" fill="none" stroke="#1C1C2A" stroke-width="9"/></pattern>
+          <pattern id="p-azu" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#F4F0E6"/><path d="M20 4 L36 20 L20 36 L4 20Z" fill="none" stroke="#1F57C3" stroke-width="3"/><circle cx="20" cy="20" r="4" fill="#1F57C3"/><path d="M0 0 h6 M34 0 h6 M0 40 h6 M34 40 h6" stroke="#1F57C3" stroke-width="3"/></pattern>
+        </defs>
+      
+        <rect width="1600" height="560" fill="url(#g-sky)"/>
+        <!-- clouds -->
+        <g class="cloud" fill="#FFB2A0" opacity=".55">
+          <path d="M140 210 q20-34 60-24 q22-30 62-8 q40-6 44 26 z"/>
+          <path d="M1010 140 q18-28 52-20 q20-26 56-6 q36-4 40 22 z" opacity=".7"/>
+          <path d="M560 300 q14-22 42-16 q16-20 44-4 q28-4 32 18 z" opacity=".6"/>
+        </g>
+        <!-- sun -->
+        <ellipse cx="800" cy="520" rx="520" ry="200" fill="url(#g-glow)"/>
+        
+        <!-- headland + fort of São Julião + lighthouse -->
+        <path d="M0 520 L0 452 Q120 430 220 448 L250 440 L380 444 Q450 452 520 520 Z" fill="#3A2152"/>
+        <path d="M190 446 L206 424 L360 424 L376 446 Z" fill="#4A2A62"/>
+        <rect x="226" y="412" width="40" height="14" fill="#4A2A62"/><rect x="320" y="412" width="30" height="14" fill="#4A2A62"/>
+        <rect x="303" y="378" width="14" height="48" fill="#F3E3D3"/><rect x="301" y="372" width="18" height="9" fill="#E6463C"/><circle cx="310" cy="370" r="4" fill="#FFE7A0"/>
+        <path class="lighthouse-beam" d="M310 376 L600 350 L600 392 Z" fill="#FFE7A0"/>
+        <!-- sea -->
+        <rect y="520" width="1600" height="200" fill="url(#g-sea)"/>
+        <g class="glints" fill="#FFC97A" transform="translate(-420 0)">
+          <rect x="1150" y="530" width="140" height="5" rx="2.5"/><rect x="1120" y="548" width="200" height="6" rx="3"/><rect x="1160" y="568" width="120" height="6" rx="3"/>
+          <rect x="1100" y="590" width="240" height="7" rx="3.5"/><rect x="1170" y="614" width="110" height="7" rx="3.5" opacity=".7"/><rect x="1130" y="640" width="190" height="8" rx="4" opacity=".55"/>
+        </g>
+        <g class="swell" stroke="#8FC9F2" stroke-width="4" fill="none" stroke-linecap="round" opacity=".55">
+          <path d="M-60 560 q40-10 80 0 t80 0 t80 0 M260 600 q40-10 80 0 t80 0 M760 575 q40-10 80 0 t80 0 t80 0 M520 650 q40-10 80 0 t80 0"/>
+        </g>
+        <!-- big wave + surfer -->
+        <g class="swell swell--b" transform="translate(-60 0)">
+          <path d="M1240 700 C1300 640 1380 600 1470 612 C1540 620 1580 660 1560 690 C1530 660 1490 660 1478 690 L1700 700 Z" fill="#1F86B5"/>
+          <path d="M1470 612 C1540 620 1580 660 1560 690 C1530 660 1490 660 1478 690" fill="none" stroke="#E9FFFD" stroke-width="10" stroke-linecap="round"/>
+          <path d="M1260 690 C1320 650 1390 625 1460 630" fill="none" stroke="#7FD9E8" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+          <g class="bob">
+            <path d="M1346 622 q46 -12 92 0 q-46 10 -92 0z" fill="#FFC93C" stroke="#1C1230" stroke-width="3"/>
+            <path d="M1386 618 l-8 -26 l10 -20 l8 6 l-2 16 l14 22" fill="none" stroke="#1C1230" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M1380 574 l-22 8 M1388 574 l24 -10" stroke="#1C1230" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="1388" cy="562" r="8" fill="#1C1230"/>
+          </g>
+        </g>
+        <g class="paddle"><path d="M860 640 q40 -8 80 0 q-40 8 -80 0z" fill="#E6463C"/><circle cx="912" cy="630" r="7" fill="#1C1230"/><path d="M904 634 l-26 4" stroke="#1C1230" stroke-width="7" stroke-linecap="round"/></g>
+        <!-- campus on the left -->
+        <path d="M0 600 L0 560 Q140 540 330 568 L520 640 L520 720 L0 720 Z" fill="#6E4A6E"/>
+        <g>
+          <rect x="40" y="574" width="190" height="64" fill="#FBEFE6"/><rect x="40" y="574" width="190" height="8" fill="#E8D4C7"/>
+          <g fill="#5C4370"><rect x="54" y="592" width="160" height="10"/><rect x="54" y="612" width="160" height="10"/></g>
+          <rect x="200" y="600" width="170" height="70" fill="#FFF6EE"/><g fill="#5C4370"><rect x="212" y="616" width="146" height="11"/><rect x="212" y="638" width="146" height="11"/></g>
+          <text x="214" y="612" font-family="Barlow Condensed" font-weight="800" font-size="11" letter-spacing="3" fill="#1F57C3">NOVA SBE</text>
+          <rect x="360" y="626" width="120" height="56" fill="#F4E4DA"/><g fill="#5C4370"><rect x="372" y="640" width="96" height="9"/><rect x="372" y="658" width="96" height="9"/></g>
+        </g>
+        <!-- beach -->
+        <path d="M0 700 Q400 680 800 694 T1600 700 L1600 770 L0 770 Z" fill="url(#g-sand)"/>
+        <!-- volleyball -->
+        <g stroke="#3A2440" stroke-width="5"><line x1="420" y1="744" x2="420" y2="680"/><line x1="560" y1="744" x2="560" y2="680"/></g>
+        <rect x="420" y="682" width="140" height="22" fill="none" stroke="#FFF6E3" stroke-width="3" stroke-dasharray="6 5"/>
+        <g class="ball"><circle cx="400" cy="660" r="11" fill="#FFF6E3" stroke="#3A2440" stroke-width="3"/><path d="M390 656 q10 8 20 0" stroke="#1F57C3" stroke-width="3" fill="none"/></g>
+        <!-- umbrellas -->
+        <g transform="translate(980 690)"><path d="M0 0 v40" stroke="#3A2440" stroke-width="4"/><path d="M-46 4 Q0 -40 46 4 Z" fill="#FFF6E3"/><path d="M-46 4 Q-30 -26 -15 -30 L-12 4Z M12 4 L15 -30 Q30 -26 46 4Z" fill="#E6463C"/></g>
+        <g transform="translate(1120 698) scale(.8)"><path d="M0 0 v40" stroke="#3A2440" stroke-width="4"/><path d="M-46 4 Q0 -40 46 4 Z" fill="#FFF6E3"/><path d="M-46 4 Q-30 -26 -15 -30 L-12 4Z M12 4 L15 -30 Q30 -26 46 4Z" fill="#1F57C3"/></g>
+        <!-- road with kerbs -->
+        <rect y="764" width="1600" height="10" fill="url(#p-kerb)"/>
+        <rect y="774" width="1600" height="64" fill="url(#g-road)"/>
+        <path d="M0 806 H1600" stroke="#FFE6B8" stroke-width="4" stroke-dasharray="34 26" opacity=".6"/>
+        <rect y="838" width="1600" height="10" fill="url(#p-kerb)"/>
+        <!-- checkpoint gate -->
+        <g transform="translate(1040 0)">
+          <rect x="0" y="712" width="16" height="130" rx="4" fill="#FF8A1F" stroke="#1C1230" stroke-width="4"/>
+          <rect x="236" y="712" width="16" height="130" rx="4" fill="#FF8A1F" stroke="#1C1230" stroke-width="4"/>
+          <rect x="-10" y="690" width="272" height="36" rx="10" fill="#FF8A1F" stroke="#1C1230" stroke-width="4"/>
+          <text x="126" y="716" text-anchor="middle" font-family="Lilita One" font-size="24" letter-spacing="4" fill="#FFF6E3" stroke="#1C1230" stroke-width="4" paint-order="stroke">CHECKPOINT</text>
+        </g>
+        <!-- kart drifting with sparks -->
+        <g class="kart-run">
+          <g class="sparks">
+            <path d="M-18 826 l-26 -8 l12 10 l-20 4 l28 2z" fill="#2D8CD6"/>
+            <path d="M-10 830 l-34 4 l16 4 l-18 8 l30 -6z" fill="#FF8A1F"/>
+            <path d="M-60 812 q-30 -6 -60 2" stroke="#FFF6E3" stroke-width="3" fill="none" opacity=".6"/>
+          </g>
+          <g class="kart-body">
+            <rect x="-6" y="796" width="96" height="26" rx="10" fill="#FF8A1F" stroke="#1C1230" stroke-width="4"/>
+            <path d="M58 796 l20 -14 h10 l-6 16z" fill="#FFC93C" stroke="#1C1230" stroke-width="4" stroke-linejoin="round"/>
+            <circle cx="40" cy="786" r="13" fill="#1F57C3" stroke="#1C1230" stroke-width="4"/>
+            <rect x="40" y="780" width="12" height="7" rx="2" fill="#BFE6FF"/>
+            <circle cx="12" cy="826" r="11" fill="#1C1230"/><circle cx="76" cy="826" r="11" fill="#1C1230"/>
+            <circle cx="12" cy="826" r="4" fill="#9AA6B8"/><circle cx="76" cy="826" r="4" fill="#9AA6B8"/>
+          </g>
+        </g>
+        <!-- calcada wave pavement -->
+        <rect y="848" width="1600" height="60" fill="url(#p-calcada)"/>
+        <!-- palms -->
+        <g transform="translate(-70 0)"><g class="sway" fill="#1C1230">
+          <path d="M118 900 C 130 800, 150 700, 196 600 L 206 604 C 166 700, 150 800, 140 900 Z"/>
+          <path d="M200 600 C 150 560, 90 570, 50 610 C 110 584, 160 590, 200 604 Z M200 600 C 230 540, 300 530, 340 560 C 290 552, 240 566, 204 606 Z M200 600 C 180 540, 130 510, 80 520 C 130 530, 170 560, 198 606 Z M200 600 C 250 590, 300 620, 316 670 C 280 630, 240 612, 202 606 Z M200 600 C 230 560, 270 520, 270 480 C 250 530, 220 560, 200 604Z"/>
+        </g></g>
+        <g class="sway sway--b" fill="#1C1230">
+          <path d="M1500 900 C 1490 790, 1470 690, 1430 610 L 1420 614 C 1452 700, 1470 800, 1478 900 Z"/>
+          <path d="M1426 610 C 1470 570, 1530 572, 1570 606 C 1520 590, 1470 594, 1428 616 Z M1426 610 C 1400 556, 1340 540, 1290 566 C 1340 560, 1390 576, 1424 616 Z M1426 610 C 1446 550, 1500 524, 1548 534 C 1500 542, 1460 566, 1428 616 Z M1426 610 C 1380 606, 1330 636, 1316 680 C 1350 640, 1390 622, 1426 616Z"/>
+        </g>
+        <rect width="1600" height="900" fill="url(#g-vig)"/>
+        <g class="pin" style="--i:0" transform="translate(310 350)"><g class="pin-in">
+          <path d="M -9 -4 L 0 12 L 9 -4 Z" fill="#0E2238"/>
+          <rect x="-98.39999999999999" y="-40" width="196.79999999999998" height="34" rx="17" fill="#0E2238" transform="translate(0 4)"/>
+          <rect x="-98.39999999999999" y="-40" width="196.79999999999998" height="34" rx="17" fill="#FFF6E3" stroke="#0E2238" stroke-width="3"/>
+          <circle cx="-81.39999999999999" cy="-23" r="6" fill="#E6463C" stroke="#0E2238" stroke-width="2"/>
+          <text x="-69.39999999999999" y="-16" font-family="Lilita One" font-size="19" letter-spacing="1" fill="#0E2238">FORT S. JULIÃO</text></g></g>
+        <g class="pin" style="--i:1" transform="translate(300 590)"><g class="pin-in">
+          <path d="M -9 -4 L 0 12 L 9 -4 Z" fill="#0E2238"/>
+          <rect x="-104.0" y="-40" width="208.0" height="34" rx="17" fill="#0E2238" transform="translate(0 4)"/>
+          <rect x="-104.0" y="-40" width="208.0" height="34" rx="17" fill="#FFF6E3" stroke="#0E2238" stroke-width="3"/>
+          <circle cx="-87.0" cy="-23" r="6" fill="#1F57C3" stroke="#0E2238" stroke-width="2"/>
+          <text x="-75.0" y="-16" font-family="Lilita One" font-size="19" letter-spacing="1" fill="#0E2238">NOVA SBE CAMPUS</text></g></g>
+        <g class="pin" style="--i:2" transform="translate(490 662)"><g class="pin-in">
+          <path d="M -9 -4 L 0 12 L 9 -4 Z" fill="#0E2238"/>
+          <rect x="-87.19999999999999" y="-40" width="174.39999999999998" height="34" rx="17" fill="#0E2238" transform="translate(0 4)"/>
+          <rect x="-87.19999999999999" y="-40" width="174.39999999999998" height="34" rx="17" fill="#FFF6E3" stroke="#0E2238" stroke-width="3"/>
+          <circle cx="-70.19999999999999" cy="-23" r="6" fill="#FFC93C" stroke="#0E2238" stroke-width="2"/>
+          <text x="-58.19999999999999" y="-16" font-family="Lilita One" font-size="19" letter-spacing="1" fill="#0E2238">BEACH VOLLEY</text></g></g>
+        <g class="pin" style="--i:3" transform="translate(1395 540)"><g class="pin-in">
+          <path d="M -9 -4 L 0 12 L 9 -4 Z" fill="#0E2238"/>
+          <rect x="-76.0" y="-40" width="152.0" height="34" rx="17" fill="#0E2238" transform="translate(0 4)"/>
+          <rect x="-76.0" y="-40" width="152.0" height="34" rx="17" fill="#FFF6E3" stroke="#0E2238" stroke-width="3"/>
+          <circle cx="-59.0" cy="-23" r="6" fill="#19B3C6" stroke="#0E2238" stroke-width="2"/>
+          <text x="-47.0" y="-16" font-family="Lilita One" font-size="19" letter-spacing="1" fill="#0E2238">SURF BREAK</text></g></g>
+      </svg>
 
       <main class="cc-center">
-        <div class="cc-emblem" aria-hidden="true"><span></span></div>
-        <p class="cc-kicker">Campus time trial</p>
-        <p class="cc-brand">Nova Kart</p>
-        <h1 class="cc-title">Carcavelos <span class="cc-title-accent">Circuit</span></h1>
+        <!-- The game's logo: the same five pictures as the in-game start screen (tools/ui_art/logo.svg). -->
+        <h1 class="cc-logo">
+          <span class="cc-sr">Nova Kart: Carcavelos Circuit</span>
+          <img class="cc-lg cc-lg-sun" src="TemplateData/logo-sun.png" alt="">
+          <img class="cc-lg cc-lg-wave" src="TemplateData/logo-wave.png" alt="">
+          <img class="cc-lg cc-lg-badge" src="TemplateData/logo-badge.png" alt="">
+          <img class="cc-lg cc-lg-word" src="TemplateData/logo-word.png" alt="">
+          <img class="cc-lg cc-lg-ribbon" src="TemplateData/logo-ribbon.png" alt="">
+        </h1>
+        <p class="cc-room" hidden></p>
 
         <!-- Only one of these panels shows at a time (showPanel in the script below). -->
         <section class="cc-panel" id="cc-panel-loading" aria-live="polite">
@@ -117,7 +259,6 @@
         </ul>
       </div>
 
-      <div class="cc-wave" aria-hidden="true"></div>
       <p class="cc-credits">Student project, Intro to Programming, Nova SBE 2026 &middot; Sounds: our own synth + elevenlabs.io &middot; Not affiliated with Nintendo or Nova SBE &middot; v{{{ PRODUCT_VERSION }}}</p>
     </div>
 
@@ -182,6 +323,15 @@
       // Without this, that same key would also leave the game's start screen, so the map fly-over and the title
       // were skipped. This listener is added here, BEFORE Unity starts, on window in the capture phase: the browser
       // runs it before any key listener Unity adds later, and stopImmediatePropagation keeps the key from them.
+      // Online links (?room=noon or ?room=sunset): say which room the game will open.
+      (function () {
+        var room = new URLSearchParams(location.search).get("room");
+        var chip = document.querySelector(".cc-room");
+        if (room === "noon" || room === "sunset") {
+          chip.textContent = (room === "noon" ? "Noon room" : "Sunset room") + " · up to 15 racers online";
+          chip.hidden = false;
+        }
+      })();
       var closePlayScreen = null; // onReady puts the function here while "Click to play" waits, null otherwise
       window.addEventListener("keydown", function (event) {
         if (closePlayScreen === null || isPageKey(event.key) || loader.classList.contains("cc-failed")) {

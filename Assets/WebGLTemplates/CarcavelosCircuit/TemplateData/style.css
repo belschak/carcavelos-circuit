@@ -763,3 +763,126 @@ html:not(.cc-racing) .cc-touch-tools .cc-touch-pill {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* =====================================================================================================================
+   "Postcard from Carcavelos" (menu redesign, Role 4, 2026-11-17): the same identity as the in-game menus.
+   Fonts from this folder (SIL OFL 1.1, see THIRD_PARTY.md), the logo as five pictures, the seaside scene as inline SVG.
+   These rules come last on purpose and override the older ones above.
+   ===================================================================================================================== */
+@font-face { font-family: "Lilita One"; src: url("LilitaOne-Regular.ttf") format("truetype"); font-display: block; }
+@font-face { font-family: "Barlow Condensed"; src: url("BarlowCondensed-ExtraBold.ttf") format("truetype"); font-weight: 800; font-display: swap; }
+
+:root {
+  --ink: #0E2238;
+  --cream: #FFF6E3;
+  --sun: #FFC93C;
+  --coral: #E6463C;
+  --mint: #3FD68C;
+  --font-display: "Lilita One", "Arial Black", system-ui, sans-serif;
+  --font-ui: "Barlow Condensed", "Bahnschrift", "Arial Narrow", system-ui, sans-serif;
+}
+
+#cc-loader { background: #22184F; grid-template-rows: 1fr auto auto; }
+.cc-wave, .cc-sky, .cc-sun, .cc-sea, .cc-tiles { display: none; }
+.cc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Scene ---------- */
+.cc-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.cc-scene .sway { transform-box: fill-box; transform-origin: 50% 100%; animation: cc-sway 5.5s ease-in-out infinite alternate; }
+.cc-scene .sway--b { animation-duration: 6.6s; animation-delay: -2s; }
+@keyframes cc-sway { from { transform: rotate(-2.2deg); } to { transform: rotate(2.6deg); } }
+.cc-scene .swell { animation: cc-swell 6s ease-in-out infinite alternate; }
+.cc-scene .swell--b { animation-duration: 8s; animation-delay: -3s; }
+@keyframes cc-swell { from { translate: -40px 0; } to { translate: 40px 0; } }
+.cc-scene .bob { transform-box: fill-box; transform-origin: 50% 80%; animation: cc-bob 2.6s ease-in-out infinite; }
+@keyframes cc-bob { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-12px) rotate(3deg); } }
+.cc-scene .paddle { animation: cc-paddle 1.9s ease-in-out infinite; }
+@keyframes cc-paddle { 50% { transform: translateY(5px); } }
+.cc-scene .glints rect { transform-box: fill-box; transform-origin: 50% 50%; animation: cc-glint 2.2s ease-in-out infinite; }
+.cc-scene .glints rect:nth-child(2n) { animation-delay: -0.7s; }
+.cc-scene .glints rect:nth-child(3n) { animation-delay: -1.4s; }
+@keyframes cc-glint { 0%, 100% { transform: scaleX(1); opacity: 0.85; } 50% { transform: scaleX(0.55); opacity: 0.45; } }
+.cc-scene .kart-run { animation: cc-kartrun 7.5s cubic-bezier(.45, .05, .4, 1) infinite; }
+@keyframes cc-kartrun { 0% { transform: translateX(-260px); } 62%, 100% { transform: translateX(1900px); } }
+.cc-scene .kart-body { transform-box: fill-box; transform-origin: 50% 90%; animation: cc-drift 7.5s ease-in-out infinite; }
+@keyframes cc-drift { 0%, 18% { transform: rotate(0); } 24%, 44% { transform: rotate(-7deg) translateY(-2px); } 50%, 100% { transform: rotate(0); } }
+.cc-scene .sparks { animation: cc-sparks 7.5s linear infinite; }
+@keyframes cc-sparks { 0%, 22% { opacity: 0; } 26%, 46% { opacity: 1; } 50%, 100% { opacity: 0; } }
+.cc-scene .ball { animation: cc-ball 2.4s ease-in-out infinite; }
+@keyframes cc-ball { 50% { transform: translate(120px, -70px); } }
+.cc-scene .cloud { animation: cc-cloud 60s linear infinite alternate; }
+@keyframes cc-cloud { to { transform: translateX(120px); } }
+.cc-scene .lighthouse-beam { transform-origin: 310px 376px; animation: cc-beam 4s ease-in-out infinite alternate; opacity: 0.28; }
+@keyframes cc-beam { from { transform: rotate(-14deg); } to { transform: rotate(10deg); } }
+.cc-scene .pin { animation: cc-pinin 0.5s calc(1.5s + var(--i) * 0.12s) cubic-bezier(.3, 1.6, .5, 1) both; }
+.cc-scene .pin-in { animation: cc-pinbob 3s calc(var(--i) * -0.7s) ease-in-out infinite; }
+@keyframes cc-pinin { from { translate: 0 40px; opacity: 0; } to { translate: 0 0; opacity: 1; } }
+@keyframes cc-pinbob { 50% { transform: translateY(-6px); } }
+
+/* ---------- Logo (positions = the layer boxes in the 1120 x 628 vector logo, as in UI/Postcard.uss) ---------- */
+.cc-center { justify-content: flex-start; padding-top: max(14px, env(safe-area-inset-top)); }
+.cc-logo { position: relative; width: min(760px, 92vw, 118vh); aspect-ratio: 1120 / 628; margin: 0; filter: drop-shadow(0 18px 26px rgba(20, 8, 40, 0.38)); }
+.cc-lg { position: absolute; display: block; max-width: none; height: auto; }
+.cc-lg-sun { left: 31.786%; top: 9.554%; width: 36.429%; animation: cc-lg-pop 0.7s 0.05s cubic-bezier(.3, 1.6, .5, 1) both, cc-lg-pulse 4s 1.5s ease-in-out infinite; }
+.cc-lg-wave { left: 2.232%; top: 59.395%; width: 95.714%; animation: cc-lg-slide 0.7s 0.25s cubic-bezier(.2, 1.3, .4, 1) both; }
+.cc-lg-word { left: 3.661%; top: 30.096%; width: 93.929%; animation: cc-lg-stamp 0.55s 0.45s cubic-bezier(.3, 1.7, .5, 1) both; }
+.cc-lg-badge { left: 32.5%; top: 3.025%; width: 35%; animation: cc-lg-drop 0.5s 0.8s cubic-bezier(.3, 1.7, .5, 1) both; }
+.cc-lg-ribbon { left: 19.196%; top: 73.726%; width: 61.786%; animation: cc-lg-rise 0.55s 0.95s cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes cc-lg-pop { from { transform: scale(0); } to { transform: scale(1); } }
+@keyframes cc-lg-pulse { 50% { transform: scale(1.03); } }
+@keyframes cc-lg-slide { from { transform: translateX(-18%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes cc-lg-stamp { from { transform: scale(1.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes cc-lg-drop { from { transform: translateY(-80%) rotate(-12deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes cc-lg-rise { from { transform: translateY(50%) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.cc-room {
+  display: inline-flex; align-items: center; gap: 8px; margin: 0 0 4px; padding: 4px 14px 5px; border-radius: 999px;
+  background: rgba(14, 34, 56, 0.72); border: 2px solid rgba(255, 246, 227, 0.35);
+  font-family: var(--font-ui); font-weight: 800; font-size: 14px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cream);
+}
+.cc-room::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 3px rgba(63, 214, 140, 0.3); }
+
+/* ---------- Loading road and play button ---------- */
+.cc-panel { margin-top: clamp(4px, 1.6vh, 18px); }
+.cc-road { height: 28px; border-radius: 14px; background: #3D3550; box-shadow: 0 0 0 4px var(--ink), 0 8px 0 2px rgba(14, 34, 56, 0.6); }
+.cc-fill { background: linear-gradient(90deg, #E6463C, #FF8A3D 60%, #FFC93C); }
+.cc-lane { opacity: 0.55; }
+.cc-kart { background: linear-gradient(180deg, #FF8A1F 0 62%, #D9661A 62% 100%); box-shadow: inset 0 0 0 2px var(--ink), 0 0 16px rgba(255, 201, 60, 0.85); }
+.cc-status, .cc-tip { font-family: var(--font-ui); font-weight: 800; color: var(--cream); text-shadow: 0 2px 0 rgba(14, 34, 56, 0.75); }
+.cc-tip { padding: 4px 14px 5px; border-radius: 999px; background: rgba(14, 34, 56, 0.55); }
+
+.cc-play {
+  gap: 14px; padding: 14px 40px 16px 32px; border-radius: 999px; border: 5px solid var(--ink);
+  background: linear-gradient(#FFE27A, #FFB43B 60%, #FF9A2A); color: var(--ink);
+  font-family: var(--font-display); font-weight: 400; font-size: clamp(26px, 3.4vw, 38px); letter-spacing: 0.06em;
+  box-shadow: 0 8px 0 var(--ink), 0 18px 30px rgba(20, 8, 40, 0.45), inset 0 4px 0 rgba(255, 255, 255, 0.6);
+}
+.cc-play svg { color: var(--coral); width: 28px; height: 28px; }
+.cc-play:active { transform: translateY(6px); box-shadow: 0 2px 0 var(--ink), 0 8px 16px rgba(20, 8, 40, 0.4), inset 0 4px 0 rgba(255, 255, 255, 0.6); }
+.cc-play:focus-visible { outline: 3px solid var(--cream); }
+.cc-play-hint {
+  margin-top: 14px; padding: 3px 14px 4px; border-radius: 999px; background: rgba(14, 34, 56, 0.55);
+  font-family: var(--font-ui); font-weight: 800; font-size: 15px; letter-spacing: 0.2em; color: #FFE9C9;
+}
+
+/* ---------- Cards (phone notice, errors) and buttons ---------- */
+.cc-card { background: rgba(19, 44, 78, 0.94); border: 4px solid var(--ink); box-shadow: inset 0 0 0 2px rgba(255, 246, 227, 0.8), 0 7px 0 rgba(14, 34, 56, 0.75), 0 26px 50px rgba(0, 0, 0, 0.4); }
+.cc-card h2 { font-family: var(--font-display); font-weight: 400; letter-spacing: 0.02em; }
+.cc-button { font-family: var(--font-display); font-weight: 400; border: 4px solid var(--ink); background: linear-gradient(#FFE27A, #FFB43B 60%, #FF9A2A); color: var(--ink); box-shadow: 0 5px 0 var(--ink); }
+
+/* ---------- Key dock ---------- */
+.cc-dock { padding: 0 16px max(12px, env(safe-area-inset-bottom)); display: flex; justify-content: center; }
+.cc-controls {
+  width: max-content; max-width: 100%; padding: 9px 18px 10px; border-radius: 18px; gap: 6px 16px;
+  background: rgba(14, 34, 56, 0.84); border: 3px solid rgba(255, 246, 227, 0.16); box-shadow: 0 6px 0 rgba(8, 16, 30, 0.6);
+}
+kbd { background: var(--cream); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 3px 0 #8FA3B8; font-weight: 800; font-size: 14px; }
+.cc-or, .cc-key-text { font-family: var(--font-ui); font-weight: 800; font-size: 14px; letter-spacing: 0.1em; color: #E6EEF7; }
+.cc-credits { position: relative; color: rgba(255, 246, 227, 0.7); text-shadow: 0 1px 0 rgba(14, 34, 56, 0.9); }
+
+@media (max-height: 640px), (max-width: 760px) {
+  .cc-scene .pin { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-scene *, .cc-lg { animation: none !important; }
+}

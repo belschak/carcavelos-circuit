@@ -116,6 +116,19 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      # Art the build made because it was not committed yet (HudArtBuilder.EnsureDisplayFont): uploaded so a team
+      # member can download and commit it once. Nothing is uploaded when the file is already in the repo.
+      - name: Upload generated UI art
+        if: env.HAS_LICENSE == 'true'
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: generated-ui-art-${{ github.sha }}
+          path: |
+            Assets/_Project/RaceFlow/UI/Fonts/LilitaOne/LilitaOne-Regular-SDF.asset
+            Assets/_Project/RaceFlow/UI/Fonts/LilitaOne/LilitaOne-Regular-SDF.asset.meta
+          if-no-files-found: ignore
+          retention-days: 7
+
       # The same files again, packed the way GitHub Pages wants them (only for main, see the top of this file).
       - name: Pack the build for GitHub Pages
         if: env.HAS_LICENSE == 'true' && github.ref == 'refs/heads/main'
