@@ -62,7 +62,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 GraphicsSettings.defaultRenderPipeline = webPipeline;
             }
 
-            BuildReport report;
+            BuildSummary report; // a copy: the phone build below destroys the first BuildReport object
             try
             {
                 // Hashed file names change every build, so old files would pile up next to the new ones.
@@ -75,9 +75,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                     options = BuildOptions.None, // release build: no development player, no profiler
                     subtarget = (int)WebGLTextureSubtarget.DXT, // desktop GPUs; phones get their own .data below
                 };
-                report = BuildPipeline.BuildPlayer(options);
+                report = BuildPipeline.BuildPlayer(options).summary;
                 phoneDataFile = null;
-                if (report.summary.result == BuildResult.Succeeded && !gzipForItch)
+                if (report.result == BuildResult.Succeeded && !gzipForItch)
                 {
                     phoneDataFile = AddPhoneData(options);
                 }
@@ -91,14 +91,14 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             }
 
             LogSettings(webPipeline);
-            Debug.Log("Role4WebBuild: " + report.summary.result + ", " + report.summary.totalErrors + " errors, "
-                + report.summary.totalTime.TotalMinutes.ToString("0.0") + " min.");
-            if (report.summary.result == BuildResult.Succeeded)
+            Debug.Log("Role4WebBuild: " + report.result + ", " + report.totalErrors + " errors, "
+                + report.totalTime.TotalMinutes.ToString("0.0") + " min.");
+            if (report.result == BuildResult.Succeeded)
             {
                 StampBuildVersion(OutputFolder, phoneDataFile);
                 LogFileSizes();
             }
-            if (Application.isBatchMode && report.summary.result != BuildResult.Succeeded)
+            if (Application.isBatchMode && report.result != BuildResult.Succeeded)
             {
                 EditorApplication.Exit(1);
             }
@@ -120,12 +120,12 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             BuildPlayerOptions phone = desktop;
             phone.locationPathName = PhoneFolder;
             phone.subtarget = (int)WebGLTextureSubtarget.ETC2;
-            BuildReport report = BuildPipeline.BuildPlayer(phone);
+            BuildSummary report = BuildPipeline.BuildPlayer(phone).summary;
             try
             {
-                if (report.summary.result != BuildResult.Succeeded)
+                if (report.result != BuildResult.Succeeded)
                 {
-                    Debug.LogWarning("Role4WebBuild: the ETC2 build for phones failed (" + report.summary.totalErrors + " errors); phones use the DXT data.");
+                    Debug.LogWarning("Role4WebBuild: the ETC2 build for phones failed (" + report.totalErrors + " errors); phones use the DXT data.");
                     return null;
                 }
                 string desktopBuild = Path.Combine(OutputFolder, "Build");
