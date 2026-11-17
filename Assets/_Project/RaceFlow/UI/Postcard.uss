@@ -196,6 +196,7 @@
 /* Cards and buttons of the menus: ink-outlined navy (the driving HUD keeps its own plates). */
 .menu-card.plate,
 .card.plate,
+.lb.plate,
 .menu-pill.plate {
     background-image: url("Art/plate-ink.png");
 }

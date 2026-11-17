@@ -29,7 +29,9 @@ on:
   workflow_dispatch: # "Run workflow" button in the Actions tab
 
 concurrency:
-  group: web-build
+  # One queue per branch: a new run on the same branch waits for the running one (only the newest waiting run is
+  # kept), and a test build of one branch no longer cancels the waiting build of another branch.
+  group: web-build-${{ github.ref }}
   cancel-in-progress: false # a Unity build takes 20+ min; let it finish, the newest merge waits and builds next
 
 permissions:
