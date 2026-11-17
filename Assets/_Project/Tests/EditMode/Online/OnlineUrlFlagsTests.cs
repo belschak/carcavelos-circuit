@@ -35,6 +35,16 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void Render0_TurnsDrawingOff_OnlyWhenAsked()
+        {
+            Assert.IsTrue(OnlineUrlFlags.Parse("x?room=noon&name=CI&render=0").NoRender);
+            Assert.IsTrue(OnlineUrlFlags.Parse("x?render=off").NoRender);
+            Assert.IsFalse(OnlineUrlFlags.Parse("x?render=1").NoRender);
+            Assert.IsFalse(OnlineUrlFlags.Parse("x?room=noon&name=CI").NoRender);
+            Assert.IsFalse(OnlineUrlFlags.None.NoRender);
+        }
+
+        [Test]
         public void Keys_AnyCase_PlusIsSpace_OtherKeysIgnored()
         {
             OnlineUrlFlags flags = OnlineUrlFlags.Parse("x?NET=Photon&Room=NOON&name=Jo+Silva&foo=bar&autopilot=yes");

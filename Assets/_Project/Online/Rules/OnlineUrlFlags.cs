@@ -10,6 +10,8 @@ namespace CarcavelosCircuit.Online
     //   name      the player name (checked like a typed name, a bad one opens the name field instead)
     //   autopilot 1 = the kart drives itself (so one person can fill a room with tabs)
     //   autostart N = the host starts 5 s after N players are in the room (2..15)
+    //   render    0 = no 3D drawing (cameras off): a scale-test bot on a machine without a GPU still drives and sends
+    //             at full speed; the screen shows only the HUD over black (17 Nov 2026, CI runners drew 3 fps)
     // Anything else in the address is ignored; every value is cut to 200 characters before it is looked at.
     public class OnlineUrlFlags
     {
@@ -21,6 +23,7 @@ namespace CarcavelosCircuit.Online
         public string Name { get; private set; } = "";     // as typed in the address, not yet cleaned
         public bool Autopilot { get; private set; }
         public int AutoStart { get; private set; }         // 0 = off
+        public bool NoRender { get; private set; }         // render=0: cameras off (scale-test bots)
 
         // Room and name both given: the lobby joins by itself.
         public bool WantsAutoJoin { get { return HasRoom && Name.Length > 0; } }
@@ -107,6 +110,10 @@ namespace CarcavelosCircuit.Online
                 case "autopilot":
                     string on = value.Trim().ToLowerInvariant();
                     Autopilot = on == "1" || on == "true" || on == "yes";
+                    break;
+                case "render":
+                    string draw = value.Trim().ToLowerInvariant();
+                    NoRender = draw == "0" || draw == "false" || draw == "no" || draw == "off";
                     break;
                 case "autostart":
                     int wanted;

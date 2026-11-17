@@ -170,6 +170,10 @@ namespace CarcavelosCircuit.Online
 
         private void Update()
         {
+            if (flags.NoRender)
+            {
+                CamerasOff();
+            }
             if (autoJoinPending)
             {
                 TryAutoJoin();
@@ -226,6 +230,17 @@ namespace CarcavelosCircuit.Online
                 case OnlineStatus.InRoom:
                     UpdateInRoom();
                     break;
+            }
+        }
+
+        // ?render=0 (scale-test bot): no 3D drawing at all, so a machine without a GPU keeps a normal frame rate and
+        // drives + sends poses like a real player. Every frame, because cameras can be switched on again by others.
+        private static void CamerasOff()
+        {
+            Camera[] cameras = Camera.allCameras; // only the enabled ones
+            for (int i = 0; i < cameras.Length; i++)
+            {
+                cameras[i].enabled = false;
             }
         }
 
