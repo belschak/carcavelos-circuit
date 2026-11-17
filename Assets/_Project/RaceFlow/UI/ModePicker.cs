@@ -7,10 +7,10 @@ namespace CarcavelosCircuit.RaceFlow
     // The three race modes on the start screen (Luc, 16 Nov 2026): RACE VS BOTS, TIME ATTACK, ONLINE RACE.
     // Built in code (like HudMenus' panels), so Main.unity and RaceHud.uxml need no change. RaceHud creates it and
     // calls Update() every frame.
-    // - Click or tap a card: that mode is picked and the race starts at once (one tap to the next step).
+    // - Click or tap a card: that mode is picked and the driver select opens (one tap to the next step).
     // - Keys 1, 2, 3 pick a mode; the same key press then starts the race like any other key.
-    // - Any other key or click starts the race in the highlighted mode (the last one played).
-    // - ONLINE RACE (M2) opens the online lobby instead of starting a race (OnlineRaceHooks.OpenLobby); the lobby
+    // - Any other key or click opens the driver select in the highlighted mode (the last one played).
+    // - ONLINE RACE (M2) opens the online lobby instead of the driver select (OnlineRaceHooks.OpenLobby); the lobby
     //   starts the race for everyone. In a build without the online part the card is dimmed and picking it shows
     //   OnlineRaceHooks.UnavailableMessage (RaceManager.TrySelectMode refuses it too).
     public class ModePicker
@@ -199,7 +199,7 @@ namespace CarcavelosCircuit.RaceFlow
                 }
                 else if (byClick)
                 {
-                    raceManager.BeginRace();
+                    raceManager.RequestStart(); // opens the driver select (UI/DriverPicker), READY there starts
                 }
                 return;
             }

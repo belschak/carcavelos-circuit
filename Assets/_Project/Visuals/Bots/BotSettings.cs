@@ -102,6 +102,27 @@ namespace CarcavelosCircuit.Visuals
         [SerializeField, Tooltip("This many metres below the racing line = fell off: put back on the line")]
         private float fallMetres = 8f;
 
+        [Header("Driver select (Luc, 17 Nov 2026): the four karts with their drivers")]
+        [SerializeField, Tooltip("Visuals/Kart/Prefabs/KartVisual_*: the Rookie's Classic and the three roster karts (NovaKartRosterBuilder fills this)")]
+        private GameObject[] kartVisuals = new GameObject[0];
+
+        // The kart model with this prefab name (RaceFlow's DriverInfo.KartVisual), null if it is not in the list.
+        public GameObject KartVisual(string prefabName)
+        {
+            if (kartVisuals == null)
+            {
+                return null;
+            }
+            for (int i = 0; i < kartVisuals.Length; i++)
+            {
+                if (kartVisuals[i] != null && kartVisuals[i].name == prefabName)
+                {
+                    return kartVisuals[i];
+                }
+            }
+            return null;
+        }
+
         public int BotCount { get { return bots == null ? 0 : bots.Length; } }
         public float TurnDegreesPerSecond { get { return turnDegreesPerSecond; } }
         public float FullSteerSpeed { get { return fullSteerSpeed; } }

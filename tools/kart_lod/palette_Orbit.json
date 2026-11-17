@@ -1,0 +1,55 @@
+{
+  "_what": "Driver select (17 Nov 2026): the far Orbit kart and its Balloon tyres, same format as palette.json (V32).",
+  "grid": 4,
+  "paint": "NK_Paint_Body",
+  "materials": [
+    "NK_Accent_Silver",
+    "NK_Blue_Extra",
+    "NK_Chassis_Dark",
+    "NK_Glass_Extra",
+    "NK_Glow",
+    "NK_Metal",
+    "NK_Number_Plate"
+  ],
+  "tyre_bake": {
+    "size": 512,
+    "ids": [
+      {
+        "name": "NT_Tyre",
+        "r": 1,
+        "g": 0,
+        "b": 0
+      },
+      {
+        "name": "NT_Balloon_Rim",
+        "r": 0,
+        "g": 1,
+        "b": 0
+      },
+      {
+        "name": "NT_Balloon_Hub",
+        "r": 0,
+        "g": 0,
+        "b": 1
+      },
+      {
+        "name": "NT_Balloon_Letter",
+        "r": 1,
+        "g": 1,
+        "b": 0
+      },
+      {
+        "name": "NT_Balloon_Wall",
+        "r": 0,
+        "g": 1,
+        "b": 1
+      },
+      {
+        "name": "NT_Balloon_Glow",
+        "r": 1,
+        "g": 0,
+        "b": 1
+      }
+    ]
+  }
+}

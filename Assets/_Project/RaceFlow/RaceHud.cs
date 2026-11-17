@@ -121,6 +121,10 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly StuckDetector stuckDetector = new StuckDetector();
         private HudMenus menus; // settings, credits, mute, pause overlay, reduced motion (task P7, UI/HudMenus.cs)
         private ModePicker modePicker;       // RACE VS BOTS / TIME ATTACK / ONLINE RACE on the start screen (UI/ModePicker.cs)
+        private DriverPicker driverPicker;   // the driver select after the mode, READY starts the race (UI/DriverPicker.cs)
+
+        // The driver select on the start screen (Play Mode test DriverSelectPlayTests).
+        public DriverPicker Drivers { get { return driverPicker; } }
         private FinishOverlay finishOverlay; // checkered flag + place or lap time after the line (UI/FinishOverlay.cs)
         private Label resultsHeadline;       // "FINISH" on the card, "2ND PLACE" in a race against the bots
         private VisualElement resultsMenu;   // the MENU (Q) button on the results card: back to the mode choice
@@ -192,6 +196,8 @@ namespace CarcavelosCircuit.RaceFlow
             menus = new HudMenus(root, raceManager); // after IgnoreClicksDeep: it switches on the clicks of its own buttons
             menus.SoundRequested += OnMenuSound;
             modePicker = new ModePicker(root, raceManager);     // after IgnoreClicksDeep, like the menus
+            driverPicker = new DriverPicker(root, raceManager); // after the mode cards: it hides them while it is open
+            driverPicker.SoundRequested += OnMenuSound;
             finishOverlay = new FinishOverlay(hudRoot);
             resultsMenu = MakeResultsMenuButton(root);
             retryKeycap = root.Q<VisualElement>("res-actions").Q<VisualElement>(className: "keycap--wide");
@@ -223,6 +229,8 @@ namespace CarcavelosCircuit.RaceFlow
             raceManager.Restarted -= OnRestarted;
             raceManager.Recovered -= OnRecovered;
             menus.SoundRequested -= OnMenuSound;
+            driverPicker.SoundRequested -= OnMenuSound;
+            driverPicker.Dispose(); // "any key" starts the race again without the HUD
             HudTextures.Destroy(startGradient);
             HudTextures.Destroy(resultsGradient);
             HudTextures.Destroy(glowLeftTexture);
@@ -564,10 +572,15 @@ namespace CarcavelosCircuit.RaceFlow
             // During the finish beat the card is not there yet, so the menus behave as in the race
             // (no results Settings button to click, the S key does nothing yet).
             menus.Update(state == RaceState.Results && !resultsShown ? RaceState.Racing : state);
-            modePicker.Update(state, menus.IsMenuOpen);
+            modePicker.Update(state, menus.IsMenuOpen || driverPicker.IsOpen);
             if (modePicker.UsesInput)
             {
                 raceManager.MenuUsesInput = true; // this click or key picks a mode, it does not also start the race
+            }
+            driverPicker.Update(state, menus.IsMenuOpen);
+            if (driverPicker.UsesInput)
+            {
+                raceManager.MenuUsesInput = true; // the driver select owns the keys; only READY starts the race
             }
             bool offlineButtons = !RaceModeRules.OpensLobby(raceManager.Mode); // online the room has START AGAIN and Q LEAVE
             HudFx.SetClickable(resultsMenu, resultsShown && !menus.IsMenuOpen && offlineButtons);

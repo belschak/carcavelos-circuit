@@ -87,6 +87,7 @@ namespace CarcavelosCircuit.RaceFlow
         public event Action Paused;                      // the pause started (focus lost or P), audit 19 pause cue
         public event Action Resumed;                     // the pause ended and the race runs again
         public event Action<RaceMode> ModeChanged;       // a new mode was picked on the start screen
+        public event Action StartRequested;              // any key on the start screen, see RequestStart
 
         private readonly RaceTimer timer = new RaceTimer();
         private readonly RunStats runStats = new RunStats();
@@ -412,7 +413,7 @@ namespace CarcavelosCircuit.RaceFlow
                 bool leftOnlineNow = ExternalStartRules.IsLeavingFrame(Time.frameCount, leftOnlineFrame); // Q or BACK just left the room
                 if (ExternalStartRules.MayStartFromKeys(ExternalStartOnly, Mode, MenuUsesInput || leftOnlineNow) && RaceKeys.AnyKeyOrClickPressed())
                 {
-                    BeginRace();
+                    RequestStart();
                 }
                 return;
             }
@@ -446,6 +447,21 @@ namespace CarcavelosCircuit.RaceFlow
                 {
                     Recover();
                 }
+            }
+        }
+
+        // "Any key" on the start screen. With a driver select listening (the HUD's DriverPicker, Luc 17 Nov 2026)
+        // the key opens it and READY then calls BeginRace; without one (Play Mode tests, a scene without the HUD)
+        // the race starts at once as before.
+        public void RequestStart()
+        {
+            if (StartRequested != null)
+            {
+                StartRequested();
+            }
+            else
+            {
+                BeginRace();
             }
         }
 

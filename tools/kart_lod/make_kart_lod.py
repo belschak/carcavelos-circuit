@@ -19,7 +19,11 @@ Tyre (Tyre_Slick_Far.fbx + baked textures): simplifying a round tyre makes it an
 
 Run (from the repo root, Blender 5.2 or newer; written and tested with 5.3):
   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python tools/kart_lod/make_kart_lod.py
-Optional after "--": kart_ratio (default below).
+Optional after "--": kart_ratio (default below), or <Kart> <Tyre> [kart_ratio] for the other roster karts (driver
+select, 17 Nov 2026), e.g. "-- Buggy Offroad". The Nova Classic + Slick keep their old file names (palette.json,
+Kart_Classic_Far, Tyre_Slick_Far, NT_TyreFar, tyre_far_id.png ...); every other combo gets its own:
+palette_<Kart>.json, Kart_<Kart>_Far.fbx, Tyre_<Tyre>_Far.fbx, NT_TyreFar_<Tyre>, tyre_far_<Tyre>_id.png,
+tyre_far_<Tyre>_ao.png and Textures/TyreFar_<Tyre>_Normal.png.
 Limits: the far kart's steering wheel does not turn (the tyres still roll and steer, they sit on the wheel anchors).
 Thin parts (bolts, pin stripes) vanish on the body; on the tyre they survive only as normal-map detail.
 """
@@ -37,14 +41,20 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 MODELS = os.path.join(REPO, "Assets", "_Project", "Visuals", "Kart", "Models")
 TEXTURES = os.path.join(REPO, "Assets", "_Project", "Visuals", "Kart", "Textures")
-PALETTE = json.load(open(os.path.join(HERE, "palette.json")))
-LOD_MATERIAL = "NK_KartLOD"
-TYRE_MATERIAL = "NT_TyreFar"
-TYRE_ID_MAP = os.path.join(HERE, "tyre_far_id.png")            # read by Unity, not an asset itself
-TYRE_NORMAL_MAP = os.path.join(TEXTURES, "TyreFar_Normal.png")
-TYRE_AO_MAP = os.path.join(HERE, "tyre_far_ao.png")             # read by Unity, which darkens the colour with it
-
 ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+if ARGS and not ARGS[0].replace(".", "", 1).isdigit():
+    KART, TYRE, ARGS = ARGS[0], ARGS[1], ARGS[2:]      # another roster kart: -- Buggy Offroad [ratio]
+else:
+    KART, TYRE = "Classic", "Slick"
+CLASSIC = KART == "Classic"
+SLICK = TYRE == "Slick"
+PALETTE = json.load(open(os.path.join(HERE, "palette.json" if CLASSIC else "palette_" + KART + ".json")))
+LOD_MATERIAL = "NK_KartLOD"                         # same name on every kart: Unity keeps one per kart folder
+TYRE_MATERIAL = "NT_TyreFar" if SLICK else "NT_TyreFar_" + TYRE
+TYRE_ID_MAP = os.path.join(HERE, "tyre_far_id.png" if SLICK else "tyre_far_" + TYRE + "_id.png")  # read by Unity
+TYRE_NORMAL_MAP = os.path.join(TEXTURES, "TyreFar_Normal.png" if SLICK else "TyreFar_" + TYRE + "_Normal.png")
+TYRE_AO_MAP = os.path.join(HERE, "tyre_far_ao.png" if SLICK else "tyre_far_" + TYRE + "_ao.png")  # darkens the colour
+
 KART_RATIO = float(ARGS[0]) if len(ARGS) > 0 else 0.20   # keep 20 % of the kart's triangles (at 10 % edges turned jagged)
 DECAL_RATIO = 0.6                                          # number plate and checkers (at 20 % the checkers smeared)
 TYRE_STEPS = 40            # steps around the axle: at 40 the outline is off a true circle by at most 0.7 mm
@@ -137,8 +147,8 @@ def make_palette_lod(meshes, ratio):
 
 
 def kart():
-    meshes = import_fbx("Kart_Classic")
-    root = bpy.data.objects["Kart_Classic"]
+    meshes = import_fbx("Kart_" + KART)
+    root = bpy.data.objects["Kart_" + KART]
     body = bpy.data.objects["Kart_Body"]
     meshes.remove(body)
     meshes.insert(0, body)                             # join into the body: the result keeps its place under the root
@@ -150,7 +160,7 @@ def kart():
     bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     bpy.data.objects.remove(root)                      # with it the wheel and exhaust anchors: the full kart keeps them
-    export([result], "Kart_Classic_Far")
+    export([result], "Kart_" + KART + "_Far")
 
 
 # ---------------------------------------------------------------- tyre: round low-poly shell + baked detail
@@ -263,7 +273,7 @@ def spin_outline(outline, axle, a, b, outer, tread_first, tread_last):
                 loop[uv_layer].uv = uv_for(ri, seam_k, part)
     bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)   # the axle points of each face become one vertex
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-    mesh = bpy.data.meshes.new("Tyre_Slick_Far")
+    mesh = bpy.data.meshes.new("Tyre_" + TYRE + "_Far")
     bm.to_mesh(mesh)
     bm.free()
     return mesh
@@ -288,9 +298,9 @@ def bake(low, high, kind, image, samples):
 
 
 def tyre():
-    high = import_fbx("Tyre_Slick")[0]
+    high = import_fbx("Tyre_" + TYRE)[0]
     outline, axle, a, b, outer, tread_first, tread_last = tyre_outline(high)
-    low = bpy.data.objects.new("Tyre_Slick_Far", spin_outline(outline, axle, a, b, outer, tread_first, tread_last))
+    low = bpy.data.objects.new("Tyre_" + TYRE + "_Far", spin_outline(outline, axle, a, b, outer, tread_first, tread_last))
     bpy.context.scene.collection.objects.link(low)
     low.matrix_world = high.matrix_world.copy()        # same place and turn as the full tyre
     for p in low.data.polygons:
@@ -340,12 +350,12 @@ def tyre():
     occlusion.file_format = 'PNG'
     bake(low, high, 'AO', occlusion, samples=64)
 
-    print(f"LOD Tyre_Slick: {triangles(high)} -> {triangles(low)} triangles, round in {TYRE_STEPS} steps; "
+    print(f"LOD Tyre_{TYRE}: {triangles(high)} -> {triangles(low)} triangles, round in {TYRE_STEPS} steps; "
           f"baked ID, normal and AO maps ({TYRE_TEXTURE} px)")
     bpy.data.objects.remove(high)
-    export([low], "Tyre_Slick_Far")
+    export([low], "Tyre_" + TYRE + "_Far")
 
 
-print("Blender", bpy.app.version_string)
+print("Blender", bpy.app.version_string, "kart", KART, "tyre", TYRE)
 kart()
 tyre()

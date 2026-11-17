@@ -122,6 +122,29 @@ namespace CarcavelosCircuit.Visuals
             isSetUp = true;
         }
 
+        // Driver select (Luc, 17 Nov 2026): the kart model under Kart/Visual was swapped for another driver's kart
+        // (Visuals/Kart/KartVisualSwap). The exhaust flames went with the old model's pipes; the wheel sets hang
+        // under this object and are rebuilt at the new wheels. Call after the old model is detached.
+        public void Rebind()
+        {
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = transform.GetChild(i);
+                if (child.name.StartsWith("WheelEffects_", System.StringComparison.Ordinal) || child.name == "ExhaustEffects")
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+            List<ParticleSystem>[] groups = { smoke, sparks, bursts, flames, flameCores, ignitions };
+            foreach (List<ParticleSystem> group in groups)
+            {
+                group.Clear();
+            }
+            isSetUp = false;
+            enabled = true;
+            Setup();
+        }
+
         // One frame of effects. Public so the builder can step it in Edit Mode.
         public void Tick()
         {

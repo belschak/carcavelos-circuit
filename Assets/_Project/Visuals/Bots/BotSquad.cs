@@ -7,7 +7,8 @@ namespace CarcavelosCircuit.Visuals
 {
     // Task V10: brings the five bots into the race. Sits on the "Racers" object in Main.unity next to RaceFlow's
     // RaceRoster (Role 4's scene builder adds it). As soon as the roster has set the race up, it spawns one normal
-    // Kart (Role 1's Kart.prefab, Role 3's kart model inside) per BotSettings profile, paints it and puts a BotDriver
+    // Kart (Role 1's Kart.prefab, Role 3's kart model inside) per seat of DriverSwap.Lineup, gives it that driver's kart
+    // model (or paints a Rookie copy) and puts a BotDriver
     // on it. The bots register as IRacer, and RaceRoster does the rest for them like for the player: grid slots
     // (bots in front, the player last), input only while Racing, back to the grid on Retry.
     // Every frame it also tells each bot how far it is ahead of the player, for the light rubber band.
@@ -33,6 +34,7 @@ namespace CarcavelosCircuit.Visuals
         private bool spawned;           // set up once the track is there (bots or not, depending on the mode)
         private bool spawnFailed;       // no prefab or no racing line: do not try again every frame
         private bool keptOut;           // RemoveBots() was called (Play Mode tests): no respawn on the start screen
+        private bool driverChanged = true; // a new driver was picked: repaint the player, swap the bots (start screen)
         private BotTrackMap map;        // the racing line, shared by the bots and the finish cruise; null = none
         private FinishCruise cruise;    // drives the player's kart after the line, null = the player drives
 
@@ -47,6 +49,8 @@ namespace CarcavelosCircuit.Visuals
                 raceManager.LapFinished += OnPlayerFinished;
                 raceManager.Restarted += StopCruise;
             }
+            DriverChoice.Changed += OnDriverChanged;
+            driverChanged = true;
         }
 
         private void OnDisable()
@@ -56,6 +60,7 @@ namespace CarcavelosCircuit.Visuals
                 raceManager.LapFinished -= OnPlayerFinished;
                 raceManager.Restarted -= StopCruise;
             }
+            DriverChoice.Changed -= OnDriverChanged;
             StopCruise();
         }
 
@@ -88,6 +93,19 @@ namespace CarcavelosCircuit.Visuals
             {
                 return;
             }
+            if (driverChanged && raceManager.KartTransform != null)
+            {
+                // Driver select: the player gets the picked driver's kart, and the bots are lined up again (the three
+                // drivers not picked + two repainted Rookies, DriverSwap). The old bots go this frame and the new
+                // ones come next frame (Destroy finishes at the frame's end).
+                driverChanged = false;
+                ShowPlayerDriver();
+                if (bots.Count > 0)
+                {
+                    DestroyBots();
+                    return;
+                }
+            }
             bool wanted = RaceModeRules.HasBots(raceManager.Mode) && !keptOut;
             if (wanted && bots.Count == 0 && !spawnFailed)
             {
@@ -118,6 +136,33 @@ namespace CarcavelosCircuit.Visuals
             return map;
         }
 
+        // The player's kart takes the picked driver's model; the boost and drift effects move to its wheels and pipes.
+        private void ShowPlayerDriver()
+        {
+            GameObject kart = raceManager.KartTransform.gameObject;
+            GameObject model = settings != null ? settings.KartVisual(DriverChoice.Current.KartVisual) : null;
+            if (model == null)
+            {
+                return; // no kart list in BotSettings yet: the player keeps the Rookie's Classic
+            }
+            Transform slot = kart.transform.Find(KartVisualSwap.SlotName);
+            Transform before = slot != null ? KartVisualSwap.CurrentModel(slot) : null;
+            GameObject now = KartVisualSwap.Apply(kart, model);
+            if (now != null && (before == null || before.gameObject != now))
+            {
+                KartEffects effects = kart.GetComponentInChildren<KartEffects>(true);
+                if (effects != null)
+                {
+                    effects.Rebind();
+                }
+            }
+        }
+
+        private void OnDriverChanged(int driver)
+        {
+            driverChanged = true;
+        }
+
         private void SpawnAll()
         {
             if (kartPrefab == null || EnsureMap() == null)
@@ -127,19 +172,20 @@ namespace CarcavelosCircuit.Visuals
                 return;
             }
             Transform spawn = raceManager.Track.SpawnPoint;
-            for (int i = 0; i < settings.BotCount; i++)
+            List<DriverSwap.Seat> seats = DriverSwap.Lineup(DriverChoice.Index, settings);
+            for (int i = 0; i < seats.Count; i++)
             {
-                BotProfile profile = settings.Bot(i);
-                if (profile == null)
-                {
-                    continue;
-                }
+                BotProfile profile = seats[i].Profile;
                 // First appearance on the bot's own grid slot (bots fill the front slots), so no two karts ever
                 // overlap; RaceRoster then lays out the whole grid again with the player in the last slot.
                 Vector3 slot = spawn.position + spawn.rotation * RacerGrid.OffsetOf(i, 2f, 3f);
                 GameObject kart = Instantiate(kartPrefab, slot, spawn.rotation);
                 kart.name = "Bot " + profile.displayName;
-                BotKartPaint.Paint(kart, profile.colour);
+                KartVisualSwap.Apply(kart, settings.KartVisual(seats[i].KartVisual)); // same frame: before any Start
+                if (seats[i].Repaint)
+                {
+                    BotKartPaint.Paint(kart, profile.colour); // the two Rookie copies; the roster karts keep their paint
+                }
                 BotDriver driver = kart.AddComponent<BotDriver>(); // registers itself (OnEnable)
                 driver.SetUp(profile, settings, map);
                 bots.Add(driver);
