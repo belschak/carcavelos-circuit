@@ -274,6 +274,127 @@
     letter-spacing: 1px;
 }
 
+/* ---------- "On the track" postcard (UI/TitleScreen.cs): the map's sights, one at a time, bottom right ---------- */
+.pc {
+    position: absolute;
+    right: 56px;
+    bottom: 10px;
+    width: 400px;
+    height: 66px;
+    flex-direction: row;
+    align-items: center;
+    padding: 2px 16px 8px 10px; /* bottom: the plate's lip */
+    background-image: url("Art/plate-paper.png");
+    -unity-slice-left: 36;
+    -unity-slice-right: 36;
+    -unity-slice-top: 36;
+    -unity-slice-bottom: 48;
+    -unity-slice-scale: 0.5px;
+    rotate: -1.5deg;
+    opacity: 0;
+    translate: 0 30px;
+    transition-property: opacity, translate;
+    transition-duration: 220ms, 380ms;
+    transition-timing-function: ease-out, ease-out-back;
+    transition-delay: 1500ms;
+}
+
+.intro-in .pc {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.intro-in .pc--out {
+    opacity: 0;
+    translate: 0 8px;
+    transition-delay: 0s;
+    transition-duration: 200ms, 200ms;
+}
+
+.pc-stamp {
+    width: 40px;
+    height: 44px;
+    margin-right: 12px;
+    background-image: url("Art/plate-sunset.png");
+    -unity-slice-left: 36;
+    -unity-slice-right: 36;
+    -unity-slice-top: 36;
+    -unity-slice-bottom: 48;
+    -unity-slice-scale: 0.5px;
+    rotate: 6deg;
+}
+
+.pc--alt .pc-stamp {
+    background-image: url("Art/plate-azul.png");
+    rotate: -6deg;
+}
+
+.pc-words {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.pc-kicker {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--cc-coral);
+}
+
+.pc-title {
+    font-size: 21px;
+    color: var(--ink);
+    -unity-text-outline-width: 0;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    margin-top: -2px;
+}
+
+.pc-text {
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    color: rgba(14, 34, 56, 0.78);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hud--narrow .pc {
+    right: 24px;
+    width: 300px;
+}
+
+.reduce-motion .pc {
+    transition-duration: 0s;
+    transition-delay: 0s;
+}
+
+/* Room cards in the online lobby: the room that ENTER joins is azulejo blue. */
+.menu-pill.plate.plate--blue {
+    background-image: url("Art/plate-azul.png");
+}
+
+/* Keys on the cream start-screen pills: ink keys with cream letters, so they do not vanish on the paper. */
+.start-screen .ts-menu .keycap {
+    background-color: var(--ink);
+    border-bottom-color: #061325;
+}
+
+.start-screen .ts-menu .keycap > Label {
+    color: var(--cc-white);
+}
+
+/* Credits page 1: the logo word on top, the team in the middle of the page. */
+#credits-page-1 {
+    justify-content: center;
+}
+
+.credits-logo {
+    width: 330px;
+    height: 69px;
+    margin-bottom: 14px;
+    background-image: url("Art/Logo/logo-word.png");
+    -unity-background-scale-mode: scale-to-fit;
+}
+
 /* ---------- Narrow windows (4:3) and reduced motion ---------- */
 .hud--narrow .lg {
     width: 460px;

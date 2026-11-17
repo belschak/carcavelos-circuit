@@ -41,6 +41,28 @@ namespace CarcavelosCircuit.RaceFlow
         private float introStart = -1f; // real time when "intro-in" appeared, -1 = not on the start screen
         private bool sweepWasRunning;
 
+        // "On the track" postcard (bottom right of the start screen): one of the map's sights at a time, so a new
+        // player sees what makes this track special while the camera flies over it.
+        private static readonly string[,] Sights =
+        {
+            { "SURF BREAK", "Surfers ride the Atlantic swell right beside the track" },
+            { "BEACH TUNNEL", "84 m under the Avenida Marginal, with painted walls" },
+            { "ATRIUM PIANO", "The route drives straight through the Hovione atrium" },
+            { "BEACH VOLLEY", "Courts on the sand of Carcavelos beach" },
+            { "NOVA KART WALL", "Between the plaza and the home straight" },
+            { "DRIFT BOOST", "Hold SPACE in a corner, let go for a boost" },
+            { "AIR TRICKS", "Press SHIFT in the air for a trick boost" },
+            { "NOON OR SUNSET", "Online rooms for up to 15 racers" },
+        };
+
+        [SerializeField, Tooltip("Seconds each sight stays on the start screen's postcard")]
+        private float sightSeconds = 4f;
+
+        private VisualElement postcard;
+        private Label sightTitle;
+        private Label sightText;
+        private int shownSight = -1;
+
         private void OnEnable()
         {
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
@@ -54,7 +76,59 @@ namespace CarcavelosCircuit.RaceFlow
             softGlintLetters = root.Q<VisualElement>("title-glint-soft-letters");
             AddWordCopy(glintLetters);
             AddWordCopy(softGlintLetters);
+            AddPostcard();
             introStart = -1f;
+        }
+
+        // The postcard: a cream card with a stamp, "ON THE TRACK" and the sight (USS: .pc in UI/Postcard.uss).
+        private void AddPostcard()
+        {
+            if (postcard != null)
+            {
+                postcard.RemoveFromHierarchy();
+            }
+            postcard = new VisualElement { name = "start-postcard" };
+            postcard.pickingMode = PickingMode.Ignore;
+            postcard.AddToClassList("pc");
+            VisualElement stamp = new VisualElement();
+            stamp.pickingMode = PickingMode.Ignore;
+            stamp.AddToClassList("pc-stamp");
+            postcard.Add(stamp);
+            VisualElement words = new VisualElement();
+            words.pickingMode = PickingMode.Ignore;
+            words.AddToClassList("pc-words");
+            Label kicker = new Label("ON THE TRACK");
+            kicker.AddToClassList("pc-kicker");
+            kicker.AddToClassList("f-ui");
+            sightTitle = new Label("");
+            sightTitle.AddToClassList("pc-title");
+            sightTitle.AddToClassList("f-display");
+            sightText = new Label("");
+            sightText.AddToClassList("pc-text");
+            sightText.AddToClassList("f-ui");
+            words.Add(kicker);
+            words.Add(sightTitle);
+            words.Add(sightText);
+            postcard.Add(words);
+            startScreen.Add(postcard);
+            shownSight = -1;
+        }
+
+        // Which sight shows: changes every sightSeconds; between two sights the card flips out and back in.
+        private void UpdatePostcard()
+        {
+            float onScreen = Time.unscaledTime - introStart;
+            int count = Sights.GetLength(0);
+            int index = Mathf.FloorToInt(onScreen / sightSeconds) % count;
+            float inSight = onScreen % sightSeconds;
+            postcard.EnableInClassList("pc--out", inSight > sightSeconds - 0.25f);
+            if (index != shownSight)
+            {
+                shownSight = index;
+                sightTitle.text = Sights[index, 0];
+                sightText.text = Sights[index, 1];
+                postcard.EnableInClassList("pc--alt", index % 2 == 1); // the stamp changes colour too
+            }
         }
 
         // The copy of the word for a sweep band: a box as big as the logo with the word picture where the real one is
@@ -83,6 +157,7 @@ namespace CarcavelosCircuit.RaceFlow
                 introStart = Time.unscaledTime;
             }
             bestLabel.EnableInClassList("ts-best--empty", bestLabel.text.Length == 0); // no empty chip without a best time
+            UpdatePostcard();
             if (hudRoot.ClassListContains("reduce-motion"))
             {
                 StopSweep();
