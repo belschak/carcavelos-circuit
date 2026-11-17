@@ -1,4 +1,5 @@
 using System;
+using CarcavelosCircuit.RaceFlow;
 using CarcavelosCircuit.Shared;
 
 namespace CarcavelosCircuit.Online
@@ -9,6 +10,8 @@ namespace CarcavelosCircuit.Online
     //   room      carcavelos (or noon / sunset, the old two-room links): join the one room without clicking (needs a
     //             name too, else the lobby only opens). noon / sunset also pick that light for this visit (not saved).
     //   name      the player name (checked like a typed name, a bad one opens the name field instead)
+    //   driver    the driver for this visit (not saved): a DriverRoster name (rookie, tiago, nova, amara) or index
+    //             0..3, so test bots can race with different drivers (17 Nov 2026)
     //   autopilot 1 = the kart drives itself (so one person can fill a room with tabs)
     //   autostart N = the host starts 5 s after N players are in the room (2..15)
     //   render    0 = no 3D drawing (cameras off): a scale-test bot on a machine without a GPU still drives and sends
@@ -23,6 +26,7 @@ namespace CarcavelosCircuit.Online
         public bool HasLight { get; private set; }         // room=noon or room=sunset: that light for this visit
         public TimeOfDay Light { get; private set; } = TimeOfDay.Noon;
         public string Name { get; private set; } = "";     // as typed in the address, not yet cleaned
+        public int Driver { get; private set; } = -1;      // DriverRoster index from ?driver=, -1 = none
         public bool Autopilot { get; private set; }
         public int AutoStart { get; private set; }         // 0 = off
         public bool NoRender { get; private set; }         // render=0: cameras off (scale-test bots)
@@ -111,6 +115,9 @@ namespace CarcavelosCircuit.Online
                 case "name":
                     Name = value.Trim();
                     break;
+                case "driver":
+                    Driver = ParseDriver(value);
+                    break;
                 case "autopilot":
                     string on = value.Trim().ToLowerInvariant();
                     Autopilot = on == "1" || on == "true" || on == "yes";
@@ -127,6 +134,18 @@ namespace CarcavelosCircuit.Online
                     }
                     break;
             }
+        }
+
+        // "Tiago" (any case) or "1" -> the DriverRoster index; -1 for anything else.
+        public static int ParseDriver(string value)
+        {
+            string text = value == null ? "" : value.Trim();
+            int number;
+            if (int.TryParse(text, out number))
+            {
+                return DriverRoster.IsValid(number) ? number : -1;
+            }
+            return DriverRoster.IndexOf(text);
         }
 
         // Which transport the lobby uses, or null when none fits (then the Online card says it needs the online build).

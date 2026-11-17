@@ -132,6 +132,10 @@ namespace CarcavelosCircuit.Online
                 // the light is the player's own look and never travels (one room for everyone, 17 Nov 2026).
                 lightFromAddress = TimeOfDayChoice.Set(flags.Light, false);
             }
+            if (flags.Driver >= 0)
+            {
+                DriverChoice.Select(flags.Driver, false); // ?driver= (test bots): this visit only, the saved pick stays
+            }
             Application.runInBackground = true;      // a tab in the background must keep sending poses
             raceManager.LapFinished += OnLapFinished;
 

@@ -89,6 +89,19 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void Driver_ByNameOrIndex_ElseNone()
+        {
+            Assert.AreEqual(1, OnlineUrlFlags.Parse("x?driver=Tiago").Driver);
+            Assert.AreEqual(3, OnlineUrlFlags.Parse("x?driver=amara").Driver);
+            Assert.AreEqual(2, OnlineUrlFlags.Parse("x?driver=2").Driver);
+            Assert.AreEqual(0, OnlineUrlFlags.Parse("x?driver=rookie").Driver);
+            Assert.AreEqual(-1, OnlineUrlFlags.Parse("x?driver=9").Driver, "outside the roster");
+            Assert.AreEqual(-1, OnlineUrlFlags.Parse("x?driver=bob").Driver);
+            Assert.AreEqual(-1, OnlineUrlFlags.Parse("x?room=carcavelos").Driver, "no flag = the player's own pick");
+            Assert.AreEqual(-1, OnlineUrlFlags.None.Driver);
+        }
+
+        [Test]
         public void RoomByItsOwnName_LeavesTheLightAlone()
         {
             OnlineUrlFlags flags = OnlineUrlFlags.Parse("x?room=carcavelos&name=Ana");
