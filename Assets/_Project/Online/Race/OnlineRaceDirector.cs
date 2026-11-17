@@ -64,6 +64,8 @@ namespace CarcavelosCircuit.Online
         private bool joinLogged;
         private int joinAttempt;          // the try of the current join (OnlineJoinRetry), 0 once in the room
         private float retryAt = -1f;      // unscaled time of the next automatic try, -1 = none
+        private double backedUpFor;       // seconds my connection has looked backed up (ConnectionHealthRules)
+        private readonly List<double> otherAges = new List<double>();
         private bool masterLogged;
         private int resultLoggedRace;
         private RaceState lastLoggedState = RaceState.Ready;
@@ -356,6 +358,27 @@ namespace CarcavelosCircuit.Online
             UpdateMaster(control);
             UpdateView(control);
             LogForTests(control, now);
+            CheckConnectionHealth(now);
+        }
+
+        // Everything from the others arrives seconds late (a backed-up line, ConnectionHealthRules): leave and join
+        // again with a fresh connection (FailOrRetry), instead of racing alone far behind the room.
+        private void CheckConnectionHealth(double now)
+        {
+            otherAges.Clear();
+            foreach (KeyValuePair<int, ProxyKart> pair in proxies)
+            {
+                if (pair.Value != null && pair.Value.NewestPoseTime >= 0.0)
+                {
+                    otherAges.Add(now - pair.Value.NewestPoseTime);
+                }
+            }
+            backedUpFor = ConnectionHealthRules.Sustained(backedUpFor, ConnectionHealthRules.LooksBackedUp(otherAges), Time.unscaledDeltaTime);
+            if (ConnectionHealthRules.ShouldReconnect(backedUpFor))
+            {
+                backedUpFor = 0.0;
+                FailOrRetry("CONNECTION TOO SLOW", "stale", "THE CONNECTION IS TOO SLOW, CHECK THE WI-FI AND TRY AGAIN");
+            }
         }
 
         // The CCNET lines (OnlineTestLog): joined, host, GO (how far off the shared StartAt), results once per race,
@@ -805,6 +828,7 @@ namespace CarcavelosCircuit.Online
         {
             joinAttempt = attempt;
             retryAt = -1f;
+            backedUpFor = 0.0;
             room = wantedRoom;
             TimeOfDayChoice.Set(room, false);     // the room sets the light for everyone in it, never saved (review F11)
             SettingsStore.SavePlayerName(cleanedName);
