@@ -580,7 +580,8 @@ kbd.cc-wide { padding: 0 11px; font-size: 12px; letter-spacing: 0.08em; }
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  --r: var(--cc-r, calc(100vh / 720));
+  --hud: var(--cc-r, calc(100vh / 720)); /* one HUD pixel, to line up with the HUD */
+  --r: var(--hud);                        /* the unit for button sizes (portrait: see below) */
   --sa-l: env(safe-area-inset-left, 0px);
   --sa-r: env(safe-area-inset-right, 0px);
   --sa-t: env(safe-area-inset-top, 0px);
@@ -694,11 +695,28 @@ kbd.cc-wide { padding: 0 11px; font-size: 12px; letter-spacing: 0.08em; }
    lap time panel about 270 px wide, 26 px from the top). */
 .cc-touch-pause {
   position: fixed;
-  top: calc(26 * var(--r));
-  left: calc(max(0px, (var(--cc-w, 100vw) - 1600 * var(--r)) / 2) + 324 * var(--r));
+  top: calc(26 * var(--hud));
+  left: min(calc(max(0px, (var(--cc-w, 100vw) - 1600 * var(--hud)) / 2) + 324 * var(--hud)),
+    calc(100vw - var(--edge-r) - var(--tool-h)));
   width: var(--tool-h);
   padding: 0;
   justify-content: center;
+}
+
+/* Portrait (the page asks to turn the phone, but someone may race upright): sizes follow the width, so both thumb
+   groups still fit side by side at their minimum size. */
+@media (orientation: portrait) {
+  #cc-touch {
+    --r: calc(100vw / 1500);
+    --steer-w: clamp(66px, calc(214 * var(--r)), 136px);
+    --steer-h: clamp(66px, calc(196 * var(--r)), 124px);
+    --gas: clamp(64px, calc(206 * var(--r)), 128px);
+    --brake: clamp(54px, calc(176 * var(--r)), 108px);
+    --drift-h: clamp(50px, calc(150 * var(--r)), 94px);
+    --item-h: clamp(46px, calc(132 * var(--r)), 84px);
+  }
+  .cc-touch-pill { width: var(--tool-h); padding: 0; justify-content: center; }
+  .cc-touch-pill span { display: none; } /* icons only, so the row stays above the steer buttons */
 }
 
 /* Start screen, results and menus (the game has not sent "racing", also while paused): no driving buttons, so they
@@ -727,6 +745,7 @@ html:not(.cc-racing) .cc-touch-pause {
   opacity: 1;
   pointer-events: auto;
 }
+#cc-touch #cc-fullscreen:hover { outline: none; } /* a phone keeps "hover" after a tap: no orange ring left behind */
 html:not(.cc-racing) #cc-touch #cc-fullscreen {
   position: fixed;
   top: max(10px, var(--sa-t));
