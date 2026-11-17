@@ -24,7 +24,10 @@ namespace CarcavelosCircuit.Online
     public class OnlineRaceDirector : MonoBehaviour
     {
         public const string ObjectName = "OnlineRace";
-        public const float ConnectTimeoutSeconds = 15f;
+        // Scale test 17 Nov 2026: joining a Photon room takes about 8 s even on a fast PC at 60 fps (name server, master,
+        // game server, relay) and 13 s+ on a slow one; 15 s cut slow laptops off. FusionSession gives up first (35 s, with
+        // the more precise message), this is only the safety net.
+        public const float ConnectTimeoutSeconds = 40f;
         public const float PoseSendsPerSecond = 15f;
 
         private static OnlineRaceDirector current;

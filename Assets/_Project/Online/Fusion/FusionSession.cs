@@ -28,7 +28,7 @@ namespace CarcavelosCircuit.Online.Fusion
         private const string HostName = "Online (Photon Fusion)";
         private const string RunnerName = "Online (Photon Fusion) runner";
         private const string Region = "eu";
-        private const float ConnectTimeoutSeconds = 20f;
+        private const float ConnectTimeoutSeconds = 35f; // a join takes ~8 s on a fast PC, more on a slow one (scale test 17 Nov)
         private const float RaceSpawnRetrySeconds = 5f;
 
         private static readonly OnlinePlayer[] NoPlayers = new OnlinePlayer[0];
