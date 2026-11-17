@@ -195,8 +195,6 @@
 }
 
 /* ---------- Plates of every menu (the pictures themselves are the realistic plates) ---------- */
-.menu-card.plate,
-.card.plate,
 .lb.plate,
 .menu-pill.plate {
     background-image: url("Art/plate-navy.png");
@@ -277,9 +275,15 @@
     display: none;
 }
 
-/* The world behind a menu: darkened, not tinted, so the photo-real map still shows through. */
+/* The world behind a menu: darkened, not tinted, so the photo-real map still shows through. The big cards are
+   nearly opaque glass, so the start screen behind a menu does not show through them. */
 .menu-bg {
-    background-color: rgba(4, 6, 10, 0.62);
+    background-color: rgba(4, 6, 10, 0.72);
+}
+
+.menu-card.plate,
+.card.plate {
+    background-image: url("Art/plate-panel.png");
 }
 
 .azulejo {
@@ -476,4 +480,178 @@
 
 .reduce-motion .lg-glint {
     display: none;
+}
+
+/* ---------- Race modes (ModePicker): the card titles in the condensed UI face, tracked out ----------
+   ModePicker sets their size in code (21 px, made for the old face); the wide display face does not fit a 214 px card
+   at that size, so the cards use Barlow Condensed like the other menu buttons. */
+#mode-picker .f-display {
+    -unity-font-definition: url("Fonts/BarlowCondensed/BarlowCondensed-ExtraBold-SDF.asset");
+    letter-spacing: 2px;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+/* ---------- Settings: quiet glass rows, the selected one gets a thin orange edge, slim level bars ---------- */
+.set-row {
+    border-radius: 4px;
+    border-width: 1px;
+    background-color: rgba(255, 255, 255, 0.045);
+}
+
+.set-row:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.set-row--selected,
+.set-row--selected:hover {
+    background-color: rgba(255, 107, 44, 0.12);
+    border-color: var(--fe-accent);
+}
+
+.set-name {
+    letter-spacing: 2px;
+    color: var(--fe-muted);
+}
+
+.set-row--selected .set-name {
+    color: var(--fe-text);
+}
+
+.set-cell {
+    width: 18px;
+}
+
+.set-cell-gem {
+    width: 12px;
+    height: 16px;
+    border-radius: 1px;
+    rotate: 0deg;
+    border-width: 1px;
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.set-cell--on .set-cell-gem {
+    background-color: var(--fe-text);
+}
+
+.set-row--selected .set-cell--on .set-cell-gem {
+    background-color: var(--fe-accent);
+}
+
+.set-cell:hover .set-cell-gem {
+    scale: 1 1.2;
+}
+
+.set-row--muted .set-cell--on .set-cell-gem,
+.set-row--selected.set-row--muted .set-cell--on .set-cell-gem {
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.set-row--muted .set-value {
+    color: var(--fe-accent);
+}
+
+.set-step {
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.set-switch {
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.set-row--on .set-switch {
+    background-color: var(--fe-accent);
+    border-color: var(--fe-accent);
+}
+
+.set-note {
+    color: rgba(246, 242, 234, 0.5);
+}
+
+/* ---------- Credits: the role number in a thin ring instead of the azulejo diamond ---------- */
+.credit-badge {
+    width: 36px;
+    height: 36px;
+    rotate: 0deg;
+    border-radius: 18px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.4);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.credit-badge-num {
+    rotate: 0deg;
+    font-size: 15px;
+    color: var(--fe-accent);
+    -unity-text-outline-width: 0;
+}
+
+.credits-head {
+    color: var(--fe-accent);
+    letter-spacing: 3px;
+}
+
+.credits-dot {
+    border-radius: 2px;
+}
+
+/* ---------- Countdown: a dark glass diamond with warm white numbers, start lights red, GO green ---------- */
+.cd-tile {
+    border-radius: 14px;
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.55);
+    border-bottom-color: rgba(255, 255, 255, 0.3);
+    border-right-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(10, 12, 16, 0.78);
+}
+
+.cd-num {
+    color: var(--fe-text);
+}
+
+.cd--go .cd-tile {
+    background-color: var(--fe-accent);
+    border-color: rgba(255, 220, 190, 0.9);
+}
+
+.cd--go .cd-num {
+    -unity-text-outline-width: 0;
+    text-shadow: 0 2px 8px rgba(120, 30, 0, 0.5);
+}
+
+.cd-lamp {
+    width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.35);
+    background-color: rgba(10, 12, 16, 0.7);
+}
+
+.cd-lamp--lit {
+    background-color: #FF3B2F;
+    border-color: #FFB3A8;
+}
+
+.cd--go .cd-lamp {
+    background-color: #3FD68C;
+    border-color: #C9FFE2;
+}
+
+/* ---------- Pause: the world dimmed, no blue tint, no wave ---------- */
+.pause-bg {
+    background-color: rgba(4, 6, 10, 0.66);
+}
+
+.pause-screen .wave-host,
+.pause-screen .pattern-host {
+    display: none;
+}
+
+.pause-note {
+    color: var(--fe-muted);
 }
