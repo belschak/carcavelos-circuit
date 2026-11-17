@@ -14,8 +14,8 @@ namespace CarcavelosCircuit.Online
     //   Room        who is in (driver portrait in the room colour, name, driver, YOU, HOST), "7/15", START RACE for
     //               the host or a waiting line, my light
     //   Message     "the room is full" / "could not connect" + BACK
-    // The light button (and T) only changes MY look: noon or sunset is each player's own choice, it never travels.
     //   Results     a small card at the top right next to the HUD's own results: the room's order, START AGAIN / Q
+    // The light button (and T) only changes MY look: noon or sunset is each player's own choice, it never travels.
     // The view only draws and reports clicks (events); OnlineRaceDirector decides everything.
     public class OnlineLobbyView
     {
@@ -156,8 +156,7 @@ namespace CarcavelosCircuit.Online
 
             VisualElement keys = Row(card);
             keys.style.marginTop = 18f;
-            KeyHint("ENTER", "JOIN", keys);
-            KeyHint("T", "LIGHT", keys);
+            KeyHint("ENTER", "JOIN", keys); // no T hint here: the cursor is usually in the name field, where T is a letter
             KeyHint("Q", "BACK", keys);
             Pill("BACK", false, () => Raise(BackRequested), keys).style.marginLeft = 18f;
 
