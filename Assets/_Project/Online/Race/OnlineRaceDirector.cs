@@ -351,10 +351,10 @@ namespace CarcavelosCircuit.Online
                 {
                     continue;
                 }
-                statSmooth.Add(proxy.NewestPoseTime, now);
+                statSmooth.Add(proxy.NewestPoseTime, now, proxy.RenderDelay);
                 if (racing)
                 {
-                    raceSmooth.Add(proxy.NewestPoseTime, now);
+                    raceSmooth.Add(proxy.NewestPoseTime, now, proxy.RenderDelay);
                 }
             }
 

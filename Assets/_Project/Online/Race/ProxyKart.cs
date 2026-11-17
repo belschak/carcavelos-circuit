@@ -17,6 +17,7 @@ namespace CarcavelosCircuit.Online
         public const string VisualName = "Visual";
 
         private readonly PoseBuffer buffer = new PoseBuffer();
+        private readonly AdaptiveRenderDelay delay = new AdaptiveRenderDelay(); // how far in the past this kart is drawn
         private KartPose shown;
         private bool hasShown;
         private string displayName = "PLAYER";
@@ -27,6 +28,7 @@ namespace CarcavelosCircuit.Online
         public int PlayerId { get; private set; }
         public int PoseCount { get { return buffer.Count; } }
         public double NewestPoseTime { get { return buffer.NewestTime; } } // shared clock of the newest pose, -1 = none
+        public double RenderDelay { get { return delay.Seconds; } }
         public bool HasPose { get { return hasShown; } } // false until the first pose could be drawn
 
         // ---- IKartState (read by the model, the name tag and the standings) ----
@@ -128,11 +130,16 @@ namespace CarcavelosCircuit.Online
             return buffer.Add(pose);
         }
 
-        // Draws the pose of RenderDelaySeconds ago on the shared clock. Called by the director every frame.
+        // Draws the pose of a moment ago on the shared clock: at least RenderDelaySeconds, more when this kart's poses
+        // arrive late or unevenly (AdaptiveRenderDelay). Called by the director every frame.
         public void Show(double now)
         {
+            if (buffer.Count > 0)
+            {
+                delay.Add(now, now - buffer.NewestTime);
+            }
             KartPose pose;
-            if (!buffer.TrySample(now - PoseBuffer.RenderDelaySeconds, out pose))
+            if (!buffer.TrySample(now - delay.Seconds, out pose))
             {
                 return;
             }

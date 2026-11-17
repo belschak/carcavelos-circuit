@@ -52,7 +52,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(0.27, smooth.MaxAgeSeconds, 0.0001);
             smooth.Reset();
             Assert.AreEqual(0, smooth.Samples);
-            Assert.AreEqual("starved_pct=0.0 max_age_ms=0 samples=0", smooth.Line());
+            Assert.AreEqual("starved_pct=0.0 max_age_ms=0 delay_ms=0 samples=0", smooth.Line());
         }
     }
 }

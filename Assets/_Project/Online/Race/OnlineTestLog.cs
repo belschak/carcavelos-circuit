@@ -91,15 +91,22 @@ namespace CarcavelosCircuit.Online
     }
 
     // How smooth the other karts are on this screen: a remote kart is "starved" in a frame when its newest pose is
-    // older than the render delay, so PoseBuffer has to guess (extrapolate or hold) instead of blending real poses.
+    // older than its render delay (AdaptiveRenderDelay), so PoseBuffer has to guess (extrapolate or hold) instead of
+    // blending real poses. Also the average render delay the karts needed.
     // The director feeds it every frame and prints it in the STAT and RESULT lines. Plain C#.
     public class ProxySmoothness
     {
         public int Samples { get; private set; }
         public int Starved { get; private set; }
         public double MaxAgeSeconds { get; private set; }
+        public double DelaySum { get; private set; }
 
         public void Add(double newestPoseTime, double now)
+        {
+            Add(newestPoseTime, now, PoseBuffer.RenderDelaySeconds);
+        }
+
+        public void Add(double newestPoseTime, double now, double renderDelay)
         {
             if (newestPoseTime < 0.0)
             {
@@ -107,7 +114,8 @@ namespace CarcavelosCircuit.Online
             }
             double age = now - newestPoseTime;
             Samples++;
-            if (age > PoseBuffer.RenderDelaySeconds)
+            DelaySum += renderDelay;
+            if (age > renderDelay)
             {
                 Starved++;
             }
@@ -124,14 +132,16 @@ namespace CarcavelosCircuit.Online
 
         public string Line()
         {
+            double meanDelay = Samples == 0 ? 0.0 : DelaySum / Samples;
             return "starved_pct=" + OnlineTestLog.Num(StarvedPercent, 1) + " max_age_ms=" + OnlineTestLog.Num(MaxAgeSeconds * 1000.0, 0)
-                + " samples=" + Samples.ToString(CultureInfo.InvariantCulture);
+                + " delay_ms=" + OnlineTestLog.Num(meanDelay * 1000.0, 0) + " samples=" + Samples.ToString(CultureInfo.InvariantCulture);
         }
 
         public void Reset()
         {
             Samples = 0;
             Starved = 0;
+            DelaySum = 0.0;
             MaxAgeSeconds = 0.0;
         }
     }
