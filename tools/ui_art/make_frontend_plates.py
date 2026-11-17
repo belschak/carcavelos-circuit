@@ -58,6 +58,9 @@ plate("plate-cream", 64, 72, (246, 243, 236, 242), (222, 218, 210, 242), (255, 2
 plate("plate-coral", 64, 72, (226, 72, 60, 240), (178, 40, 36, 240), (255, 170, 160, 110), 8, 8, light=(255, 255, 255, 70))
 plate("plate-mint", 64, 72, (52, 196, 128, 240), (28, 140, 88, 240), (190, 255, 220, 110), 8, 8, light=(255, 255, 255, 70))
 plate("plate-orange-row", 64, 68, (255, 128, 64, 255), (232, 82, 26, 255), (255, 196, 160, 120), 7, 6, light=(255, 255, 255, 90))
+# New: the big menu cards (settings, credits, results, lobby): the same glass, nearly opaque, so the start screen
+# behind a menu does not show through.
+plate("plate-panel", 96, 104, (22, 26, 32, 246), (9, 11, 15, 250), EDGE, 10, 12)
 # New: the selected entry of a menu (glass with an orange edge), used by UI/FrontEnd.uss.
 plate("plate-select", 96, 104, (54, 40, 34, 232), (22, 16, 14, 236), (255, 110, 50, 255), 10, 12, light=(255, 170, 120, 70), accent=True)
 
@@ -84,3 +87,39 @@ ramp("shade-left", (256, 4), [(0, 205), (0.38, 150), (0.72, 0), (1, 0)], True)
 ramp("shade-bottom", (4, 256), [(0, 0), (0.55, 40), (1, 200)], False)
 ramp("shade-top", (4, 128), [(0, 120), (1, 0)], False)
 print("plates written to", ART)
+
+
+# Podium shields (leaderboard places 1-3): brushed-metal badges instead of the cartoon shields (80 x 92, stretched).
+def shield(name, top, bottom):
+    W, H = 80 * SS, 92 * SS
+    pts = [(6 * SS, 6 * SS), (74 * SS, 6 * SS), (74 * SS, 58 * SS), (40 * SS, 86 * SS), (6 * SS, 58 * SS)]
+    grad = Image.new("RGBA", (W, H))
+    gd = ImageDraw.Draw(grad)
+    for y in range(H):
+        gd.line([(0, y), (W, y)], fill=lerp(top, bottom, y / (H - 1)))
+    mask = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(mask).polygon(pts, fill=255)
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(sh).polygon([(x, y + 3 * SS) for x, y in pts], fill=(0, 0, 0, 120))
+    img.alpha_composite(sh.filter(ImageFilter.GaussianBlur(3 * SS)))
+    img.paste(grad, (0, 0), mask)
+    d = ImageDraw.Draw(img)
+    d.line(pts + [pts[0]], fill=(255, 255, 255, 120), width=2 * SS)
+    d.line([(10 * SS, 12 * SS), (70 * SS, 12 * SS)], fill=(255, 255, 255, 110), width=2 * SS)
+    img.resize((80, 92), Image.LANCZOS).save(ART / f"{name}.png", optimize=True)
+
+
+shield("shield-sun", (250, 222, 150, 255), (176, 128, 40, 255))
+shield("shield-silver", (240, 243, 247, 255), (140, 150, 162, 255))
+shield("shield-bronze", (236, 176, 128, 255), (140, 80, 40, 255))
+
+# The item slot (ItemSlotHud): a glass tile with a double hairline instead of the azulejo tile (224 x 224, stretched).
+S = 224 * SS
+tile = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+d = ImageDraw.Draw(tile)
+d.rounded_rectangle((4 * SS, 4 * SS, S - 4 * SS, S - 4 * SS), 22 * SS, fill=(12, 15, 20, 200), outline=(255, 255, 255, 70), width=3 * SS)
+d.rounded_rectangle((16 * SS, 16 * SS, S - 16 * SS, S - 16 * SS), 14 * SS, outline=(255, 255, 255, 26), width=2 * SS)
+d.line([(30 * SS, 10 * SS), (S - 30 * SS, 10 * SS)], fill=(255, 255, 255, 40), width=2 * SS)
+tile.resize((224, 224), Image.LANCZOS).save(ART / "item-frame.png", optimize=True)
+print("shields + item frame written")

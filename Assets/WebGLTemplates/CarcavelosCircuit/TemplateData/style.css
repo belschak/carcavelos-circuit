@@ -800,7 +800,7 @@ html:not(.cc-racing) .cc-touch-tools .cc-touch-pill {
 
 /* Lower third: the sight in the current picture (bottom right, above the key dock). */
 .cc-shot figcaption {
-  position: absolute; right: clamp(16px, 4vw, 64px); bottom: clamp(96px, 15vh, 150px); width: min(380px, 40vw);
+  position: absolute; right: clamp(16px, 4vw, 64px); bottom: clamp(124px, 19vh, 180px); width: min(380px, 40vw);
   display: grid; grid-template-columns: 4px 1fr; column-gap: 14px; padding: 12px 18px 13px 14px;
   background: var(--fe-glass); border: 1px solid var(--fe-hair); border-radius: 6px;
   backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
@@ -900,17 +900,36 @@ kbd { background: rgba(255, 255, 255, 0.08); color: var(--fe-text); border: 1px 
 .cc-or, .cc-key-text { font-family: var(--font-ui); font-weight: 800; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fe-muted); }
 .cc-credits { position: relative; background: none; color: rgba(246, 242, 234, 0.42); text-shadow: none; letter-spacing: 0.04em; }
 
+/* ---------- Race modes preview under the wordmark ---------- */
+.cc-modes { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: clamp(14px, 3vh, 30px) 0 0; padding: 0; list-style: none;
+  font-family: var(--font-ui); font-weight: 800; font-size: 14px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fe-muted); }
+.cc-modes li { display: flex; align-items: center; gap: 9px; }
+.cc-modes b { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid rgba(255, 255, 255, 0.34); border-radius: 3px;
+  font-size: 12px; letter-spacing: 0; color: var(--fe-text); }
+.cc-modes li:first-child b { border-color: var(--fe-accent); color: var(--fe-accent-hi); }
+
+/* Desktop: the play button sits where the game shows PRESS ANY KEY (about 58 to 64 % down the screen), so after the
+   click the mouse rests on a label in the game, not on a race-mode card or a menu button (those would swallow the
+   first key press, see RaceHud/ModePicker "MenuUsesInput"). */
+@media (min-width: 761px) and (min-height: 471px) {
+  .cc-center { justify-content: flex-start; padding-top: 12vh; }
+  .cc-logo { width: min(88.9vh, 50vw); }
+  #cc-panel-play, #cc-panel-loading { position: absolute; top: 58.5vh; left: max(clamp(24px, 6.5vw, 112px), env(safe-area-inset-left)); margin-top: 0; }
+}
+
 /* ---------- Phones and small windows: centred column, captions off ---------- */
 @media (max-width: 760px) {
   .cc-center { align-items: center; text-align: center; padding-left: 16px; padding-right: 16px; }
   .cc-logo { width: min(520px, 90vw); }
   .cc-shot figcaption { display: none; }
+  .cc-modes { justify-content: center; }
   .cc-play-hint, .cc-tip { text-align: center; }
   #cc-panel-play { align-items: center; }
   .cc-grade { background: linear-gradient(0deg, rgba(6, 8, 12, 0.9), rgba(6, 8, 12, 0.35) 45%, rgba(6, 8, 12, 0.55)); }
 }
 @media (max-height: 470px) {
   .cc-dock { display: none; }
+  .cc-modes { display: none; }
   .cc-logo { width: min(440px, 60vw, 92vh); }
   .cc-panel { margin-top: 12px; }
   .cc-shot figcaption { bottom: 18px; }
