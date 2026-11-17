@@ -62,6 +62,8 @@ namespace CarcavelosCircuit.Online
         // CCNET test lines (OnlineTestLog): what this screen already reported.
         private string myName = "";
         private bool joinLogged;
+        private int joinAttempt;          // the try of the current join (OnlineJoinRetry), 0 once in the room
+        private float retryAt = -1f;      // unscaled time of the next automatic try, -1 = none
         private bool masterLogged;
         private int resultLoggedRace;
         private RaceState lastLoggedState = RaceState.Ready;
@@ -204,6 +206,11 @@ namespace CarcavelosCircuit.Online
             ReadKeys();
             if (session == null)
             {
+                if (retryAt >= 0f && Time.unscaledTime >= retryAt)
+                {
+                    retryAt = -1f;
+                    JoinRoom(room, myName, joinAttempt + 1);
+                }
                 return;
             }
             switch (session.Status)
@@ -211,9 +218,7 @@ namespace CarcavelosCircuit.Online
                 case OnlineStatus.Connecting:
                     if (Time.unscaledTime - connectStartedAt > ConnectTimeoutSeconds)
                     {
-                        OnlineTestLog.Write("STATUS timeout room=" + OnlineTestLog.Room(room));
-                        DropSession();
-                        ShowMessage("COULD NOT CONNECT, CHECK THE WI-FI AND TRY AGAIN");
+                        FailOrRetry("TIMEOUT", "timeout", "COULD NOT CONNECT, CHECK THE WI-FI AND TRY AGAIN");
                     }
                     break;
                 case OnlineStatus.Full:
@@ -223,14 +228,33 @@ namespace CarcavelosCircuit.Online
                     break;
                 case OnlineStatus.Failed:
                     string why = session.FailReason ?? "";
-                    OnlineTestLog.Write("STATUS failed room=" + OnlineTestLog.Room(room) + " reason=" + OnlineTestLog.Clean(why));
-                    DropSession();
-                    ShowMessage(why.Length > 0 ? "CONNECTION FAILED: " + why : "CONNECTION FAILED");
+                    FailOrRetry(why, "failed", why.Length > 0 ? "CONNECTION FAILED: " + why : "CONNECTION FAILED");
                     break;
                 case OnlineStatus.InRoom:
                     UpdateInRoom();
                     break;
             }
+        }
+
+        // A failed or timed-out join (or a lost connection): try again by itself a few times (OnlineJoinRetry), else
+        // show the message. kind = the word in the CCNET STATUS line (timeout / failed).
+        private void FailOrRetry(string reason, string kind, string message)
+        {
+            DropSession();
+            if (OnlineJoinRetry.ShouldRetry(reason, joinAttempt))
+            {
+                int next = joinAttempt + 1;
+                OnlineTestLog.Write("STATUS retry room=" + OnlineTestLog.Room(room) + " attempt=" + next + " after=" + kind
+                    + " reason=" + OnlineTestLog.Clean(reason));
+                retryAt = Time.unscaledTime + OnlineJoinRetry.RetryDelaySeconds;
+                if (view != null)
+                {
+                    view.ShowConnecting(room, OnlineJoinRetry.RetryLine(next));
+                }
+                return;
+            }
+            OnlineTestLog.Write("STATUS " + kind + " room=" + OnlineTestLog.Room(room) + " reason=" + OnlineTestLog.Clean(reason));
+            ShowMessage(message);
         }
 
         // ?render=0 (scale-test bot): no 3D drawing at all, so a machine without a GPU keeps a normal frame rate and
@@ -341,6 +365,7 @@ namespace CarcavelosCircuit.Online
             if (!joinLogged)
             {
                 joinLogged = true;
+                joinAttempt = 0; // in the room: a dropped connection later gets its own tries
                 OnlineTestLog.Write("JOIN room=" + OnlineTestLog.Room(room) + " name=" + OnlineTestLog.Clean(myName) + " id=" + session.LocalId
                     + " players=" + session.Players.Count + " transport=" + transportName);
             }
@@ -776,8 +801,10 @@ namespace CarcavelosCircuit.Online
             }
         }
 
-        private void JoinRoom(TimeOfDay wantedRoom, string cleanedName)
+        private void JoinRoom(TimeOfDay wantedRoom, string cleanedName, int attempt = 1)
         {
+            joinAttempt = attempt;
+            retryAt = -1f;
             room = wantedRoom;
             TimeOfDayChoice.Set(room, false);     // the room sets the light for everyone in it, never saved (review F11)
             SettingsStore.SavePlayerName(cleanedName);
@@ -810,7 +837,7 @@ namespace CarcavelosCircuit.Online
             nextPoseAt = 0f;
             if (view != null)
             {
-                view.ShowConnecting(room);
+                view.ShowConnecting(room, attempt > 1 ? OnlineJoinRetry.RetryLine(attempt) : "CONNECTING...");
             }
             session.Join(OnlineRooms.SessionName(room), cleanedName, OnlineColours.RandomIndex(new System.Random()));
             sessionDirty = true;

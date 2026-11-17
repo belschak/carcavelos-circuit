@@ -168,13 +168,19 @@ namespace CarcavelosCircuit.Online
 
         public void ShowConnecting(TimeOfDay room)
         {
-            if (!Open(Page.Connecting, "connecting"))
+            ShowConnecting(room, "CONNECTING...");
+        }
+
+        // text = "CONNECTING..." or the retry line (OnlineJoinRetry.RetryLine).
+        public void ShowConnecting(TimeOfDay room, string text)
+        {
+            if (!Open(Page.Connecting, "connecting:" + text))
             {
                 return;
             }
             card.Clear();
             Title(OnlineRooms.Label(room), card);
-            Label line = Chip("CONNECTING...", false, card);
+            Label line = Chip(text, false, card);
             line.style.marginTop = 18f;
             VisualElement keys = Row(card);
             keys.style.marginTop = 18f;
