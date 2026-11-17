@@ -14,10 +14,23 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
-        public void OneFreshKart_MeansMyLineIsFine()
+        public void MostKartsFresh_MeansMyLineIsFine()
         {
-            Assert.IsFalse(ConnectionHealthRules.LooksBackedUp(new List<double> { 30.0, 0.3, 25.0 }), "one hidden tab elsewhere");
+            Assert.IsFalse(ConnectionHealthRules.LooksBackedUp(new List<double> { 30.0, 0.3, 0.4, 0.5 }), "one hidden tab elsewhere");
+            Assert.IsFalse(ConnectionHealthRules.LooksBackedUp(new List<double> { 30.0, 25.0, 0.3, 0.4 }), "two of four quiet");
             Assert.IsFalse(ConnectionHealthRules.LooksBackedUp(new List<double> { 0.4, 0.5 }));
+        }
+
+        [Test]
+        public void OneOddFreshKart_DoesNotHideABackedUpLine()
+        {
+            List<double> ages = new List<double>();
+            for (int i = 0; i < 12; i++)
+            {
+                ages.Add(16.0);
+            }
+            ages.Add(0.2); // scale run 2: one kart looked fresh while 12 were 16 s late
+            Assert.IsTrue(ConnectionHealthRules.LooksBackedUp(ages));
         }
 
         [Test]
