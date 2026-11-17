@@ -29,7 +29,9 @@ on:
   workflow_dispatch: # "Run workflow" button in the Actions tab
 
 concurrency:
-  group: web-build
+  # One queue per branch: a new run on the same branch waits for the running one (only the newest waiting run is
+  # kept), and a test build of one branch no longer cancels the waiting build of another branch.
+  group: web-build-${{ github.ref }}
   cancel-in-progress: false # a Unity build takes 20+ min; let it finish, the newest merge waits and builds next
 
 permissions:
@@ -115,6 +117,19 @@ jobs:
           path: Build-Web
           if-no-files-found: error
           retention-days: 14
+
+      # Art the build made because it was not committed yet (HudArtBuilder.EnsureDisplayFont): uploaded so a team
+      # member can download and commit it once. Nothing is uploaded when the file is already in the repo.
+      - name: Upload generated UI art
+        if: env.HAS_LICENSE == 'true'
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: generated-ui-art-${{ github.sha }}
+          path: |
+            Assets/_Project/RaceFlow/UI/Fonts/ArchivoExpanded/ArchivoExpanded-ExtraBoldItalic-SDF.asset
+            Assets/_Project/RaceFlow/UI/Fonts/ArchivoExpanded/ArchivoExpanded-ExtraBoldItalic-SDF.asset.meta
+          if-no-files-found: ignore
+          retention-days: 7
 
       # The same files again, packed the way GitHub Pages wants them (only for main, see the top of this file).
       - name: Pack the build for GitHub Pages

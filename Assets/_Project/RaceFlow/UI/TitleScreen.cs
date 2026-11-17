@@ -3,29 +3,23 @@ using UnityEngine.UIElements;
 
 namespace CarcavelosCircuit.RaceFlow
 {
-    // The title opener on the start screen (task R11 "Carcavelos Round 3"). On the HUD object, next to RaceHud.
-    // RaceHud still runs the start screen (state class st-ready, "intro-in" a moment after it shows, the breathing
-    // pill, the best time). This only adds the title show, all styled in UI/StartScreen.uss:
-    // 1. Logo reveal: the letters of CARCAVELOS drop in one after another (one Label per letter, made here, each
-    //    with its own transition-delay), the racing stripes slide in, the wave wipes open, CIRCUIT slides in, and
-    //    the team's slogan CARCAVELOS ROUND 3 lands like a stamp. The USS animates; C# only sets the delays.
-    // 2. Light sweep: every few seconds a band of light runs over the letters. Trick: a narrow box with
-    //    overflow: hidden moves to the right while a gold copy of the letters inside it moves left by the same
-    //    amount, so the copy stays exactly on top of the white letters and only shows inside the band. Two such
-    //    bands share one centre (a wide soft one and a narrow bright core), so the sheen has soft edges.
-    //    Written as four translates per frame (no layout pass), only while the sweep runs.
+    // The title opener on the start screen (task R11, wordmark since the realistic menu redesign). On the HUD object, next
+    // to RaceHud. RaceHud still runs the start screen (state class st-ready, "intro-in" a moment after it shows, the
+    // breathing prompt, the best time). This only adds the title show, styled in UI/FrontEnd.uss:
+    // 1. Logo reveal: the five logo pictures (sun, wave, badge, word, ribbon) pop in one after another. Pure USS
+    //    (transition delays on ".intro-in .lg-..."), nothing to do here.
+    // 2. Light sweep: every few seconds a band of light runs over the word. Trick: a narrow box with overflow: hidden
+    //    moves to the right while a gold-tinted copy of the word picture inside it moves left by the same amount, so the
+    //    copy stays exactly on top of the real word and only shows inside the band. Two such bands share one centre
+    //    (a wide soft one and a narrow bright core), so the sheen has soft edges. Four translates per frame, only while
+    //    the sweep runs.
     // With reduced motion (the "reduce-motion" class HudMenus puts on hud-root) everything is simply there:
-    // no drop, no stamp, no sweep (the USS sets the durations to 0, this script skips the sweep).
+    // no pop, no sweep (the USS sets the durations to 0, this script skips the sweep).
     [RequireComponent(typeof(UIDocument))]
     public class TitleScreen : MonoBehaviour
     {
-        private const string Title = "CARCAVELOS";
-
         [SerializeField, Tooltip("The race brain: the title only animates on the start screen (state Ready)")]
         private RaceManager raceManager;
-
-        [SerializeField, Tooltip("Milliseconds between two letters dropping in")]
-        private int letterStepMs = 45;
 
         [SerializeField, Tooltip("Seconds after the start screen appears before the first light sweep")]
         private float firstSweepSeconds = 1.6f;
@@ -47,6 +41,28 @@ namespace CarcavelosCircuit.RaceFlow
         private float introStart = -1f; // real time when "intro-in" appeared, -1 = not on the start screen
         private bool sweepWasRunning;
 
+        // "On the track" postcard (bottom right of the start screen): one of the map's sights at a time, so a new
+        // player sees what makes this track special while the camera flies over it.
+        private static readonly string[,] Sights =
+        {
+            { "SURF BREAK", "Surfers ride the Atlantic swell right beside the track" },
+            { "BEACH TUNNEL", "84 m under the Avenida Marginal, with painted walls" },
+            { "ATRIUM PIANO", "The route drives straight through the Hovione atrium" },
+            { "BEACH VOLLEY", "Courts on the sand of Carcavelos beach" },
+            { "NOVA KART WALL", "Between the plaza and the home straight" },
+            { "DRIFT BOOST", "Hold SPACE in a corner, let go for a boost" },
+            { "AIR TRICKS", "Press SHIFT in the air for a trick boost" },
+            { "NOON OR SUNSET", "Online rooms for up to 15 racers" },
+        };
+
+        [SerializeField, Tooltip("Seconds each sight stays on the start screen's postcard")]
+        private float sightSeconds = 4f;
+
+        private VisualElement postcard;
+        private Label sightTitle;
+        private Label sightText;
+        private int shownSight = -1;
+
         private void OnEnable()
         {
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
@@ -58,34 +74,106 @@ namespace CarcavelosCircuit.RaceFlow
             glintLetters = root.Q<VisualElement>("title-glint-letters");
             softGlint = root.Q<VisualElement>("title-glint-soft");
             softGlintLetters = root.Q<VisualElement>("title-glint-soft-letters");
-            AddLetters(root.Q<VisualElement>("title-letters"), true);
-            AddLetters(glintLetters, false);
-            AddLetters(softGlintLetters, false);
+            AddWordCopy(glintLetters);
+            AddWordCopy(softGlintLetters);
+            AddPostcard();
             introStart = -1f;
+            // Photo mode (?photo=1 in the web page address): no menus and no HUD, only the game world, so we can
+            // take clean screenshots of our own map for the key art of the web page and the menus.
+            photoMode = Application.absoluteURL.Contains("photo=1");
         }
 
-        // One Label per letter. The real letters get a growing delay, so they drop in from left to right.
-        // The gold copy for the sweep has no delay and no drop (USS: .ts-letters--glint).
-        private void AddLetters(VisualElement host, bool staggered)
+        private bool photoMode;
+        private float nextPhotoHide;
+
+        // Photo mode hides every UI document (start screen, race HUD, minimap, item slot ...), again every second,
+        // because some HUD parts are made later in the race.
+        private void HideAllUiForPhotos()
+        {
+            if (Time.unscaledTime < nextPhotoHide)
+            {
+                return;
+            }
+            nextPhotoHide = Time.unscaledTime + 1f;
+            UIDocument[] documents = FindObjectsByType<UIDocument>(FindObjectsSortMode.None);
+            for (int i = 0; i < documents.Length; i++)
+            {
+                if (documents[i].rootVisualElement != null)
+                {
+                    documents[i].rootVisualElement.style.display = DisplayStyle.None;
+                }
+            }
+        }
+
+        // The "on the track" lower third: an orange tab, "ON THE TRACK" and the sight (USS: .pc in UI/FrontEnd.uss).
+        private void AddPostcard()
+        {
+            if (postcard != null)
+            {
+                postcard.RemoveFromHierarchy();
+            }
+            postcard = new VisualElement { name = "start-postcard" };
+            postcard.pickingMode = PickingMode.Ignore;
+            postcard.AddToClassList("pc");
+            VisualElement stamp = new VisualElement();
+            stamp.pickingMode = PickingMode.Ignore;
+            stamp.AddToClassList("pc-stamp");
+            postcard.Add(stamp);
+            VisualElement words = new VisualElement();
+            words.pickingMode = PickingMode.Ignore;
+            words.AddToClassList("pc-words");
+            Label kicker = new Label("ON THE TRACK");
+            kicker.AddToClassList("pc-kicker");
+            kicker.AddToClassList("f-ui");
+            sightTitle = new Label("");
+            sightTitle.AddToClassList("pc-title");
+            sightTitle.AddToClassList("f-display");
+            sightText = new Label("");
+            sightText.AddToClassList("pc-text");
+            sightText.AddToClassList("f-ui");
+            words.Add(kicker);
+            words.Add(sightTitle);
+            words.Add(sightText);
+            postcard.Add(words);
+            startScreen.Add(postcard);
+            shownSight = -1;
+        }
+
+        // Which sight shows: changes every sightSeconds; between two sights the card flips out and back in.
+        private void UpdatePostcard()
+        {
+            float onScreen = Time.unscaledTime - introStart;
+            int count = Sights.GetLength(0);
+            int index = Mathf.FloorToInt(onScreen / sightSeconds) % count;
+            float inSight = onScreen % sightSeconds;
+            postcard.EnableInClassList("pc--out", inSight > sightSeconds - 0.25f);
+            if (index != shownSight)
+            {
+                shownSight = index;
+                sightTitle.text = Sights[index, 0];
+                sightText.text = Sights[index, 1];
+                postcard.EnableInClassList("pc--alt", index % 2 == 1); // the stamp changes colour too
+            }
+        }
+
+        // The copy of the word for a sweep band: a box as big as the logo with the word picture where the real one is
+        // (USS: .lg-glint-copy and its .lg-word child, tinted gold).
+        private static void AddWordCopy(VisualElement host)
         {
             host.Clear();
-            for (int i = 0; i < Title.Length; i++)
-            {
-                Label letter = new Label(Title.Substring(i, 1));
-                letter.pickingMode = PickingMode.Ignore;
-                letter.AddToClassList("ts-letter");
-                letter.AddToClassList("f-display");
-                if (staggered)
-                {
-                    int delay = 80 + i * letterStepMs;
-                    letter.style.transitionDelay = new StyleList<TimeValue>(new System.Collections.Generic.List<TimeValue> { new TimeValue(delay, TimeUnit.Millisecond) });
-                }
-                host.Add(letter);
-            }
+            VisualElement word = new VisualElement();
+            word.pickingMode = PickingMode.Ignore;
+            word.AddToClassList("lg-layer");
+            word.AddToClassList("lg-word");
+            host.Add(word);
         }
 
         private void Update()
         {
+            if (photoMode)
+            {
+                HideAllUiForPhotos();
+            }
             bool onStart = raceManager.State == RaceState.Ready && startScreen.ClassListContains("intro-in");
             if (!onStart)
             {
@@ -98,6 +186,7 @@ namespace CarcavelosCircuit.RaceFlow
                 introStart = Time.unscaledTime;
             }
             bestLabel.EnableInClassList("ts-best--empty", bestLabel.text.Length == 0); // no empty chip without a best time
+            UpdatePostcard();
             if (hudRoot.ClassListContains("reduce-motion"))
             {
                 StopSweep();
@@ -125,8 +214,8 @@ namespace CarcavelosCircuit.RaceFlow
             MoveBand(softGlint, softGlintLetters, centre);
             if (!sweepWasRunning)
             {
-                glint.AddToClassList("ts-glint--on");
-                softGlint.AddToClassList("ts-glint--on");
+                glint.AddToClassList("lg-glint--on");
+                softGlint.AddToClassList("lg-glint--on");
                 sweepWasRunning = true;
             }
         }
@@ -143,8 +232,8 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (sweepWasRunning)
             {
-                glint.RemoveFromClassList("ts-glint--on");
-                softGlint.RemoveFromClassList("ts-glint--on");
+                glint.RemoveFromClassList("lg-glint--on");
+                softGlint.RemoveFromClassList("lg-glint--on");
                 sweepWasRunning = false;
             }
         }
