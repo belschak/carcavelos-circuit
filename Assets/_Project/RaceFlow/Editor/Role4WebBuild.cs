@@ -39,6 +39,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             // After BuildAll (which always saves the config empty), before anything else changes the project.
             LeaderboardBuildConfig.FillFromEnvironment();
 
+            // The online race (M2): only when CI copied the Photon Fusion SDK in and the PHOTON_APP_ID secret is set.
+            OnlineBuildConfig.Apply();
+
             // Build with the Web URP asset as the project default, so the build does not also carry the shader variants
             // of the PC asset (Forward+, SSAO). The editor's default is put back afterwards, even if the build fails.
             RenderPipelineAsset webPipeline = Role4WebQuality.SetUp();
@@ -70,6 +73,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             finally
             {
                 LeaderboardBuildConfig.Clear(); // the asset in the repo stays empty
+                OnlineBuildConfig.Clear(); // no App ID file and no CARCAVELOS_FUSION define left behind
                 GraphicsSettings.defaultRenderPipeline = AssetDatabase.LoadAssetAtPath<RenderPipelineAsset>(editorPipelinePath);
                 AssetDatabase.SaveAssets();
             }

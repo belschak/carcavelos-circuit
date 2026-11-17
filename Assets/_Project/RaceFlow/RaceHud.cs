@@ -124,6 +124,8 @@ namespace CarcavelosCircuit.RaceFlow
         private FinishOverlay finishOverlay; // checkered flag + place or lap time after the line (UI/FinishOverlay.cs)
         private Label resultsHeadline;       // "FINISH" on the card, "2ND PLACE" in a race against the bots
         private VisualElement resultsMenu;   // the MENU (Q) button on the results card: back to the mode choice
+        private VisualElement retryKeycap;   // the ENTER keycap beside RETRY (hidden with it online)
+        private int headlinePlace = -1;      // the place the card headline was written with
 
         // Menu sounds (audit 10): HudMenus says what happened, RaceSounds listens here and plays the clip.
         // RaceHud passes the event on because HudMenus is made new in every OnEnable, while this component stays.
@@ -135,6 +137,9 @@ namespace CarcavelosCircuit.RaceFlow
         // The results card starts to come in (after the finish cinematic, or earlier on a key). RaceSounds times
         // the medal thud and the record sting from this moment.
         public event System.Action ResultsCardShown;
+
+        // The mode cards on the start screen (Play Mode test: picking ONLINE RACE opens the lobby). Null before OnEnable.
+        public ModePicker ModePicker { get { return modePicker; } }
 
         // What each label shows right now, so we only rebuild its text when this number changes.
         private readonly ShownNumber shownState = new ShownNumber();        // RaceState as int
@@ -189,6 +194,7 @@ namespace CarcavelosCircuit.RaceFlow
             modePicker = new ModePicker(root, raceManager);     // after IgnoreClicksDeep, like the menus
             finishOverlay = new FinishOverlay(hudRoot);
             resultsMenu = MakeResultsMenuButton(root);
+            retryKeycap = root.Q<VisualElement>("res-actions").Q<VisualElement>(className: "keycap--wide");
 
             // Narrow windows (4:3, 16:10): the HUD scales by height, so the panel gets less width than the 1280 reference.
             // Then the centred hint chip would cover the lap time and the key bar the drift panel: "hud--narrow" moves them.
@@ -500,7 +506,9 @@ namespace CarcavelosCircuit.RaceFlow
             float nextSeconds = raceManager.MedalSeconds(next);
             string nextTime = nextSeconds > 0f ? HudFormat.Time(RaceTimer.ToMilliseconds(nextSeconds)) : "";
             resultsMedalNext.text = ResultsCopy.MedalLine(medal, bestBefore, best, next, nextTime);
-            resultsMedalNext.style.display = resultsMedalNext.text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            // Online laps save no medal or best (M2), so the "next medal" line would promise something that never happens.
+            bool show = resultsMedalNext.text.Length > 0 && raceManager.Mode != RaceMode.OnlineRace;
+            resultsMedalNext.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         // Lap report: four numbers from RunStats. Nothing measured shows a dim "-" (ResultsCopy), never a broken-looking "0".
@@ -561,8 +569,9 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 raceManager.MenuUsesInput = true; // this click or key picks a mode, it does not also start the race
             }
-            HudFx.SetClickable(resultsMenu, resultsShown && !menus.IsMenuOpen);
-            if (resultsShown && !menus.IsMenuOpen && MouseOn(resultsMenu))
+            bool offlineButtons = !RaceModeRules.OpensLobby(raceManager.Mode); // online the room has START AGAIN and Q LEAVE
+            HudFx.SetClickable(resultsMenu, resultsShown && !menus.IsMenuOpen && offlineButtons);
+            if (resultsShown && !menus.IsMenuOpen && offlineButtons && MouseOn(resultsMenu))
             {
                 raceManager.MenuUsesInput = true; // the press on MENU must not also count as Q or a retry click
             }
@@ -592,6 +601,11 @@ namespace CarcavelosCircuit.RaceFlow
             HudFx.SetShown(controlsHint, state == RaceState.Countdown || (state == RaceState.Racing && Time.time < controlsVisibleUntil));
             if (resultsShown)
             {
+                // Online a later finish report with a faster time can move my room place: the card follows it.
+                if (RaceModeRules.OpensLobby(raceManager.Mode) && raceManager.PlayerPlace != headlinePlace)
+                {
+                    WriteResultsHeadline();
+                }
                 UpdateResults();
             }
             UpdateConfetti();
@@ -650,15 +664,13 @@ namespace CarcavelosCircuit.RaceFlow
         private void ShowResultsCard()
         {
             resultsShown = true;
-            // Against the bots the card says the place; alone (or with an unknown place) it stays "FINISH".
-            int place = raceManager.PlayerPlace;
-            bool showPlace = RaceModeRules.ShowsPlace(raceManager.Mode) && RaceModeRules.HasKnownPlace(place, raceManager.RacersInRace);
-            if (resultsHeadline != null)
-            {
-                resultsHeadline.text = showPlace ? RaceModeRules.Ordinal(place) + " PLACE" : "FINISH";
-            }
+            WriteResultsHeadline();
             hudRoot.AddToClassList("st-results");
-            HudFx.SetClickable(retryButton, true);
+            // Online, RETRY and MENU do nothing (the lobby owns Enter and Q and draws START AGAIN / Q LEAVE beside
+            // the card), so they are not shown at all. Offline the card is exactly as before.
+            bool offlineButtons = !RaceModeRules.OpensLobby(raceManager.Mode);
+            ShowOfflineResultButtons(offlineButtons);
+            HudFx.SetClickable(retryButton, offlineButtons);
             resultsStartTime = Time.unscaledTime;
             tickerDone = false;
             resultsScreen.RemoveFromClassList("results--in");
@@ -669,6 +681,33 @@ namespace CarcavelosCircuit.RaceFlow
             }).ExecuteLater(33);
             confettiTime = celebrateLap ? resultsStartTime + FinishMoment.ConfettiDelay(raceManager.LastLapWasRecord) : -1f;
             if (ResultsCardShown != null) ResultsCardShown();
+        }
+
+        // Against the bots the card says the place; alone (or with an unknown place) it stays "FINISH".
+        private void WriteResultsHeadline()
+        {
+            int place = raceManager.PlayerPlace;
+            headlinePlace = place;
+            bool showPlace = RaceModeRules.ShowsPlace(raceManager.Mode) && RaceModeRules.HasKnownPlace(place, raceManager.RacersInRace);
+            if (resultsHeadline != null)
+            {
+                resultsHeadline.text = showPlace ? RaceModeRules.Ordinal(place) + " PLACE" : "FINISH";
+            }
+        }
+
+        // RETRY (with its ENTER keycap) and MENU on the results card: shown offline, gone online. Null = the USS look.
+        private void ShowOfflineResultButtons(bool shown)
+        {
+            StyleEnum<DisplayStyle> display = shown ? new StyleEnum<DisplayStyle>(StyleKeyword.Null) : new StyleEnum<DisplayStyle>(DisplayStyle.None);
+            retryButton.style.display = display;
+            if (retryKeycap != null)
+            {
+                retryKeycap.style.display = display;
+            }
+            if (resultsMenu != null)
+            {
+                resultsMenu.style.display = display;
+            }
         }
 
         // The MENU (Q) pill beside SETTINGS on the results card, built in code like the mode cards: back to the start

@@ -4,15 +4,97 @@ using NUnit.Framework;
 namespace CarcavelosCircuit.Tests.EditMode
 {
     // Race modes (help for Role 4, Luc 16 Nov 2026): which modes can be played, which have bots, what the finish shows.
+    // M2 (online race): Online is playable through the lobby, never remembered, and switches items, ghost,
+    // records and the leaderboard form off.
     public class RaceModeRulesTests
     {
         [Test]
-        public void Playable_BotsAndTimeAttack_NotOnline()
+        public void Playable_AllThreeModes_NotAnUnknownNumber()
         {
             Assert.IsTrue(RaceModeRules.IsPlayable(RaceMode.RaceVsBots));
             Assert.IsTrue(RaceModeRules.IsPlayable(RaceMode.TimeAttack));
-            Assert.IsFalse(RaceModeRules.IsPlayable(RaceMode.OnlineRace), "online is on the menu but coming soon");
+            Assert.IsTrue(RaceModeRules.IsPlayable(RaceMode.OnlineRace), "online races through the lobby since M2");
             Assert.IsFalse(RaceModeRules.IsPlayable((RaceMode)7), "an unknown number is never playable");
+        }
+
+        [Test]
+        public void CanPick_OnlineNeedsTheOnlineBuild_OthersAlways()
+        {
+            string message;
+            Assert.IsTrue(RaceModeRules.CanPick(RaceMode.RaceVsBots, false, out message));
+            Assert.AreEqual("", message);
+            Assert.IsTrue(RaceModeRules.CanPick(RaceMode.TimeAttack, false, out message));
+            Assert.IsTrue(RaceModeRules.CanPick(RaceMode.OnlineRace, true, out message), "the online build is in");
+            Assert.AreEqual("", message);
+            Assert.IsFalse(RaceModeRules.CanPick(RaceMode.OnlineRace, false, out message), "no online build");
+            Assert.AreEqual(OnlineRaceHooks.UnavailableMessage, message, "the card says why");
+            Assert.IsFalse(RaceModeRules.CanPick((RaceMode)7, true, out message), "an unknown number is refused");
+            Assert.AreEqual("", message, "silently: there is no card for it");
+        }
+
+        [Test]
+        public void Dimmed_OnlyOnlineWithoutTheOnlineBuild_AndUnknownModes()
+        {
+            Assert.IsFalse(RaceModeRules.LooksDimmed(RaceMode.RaceVsBots, false));
+            Assert.IsFalse(RaceModeRules.LooksDimmed(RaceMode.TimeAttack, false));
+            Assert.IsTrue(RaceModeRules.LooksDimmed(RaceMode.OnlineRace, false));
+            Assert.IsFalse(RaceModeRules.LooksDimmed(RaceMode.OnlineRace, true));
+            Assert.IsTrue(RaceModeRules.LooksDimmed((RaceMode)7, true));
+        }
+
+        [Test]
+        public void Remembered_OnlyOfflineModes_SoTheNextVisitNeverStartsInALobby()
+        {
+            Assert.IsTrue(RaceModeRules.IsRemembered(RaceMode.RaceVsBots));
+            Assert.IsTrue(RaceModeRules.IsRemembered(RaceMode.TimeAttack));
+            Assert.IsFalse(RaceModeRules.IsRemembered(RaceMode.OnlineRace));
+            Assert.IsFalse(RaceModeRules.IsRemembered((RaceMode)7));
+
+            Assert.AreEqual(RaceMode.TimeAttack, RaceModeRules.StartMode(1));
+            Assert.AreEqual(RaceMode.RaceVsBots, RaceModeRules.StartMode(0));
+            Assert.AreEqual(RaceModeRules.Default, RaceModeRules.StartMode(2), "an old save with Online starts offline");
+            Assert.AreEqual(RaceModeRules.Default, RaceModeRules.StartMode(-1), "edited PlayerPrefs");
+            Assert.AreEqual(RaceModeRules.Default, RaceModeRules.StartMode(99));
+        }
+
+        [Test]
+        public void Online_OpensTheLobby_AndNoKeyStartsIt()
+        {
+            Assert.IsTrue(RaceModeRules.OpensLobby(RaceMode.OnlineRace));
+            Assert.IsFalse(RaceModeRules.OpensLobby(RaceMode.RaceVsBots));
+            Assert.IsFalse(RaceModeRules.OpensLobby(RaceMode.TimeAttack));
+            Assert.IsTrue(RaceModeRules.StartsOnAnyKey(RaceMode.RaceVsBots));
+            Assert.IsTrue(RaceModeRules.StartsOnAnyKey(RaceMode.TimeAttack));
+            Assert.IsFalse(RaceModeRules.StartsOnAnyKey(RaceMode.OnlineRace), "the host starts it for everyone");
+            Assert.IsFalse(RaceModeRules.StartsOnAnyKey((RaceMode)7));
+        }
+
+        [Test]
+        public void Online_HasNoItemsNoGhostNoRecordsNoLeaderboardForm()
+        {
+            Assert.IsTrue(RaceModeRules.HasItems(RaceMode.RaceVsBots));
+            Assert.IsTrue(RaceModeRules.HasItems(RaceMode.TimeAttack));
+            Assert.IsFalse(RaceModeRules.HasItems(RaceMode.OnlineRace), "others only see your pose, not your boosts");
+            Assert.IsTrue(RaceModeRules.HasGhost(RaceMode.TimeAttack));
+            Assert.IsTrue(RaceModeRules.HasGhost(RaceMode.RaceVsBots));
+            Assert.IsFalse(RaceModeRules.HasGhost(RaceMode.OnlineRace), "the real people are on the road");
+            Assert.IsTrue(RaceModeRules.KeepsRecords(RaceMode.TimeAttack));
+            Assert.IsTrue(RaceModeRules.KeepsRecords(RaceMode.RaceVsBots));
+            Assert.IsFalse(RaceModeRules.KeepsRecords(RaceMode.OnlineRace), "a bumped lap never replaces the record");
+            Assert.IsTrue(RaceModeRules.UsesLeaderboard(RaceMode.TimeAttack));
+            Assert.IsTrue(RaceModeRules.UsesLeaderboard(RaceMode.RaceVsBots));
+            Assert.IsFalse(RaceModeRules.UsesLeaderboard(RaceMode.OnlineRace), "the room shows its own results");
+        }
+
+        [Test]
+        public void Finish_OnlineShowsAPlace_LikeARaceAgainstTheBots()
+        {
+            Assert.IsTrue(RaceModeRules.ShowsPlace(RaceMode.OnlineRace));
+            Assert.IsTrue(RaceModeRules.ShowsPlace(RaceMode.RaceVsBots));
+            Assert.IsFalse(RaceModeRules.ShowsPlace(RaceMode.TimeAttack));
+            Assert.AreEqual("3RD", RaceModeRules.FinishHeadline(RaceMode.OnlineRace, 3, 7, "1:02.345"));
+            Assert.AreEqual("OF 7  ·  1:02.345", RaceModeRules.FinishSubline(RaceMode.OnlineRace, 3, 7, "1:02.345", false));
+            Assert.AreEqual("1:02.345", RaceModeRules.FinishHeadline(RaceMode.OnlineRace, 0, 7, "1:02.345"), "place not reported yet");
         }
 
         [Test]
@@ -40,8 +122,10 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual("RACE VS BOTS", RaceModeRules.Title(RaceMode.RaceVsBots));
             Assert.AreEqual("TIME ATTACK", RaceModeRules.Title(RaceMode.TimeAttack));
             Assert.AreEqual("ONLINE RACE", RaceModeRules.Title(RaceMode.OnlineRace));
-            Assert.AreEqual("COMING SOON", RaceModeRules.Subtitle(RaceMode.OnlineRace));
+            Assert.AreEqual("RACE YOUR CLASS LIVE", RaceModeRules.Subtitle(RaceMode.OnlineRace));
+            Assert.AreEqual("BEAT 5 RIVALS", RaceModeRules.Subtitle(RaceMode.RaceVsBots));
             Assert.AreEqual("", RaceModeRules.Title((RaceMode)9));
+            Assert.AreEqual("", RaceModeRules.Subtitle((RaceMode)9));
         }
 
         [Test]

@@ -127,6 +127,7 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 | R13 | After D7: new medal times + re-record the Dean's ghost on the final track | Tue 17 | todo (waits for D7 #73 to merge: new top speed 18 m/s, 26.1 m/s boosted) |
 | R14 | Integration, deploy check with Luc (V6/G5), README for the submission | Sun 22 | todo |
 | R15 | Arcade UI restyle per art direction: OFL fonts, colour tokens, plates, motion; title, HUD, results, leaderboard, name entry | Fri 13 | done (David, #71) |
+| M2 | **Online race (team decision 16 Nov):** everyone joins from the ONE live link, two rooms NOON / SUNSET (max 15 each, first come first served, 1 lap), own kart drives as today, other karts are proxies, synced countdown, same finish order on every screen; Photon Fusion 2 Shared Mode, SDK stays out of the public repo (`docs/online.md`); test transport `?net=local` for tabs on one machine; Plan B = recorded race video | Sun 22 | in progress (David, branch `role4/M2-online-race-david`) |
 
 ## Course submission (official, `docs/course-requirements.md`)
 | ID | Task | Who | Due | Status |
