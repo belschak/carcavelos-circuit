@@ -50,12 +50,13 @@
 }
 
 /* ---------- Fonts: the ONE place to change them ----------
-   Display (titles, FINISH, countdown, position, big words): Unbounded Black, cream with a thick ink outline and a
+   Display (titles, FINISH, countdown, position, big words): Lilita One (since the "Postcard" menu redesign; was
+   Unbounded Black), cream with a thick ink outline and a
    hard ink shadow straight down (no blur: a hard offset reads "sticker", a blur reads "web page").
    Numbers and UI: Barlow Condensed ExtraBold. Timers use HudFormat.DigitWidth (<mspace>) so digits never jitter.
    Both are SIL OFL 1.1 (OFL.txt next to each font, THIRD_PARTY.md, credits page). */
 .f-display {
-    -unity-font-definition: url("Fonts/Unbounded/Unbounded-Black-SDF.asset");
+    -unity-font-definition: url("Fonts/LilitaOne/LilitaOne-Regular-SDF.asset");
     -unity-font-style: normal;
     -unity-text-outline-width: 3px;
     -unity-text-outline-color: #0E2238;

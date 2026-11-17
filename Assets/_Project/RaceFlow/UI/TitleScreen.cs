@@ -3,29 +3,23 @@ using UnityEngine.UIElements;
 
 namespace CarcavelosCircuit.RaceFlow
 {
-    // The title opener on the start screen (task R11 "Carcavelos Round 3"). On the HUD object, next to RaceHud.
-    // RaceHud still runs the start screen (state class st-ready, "intro-in" a moment after it shows, the breathing
-    // pill, the best time). This only adds the title show, all styled in UI/StartScreen.uss:
-    // 1. Logo reveal: the letters of CARCAVELOS drop in one after another (one Label per letter, made here, each
-    //    with its own transition-delay), the racing stripes slide in, the wave wipes open, CIRCUIT slides in, and
-    //    the team's slogan CARCAVELOS ROUND 3 lands like a stamp. The USS animates; C# only sets the delays.
-    // 2. Light sweep: every few seconds a band of light runs over the letters. Trick: a narrow box with
-    //    overflow: hidden moves to the right while a gold copy of the letters inside it moves left by the same
-    //    amount, so the copy stays exactly on top of the white letters and only shows inside the band. Two such
-    //    bands share one centre (a wide soft one and a narrow bright core), so the sheen has soft edges.
-    //    Written as four translates per frame (no layout pass), only while the sweep runs.
+    // The title opener on the start screen (task R11, logo since the "Postcard" menu redesign). On the HUD object, next
+    // to RaceHud. RaceHud still runs the start screen (state class st-ready, "intro-in" a moment after it shows, the
+    // breathing prompt, the best time). This only adds the title show, styled in UI/Postcard.uss:
+    // 1. Logo reveal: the five logo pictures (sun, wave, badge, word, ribbon) pop in one after another. Pure USS
+    //    (transition delays on ".intro-in .lg-..."), nothing to do here.
+    // 2. Light sweep: every few seconds a band of light runs over the word. Trick: a narrow box with overflow: hidden
+    //    moves to the right while a gold-tinted copy of the word picture inside it moves left by the same amount, so the
+    //    copy stays exactly on top of the real word and only shows inside the band. Two such bands share one centre
+    //    (a wide soft one and a narrow bright core), so the sheen has soft edges. Four translates per frame, only while
+    //    the sweep runs.
     // With reduced motion (the "reduce-motion" class HudMenus puts on hud-root) everything is simply there:
-    // no drop, no stamp, no sweep (the USS sets the durations to 0, this script skips the sweep).
+    // no pop, no sweep (the USS sets the durations to 0, this script skips the sweep).
     [RequireComponent(typeof(UIDocument))]
     public class TitleScreen : MonoBehaviour
     {
-        private const string Title = "CARCAVELOS";
-
         [SerializeField, Tooltip("The race brain: the title only animates on the start screen (state Ready)")]
         private RaceManager raceManager;
-
-        [SerializeField, Tooltip("Milliseconds between two letters dropping in")]
-        private int letterStepMs = 45;
 
         [SerializeField, Tooltip("Seconds after the start screen appears before the first light sweep")]
         private float firstSweepSeconds = 1.6f;
@@ -58,30 +52,21 @@ namespace CarcavelosCircuit.RaceFlow
             glintLetters = root.Q<VisualElement>("title-glint-letters");
             softGlint = root.Q<VisualElement>("title-glint-soft");
             softGlintLetters = root.Q<VisualElement>("title-glint-soft-letters");
-            AddLetters(root.Q<VisualElement>("title-letters"), true);
-            AddLetters(glintLetters, false);
-            AddLetters(softGlintLetters, false);
+            AddWordCopy(glintLetters);
+            AddWordCopy(softGlintLetters);
             introStart = -1f;
         }
 
-        // One Label per letter. The real letters get a growing delay, so they drop in from left to right.
-        // The gold copy for the sweep has no delay and no drop (USS: .ts-letters--glint).
-        private void AddLetters(VisualElement host, bool staggered)
+        // The copy of the word for a sweep band: a box as big as the logo with the word picture where the real one is
+        // (USS: .lg-glint-copy and its .lg-word child, tinted gold).
+        private static void AddWordCopy(VisualElement host)
         {
             host.Clear();
-            for (int i = 0; i < Title.Length; i++)
-            {
-                Label letter = new Label(Title.Substring(i, 1));
-                letter.pickingMode = PickingMode.Ignore;
-                letter.AddToClassList("ts-letter");
-                letter.AddToClassList("f-display");
-                if (staggered)
-                {
-                    int delay = 80 + i * letterStepMs;
-                    letter.style.transitionDelay = new StyleList<TimeValue>(new System.Collections.Generic.List<TimeValue> { new TimeValue(delay, TimeUnit.Millisecond) });
-                }
-                host.Add(letter);
-            }
+            VisualElement word = new VisualElement();
+            word.pickingMode = PickingMode.Ignore;
+            word.AddToClassList("lg-layer");
+            word.AddToClassList("lg-word");
+            host.Add(word);
         }
 
         private void Update()
@@ -125,8 +110,8 @@ namespace CarcavelosCircuit.RaceFlow
             MoveBand(softGlint, softGlintLetters, centre);
             if (!sweepWasRunning)
             {
-                glint.AddToClassList("ts-glint--on");
-                softGlint.AddToClassList("ts-glint--on");
+                glint.AddToClassList("lg-glint--on");
+                softGlint.AddToClassList("lg-glint--on");
                 sweepWasRunning = true;
             }
         }
@@ -143,8 +128,8 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (sweepWasRunning)
             {
-                glint.RemoveFromClassList("ts-glint--on");
-                softGlint.RemoveFromClassList("ts-glint--on");
+                glint.RemoveFromClassList("lg-glint--on");
+                softGlint.RemoveFromClassList("lg-glint--on");
                 sweepWasRunning = false;
             }
         }
