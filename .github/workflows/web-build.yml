@@ -11,6 +11,9 @@
 #   UNITY_PASSWORD = the Unity account's password
 # Without them the run stops at the first step with a clear message (no failed build).
 # Optional, for the online leaderboard (task R10): LEADERBOARD_URL and LEADERBOARD_ANON_KEY (backend/supabase/README.md).
+# Optional, for the online race (M2, docs/online.md): PHOTON_SDK_DEPLOY_KEY (read-only deploy key of the PRIVATE repo
+# belschak/carcavelos-photon-sdk that holds the Photon Fusion 2 SDK, which its licence does not let us publish here)
+# and PHOTON_APP_ID (the Fusion app's ID). Without them the build is single player only.
 #
 # Public URL (V6, G5): every build of main is also published on GitHub Pages, so the deployed game is always the
 # newest main commit (course rule: main = the deployed app). One-time setting by the repo owner, before the first
@@ -26,7 +29,9 @@ on:
   workflow_dispatch: # "Run workflow" button in the Actions tab
 
 concurrency:
-  group: web-build
+  # One queue per branch: a new run on the same branch waits for the running one (only the newest waiting run is
+  # kept), and a test build of one branch no longer cancels the waiting build of another branch.
+  group: web-build-${{ github.ref }}
   cancel-in-progress: false # a Unity build takes 20+ min; let it finish, the newest merge waits and builds next
 
 permissions:
@@ -38,6 +43,7 @@ jobs:
     timeout-minutes: 90
     env:
       HAS_LICENSE: ${{ secrets.UNITY_LICENSE != '' && secrets.UNITY_EMAIL != '' && secrets.UNITY_PASSWORD != '' }}
+      HAS_PHOTON_SDK: ${{ secrets.PHOTON_SDK_DEPLOY_KEY != '' }}
     outputs:
       built: ${{ env.HAS_LICENSE }}
     steps:
@@ -59,6 +65,21 @@ jobs:
       - name: Check out
         if: env.HAS_LICENSE == 'true'
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      # The Photon Fusion 2 SDK for the online race (M2). Its licence forbids publishing it in this public repo,
+      # so it lives in a private repo and is copied into Assets/Photon/ (ignored by Git) only for the build.
+      - name: Fetch the Photon Fusion SDK (private)
+        if: env.HAS_LICENSE == 'true' && env.HAS_PHOTON_SDK == 'true'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: belschak/carcavelos-photon-sdk
+          ssh-key: ${{ secrets.PHOTON_SDK_DEPLOY_KEY }}
+          path: Assets/Photon
+          persist-credentials: false
+
+      - name: Remove the SDK repo's Git folder
+        if: env.HAS_LICENSE == 'true' && env.HAS_PHOTON_SDK == 'true'
+        run: rm -rf Assets/Photon/.git && ls Assets/Photon
 
       # Unity's Library folder (imported assets) makes the next build much faster.
       - name: Cache Library
@@ -85,7 +106,8 @@ jobs:
           # player's device. Passed as Unity arguments, not as env: lines, because GameCI's Docker container only
           # receives its own list of environment variables. LeaderboardBuildConfig checks them (https, *.supabase.co,
           # public key only), puts them into this build and empties the config asset again afterwards.
-          customParameters: -leaderboardUrl ${{ secrets.LEADERBOARD_URL }} -leaderboardKey ${{ secrets.LEADERBOARD_ANON_KEY }}
+          # Online race (M2): the Photon App ID the same way; OnlineBuildConfig checks it is a GUID.
+          customParameters: -leaderboardUrl ${{ secrets.LEADERBOARD_URL }} -leaderboardKey ${{ secrets.LEADERBOARD_ANON_KEY }} -photonAppId ${{ secrets.PHOTON_APP_ID }}
 
       - name: Upload the build
         if: env.HAS_LICENSE == 'true'
@@ -95,6 +117,19 @@ jobs:
           path: Build-Web
           if-no-files-found: error
           retention-days: 14
+
+      # Art the build made because it was not committed yet (HudArtBuilder.EnsureDisplayFont): uploaded so a team
+      # member can download and commit it once. Nothing is uploaded when the file is already in the repo.
+      - name: Upload generated UI art
+        if: env.HAS_LICENSE == 'true'
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: generated-ui-art-${{ github.sha }}
+          path: |
+            Assets/_Project/RaceFlow/UI/Fonts/ArchivoExpanded/ArchivoExpanded-ExtraBoldItalic-SDF.asset
+            Assets/_Project/RaceFlow/UI/Fonts/ArchivoExpanded/ArchivoExpanded-ExtraBoldItalic-SDF.asset.meta
+          if-no-files-found: ignore
+          retention-days: 7
 
       # The same files again, packed the way GitHub Pages wants them (only for main, see the top of this file).
       - name: Pack the build for GitHub Pages

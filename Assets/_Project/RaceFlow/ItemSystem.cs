@@ -89,6 +89,7 @@ namespace CarcavelosCircuit.RaceFlow
         private DeansHalo halo;
         private IKartBoost kartBoost;     // null if the kart cannot be boosted from outside
         private bool spawned;
+        private bool boxesShown = true;   // false in an online race (M2): the boxes are switched off, no items
         private int resumeFrame = -1;     // the key that ends a pause must not also use the item
         private int ringsDropped;         // rings of the last Seagull Delivery ...
         private int ringsCollected;       // ... and how many of them you drove through
@@ -103,7 +104,13 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 SpawnBoxes();
             }
-            if (raceManager.IsPaused)
+            // Online (M2) there are no items: other players only see your pose, not your boosts (RaceModeRules.HasItems).
+            bool wantBoxes = RaceModeRules.HasItems(raceManager.Mode);
+            if (wantBoxes != boxesShown)
+            {
+                ShowBoxes(wantBoxes);
+            }
+            if (!wantBoxes || raceManager.IsPaused)
             {
                 return;
             }
@@ -131,7 +138,8 @@ namespace CarcavelosCircuit.RaceFlow
         // Only while racing with input on: not on the start screen, in the countdown or after the finish line.
         public bool UseItem()
         {
-            if (!raceManager.IsSetUp || raceManager.State != RaceState.Racing || !raceManager.Kart.InputEnabled)
+            if (!raceManager.IsSetUp || raceManager.State != RaceState.Racing || !raceManager.Kart.InputEnabled
+                || !RaceModeRules.HasItems(raceManager.Mode))
             {
                 return false;
             }
@@ -171,7 +179,7 @@ namespace CarcavelosCircuit.RaceFlow
         // Called by ItemBox when the kart drives through it.
         public void OnBoxHit(ItemBox box)
         {
-            if (raceManager.State != RaceState.Racing || !box.IsAvailable)
+            if (raceManager.State != RaceState.Racing || !box.IsAvailable || !RaceModeRules.HasItems(raceManager.Mode))
             {
                 return;
             }
@@ -270,6 +278,28 @@ namespace CarcavelosCircuit.RaceFlow
             for (int i = 0; i < boxes.Count; i++)
             {
                 boxes[i].ResetBox();
+            }
+        }
+
+        // Switches every box off (online race) or back on, whole and ready. Off also empties the slot and clears
+        // rings and shield, so nothing from an offline lap carries into the online room.
+        private void ShowBoxes(bool shown)
+        {
+            boxesShown = shown;
+            for (int i = 0; i < boxes.Count; i++)
+            {
+                boxes[i].gameObject.SetActive(shown);
+                if (shown)
+                {
+                    boxes[i].ResetBox();
+                }
+            }
+            if (!shown)
+            {
+                slot.Clear();
+                shield.Clear();
+                if (halo != null) halo.Hide();
+                ClearRings();
             }
         }
 

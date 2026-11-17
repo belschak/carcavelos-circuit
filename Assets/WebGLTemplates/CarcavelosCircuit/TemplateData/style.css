@@ -763,3 +763,195 @@ html:not(.cc-racing) .cc-touch-tools .cc-touch-pill {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* =====================================================================================================================
+   "Golden Hour" (realistic menu redesign, Role 4, 2026-11-17): the same identity as the in-game menus (UI/FrontEnd.uss).
+   Real captures of our game as key art, a cinematic grade, the wide wordmark (five pictures), smoked-glass panels with
+   hairline edges and ONE accent: Carcavelos sunset orange. Fonts from this folder (SIL OFL 1.1, see THIRD_PARTY.md).
+   These rules come last on purpose and override the older ones above.
+   ===================================================================================================================== */
+@font-face { font-family: "Archivo Expanded"; src: url("ArchivoExpanded-ExtraBoldItalic.ttf") format("truetype"); font-weight: 800; font-style: italic; font-display: block; }
+@font-face { font-family: "Barlow Condensed"; src: url("BarlowCondensed-ExtraBold.ttf") format("truetype"); font-weight: 800; font-display: swap; }
+:root {
+  --fe-ink: #07090D;
+  --fe-text: #F6F2EA;
+  --fe-muted: rgba(246, 242, 234, 0.66);
+  --fe-hair: rgba(255, 255, 255, 0.16);
+  --fe-glass: rgba(12, 15, 20, 0.62);
+  --fe-accent: #FF6B2C;
+  --fe-accent-hi: #FF8A45;
+  --font-display: "Archivo Expanded", "Arial Black", system-ui, sans-serif;
+  --font-ui: "Barlow Condensed", "Bahnschrift", "Arial Narrow", system-ui, sans-serif;
+}
+#cc-loader { background: var(--fe-ink); grid-template-rows: 1fr auto auto; grid-template-columns: minmax(0, 1fr); color: var(--fe-text); }
+.cc-wave, .cc-sky, .cc-sun, .cc-sea, .cc-tiles { display: none; }
+.cc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Key art: real captures cross-fading with a slow push-in, 4 x 6 s ---------- */
+.cc-key { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.cc-shot { position: absolute; inset: 0; margin: 0; opacity: 0; animation: cc-show 24s calc(var(--n) * 6s) linear infinite both; }
+.cc-shot img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: 60% 50%;
+  animation: cc-push 24s calc(var(--n) * 6s) linear infinite both; transform-origin: 62% 55%; }
+@keyframes cc-show { 0% { opacity: 0; } 4% { opacity: 1; } 25% { opacity: 1; } 29% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes cc-push { 0% { transform: scale(1.08); } 29% { transform: scale(1.0); } 100% { transform: scale(1.0); } }
+/* The first picture is there at once (no fade from black on page load). */
+.cc-shot:first-child { opacity: 1; animation-name: cc-show-first; }
+@keyframes cc-show-first { 0% { opacity: 1; } 25% { opacity: 1; } 29% { opacity: 0; } 96% { opacity: 0; } 100% { opacity: 1; } }
+
+/* Lower third: the sight in the current picture (bottom right, above the key dock). */
+.cc-shot figcaption {
+  position: absolute; right: clamp(16px, 4vw, 64px); bottom: clamp(124px, 19vh, 180px); width: min(380px, 40vw);
+  display: grid; grid-template-columns: 4px 1fr; column-gap: 14px; padding: 12px 18px 13px 14px;
+  background: var(--fe-glass); border: 1px solid var(--fe-hair); border-radius: 6px;
+  backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  font-family: var(--font-ui); font-weight: 800; color: var(--fe-text);
+  opacity: 0; animation: cc-cap 24s calc(var(--n) * 6s) ease-out infinite both;
+}
+.cc-shot figcaption::before { content: ""; grid-row: 1 / 4; background: var(--fe-accent); border-radius: 1px; }
+.cc-shot figcaption b { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--fe-accent-hi); }
+.cc-shot figcaption strong { font-family: var(--font-display); font-style: italic; font-size: 16px; letter-spacing: 0.04em; text-transform: uppercase; margin-top: 2px; }
+.cc-shot figcaption span { font-size: 14px; letter-spacing: 0.04em; color: var(--fe-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@keyframes cc-cap { 0%, 3% { opacity: 0; transform: translateX(24px); } 7%, 24% { opacity: 1; transform: none; } 27%, 100% { opacity: 0; transform: translateX(-8px); } }
+
+/* Cinematic grade: dark fall-off from the left (behind the wordmark) and at the bottom (behind the keys), warm light. */
+.cc-grade { position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 78% 30%, rgba(255, 150, 80, 0.10), rgba(255, 150, 80, 0) 60%),
+    linear-gradient(90deg, rgba(6, 8, 12, 0.86) 0%, rgba(6, 8, 12, 0.6) 30%, rgba(6, 8, 12, 0.08) 62%, rgba(6, 8, 12, 0) 80%),
+    linear-gradient(0deg, rgba(6, 8, 12, 0.9) 0%, rgba(6, 8, 12, 0.35) 22%, rgba(6, 8, 12, 0) 45%),
+    linear-gradient(180deg, rgba(6, 8, 12, 0.45) 0%, rgba(6, 8, 12, 0) 18%); }
+.cc-grade::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 220px rgba(0, 0, 0, 0.55); }
+
+/* ---------- Left column: wordmark, room, one panel ---------- */
+.cc-center { align-items: flex-start; justify-content: center; text-align: left;
+  padding: max(24px, env(safe-area-inset-top)) 24px 12px max(clamp(24px, 6.5vw, 112px), env(safe-area-inset-left)); }
+.cc-logo { position: relative; width: min(780px, 50vw, 110vh); aspect-ratio: 1200 / 400; margin: 0; }
+.cc-lg { position: absolute; display: block; max-width: none; height: auto; animation: cc-lg-in 0.8s cubic-bezier(.2, .7, .2, 1) both; }
+.cc-lg-badge { left: 0.167%; top: 6.25%; width: 32.667%; animation-delay: 0.05s; }
+.cc-lg-word { left: 0; top: 17.5%; width: 100%; animation-delay: 0.18s; }
+.cc-lg-sun { left: 0.583%; top: 64.5%; width: 40.333%; transform-origin: left center; animation: cc-lg-streak 0.9s 0.38s cubic-bezier(.2, .7, .2, 1) both; }
+.cc-lg-ribbon { left: 0; top: 72.5%; width: 32%; animation-delay: 0.46s; }
+.cc-lg-wave { left: 36%; top: 79.25%; width: 64%; height: 3%; animation-delay: 0.56s; }
+@keyframes cc-lg-in { from { opacity: 0; transform: translateX(-6%); } to { opacity: 1; transform: none; } }
+@keyframes cc-lg-streak { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: none; } }
+/* Light sweep over the wordmark, like the in-game title. */
+.cc-logo::after { content: ""; position: absolute; left: 0; top: 17.5%; width: 100%; height: 40%; pointer-events: none;
+  background: linear-gradient(100deg, transparent 42%, rgba(255, 186, 130, 0.9) 50%, transparent 58%) no-repeat;
+  background-size: 300% 100%; background-position: 150% 0;
+  -webkit-mask: url("logo-word.png") 0 0 / 100% 100% no-repeat; mask: url("logo-word.png") 0 0 / 100% 100% no-repeat;
+  animation: cc-sheen 5s 1.6s ease-in-out infinite; }
+@keyframes cc-sheen { 0% { background-position: 150% 0; } 30%, 100% { background-position: -50% 0; } }
+
+.cc-room {
+  display: inline-flex; align-items: center; gap: 9px; margin: 14px 0 0; padding: 6px 14px 6px 12px; border-radius: 4px;
+  background: var(--fe-glass); border: 1px solid var(--fe-hair); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  font-family: var(--font-ui); font-weight: 800; font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--fe-text);
+}
+.cc-room::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #3FD68C; box-shadow: 0 0 10px rgba(63, 214, 140, 0.8); }
+
+/* ---------- Loading: a thin racing line with a glowing head ---------- */
+.cc-panel { margin-top: clamp(18px, 4.5vh, 44px); width: min(520px, 86vw); }
+#cc-panel-play { width: auto; align-items: flex-start; }
+.cc-card.cc-panel { width: min(460px, 92vw); }
+.cc-road { height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.16); box-shadow: none; overflow: visible; }
+.cc-fill { border-radius: 2px; background: linear-gradient(90deg, rgba(255, 107, 44, 0.2), var(--fe-accent) 70%, #FFC27A); }
+.cc-lane, .cc-finish { display: none; }
+.cc-kart { width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: #FFE2C4; box-shadow: 0 0 0 3px rgba(255, 107, 44, 0.35), 0 0 18px 4px rgba(255, 140, 70, 0.9); }
+.cc-kart::before, .cc-kart::after { display: none; }
+.cc-status { display: flex; justify-content: space-between; margin-top: 12px; font-family: var(--font-ui); font-weight: 800; font-size: 14px;
+  letter-spacing: 0.22em; text-transform: uppercase; color: var(--fe-muted); text-shadow: none; }
+.cc-percent { color: var(--fe-text); font-variant-numeric: tabular-nums; }
+.cc-tip { margin-top: 18px; padding: 0 0 0 14px; border-left: 2px solid var(--fe-accent); border-radius: 0; background: none;
+  font-family: var(--font-ui); font-weight: 800; font-size: 15px; letter-spacing: 0.06em; color: var(--fe-muted); text-shadow: none; text-align: left; }
+
+/* ---------- Play button: the one solid orange action ---------- */
+.cc-play {
+  position: relative; overflow: hidden; gap: 14px; padding: 19px 44px 19px 34px; border-radius: 4px; border: 0;
+  background: linear-gradient(180deg, var(--fe-accent-hi), #F0561E); color: #fff;
+  font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: clamp(16px, 1.5vw, 20px); letter-spacing: 0.16em; text-transform: uppercase;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 14px 40px rgba(255, 90, 30, 0.35), 0 4px 14px rgba(0, 0, 0, 0.4);
+  animation: cc-rise 0.5s ease-out both; transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.cc-play::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.35) 50%, transparent 65%);
+  transform: translateX(-120%); animation: cc-btn-sheen 3.2s 1s ease-in-out infinite; }
+@keyframes cc-btn-sheen { 0% { transform: translateX(-120%); } 35%, 100% { transform: translateX(120%); } }
+.cc-play:hover { transform: translateY(-2px); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 18px 48px rgba(255, 90, 30, 0.45), 0 6px 18px rgba(0, 0, 0, 0.4); }
+.cc-play:active { transform: translateY(1px); }
+.cc-play svg { color: #fff; width: 20px; height: 20px; }
+.cc-play:focus-visible { outline: 2px solid var(--fe-text); outline-offset: 3px; }
+.cc-play-hint { margin-top: 14px; padding: 0; background: none; font-family: var(--font-ui); font-weight: 800; font-size: 14px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--fe-muted); text-align: left; }
+
+/* ---------- Cards (phone notice, errors) and buttons ---------- */
+.cc-card { background: rgba(12, 15, 20, 0.78); border: 1px solid var(--fe-hair); border-radius: 8px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2); text-align: left; color: var(--fe-text); }
+.cc-card h2 { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 20px; letter-spacing: 0.04em; text-transform: uppercase; }
+.cc-card p, .cc-card li { color: var(--fe-muted); }
+.cc-card-icon { color: var(--fe-text); }
+.cc-button { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase;
+  border: 0; border-radius: 4px; background: linear-gradient(180deg, var(--fe-accent-hi), #F0561E); color: #fff; box-shadow: 0 10px 30px rgba(255, 90, 30, 0.3); }
+
+/* ---------- Key dock ---------- */
+.cc-dock { padding: 0 16px max(14px, env(safe-area-inset-bottom)); display: flex; justify-content: center; position: relative; }
+.cc-controls { width: fit-content; max-width: min(100%, 1180px); padding: 9px 18px; border-radius: 6px; gap: 6px 18px;
+  background: var(--fe-glass); border: 1px solid var(--fe-hair); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+kbd { background: rgba(255, 255, 255, 0.08); color: var(--fe-text); border: 1px solid rgba(255, 255, 255, 0.32); border-radius: 4px; box-shadow: none;
+  font-family: var(--font-ui); font-weight: 800; font-size: 13px; }
+.cc-or, .cc-key-text { font-family: var(--font-ui); font-weight: 800; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fe-muted); }
+.cc-credits { position: relative; background: none; color: rgba(246, 242, 234, 0.42); text-shadow: none; letter-spacing: 0.04em; }
+
+/* ---------- Race modes preview under the wordmark ---------- */
+.cc-modes { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: clamp(14px, 3vh, 30px) 0 0; padding: 0; list-style: none;
+  font-family: var(--font-ui); font-weight: 800; font-size: 14px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fe-muted); }
+.cc-modes li { display: flex; align-items: center; gap: 9px; }
+.cc-modes b { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid rgba(255, 255, 255, 0.34); border-radius: 3px;
+  font-size: 12px; letter-spacing: 0; color: var(--fe-text); }
+.cc-modes li:first-child b { border-color: var(--fe-accent); color: var(--fe-accent-hi); }
+
+/* Desktop: the play button sits where the game shows PRESS ANY KEY (about 58 to 64 % down the screen), so after the
+   click the mouse rests on a label in the game, not on a race-mode card or a menu button (those would swallow the
+   first key press, see RaceHud/ModePicker "MenuUsesInput"). */
+@media (min-width: 761px) and (min-height: 471px) {
+  .cc-center { justify-content: flex-start; padding-top: 12vh; }
+  .cc-logo { width: min(88.9vh, 50vw); }
+  #cc-panel-play, #cc-panel-loading { position: absolute; top: 58.5vh; left: max(clamp(24px, 6.5vw, 112px), env(safe-area-inset-left)); margin-top: 0; }
+}
+
+/* ---------- Touch controls and the fullscreen button: the same glass ---------- */
+.cc-touch-button, .cc-touch-pill, .cc-touch-tools #cc-fullscreen, #cc-fullscreen {
+  border: 1px solid rgba(255, 255, 255, 0.34); background: rgba(12, 15, 20, 0.46); color: var(--fe-text);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-family: var(--font-ui); font-weight: 800; letter-spacing: 0.14em; }
+.cc-touch-button { border-radius: 14px; }
+.cc-touch-pill, .cc-touch-tools #cc-fullscreen { border-radius: 8px; }
+#cc-fullscreen { border-radius: 8px; }
+.cc-touch-button.cc-pressed, .cc-touch-pill.cc-pressed { background: rgba(255, 107, 44, 0.82); border-color: var(--fe-accent-hi); }
+
+/* ---------- Phones and small windows: centred column, captions off ---------- */
+@media (max-width: 760px) {
+  .cc-center { align-items: center; text-align: center; padding-left: 16px; padding-right: 16px; }
+  .cc-logo { width: min(520px, 90vw); }
+  .cc-shot figcaption { display: none; }
+  .cc-modes { justify-content: center; }
+  .cc-play-hint, .cc-tip { text-align: center; }
+  #cc-panel-play { align-items: center; }
+  .cc-grade { background: linear-gradient(0deg, rgba(6, 8, 12, 0.9), rgba(6, 8, 12, 0.35) 45%, rgba(6, 8, 12, 0.55)); }
+}
+@media (max-height: 470px) {
+  .cc-dock { display: none; }
+  .cc-modes { display: none; }
+  .cc-logo { width: min(440px, 60vw, 92vh); }
+  .cc-panel { margin-top: 12px; }
+  .cc-shot figcaption { bottom: 18px; }
+  .cc-play-hint { margin-top: 8px; }
+}
+@media (max-height: 470px) and (max-width: 960px) {
+  .cc-shot figcaption { display: none; }
+}
+@media (max-width: 560px) {
+  .cc-controls { padding: 8px 12px; gap: 6px 12px; }
+  .cc-controls li:nth-child(n+5) { display: none; } /* phones: drive, drift, trick, item */
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-shot:not(:first-child) { display: none; }
+  .cc-shot:first-child figcaption, .cc-lg { opacity: 1; transform: none; }
+}

@@ -161,11 +161,12 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // A lap ended: open the form (if this time may be saved) and load the list beside the card.
+        // Online (M2) there is no form: the room shows its own results (RaceModeRules.UsesLeaderboard).
         private void OnLapFinished(float seconds, bool isRecord)
         {
             lapNumber++;
             lapSeconds = seconds;
-            if (LapTimeRules.IsAcceptable(seconds, raceManager.MedalSeconds(Medal.Gold)))
+            if (RaceModeRules.UsesLeaderboard(raceManager.Mode) && LapTimeRules.IsAcceptable(seconds, raceManager.MedalSeconds(Medal.Gold)))
             {
                 form.Open(playerName, RaceTimer.ToMilliseconds(seconds));
             }
@@ -183,10 +184,11 @@ namespace CarcavelosCircuit.RaceFlow
             form.Hide();
         }
 
-        // SAVE clicked, or Enter while typing. Public so the Play Mode test can press it.
+        // SAVE clicked, or Enter while typing. Public so the Play Mode test can press it. Never sends an online lap.
         public void SaveTypedName()
         {
-            if (form.State != SaveFormState.Editing || raceManager.State != RaceState.Results)
+            if (form.State != SaveFormState.Editing || raceManager.State != RaceState.Results
+                || !RaceModeRules.UsesLeaderboard(raceManager.Mode))
             {
                 return;
             }

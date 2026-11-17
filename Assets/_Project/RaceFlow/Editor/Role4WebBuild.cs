@@ -30,6 +30,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             bool gzipForItch = HasArgument("-webHost=itch");
             ApplyWebSettings(gzipForItch);
 
+            // The menus' display font (Archivo Expanded) as an SDF asset, made here if the project does not have it yet.
+            HudArtBuilder.EnsureDisplayFont();
+
             // CI runs only this method, so first rebuild Main.unity and the placeholder kart from what is on main now
             // (Role 1's kart, Role 3's kart model, every merged track scene). Then the build is always the integrated game.
             Role4SceneBuilder.BuildAll();
@@ -38,6 +41,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             // The online leaderboard's address and public key from the CI secrets, only for this build (task R10).
             // After BuildAll (which always saves the config empty), before anything else changes the project.
             LeaderboardBuildConfig.FillFromEnvironment();
+
+            // The online race (M2): only when CI copied the Photon Fusion SDK in and the PHOTON_APP_ID secret is set.
+            OnlineBuildConfig.Apply();
 
             // Build with the Web URP asset as the project default, so the build does not also carry the shader variants
             // of the PC asset (Forward+, SSAO). The editor's default is put back afterwards, even if the build fails.
@@ -70,6 +76,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             finally
             {
                 LeaderboardBuildConfig.Clear(); // the asset in the repo stays empty
+                OnlineBuildConfig.Clear(); // no App ID file and no CARCAVELOS_FUSION define left behind
                 GraphicsSettings.defaultRenderPipeline = AssetDatabase.LoadAssetAtPath<RenderPipelineAsset>(editorPipelinePath);
                 AssetDatabase.SaveAssets();
             }

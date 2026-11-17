@@ -25,6 +25,7 @@ REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
 RACE_SETTINGS = os.path.join(REPO, "Assets", "_Project", "RaceFlow", "Settings", "RaceSettings.asset")
 
 SLOTS = 10                              # Luc: "say 10 positions"
+MIDDLE_SLOTS = 5                        # online rooms of 15: slots 10..14 in an unpainted middle column (RacerGrid)
 BOX_W, BOX_L, BOX_LINE = 1.7, 2.3, 0.12   # box around a kart of about 1.4 x 2.0 m, centred on the slot; painted line width
 BOX_SIDE = 1.0                          # V23, F1 style: line across the front + side lines this long running back, open behind
 SPAWN_BACK = 4                          # export_unity_bundle.unity_track: spawn = start - 4 points (8 m behind the line)
@@ -70,12 +71,20 @@ def slot_offset(slot, side, row):
     forward) of a slot seen from the SpawnPoint. Pairs side by side: even slot = left, odd slot = right, row = slot // 2.
     KEEP IN SYNC with the C# (its test RacerGridTests.SlotOffsets_AreTheTableTheGeneratorPaints has SLOT_TABLE_2_3)."""
     slot = max(slot, 0)
+    if SLOTS <= slot < SLOTS + MIDDLE_SLOTS:                 # RacerGrid.MiddleSlots: online slots 10..14, not painted
+        return 0.0, -(slot - SLOTS + 0.5) * row
+    if slot >= SLOTS + MIDDLE_SLOTS:                         # 16+ racers (never today): pairs again behind the boxes
+        slot -= MIDDLE_SLOTS
     return (-side if slot % 2 == 0 else side), -(slot // 2) * row
 
 
 # slot_offset(k, 2, 3) for k = 0..9, the same table as in RacerGridTests.cs; checked at import so the two cannot drift
 SLOT_TABLE_2_3 = [(-2, 0), (2, 0), (-2, -3), (2, -3), (-2, -6), (2, -6), (-2, -9), (2, -9), (-2, -12), (2, -12)]
 assert [slot_offset(k, 2.0, 3.0) for k in range(10)] == SLOT_TABLE_2_3, "start_plan.slot_offset differs from RacerGrid"
+# slots 10..14 (online rooms of 15, RacerGrid.MiddleSlots): a middle column between the box columns, half a row
+# behind each box row, so nobody stands in the U-turn behind the straight (it starts about 13 m behind the SpawnPoint)
+SLOT_TABLE_MIDDLE_2_3 = [(0, -1.5), (0, -4.5), (0, -7.5), (0, -10.5), (0, -13.5)]
+assert [slot_offset(k, 2.0, 3.0) for k in range(10, 15)] == SLOT_TABLE_MIDDLE_2_3, "middle column differs from RacerGrid"
 
 
 def grid_slots(route=None):

@@ -1,0 +1,34 @@
+{
+    "name": "CarcavelosCircuit.Online.Fusion",
+    "rootNamespace": "CarcavelosCircuit.Online.Fusion",
+    "references": [
+        "CarcavelosCircuit.Online",
+        "CarcavelosCircuit.Shared",
+        "CarcavelosCircuit.RaceFlow",
+        "Fusion.Unity",
+        "Photon.Realtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Fusion.Runtime.dll",
+        "Fusion.Common.dll",
+        "Fusion.Realtime.dll",
+        "Fusion.Sockets.dll",
+        "Fusion.Log.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "CARCAVELOS_FUSION"
+    ],
+    "versionDefines": [
+        {
+            "name": "Unity",
+            "expression": "",
+            "define": "FUSION_FORCE_WEAVING"
+        }
+    ],
+    "noEngineReferences": false
+}

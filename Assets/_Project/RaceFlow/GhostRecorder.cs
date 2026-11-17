@@ -36,7 +36,8 @@ namespace CarcavelosCircuit.RaceFlow
             }
 
             // A new attempt starts on GO (also after a retry): throw the old recording away.
-            bool racing = raceManager.State == RaceState.Racing;
+            // Online (M2) nothing is recorded: that lap never becomes the ghost (RaceModeRules.HasGhost).
+            bool racing = raceManager.State == RaceState.Racing && RaceModeRules.HasGhost(raceManager.Mode);
             if (racing && !wasRacing)
             {
                 recording.Clear();
@@ -51,9 +52,10 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // The RaceManager has already saved the new best time when this event comes; the ghost goes right next to it.
+        // (An online lap is never a record, and even so it is never saved as the ghost.)
         private void OnLapFinished(float lapSeconds, bool newRecord)
         {
-            if (!newRecord || recording == null)
+            if (!newRecord || recording == null || !RaceModeRules.HasGhost(raceManager.Mode))
             {
                 return;
             }

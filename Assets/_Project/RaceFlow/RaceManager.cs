@@ -64,10 +64,19 @@ namespace CarcavelosCircuit.RaceFlow
         // cinematic): then the kart keeps its input in Results. Cleared on Retry and on the way back to the menu.
         public bool PlayerOnAutopilot { get; set; }
         // Written every frame by RaceRoster; after the finish they hold the place the player finished in.
-        public int PlayerPlace { get; set; }
-        public int RacersInRace { get; set; }
+        // Online the room's place wins while one is set (SetExternalPlace, ShownPlace).
+        public int PlayerPlace { get { return shownPlace.Place; } set { shownPlace.RosterPlace = value; } }
+        public int RacersInRace { get { return shownPlace.Racers; } set { shownPlace.RosterRacers = value; } }
         // Time.unscaledTime when the kart crossed the line, -1 = not finished (camera shot and HUD cinematic).
         public float FinishRealTime { get; private set; } = -1f;
+
+        // ---- Online race (M2): the Online assembly drives the race through these (see OnlineRaceHooks) ----
+        // True while the online lobby owns the race: no key or click starts, retries, leaves or pauses it
+        // (ExternalStartRules). The lobby starts it with BeginRaceExternal and resets it with ResetToReadyExternal.
+        public bool ExternalStartOnly { get; set; }
+        // The Inspector switch "pause on focus loss". Online the lobby switches it off: the race goes on on
+        // everyone else's screen, so a hidden tab must not freeze this player's clock. LeaveOnlineMode puts it back.
+        public bool PauseOnFocusLoss { get { return pauseOnFocusLoss; } set { pauseOnFocusLoss = value; } }
 
         // ---- Events (sounds and effects listen, the HUD mostly reads the values above) ----
         public event Action<int> CountdownStep;          // 3, 2, 1, 0 = GO
@@ -83,6 +92,9 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly RaceTimer timer = new RaceTimer();
         private readonly RunStats runStats = new RunStats();
         private readonly RacePause pause = new RacePause();
+        private readonly ShownPlace shownPlace = new ShownPlace();
+        private bool pauseOnFocusLossFromScene = true; // the Inspector value, put back by LeaveOnlineMode
+        private int leftOnlineFrame = -1; // Time.frameCount of the last LeaveOnlineMode, -1 = never (its key must not start a race)
         private float timeScaleBeforePause = 1f;
         private bool frozen; // true while this script holds Time.timeScale at 0
         private float slowMotionStart = -1f; // Time.unscaledTime when the finish slow motion began, -1 = none (task P6b)
@@ -103,6 +115,11 @@ namespace CarcavelosCircuit.RaceFlow
         private Rigidbody[] kartBodies;    // the kart's Rigidbodies at spawn time (see IsKartCollider)
         private Collider[] kartColliders;  // the kart's colliders at spawn time
         private string saveKey;
+
+        private void Awake()
+        {
+            pauseOnFocusLossFromScene = pauseOnFocusLoss;
+        }
 
         // Called once by RaceBootstrap after the track is loaded and the kart is spawned.
         public void SetUp(GameObject kartObject, TrackInfo loadedTrack, string trackName)
@@ -161,9 +178,8 @@ namespace CarcavelosCircuit.RaceFlow
             savedCoachFlags = PlayerPrefs.GetInt(CoachSaveKey, 0);
             coach = new OnboardingCoach(savedCoachFlags, settings.CoachNoDriftSeconds);
 
-            // The last mode played. A save we cannot read (or Online, which is not playable) starts as Race vs Bots.
-            RaceMode saved = RaceModeRules.FromSaved(PlayerPrefs.GetInt(ModeSaveKey, (int)RaceModeRules.Default));
-            Mode = RaceModeRules.IsPlayable(saved) ? saved : RaceModeRules.Default;
+            // The last mode played. A save we cannot read (or Online, which is never remembered) starts as Race vs Bots.
+            Mode = SavedOfflineMode();
 
             stateMachine = new RaceStateMachine(settings.CountdownFrom);
             stateMachine.StateChanged += OnStateChanged;
@@ -380,7 +396,8 @@ namespace CarcavelosCircuit.RaceFlow
             }
 
             // P pauses the countdown or the race by hand (audit 9): the same pause as a lost focus.
-            if (RaceKeys.PausePressed() && StartPause(pause.OnPauseKey(State)))
+            // Not while the online lobby owns the race (the shared clock goes on without us).
+            if (ExternalStartRules.MayPauseByHand(ExternalStartOnly) && RaceKeys.PausePressed() && StartPause(pause.OnPauseKey(State)))
             {
                 return;
             }
@@ -390,10 +407,11 @@ namespace CarcavelosCircuit.RaceFlow
             kart.InputEnabled = InputAllowedNow();
 
             // Ready screen: wait for the first key or click (browsers only allow sound after that).
-            // Not while the settings or credits use the keys and the mouse.
+            // Not while the settings or credits use the keys and the mouse, and never online (the host starts).
             if (State == RaceState.Ready)
             {
-                if (!MenuUsesInput && RaceKeys.AnyKeyOrClickPressed())
+                bool leftOnlineNow = ExternalStartRules.IsLeavingFrame(Time.frameCount, leftOnlineFrame); // Q or BACK just left the room
+                if (ExternalStartRules.MayStartFromKeys(ExternalStartOnly, Mode, MenuUsesInput || leftOnlineNow) && RaceKeys.AnyKeyOrClickPressed())
                 {
                     RequestStart();
                 }
@@ -448,34 +466,120 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // Leaves the start screen: the first countdown begins. Called by the first key or click, and by the
-        // automated race test (Tests/PlayMode). Does nothing outside the start screen.
+        // automated race test (Tests/PlayMode). Does nothing outside the start screen, and nothing online
+        // (there only the lobby starts the race, with BeginRaceExternal).
         public void BeginRace()
         {
-            if (IsSetUp && State == RaceState.Ready && !pause.IsPaused && RaceModeRules.IsPlayable(Mode))
+            if (IsSetUp && State == RaceState.Ready && !pause.IsPaused && RaceModeRules.IsPlayable(Mode)
+                && ExternalStartRules.MayStartFromKeys(ExternalStartOnly, Mode, false))
             {
                 stateMachine.BeginCountdown(settings.CountdownStepSeconds);
             }
         }
 
+        // ---- Online race (M2): called by the Online assembly's lobby ----
+
+        // Starts the countdown from the start screen, whatever the keys and ExternalStartOnly say. The lobby calls
+        // it secondsPerStep * CountdownFrom before the shared GO moment, so GO lands at the same time on every
+        // screen. A pause is ended first. False (nothing happens) outside Ready or before the race is set up.
+        public bool BeginRaceExternal(float secondsPerStep)
+        {
+            if (!IsSetUp || !ExternalStartRules.MayBeginExternal(State, Mode))
+            {
+                return false;
+            }
+            EndPause();
+            stateMachine.BeginCountdown(secondsPerStep);
+            return true;
+        }
+
+        // From any state back onto the grid in Ready (online rematch, or leaving the room mid-race). Like the way
+        // back to the menu: kart on its slot, lap, timer and finish shot cleared, the external place cleared.
+        // Nothing is saved. Everyone who resets on Retry resets here too (Restarted).
+        public void ResetToReadyExternal()
+        {
+            if (!IsSetUp)
+            {
+                return;
+            }
+            EndPause();
+            StopSlowMotion();
+            ClearRunForNewStart();
+            ForgetAttempt();
+            ClearExternalPlace();
+            stateMachine.ResetToReady();
+            kart.InputEnabled = false;
+            if (Restarted != null) Restarted();
+        }
+
+        // The finish overlay and the results card show this place ("3RD", "OF 7") instead of RaceRoster's live
+        // standings, until ClearExternalPlace. The online room knows everyone's reported times.
+        public void SetExternalPlace(int place, int racers)
+        {
+            shownPlace.SetExternal(place, racers);
+        }
+
+        public void ClearExternalPlace()
+        {
+            shownPlace.ClearExternal();
+        }
+
+        // Leaves the online mode for the start screen in the last offline mode (Race vs Bots / Time Attack), from
+        // any state. Keys, pause on focus loss and the shown place work as offline again. The lobby calls it when
+        // the player leaves the room (Back, Q) or the connection fails.
+        public void LeaveOnlineMode()
+        {
+            leftOnlineFrame = Time.frameCount; // the Q or click that left the room does not also start a race this frame
+            ExternalStartOnly = false;
+            pauseOnFocusLoss = pauseOnFocusLossFromScene;
+            ClearExternalPlace();
+            if (!IsSetUp)
+            {
+                return; // SetUp picks the saved offline mode anyway
+            }
+            if (State != RaceState.Ready)
+            {
+                ResetToReadyExternal();
+            }
+            if (Mode == RaceMode.OnlineRace)
+            {
+                Mode = SavedOfflineMode();
+                if (ModeChanged != null) ModeChanged(Mode);
+            }
+        }
+
+        // The mode saved for the next visit (only offline modes are ever saved, RaceModeRules.StartMode).
+        private static RaceMode SavedOfflineMode()
+        {
+            return RaceModeRules.StartMode(PlayerPrefs.GetInt(ModeSaveKey, (int)RaceModeRules.Default));
+        }
+
         // Full reset: kart back on the grid, rules, timer and effects cleared, quick countdown again.
-        // Public so the HUD's Retry button can call it.
+        // Public so the HUD's Retry button can call it. Does nothing while the online lobby owns the race.
         public void Retry()
         {
-            if (!IsSetUp || State == RaceState.Ready)
+            if (!IsSetUp || State == RaceState.Ready || !ExternalStartRules.MayRetryOrLeave(ExternalStartOnly))
             {
                 return;
             }
             EndPause(); // only a safety net: a paused race cannot normally be retried
             StopSlowMotion(); // Enter during the finish slow motion: the new attempt runs at full speed at once
             ClearRunForNewStart();
+            ForgetAttempt();
+            stateMachine.BeginCountdown(settings.RetryCountdownStepSeconds);
+            if (Restarted != null) Restarted();
+        }
+
+        // The old attempt's hint, split popup, record flag and stats go. Shared by Retry, BackToMenu and
+        // ResetToReadyExternal.
+        private void ForgetAttempt()
+        {
             LastLapWasRecord = false;
             HasSplitDelta = false;
             HintText = "";
             HintVisibleUntil = 0f;
             waitingCoachHint = CoachHint.None; // a tip queued in the old attempt must not pop up right after GO
             runStats.Reset();
-            stateMachine.BeginCountdown(settings.RetryCountdownStepSeconds);
-            if (Restarted != null) Restarted();
         }
 
         // Kart on the grid, rules and timer cleared, finish cinematic over. Shared by Retry and BackToMenu.
@@ -488,8 +592,9 @@ namespace CarcavelosCircuit.RaceFlow
             timer.Reset();
         }
 
-        // Picks the mode for the next race. Only on the start screen, and only a playable mode: Online gives back
-        // the "coming soon" message for the HUD and changes nothing. Saved, so the next visit starts in it.
+        // Picks the mode for the next race. Only on the start screen, and only a mode RaceModeRules.CanPick allows:
+        // Online without the online build gives back its message for the HUD and changes nothing. An offline mode
+        // is saved, so the next visit starts in it; Online never is (RaceModeRules.IsRemembered).
         public bool TrySelectMode(RaceMode mode, out string message)
         {
             message = "";
@@ -497,37 +602,35 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 return false;
             }
-            if (!RaceModeRules.IsPlayable(mode))
+            if (!RaceModeRules.CanPick(mode, OnlineRaceHooks.Available, out message))
             {
-                message = RaceModeRules.ComingSoonMessage;
                 return false;
             }
             if (mode != Mode)
             {
                 Mode = mode;
-                PlayerPrefs.SetInt(ModeSaveKey, (int)mode);
-                PlayerPrefs.Save();
+                if (RaceModeRules.IsRemembered(mode))
+                {
+                    PlayerPrefs.SetInt(ModeSaveKey, (int)mode);
+                    PlayerPrefs.Save();
+                }
                 if (ModeChanged != null) ModeChanged(mode);
             }
             return true;
         }
 
         // Results -> start screen, so the player can pick another mode. Public for the HUD's MENU button.
+        // Does nothing while the online lobby owns the race (ExternalStartOnly).
         public void BackToMenu()
         {
-            if (!IsSetUp || State != RaceState.Results)
+            if (!IsSetUp || State != RaceState.Results || !ExternalStartRules.MayRetryOrLeave(ExternalStartOnly))
             {
                 return;
             }
             EndPause();
             StopSlowMotion();
             ClearRunForNewStart();
-            LastLapWasRecord = false;
-            HasSplitDelta = false;
-            HintText = "";
-            HintVisibleUntil = 0f;
-            waitingCoachHint = CoachHint.None;
-            runStats.Reset();
+            ForgetAttempt();
             stateMachine.BackToReady();
             kart.InputEnabled = false;
             // Everyone who resets on Retry (grid, items, ghost, leaderboard form, camera, finish autopilot) resets
@@ -599,14 +702,23 @@ namespace CarcavelosCircuit.RaceFlow
             timer.Stop(Time.timeAsDouble);
             float lapTime = timer.ElapsedSeconds;
             PreviousBestSeconds = personalBest.BestSeconds;
-            LastLapWasRecord = personalBest.FinishRun(lapTime);
             PreviousBestMedal = personalBest.BestMedal;
             LastMedal = MedalRules.For(lapTime, medalThresholds);
-            bool medalImproved = personalBest.NoteMedal(LastMedal); // can differ from a record only after a re-tune
-            if (LastLapWasRecord || medalImproved)
+            // Online laps (bumped, held up by others) never replace the time trial record or its medal: the card
+            // shows the medal this lap is worth, but nothing is kept (RaceModeRules.KeepsRecords).
+            if (RaceModeRules.KeepsRecords(Mode))
             {
-                PlayerPrefs.SetString(saveKey, personalBest.ToSaveString());
-                PlayerPrefs.Save(); // in a Web build this writes to the browser right away
+                LastLapWasRecord = personalBest.FinishRun(lapTime);
+                bool medalImproved = personalBest.NoteMedal(LastMedal); // can differ from a record only after a re-tune
+                if (LastLapWasRecord || medalImproved)
+                {
+                    PlayerPrefs.SetString(saveKey, personalBest.ToSaveString());
+                    PlayerPrefs.Save(); // in a Web build this writes to the browser right away
+                }
+            }
+            else
+            {
+                LastLapWasRecord = false;
             }
             // The finish slow motion (task P6b) starts in the same physics step as the official time, which is
             // already taken, so slowing the game can never change the lap time.

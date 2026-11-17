@@ -104,7 +104,8 @@ namespace CarcavelosCircuit.RaceFlow
                 Load();
                 needsLoad = false;
             }
-            if (ghost == null)
+            // No ghost to show, or an online race (M2): the real people are on the road (RaceModeRules.HasGhost).
+            if (ghost == null || !RaceModeRules.HasGhost(raceManager.Mode))
             {
                 ShowAlpha(0f);
                 return;

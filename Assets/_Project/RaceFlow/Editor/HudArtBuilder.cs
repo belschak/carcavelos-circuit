@@ -22,6 +22,12 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         private const string UiFolder = "Assets/_Project/RaceFlow/UI";
         private const string ArtFolder = UiFolder + "/Art";
 
+        // The display face since the realistic menu redesign: Archivo Expanded ExtraBold Italic (SIL OFL 1.1, from the
+        // official Omnibus-Type/Archivo repo), a wide motorsport grotesque about as wide as the old Unbounded Black, so
+        // every layout made for Unbounded still fits.
+        private const string DisplayTtf = UiFolder + "/Fonts/ArchivoExpanded/ArchivoExpanded-ExtraBoldItalic.ttf";
+        private const string DisplayAsset = UiFolder + "/Fonts/ArchivoExpanded/ArchivoExpanded-ExtraBoldItalic-SDF.asset";
+
         // Printable ASCII and Latin-1 (José, Müller), plus the few symbols the HUD writes. The UI face also gets Latin
         // Extended-A (Łukasz, Şahin), because player names in the leaderboard rows use it (PlayerNameRules allows them).
         private static string Characters(bool withExtendedA)
@@ -42,6 +48,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         {
             BuildFont(UiFolder + "/Fonts/Unbounded/Unbounded-Black.ttf", UiFolder + "/Fonts/Unbounded/Unbounded-Black-SDF.asset", 56, 9, false);
             BuildFont(UiFolder + "/Fonts/BarlowCondensed/BarlowCondensed-ExtraBold.ttf", UiFolder + "/Fonts/BarlowCondensed/BarlowCondensed-ExtraBold-SDF.asset", 56, 8, true);
+            BuildFont(DisplayTtf, DisplayAsset, 56, 9, false);
             BuildPlates();
             // A style sheet only finds a picture or font that existed when it was imported: import them again.
             string[] sheets = { "RaceHud.uss", "StartScreen.uss", "Leaderboard.uss", "HudArt.uss", "RaceHudTheme.tss" };
@@ -51,6 +58,25 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             }
             AssetDatabase.SaveAssets();
             Debug.Log("HudArtBuilder: fonts and plates built");
+        }
+
+        // Called by the web build (Role4WebBuild) before anything else: makes the display font asset if it is not in the
+        // project yet, so a fresh checkout without it still builds with the right font. CI uploads the made file, so it
+        // can be committed once (then this does nothing).
+        public static void EnsureDisplayFont()
+        {
+            if (AssetDatabase.LoadAssetAtPath<FontAsset>(DisplayAsset) != null)
+            {
+                return;
+            }
+            BuildFont(DisplayTtf, DisplayAsset, 56, 9, false);
+            string[] sheets = { "HudArt.uss", "RaceHud.uss", "StartScreen.uss", "Leaderboard.uss", "FrontEnd.uss", "RaceHudTheme.tss" };
+            for (int i = 0; i < sheets.Length; i++)
+            {
+                AssetDatabase.ImportAsset(UiFolder + "/" + sheets[i], ImportAssetOptions.ForceUpdate);
+            }
+            AssetDatabase.SaveAssets();
+            Debug.Log("HudArtBuilder: display font asset made for this build");
         }
 
         private static void BuildFont(string ttfPath, string assetPath, int pointSize, int padding, bool withExtendedA)

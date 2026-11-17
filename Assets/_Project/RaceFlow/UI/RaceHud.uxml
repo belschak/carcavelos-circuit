@@ -6,6 +6,7 @@
     <Style src="RaceHud.uss" />
     <Style src="StartScreen.uss" />
     <Style src="Leaderboard.uss" />
+    <Style src="FrontEnd.uss" />
     <ui:VisualElement name="hud-root" class="hud-root st-ready">
 
         <!-- Boost edge glow: orange light on the left and right screen edge while boosting (peripheral vision cue) -->
@@ -142,31 +143,36 @@
         </ui:VisualElement>
         <ui:VisualElement name="go-flash" class="go-flash" />
 
-        <!-- ===== Start screen (state Ready), redesigned for task R11 "Carcavelos Round 3" =====
-             Left: the title lockup. The letters of CARCAVELOS are made in code (UI/TitleScreen.cs) so they can drop in one
-             after another and a light sweep can run over them; with reduced motion they are simply there.
+        <!-- ===== Start screen (state Ready): R11 "Carcavelos Round 3", wordmark since the realistic menu redesign =====
+             Left: the wordmark. Five pictures stacked in one box (UI/Art/Logo, made by tools/ui_art/export_wordmark.py):
+             the orange light streak ("sun"), the thin line ("wave"), the NOVA KART kicker ("badge"), the word CARCAVELOS
+             and CIRCUIT ("ribbon"). They slide in one after another (UI/FrontEnd.uss) and a light sweep runs over the word
+             (UI/TitleScreen.cs: a tinted copy of the word inside a moving band). ROUND 3 sits after CIRCUIT. With reduced
+             motion all is simply there.
              Right: the leaderboard (top 10 of this track), filled in code by LeaderboardHud into "start-board-host".
-             Styles: UI/StartScreen.uss (title) and UI/Leaderboard.uss (board). Element names RaceHud and HudMenus use are unchanged. -->
+             Styles: UI/StartScreen.uss + UI/FrontEnd.uss (title) and UI/Leaderboard.uss (board). Element names RaceHud and
+             HudMenus use are unchanged. -->
         <ui:VisualElement name="start-screen" class="overlay start-screen">
             <ui:VisualElement name="start-bg" class="overlay-bg" />
+            <!-- Realistic redesign: a soft dark fall-off at the bottom too, so the menu reads on the bright noon world -->
+            <ui:VisualElement name="start-shade" class="fe-shade-bottom" picking-mode="Ignore" />
             <ui:VisualElement name="start-layout" class="ts-layout">
                 <ui:VisualElement name="start-content" class="start-content ts-hero">
                     <ui:VisualElement name="title-lockup" class="ts-lockup">
-                        <!-- The game's name in bold above the track's name (Luc, 16 Nov) -->
-                        <ui:Label name="title-brand" text="NOVA KART" class="ts-brand f-display" />
-                        <ui:VisualElement name="title-logo" class="ts-logo">
-                            <ui:VisualElement name="title-letters" class="ts-letters" />
-                            <ui:VisualElement name="title-glint-soft" class="ts-glint ts-glint--soft">
-                                <ui:VisualElement name="title-glint-soft-letters" class="ts-letters ts-letters--glint" />
+                        <ui:VisualElement name="title-logo" class="lg">
+                            <ui:VisualElement name="logo-sun" class="lg-layer lg-sun" />
+                            <ui:VisualElement name="logo-wave" class="lg-layer lg-wave" />
+                            <!-- NOVA KART, the game's name (Luc, 16 Nov), as a badge on top of the sun -->
+                            <ui:VisualElement name="logo-badge" class="lg-layer lg-badge" />
+                            <ui:VisualElement name="logo-word" class="lg-layer lg-word" />
+                            <ui:VisualElement name="title-glint-soft" class="lg-glint lg-glint--soft">
+                                <ui:VisualElement name="title-glint-soft-letters" class="lg-glint-copy" />
                             </ui:VisualElement>
-                            <ui:VisualElement name="title-glint" class="ts-glint">
-                                <ui:VisualElement name="title-glint-letters" class="ts-letters ts-letters--glint" />
+                            <ui:VisualElement name="title-glint" class="lg-glint">
+                                <ui:VisualElement name="title-glint-letters" class="lg-glint-copy" />
                             </ui:VisualElement>
-                        </ui:VisualElement>
-                        <!-- CIRCUIT on a tilted orange plate, and the team's round as a small stamp beside it -->
-                        <ui:VisualElement class="ts-sub-row">
-                            <ui:Label text="CIRCUIT" class="ts-circuit plate plate--orange f-display" />
-                            <ui:Label name="title-slogan" text="ROUND 3" class="ts-slogan chip f-display" />
+                            <ui:VisualElement name="logo-ribbon" class="lg-layer lg-ribbon" />
+                            <ui:Label name="title-slogan" text="ROUND 3" class="ts-slogan lg-stamp chip f-display" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:Label name="press-any-key" text="PRESS ANY KEY" class="pill plate plate--orange ts-prompt f-display intro intro--4" />
@@ -348,6 +354,7 @@
                 <ui:VisualElement class="credits-pages">
                     <!-- Page 1: the team, names and roles as in docs/team.md -->
                     <ui:VisualElement name="credits-page-1" class="credits-page">
+                        <ui:VisualElement class="credits-logo" />
                         <ui:Label text="THE TEAM" class="credits-head f-ui" />
                         <ui:VisualElement class="credits-team">
                             <ui:VisualElement class="credit-person">
@@ -391,7 +398,7 @@
                         <ui:Label text="Surfers: Microsoft Rocketbox Avatar Library (MIT, © 2020 Microsoft)." class="credit-text f-ui" />
                         <ui:Label text="Route traced over OpenStreetMap. Map data © OpenStreetMap contributors (ODbL)." class="credit-text f-ui" />
                         <ui:Label text="FONTS" class="credits-head credits-head--next f-ui" />
-                        <ui:Label text="Unbounded (The Unbounded Project Authors) and Barlow Condensed (The Barlow Project Authors), SIL Open Font License 1.1." class="credit-text f-ui" />
+                        <ui:Label text="Archivo Expanded (The Archivo Project Authors), Barlow Condensed (The Barlow Project Authors) and Unbounded (The Unbounded Project Authors), SIL Open Font License 1.1." class="credit-text f-ui" />
                         <ui:Label text="Original game, not affiliated with Nova SBE." class="credits-foot f-ui" />
                     </ui:VisualElement>
                 </ui:VisualElement>

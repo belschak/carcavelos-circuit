@@ -97,6 +97,20 @@ namespace CarcavelosCircuit.RaceFlow
             return true;
         }
 
+        // Any state -> Ready, for the online rematch and for leaving an online room mid-race (RaceManager.
+        // ResetToReadyExternal). Returns false when already Ready (then no StateChanged fires).
+        public bool ResetToReady()
+        {
+            if (State == RaceState.Ready)
+            {
+                return false;
+            }
+            CountdownNumber = 0;
+            countdownSecondsLeft = 0f;
+            SetState(RaceState.Ready);
+            return true;
+        }
+
         private void SetState(RaceState newState)
         {
             State = newState;

@@ -9,12 +9,14 @@ namespace CarcavelosCircuit.RaceFlow
     // Slot 0 = box 1 = front row left, slot 1 = box 2 = front row right, slot 2 = box 3 = second row left, and so on.
     // The front row is centred on the SpawnPoint (the SpawnPoint itself is the free middle between boxes 1 and 2).
     // Numbers in RaceSettings (docs/interfaces.md: 2 m sideways, 3 m back per row).
+    // Slots 10 .. 14 (online rooms of 15) have no box: a middle column between the box columns (see MiddleSlots).
     // KEEP IN SYNC: tools/world_gen/start_plan.py slot_offset() is the same formula in Python; the generator paints
     // the boxes with it. Change one, change the other (RacerGridTests.SlotOffsets_AreTheTableTheGeneratorPaints).
     // Who stands where:
     // - Bots take the slots from the front: 0, 1, 2 ... A bot keeps its slot for the whole session, so Retry always
     //   puts it back on the same spot. A freed slot (a bot left) goes to the next bot that needs one, lowest first.
     // - The player always starts LAST, in the slot right behind the last bot. Alone (time trial) that is slot 0.
+    // - Online (M2, no bots) PlayerSlotOverride puts the player on the slot the room gave it instead.
     public class RacerGrid
     {
         private readonly float sidewaysMetres;
@@ -22,6 +24,10 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly List<IRacer> racers = new List<IRacer>(); // racers[i] holds slots[i]
         private readonly List<int> slots = new List<int>();
         private const int NoStoredSlot = -1; // the player's entry in slots (see SlotOf)
+        private int playerSlotOverride = NoOverride;
+
+        // PlayerSlotOverride value for "no override".
+        public const int NoOverride = -1;
 
         public RacerGrid(float sidewaysMetres, float rowMetres)
         {
@@ -42,6 +48,16 @@ namespace CarcavelosCircuit.RaceFlow
             return OffsetOf(slot, sidewaysMetres, rowMetres);
         }
 
+        // The ten boxes painted on the start plaza (start_plan.py SLOTS): slots 0 .. 9, pairs side by side.
+        public const int PaintedSlots = 10;
+
+        // Online rooms hold 15 players (OnlineRooms.MaxPlayers), five more than the boxes. The straight behind the
+        // SpawnPoint ends about 13 m back (the last box row is 12 m back), then the U-turn starts. So the five extra
+        // slots do not go further back: they stand in a middle column on the SpawnPoint's line, between the two box
+        // columns, half a row behind each box row (1.5, 4.5, 7.5, 10.5, 13.5 m back with 3 m rows). Nothing is
+        // painted there. With 2 m sideways a 1.4 m kart in the middle keeps 0.6 m to the karts left and right.
+        public const int MiddleSlots = 5;
+
         // The one grid formula (mirrored by start_plan.py slot_offset, see the note at the top).
         public static Vector3 OffsetOf(int slot, float sidewaysMetres, float rowMetres)
         {
@@ -49,7 +65,16 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 slot = 0;
             }
-            int row = slot / 2;                    // 0,1 -> front row; 2,3 -> second row ...
+            if (slot >= PaintedSlots && slot < PaintedSlots + MiddleSlots)
+            {
+                int middle = slot - PaintedSlots;  // 0 = just behind the front row ... 4 = just behind the last box row
+                return new Vector3(0f, 0f, -(middle + 0.5f) * rowMetres);
+            }
+            if (slot >= PaintedSlots + MiddleSlots)
+            {
+                slot -= MiddleSlots;  // 16 or more racers (never today): pairs again, behind the last box row
+            }
+            int row = slot / 2;                   // 0,1 -> front row; 2,3 -> second row ...
             float side = slot % 2 == 0 ? -1f : 1f; // even slot (odd box number) = left, odd slot = right
             return new Vector3(side * sidewaysMetres, 0f, -row * rowMetres);
         }
@@ -73,11 +98,24 @@ namespace CarcavelosCircuit.RaceFlow
             return racer.IsPlayer ? PlayerSlot : slots[i];
         }
 
-        // Where the player starts: behind every bot (highest bot slot + 1), or TimeTrialSlot if there is no bot.
+        // Online (M2): the player's grid slot is the index in the room's roster, the same on every screen.
+        // -1 (or any negative number) = off: the player goes behind the bots as usual.
+        public int PlayerSlotOverride
+        {
+            get { return playerSlotOverride; }
+            set { playerSlotOverride = value < 0 ? NoOverride : value; }
+        }
+
+        // Where the player starts: the override if one is set, else behind every bot (highest bot slot + 1),
+        // or TimeTrialSlot if there is no bot.
         public int PlayerSlot
         {
             get
             {
+                if (playerSlotOverride >= 0)
+                {
+                    return playerSlotOverride;
+                }
                 int last = TimeTrialSlot - 1;
                 for (int i = 0; i < slots.Count; i++)
                 {
