@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 9ab75ad4087044fbb3c1beaa8dedb54b
+guid: 01447a3ae1d84406aecc912a858efd0c
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Lilita One
+  - Archivo Expanded
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

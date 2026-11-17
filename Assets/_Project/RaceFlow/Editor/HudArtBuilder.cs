@@ -22,10 +22,11 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         private const string UiFolder = "Assets/_Project/RaceFlow/UI";
         private const string ArtFolder = UiFolder + "/Art";
 
-        // The display face since the "Postcard" menu redesign: Lilita One (SIL OFL 1.1), a round cartoon face that
-        // matches the team's cartoon art style better than the wide Unbounded.
-        private const string DisplayTtf = UiFolder + "/Fonts/LilitaOne/LilitaOne-Regular.ttf";
-        private const string DisplayAsset = UiFolder + "/Fonts/LilitaOne/LilitaOne-Regular-SDF.asset";
+        // The display face since the realistic menu redesign: Archivo Expanded ExtraBold Italic (SIL OFL 1.1, from the
+        // official Omnibus-Type/Archivo repo), a wide motorsport grotesque about as wide as the old Unbounded Black, so
+        // every layout made for Unbounded still fits.
+        private const string DisplayTtf = UiFolder + "/Fonts/ArchivoExpanded/ArchivoExpanded-ExtraBoldItalic.ttf";
+        private const string DisplayAsset = UiFolder + "/Fonts/ArchivoExpanded/ArchivoExpanded-ExtraBoldItalic-SDF.asset";
 
         // Printable ASCII and Latin-1 (José, Müller), plus the few symbols the HUD writes. The UI face also gets Latin
         // Extended-A (Łukasz, Şahin), because player names in the leaderboard rows use it (PlayerNameRules allows them).
@@ -69,7 +70,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 return;
             }
             BuildFont(DisplayTtf, DisplayAsset, 56, 9, false);
-            string[] sheets = { "HudArt.uss", "RaceHud.uss", "StartScreen.uss", "Leaderboard.uss", "RaceHudTheme.tss" };
+            string[] sheets = { "HudArt.uss", "RaceHud.uss", "StartScreen.uss", "Leaderboard.uss", "FrontEnd.uss", "RaceHudTheme.tss" };
             for (int i = 0; i < sheets.Length; i++)
             {
                 AssetDatabase.ImportAsset(UiFolder + "/" + sheets[i], ImportAssetOptions.ForceUpdate);

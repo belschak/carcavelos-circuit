@@ -1,0 +1,479 @@
+/* "Golden Hour": the realistic menu redesign (Role 4, 2026-11-17). Loaded LAST in RaceHud.uxml, so for the same selector
+   these rules win over RaceHud.uss, StartScreen.uss and Leaderboard.uss. The game world is near-photoreal now, so the
+   menus step back like in modern racing games: the live 3D world stays the hero, a cinematic dark fall-off on the left
+   and at the bottom, a calm wide wordmark, smoked-glass panels with a hairline edge, warm white text and ONE accent,
+   Carcavelos sunset orange (main actions, the selected entry, small tabs).
+   Plates: tools/ui_art/make_frontend_plates.py (same sizes and 9-slice cuts as UI/HudArt.uss, so the HUD keeps its
+   layout). Wordmark: tools/ui_art/export_wordmark.py (prints the .lg-* boxes below). Display face: Archivo Expanded
+   (UI/HudArt.uss .f-display). */
+
+:root {
+    --fe-accent: #FF6B2C;
+    --fe-text: #F6F2EA;
+    --fe-muted: rgba(246, 242, 234, 0.66);
+    --fe-hair: rgba(255, 255, 255, 0.16);
+}
+
+/* ---------- Cinematic light over the live world (start screen) ---------- */
+#start-bg {
+    background-color: rgba(0, 0, 0, 0);
+    background-image: url("Art/shade-left.png");
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.fe-shade-bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 46%;
+    background-image: url("Art/shade-bottom.png");
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+/* ---------- Wordmark: five pictures in one 600 x 200 box (boxes printed by export_wordmark.py) ---------- */
+.lg {
+    position: relative;
+    width: 600px;
+    height: 200px;
+    margin-left: 0;
+}
+
+.lg-layer {
+    position: absolute;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.lg-badge { left: 0.167%; top: 6.25%; width: 32.667%; height: 14%; background-image: url("Art/Logo/logo-badge.png"); }
+.lg-word { left: 0; top: 17.5%; width: 100%; height: 40%; background-image: url("Art/Logo/logo-word.png"); }
+.lg-sun { left: 0.583%; top: 64.5%; width: 40.333%; height: 5%; background-image: url("Art/Logo/logo-sun.png"); }
+.lg-ribbon { left: 0; top: 72.5%; width: 32%; height: 17%; background-image: url("Art/Logo/logo-ribbon.png"); }
+.lg-wave { left: 50%; top: 79.25%; width: 50%; height: 3%; background-image: url("Art/Logo/logo-wave.png"); }
+
+/* Reveal: every part slides in from the left and fades up, one after another (calm ease-out, no bounce). The streak
+   grows out of the left edge like a light trail. */
+.lg-badge,
+.lg-word,
+.lg-ribbon,
+.lg-wave {
+    opacity: 0;
+    translate: -36px 0;
+    transition-property: opacity, translate;
+    transition-duration: 420ms, 620ms;
+    transition-timing-function: ease-out, ease-out-cubic;
+}
+
+.lg-badge { transition-delay: 60ms; }
+.lg-word { transition-delay: 180ms; }
+.lg-ribbon { transition-delay: 460ms; }
+.lg-wave { transition-delay: 560ms; }
+
+.lg-sun {
+    opacity: 0;
+    scale: 0 1;
+    transform-origin: left;
+    transition-property: opacity, scale;
+    transition-duration: 300ms, 700ms;
+    transition-timing-function: ease-out, ease-out-cubic;
+    transition-delay: 360ms;
+}
+
+.intro-in .lg-sun,
+.intro-in .lg-wave,
+.intro-in .lg-word,
+.intro-in .lg-badge,
+.intro-in .lg-ribbon {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1 1;
+}
+
+/* The light sweep (UI/TitleScreen.cs moves the bands): a warm sunset-tinted copy of the word inside each band. */
+.lg-glint {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 44px;
+    overflow: hidden;
+    opacity: 0;
+}
+
+.lg-glint--soft {
+    width: 150px;
+}
+
+.lg-glint--on {
+    opacity: 1;
+}
+
+.lg-glint-copy {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 600px;
+    height: 200px;
+}
+
+/* Three classes: beats ".intro-in .lg-word", the copy never animates, it is always in place. */
+.lg .lg-glint-copy .lg-word {
+    opacity: 1;
+    translate: 0 0;
+    transition-duration: 0s;
+    -unity-background-image-tint-color: rgb(255, 176, 120);
+}
+
+.lg .lg-glint--soft .lg-glint-copy .lg-word {
+    -unity-background-image-tint-color: rgba(255, 214, 176, 0.75);
+}
+
+/* ROUND 3: a small outlined tag after CIRCUIT. */
+.start-screen .lg-stamp {
+    position: absolute;
+    left: 34%;
+    top: 73%;
+    right: auto;
+    bottom: auto;
+    margin-left: 0;
+    height: 22px;
+    padding: 0 9px;
+    background-image: none;
+    border-width: 1px;
+    border-color: rgba(246, 242, 234, 0.55);
+    border-radius: 3px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--fe-text);
+    -unity-text-align: middle-center;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    rotate: 0deg;
+    scale: 1 1;
+    translate: -20px 0;
+    transition-property: opacity, translate;
+    transition-duration: 400ms, 600ms;
+    transition-timing-function: ease-out, ease-out-cubic;
+    transition-delay: 640ms;
+}
+
+.intro-in .lg-stamp {
+    translate: 0 0;
+}
+
+/* ---------- Start screen layout ---------- */
+.start-screen .ts-layout {
+    padding: 34px 56px 92px 72px;
+}
+
+.start-screen .ts-hero {
+    align-items: flex-start;
+    max-width: 700px;
+}
+
+/* PRESS ANY KEY: the one solid sunset-orange button, wide words in warm white. */
+.start-screen .ts-prompt {
+    margin-top: 30px;
+    margin-left: 0;
+    height: 58px;
+    padding: 0 42px 6px 42px;
+    font-size: 19px;
+    letter-spacing: 3px;
+    color: #FFFFFF;
+    -unity-text-outline-width: 0;
+    text-shadow: 0 1px 3px rgba(120, 30, 0, 0.45);
+}
+
+.start-screen .ts-best {
+    margin-top: 12px;
+    margin-left: 0;
+    background-image: url("Art/plate-navy-chip.png");
+    color: var(--fe-text);
+}
+
+.start-screen .ts-menu {
+    margin-top: 14px;
+    justify-content: flex-start;
+}
+
+/* ---------- Plates of every menu (the pictures themselves are the realistic plates) ---------- */
+.menu-card.plate,
+.card.plate,
+.lb.plate,
+.menu-pill.plate {
+    background-image: url("Art/plate-navy.png");
+}
+
+.plate--orange,
+.menu-pill.plate.plate--orange {
+    background-image: url("Art/plate-orange.png");
+}
+
+/* The room that ENTER joins in the online lobby, and any other selected entry: glass with an orange edge. */
+.menu-pill.plate.plate--blue {
+    background-image: url("Art/plate-select.png");
+}
+
+.menu-pill {
+    transition-property: scale, translate;
+    transition-duration: 180ms, 80ms;
+    transition-timing-function: ease-out-cubic, ease-out;
+}
+
+.menu-pill:hover {
+    scale: 1.03 1.03;
+}
+
+.menu-pill:hover:active {
+    scale: 0.98 0.98;
+    translate: 0 1px;
+}
+
+.menu-pill-text {
+    color: var(--fe-text);
+    letter-spacing: 2px;
+}
+
+.menu-pill--muted .menu-pill-text {
+    color: var(--fe-accent);
+}
+
+/* Keys: small dark glass keys with a hairline edge (also in the HUD's key hints). */
+.keycap {
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.09);
+    border-width: 1px;
+    border-bottom-width: 1px;
+    border-color: rgba(255, 255, 255, 0.34);
+    border-bottom-color: rgba(255, 255, 255, 0.22);
+}
+
+.keycap > Label {
+    color: var(--fe-text);
+}
+
+.key-text {
+    color: var(--fe-muted);
+    letter-spacing: 2px;
+}
+
+/* ---------- Menu cards (settings, credits, lobby): a title with a thin orange underline, no ribbon ---------- */
+.menu-title {
+    background-image: none;
+    padding: 0 0 8px 0;
+    border-bottom-width: 3px;
+    border-bottom-color: var(--fe-accent);
+    font-size: 26px;
+    letter-spacing: 2px;
+    color: var(--fe-text);
+    -unity-text-outline-width: 0;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    rotate: 0deg;
+}
+
+.menu-card {
+    padding-top: 26px;
+}
+
+.menu-card .wave-host {
+    display: none;
+}
+
+/* The world behind a menu: darkened, not tinted, so the photo-real map still shows through. */
+.menu-bg {
+    background-color: rgba(4, 6, 10, 0.62);
+}
+
+.azulejo {
+    display: none;
+}
+
+/* ---------- Results, pause ---------- */
+.res-headline {
+    font-size: 60px;
+    letter-spacing: 4px;
+    -unity-text-outline-width: 0;
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+    rotate: 0deg;
+}
+
+.retry-button {
+    color: #FFFFFF;
+    -unity-text-outline-width: 0;
+    text-shadow: 0 1px 3px rgba(120, 30, 0, 0.45);
+}
+
+.pause-title {
+    font-size: 84px;
+    letter-spacing: 10px;
+    -unity-text-outline-width: 0;
+    text-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+    rotate: 0deg;
+}
+
+/* ---------- Leaderboard: glass, a light header, quiet rows ---------- */
+.lb-head {
+    background-image: url("Art/plate-blue.png");
+}
+
+.lb-gem {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    border-width: 0;
+    background-color: var(--fe-accent);
+    margin: 0 14px 0 8px;
+}
+
+.lb-title {
+    font-size: 17px;
+    letter-spacing: 2px;
+    color: var(--fe-text);
+    -unity-text-outline-width: 0;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.lb-sub {
+    color: var(--fe-muted);
+    letter-spacing: 2px;
+}
+
+.lb-row {
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.lb-row--alt {
+    background-color: rgba(255, 255, 255, 0.025);
+}
+
+.lb-rank {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.28);
+}
+
+/* ---------- "On the track" lower third (UI/TitleScreen.cs): the map's sights, one at a time, bottom right ---------- */
+.pc {
+    position: absolute;
+    right: 56px;
+    bottom: 22px;
+    width: 380px;
+    height: 62px;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 16px 6px 0;
+    background-image: url("Art/plate-navy.png");
+    -unity-slice-left: 36;
+    -unity-slice-right: 36;
+    -unity-slice-top: 36;
+    -unity-slice-bottom: 48;
+    -unity-slice-scale: 0.5px;
+    rotate: 0deg;
+    opacity: 0;
+    translate: 40px 0;
+    transition-property: opacity, translate;
+    transition-duration: 300ms, 500ms;
+    transition-timing-function: ease-out, ease-out-cubic;
+    transition-delay: 1500ms;
+}
+
+.intro-in .pc {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.intro-in .pc--out {
+    opacity: 0;
+    translate: 12px 0;
+    transition-delay: 0s;
+    transition-duration: 200ms, 200ms;
+}
+
+.pc-stamp {
+    width: 4px;
+    height: 34px;
+    margin: 0 14px 0 14px;
+    background-image: none;
+    background-color: var(--fe-accent);
+    border-radius: 1px;
+    rotate: 0deg;
+}
+
+.pc--alt .pc-stamp {
+    background-image: none;
+    background-color: var(--fe-accent);
+    rotate: 0deg;
+}
+
+.pc-words {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.pc-kicker {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--fe-accent);
+}
+
+.pc-title {
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: var(--fe-text);
+    -unity-text-outline-width: 0;
+    text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    margin-top: 1px;
+}
+
+.pc-text {
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    color: var(--fe-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hud--narrow .pc {
+    right: 24px;
+    width: 300px;
+}
+
+.reduce-motion .pc {
+    transition-duration: 0s;
+    transition-delay: 0s;
+}
+
+/* Credits page 1: the wordmark on top, the team in the middle of the page. */
+#credits-page-1 {
+    justify-content: center;
+}
+
+.credits-logo {
+    width: 360px;
+    height: 48px;
+    margin-bottom: 16px;
+    background-image: url("Art/Logo/logo-word.png");
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* ---------- Narrow windows (4:3) and reduced motion ---------- */
+.hud--narrow .lg {
+    width: 500px;
+    height: 167px;
+}
+
+.hud--narrow .lg-glint-copy {
+    width: 500px;
+    height: 167px;
+}
+
+.reduce-motion .lg-layer,
+.reduce-motion .intro-in .lg-layer,
+.reduce-motion .lg-stamp {
+    transition-duration: 0s;
+    transition-delay: 0s;
+}
+
+.reduce-motion .lg-glint {
+    display: none;
+}
