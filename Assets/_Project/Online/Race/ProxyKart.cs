@@ -26,6 +26,7 @@ namespace CarcavelosCircuit.Online
 
         public int PlayerId { get; private set; }
         public int PoseCount { get { return buffer.Count; } }
+        public double NewestPoseTime { get { return buffer.NewestTime; } } // shared clock of the newest pose, -1 = none
         public bool HasPose { get { return hasShown; } } // false until the first pose could be drawn
 
         // ---- IKartState (read by the model, the name tag and the standings) ----

@@ -56,6 +56,15 @@ namespace CarcavelosCircuit.Online
         private double autoStartReachedAt = -1.0;
         private bool runInBackgroundBefore;
         private TimeOfDay lightBefore = TimeOfDay.Noon; // the player's own light, back on leave (the room only borrows it)
+        // CCNET test lines (OnlineTestLog): what this screen already reported.
+        private string myName = "";
+        private bool joinLogged;
+        private bool masterLogged;
+        private int resultLoggedRace;
+        private RaceState lastLoggedState = RaceState.Ready;
+        private float nextStatAt;
+        private readonly ProxySmoothness statSmooth = new ProxySmoothness(); // since the last STAT line
+        private readonly ProxySmoothness raceSmooth = new ProxySmoothness(); // during the current race
 
         public static OnlineRaceDirector Current { get { return current; } }
         public IOnlineSession Session { get { return session; } }
@@ -195,16 +204,19 @@ namespace CarcavelosCircuit.Online
                 case OnlineStatus.Connecting:
                     if (Time.unscaledTime - connectStartedAt > ConnectTimeoutSeconds)
                     {
+                        OnlineTestLog.Write("STATUS timeout room=" + OnlineTestLog.Room(room));
                         DropSession();
                         ShowMessage("COULD NOT CONNECT, CHECK THE WI-FI AND TRY AGAIN");
                     }
                     break;
                 case OnlineStatus.Full:
+                    OnlineTestLog.Write("STATUS full room=" + OnlineTestLog.Room(room));
                     DropSession();
                     ShowMessage(OnlineRooms.FullMessage(room));
                     break;
                 case OnlineStatus.Failed:
                     string why = session.FailReason ?? "";
+                    OnlineTestLog.Write("STATUS failed room=" + OnlineTestLog.Room(room) + " reason=" + OnlineTestLog.Clean(why));
                     DropSession();
                     ShowMessage(why.Length > 0 ? "CONNECTION FAILED: " + why : "CONNECTION FAILED");
                     break;
@@ -301,6 +313,62 @@ namespace CarcavelosCircuit.Online
             UpdatePlace(control);
             UpdateMaster(control);
             UpdateView(control);
+            LogForTests(control, now);
+        }
+
+        // The CCNET lines (OnlineTestLog): joined, host, GO (how far off the shared StartAt), results once per race,
+        // and every 10 s how smooth the other karts are. A test script compares these lines across all clients.
+        private void LogForTests(RaceControl control, double now)
+        {
+            if (!joinLogged)
+            {
+                joinLogged = true;
+                OnlineTestLog.Write("JOIN room=" + OnlineTestLog.Room(room) + " name=" + OnlineTestLog.Clean(myName) + " id=" + session.LocalId
+                    + " players=" + session.Players.Count + " transport=" + transportName);
+            }
+            if (session.IsMaster && !masterLogged)
+            {
+                OnlineTestLog.Write("HOST room=" + OnlineTestLog.Room(room) + " id=" + session.LocalId + " players=" + session.Players.Count);
+            }
+            masterLogged = session.IsMaster;
+
+            RaceState state = raceManager.State;
+            if (state == RaceState.Racing && lastLoggedState != RaceState.Racing && inRace && control.RaceId > 0)
+            {
+                OnlineTestLog.Write("GO room=" + OnlineTestLog.Room(room) + " race=" + control.RaceId
+                    + " skew_ms=" + OnlineTestLog.Num((now - control.StartAt) * 1000.0, 0));
+            }
+            lastLoggedState = state;
+
+            bool racing = control.RaceId > 0 && (state == RaceState.Countdown || state == RaceState.Racing || state == RaceState.Results);
+            foreach (KeyValuePair<int, ProxyKart> pair in proxies)
+            {
+                ProxyKart proxy = pair.Value;
+                if (proxy == null || !proxy.HasPose || !control.Contains(pair.Key))
+                {
+                    continue;
+                }
+                statSmooth.Add(proxy.NewestPoseTime, now);
+                if (racing)
+                {
+                    raceSmooth.Add(proxy.NewestPoseTime, now);
+                }
+            }
+
+            if (control.RaceId > 0 && control.RaceId == appliedRaceId && resultLoggedRace != control.RaceId && FinishOrderRules.AllDone(rows))
+            {
+                resultLoggedRace = control.RaceId;
+                OnlineTestLog.Write(OnlineTestLog.Result(room, control.RaceId, myName, rows) + " in=" + (inRace ? 1 : 0) + " " + raceSmooth.Line());
+            }
+
+            if (Time.unscaledTime >= nextStatAt)
+            {
+                nextStatAt = Time.unscaledTime + OnlineTestLog.StatEverySeconds;
+                OnlineTestLog.Write("STAT room=" + OnlineTestLog.Room(room) + " players=" + session.Players.Count + " proxies=" + proxies.Count
+                    + " race=" + control.RaceId + " state=" + state + " fps=" + OnlineTestLog.Num(1.0 / Mathf.Max(Time.smoothDeltaTime, 0.0001f), 0)
+                    + " " + statSmooth.Line());
+                statSmooth.Reset();
+            }
         }
 
         // A new race id = everyone back on the grid in Ready, my slot from the roster; then the countdown at the
@@ -313,6 +381,12 @@ namespace CarcavelosCircuit.Online
                 countdownStarted = false;
                 timedOut = false;
                 inRace = control.Contains(session.LocalId);
+                raceSmooth.Reset();
+                if (control.RaceId > 0)
+                {
+                    OnlineTestLog.Write("RACE room=" + OnlineTestLog.Room(room) + " race=" + control.RaceId + " in=" + (inRace ? 1 : 0)
+                        + " slot=" + control.IndexOf(session.LocalId) + " roster=" + control.RosterCount);
+                }
                 autopilot.Stop();
                 if (raceManager.State != RaceState.Ready)
                 {
@@ -549,6 +623,7 @@ namespace CarcavelosCircuit.Online
             if (session != null && session.Status == OnlineStatus.InRoom && inRace && appliedRaceId > 0)
             {
                 session.ReportFinish(appliedRaceId, lapSeconds);
+                OnlineTestLog.Write("FINISH room=" + OnlineTestLog.Room(room) + " race=" + appliedRaceId + " lap=" + OnlineTestLog.Num(lapSeconds, 3));
             }
         }
 
@@ -690,6 +765,14 @@ namespace CarcavelosCircuit.Online
             SettingsStore.SavePlayerName(cleanedName);
             SetPlayerName(cleanedName);
             DropSession();
+            myName = cleanedName;
+            joinLogged = false;
+            masterLogged = false;
+            resultLoggedRace = 0;
+            lastLoggedState = RaceState.Ready;
+            nextStatAt = 0f;
+            statSmooth.Reset();
+            raceSmooth.Reset();
             session = OnlineSessions.Create(transportName);
             if (session == null)
             {
@@ -785,6 +868,10 @@ namespace CarcavelosCircuit.Online
                 return;
             }
             open = false;
+            if (joinLogged)
+            {
+                OnlineTestLog.Write("LEAVE room=" + OnlineTestLog.Room(room));
+            }
             DropSession();
             if (view != null)
             {
