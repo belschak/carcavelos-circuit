@@ -126,8 +126,8 @@ jobs:
         with:
           name: generated-ui-art-${{ github.sha }}
           path: |
-            Assets/_Project/RaceFlow/UI/Fonts/LilitaOne/LilitaOne-Regular-SDF.asset
-            Assets/_Project/RaceFlow/UI/Fonts/LilitaOne/LilitaOne-Regular-SDF.asset.meta
+            Assets/_Project/RaceFlow/UI/Fonts/ArchivoExpanded/ArchivoExpanded-ExtraBoldItalic-SDF.asset
+            Assets/_Project/RaceFlow/UI/Fonts/ArchivoExpanded/ArchivoExpanded-ExtraBoldItalic-SDF.asset.meta
           if-no-files-found: ignore
           retention-days: 7
 

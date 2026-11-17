@@ -30,7 +30,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             bool gzipForItch = HasArgument("-webHost=itch");
             ApplyWebSettings(gzipForItch);
 
-            // The menus' display font (Lilita One) as an SDF asset, made here if the project does not have it yet.
+            // The menus' display font (Archivo Expanded) as an SDF asset, made here if the project does not have it yet.
             HudArtBuilder.EnsureDisplayFont();
 
             // CI runs only this method, so first rebuild Main.unity and the placeholder kart from what is on main now

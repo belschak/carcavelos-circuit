@@ -3,9 +3,9 @@ using UnityEngine.UIElements;
 
 namespace CarcavelosCircuit.RaceFlow
 {
-    // The title opener on the start screen (task R11, logo since the "Postcard" menu redesign). On the HUD object, next
+    // The title opener on the start screen (task R11, wordmark since the realistic menu redesign). On the HUD object, next
     // to RaceHud. RaceHud still runs the start screen (state class st-ready, "intro-in" a moment after it shows, the
-    // breathing prompt, the best time). This only adds the title show, styled in UI/Postcard.uss:
+    // breathing prompt, the best time). This only adds the title show, styled in UI/FrontEnd.uss:
     // 1. Logo reveal: the five logo pictures (sun, wave, badge, word, ribbon) pop in one after another. Pure USS
     //    (transition delays on ".intro-in .lg-..."), nothing to do here.
     // 2. Light sweep: every few seconds a band of light runs over the word. Trick: a narrow box with overflow: hidden
@@ -80,13 +80,32 @@ namespace CarcavelosCircuit.RaceFlow
             introStart = -1f;
             // Photo mode (?photo=1 in the web page address): no menus and no HUD, only the game world, so we can
             // take clean screenshots of our own map for the key art of the web page and the menus.
-            if (Application.absoluteURL.Contains("photo=1"))
+            photoMode = Application.absoluteURL.Contains("photo=1");
+        }
+
+        private bool photoMode;
+        private float nextPhotoHide;
+
+        // Photo mode hides every UI document (start screen, race HUD, minimap, item slot ...), again every second,
+        // because some HUD parts are made later in the race.
+        private void HideAllUiForPhotos()
+        {
+            if (Time.unscaledTime < nextPhotoHide)
             {
-                root.style.display = DisplayStyle.None;
+                return;
+            }
+            nextPhotoHide = Time.unscaledTime + 1f;
+            UIDocument[] documents = FindObjectsByType<UIDocument>(FindObjectsSortMode.None);
+            for (int i = 0; i < documents.Length; i++)
+            {
+                if (documents[i].rootVisualElement != null)
+                {
+                    documents[i].rootVisualElement.style.display = DisplayStyle.None;
+                }
             }
         }
 
-        // The postcard: a cream card with a stamp, "ON THE TRACK" and the sight (USS: .pc in UI/Postcard.uss).
+        // The "on the track" lower third: an orange tab, "ON THE TRACK" and the sight (USS: .pc in UI/FrontEnd.uss).
         private void AddPostcard()
         {
             if (postcard != null)
@@ -151,6 +170,10 @@ namespace CarcavelosCircuit.RaceFlow
 
         private void Update()
         {
+            if (photoMode)
+            {
+                HideAllUiForPhotos();
+            }
             bool onStart = raceManager.State == RaceState.Ready && startScreen.ClassListContains("intro-in");
             if (!onStart)
             {
