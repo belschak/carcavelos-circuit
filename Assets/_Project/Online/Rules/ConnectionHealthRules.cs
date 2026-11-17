@@ -18,6 +18,7 @@ namespace CarcavelosCircuit.Online
         public const double StaleSeconds = 5.0;
         public const double SustainSeconds = 3.0;
         public const double StaleShare = 0.75;
+        public const double MaxStepSeconds = 0.1;   // one frame counts at most this much (a hitch is not a backed-up line)
 
         // newestAges = for every other player in the room who has sent poses: now - their newest pose time.
         public static bool LooksBackedUp(IReadOnlyList<double> newestAges)
@@ -38,9 +39,13 @@ namespace CarcavelosCircuit.Online
         }
 
         // How long it has looked backed up (pass the previous value; resets to 0 the moment it looks fine).
+        // A frame counts at most MaxStepSeconds: live check 17 Nov, a laptop froze for ~15 s, the first frame after
+        // it saw every kart 15 s old and rejoined at once although fresh poses came in the very next frames. Now
+        // SustainSeconds needs 30+ frames in a row of old data, which only a really backed-up line gives.
         public static double Sustained(double before, bool backedUp, double dt)
         {
-            return backedUp ? before + (dt > 0.0 ? dt : 0.0) : 0.0;
+            double step = dt > 0.0 ? (dt > MaxStepSeconds ? MaxStepSeconds : dt) : 0.0;
+            return backedUp ? before + step : 0.0;
         }
 
         public static bool ShouldReconnect(double sustainedSeconds)

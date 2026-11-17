@@ -54,5 +54,14 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.IsTrue(ConnectionHealthRules.ShouldReconnect(s));
             Assert.AreEqual(0.0, ConnectionHealthRules.Sustained(s, false, 0.1), "one good frame resets it");
         }
+
+        [Test]
+        public void OneLongHitch_IsNotABackedUpLine()
+        {
+            double s = ConnectionHealthRules.Sustained(0.0, true, 15.0); // the laptop froze for 15 s
+            Assert.IsFalse(ConnectionHealthRules.ShouldReconnect(s));
+            s = ConnectionHealthRules.Sustained(s, false, 0.016);        // fresh poses the next frame
+            Assert.AreEqual(0.0, s);
+        }
     }
 }
