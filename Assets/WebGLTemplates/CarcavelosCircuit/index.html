@@ -707,6 +707,36 @@
         });
       })();
 
+      // ---------- Textures the GPU can use as they are ----------
+      // Desktop GPUs read DXT, phone GPUs (iPhone, Android) read ETC2 but no DXT: with the DXT data a phone unpacked every
+      // texture on the CPU (much slower start, 4-8x the memory). Role4WebBuild adds an ETC2 copy of the game data and
+      // stamps its name here. ?cc-tex=etc2 or ?cc-tex=dxt forces one (for testing).
+      var phoneDataFile = "__CC_ETC2_DATA__";
+      function pickDataUrl() {
+        var desktopData = "Build/{{{ DATA_FILENAME }}}";
+        var forced = new URLSearchParams(location.search).get("cc-tex");
+        if (phoneDataFile.indexOf("__") === 0 || forced === "dxt") {
+          return desktopData; // no phone data in this build, or forced
+        }
+        if (forced === "etc2") {
+          return "Build/" + phoneDataFile;
+        }
+        var useEtc2 = false;
+        try {
+          var gl = document.createElement("canvas").getContext("webgl2");
+          if (gl) {
+            useEtc2 = !gl.getExtension("WEBGL_compressed_texture_s3tc") && Boolean(gl.getExtension("WEBGL_compressed_texture_etc"));
+            var lose = gl.getExtension("WEBGL_lose_context");
+            if (lose) {
+              lose.loseContext();
+            }
+          }
+        } catch (e) {
+          // keep the DXT data
+        }
+        return useEtc2 ? "Build/" + phoneDataFile : desktopData;
+      }
+
       // ---------- Start loading the game ----------
       // Phones start the download at once, behind the touch-controls card (it used to wait for a tap on that card).
       var downloadStarted = false;
@@ -727,7 +757,7 @@
         }
         var config = {
           arguments: [],
-          dataUrl: "Build/{{{ DATA_FILENAME }}}",
+          dataUrl: pickDataUrl(),
           frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
 #if USE_WASM
           codeUrl: "Build/{{{ CODE_FILENAME }}}",

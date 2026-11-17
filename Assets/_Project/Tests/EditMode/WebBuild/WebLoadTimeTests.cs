@@ -130,13 +130,21 @@ namespace CarcavelosCircuit.Tests.EditMode
             string html = "<link href=\"TemplateData/style.css\"><img src=\"TemplateData/keyart-1.jpg\">"
                 + "<img src=\"TemplateData/a.png?x=1\"><script src=\"Build/abc.loader.js\"></script>"
                 + "<script>var buildId = \"" + Role4WebBuild.BuildIdPlaceholder + "\";</script>";
-            string stamped = Role4WebBuild.StampHtml(html, "0123456789ab");
+            string stamped = Role4WebBuild.StampHtml(html, "0123456789ab", null);
             StringAssert.Contains("href=\"TemplateData/style.css?v=0123456789ab\"", stamped);
             StringAssert.Contains("src=\"TemplateData/keyart-1.jpg?v=0123456789ab\"", stamped);
             StringAssert.Contains("src=\"TemplateData/a.png?x=1\"", stamped);   // already has a query: left alone
             StringAssert.Contains("src=\"Build/abc.loader.js\"", stamped);      // hashed names need nothing
             StringAssert.Contains("var buildId = \"0123456789ab\"", stamped);
             StringAssert.DoesNotContain(Role4WebBuild.BuildIdPlaceholder, stamped);
+        }
+
+        [Test]
+        public void StampHtml_FillsThePhoneDataName_OnlyWhenThereIsOne()
+        {
+            string html = "var phoneDataFile = \"" + Role4WebBuild.PhoneDataPlaceholder + "\";";
+            StringAssert.Contains("\"0f0f.data\"", Role4WebBuild.StampHtml(html, "id", "0f0f.data"));
+            StringAssert.Contains(Role4WebBuild.PhoneDataPlaceholder, Role4WebBuild.StampHtml(html, "id", null)); // page keeps DXT
         }
 
         [Test]
@@ -191,6 +199,8 @@ namespace CarcavelosCircuit.Tests.EditMode
             StringAssert.Contains("cc-build", html);
             StringAssert.Contains("\"immutable\"", html);
             StringAssert.Contains("startDownload();", html); // phones start the download at once
+            StringAssert.Contains("\"" + Role4WebBuild.PhoneDataPlaceholder + "\"", html); // ETC2 data for phones
+            StringAssert.Contains("dataUrl: pickDataUrl()", html);
         }
     }
 }

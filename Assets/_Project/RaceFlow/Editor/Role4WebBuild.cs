@@ -73,8 +73,14 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                     locationPathName = OutputFolder,
                     target = BuildTarget.WebGL,
                     options = BuildOptions.None, // release build: no development player, no profiler
+                    subtarget = (int)WebGLTextureSubtarget.DXT, // desktop GPUs; phones get their own .data below
                 };
                 report = BuildPipeline.BuildPlayer(options);
+                phoneDataFile = null;
+                if (report.summary.result == BuildResult.Succeeded && !gzipForItch)
+                {
+                    phoneDataFile = AddPhoneData(options);
+                }
             }
             finally
             {
@@ -89,12 +95,67 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 + report.summary.totalTime.TotalMinutes.ToString("0.0") + " min.");
             if (report.summary.result == BuildResult.Succeeded)
             {
-                StampBuildVersion(OutputFolder);
+                StampBuildVersion(OutputFolder, phoneDataFile);
                 LogFileSizes();
             }
             if (Application.isBatchMode && report.summary.result != BuildResult.Succeeded)
             {
                 EditorApplication.Exit(1);
+            }
+        }
+
+        // ---------- Phones: the same game with ETC2 textures (load time, 17 Nov) ----------
+        // Phone GPUs (iPhone, Android) have no DXT, so Unity unpacked every DXT texture on the CPU while loading: measured
+        // +9 s to "Tap to play" and +20 s until the track is there on a 4x slower CPU, and 4-8x the texture memory.
+        // Unity's documented answer (Manual: Web > Texture compression) is a second build with another texture format
+        // whose .data sits next to the first; index.html picks it when the GPU has ETC2 but no DXT. ETC2 can be crunched
+        // like DXT, so the phone download stays the same size. Code files must be byte-identical (same hashed names),
+        // otherwise the phone .data is left out and phones keep the DXT one (a warning in the build log).
+        private const string PhoneFolder = "Build-Web-ETC2";
+        private static string phoneDataFile;
+
+        private static string AddPhoneData(BuildPlayerOptions desktop)
+        {
+            FileUtil.DeleteFileOrDirectory(PhoneFolder);
+            BuildPlayerOptions phone = desktop;
+            phone.locationPathName = PhoneFolder;
+            phone.subtarget = (int)WebGLTextureSubtarget.ETC2;
+            BuildReport report = BuildPipeline.BuildPlayer(phone);
+            try
+            {
+                if (report.summary.result != BuildResult.Succeeded)
+                {
+                    Debug.LogWarning("Role4WebBuild: the ETC2 build for phones failed (" + report.summary.totalErrors + " errors); phones use the DXT data.");
+                    return null;
+                }
+                string desktopBuild = Path.Combine(OutputFolder, "Build");
+                string phoneBuild = Path.Combine(PhoneFolder, "Build");
+                string phoneData = null;
+                foreach (string file in Directory.GetFiles(phoneBuild))
+                {
+                    string name = Path.GetFileName(file);
+                    if (name.EndsWith(".data"))
+                    {
+                        phoneData = name;
+                    }
+                    else if (!File.Exists(Path.Combine(desktopBuild, name)))
+                    {
+                        Debug.LogWarning("Role4WebBuild: the ETC2 build's " + name + " differs from the desktop build; phones use the DXT data.");
+                        return null;
+                    }
+                }
+                if (phoneData == null || File.Exists(Path.Combine(desktopBuild, phoneData)))
+                {
+                    Debug.LogWarning("Role4WebBuild: no separate ETC2 .data was made; phones use the DXT data.");
+                    return null;
+                }
+                File.Copy(Path.Combine(phoneBuild, phoneData), Path.Combine(desktopBuild, phoneData));
+                Debug.Log("Role4WebBuild: ETC2 data for phones added: " + phoneData);
+                return phoneData;
+            }
+            finally
+            {
+                FileUtil.DeleteFileOrDirectory(PhoneFolder);
             }
         }
 
@@ -212,8 +273,9 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         // TemplateData address in index.html and style.css. index.html checks version.json and reloads once when a newer
         // build is out (see "Always the newest build" in the template).
         public const string BuildIdPlaceholder = "__CC_BUILD_ID__";
+        public const string PhoneDataPlaceholder = "__CC_ETC2_DATA__";
 
-        public static void StampBuildVersion(string folder)
+        public static void StampBuildVersion(string folder, string phoneData)
         {
             string indexPath = Path.Combine(folder, "index.html");
             if (!File.Exists(indexPath))
@@ -222,7 +284,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 return;
             }
             string id = BuildId(folder);
-            File.WriteAllText(indexPath, StampHtml(File.ReadAllText(indexPath), id));
+            File.WriteAllText(indexPath, StampHtml(File.ReadAllText(indexPath), id, phoneData));
             string cssPath = Path.Combine(folder, "TemplateData", "style.css");
             if (File.Exists(cssPath))
             {
@@ -271,9 +333,14 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         // url(x), url("x"), url('x') in style.css with a relative address (not data:, http(s):, / or #).
         private static readonly Regex CssUrl = new Regex("(url\\(\\s*[\"']?)(?![\"']|data:|https?:|/|#)([^\"')?#\\s]+)([\"']?\\s*\\))");
 
-        public static string StampHtml(string html, string id)
+        // phoneData: the ETC2 .data file name, or null (the placeholder then stays and the page uses the DXT data).
+        public static string StampHtml(string html, string id, string phoneData)
         {
             html = html.Replace(BuildIdPlaceholder, id);
+            if (!string.IsNullOrEmpty(phoneData))
+            {
+                html = html.Replace(PhoneDataPlaceholder, phoneData);
+            }
             return TemplateDataLink.Replace(html, m => m.Groups[1].Value + m.Groups[2].Value + "?v=" + id + m.Groups[3].Value);
         }
 
@@ -292,9 +359,14 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             {
                 long raw = new FileInfo(file).Length;
                 long gzip = file.EndsWith(".gz") ? raw : GzipSize(file);
-                totalRaw += raw;
-                totalGzip += gzip;
-                Debug.Log("Role4WebBuild file: " + Path.GetFileName(file) + "  " + ToMB(raw) + " MB (gzip " + ToMB(gzip) + " MB)");
+                bool phoneOnly = Path.GetFileName(file) == phoneDataFile;
+                if (!phoneOnly)
+                {
+                    totalRaw += raw; // a visitor downloads either the DXT or the ETC2 data, never both
+                    totalGzip += gzip;
+                }
+                Debug.Log("Role4WebBuild file: " + Path.GetFileName(file) + "  " + ToMB(raw) + " MB (gzip " + ToMB(gzip) + " MB)"
+                    + (phoneOnly ? "  [ETC2, phones only]" : ""));
             }
             Debug.Log("Role4WebBuild size: " + ToMB(totalRaw) + " MB on disk, about " + ToMB(totalGzip) + " MB over the wire (gzip).");
         }
