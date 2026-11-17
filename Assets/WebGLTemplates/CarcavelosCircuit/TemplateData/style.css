@@ -917,6 +917,15 @@ kbd { background: rgba(255, 255, 255, 0.08); color: var(--fe-text); border: 1px 
   #cc-panel-play, #cc-panel-loading { position: absolute; top: 58.5vh; left: max(clamp(24px, 6.5vw, 112px), env(safe-area-inset-left)); margin-top: 0; }
 }
 
+/* ---------- Touch controls and the fullscreen button: the same glass ---------- */
+.cc-touch-button, .cc-touch-pill, .cc-touch-tools #cc-fullscreen, #cc-fullscreen {
+  border: 1px solid rgba(255, 255, 255, 0.34); background: rgba(12, 15, 20, 0.46); color: var(--fe-text);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-family: var(--font-ui); font-weight: 800; letter-spacing: 0.14em; }
+.cc-touch-button { border-radius: 14px; }
+.cc-touch-pill, .cc-touch-tools #cc-fullscreen { border-radius: 8px; }
+#cc-fullscreen { border-radius: 8px; }
+.cc-touch-button.cc-pressed, .cc-touch-pill.cc-pressed { background: rgba(255, 107, 44, 0.82); border-color: var(--fe-accent-hi); }
+
 /* ---------- Phones and small windows: centred column, captions off ---------- */
 @media (max-width: 760px) {
   .cc-center { align-items: center; text-align: center; padding-left: 16px; padding-right: 16px; }
