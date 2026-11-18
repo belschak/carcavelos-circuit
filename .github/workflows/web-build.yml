@@ -64,13 +64,13 @@ jobs:
 
       - name: Check out
         if: env.HAS_LICENSE == 'true'
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # The Photon Fusion 2 SDK for the online race (M2). Its licence forbids publishing it in this public repo,
       # so it lives in a private repo and is copied into Assets/Photon/ (ignored by Git) only for the build.
       - name: Fetch the Photon Fusion SDK (private)
         if: env.HAS_LICENSE == 'true' && env.HAS_PHOTON_SDK == 'true'
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: belschak/carcavelos-photon-sdk
           # The fixed copy (docs/security.md): Fusion 2.1.4 stable + our weaving config, pinned to one commit so a
@@ -87,7 +87,7 @@ jobs:
       # Unity's Library folder (imported assets) makes the next build much faster.
       - name: Cache Library
         if: env.HAS_LICENSE == 'true'
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: Library
           key: Library-WebGL-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
@@ -96,7 +96,7 @@ jobs:
       # Same build code as on a laptop (Carcavelos Circuit > Web Build): every Web setting lives in Role4WebBuild.
       - name: Build
         if: env.HAS_LICENSE == 'true'
-        uses: game-ci/unity-builder@4423ee75828dff56037d1d1cfdac6b68e3a6ba00 # v4.8.2
+        uses: game-ci/unity-builder@eb1b9fba120c6e62c9fb7a7a81d6c107ce004c45 # v6.0.0
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -122,7 +122,7 @@ jobs:
 
       - name: Upload the build
         if: env.HAS_LICENSE == 'true'
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: carcavelos-web-${{ github.sha }}
           path: Build-Web
@@ -133,7 +133,7 @@ jobs:
       # member can download and commit it once. Nothing is uploaded when the file is already in the repo.
       - name: Upload generated UI art
         if: env.HAS_LICENSE == 'true'
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: generated-ui-art-${{ github.sha }}
           path: |
@@ -197,7 +197,7 @@ jobs:
 
       - name: Download the build
         if: env.HAS_MIRROR_KEY == 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: carcavelos-web-${{ github.sha }}
           path: site
