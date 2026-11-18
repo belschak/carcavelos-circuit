@@ -26,7 +26,11 @@ namespace CarcavelosCircuit.RaceFlow
         public const int TyreColumn = 2;
         public const int ColumnCount = 3;
 
-        private const float TileWidth = 150f;
+        public const float TileWidth = 150f;
+        public const float SidePadding = 28f;       // left and right of the builder
+        public const float StageMinWidth = 300f;    // the turntable shrinks first on narrow windows
+        public const float StageGap = 16f;          // between the turntable and the DRIVER column
+        public const float ColumnGap = 10f;         // between the columns
         public const float TileHeight = 92f;        // >= 44 CSS px on an iPhone SE in landscape (375 px high: 0.52 px each)
         private const float TileGap = 8f;
         private const float BadgeSize = 22f;
@@ -145,8 +149,8 @@ namespace CarcavelosCircuit.RaceFlow
             VisualElement body = Row();
             body.style.width = Length.Percent(100f);
             body.style.maxWidth = 1180f;
-            body.style.paddingLeft = 28f;
-            body.style.paddingRight = 28f;
+            body.style.paddingLeft = SidePadding;
+            body.style.paddingRight = SidePadding;
             body.style.alignItems = Align.Stretch;
 
             VisualElement stagePlate = new VisualElement { name = "kart-builder-stage" };
@@ -154,8 +158,8 @@ namespace CarcavelosCircuit.RaceFlow
             stagePlate.AddToClassList("kb-stage");   // UI/FrontEnd.uss: the big glass panel picture
             stagePlate.style.flexGrow = 1f;
             stagePlate.style.flexShrink = 1f;
-            stagePlate.style.minWidth = 300f;
-            stagePlate.style.marginRight = 16f;
+            stagePlate.style.minWidth = StageMinWidth;
+            stagePlate.style.marginRight = StageGap;
             stagePlate.style.overflow = Overflow.Hidden;
             stagePlate.pickingMode = PickingMode.Ignore;
 
@@ -293,7 +297,7 @@ namespace CarcavelosCircuit.RaceFlow
             VisualElement box = new VisualElement { name = "kart-builder-column-" + column };
             box.style.width = TileWidth;
             box.style.flexShrink = 0f;
-            box.style.marginLeft = column == 0 ? 0f : 10f;
+            box.style.marginLeft = column == 0 ? 0f : ColumnGap;
             box.pickingMode = PickingMode.Ignore;
 
             Label head = new Label(ColumnTitles[column]);

@@ -350,13 +350,8 @@
     letter-spacing: 0;
 }
 
-/* The driver select (UI/DriverPicker: 4 cards of 184 px, sizes set in code) is wider than a 4:3 or 5:4 window: the
-   4th card was cut off at 1024x768. Like the mode cards it is drawn smaller from its left edge, so nothing moves
-   relative to the cards and clicks still land on the card that is drawn. */
-.hud--compact #driver-picker {
-    scale: 0.8 0.8;
-    transform-origin: left top;
-}
+/* The kart builder (UI/KartBuilder, 18 Nov) replaced the driver select: its turntable shrinks first (min 300 px), so the
+   three columns fit a 5:4 window at full size (StartScreenFitTests). No rule needed here. */
 
 /* ---------- 5:4 (RaceHud adds hud--boxy below 940 px, so only 900 px wide windows) ----------
    Checked at 1280x1024: the board covered the end of the ONLINE RACE card and the NOON button, and the postcard

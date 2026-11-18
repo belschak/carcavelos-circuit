@@ -48,20 +48,19 @@ namespace CarcavelosCircuit.Tests.EditMode
             StringAssert.Contains(".hud--compact .lb-host--start", uss);
             StringAssert.Contains(".hud--compact .lb-host--start .lb-title", uss);
             StringAssert.Contains(".hud--compact .lb-host--start .lb-source", uss);
-            StringAssert.Contains(".hud--compact #driver-picker", uss);
             StringAssert.Contains(".hud--boxy #mode-picker", uss);
             StringAssert.Contains(".hud--boxy #start-menu", uss);
             StringAssert.Contains(".hud--boxy .ts-footer", uss);
         }
 
         [Test]
-        public void CompactLayout_DriverSelectFitsAtFiveToFour()
+        public void KartBuilder_FitsAtFiveToFour()
         {
-            // UI/DriverPicker: 4 cards of 184 px + 2 x 6 px margin each; ts-layout padding 64 left / 56 right.
-            // Drawn at 80 % from its left edge (StartScreen.uss), so the row must end inside the narrowest compact window.
+            // UI/KartBuilder (18 Nov, replaced the driver select): padding, the turntable at its smallest, three columns.
             const float width = 900f;
-            float rowEnd = 64f + 4f * (184f + 12f) * 0.8f;
-            Assert.Less(rowEnd, width - 56f, "the 4th driver card must stay inside a 5:4 window");
+            float builder = 2f * KartBuilder.SidePadding + KartBuilder.StageMinWidth + KartBuilder.StageGap
+                            + 3f * KartBuilder.TileWidth + 2f * KartBuilder.ColumnGap;
+            Assert.LessOrEqual(builder, width, "the TYRES column must stay inside a 5:4 window");
         }
     }
 }
