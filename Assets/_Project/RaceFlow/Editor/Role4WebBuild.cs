@@ -63,27 +63,54 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             }
 
             BuildSummary report; // a copy: the phone build below destroys the first BuildReport object
+            FogStripping fogBefore = FogStripping.Read();
             try
             {
                 // Hashed file names change every build, so old files would pile up next to the new ones.
                 FileUtil.DeleteFileOrDirectory(OutputFolder);
+                string[] scenes = WebScenes();
+                phoneDataFile = null;
+                worldFiles = null;
+                string worldManifest = null;
+                if (WorldAsOwnFile(scenes, gzipForItch))
+                {
+                    // Fog variants: with "Automatic" Unity keeps only the fog modes of the scenes in the player build. The
+                    // world (exponential fog) is no longer one of them, so the karts and drivers would lose their fog
+                    // variants. Custom = exactly the set the old build had (exponential), for the player and the world.
+                    FogStripping.KeepExponentialOnly();
+                    worldManifest = BuildWorldBundles();
+                    if (worldManifest != null)
+                    {
+                        scenes = PlayerScenes(scenes);
+                    }
+                    else
+                    {
+                        fogBefore.Write(); // no world file: the classic build (world inside the .data), settings as before
+                    }
+                }
                 var options = new BuildPlayerOptions
                 {
-                    scenes = WebScenes(),
+                    scenes = scenes,
                     locationPathName = OutputFolder,
                     target = BuildTarget.WebGL,
                     options = BuildOptions.None, // release build: no development player, no profiler
                     subtarget = (int)WebGLTextureSubtarget.DXT, // desktop GPUs; phones get their own .data below
+                    // Code and engine stripping must also keep what only the world file uses (its components).
+                    assetBundleManifestPath = worldManifest,
                 };
                 report = BuildPipeline.BuildPlayer(options).summary;
-                phoneDataFile = null;
                 if (report.result == BuildResult.Succeeded && !gzipForItch)
                 {
                     phoneDataFile = AddPhoneData(options);
                 }
+                if (report.result == BuildResult.Succeeded && worldManifest != null)
+                {
+                    worldFiles = CopyWorldBundles(phoneDataFile != null);
+                }
             }
             finally
             {
+                fogBefore.Write();
                 LeaderboardBuildConfig.Clear(); // the asset in the repo stays empty
                 OnlineBuildConfig.Clear(); // no App ID file and no CARCAVELOS_FUSION define left behind
                 GraphicsSettings.defaultRenderPipeline = AssetDatabase.LoadAssetAtPath<RenderPipelineAsset>(editorPipelinePath);
@@ -95,6 +122,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 + report.totalTime.TotalMinutes.ToString("0.0") + " min.");
             if (report.result == BuildResult.Succeeded)
             {
+                StampWorld(OutputFolder, worldFiles);
                 StampBuildVersion(OutputFolder, phoneDataFile);
                 LogFileSizes();
             }
@@ -173,6 +201,198 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             finally
             {
                 FileUtil.DeleteFileOrDirectory(PhoneFolder);
+            }
+        }
+
+        // ---------- The campus world as its own file (load time P8, 18 Nov) ----------
+        // The world scene was ~2/3 of the .data (31 of 46 MB over the wire). As an AssetBundle next to the game files
+        // (RaceFlow/WorldStream.cs loads it) the code and menus start while it downloads, and because its name is its
+        // content hash the browser keeps it across deploys that did not change the world. One file per texture format,
+        // like the .data: DXT for desktops, ETC2 for phones; index.html picks the one that fits (window.ccWorldBundleUrl).
+        // -worldInData on the command line builds the old way (world inside the .data), e.g. to compare.
+        public const string WorldDxtPlaceholder = "__CC_WORLD_DXT__";
+        public const string WorldEtc2Placeholder = "__CC_WORLD_ETC2__";
+        public const string WorldSharePlaceholder = "0/*__CC_WORLD_SHARE__*/";
+        private const string WorldBundleFolder = "Build-WorldBundles";
+        private const string WorldBundleName = "world";
+        private static WorldFiles worldFiles;
+
+        public class WorldFiles
+        {
+            public string Dxt;   // file name in Build/, world-<md5>.bundle
+            public string Etc2;  // null when phones use the DXT files (no ETC2 .data either)
+            public float Share;  // the world's part of a desktop download (gzip), for the page's loading bar
+        }
+
+        private static bool WorldAsOwnFile(string[] scenes, bool gzipForItch)
+        {
+            return !gzipForItch && !HasArgument("-worldInData") && Array.IndexOf(scenes, WorldScene) >= 0;
+        }
+
+        // The player build without the world scene (it is in the world file).
+        public static string[] PlayerScenes(string[] webScenes)
+        {
+            var kept = new System.Collections.Generic.List<string>();
+            foreach (string scene in webScenes)
+            {
+                if (scene != WorldScene)
+                {
+                    kept.Add(scene);
+                }
+            }
+            return kept.ToArray();
+        }
+
+        // Both world files; returns the DXT one's manifest (for stripping), or null when either failed (classic build).
+        private static string BuildWorldBundles()
+        {
+            FileUtil.DeleteFileOrDirectory(WorldBundleFolder);
+            WebGLTextureSubtarget before = EditorUserBuildSettings.webGLBuildSubtarget;
+            try
+            {
+                string manifest = BuildWorldBundle(WebGLTextureSubtarget.DXT, "dxt");
+                if (manifest == null || BuildWorldBundle(WebGLTextureSubtarget.ETC2, "etc2") == null)
+                {
+                    Debug.LogWarning("Role4WebBuild: the world file could not be built; the world stays inside the .data.");
+                    return null;
+                }
+                return manifest;
+            }
+            finally
+            {
+                EditorUserBuildSettings.webGLBuildSubtarget = before;
+            }
+        }
+
+        private static string BuildWorldBundle(WebGLTextureSubtarget textures, string folderName)
+        {
+            string folder = Path.Combine(WorldBundleFolder, folderName);
+            Directory.CreateDirectory(folder);
+            EditorUserBuildSettings.webGLBuildSubtarget = textures; // the bundle's texture format follows this setting
+            var bundles = new[] { new AssetBundleBuild { assetBundleName = WorldBundleName, assetNames = new[] { WorldScene } } };
+            // LZ4 chunks: small in memory while open; GitHub Pages gzips it on the way like the .data.
+            AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(folder, bundles,
+                BuildAssetBundleOptions.ChunkBasedCompression | BuildAssetBundleOptions.StrictMode, BuildTarget.WebGL);
+            string file = Path.Combine(folder, WorldBundleName);
+            if (manifest == null || !File.Exists(file))
+            {
+                return null;
+            }
+            Debug.Log("Role4WebBuild: world file (" + folderName + ") " + ToMB(new FileInfo(file).Length) + " MB.");
+            return Path.Combine(folder, folderName + ".manifest"); // the folder's own manifest is named after the folder
+        }
+
+        // Copies the world files into Build/ under their content hash and measures the world's share of the download.
+        private static WorldFiles CopyWorldBundles(bool phonesHaveEtc2Data)
+        {
+            string build = Path.Combine(OutputFolder, "Build");
+            var files = new WorldFiles();
+            files.Dxt = CopyHashed(Path.Combine(WorldBundleFolder, "dxt", WorldBundleName), build);
+            if (phonesHaveEtc2Data)
+            {
+                files.Etc2 = CopyHashed(Path.Combine(WorldBundleFolder, "etc2", WorldBundleName), build);
+            }
+            long world = GzipSize(Path.Combine(build, files.Dxt));
+            long game = 0;
+            foreach (string file in Directory.GetFiles(build))
+            {
+                string name = Path.GetFileName(file);
+                if (!name.StartsWith("world-") && name != phoneDataFile)
+                {
+                    game += GzipSize(file);
+                }
+            }
+            files.Share = world + game > 0 ? (float)world / (world + game) : 0f;
+            return files;
+        }
+
+        private static string CopyHashed(string source, string folder)
+        {
+            string name = WorldFileName(File.ReadAllBytes(source));
+            File.Copy(source, Path.Combine(folder, name), true);
+            return name;
+        }
+
+        public static string WorldFileName(byte[] content)
+        {
+            using (MD5 md5 = MD5.Create())
+            {
+                var name = new StringBuilder("world-");
+                foreach (byte b in md5.ComputeHash(content))
+                {
+                    name.Append(b.ToString("x2"));
+                }
+                return name.Append(".bundle").ToString();
+            }
+        }
+
+        private static void StampWorld(string folder, WorldFiles files)
+        {
+            string indexPath = Path.Combine(folder, "index.html");
+            if (files != null && File.Exists(indexPath))
+            {
+                File.WriteAllText(indexPath, StampWorldHtml(File.ReadAllText(indexPath), files));
+                Debug.Log("Role4WebBuild: world files " + files.Dxt + (files.Etc2 != null ? " + " + files.Etc2 + " (ETC2)" : "")
+                    + ", " + Mathf.RoundToInt(files.Share * 100f) + " % of the download.");
+            }
+        }
+
+        // The world file names and the world's share of the download into the page ("Campus world" in index.html).
+        public static string StampWorldHtml(string html, WorldFiles files)
+        {
+            html = html.Replace(WorldDxtPlaceholder, files.Dxt);
+            if (!string.IsNullOrEmpty(files.Etc2))
+            {
+                html = html.Replace(WorldEtc2Placeholder, files.Etc2);
+            }
+            return html.Replace(WorldSharePlaceholder, files.Share.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        // GraphicsSettings fog stripping, read and written through the settings asset (Unity has no API for it).
+        private struct FogStripping
+        {
+            private int mode;
+            private bool linear;
+            private bool exp;
+            private bool exp2;
+
+            private static SerializedObject Settings()
+            {
+                UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/GraphicsSettings.asset");
+                return assets.Length > 0 ? new SerializedObject(assets[0]) : null;
+            }
+
+            public static FogStripping Read()
+            {
+                var fog = new FogStripping { mode = -1 };
+                SerializedObject settings = Settings();
+                if (settings != null)
+                {
+                    fog.mode = settings.FindProperty("m_FogStripping").intValue;
+                    fog.linear = settings.FindProperty("m_FogKeepLinear").boolValue;
+                    fog.exp = settings.FindProperty("m_FogKeepExp").boolValue;
+                    fog.exp2 = settings.FindProperty("m_FogKeepExp2").boolValue;
+                }
+                return fog;
+            }
+
+            public void Write()
+            {
+                SerializedObject settings = Settings();
+                if (settings == null || mode < 0)
+                {
+                    return;
+                }
+                settings.FindProperty("m_FogStripping").intValue = mode;
+                settings.FindProperty("m_FogKeepLinear").boolValue = linear;
+                settings.FindProperty("m_FogKeepExp").boolValue = exp;
+                settings.FindProperty("m_FogKeepExp2").boolValue = exp2;
+                settings.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            public static void KeepExponentialOnly()
+            {
+                new FogStripping { mode = 1, linear = false, exp = true, exp2 = false }.Write(); // 1 = Custom
             }
         }
 
@@ -372,20 +592,28 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             string[] files = Directory.GetFiles(Path.Combine(OutputFolder, "Build"));
             long totalRaw = 0;
             long totalGzip = 0;
+            long worldGzip = 0;
             foreach (string file in files)
             {
                 long raw = new FileInfo(file).Length;
                 long gzip = file.EndsWith(".gz") ? raw : GzipSize(file);
-                bool phoneOnly = Path.GetFileName(file) == phoneDataFile;
+                string name = Path.GetFileName(file);
+                bool phoneOnly = name == phoneDataFile || (worldFiles != null && name == worldFiles.Etc2);
+                bool world = worldFiles != null && name == worldFiles.Dxt;
+                if (world)
+                {
+                    worldGzip = gzip;
+                }
                 if (!phoneOnly)
                 {
                     totalRaw += raw; // a visitor downloads either the DXT or the ETC2 data, never both
                     totalGzip += gzip;
                 }
                 Debug.Log("Role4WebBuild file: " + Path.GetFileName(file) + "  " + ToMB(raw) + " MB (gzip " + ToMB(gzip) + " MB)"
-                    + (phoneOnly ? "  [ETC2, phones only]" : ""));
+                    + (phoneOnly ? "  [ETC2, phones only]" : "") + (world ? "  [campus world, loads after the game starts]" : ""));
             }
-            Debug.Log("Role4WebBuild size: " + ToMB(totalRaw) + " MB on disk, about " + ToMB(totalGzip) + " MB over the wire (gzip).");
+            Debug.Log("Role4WebBuild size: " + ToMB(totalRaw) + " MB on disk, about " + ToMB(totalGzip) + " MB over the wire (gzip)"
+                + (worldFiles != null ? ": the game " + ToMB(totalGzip - worldGzip) + " MB, then the campus world " + ToMB(worldGzip) + " MB." : "."));
         }
 
         private static long GzipSize(string file)

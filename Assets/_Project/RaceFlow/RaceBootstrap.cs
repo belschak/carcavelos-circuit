@@ -47,6 +47,16 @@ namespace CarcavelosCircuit.RaceFlow
             // ~50 ms slices and is ready sooner; afterwards back to Normal so later loads never stutter the race.
             ThreadPriority loadingPriority = Application.backgroundLoadingPriority;
             Application.backgroundLoadingPriority = ThreadPriority.High;
+
+            // Load time P8 (18 Nov): on the Web the campus world comes as its own file (WorldStream), downloaded now
+            // while the page still shows its loading bar. Nothing happens without that file (Editor, tests).
+            yield return WorldStream.Load();
+            if (WorldStream.Failed)
+            {
+                // Never fall back to the test loop: the page shows its network card with Reload instead.
+                Application.backgroundLoadingPriority = loadingPriority;
+                yield break;
+            }
             for (int i = 0; i < candidates.Length && track == null; i++)
             {
                 yield return LoadSceneIfNeeded(candidates[i]);
@@ -64,10 +74,12 @@ namespace CarcavelosCircuit.RaceFlow
                 }
             }
             Application.backgroundLoadingPriority = loadingPriority;
+            WorldStream.Release(); // the scene is loaded; the downloaded file itself is no longer needed
 
             if (track == null)
             {
                 Debug.LogError("RaceBootstrap: no track to race on. Check the scene names in RaceSettings and File > Build Profiles.");
+                WebPage.SendWorldState(WebPage.WorldFailed, 0f); // a page waiting for the world shows its error card
                 yield break;
             }
             Debug.Log("RaceBootstrap: racing on " + trackScene + ".");
@@ -97,6 +109,9 @@ namespace CarcavelosCircuit.RaceFlow
                 raceManager.Restarted += chaseCamera.SnapBehindTarget;
                 raceManager.Recovered += chaseCamera.SnapBehindTarget; // R or a fall teleports the kart: cut, do not swoop
             }
+
+            // The page keeps its loading screen up until the track is ready when the world was streamed (P8).
+            WebPage.SendWorldState(WebPage.WorldReady, 1f);
         }
 
         // Symmetric to the += above: never leave a listener on the RaceManager.

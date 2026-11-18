@@ -29,5 +29,20 @@ mergeInto(LibraryManager.library, {
     var buffer = _malloc(size);
     stringToUTF8(answer, buffer, size);
     return buffer; // Unity turns this into a C# string and frees the memory
+  },
+
+  // Load time P8 (18 Nov): the address of the campus world file the page picked for this GPU, "" when there is none
+  // (index.html window.ccWorldBundleUrl). C# side: WebPage.WorldBundleUrl, RaceFlow/WorldStream.cs.
+  CarcavelosWorldBundleUrl: function () {
+    var url = typeof window.ccWorldBundleUrl === "string" ? window.ccWorldBundleUrl : "";
+    var size = lengthBytesUTF8(url) + 1;
+    var buffer = _malloc(size);
+    stringToUTF8(url, buffer, size);
+    return buffer;
+  },
+
+  // state: 0 the world is downloading (progress 0 to 1), 1 the track is ready, 2 the world could not be loaded.
+  CarcavelosWorldState: function (state, progress) {
+    window.dispatchEvent(new CustomEvent("cc-world", { detail: { state: state, progress: progress } }));
   }
 });

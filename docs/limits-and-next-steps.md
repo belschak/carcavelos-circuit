@@ -22,7 +22,7 @@ What the game does not do, where it can break, and what we would build next. Eac
 
 ### Game and browser
 - **The short link depends on a mirror step.** `nova-kart.github.io` is a copy that the Web build workflow pushes after each `main` build. If that step fails or its deploy key is missing, the short link keeps the previous build while this repository's own Pages address has the new one (same game, one deploy behind).
-- **Download about 50 MB** (after the lean-build work of 16 and 17 Nov). The first visit on slow Wi-Fi takes time; later visits come from the browser cache.
+- **Download about 50 MB** (after the lean-build work of 16 and 17 Nov). The first visit on slow Wi-Fi takes time (about 2 minutes at 4 Mbit/s); later visits come from the browser cache, and since 18 Nov the campus world (half the download) stays cached across deploys that do not change it. Next step: a menu that works before the world has arrived (the mode and driver menus need the race to be set up first).
 - **WebGL 2 and WebAssembly are required.** Old browsers or switched-off hardware acceleration get an error card that says so, instead of a black screen.
 - **Saved data lives in one browser.** Best laps, ghost and settings are in `PlayerPrefs`; another browser, a private window or clearing site data starts fresh.
 - **Bots do not use items**, and their skill comes from a light rubber band, not from learning.

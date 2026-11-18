@@ -383,15 +383,65 @@
       }
 
       // ---------- Progress: 0 to 0.9 = downloading, 0.9 to 1 = starting the engine ----------
-      function onProgress(progress) {
+      function onProgress(progress, phase) {
         var percent = Math.round(progress * 100);
         fill.style.transform = "scaleX(" + progress + ")";
         kart.style.left = percent + "%";
         loader.style.setProperty("--cc-progress", String(progress)); // the sun rises with the progress (style.css)
         road.setAttribute("aria-valuenow", String(percent));
         percentText.textContent = percent + "%";
-        phaseText.textContent = progress < 0.9 ? "Loading the track" : "Starting the engine";
+        phaseText.textContent = phase || (progress < 0.9 ? "Loading the track" : "Starting the engine");
       }
+
+      // ---------- Campus world as its own file (load time P8, 18 Nov) ----------
+      // Role4WebBuild puts the campus world into its own file (world-<content hash>.bundle) and stamps its name and its
+      // share of the download here. The game files come first, the game starts, then it downloads the world itself
+      // (RaceFlow/WorldStream.cs) and tells us how far it is ("cc-world" events from CarcavelosWebPage.jslib). The bar
+      // runs on through both parts, and "Click to play" waits until the track is ready. The world file is cached for
+      // good (its name changes when the world changes), so a deploy that did not touch the world keeps it.
+      var worldFiles = { dxt: "__CC_WORLD_DXT__", etc2: "__CC_WORLD_ETC2__" };
+      var worldShare = 0/*__CC_WORLD_SHARE__*/;
+      var worldStreamed = worldFiles.dxt.indexOf("__") !== 0;
+      var worldReady = false;
+      var waitingInstance = null; // the game is up, "Click to play" waits for the world
+      var shownProgress = 0;
+
+      function showProgress(progress, phase) {
+        shownProgress = Math.max(shownProgress, Math.min(progress, 1)); // never runs backwards
+        onProgress(shownProgress, phase);
+      }
+
+      // Unity's own progress covers the game files (0 to 0.9 downloading, then starting the engine).
+      function onGameProgress(progress) {
+        if (!worldStreamed) {
+          onProgress(progress);
+          return;
+        }
+        var gamePart = 1 - worldShare;
+        showProgress(Math.min(progress / 0.9, 1) * gamePart, progress < 0.9 ? "Loading the game" : "Starting the engine");
+      }
+
+      window.addEventListener("cc-world", function (event) {
+        if (!worldStreamed || worldReady) {
+          return;
+        }
+        var state = event.detail.state;
+        if (state === 0) {
+          showProgress(1 - worldShare + worldShare * 0.98 * event.detail.progress, "Loading the track");
+        } else if (state === 1) {
+          worldReady = true;
+          if (waitingInstance) {
+            showPlayScreen(waitingInstance);
+          }
+        } else if (state === 2) {
+          showError(
+            "The track did not download",
+            "Check the internet connection, then reload the page.",
+            null,
+            "Could not load the campus world (" + (window.ccWorldBundleUrl || "no address") + ")"
+          );
+        }
+      });
 
       // ---------- After loading: "Click to play" ----------
       // The click lands on this screen, not on the game, so it cannot press a button on the game's start screen by accident.
@@ -399,6 +449,14 @@
       // A key press works too, but it ONLY closes this screen (see closePlayScreen above): the game then shows its own
       // start screen and the next key starts the race.
       function onReady(unityInstance) {
+        if (worldStreamed && !worldReady) {
+          waitingInstance = unityInstance; // the "cc-world" ready event shows the play screen
+          return;
+        }
+        showPlayScreen(unityInstance);
+      }
+
+      function showPlayScreen(unityInstance) {
         clearInterval(tipTimer);
         onProgress(1);
         loader.classList.add("cc-ready");
@@ -743,13 +801,22 @@
       // stamps its name here. ?cc-tex=etc2 or ?cc-tex=dxt forces one (for testing).
       var phoneDataFile = "__CC_ETC2_DATA__";
       function pickDataUrl() {
-        var desktopData = "Build/{{{ DATA_FILENAME }}}";
+        var useEtc2 = pickEtc2();
+        if (worldStreamed) {
+          // the world file in the same texture format (phones use the DXT world only when there is no ETC2 one)
+          var world = useEtc2 && worldFiles.etc2.indexOf("__") !== 0 ? worldFiles.etc2 : worldFiles.dxt;
+          window.ccWorldBundleUrl = new URL("Build/" + world, location.href).href;
+        }
+        return useEtc2 ? "Build/" + phoneDataFile : "Build/{{{ DATA_FILENAME }}}";
+      }
+
+      function pickEtc2() {
         var forced = new URLSearchParams(location.search).get("cc-tex");
         if (phoneDataFile.indexOf("__") === 0 || forced === "dxt") {
-          return desktopData; // no phone data in this build, or forced
+          return false; // no phone data in this build, or forced
         }
         if (forced === "etc2") {
-          return "Build/" + phoneDataFile;
+          return true;
         }
         var useEtc2 = false;
         try {
@@ -764,7 +831,7 @@
         } catch (e) {
           // keep the DXT data
         }
-        return useEtc2 ? "Build/" + phoneDataFile : desktopData;
+        return useEtc2;
       }
 
       // ---------- Start loading the game ----------
@@ -800,7 +867,8 @@
           // Build files have their content hash in the name (nameFilesAsHashes), so a cached one can never be outdated:
           // a second visit loads the .data straight from the browser cache without asking the server first.
           cacheControl: function (url) {
-            return /(^|\/)Build\/[0-9a-f]{32}\.data$/.test(url) ? "immutable" : "no-store";
+            // The campus world file too (world-<content hash>.bundle, downloaded by the game itself).
+            return /(^|\/)Build\/([0-9a-f]{32}\.data|world-[0-9a-f]{32}\.bundle)$/.test(url) ? "immutable" : "no-store";
           },
           // Sharp on high-DPI laptop screens, but at most 1.5x the window size so the GPU keeps up.
           devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
@@ -810,7 +878,7 @@
         var script = document.createElement("script");
         script.src = "Build/{{{ LOADER_FILENAME }}}";
         script.onload = function () {
-          createUnityInstance(canvas, config, onProgress).then(onReady).catch(showLoadError);
+          createUnityInstance(canvas, config, onGameProgress).then(onReady).catch(showLoadError);
         };
         script.onerror = function () {
           showError(
