@@ -3,19 +3,36 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>{{{ PRODUCT_NAME }}}: seaside campus kart time trial</title>
-    <meta name="description" content="Carcavelos Circuit: race a kart around a seaside campus in Portugal, drift for boosts and beat your best lap. Free browser game, a student project made with Unity.">
+    <title>Nova Kart: Carcavelos Circuit</title>
+    <meta name="description" content="Nova Kart: Carcavelos Circuit. Race a kart around a seaside campus in Portugal: beat five bots, chase your best lap or race your class online. Free browser game, a student project made with Unity.">
     <meta name="theme-color" content="#07090D">
     <meta name="color-scheme" content="dark">
-    <!-- Link previews (WhatsApp, Discord, LinkedIn ...). No og:image: it needs a full https URL of the host, which itch.io and GitHub Pages add themselves. -->
+    <!-- Link previews (WhatsApp, iMessage, Teams, LinkedIn, X, Discord). They need absolute https addresses, so the public
+         address is written ONCE as __CC_SITE_URL__ and filled in by every Web build (RaceFlow/Editor/ShareLinkStamp.cs):
+         on GitHub Actions it comes from the repository's name, so moving the repo to another owner needs no edit here.
+         The card and the icons are made by tools/ui_art/make_brand_icons.py. -->
+    <link rel="canonical" href="__CC_SITE_URL__">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="{{{ PRODUCT_NAME }}}">
-    <meta property="og:title" content="{{{ PRODUCT_NAME }}}: seaside campus kart time trial">
-    <meta property="og:description" content="Drift for boosts and beat your best lap on a seaside campus track. Free in the browser, best on a laptop with a keyboard.">
+    <meta property="og:site_name" content="Nova Kart: Carcavelos Circuit">
+    <meta property="og:title" content="Nova Kart: Carcavelos Circuit">
+    <meta property="og:description" content="Kart racing on a seaside campus in Portugal. Race five bots, beat the clock or race your class online. Free in the browser.">
+    <meta property="og:url" content="__CC_SITE_URL__">
+    <meta property="og:image" content="__CC_SITE_URL__TemplateData/og-card.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Nova Kart: Carcavelos Circuit. Sunset over Carcavelos beach and the campus track, with the game's logo.">
     <meta property="og:locale" content="en_US">
-    <meta name="twitter:card" content="summary">
-    <!-- Favicon: the diamond tile from the HUD countdown (inline SVG, no extra download). -->
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23123B5E'/%3E%3Crect x='7' y='7' width='18' height='18' rx='4' transform='rotate(45 16 16)' fill='%23EAEAEC'/%3E%3Crect x='11.5' y='11.5' width='9' height='9' rx='2' transform='rotate(45 16 16)' fill='%23FF8A1F'/%3E%3C/svg%3E">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Nova Kart: Carcavelos Circuit">
+    <meta name="twitter:description" content="Kart racing on a seaside campus in Portugal. Race five bots, beat the clock or race your class online. Free in the browser.">
+    <meta name="twitter:image" content="__CC_SITE_URL__TemplateData/og-card.jpg">
+    <meta name="twitter:image:alt" content="Nova Kart: Carcavelos Circuit. Sunset over Carcavelos beach and the campus track, with the game's logo.">
+    <!-- Tab icon: the logo mark (an italic C framing the sun setting on the sea). SVG for sharp tabs, ICO + PNG for the rest. -->
+    <link rel="icon" href="TemplateData/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="TemplateData/favicon.ico" sizes="16x16 32x32 48x48">
+    <link rel="icon" href="TemplateData/favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="TemplateData/favicon-16.png" sizes="16x16" type="image/png">
     <!-- Home screen (phones): "Add to Home Screen" opens the game full screen and sideways, without browser bars. -->
     <link rel="manifest" href="TemplateData/manifest.webmanifest">
     <link rel="apple-touch-icon" href="TemplateData/icon-180.png">
