@@ -8,6 +8,19 @@ namespace CarcavelosCircuit.Tests.EditMode
     public class WebPageTests
     {
         [Test]
+        public void WorldStream_OutsideAWebBuild_DoesNothing()
+        {
+            // Load time P8: without a world file (Editor, tests) RaceBootstrap loads the world scene as before.
+            Assert.AreEqual("", WebPage.WorldBundleUrl);
+            System.Collections.IEnumerator load = WorldStream.Load();
+            Assert.IsFalse(load.MoveNext(), "nothing to wait for");
+            Assert.IsFalse(WorldStream.Failed);
+            Assert.IsFalse(WorldStream.IsUsed);
+            WebPage.SendWorldState(WebPage.WorldReady, 1f); // no page: nothing happens
+            WorldStream.Release();
+        }
+
+        [Test]
         public void UsesNamePrompt_IsOffOutsideAWebBuild()
         {
             Assert.IsFalse(WebPage.UsesNamePrompt, "Editor and desktop keep the game's own name field");

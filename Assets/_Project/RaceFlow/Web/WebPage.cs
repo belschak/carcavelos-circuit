@@ -22,6 +22,12 @@ namespace CarcavelosCircuit.RaceFlow
 
         [DllImport("__Internal")]
         private static extern int CarcavelosTouchMode();
+
+        [DllImport("__Internal")]
+        private static extern string CarcavelosWorldBundleUrl();
+
+        [DllImport("__Internal")]
+        private static extern void CarcavelosWorldState(int state, float progress);
 #endif
 
         // 3. TouchMode (phone round 17.11): true while the page shows its touch buttons (phones, tablets, a touch laptop
@@ -99,6 +105,35 @@ namespace CarcavelosCircuit.RaceFlow
             return answer == null ? current : answer;
 #else
             return current;
+#endif
+        }
+        // 4. The campus world as its own download (load time P8, 18 Nov). The page picks the world file that fits the GPU
+        //    (DXT or ETC2, like the .data) and gives its full address here; "" = no separate world file (the Editor,
+        //    tests, or a build where the world is inside the .data). See RaceFlow/WorldStream.cs.
+        public static string WorldBundleUrl
+        {
+            get
+            {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                string url = CarcavelosWorldBundleUrl();
+                return url == null ? "" : url;
+#else
+                return "";
+#endif
+            }
+        }
+
+        // What the page is told about the world: its loading bar goes on while the world downloads (WorldLoading,
+        // progress 0 to 1), "Click to play" waits for WorldReady (the track is set up), WorldFailed shows the
+        // page's network card.
+        public const int WorldLoading = 0;
+        public const int WorldReady = 1;
+        public const int WorldFailed = 2;
+
+        public static void SendWorldState(int state, float progress)
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            CarcavelosWorldState(state, progress);
 #endif
         }
     }
