@@ -29,8 +29,8 @@ Rules for the demo: one Chrome window, only the game tab (and the backup tab on 
 
 | Thing | At the start of the demo | How |
 |---|---|---|
-| Leaderboard (today: "THIS DEVICE", stored in the browser) | 4-6 believable times with our first names, no test names (`P3 Wifi`, `AAAA...`) | The day before, on the demo laptop's Chrome profile: clear the site data, then drive and save one lap each. The board lives in that browser only |
-| Leaderboard (once the online board is on, P5) | Times of the team and the rehearsal, no test rows | Supabase Table Editor > `lap_times`: delete test rows the day before |
+| Leaderboard (online, Supabase: the board shows "ONLINE") | Times of the team and the rehearsal with our first names, no test rows (`P3 ...`, `AAAA...`, `QA ...`) | The day before: Supabase Table Editor > `lap_times`, delete test rows. Never save test names on the live board |
+| Leaderboard on this device (the fallback) | Not empty, in case the online board is down | The day before, on the demo laptop's Chrome profile: drive and save one lap each; every save is also kept in that browser |
 | Personal best and ghost | One real lap, so time attack shows a ghost | Drive one clean lap in time attack the day before |
 | Settings | Sound on, music at a level the room can hear, NOON | Settings (O) before the demo |
 | Online room | Empty, nobody left in it from rehearsals | Close all rehearsal tabs; a forgotten tab is a player |
@@ -41,12 +41,13 @@ Every row was tried on purpose on the live site on 18 Nov 2026 (blocked hosts, n
 
 | Dependency | What goes wrong | What the app shows (tested) | Check before | Fallback |
 |---|---|---|---|---|
-| **GitHub Pages** (host) | Old version deployed; the first load is slow on bad Wi-Fi (35 s to 3+ min for the ~50 MB download; on slow 3G about 13 min) | Loader with progress, tips and the key card; a failed download shows an error card with RELOAD THE PAGE | Actions > Web build: the run for the last merge on `main` is green incl. the `pages` job; `https://belschak.github.io/carcavelos-circuit/version.json` shows the build id that the deploy log printed (an open page with an older build reloads itself once) | Preload the tab before our turn: a second visit loads from the browser cache in 8-20 s. Never cold-load on the classroom Wi-Fi |
+| **GitHub Pages** (host) | Old version deployed; the first visit downloads 52.7 MB: about 15 s at 50 Mbit/s, 48 s at 10 Mbit/s, measured 2-7 min on a weak 1-3 Mbit/s Wi-Fi, 4.4 min on fast 3G, 14 min on slow 3G | Loader with progress, tips and the key card; a failed download shows an error card with RELOAD THE PAGE | Actions > Web build: the run for the last merge on `main` is green incl. the `pages` job; `https://belschak.github.io/carcavelos-circuit/version.json` shows the build id that the deploy log printed (an open page with an older build reloads itself once) | Preload the tab before our turn: a second visit loads from the browser cache in 8-20 s. Never cold-load on the classroom Wi-Fi. Right after a deploy the old page can point at removed files for up to 10 min ("THE GAME COULD NOT START"): no merges on the day; if it appears, reload after a minute |
+| **Projector resolution** | A 4:3 projector mode (1024x768) or an 800x600 window: the leaderboard panel covers the ONLINE RACE card | | Connect to the projector in the week before; use "Extend" or a 16:9 mode of at least 1280x720 (tested clean: 1280x720, 1280x800, 1366x768, 1440x900, 1536x864, 1920x1080) | Press 3 for the online race (the key works even when the card is covered) |
 | **Browser / GPU** | WebGL 2 off, hardware acceleration off, an old browser | "THIS BROWSER CANNOT SHOW THE 3D TRACK" with what to switch on | Demo laptop: current Chrome, hardware acceleration on, charger plugged in (GPU throttles on battery) | Backup laptop (Luc) |
 | **Photon Cloud** (online race) | Region down, classroom network blocks WebSockets, 100 players at once (free plan), the room is full (15) | "CONNECTING AGAIN (TRY 2 OF 3)", then a red message plus "RACE VS BOTS AND TIME ATTACK WORK WITHOUT THE INTERNET" and BACK; room full and server full have their own messages | Join the room from two devices on the deployed app the day before AND in the room before the class (step "On the day") | Say what happened, press BACK, continue with race vs bots (works without internet). If only the class Wi-Fi is the problem: David's phone hotspot for the demo laptop |
 | **Classroom Wi-Fi** (eduroam) | Slow, drops, blocks ports | Our own kart never freezes; other karts may pause briefly; a lost connection retries 3 times, then the message above | Test the online race on eduroam on campus in the week before (WebGL uses WebSocket on port 443) | Phone hotspot for the demo laptop; single-player modes need no internet once the page is loaded |
 | **Classmates' phones** | Slow first download on mobile data, a phone held upright, an old phone | Phone loader with the touch card; touch buttons in landscape | Give the link (QR code on a printed card or a phone, the link on the board) at the start of our turn, so the download runs while we show steps 1-5 | The online race also works with only our four devices |
-| **Supabase** (online leaderboard, once P5 is live) | The free project pauses after about a week without requests; the key is wrong | "LEADERBOARD OFFLINE - YOUR TIME IS SAVED ON THIS DEVICE" (times are kept in the browser) | Open the Supabase dashboard the day before: project active, not paused; the keep-alive job ran | Continue: the local board still works. Today the build has no keys, so the board is "THIS DEVICE" and nothing can fail here |
+| **Supabase** (online leaderboard) | The free project pauses after about a week without requests; the database is down or slow (6 s timeout) | Badge "OFFLINE" and "LEADERBOARD OFFLINE - TIMES FROM THIS DEVICE" on the start screen, "LEADERBOARD OFFLINE - YOUR TIME IS SAVED ON THIS DEVICE" after a save; SAVE still works (tested with the requests blocked and with HTTP 500) | Open the Supabase dashboard the day before: project active, not paused; the keep-alive job ran | Continue: say "the database is not reachable, the game keeps the time on this device" |
 | **Secrets on screen** | Photon or Supabase dashboard, GitHub settings or a `.env` visible on the projector | | Close every dashboard, settings page and the coding agent before sharing the screen | |
 | **One member absent / laptop dead** | | | Backup operator has the tab preloaded and rehearsed once | Luc operates from step where David stopped |
 
@@ -64,8 +65,9 @@ If something fails during the demo: say what happened, point at the message, con
 ## 6. Known rough edges (avoid on stage until fixed)
 
 Found in the failure QA on 18 Nov 2026; none freezes the game. Remove a line once its fix is live.
+- Start screen at 1024x768 or smaller: the leaderboard covers the ONLINE RACE card. Use a 16:9 mode of 1280x720 or more; key 3 opens the online race anyway.
+- Name fields (results and online lobby): after typing, Esc does not leave the field and Q does nothing. Use the mouse (SAVE, BACK).
 - Online race on a laptop: the key hint bar still shows ENTER RETRY and P PAUSE, which do nothing online. Do not press them.
-- Results card: after Tab into the name field, Esc does not leave it (Q and O stay dead). Use the mouse on the name field and SAVE.
 - When Photon cannot be reached the message reads "CONNECTION FAILED: CONNECTION FAILED (Error)". Say: "Photon is not reachable from this network, the game tells you and offers BACK".
 
 ## 7. Checklists
@@ -82,7 +84,7 @@ Found in the failure QA on 18 Nov 2026; none freezes the game. Remove a line onc
 
 ### The day before (Mon 23 Nov or Thu 3 Dec)
 - [ ] Rehearse once from start to finish on the deployed URL, with David operating; once with Luc operating.
-- [ ] Photon dashboard: app active, CCU well below 100. Supabase (if on): project not paused, data there.
+- [ ] Photon dashboard: app active, CCU well below 100. Supabase: project not paused, test rows deleted, the board shows "ONLINE" on the live site.
 - [ ] Reset the starting data (section 3) on both laptops after the rehearsal.
 - [ ] Stop merging. Nothing new goes to `main` after the rehearsal (after Mon 23 Nov 23:59 it would not be graded anyway).
 - [ ] Charge both laptops and the phones; David's phone hotspot works.
