@@ -276,6 +276,9 @@ namespace CarcavelosCircuit.RaceFlow
                 float fit = Mathf.Max(1.3f / Mathf.Tan(FieldOfView * 0.5f * Mathf.Deg2Rad),
                                       1.45f / (Mathf.Tan(FieldOfView * 0.5f * Mathf.Deg2Rad) * aspect));
                 distance = fit;
+                // Taller pictures (4:3, 5:4) show more height than the 1.3 m the kart needs: look up by the same share,
+                // so the wheels keep standing on the builder's shadow spot (desktop QA 18 Nov: 35-60 px above it).
+                lookAt.y = SingleLookHeight(fit * Mathf.Tan(FieldOfView * 0.5f * Mathf.Deg2Rad));
             }
             PlaceCamera();
         }
@@ -285,6 +288,11 @@ namespace CarcavelosCircuit.RaceFlow
         public static float LineupLookHeight(float halfHeight)
         {
             return Mathf.Max(0.5f, halfHeight * 0.82f);
+        }
+
+        public static float SingleLookHeight(float halfHeight)
+        {
+            return 0.43f * Mathf.Max(1f, halfHeight / 1.3f);
         }
 
         private void PlaceCamera()

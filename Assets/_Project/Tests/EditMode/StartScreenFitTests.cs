@@ -110,6 +110,13 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void Turntable_KartKeepsStandingOnItsShadowInTallPictures()
+        {
+            Assert.AreEqual(0.43f, KartStage.SingleLookHeight(1.3f), 1e-4f, "16:9: unchanged");
+            Assert.AreEqual(0.43f * 2f, KartStage.SingleLookHeight(2.6f), 1e-4f, "twice the height: the ground stays at the same share");
+        }
+
+        [Test]
         public void TileShots_EmptyPicturesAreFound()
         {
             var empty = new Color32[100];

@@ -1036,6 +1036,8 @@ kbd { background: rgba(255, 255, 255, 0.08); color: var(--fe-text); border: 1px 
 }
 @media (max-height: 360px) {
   .cc-credits { display: none; }
+  .cc-card { padding-top: 12px; padding-bottom: 10px; } /* phone QA 18 Nov: the card's bottom edge was cut by 4-11 px */
+  .cc-card .cc-small { margin-top: 6px; }
 }
 @media (max-width: 560px) {
   .cc-controls { padding: 8px 12px; gap: 6px 12px; }
