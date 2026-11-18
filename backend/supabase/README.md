@@ -2,7 +2,7 @@
 
 The game keeps every finished lap time with a name. Without this setup it does so **on the player's device only** (no error, the board says "THIS DEVICE"). With it, times go to one small free online database and every player sees the same top 10.
 
-Nothing in this folder runs by itself. No account exists yet: David (Role 4) creates it once, in about 10 minutes.
+Nothing in this folder runs by itself. **Status (18 Nov 2026): ON.** The project `carcavelos-circuit` (Supabase free plan, region Europe, owned by David, Role 4) runs both SQL files below, and the two GitHub secrets are set, so every Web build of `main` uses the shared online top 10. The steps below are how it was set up, and how to set it up again from zero.
 
 ## What David does (once)
 
@@ -46,4 +46,4 @@ It still never goes into a file in the repo, because:
 
 - Someone with the public key can post valid-looking fake times with a script (inside 5 s to 30 min and with a clean name). The optional rate limit slows that down; the project owner can delete such rows in the Table Editor. The game also hides times that are impossible on the track (faster than 40 % of the Gold medal time).
 - The rude-word list is short; it catches the obvious words in English, Portuguese, German and Dutch, not everything.
-- Free Supabase projects pause after about a week without any request. Then the game says "LEADERBOARD OFFLINE - YOUR TIME IS SAVED ON THIS DEVICE" until David presses **Restore** in the dashboard. Open the game once before a demo.
+- Free Supabase projects pause after about a week without any request. The workflow `.github/workflows/leaderboard-keepalive.yml` reads one row every day so that never happens (a red run = the leaderboard did not answer). If it pauses anyway, the game says "LEADERBOARD OFFLINE - YOUR TIME IS SAVED ON THIS DEVICE" until David presses **Restore** in the dashboard. Open the game once before a demo.
