@@ -115,9 +115,9 @@ So the code on `main` is the code that is deployed, and nobody deploys from a la
 | Phone controls (touch buttons, landscape layout) | `Assets/WebGLTemplates/CarcavelosCircuit/` | Streamlit's layout is form-like; no thumb controls over a game view |
 | A custom interface (menus, HUD, minimap, finish cinematic) | `RaceFlow/UI/` | Streamlit gives standard widgets, not a game interface |
 
-**How the stack decision was handled.** The team project page allows "start a new application" of the team's own choice; the stack guide says a language other than Python is agreed with the teaching staff case by case. The team chose Unity on 6 Nov 2026 ([decisions.md](decisions.md)) and asked the staff on 7 Nov through the Moodle question form (task G1 in [TASKS.md](../TASKS.md)).
+**How the stack decision was handled.** The team project page allows "start a new application" of the team's own choice; the stack guide says a language other than Python is agreed with the teaching staff case by case. The team chose Unity on 6 Nov 2026 ([decisions.md](decisions.md)) and Noah asked the teaching staff for their OK on 7 Nov (task G1 in [TASKS.md](../TASKS.md)).
 
-**Status:** requested 7 Nov 2026 through the Moodle question form; no written answer is recorded in this repository yet.
+**Status:** requested by Noah on 7 Nov 2026, answer pending.
 
 ## Read further
 

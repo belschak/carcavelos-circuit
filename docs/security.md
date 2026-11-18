@@ -160,6 +160,14 @@ copy from a private repository with a read-only key.
 - Dependabot (`.github/dependabot.yml`) opens a pull request each week when a pinned action or Python tool has a new
   release or a security fix, so pinning does not mean falling behind; each such PR runs the same tests.
 
+**GitHub's own checks on the repository (switched on 18 Nov 2026, checked through the GitHub API).**
+- Secret scanning and push protection: GitHub scans every push for known key formats and refuses a push that
+  contains one, in addition to our gitleaks run.
+- Dependabot alerts: GitHub warns when a dependency it knows about gets a security advisory (automatic Dependabot
+  security pull requests are off; the weekly version pull requests above cover updates).
+- Private vulnerability reporting: anyone can report a problem privately under Security > Report a vulnerability
+  (see `SECURITY.md`).
+
 **No known vulnerabilities (checked 18 Nov 2026).**
 - GitHub Advisory Database: no advisory for any of the 8 actions we use.
 - OSV / GitHub advisories for Python: Pillow 12.3.0 had 40+ advisories (image parsing), all fixed in 13.0.0, which
