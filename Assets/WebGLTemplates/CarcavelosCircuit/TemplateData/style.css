@@ -1022,6 +1022,14 @@ kbd { background: rgba(255, 255, 255, 0.08); color: var(--fe-text); border: 1px 
 @media (max-height: 470px) and (max-width: 960px) {
   .cc-shot figcaption { display: none; }
 }
+/* Phone QA 18 Nov: page buttons are thumb targets too (>= 44 CSS px), and on the shortest phones (iPhone SE in Safari,
+   320 px high) the credits line ran over the card's last line: there it goes (the game's Credits screen, key C, keeps it). */
+@media (pointer: coarse) {
+  #cc-load-anyway, #cc-play-button { min-height: 44px; }
+}
+@media (max-height: 360px) {
+  .cc-credits { display: none; }
+}
 @media (max-width: 560px) {
   .cc-controls { padding: 8px 12px; gap: 6px 12px; }
   .cc-controls li:nth-child(n+5) { display: none; } /* phones: drive, drift, trick, item */

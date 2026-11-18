@@ -22,6 +22,8 @@ namespace CarcavelosCircuit.RaceFlow
         private KartStage stage;
         private bool shown;
         private bool coveringStartScreen;
+        private readonly Label[] nameLabels = new Label[DriverRoster.Count];
+        private readonly Label[] kartLabels = new Label[DriverRoster.Count];
         private float bottomPercent = MinBottomPercent;
         private float hiddenAt = -10f;
 
@@ -89,6 +91,20 @@ namespace CarcavelosCircuit.RaceFlow
                 cell.style.flexBasis = 0f;
                 cell.style.alignItems = Align.Center;
                 cell.pickingMode = PickingMode.Ignore;
+                // A dark glass tag under each name, so it reads on the bright noon road too (phone QA 18 Nov).
+                VisualElement tag = new VisualElement();
+                tag.style.alignItems = Align.Center;
+                tag.style.paddingLeft = 8f;
+                tag.style.paddingRight = 8f;
+                tag.style.paddingTop = 2f;
+                tag.style.paddingBottom = 4f;
+                tag.style.borderTopLeftRadius = 6f;
+                tag.style.borderTopRightRadius = 6f;
+                tag.style.borderBottomLeftRadius = 6f;
+                tag.style.borderBottomRightRadius = 6f;
+                tag.style.backgroundColor = new Color(0.024f, 0.031f, 0.047f, 0.55f);
+                tag.pickingMode = PickingMode.Ignore;
+                cell.Add(tag);
                 Label name = new Label(DriverRoster.Get(i).Name.ToUpperInvariant());
                 name.AddToClassList("f-display");
                 name.style.fontSize = 20f;
@@ -98,7 +114,8 @@ namespace CarcavelosCircuit.RaceFlow
                 name.style.borderBottomColor = DriverRoster.Get(i).Colour;
                 name.style.textShadow = new TextShadow { offset = new Vector2(0f, 2f), blurRadius = 8f, color = new Color(0f, 0f, 0f, 0.85f) };
                 name.pickingMode = PickingMode.Ignore;
-                cell.Add(name);
+                tag.Add(name);
+                nameLabels[i] = name;
                 Label kart = new Label(KartLoadout.KartNames[i]);
                 kart.AddToClassList("key-text");
                 kart.AddToClassList("f-ui");
@@ -107,9 +124,11 @@ namespace CarcavelosCircuit.RaceFlow
                 kart.style.color = HudColors.Cream;
                 kart.style.textShadow = new TextShadow { offset = new Vector2(0f, 1f), blurRadius = 6f, color = new Color(0f, 0f, 0f, 0.9f) };
                 kart.pickingMode = PickingMode.Ignore;
-                cell.Add(kart);
+                tag.Add(kart);
+                kartLabels[i] = kart;
                 names.Add(cell);
             }
+            names.RegisterCallback<GeometryChangedEvent>(evt => SizeNames(evt.newRect.width / DriverRoster.Count));
             element.Add(names);
 
             if (hudRoot != null)
@@ -221,6 +240,22 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 bottomPercent = bottom;
                 element.style.bottom = Length.Percent(bottom);
+            }
+        }
+
+        // Names shrink on narrow windows (iPad 1024 x 768: ROOKIE and TIAGO touched at 20 px), never below 12 px.
+        public static float NameFontSize(float cellWidth)
+        {
+            return Mathf.Clamp(cellWidth / 7f, 12f, 20f);
+        }
+
+        private void SizeNames(float cellWidth)
+        {
+            float size = NameFontSize(cellWidth);
+            for (int i = 0; i < nameLabels.Length; i++)
+            {
+                nameLabels[i].style.fontSize = size;
+                kartLabels[i].style.fontSize = Mathf.Max(10f, size * 0.65f);
             }
         }
 

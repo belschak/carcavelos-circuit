@@ -74,5 +74,18 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(StartLineup.MinBottomPercent, StartLineup.BottomPercent(0f), "bad value: default");
             Assert.LessOrEqual(StartLineup.BottomPercent(0.2f), 40f, "never squeezed to nothing");
         }
+
+        [Test]
+        public void StartLineup_NamesShrinkOnNarrowWindows()
+        {
+            // One name cell = 1/4 of 92 % of the line-up (46 % of the HUD width). 1280 x 720: 1280 HUD px wide;
+            // iPad 1024 x 768: 960 HUD px wide (the HUD is 720 high). "ROOKIE" is about 6 letters of ~0.9 em.
+            float wide = StartLineup.NameFontSize(1280f * 0.46f * 0.92f / 4f);
+            float ipad = StartLineup.NameFontSize(960f * 0.46f * 0.92f / 4f);
+            Assert.AreEqual(19.3f, wide, 0.2f);
+            Assert.Less(ipad, wide);
+            Assert.LessOrEqual(6f * 0.9f * ipad + 16f, 960f * 0.46f * 0.92f / 4f, "the names keep a gap on an iPad");
+            Assert.AreEqual(12f, StartLineup.NameFontSize(10f), "never unreadably small");
+        }
     }
 }

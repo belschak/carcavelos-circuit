@@ -36,6 +36,7 @@ namespace CarcavelosCircuit.Visuals
         private bool keptOut;           // RemoveBots() was called (Play Mode tests): no respawn on the start screen
         private bool driverChanged = true; // a new driver was picked: repaint the player, swap the bots (start screen)
         private bool loadoutChanged;       // only the kart or tyres changed: rebuild the player's model, keep the bots
+        private bool playerModelPending = true; // the player's own model does not show the pick yet (any race state)
         private BotTrackMap map;        // the racing line, shared by the bots and the finish cruise; null = none
         private FinishCruise cruise;    // drives the player's kart after the line, null = the player drives
 
@@ -54,6 +55,7 @@ namespace CarcavelosCircuit.Visuals
             DriverChoice.Changed += OnDriverChanged;
             DriverChoice.LoadoutChanged += OnLoadoutChanged;
             driverChanged = true;
+            playerModelPending = true;
             // Kart builder (18 Nov 2026): every kart model is now a driver + kart + tyres set built from Luc's four
             // prefabs (KartComboLibrary); the start screen's builder and line-up get them through RaceFlow's KartModels.
             KartComboLibrary.Use(settings);
@@ -101,6 +103,12 @@ namespace CarcavelosCircuit.Visuals
         {
             if (raceManager.State != RaceState.Ready)
             {
+                // Online QA 18 Nov: a slow client that joins by link can be counted in before this ran in Ready. Its
+                // own kart still gets the picked set (looks only, safe mid-race); the bots wait for the next Ready.
+                if (playerModelPending && raceManager.KartTransform != null)
+                {
+                    ShowPlayerDriver();
+                }
                 return;
             }
             if (driverChanged && raceManager.KartTransform != null)
@@ -157,6 +165,7 @@ namespace CarcavelosCircuit.Visuals
         {
             GameObject kart = raceManager.KartTransform.gameObject;
             loadoutChanged = false;
+            playerModelPending = false;
             GameObject model = KartComboLibrary.Template(DriverChoice.Loadout);
             if (model == null && settings != null)
             {
@@ -182,11 +191,13 @@ namespace CarcavelosCircuit.Visuals
         private void OnDriverChanged(int driver)
         {
             driverChanged = true;
+            playerModelPending = true;
         }
 
         private void OnLoadoutChanged(KartLoadout loadout)
         {
             loadoutChanged = true;
+            playerModelPending = true;
         }
 
         private void SpawnAll()

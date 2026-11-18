@@ -31,7 +31,8 @@ namespace CarcavelosCircuit.RaceFlow
         public const float StageMinWidth = 300f;    // the turntable shrinks first on narrow windows
         public const float StageGap = 16f;          // between the turntable and the DRIVER column
         public const float ColumnGap = 10f;         // between the columns
-        public const float TileHeight = 92f;        // >= 44 CSS px on an iPhone SE in landscape (375 px high: 0.52 px each)
+        public const float TileHeight = 100f;       // >= 44 CSS px on a phone in landscape with browser bars (320 px high: 0.44 px each)
+        public const float TouchBackMinWidth = 170f; // BACK on touch: no keycap, so the word alone would make a small square
         private const float TileGap = 8f;
         private const float BadgeSize = 22f;
         private const int TileShotWidth = 288;       // the tile pictures: about 2x their size on a 1080p screen
@@ -489,10 +490,11 @@ namespace CarcavelosCircuit.RaceFlow
             return button;
         }
 
-        // Phone round 17.11: a thumb needs a bigger target: on touch >= 36 CSS px on every phone in landscape.
+        // Phone round 17.11: a thumb needs a bigger target. Phone QA 18 Nov: >= 44 CSS px even on an iPhone SE in Safari
+        // with its bars (320 CSS px high: one HUD px = 0.44 CSS px).
         public static float ButtonHeight(bool main, bool touch)
         {
-            return main ? (touch ? 88f : 64f) : (touch ? 82f : 48f);
+            return main ? (touch ? 100f : 64f) : (touch ? 100f : 48f);
         }
 
         // A soft dark ellipse under the turntable (the kart floats on a see-through picture, this grounds it).
@@ -540,6 +542,9 @@ namespace CarcavelosCircuit.RaceFlow
             bool touch = WebPage.TouchMode;
             readyButton.style.height = ButtonHeight(true, touch);
             backButton.style.height = ButtonHeight(false, touch);
+            backButton.style.minWidth = touch ? TouchBackMinWidth : 0f;
+            backButton.style.justifyContent = touch ? Justify.Center : Justify.FlexStart;
+            readyButton.style.marginLeft = touch ? 18f : 8f; // a wider gap between the two thumb targets
             panel.style.display = DisplayStyle.Flex;
             for (int i = 0; i < hiddenWhileOpen.Count; i++)
             {

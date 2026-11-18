@@ -222,10 +222,12 @@ namespace CarcavelosCircuit.Tests.EditMode
         [Test]
         public void TouchTargets_TilesAndButtons_AtLeast44CssPixelsOnAnIPhoneSe()
         {
-            // HUD px are 720 high; an iPhone SE in landscape is 375 CSS px high: one HUD px = 0.52 CSS px.
-            float cssPerHud = 375f / 720f;
+            // HUD px are 720 high; an iPhone SE in landscape in Safari (bars shown) is 320 CSS px high: one HUD px =
+            // 0.44 CSS px (phone QA 18 Nov measured BACK at 37 px there before this was raised).
+            float cssPerHud = 320f / 720f;
             Assert.GreaterOrEqual(KartBuilder.ButtonHeight(true, true) * cssPerHud, 44f);
-            Assert.GreaterOrEqual(KartBuilder.ButtonHeight(false, true) * cssPerHud, 42f);
+            Assert.GreaterOrEqual(KartBuilder.ButtonHeight(false, true) * cssPerHud, 44f);
+            Assert.GreaterOrEqual(KartBuilder.TouchBackMinWidth * cssPerHud, 44f, "BACK is not a small square");
             Assert.GreaterOrEqual(KartBuilder.TileHeight * cssPerHud, 44f, "every tile of the three columns");
             Assert.AreEqual("NOVA CLASSIC", KartBuilder.PartName(KartBuilder.KartColumn, 0));
             Assert.AreEqual("BALLOON", KartBuilder.PartName(KartBuilder.TyreColumn, 2));
