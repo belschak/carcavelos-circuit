@@ -3,8 +3,8 @@
 The mark: an italic C (the C of Carcavelos) that frames the sun setting on the sea, on the orange streak of the
 wordmark. Same "Golden Hour" look as the menus: warm dark ground, cream letter, orange accent, no cartoon.
 Two versions of the same drawing: a flat one (tab icon, readable at 16 px) and a photo one for the home screen,
-where the ground is our own key art (keyart-2.jpg, the sunset over Carcavelos beach from the build's photo mode
-?photo=1) with the real sea horizon on the mark's horizon.
+where the ground is our own key art (art/brand-beach-sunset-1600.jpg: the sunset over Carcavelos beach from the build's
+photo mode ?photo=1, the loading page's keyart-2.jpg until 18 Nov 2026) with the real sea horizon on the mark's horizon.
 The card (1200 x 630, og:image / twitter:image) is the same key art with the game's wordmark, drawn with the repo's
 own fonts (Archivo Expanded + Barlow Condensed, SIL OFL 1.1).
 
@@ -28,8 +28,8 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "Assets/WebGLTemplates/CarcavelosCircuit/TemplateData"
 FONTS = ROOT / "Assets/_Project/RaceFlow/UI/Fonts"
-KEYART = DATA / "keyart-2.jpg"  # 1600 x 900, sunset over the Atlantic; sea horizon at y 178, sun reflection at x 800
-CARD_ART = DATA / "keyart-2.jpg"
+KEYART = Path(__file__).resolve().parent / "art/brand-beach-sunset-1600.jpg"  # 1600 x 900, sunset over the Atlantic; sea horizon at y 178, sun reflection at x 800
+CARD_ART = KEYART
 CARD_MAX_BYTES = 300 * 1024
 
 CREAM = ("#FFFFFF", "#F0E4D2")
