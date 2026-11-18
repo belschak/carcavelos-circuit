@@ -27,6 +27,9 @@ namespace CarcavelosCircuit.Online
         // never saved) and the room results card sat on top of it (QA 17 Nov 2026), so it is hidden while the room
         // results show. Hidden, not removed: the results card keeps its place left of the room results.
         public const string LocalBoardName = "results-board-host";
+        // The start screen's leaderboard: when the race time runs out the DNF player is put back on the start screen
+        // and the room results card sat on top of it (live QA 18 Nov 2026: "LEADERBOARD TOP 10" showed through).
+        public const string StartBoardName = "start-board-host";
         public const string CheckpointPanelName = "cp-panel"; // RaceHud's CHECKPOINT bar, top right under the room results
         // Heights on touch screens (HUD px), thumb-sized like the other touch menus (qa-phone 17 Nov 2026: 82 HUD px
         // = 36.4 CSS px on an iPhone SE in Safari 667x320, 38.7 on an iPhone 15 844x340).
@@ -50,6 +53,7 @@ namespace CarcavelosCircuit.Online
         private Label problemLabel;
         private Label lightLabel;             // the text on the light button of the page now showing, null = none
         private VisualElement hiddenBoard;    // the local leaderboard while the room results hide it, null = shown
+        private VisualElement hiddenStartBoard; // the start screen leaderboard while the room results hide it
         private VisualElement hiddenCheckpoints; // RaceHud's checkpoint bar while the room results hide it, null = shown
         // Phones and tablets (WebPage.TouchMode): no keyboard hints (ENTER, T, Q) and thumb-sized buttons, like the
         // other menus on touch (RaceHud.uss .hud--touch). Read again every time a page is built.
@@ -379,6 +383,9 @@ namespace CarcavelosCircuit.Online
         // Is the HUD's local leaderboard hidden by the room results right now? (tests)
         public bool HidesLocalBoard { get { return hiddenBoard != null; } }
 
+        // Is the start screen leaderboard hidden by the room results right now? (tests)
+        public bool HidesStartBoard { get { return hiddenStartBoard != null; } }
+
         // Is RaceHud's checkpoint bar hidden by the room results right now? (tests)
         public bool HidesCheckpoints { get { return hiddenCheckpoints != null; } }
 
@@ -394,6 +401,14 @@ namespace CarcavelosCircuit.Online
                     if (hiddenBoard != null)
                     {
                         hiddenBoard.style.visibility = Visibility.Hidden;
+                    }
+                }
+                if (hiddenStartBoard == null)
+                {
+                    hiddenStartBoard = root.Q<VisualElement>(StartBoardName);
+                    if (hiddenStartBoard != null)
+                    {
+                        hiddenStartBoard.style.visibility = Visibility.Hidden;
                     }
                 }
                 // the CHECKPOINT 13/13 bar sits under the card's top (QA desktop 18 Nov 2026: its text showed through).
@@ -412,6 +427,11 @@ namespace CarcavelosCircuit.Online
             {
                 hiddenBoard.style.visibility = StyleKeyword.Null;
                 hiddenBoard = null;
+            }
+            if (hiddenStartBoard != null)
+            {
+                hiddenStartBoard.style.visibility = StyleKeyword.Null;
+                hiddenStartBoard = null;
             }
             if (hiddenCheckpoints != null)
             {
