@@ -53,6 +53,18 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(expected, WebPage.PageRaceState(state, paused));
         }
 
+        // Phone QA 17.11: online the page hides Pause and Retry (the room cannot be paused or restarted by hand).
+        [TestCase(RaceState.Racing, false, WebPage.PageRacing + WebPage.PageOnline)]
+        [TestCase(RaceState.Countdown, false, WebPage.PageRacing + WebPage.PageOnline)]
+        [TestCase(RaceState.Ready, false, WebPage.PageMenus)]
+        [TestCase(RaceState.Results, false, WebPage.PageMenus)]
+        public void PageRaceState_TellsThePageAnOnlineRace(RaceState state, bool paused, int expected)
+        {
+            Assert.AreEqual(expected, WebPage.PageRaceState(state, paused, true));
+            Assert.AreEqual(WebPage.PageRaceState(state, paused), WebPage.PageRaceState(state, paused, true) & 3,
+                "the low bits stay the plain race state the page already reads");
+        }
+
         [Test]
         public void SendRaceState_WithAPageState_OutsideAWebBuild_DoesNothing()
         {

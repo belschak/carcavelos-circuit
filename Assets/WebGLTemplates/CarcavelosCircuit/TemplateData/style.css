@@ -729,6 +729,12 @@ html:not(.cc-racing) .cc-touch-pause {
   pointer-events: none;
 }
 
+/* Online race (phone QA 17.11): the room runs on, so Pause and Retry would do nothing there: hidden. Recover stays. */
+html.cc-online .cc-touch-pause,
+html.cc-online .cc-touch-tools [data-keys="Enter"] {
+  display: none;
+}
+
 /* In touch mode the fullscreen button joins the Recover/Retry row during a race and sits in the top right corner on
    the menus (the title, the ROUND 3 tag and the countdown stay free). It stays visible (no mouse to bring it back). */
 #cc-touch #cc-fullscreen {

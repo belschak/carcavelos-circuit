@@ -36,8 +36,7 @@ namespace CarcavelosCircuit.RaceFlow
         // Not every key: Alt-Tab, Ctrl, F11 (fullscreen) or Escape should not start the countdown by accident.
         public static bool AnyKeyOrClickPressed()
         {
-            Mouse mouse = Mouse.current;
-            if (mouse != null && mouse.leftButton.wasPressedThisFrame)
+            if (ClickPressed())
             {
                 return true;
             }
@@ -60,7 +59,7 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // False for modifier keys (Shift, Ctrl, Alt, Windows/Cmd), function keys (F1 to F24), system keys
-        // (Escape, Tab, Caps Lock, Print Screen ...) and the menu keys O, C, M, P, T (they open settings, credits,
+        // (Escape, Backspace, Tab, Caps Lock, Print Screen ...) and the menu keys O, C, M, P, T (they open settings, credits,
         // mute, pause or switch the time of day, and must not also start the race). Public so an Edit Mode test can check the list.
         public static bool CountsAsStartKey(Key key)
         {
@@ -81,6 +80,7 @@ namespace CarcavelosCircuit.RaceFlow
                 case Key.RightMeta:
                 case Key.ContextMenu:
                 case Key.Escape:
+                case Key.Backspace: // "back" (driver select, settings, credits): never also "go on" (QA 17.11.2026)
                 case Key.Tab:
                 case Key.CapsLock:
                 case Key.NumLock:
@@ -196,19 +196,33 @@ namespace CarcavelosCircuit.RaceFlow
             return 0;
         }
 
-        // The left mouse button went down this frame (a click or, on a phone, a tap the page turns into a click).
+        // The left mouse button or a finger went down this frame (a click, or a tap on a phone or tablet).
+        // Phone QA 17.11: the game reads taps itself (the menu buttons get them from UI Toolkit); the page no longer
+        // turns a tap into a mouse click as well, which gave every menu button two clicks (SETTINGS opened and closed
+        // again, SOUND and NOON flipped twice).
         // The menus only claim this press when it lands on one of their buttons (MenuInputRules.ClickBelongsToButton):
         // a key pressed while the mouse merely rests on a button is still a key.
         public static bool ClickPressed()
         {
             Mouse mouse = Mouse.current;
-            return mouse != null && mouse.leftButton.wasPressedThisFrame;
+            if (mouse != null && mouse.leftButton.wasPressedThisFrame)
+            {
+                return true;
+            }
+            Touchscreen touch = Touchscreen.current;
+            return touch != null && touch.primaryTouch.press.wasPressedThisFrame;
         }
 
-        // Where the mouse is, in screen pixels (0,0 = bottom left). False without a mouse.
-        // The HUD uses it to see if the mouse points at a menu button before the click arrives.
+        // Where the mouse (or the finger on the screen right now) is, in screen pixels (0,0 = bottom left). False
+        // without either. The HUD uses it to see if a press lands on a menu button before the click arrives.
         public static bool TryGetMousePosition(out Vector2 position)
         {
+            Touchscreen touch = Touchscreen.current;
+            if (touch != null && touch.primaryTouch.press.isPressed)
+            {
+                position = touch.primaryTouch.position.ReadValue();
+                return true;
+            }
             Mouse mouse = Mouse.current;
             position = mouse != null ? mouse.position.ReadValue() : Vector2.zero;
             return mouse != null;

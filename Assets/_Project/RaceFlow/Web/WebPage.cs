@@ -46,13 +46,22 @@ namespace CarcavelosCircuit.RaceFlow
         public const int PageRacing = 1;
         public const int PagePaused = 2;
 
+        // Added to a race state when the race is online (phone QA 17.11): an online race cannot be paused or retried
+        // by hand (the room runs on), so the page hides its Pause and Retry buttons there instead of two dead buttons.
+        public const int PageOnline = 4;
+
         public static int PageRaceState(RaceState state, bool paused)
+        {
+            return PageRaceState(state, paused, false);
+        }
+
+        public static int PageRaceState(RaceState state, bool paused, bool online)
         {
             if (state != RaceState.Countdown && state != RaceState.Racing)
             {
                 return PageMenus;
             }
-            return paused ? PagePaused : PageRacing;
+            return (paused ? PagePaused : PageRacing) + (online ? PageOnline : 0);
         }
 
         // True in a Web build on a phone or tablet: then the name is typed in the browser's own text box.

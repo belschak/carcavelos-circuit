@@ -23,12 +23,21 @@ namespace CarcavelosCircuit.Online
 
         private const float CardWidth = 760f;
         private const float SideCardWidth = 360f;
+        // RaceHud's local leaderboard beside the results card (RaceHud.uxml). Online it stays empty (online laps are
+        // never saved) and the room results card sat on top of it (QA 17 Nov 2026), so it is hidden while the room
+        // results show. Hidden, not removed: the results card keeps its place left of the room results.
+        public const string LocalBoardName = "results-board-host";
+        public const string CheckpointPanelName = "cp-panel"; // RaceHud's CHECKPOINT bar, top right under the room results
+        // Heights on touch screens (HUD px), thumb-sized like the other touch menus (qa-phone 17 Nov 2026: 82 HUD px
+        // = 36.4 CSS px on an iPhone SE in Safari 667x320, 38.7 on an iPhone 15 844x340).
+        public const float TouchPillHeight = 82f;
+        public const float TouchNameFieldHeight = 76f;
 
         private const float PortraitSize = 34f;
 
         // The player clicked JOIN RACE or pressed Enter on the rooms page: the typed name (not cleaned yet).
         public event Action<string> JoinRequested;
-        public event Action BackRequested;    // BACK button on the rooms, connecting and message pages
+        public event Action BackRequested;    // BACK (rooms, connecting, message pages) and LEAVE (room page, results)
         public event Action StartRequested;   // START RACE / START AGAIN (the host)
         public event Action LightRequested;   // the NOON / SUNSET button: my own light, the other way round
 
@@ -40,6 +49,13 @@ namespace CarcavelosCircuit.Online
         private TextField nameField;
         private Label problemLabel;
         private Label lightLabel;             // the text on the light button of the page now showing, null = none
+        private VisualElement hiddenBoard;    // the local leaderboard while the room results hide it, null = shown
+        private VisualElement hiddenCheckpoints; // RaceHud's checkpoint bar while the room results hide it, null = shown
+        // Phones and tablets (WebPage.TouchMode): no keyboard hints (ENTER, T, Q) and thumb-sized buttons, like the
+        // other menus on touch (RaceHud.uss .hud--touch). Read again every time a page is built.
+        private bool touch;
+        private readonly bool forcedTouch;    // tests: touch decided by the test, not by the page
+        private readonly bool touchIsForced;
         private string signature = "";
         private static readonly System.Collections.Generic.Dictionary<string, Texture2D> portraits =
             new System.Collections.Generic.Dictionary<string, Texture2D>(); // DriverPortraits, loaded once
@@ -53,8 +69,19 @@ namespace CarcavelosCircuit.Online
 
         public string TypedName { get { return nameField != null ? nameField.value : ""; } }
 
-        public OnlineLobbyView(VisualElement documentRoot)
+        public OnlineLobbyView(VisualElement documentRoot) : this(documentRoot, false, false)
         {
+        }
+
+        // Tests: a lobby that is (or is not) on a touch screen, whatever the page says.
+        public OnlineLobbyView(VisualElement documentRoot, bool touchScreen) : this(documentRoot, touchScreen, true)
+        {
+        }
+
+        private OnlineLobbyView(VisualElement documentRoot, bool touchScreen, bool forced)
+        {
+            forcedTouch = touchScreen;
+            touchIsForced = forced;
             root = documentRoot;
             overlay = new VisualElement { name = "online-lobby" };
             overlay.AddToClassList("menu-overlay");
@@ -132,7 +159,7 @@ namespace CarcavelosCircuit.Online
             nameField.isDelayed = false;
             nameField.value = name ?? "";
             nameField.style.width = 300f;
-            nameField.style.height = 52f;
+            nameField.style.height = touch ? TouchNameFieldHeight : 52f;
             nameRow.Add(nameField);
             if (WebPage.UsesNamePrompt)
             {
@@ -261,6 +288,7 @@ namespace CarcavelosCircuit.Online
             }
             KeyHint("T", "LIGHT", keys);
             KeyHint("Q", "LEAVE", keys);
+            LeaveButton(keys, touch ? 0f : 18f);
         }
 
         public void ShowMessage(string text)
@@ -317,6 +345,18 @@ namespace CarcavelosCircuit.Online
                 KeyHint("ENTER", "AGAIN", keys);
             }
             KeyHint("Q", "LEAVE", keys);
+            VisualElement leaveRow = Row(sideCard); // own row: the side card is too narrow for keys + button
+            leaveRow.style.marginTop = 8f;
+            LeaveButton(leaveRow, 0f);
+        }
+
+        // LEAVE the room (= Q): a button too, so a phone (no Q key) or a mouse-only player can get out of the room
+        // and of the room results (QA 17 Nov 2026: on touch there was no way back to the start screen).
+        private void LeaveButton(VisualElement parent, float marginLeft)
+        {
+            VisualElement pill = Pill("LEAVE", false, () => Raise(BackRequested), parent);
+            pill.name = "online-leave";
+            pill.style.marginLeft = marginLeft;
         }
 
         // Takes the lobby off the screen (racing, or the player left).
@@ -331,18 +371,65 @@ namespace CarcavelosCircuit.Online
             nameField = null;
             problemLabel = null;
             lightLabel = null;
+            HideLocalBoard(false);
             overlay.RemoveFromClassList("is-shown");
             overlay.RemoveFromHierarchy();
+        }
+
+        // Is the HUD's local leaderboard hidden by the room results right now? (tests)
+        public bool HidesLocalBoard { get { return hiddenBoard != null; } }
+
+        // Is RaceHud's checkpoint bar hidden by the room results right now? (tests)
+        public bool HidesCheckpoints { get { return hiddenCheckpoints != null; } }
+
+        // hide = the room results are on screen: the empty local leaderboard under them goes invisible (keeps its
+        // space); false = it comes back as RaceHud styled it.
+        private void HideLocalBoard(bool hide)
+        {
+            if (hide)
+            {
+                if (hiddenBoard == null)
+                {
+                    hiddenBoard = root.Q<VisualElement>(LocalBoardName);
+                    if (hiddenBoard != null)
+                    {
+                        hiddenBoard.style.visibility = Visibility.Hidden;
+                    }
+                }
+                // the CHECKPOINT 13/13 bar sits under the card's top (QA desktop 18 Nov 2026: its text showed through).
+                // Visibility, not display: RaceHud sets the bar's display every frame.
+                if (hiddenCheckpoints == null)
+                {
+                    hiddenCheckpoints = root.Q<VisualElement>(CheckpointPanelName);
+                    if (hiddenCheckpoints != null)
+                    {
+                        hiddenCheckpoints.style.visibility = Visibility.Hidden;
+                    }
+                }
+                return;
+            }
+            if (hiddenBoard != null)
+            {
+                hiddenBoard.style.visibility = StyleKeyword.Null;
+                hiddenBoard = null;
+            }
+            if (hiddenCheckpoints != null)
+            {
+                hiddenCheckpoints.style.visibility = StyleKeyword.Null;
+                hiddenCheckpoints = null;
+            }
         }
 
         // Puts the overlay on screen for a page. False = this page with this content is already showing.
         private bool Open(Page page, string contentSignature)
         {
             bool samePage = Current == page;
-            if (samePage && signature == contentSignature)
+            bool touchNow = touchIsForced ? forcedTouch : WebPage.TouchMode;
+            if (samePage && signature == contentSignature && touchNow == touch)
             {
                 return false;
             }
+            touch = touchNow; // a touch laptop can switch: the page is built again with or without key hints
             if (!samePage)
             {
                 nameField = null;
@@ -355,6 +442,7 @@ namespace CarcavelosCircuit.Online
             background.style.display = side ? DisplayStyle.None : DisplayStyle.Flex;
             card.style.display = side ? DisplayStyle.None : DisplayStyle.Flex;
             sideCard.style.display = side ? DisplayStyle.Flex : DisplayStyle.None;
+            HideLocalBoard(side);
             if (overlay.parent != root)
             {
                 root.Add(overlay); // last child = drawn on top of the whole HUD
@@ -421,7 +509,7 @@ namespace CarcavelosCircuit.Online
         }
 
         // A button: the orange plate for the main action, navy for the rest.
-        private static VisualElement Pill(string text, bool orange, Action onClick, VisualElement parent)
+        private VisualElement Pill(string text, bool orange, Action onClick, VisualElement parent)
         {
             VisualElement pill = new VisualElement();
             pill.AddToClassList("menu-pill");
@@ -430,7 +518,7 @@ namespace CarcavelosCircuit.Online
             {
                 pill.AddToClassList("plate--orange");
             }
-            pill.style.height = 56f;
+            pill.style.height = touch ? TouchPillHeight : 56f;
             pill.style.paddingLeft = 22f;
             pill.style.paddingRight = 26f;
             pill.style.justifyContent = Justify.Center;
@@ -449,8 +537,13 @@ namespace CarcavelosCircuit.Online
             return pill;
         }
 
-        private static void KeyHint(string key, string text, VisualElement parent)
+        // A key and what it does (ENTER JOIN). Not on touch screens: there is no keyboard to press it on.
+        private void KeyHint(string key, string text, VisualElement parent)
         {
+            if (touch)
+            {
+                return;
+            }
             VisualElement cap = new VisualElement();
             cap.pickingMode = PickingMode.Ignore;
             cap.AddToClassList("keycap");

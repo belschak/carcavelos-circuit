@@ -13,7 +13,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
     // Team test 17 Nov 2026, the start screen with real key presses in the real game (Main.unity). A test keyboard
     // (Input System) sends the keys, so RaceKeys reads them exactly like a player's:
     // - 1 / 2 / 3 open the driver select in that mode, Space opens it in the highlighted mode,
-    // - Backspace goes back to the modes and stays there (it is also a start key, so it must not reopen it),
+    // - Backspace goes back to the modes and stays there (it is no start key any more, and must not reopen it),
     // - Escape closes the settings and the credits; over the driver select it only closes the card.
     // The player's saved mode and driver are put back afterwards.
     public class MenuKeysPlayTests

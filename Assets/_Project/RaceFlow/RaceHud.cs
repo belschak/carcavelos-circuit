@@ -828,7 +828,7 @@ namespace CarcavelosCircuit.RaceFlow
 
             if (shownLoading.Changed(raceManager.IsSetUp ? 0 : 1))
             {
-                pressAnyKey.text = raceManager.IsSetUp ? StartPrompt(WebPage.UsesNamePrompt) : "LOADING TRACK...";
+                pressAnyKey.text = raceManager.IsSetUp ? StartPrompt(WebPage.TouchMode || WebPage.UsesNamePrompt) : "LOADING TRACK...";
                 pressAnyKey.EnableInClassList("pill--loading", !raceManager.IsSetUp);
             }
         }

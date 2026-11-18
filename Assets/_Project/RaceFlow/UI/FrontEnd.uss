@@ -210,6 +210,28 @@
     background-image: url("Art/plate-select.png");
 }
 
+/* Hover (QA 17.11.2026): a menu button under the mouse gets the mode cards' hover look, glass with an orange edge,
+   not only the 3 % lift. Orange buttons stay orange. Touch keeps the plain plates (a tap leaves :hover behind). */
+.menu-pill.plate:hover {
+    background-image: url("Art/plate-select.png");
+}
+
+.menu-pill.plate.plate--orange:hover {
+    background-image: url("Art/plate-orange.png");
+}
+
+.hud--touch .menu-pill.plate:hover {
+    background-image: url("Art/plate-navy.png");
+}
+
+.hud--touch .menu-pill.plate.plate--orange:hover {
+    background-image: url("Art/plate-orange.png");
+}
+
+.hud--touch .menu-pill.plate.plate--blue:hover {
+    background-image: url("Art/plate-select.png");
+}
+
 .menu-pill {
     transition-property: scale, translate;
     transition-duration: 180ms, 80ms;

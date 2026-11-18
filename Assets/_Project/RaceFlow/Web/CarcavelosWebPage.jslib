@@ -5,7 +5,9 @@ mergeInto(LibraryManager.library, {
   // results (WebPage.PageRaceState). The page template listens for "cc-race-state" and shows its driving buttons
   // only during a running race.
   CarcavelosRaceState: function (state) {
-    window.dispatchEvent(new CustomEvent("cc-race-state", { detail: { racing: state === 1, paused: state === 2 } }));
+    // state: 0 menus, 1 racing, 2 paused, plus 4 in an online race (WebPage.PageOnline).
+    var race = state & 3;
+    window.dispatchEvent(new CustomEvent("cc-race-state", { detail: { racing: race === 1, paused: race === 2, online: (state & 4) !== 0 } }));
   },
 
   // 1 while the page shows its touch buttons (phone or tablet, index.html useTouchMode adds "cc-touch-mode"), else 0.

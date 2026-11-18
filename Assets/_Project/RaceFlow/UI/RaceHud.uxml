@@ -274,7 +274,7 @@
             <ui:VisualElement class="pause-content">
                 <ui:Label text="PAUSED" class="pause-title f-display" />
                 <ui:VisualElement name="pause-wave-host" class="wave-host wave-host--small" />
-                <ui:Label text="PRESS P, ANY KEY OR CLICK TO CONTINUE" class="pill pause-pill f-ui" />
+                <ui:Label name="pause-hint" text="PRESS P, ANY KEY OR CLICK TO CONTINUE" class="pill pause-pill f-ui" />
                 <ui:Label text="THE CLOCK IS STOPPED" class="pause-note f-ui" />
             </ui:VisualElement>
         </ui:VisualElement>

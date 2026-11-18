@@ -590,54 +590,14 @@
         }
         document.documentElement.classList.toggle("cc-racing", racing);
         document.documentElement.classList.toggle("cc-paused", !!(event.detail && event.detail.paused));
+        document.documentElement.classList.toggle("cc-online", !!(event.detail && event.detail.online));
       });
       document.addEventListener("visibilitychange", releaseAllFingers);
 
-      // A short tap on the game (not on a button) = a mouse click at that spot. The game ignores touches on its
-      // own, so without this the start screen and the Retry button on the results screen could not be tapped.
-      var tapStart = null;
-      var mouseSeenDuringTap = false;
-      canvas.addEventListener("touchstart", function (event) {
-        var touch = event.changedTouches[0];
-        tapStart = { x: touch.clientX, y: touch.clientY, time: Date.now() };
-        mouseSeenDuringTap = false;
-      }, { passive: true });
-
-      canvas.addEventListener("mousedown", function (event) {
-        if (event.isTrusted) {
-          mouseSeenDuringTap = true; // this browser already turns taps into clicks: do not click twice
-        }
-      });
-
-      canvas.addEventListener("touchend", function (event) {
-        var touch = event.changedTouches[0];
-        if (!tapStart || !touchMode) {
-          return;
-        }
-        var moved = Math.abs(touch.clientX - tapStart.x) + Math.abs(touch.clientY - tapStart.y);
-        var short = Date.now() - tapStart.time < 500;
-        tapStart = null;
-        if (moved > 20 || !short) {
-          return; // a swipe or a long press, not a tap
-        }
-        var x = touch.clientX;
-        var y = touch.clientY;
-        setTimeout(function () {
-          if (!mouseSeenDuringTap) {
-            clickAt(x, y);
-          }
-        }, 60);
-      }, { passive: true });
-
-      function clickAt(x, y) {
-        var types = ["mousemove", "mousedown", "mouseup"];
-        for (var i = 0; i < types.length; i++) {
-          canvas.dispatchEvent(new MouseEvent(types[i], {
-            clientX: x, clientY: y, button: 0, buttons: types[i] === "mousedown" ? 1 : 0,
-            bubbles: true, cancelable: true, view: window
-          }));
-        }
-      }
+      // Taps on the game itself (menu buttons, mode cards, RETRY, "tap to continue") go straight to the game: Unity
+      // reads the touch screen (UI Toolkit buttons and RaceKeys.ClickPressed). Phone QA 17.11: the page used to send
+      // a mouse click after every tap as well, so each menu button got two clicks (SETTINGS opened and closed again,
+      // SOUND and NOON flipped twice and seemed dead).
 
       // Switches the page to touch texts: touch tips, touch legend, rotate hint. Called before loading.
       function useTouchMode() {

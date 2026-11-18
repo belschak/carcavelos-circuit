@@ -159,6 +159,7 @@ Thumbs.db
 
 # Local Web builds (Role 3 uploads them to itch.io)
 /Build-Web/
+/Build-Web-DXT-keep/
 
 # Photon Fusion 2 SDK (M2 online race): its licence forbids publishing it, so it is never committed.
 # CI copies it in from a private repo; teammates import it themselves (docs/online.md).

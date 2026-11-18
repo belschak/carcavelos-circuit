@@ -11,11 +11,13 @@ namespace CarcavelosCircuit.RaceFlow
         private const int ShardCount = 10;
         private const float ShardSeconds = 0.8f;    // how long the shards fly
         private const float PopInSeconds = 0.45f;   // grow-back animation
+        private const float ParkSeconds = 0.35f;    // shrink away after the finish line (Park)
         private const float SpinDegreesPerSecond = 95f;
         private const float BobMetres = 0.18f;
 
         private readonly ItemBoxState state = new ItemBoxState();
         private ItemSystem system;
+        private SphereCollider trigger;
         private Transform cube;
         private Transform[] shards = new Transform[0];
         private Vector3[] shardVelocity = new Vector3[0];
@@ -25,8 +27,13 @@ namespace CarcavelosCircuit.RaceFlow
         private float bobPhase;      // different per box, so a row does not bob in lockstep
         private float shardTime = -1f;   // seconds since the burst, -1 = no shards flying
         private float popInTime = -1f;   // seconds since it came back, -1 = not growing
+        private float parkTime = -1f;    // seconds since Park, -1 = not shrinking
+        private bool parked;             // put away after the finish: hidden and not hittable until ResetBox
 
-        public bool IsAvailable { get { return state.IsAvailable; } }
+        public bool IsAvailable { get { return state.IsAvailable && !parked; } }
+
+        // Put away after the finish line (Play Mode test).
+        public bool IsParked { get { return parked; } }
         public bool GivesWave { get; private set; } // a wave box (WaveBoxSpot): always the Carcavelos Wave
 
         // Called once by ItemSystem right after AddComponent.
@@ -42,7 +49,7 @@ namespace CarcavelosCircuit.RaceFlow
             gameObject.layer = 2; // "Ignore Raycast": the kart's ground ray and the camera never see the boxes
 
             // The trigger sits on the root, a bit bigger than the cube, so clipping a corner counts too.
-            SphereCollider trigger = gameObject.AddComponent<SphereCollider>();
+            trigger = gameObject.AddComponent<SphereCollider>();
             trigger.isTrigger = true;
             trigger.radius = boxSize * 0.95f;
 
@@ -105,7 +112,7 @@ namespace CarcavelosCircuit.RaceFlow
 
         private void OnTriggerEnter(Collider other)
         {
-            if (system != null && state.IsAvailable && system.IsKart(other))
+            if (system != null && IsAvailable && system.IsKart(other))
             {
                 system.OnBoxHit(this);
             }
@@ -137,9 +144,33 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
+        // After the finish line (QA 17.11.2026): the first row stands just past the line, right where the finish
+        // cinematic swings the camera in front of the kart, so a box filled half the screen. The race is over for
+        // this player, so every box shrinks away (box, light on the road and shards) and stays away until ResetBox.
+        public void Park()
+        {
+            if (parked)
+            {
+                return;
+            }
+            parked = true;
+            parkTime = 0f;
+            if (trigger != null)
+            {
+                trigger.enabled = false; // no hits, and no zero-sized collider once it has shrunk away
+            }
+        }
+
         // Retry: every box is back at once, without the grow animation.
         public void ResetBox()
         {
+            parked = false;
+            parkTime = -1f;
+            transform.localScale = Vector3.one;
+            if (trigger != null)
+            {
+                trigger.enabled = true;
+            }
             state.Reset();
             cube.gameObject.SetActive(true);
             cube.localScale = Vector3.one * size;
@@ -150,6 +181,11 @@ namespace CarcavelosCircuit.RaceFlow
         private void Update()
         {
             float dt = Time.deltaTime;
+            if (parked)
+            {
+                UpdatePark(Time.unscaledDeltaTime); // the finish slow motion must not slow the shrink down
+                return;
+            }
             if (state.Tick(dt))
             {
                 cube.gameObject.SetActive(true);
@@ -163,6 +199,23 @@ namespace CarcavelosCircuit.RaceFlow
 
             UpdatePopIn(dt);
             UpdateShards(dt);
+        }
+
+        // Shrink the whole box (root: cube, light on the road, shards) to nothing, then leave it at zero.
+        private void UpdatePark(float dt)
+        {
+            if (parkTime < 0f)
+            {
+                return;
+            }
+            parkTime += dt;
+            float p = Mathf.Clamp01(parkTime / ParkSeconds);
+            transform.localScale = Vector3.one * (1f - p * p);
+            if (p >= 1f)
+            {
+                parkTime = -1f;
+                transform.localScale = Vector3.zero;
+            }
         }
 
         // Grow back with a small overshoot (0 -> 115 % -> 100 %), so the box "pops" into place.
