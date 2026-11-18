@@ -7,6 +7,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 
 namespace CarcavelosCircuit.Tests.PlayMode
 {
@@ -206,6 +207,75 @@ namespace CarcavelosCircuit.Tests.PlayMode
             finally
             {
                 OnlineRaceHooks.OpenLobby = hookBefore;
+            }
+        }
+
+        // Luc, 18 Nov 2026: the mode card under the mouse turns orange; the picked card waits as glass with the orange
+        // edge; mouse off the row = the picked card is orange again. Touch and the dimmed Online card: no orange hover.
+        [UnityTest]
+        public IEnumerator ModeCards_OrangeFollowsTheMouse_OneCardAtATime()
+        {
+            System.Action<RaceManager> hookBefore = OnlineRaceHooks.OpenLobby;
+            RaceHud hud = Object.FindAnyObjectByType<RaceHud>();
+            Assert.IsNotNull(hud, "Main.unity has no RaceHud");
+            VisualElement root = hud.GetComponent<UIDocument>().rootVisualElement;
+            VisualElement hudRoot = root.Q<VisualElement>("hud-root");
+            VisualElement[] cards = { root.Q<VisualElement>("mode-1"), root.Q<VisualElement>("mode-2"), root.Q<VisualElement>("mode-3") };
+            bool wasTouch = hudRoot.ClassListContains("hud--touch");
+            try
+            {
+                string message;
+                OnlineRaceHooks.OpenLobby = manager => { }; // the online build: ONLINE RACE can turn orange too
+                Assert.IsTrue(race.TrySelectMode(RaceMode.RaceVsBots, out message));
+                yield return null;
+                hudRoot.RemoveFromClassList("hud--touch");
+                hud.ModePicker.HoverCard(-1, false); // leaves nothing hovered (and a wrong index does nothing)
+                hud.ModePicker.HoverCard(3, true);
+                Assert.AreEqual(-1, hud.ModePicker.Hovered, "no 4th card");
+                hud.ModePicker.HoverCard(0, false);
+                AssertOrange(cards, 0, "mouse off the row: the picked card");
+
+                for (int card = 0; card < 3; card++)
+                {
+                    hud.ModePicker.HoverCard(card, true);
+                    AssertOrange(cards, card, "mouse on card " + (card + 1));
+                    Assert.AreEqual(card != 0, cards[0].ClassListContains("plate--blue"),
+                        "the picked card waits as glass while the mouse is on another card");
+                    hud.ModePicker.HoverCard(card, false);
+                    AssertOrange(cards, 0, "mouse left card " + (card + 1) + ": the picked card again");
+                }
+                Assert.AreEqual(RaceMode.RaceVsBots, race.Mode, "hovering never picks a mode");
+                Assert.IsFalse(hud.Builder.IsOpen, "hovering never opens the kart builder");
+
+                // Touch: a tap leaves the hover behind, so the picked card stays the orange one.
+                hudRoot.AddToClassList("hud--touch");
+                hud.ModePicker.HoverCard(1, true);
+                AssertOrange(cards, 0, "touch: no orange hover");
+                hud.ModePicker.HoverCard(1, false);
+                hudRoot.RemoveFromClassList("hud--touch");
+
+                // A build without the online part: the dimmed ONLINE card never turns orange.
+                OnlineRaceHooks.OpenLobby = null;
+                yield return null; // ModePicker.Update sees the change and dims the card
+                hud.ModePicker.HoverCard(2, true);
+                AssertOrange(cards, 0, "dimmed ONLINE card under the mouse: the picked card stays orange");
+                hud.ModePicker.HoverCard(2, false);
+            }
+            finally
+            {
+                OnlineRaceHooks.OpenLobby = hookBefore;
+                hudRoot.EnableInClassList("hud--touch", wasTouch);
+            }
+        }
+
+        // Exactly one card has the orange plate, and it is the expected one.
+        private void AssertOrange(VisualElement[] cards, int expected, string what)
+        {
+            RaceHud hud = Object.FindAnyObjectByType<RaceHud>();
+            Assert.AreEqual(expected, hud.ModePicker.OrangeCard, what);
+            for (int i = 0; i < cards.Length; i++)
+            {
+                Assert.AreEqual(i == expected, cards[i].ClassListContains("plate--orange"), what + " (card " + (i + 1) + ")");
             }
         }
 

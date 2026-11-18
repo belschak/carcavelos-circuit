@@ -101,6 +101,23 @@ namespace CarcavelosCircuit.RaceFlow
             return !CanPick(mode, onlineAvailable, out unused);
         }
 
+        // Which of the three mode cards is orange (Luc, 18 Nov 2026: "the mode under my mouse turns orange").
+        // The orange follows the mouse, so only ONE card is orange at a time: the card under the mouse, else the
+        // picked card. No orange for a dimmed card (it cannot be picked) and no hover on touch (a tap leaves the
+        // hover behind, so the picked card stays orange). -1 = no card (nothing picked and nothing hovered).
+        public static int OrangeCard(int picked, int hovered, bool hoveredDimmed, bool touch)
+        {
+            if (hovered >= 0 && hovered < ModeCount && !hoveredDimmed && !touch)
+            {
+                return hovered;
+            }
+            if (picked >= 0 && picked < ModeCount)
+            {
+                return picked;
+            }
+            return -1;
+        }
+
         // Do the bots race in this mode? (Online races people, not bots.)
         public static bool HasBots(RaceMode mode)
         {
