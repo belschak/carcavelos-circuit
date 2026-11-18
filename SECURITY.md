@@ -6,9 +6,8 @@ stores no personal data beyond the nickname and lap time a player chooses to put
 ## Reporting a problem
 
 Please do not open a public issue for a security problem. Use GitHub's private report instead:
-**Security > Report a vulnerability** on <https://github.com/belschak/carcavelos-circuit/security>. If that button is
-not there, open an issue titled "security contact" without any details and we will reach out. We answer within a few
-days while the course runs (until December 2026). After that the project is not maintained.
+**Security > Report a vulnerability** on <https://github.com/belschak/carcavelos-circuit/security>. We answer within a
+few days while the course runs (until December 2026). After that the project is not maintained.
 
 ## Supported version
 

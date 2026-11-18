@@ -168,3 +168,10 @@ Thumbs.db
 # Written only during a Web build by OnlineBuildConfig (Photon App ID from the PHOTON_APP_ID secret)
 /[Aa]ssets/_Project/Online/Resources/CarcavelosPhotonAppId.txt
 /[Aa]ssets/_Project/Online/Resources/CarcavelosPhotonAppId.txt.meta
+
+# Local secrets (docs/security.md): environment files are never committed; keys live only in GitHub Actions secrets.
+# A committed example file without values, if one is ever needed, is allowed as .env.example.
+.env
+.env.*
+!.env.example
+*.env

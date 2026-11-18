@@ -1,12 +1,14 @@
 # Carcavelos Circuit
 
+[![Tests](https://github.com/belschak/carcavelos-circuit/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/belschak/carcavelos-circuit/actions/workflows/tests.yml?query=branch%3Amain) [![Security](https://github.com/belschak/carcavelos-circuit/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/belschak/carcavelos-circuit/actions/workflows/security.yml?query=branch%3Amain)
+
 A 3D kart racer on a model of Nova SBE's Carcavelos campus that runs in the browser. Race five bots through the beach tunnel, along the promenade and over the ramp between the campus wings; chase your own ghost in Time Attack; or race the whole class live in one online room. Team project for Introduction to Programming (2477), Nova SBE, Fall 2026.
 
 **Play it: https://nova-kart.github.io/** (Chrome, Edge or Firefox on a laptop; phones work with touch buttons)
 
 Also live at https://belschak.github.io/carcavelos-circuit/: the same build of `main`, published to both addresses by the same workflow ([why](docs/architecture.md#build-and-deploy)).
 
-Built with Unity 6000.3.28f1 (C#), compiled to WebAssembly, deployed from `main` to GitHub Pages by GitHub Actions. The code lives in this repository only. Optional online services: Supabase (leaderboard) and Photon Fusion 2 (online race).
+Built with Unity 6000.3.28f1 (C#) instead of the course's Python + Streamlit, a stack approved by the teaching staff (18.11.2026) ([why](docs/architecture.md#stack-approval)); compiled to WebAssembly, deployed from `main` to GitHub Pages by GitHub Actions. The code lives in this repository only. Online services: Supabase (the global leaderboard) and Photon Fusion 2 (the online race); if either is down, the rest of the game keeps working and says what failed.
 
 ## Team
 
@@ -57,6 +59,7 @@ On a phone the game shows touch buttons instead.
 | Menus and HUD | Start screen, settings, credits, results, plain-language errors | `Assets/_Project/RaceFlow/UI/` |
 | Sound | Engine pitch from speed, drift and boost sounds, music with ducking | `Assets/_Project/Audio/`, `RaceFlow/RaceMusic.cs` |
 | Beach life | Waves rolling onto the beach, surfers riding them | `Assets/_Project/Ambience/` |
+| Teacher tribute | A thank-you to the course's teaching staff: a SPECIAL THANKS page in the credits, four thank-you boards beside checkpoint gates on the track, and "YOU WON THE GIL PEREIRA CUP" on a Gold or Dean's List lap | `Assets/_Project/RaceFlow/Tribute/`, art from `tools/textures/make_tribute_boards.py` |
 | Web page | Loader, error cards, touch controls, update check | `Assets/WebGLTemplates/CarcavelosCircuit/index.html` |
 
 How these parts fit together, and why they were built this way: [docs/architecture.md](docs/architecture.md).
@@ -88,9 +91,11 @@ Then open http://localhost:8000. macOS: the Unity path is `/Applications/Unity/H
 
 ## Run the tests
 
-In the Unity Editor: Window > General > Test Runner > **EditMode** > Run All, then **PlayMode** > Run All.
+**On GitHub (the reference):** `.github/workflows/tests.yml` runs every Edit Mode and Play Mode test in Unity on Linux on every pull request into `main` and every push to `main` (badge at the top). Actions > **Tests** > Run workflow starts it by hand.
 
-From the command line (Unity closed), Windows:
+**On your computer** (needs the **Web Build Support** module, see above): in the Unity Editor, Window > General > Test Runner > **EditMode** > Run All, then **PlayMode** > Run All.
+
+From the command line (Unity closed), inside the cloned folder (`cd carcavelos-circuit`), Windows:
 
 ```
 "C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -runTests -batchmode -projectPath . -testPlatform EditMode -testResults TestResults/editmode.xml
@@ -100,9 +105,9 @@ From the command line (Unity closed), Windows:
 "C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -runTests -batchmode -projectPath . -testPlatform PlayMode -testResults TestResults/playmode.xml
 ```
 
-macOS: the Unity path above, same arguments. The results are NUnit XML files in `TestResults/`.
+macOS: the Unity path above, same arguments. Exit code 0 means every test passed; the results are NUnit XML files in `TestResults/`.
 
-On GitHub: Actions > **Tests** > Run workflow runs both modes in Unity on Linux (`.github/workflows/tests.yml`). What the tests cover and what they do not: [docs/verification.md](docs/verification.md).
+What the tests cover for each workflow (accepted, rejected and edge cases) and what they do not: [docs/verification.md](docs/verification.md).
 
 ## Repository map
 
@@ -112,11 +117,12 @@ On GitHub: Actions > **Tests** > Run workflow runs both modes in Unity on Linux 
 | `Assets/WebGLTemplates/` | The web page around the game |
 | `backend/supabase/` | Leaderboard database: table, access rules, setup steps |
 | `tools/` | Python scripts that generate the campus world, props, textures, sounds and UI art (not needed to run the game) |
-| `.github/workflows/` | CI: tests and the Web build + deploy |
+| `.github/workflows/` | CI: tests, security checks (secret scan, pinning), the Web build + deploy, the leaderboard keep-alive |
 | `docs/` | How it is built, why, limits, decisions: start at [docs/README.md](docs/README.md) |
 | `AGENTS.md` | The rules for every teammate and every AI assistant (Git workflow, ownership, contracts) |
 | `TASKS.md` | The task board: every task, owner and status |
 | `THIRD_PARTY.md` | Every external asset and its licence |
+| `SECURITY.md`, `LICENSE` | How to report a security problem; the MIT licence for our code |
 | `Packages/`, `ProjectSettings/` | Unity package list (pinned) and project settings |
 
 ## Documentation

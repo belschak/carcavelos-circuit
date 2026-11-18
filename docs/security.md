@@ -112,10 +112,14 @@ scenes; only the tests and the driving test scene create them.
 - **The repository:** names and student numbers of the team are in the README because the course requires it.
   On 18 Nov 2026 every file of every commit, including binary 3D models, was scanned for e-mail addresses, personal
   folder paths (`C:\Users\...`, `/Users/...`) and phone numbers. No phone numbers and no Windows user folders were
-  found. Exported FBX models keep the exporting computer's file path in their metadata: some contain a teammate's
-  macOS user name, and the item models contain the Google Drive folder path of the teammate who made them, which
-  includes their e-mail address. This metadata is not used by the game. Cleaning it from the models and from the Git
-  history is a team decision, because rewriting history changes every teammate's clone.
+  found. Exported FBX models keep the exporting computer's file path in their metadata: some contained a teammate's
+  macOS user name, and the item models the Google Drive folder path of the teammate who made them, which includes
+  their e-mail address. The game never reads these paths.
+  **The current files are clean:** on 18 Nov 2026 the user name and the address were overwritten in place with text of
+  the same length in all 10 affected models (864 places). Same size, and every byte outside those path strings is
+  unchanged (checked file by file), so geometry, materials and animation are identical; the tests and a Web build
+  confirmed it. **Older commits still contain them:** removing them from the Git history would change every
+  teammate's clone and every open pull request, so that is left to the team member concerned.
 - **Commit metadata:** every Git commit records its author's name and e-mail address, and some team members committed
   with a personal address. That is visible to anyone who reads the history; it is not a credential. We do not rewrite
   history to change it (that would break every clone and every open pull request). New commits should use GitHub's
@@ -148,11 +152,21 @@ copy from a private repository with a read-only key.
   the Unity registry or built in. Unity editor: `ProjectSettings/ProjectVersion.txt` (6000.3.28f1).
 - GitHub Actions: every `uses:` is pinned to a full commit SHA (with the version as a comment).
 - gitleaks in CI: a fixed release whose SHA-256 is checked before it runs.
+- The test run's tools: the GameCI CLI at a fixed release (`cliVersion` in `tests.yml`) and the Unity Docker image
+  by its SHA-256 digest, so a re-pushed tag cannot change what runs the tests.
 - Python art tools (`tools/requirements.txt`): exact `==` versions. They only make textures and icons offline;
   the game, its tests and its build need no Python.
 - The Security workflow's pinning check and `RepoHygieneTests` fail on any unpinned dependency.
 - Dependabot (`.github/dependabot.yml`) opens a pull request each week when a pinned action or Python tool has a new
   release or a security fix, so pinning does not mean falling behind; each such PR runs the same tests.
+
+**GitHub's own checks on the repository (switched on 18 Nov 2026, checked through the GitHub API).**
+- Secret scanning and push protection: GitHub scans every push for known key formats and refuses a push that
+  contains one, in addition to our gitleaks run.
+- Dependabot alerts: GitHub warns when a dependency it knows about gets a security advisory (automatic Dependabot
+  security pull requests are off; the weekly version pull requests above cover updates).
+- Private vulnerability reporting: anyone can report a problem privately under Security > Report a vulnerability
+  (see `SECURITY.md`).
 
 **No known vulnerabilities (checked 18 Nov 2026).**
 - GitHub Advisory Database: no advisory for any of the 8 actions we use.

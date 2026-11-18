@@ -6,7 +6,7 @@ Sources: the course wiki https://2477-introduction-programming.gitlab.io/wiki/ (
 | # | Requirement | How we meet it | Status |
 |---|---|---|---|
 | C1 | 3 to 4 members | 4: see README | done |
-| C2 | New application of the team's own choice (allowed by the wiki: "start a new application") | From-scratch Unity game. The stack guide says a language other than Python is agreed with the staff case by case: asked via the Moodle question form on 7 Nov (G1); reasons and current status in `docs/architecture.md` (Stack approval) | ok |
+| C2 | New application of the team's own choice (allowed by the wiki: "start a new application") | From-scratch Unity game. The stack guide says a language other than Python is agreed with the staff case by case: Unity approved by the teaching staff (18.11.2026), G1; reasons in `docs/architecture.md` (Stack approval) | done |
 | C3 | **Submission: Mon 23 Nov 2026, 23:59, on Moodle.** One member submits the GitHub repo link on the team project assignment. **Commits after the deadline are not graded** | Task G5. The last commit before the deadline is the graded state | due Mon 23 Nov |
 | C4 | **Every member contributes code to the repository** | Each member commits their own code from their own GitHub account (commit email linked to it; your avatar must show on your commits). AI-written is fine, but you commit it yourself. All four have merged pull requests on `main` (`docs/walkthrough-qa.md`, "Who built what") | done |
 | C5 | **Repository is public** (staff open it without an invitation); keys and passwords stay out of it | Public (checked 18 Nov 2026); only David changes the visibility | done |

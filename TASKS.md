@@ -1,5 +1,7 @@
 # Tasks (the board)
 
+> **Frozen for the submission (18 Nov 2026).** This was the team's working board during the build weeks; rows keep their history. The current status of every course requirement is in [docs/course-requirements.md](docs/course-requirements.md), the known open points in [docs/limits-and-next-steps.md](docs/limits-and-next-steps.md).
+
 Status: `todo` -> `claimed (<name>, <date>)` -> `in review` -> `done`. Claim protocol in `AGENTS.md`. Requests for another role: add a row with that role's prefix.
 Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is merged (otherwise everyone generates different `.meta` GUIDs).
 
@@ -8,8 +10,8 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 |---|---|---|---|---|
 | S1 | Create the Unity project (6000.3.28f1, Universal 3D template) at the repo root; folders `Assets/_Project/{Driving,Track,Visuals,RaceFlow,Audio,Shared,Tests/EditMode}`; one asmdef per module as in `docs/interfaces.md`; empty scenes `Driving_TestBed`, `Track_Campus`, `Visuals_Showroom`, `Main`; Force Text + "Reduce version control noise" on; commit with all `.meta` files | 4 | Sat 7 | done (David, 2026-11-08) |
 | S2 | `IKartState` interface in `Shared/` exactly as in `docs/interfaces.md` | 4 | Sun 8 | done (David, 2026-11-08) |
-| S3 | Minimal Web build (one cube, one camera) uploaded to itch.io, opened on another laptop; URL in `docs/builds.md` | 3 | Sun 8 | todo |
-| S4 | Every teammate: `docs/setup.md` done, project opens from a fresh clone, name + GitHub handle in `docs/team.md` | all | Sun 8 | todo |
+| S3 | Minimal Web build (one cube, one camera) uploaded to itch.io, opened on another laptop; URL in `docs/builds.md` | 3 | Sun 8 | superseded: no itch.io; every `main` commit is built and deployed to GitHub Pages by CI (#28, #79), see `docs/builds.md` |
+| S4 | Every teammate: `docs/setup.md` done, project opens from a fresh clone, name + GitHub handle in `docs/team.md` | all | Sun 8 | done: all four members commit from their own accounts and are in `docs/team.md` |
 
 ## Role 1: Driving + camera (Alessandro)
 | ID | Task | Due | Status |
@@ -25,23 +27,23 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 | ID | Task | Due | Status |
 |---|---|---|---|
 | T1 | Final route in `docs/route.md` from the campus walk (sketch, sections, lengths, ramp size) | Sat 7 | in review (Noah, 2026-11-13): final V20 route, 1,394 m, 13 checkpoints; no sketch image yet |
-| T2 | Grey-box loop in `Track_Campus` at real scale: road, walls, main buildings as blocks, elevation | Mon 9 | todo |
-| T3 | Ramp D/B wing, tunnel, beach promenade in grey | Wed 11 | todo |
+| T2 | Grey-box loop in `Track_Campus` at real scale: road, walls, main buildings as blocks, elevation | Mon 9 | superseded by the campus world built from map data (V4 #33, V21 #99) |
+| T3 | Ramp D/B wing, tunnel, beach promenade in grey | Wed 11 | superseded by the campus world (ramp, tunnel and promenade in V14-V21, #99) |
 | T4 | `Checkpoint`, `SpawnPoint`, respawn points, `TrackInfo` | Tue 10 | done (Noah, #48) |
 | T5 | `RaceRules` (plain C#) + Edit Mode tests: order, wrong way, duplicate finish, missed checkpoint | Wed 11 | done (Noah, #47) |
-| T6 | Lap time 35-60 s check with the real kart; adjust route | Fri 13 | todo |
+| T6 | Lap time 35-60 s check with the real kart; adjust route | Fri 13 | open: lap time not measured with the final kart (`docs/route.md`) |
 | T7 | Low white fence (posts + two flat boards) along both road edges of the campus world `Track_CampusWorld`, none in the tunnel or at the terrace jump; prefab `Track/Prefabs/WhiteGuardrails.prefab` built by `WhiteGuardrailBuilder` from Role 3's `track.json` | Fri 13 | done (Noah, PR #63) |
 
 ## Role 3: Kart, visuals + web release (Luc)
 | ID | Task | Due | Status |
 |---|---|---|---|
 | V1 | `docs/art-style.md`: palette (5-6 colours), shape language, 1 reference image | Sun 8 | in review |
-| V2 | Scale test: 1 m cube from Blender as FBX imports at 1 m, forward = +Z; record export settings in `docs/art-style.md` | Sun 8 | todo |
+| V2 | Scale test: 1 m cube from Blender as FBX imports at 1 m, forward = +Z; record export settings in `docs/art-style.md` | Sun 8 | open: export settings not written into `docs/art-style.md`; models import at the right scale (checked by the scene builders) |
 | V3 | Kart + simple seated driver FBX, fits `Kart/Visual` (agree pivot/size with Role 1) | Wed 11 | in review (#34): `KartVisual_Classic_Rookie` prefab, steering wheel and hands follow `Steer` (own two-bone IK, no package), playtested by Luc 10 Nov |
 | V4 | 2-3 low-poly campus landmarks from the photos (e.g. library facade, EDP Plaza, D/B ramp) | Fri 13 | done (#33): whole campus world `Track_CampusWorld` on Noah's route, built by `CampusWorldBuilder` |
-| V5 | `KartEffects`: drift sparks + boost flame, reads `IKartState` only | Thu 12 | claimed (Luc, 2026-11-09) |
-| V6 | Complete race at the itch.io URL, logged in `docs/builds.md` | Thu 12 | todo |
-| V7 | README "How to build" reproducible by a second person | Fri 13 | todo |
+| V5 | `KartEffects`: drift sparks + boost flame, reads `IKartState` only | Thu 12 | done (Luc, merged in #106) |
+| V6 | Complete race at the itch.io URL, logged in `docs/builds.md` | Thu 12 | superseded by the GitHub Pages row V6 below |
+| V7 | README "How to build" reproducible by a second person | Fri 13 | done: CI builds every `main` commit with the same script (`web-build.yml`, `Role4WebBuild`); local steps in the README |
 | V8 | `Visuals/CampusWorld/CampusWorld.prefab`: the whole campus world as one prefab (colliders, trees and props, sun and sky light) for Role 2's `Track_Campus`; `Track_CampusWorld` stays Role 3's preview with the race placeholders | Tue 10 | done (Luc, #37) |
 | V9 | Look pass for the campus world: soft trees with wind, moving sea, grass and sand detail, grass tufts (own shaders in `Visuals/Shaders/`, fallback to URP Lit) | – | done (#64) |
 | V14 | World pass from the photo/orthophoto/Street View surveys: real coastline and beach (no sea through the land), beachfront restaurants and promenade, street section and Capricciosa forecourt, campus buildings, upper plaza with frosted-glass skylights, sunken courtyard, library and bridge passage, drivable stairs, real jump kicker. Two race-line changes proposed to Role 2 (tunnel exit, line past the library) | Fri 13 | done (Luc, merged via V21) |
@@ -84,7 +86,7 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 | T8 | **`TrackProgress` implements `ITrackProgress`** on the `TrackInfo` root: racing line in driving order (start line first), `DistanceAlongLap`, `PointAt`, `DirectionAt`. May wrap `Shared/TrackPolyline`. Positions, minimap and bots read it | Wed 11 | done (Noah, #76) |
 | T9 | Realistic main building inside: atrium, KPMG gallery, staircase (from your help PRs #44/#45), made by your own builder under `Track/` as a prefab; Luc places it in the campus world (request Q18) | Tue 17 | done (Noah, #80): the hall is built by Noah's generator in help PR #45 and placed in the campus world by Luc's V12 #77 |
 | T10 | Piano in the atrium + piano sounds when a kart drives past or hits it (clip + script in your folder, CC0 or own recording, listed in `THIRD_PARTY.md`) | Tue 17 | in review (Noah, 2026-11-11) |
-| T11 | Volleyball fields on the beach (nets, lines, posts; colliders, placed beside the racing line, not on it) | Tue 17 | todo |
+| T11 | Volleyball fields on the beach (nets, lines, posts; colliders, placed beside the racing line, not on it) | Tue 17 | not built (feature freeze 22 Nov) |
 
 ### Role 3: Luc
 | ID | Task | Due | Status |
@@ -97,7 +99,7 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 | V33 | **Wider checkpoints + roundabout wall** (Luc's live drive, 15 Nov): checkpoint banner poles stand at the trigger's real edges (`CheckpointGatePlan.PostOffsetForTrigger`, wide checkpoints look wide); new optional `checkpoint_shifts` in track.json; CP13 (U-turn) 2 points before the apex, reaching 0.3 m past the start median's west end (inner pole level with the wall's end); CP3 (after the jump, before the avenue) 28 -> 44 m; CP4 shifted 3 m right so its pole stands at the new `roundabout_inside` Nova Kart wall, which runs along the inside of the race road from the north arm's zebra to the west arm, so only the first exit right is open | Sun 22 | done (Luc, 2026-11-15, PR #117) |
 | V35 | **Far horizon in the sky** (Luc, 15 Nov, Blender 5.3): the real land 3-45 km away (Serra de Sintra, Cascais coast, Caparica, Serra da Arrabida) from AWS Terrain Tiles (zoom 11, `tools/world_gen/dem/far/`) rendered with Blender 5.3's EEVEE equirectangular camera (`make_far_horizon.py`) and laid over both painted skies (`make_sky.py`, noon + sunset). No runtime cost (same sky textures, same size); subtle hazy coastline over the sea | Sun 22 | done (Luc, 2026-11-15, PR #122) |
 | V38 | **Race modes + finish cinematic** (Luc, 16 Nov): start screen with RACE VS BOTS / TIME ATTACK / ONLINE RACE (coming soon), bots only in Race vs Bots; after the line a checkered flag, the camera swings to the kart's front while `FinishCruise` drives the player on, place or lap time in the middle, then the results card (MENU = Q back to the modes). RaceFlow part as help PR for Role 4 (`help/role4-race-modes-luc`). Edit Mode tests `RaceModeRulesTests`, `FinishCinematicTests`, `FinishCruiseTests`, Play Mode `RaceModesPlayTests` | Sun 22 | done (Luc, 2026-11-16, help PR #126; David review after merge) |
-| V6 | Complete race at the deployed URL, logged in `docs/builds.md` (with David) | Sun 22 | todo |
+| V6 | Complete race at the deployed URL, logged in `docs/builds.md` (with David) | Sun 22 | done: full races on the live build in every mode on 17 and 18 Nov (team QA, 0 console errors); every deploy is logged in Actions > Web build (`docs/builds.md`) |
 | V28 | **Time of day: Noon + Sunset** (Alessandro asked for sunset): `Shared/TimeOfDay.cs` (choice saved in PlayerPrefs), one `TimeOfDayLook` per mood, `CampusWorldLighting` switches sun, sky light, painted sky (`make_sky.py --mood sunset`), reflections, haze and colour grade at runtime, no lightmaps. Noon = today's look value for value. Night later (needs lit lamps). Start-screen pill + key T and the aerial sea preview are a help PR for Role 4 | Sun 22 | in progress (Luc) |
 | V31 | **Start median joins the finish line** (Luc, 14 Nov): the Nova Kart wall between the plaza and the home straight starts at the START gate's left pylon and runs 14 m back (before: a free 12 m piece at the U-turn end), so the driver sees where the straight is and the plaza stays open. `start_plan.median()`, `track.json "barriers"`, rebuilt guardrails and world | Sun 22 | done (Luc, 2026-11-15, #113) |
 | V34 | **Item effects + item boxes, AAA pass** (Luc, 15 Nov: "the wave only turns the screen blue"): Luc's Items v01 look back in `Visuals/ItemFx/` on the `KartEffects` prefab: the Carcavelos Wave as water round the kart (crest + foam lip, spray, splashes), Espresso crema ring + trails + speed lines, Seagull = Nori tossing lifebuoys, Dean's List = laurel wreath + mortarboard; new rounded azulejo box with glow and road light. RaceFlow hooks (look slots in `ItemSettings`, softer HUD wave) = help PR for Role 4 | Sun 22 | done (Luc, 2026-11-15, #118 + #119) |
@@ -125,19 +127,19 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 | R10 | Online time leaderboard with names: every finished time saved and ranked, top 10 on the start screen; name validation, offline fallback, no credentials in the repo (BLOCKED part: David creates the free database account) | Fri 13 | done (David, #68; online part BLOCKED until David creates the Supabase project, offline "this device" board works) |
 | R11 | Start screen "Carcavelos Round 3" (title animation, slot for the leaderboard) + "Lab opener" (meaning to be confirmed by David) | Fri 13 | done (David, #68; "Lab opener" waits for David) |
 | R12 | Waves rolling onto the beach + 2-4 surfers riding them (new Role 4 folder `Ambience/`, placed at runtime, no edit to Luc's scene) | Tue 17 | done (David, #66) |
-| R13 | After D7: new medal times + re-record the Dean's ghost on the final track | Tue 17 | todo (waits for D7 #73 to merge: new top speed 18 m/s, 26.1 m/s boosted) |
-| R14 | Integration, deploy check with Luc (V6/G5), README for the submission | Sun 22 | todo |
+| R13 | After D7: new medal times + re-record the Dean's ghost on the final track | Tue 17 | open: medal times are still the placeholder ones scaled to the track, the Dean's ghost is not recorded (`docs/explain/role4-walkthrough.md`, Limits) |
+| R14 | Integration, deploy check with Luc (V6/G5), README for the submission | Sun 22 | done: README and docs for the submission (#144, #157); deploy = CI on every `main` commit |
 | R15 | Arcade UI restyle per art direction: OFL fonts, colour tokens, plates, motion; title, HUD, results, leaderboard, name entry | Fri 13 | done (David, #71) |
 | M2 | **Online race (team decision 16 Nov):** everyone joins from the ONE live link, two rooms NOON / SUNSET (max 15 each, first come first served, 1 lap), own kart drives as today, other karts are proxies, synced countdown, same finish order on every screen; Photon Fusion 2 Shared Mode, SDK stays out of the public repo (`docs/online.md`); test transport `?net=local` for tabs on one machine; Plan B = recorded race video | Sun 22 | in progress (David, branch `role4/M2-online-race-david`) |
 
 ## Course submission (official, `docs/course-requirements.md`)
 | ID | Task | Who | Due | Status |
 |---|---|---|---|---|
-| G1 | Teaching-team OK for a from-scratch Unity game: email to Prof. Ricardo Pereira + Cláudio Vieira from a Nova student account, team in CC; save the reply as a screenshot in the team Drive | Noah | Tue 10 | claimed (Noah, 2026-11-07) |
-| G2 | README Team table: your name + student number + role | each member | Fri 13 | todo |
-| G3 | At least one merged PR with your own C# code, committed from your own GitHub account | each member | Fri 13 | todo |
-| G4 | Final check (no secrets, no personal data, no raw media), then David switches the repo to public and adds a `main` ruleset | David | Sun 15 | todo |
-| G5 | Deployed URL in README, deployed build = a `main` commit in `docs/builds.md`, one member submits the repo link on Moodle | Role 3 + Role 4 | **Mon 23, 23:59** | todo |
+| G1 | Teaching-team OK for a from-scratch Unity game (the stack guide says a language other than Python is agreed with the staff case by case) | Noah | Tue 10 | done: requested by Noah on 7 Nov 2026, approved by the teaching staff (18.11.2026) (`docs/decisions.md`) |
+| G2 | README Team table: your name + student number + role | each member | Fri 13 | done (#43, #101) |
+| G3 | At least one merged PR with your own C# code, committed from your own GitHub account | each member | Fri 13 | done: every member has merged PRs with their own code (Alessandro #39, Noah #47, Luc #33, David #14) |
+| G4 | Final check (no secrets, no personal data, no raw media), then David switches the repo to public and adds a `main` ruleset | David | Sun 15 | repo public (done); the `main` ruleset is open, David decides |
+| G5 | Deployed URL in README, deployed build = a `main` commit in `docs/builds.md`, one member submits the repo link on Moodle | Role 3 + Role 4 | **Mon 23, 23:59** | URL in README done; submission on Moodle due Mon 23 Nov 23:59 |
 
 ## Requests between roles
 | ID | From -> To | Request | Status |
