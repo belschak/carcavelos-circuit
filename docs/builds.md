@@ -12,3 +12,5 @@
 The first local Web builds (8 Nov 2026) were tested by hand and logged in a table, before CI deployed to GitHub Pages (from 13 Nov, PR #79). That table is kept as a record: [history/builds-manual-tests-2026-11-08.md](history/builds-manual-tests-2026-11-08.md).
 
 How to make a Web build yourself: [setup.md](setup.md#web-build-role-3-or-the-build-backup) and the README.
+
+Key art and photo mode: the loading page's pictures are shot from a Web build in photo mode (`?photo=1` hides every menu and the HUD; `&dpr=2` renders the canvas at 2x the window for supersampled captures; normal play stays capped at 1.5x). For the 18 Nov 2026 set a throwaway branch built the game without the Web texture crunch; `tools/ui_art/make_keyart.py` turns the raw captures into the AVIF/WebP/JPEG sizes in `TemplateData/` (decision "Sharp key art on the loading page").

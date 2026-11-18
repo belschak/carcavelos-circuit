@@ -51,12 +51,40 @@
     <div id="cc-loader">
       <!-- Background (realistic menu redesign "Golden Hour"): real captures of our own game, taken in the build's photo
            mode (?photo=1). They cross-fade with a slow push-in; each shows one sight of the track as a lower third.
+           Sharp key art (18 Nov 2026): shot at 2x (?photo=1&dpr=2) from a build without the texture crunch and saved by
+           tools/ui_art/make_keyart.py as AVIF, WebP and JPEG in five widths. The browser takes the first format it can
+           show and the smallest width that still fills the screen ("sizes": the picture covers the window, so on
+           windows taller than 16:9 it is 177vh wide). Phones and small windows (first source) only get 960 or 1600 px.
            A cinematic grade (dark fall-off left and bottom, warm light) sits on top. CSS only (style.css, "Golden Hour"). -->
       <div class="cc-key" aria-hidden="true">
-        <figure class="cc-shot" style="--n:0"><img src="TemplateData/keyart-1.jpg" alt="" decoding="async"><figcaption><b>Race vs bots</b><strong>The start grid</strong><span>Five rivals under the NOVA KART arch</span></figcaption></figure>
-        <figure class="cc-shot" style="--n:1"><img src="TemplateData/keyart-2.jpg" alt="" decoding="async" loading="lazy"><figcaption><b>On the track</b><strong>Carcavelos beach</strong><span>Sunset over the Atlantic, the surf break right beside the track</span></figcaption></figure>
-        <figure class="cc-shot" style="--n:2"><img src="TemplateData/keyart-3.jpg" alt="" decoding="async" loading="lazy"><figcaption><b>On the track</b><strong>Through the campus</strong><span>Past the NOVA letters, straight through the atrium</span></figcaption></figure>
-        <figure class="cc-shot" style="--n:3"><img src="TemplateData/keyart-4.jpg" alt="" decoding="async" loading="lazy"><figcaption><b>Items</b><strong>Azulejo item boxes</strong><span>Drive through a tile box, press E to use what you get</span></figcaption></figure>
+        <figure class="cc-shot" style="--n:0"><picture>
+          <source type="image/avif" media="(max-width: 1000px)" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-grid-960.avif 960w, TemplateData/keyart-grid-1600.avif 1600w">
+          <source type="image/avif" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-grid-960.avif 960w, TemplateData/keyart-grid-1600.avif 1600w, TemplateData/keyart-grid-1920.avif 1920w, TemplateData/keyart-grid-2400.avif 2400w, TemplateData/keyart-grid-3200.avif 3200w">
+          <source type="image/webp" media="(max-width: 1000px)" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-grid-960.webp 960w, TemplateData/keyart-grid-1600.webp 1600w">
+          <source type="image/webp" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-grid-960.webp 960w, TemplateData/keyart-grid-1600.webp 1600w, TemplateData/keyart-grid-1920.webp 1920w, TemplateData/keyart-grid-2400.webp 2400w, TemplateData/keyart-grid-3200.webp 3200w">
+          <img src="TemplateData/keyart-grid-1920.jpg" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-grid-960.jpg 960w, TemplateData/keyart-grid-1920.jpg 1920w" alt="" decoding="async" fetchpriority="high"></picture>
+          <figcaption><b>Race vs bots</b><strong>The start grid</strong><span>Rookie, Tiago, Nova and Amara line up for the start</span></figcaption></figure>
+        <figure class="cc-shot" style="--n:1"><picture>
+          <source type="image/avif" media="(max-width: 1000px)" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-beach-960.avif 960w, TemplateData/keyart-beach-1600.avif 1600w">
+          <source type="image/avif" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-beach-960.avif 960w, TemplateData/keyart-beach-1600.avif 1600w, TemplateData/keyart-beach-1920.avif 1920w, TemplateData/keyart-beach-2400.avif 2400w, TemplateData/keyart-beach-3200.avif 3200w">
+          <source type="image/webp" media="(max-width: 1000px)" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-beach-960.webp 960w, TemplateData/keyart-beach-1600.webp 1600w">
+          <source type="image/webp" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-beach-960.webp 960w, TemplateData/keyart-beach-1600.webp 1600w, TemplateData/keyart-beach-1920.webp 1920w, TemplateData/keyart-beach-2400.webp 2400w, TemplateData/keyart-beach-3200.webp 3200w">
+          <img src="TemplateData/keyart-beach-1920.jpg" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-beach-960.jpg 960w, TemplateData/keyart-beach-1920.jpg 1920w" alt="" decoding="async" loading="lazy"></picture>
+          <figcaption><b>On the track</b><strong>Carcavelos beach</strong><span>Sunset over the Atlantic, the surf right beside the track</span></figcaption></figure>
+        <figure class="cc-shot" style="--n:2"><picture>
+          <source type="image/avif" media="(max-width: 1000px)" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-campus-960.avif 960w, TemplateData/keyart-campus-1600.avif 1600w">
+          <source type="image/avif" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-campus-960.avif 960w, TemplateData/keyart-campus-1600.avif 1600w, TemplateData/keyart-campus-1920.avif 1920w, TemplateData/keyart-campus-2400.avif 2400w, TemplateData/keyart-campus-3200.avif 3200w">
+          <source type="image/webp" media="(max-width: 1000px)" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-campus-960.webp 960w, TemplateData/keyart-campus-1600.webp 1600w">
+          <source type="image/webp" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-campus-960.webp 960w, TemplateData/keyart-campus-1600.webp 1600w, TemplateData/keyart-campus-1920.webp 1920w, TemplateData/keyart-campus-2400.webp 2400w, TemplateData/keyart-campus-3200.webp 3200w">
+          <img src="TemplateData/keyart-campus-1920.jpg" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-campus-960.jpg 960w, TemplateData/keyart-campus-1920.jpg 1920w" alt="" decoding="async" loading="lazy"></picture>
+          <figcaption><b>On the track</b><strong>Through the campus</strong><span>Under the START arch and straight into the atrium</span></figcaption></figure>
+        <figure class="cc-shot" style="--n:3"><picture>
+          <source type="image/avif" media="(max-width: 1000px)" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-items-960.avif 960w, TemplateData/keyart-items-1600.avif 1600w">
+          <source type="image/avif" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-items-960.avif 960w, TemplateData/keyart-items-1600.avif 1600w, TemplateData/keyart-items-1920.avif 1920w, TemplateData/keyart-items-2400.avif 2400w, TemplateData/keyart-items-3200.avif 3200w">
+          <source type="image/webp" media="(max-width: 1000px)" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-items-960.webp 960w, TemplateData/keyart-items-1600.webp 1600w">
+          <source type="image/webp" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-items-960.webp 960w, TemplateData/keyart-items-1600.webp 1600w, TemplateData/keyart-items-1920.webp 1920w, TemplateData/keyart-items-2400.webp 2400w, TemplateData/keyart-items-3200.webp 3200w">
+          <img src="TemplateData/keyart-items-1920.jpg" sizes="(max-aspect-ratio: 16/9) 177vh, 100vw" srcset="TemplateData/keyart-items-960.jpg 960w, TemplateData/keyart-items-1920.jpg 1920w" alt="" decoding="async" loading="lazy"></picture>
+          <figcaption><b>Items</b><strong>Azulejo item boxes</strong><span>Drive through a tile box, press E to use what you get</span></figcaption></figure>
       </div>
       <div class="cc-grade" aria-hidden="true"></div>
 
@@ -870,8 +898,10 @@
             // The campus world file too (world-<content hash>.bundle, downloaded by the game itself).
             return /(^|\/)Build\/([0-9a-f]{32}\.data|world-[0-9a-f]{32}\.bundle)$/.test(url) ? "immutable" : "no-store";
           },
-          // Sharp on high-DPI laptop screens, but at most 1.5x the window size so the GPU keeps up.
-          devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
+          // Sharp on high-DPI laptop screens, but at most 1.5x the window size so the GPU keeps up (measured 18 Nov on an
+          // Intel Arc 140T laptop at 1440 x 900 CSS px: racing at 2x = 2880 x 1800 dropped to 56 fps with 33 ms frames,
+          // 1.5x held 60 fps). Photo mode only (?photo=1&dpr=2) may ask for more, for supersampled key-art captures.
+          devicePixelRatio: canvasPixelRatio(),
           showBanner: showBanner
         };
 
@@ -889,6 +919,17 @@
           );
         };
         document.body.appendChild(script);
+      }
+
+      // Render size of the game = window size x this ratio. Normally the screen's own ratio, capped at 1.5 (see above).
+      // With ?photo=1&dpr=N (N from 1 to 4) the page uses N instead, so key art can be rendered at 2x and scaled down.
+      function canvasPixelRatio() {
+        var params = new URLSearchParams(location.search);
+        var asked = parseFloat(params.get("dpr"));
+        if (params.get("photo") === "1" && asked >= 1 && asked <= 4) {
+          return asked;
+        }
+        return Math.min(window.devicePixelRatio || 1, 1.5);
       }
 
       // Can this browser run the game? WebGL 2 (3D graphics) and WebAssembly (the game code) are both needed.
