@@ -345,7 +345,7 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <!-- ===== Credits (task P7), key C on the start screen. Two pages, A/D or NEXT PAGE to turn ===== -->
+        <!-- ===== Credits (task P7), key C on the start screen. Three pages (the third: P4 special thanks), A/D or NEXT PAGE to turn ===== -->
         <ui:VisualElement name="credits-screen" class="menu-overlay">
             <ui:VisualElement name="credits-bg" class="menu-bg" />
             <ui:VisualElement name="credits-card" class="menu-card plate">
@@ -401,10 +401,21 @@
                         <ui:Label text="Archivo Expanded (The Archivo Project Authors), Barlow Condensed (The Barlow Project Authors) and Unbounded (The Unbounded Project Authors), SIL Open Font License 1.1." class="credit-text f-ui" />
                         <ui:Label text="Original game, not affiliated with Nova SBE." class="credits-foot f-ui" />
                     </ui:VisualElement>
+                    <!-- Page 3 (task P4): special thanks to the teaching staff. Names only; TeacherTribute adds the boards and the cup -->
+                    <ui:VisualElement name="credits-page-3" class="credits-page" style="justify-content: center;">
+                        <ui:Label text="SPECIAL THANKS" class="credits-head f-ui" />
+                        <ui:Label text="This game exists because of Introduction to Programming 2026 at Nova SBE. Thank you for teaching us how to build it." class="credit-text f-ui" style="margin-bottom: 10px;" />
+                        <ui:Label text="RICARDO JOÃO GIL PEREIRA" class="credit-name f-ui" style="font-size: 25px; margin-top: 10px;" />
+                        <ui:Label text="CLÁUDIO VIEIRA" class="credit-name f-ui" style="font-size: 25px; margin-top: 10px;" />
+                        <ui:Label text="LUÍS CARVALHO" class="credit-name f-ui" style="font-size: 25px; margin-top: 10px;" />
+                        <ui:Label text="PAULO MARQUES" class="credit-name f-ui" style="font-size: 25px; margin-top: 10px;" />
+                        <ui:Label text="Teaching staff, Introduction to Programming, Nova SBE, Fall 2026." class="credits-foot f-ui" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="credits-footer">
                     <ui:VisualElement name="credits-dot-1" class="credits-dot" />
                     <ui:VisualElement name="credits-dot-2" class="credits-dot" />
+                    <ui:VisualElement name="credits-dot-3" class="credits-dot" />
                     <ui:VisualElement name="credits-next" class="menu-pill plate menu-pill--next">
                         <ui:VisualElement class="keycap keycap--small"><ui:Label text="D" class="f-ui" /></ui:VisualElement>
                         <ui:Label text="NEXT PAGE" class="menu-pill-text f-ui" />
