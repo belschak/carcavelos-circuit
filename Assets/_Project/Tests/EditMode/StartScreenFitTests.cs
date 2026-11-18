@@ -25,10 +25,10 @@ namespace CarcavelosCircuit.Tests.EditMode
         public void CompactLayout_CardsAndBoardFitAtFiveToFour()
         {
             // Numbers from UI/StartScreen.uss and ModePicker: padding 28 left / 24 right, 3 cards of 214 + 2 x 7 px,
-            // drawn at 80 % from the left edge; board at least 260 px wide.
+            // drawn at 78 % from the left edge; board 33 % of the width between the paddings, 280-330 px.
             const float width = 900f;
-            float cardsEnd = 28f + 3f * (214f + 14f) * 0.8f;
-            float boardStart = width - 24f - Mathf.Clamp(width * 0.3f, 260f, 300f);
+            float cardsEnd = 28f + 3f * (214f + 14f) * 0.78f;
+            float boardStart = width - 24f - Mathf.Clamp((width - 52f) * 0.33f, 280f, 330f);
             Assert.Less(cardsEnd, boardStart, "the board must start right of the ONLINE RACE card");
         }
 
