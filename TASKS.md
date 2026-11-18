@@ -135,7 +135,7 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 ## Course submission (official, `docs/course-requirements.md`)
 | ID | Task | Who | Due | Status |
 |---|---|---|---|---|
-| G1 | Teaching-team OK for a from-scratch Unity game (the stack guide says a language other than Python is agreed with the staff case by case) | Noah | Tue 10 | requested by Noah on 7 Nov 2026, answer pending (current status: `docs/architecture.md`, Stack approval) |
+| G1 | Teaching-team OK for a from-scratch Unity game (the stack guide says a language other than Python is agreed with the staff case by case) | Noah | Tue 10 | done: requested by Noah on 7 Nov 2026, approved by the teaching staff (18.11.2026) (`docs/decisions.md`) |
 | G2 | README Team table: your name + student number + role | each member | Fri 13 | done (#43, #101) |
 | G3 | At least one merged PR with your own C# code, committed from your own GitHub account | each member | Fri 13 | done: every member has merged PRs with their own code (Alessandro #39, Noah #47, Luc #33, David #14) |
 | G4 | Final check (no secrets, no personal data, no raw media), then David switches the repo to public and adds a `main` ruleset | David | Sun 15 | repo public (done); the `main` ruleset is open, David decides |
