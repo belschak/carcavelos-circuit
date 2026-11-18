@@ -148,6 +148,8 @@ copy from a private repository with a read-only key.
   the Unity registry or built in. Unity editor: `ProjectSettings/ProjectVersion.txt` (6000.3.28f1).
 - GitHub Actions: every `uses:` is pinned to a full commit SHA (with the version as a comment).
 - gitleaks in CI: a fixed release whose SHA-256 is checked before it runs.
+- The test run's tools: the GameCI CLI at a fixed release (`cliVersion` in `tests.yml`) and the Unity Docker image
+  by its SHA-256 digest, so a re-pushed tag cannot change what runs the tests.
 - Python art tools (`tools/requirements.txt`): exact `==` versions. They only make textures and icons offline;
   the game, its tests and its build need no Python.
 - The Security workflow's pinning check and `RepoHygieneTests` fail on any unpinned dependency.
