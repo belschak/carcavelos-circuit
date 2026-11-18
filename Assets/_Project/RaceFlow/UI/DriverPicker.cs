@@ -44,7 +44,7 @@ namespace CarcavelosCircuit.RaceFlow
         public bool IsOpen { get; private set; }
 
         // True while a click or key belongs to the panel, so it must not ALSO count as "any key" (MenuUsesInput).
-        // Also in the frame it closed: Backspace (back) is a normal start key and would open the panel again at once.
+        // Also in the frame it closed, so the closing key never counts twice (Backspace is no start key since QA 17.11).
         public bool UsesInput { get { return IsOpen || closedFrame == Time.frameCount; } }
 
         // The driver whose card is highlighted (Play Mode test), -1 = none.
@@ -182,6 +182,13 @@ namespace CarcavelosCircuit.RaceFlow
             card.Add(frame);
 
             card.RegisterCallback<PointerEnterEvent>(evt => SetHovered(index));
+            card.RegisterCallback<PointerMoveEvent>(evt =>
+            {
+                if (hovered != index)
+                {
+                    SetHovered(index); // the mouse moves again after a key pick (see Update)
+                }
+            });
             card.RegisterCallback<PointerLeaveEvent>(evt =>
             {
                 if (pressed == index)
@@ -219,7 +226,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             button.style.flexDirection = FlexDirection.Row;
             button.style.alignItems = Align.Center;
-            button.style.height = main ? 64f : 48f;
+            button.style.height = ButtonHeight(main, WebPage.TouchMode); // set again on every Open (touch can switch)
             button.style.paddingLeft = 16f;
             button.style.paddingRight = 20f;
             button.style.paddingBottom = 6f;
@@ -250,6 +257,13 @@ namespace CarcavelosCircuit.RaceFlow
             return button;
         }
 
+        // Phone round 17.11: a thumb needs a bigger target (the keycaps are hidden there, RaceHud.uss .hud--touch):
+        // on touch >= 36 CSS px on every phone in landscape with the browser bars (HUD px x height / 720).
+        public static float ButtonHeight(bool main, bool touch)
+        {
+            return main ? (touch ? 88f : 64f) : (touch ? 82f : 48f);
+        }
+
         // "Any key" or a mode card on the start screen: show the drivers instead of the modes.
         private void Open()
         {
@@ -262,6 +276,10 @@ namespace CarcavelosCircuit.RaceFlow
             hovered = -1;
             pressed = -1;
             picked = DriverChoice.HasPicked ? DriverChoice.Index : -1;
+            // A touch laptop or an iPad with a keyboard switches touch mode while the game runs: sizes follow it.
+            bool touch = WebPage.TouchMode;
+            readyButton.style.height = ButtonHeight(true, touch);
+            backButton.style.height = ButtonHeight(false, touch);
             panel.style.display = DisplayStyle.Flex;
             for (int i = 0; i < hiddenWhileOpen.Count; i++)
             {
@@ -313,6 +331,9 @@ namespace CarcavelosCircuit.RaceFlow
             int step = RaceKeys.MenuHorizontal();
             if (step != 0)
             {
+                // A key pick wins over a mouse that only rests on another card (QA 17.11.2026): the big card and
+                // the line under the row show the driver the keys picked, until the mouse moves again.
+                hovered = -1;
                 Pick(DriverRoster.Step(picked, step));
             }
             if (backThisFrame || RaceKeys.BackPressed())

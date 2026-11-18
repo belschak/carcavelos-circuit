@@ -43,6 +43,7 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly VisualElement creditsCard;
         private readonly VisualElement creditsClose;
         private readonly VisualElement pauseScreen;
+        private readonly Label pauseHint;
         private readonly VisualElement toast;
         private readonly Label toastText;
 
@@ -86,6 +87,7 @@ namespace CarcavelosCircuit.RaceFlow
             creditsCard = root.Q<VisualElement>("credits-card");
             creditsClose = root.Q<VisualElement>("credits-close");
             pauseScreen = root.Q<VisualElement>("pause-screen");
+            pauseHint = root.Q<Label>("pause-hint");
             toast = root.Q<VisualElement>("toast");
             toastText = root.Q<Label>("toast-text");
 
@@ -160,6 +162,14 @@ namespace CarcavelosCircuit.RaceFlow
             }
 
             HudFx.SetShown(pauseScreen, raceManager.IsPaused);
+            if (raceManager.IsPaused)
+            {
+                // Phone round 17.11: no keyboard on a phone, so the card says what a thumb does.
+                SetText(pauseHint, PauseHintText(WebPage.TouchMode));
+            }
+
+            // The online lobby's LIGHT button also changes the time of day: the start pill follows it.
+            SetText(startMoodText, TimeOfDayChoice.Label(TimeOfDayChoice.Current));
             HudFx.SetShown(toast, Time.unscaledTime < toastVisibleUntil);
 
             // Menu buttons can be clicked only while they are visible and no menu covers them.
@@ -265,6 +275,20 @@ namespace CarcavelosCircuit.RaceFlow
             HudFx.SetClickable(creditsCard, creditsOpen);
             HudFx.SetClickable(creditsClose, creditsOpen);
             creditsPanel.SetClickable(creditsOpen);
+        }
+
+        // The PAUSED card's hint: keys and mouse on a computer, a tap on a phone (the page's touch buttons).
+        public static string PauseHintText(bool touch)
+        {
+            return touch ? "TAP TO CONTINUE" : "PRESS P, ANY KEY OR CLICK TO CONTINUE";
+        }
+
+        private static void SetText(Label label, string text)
+        {
+            if (label != null && label.text != text)
+            {
+                label.text = text;
+            }
         }
 
         // V28: noon -> sunset -> noon. Saved at once; the world and the camera listen to TimeOfDayChoice.Changed.

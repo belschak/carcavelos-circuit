@@ -122,7 +122,8 @@ namespace CarcavelosCircuit.RaceFlow
 
             // The page's touch buttons for driving only during a race (not while paused), so on a phone they never
             // cover the boards or the PAUSED card.
-            int pageState = WebPage.PageRaceState(state, raceManager.IsPaused);
+            // Online (the room starts the race) the page also hides its Pause and Retry buttons: they would do nothing.
+            int pageState = WebPage.PageRaceState(state, raceManager.IsPaused, raceManager.ExternalStartOnly);
             if (pageState != sentPageState)
             {
                 sentPageState = pageState;

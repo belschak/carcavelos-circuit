@@ -181,6 +181,30 @@ namespace CarcavelosCircuit.Tests.PlayMode
             Assert.IsTrue(items.Slot.IsEmpty, "retry empties the slot");
         }
 
+        // QA 17.11.2026: the finish cinematic looked straight into the first row (it stands just past the line).
+        [UnityTest]
+        public IEnumerator Finish_PutsTheBoxesAway_AndRetryBringsThemBack()
+        {
+            yield return StartAndWaitForGo();
+            for (int passed = 1; passed < race.CheckpointCount; passed++)
+            {
+                race.OnCheckpointEntered(passed);
+            }
+            race.OnCheckpointEntered(0);
+            Assert.AreEqual(RaceState.Results, race.State, "the lap is over");
+            ItemBox box = items.BoxAt(0);
+            Assert.IsTrue(box.IsParked, "over the line every box is put away");
+            Assert.IsFalse(box.IsAvailable, "a put-away box cannot be hit");
+            yield return new WaitForSecondsRealtime(0.6f);
+            Assert.Less(box.transform.localScale.x, 0.01f, "it has shrunk away");
+
+            race.Retry();
+            yield return null;
+            Assert.IsFalse(box.IsParked);
+            Assert.IsTrue(box.IsAvailable, "retry brings every box back");
+            Assert.AreEqual(1f, box.transform.localScale.x, 0.001f, "at full size");
+        }
+
         [UnityTest]
         public IEnumerator NoItems_BeforeTheRaceStarts()
         {

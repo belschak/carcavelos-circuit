@@ -264,6 +264,7 @@ namespace CarcavelosCircuit.RaceFlow
                 raceManager.Resumed += OnResumed;
                 raceManager.Recovered += OnRecovered;
                 raceManager.ModeChanged += OnModeChanged;
+                raceManager.LapFinished += OnLapFinished;
             }
         }
 
@@ -275,6 +276,7 @@ namespace CarcavelosCircuit.RaceFlow
                 raceManager.Resumed -= OnResumed;
                 raceManager.Recovered -= OnRecovered;
                 raceManager.ModeChanged -= OnModeChanged;
+                raceManager.LapFinished -= OnLapFinished;
             }
         }
 
@@ -293,6 +295,17 @@ namespace CarcavelosCircuit.RaceFlow
             if (ringRed != null) Destroy(ringRed);
             if (ringWhite != null) Destroy(ringWhite);
             if (gold != null) Destroy(gold);
+        }
+
+        // Over the line (every mode, online too): the boxes shrink away, so the finish cinematic's camera, which swings
+        // round in front of the kart just past the line, never looks into the first row. Retry or the start screen
+        // (Restarted, ModeChanged) bring them back whole.
+        private void OnLapFinished(float lapSeconds, bool record)
+        {
+            for (int i = 0; i < boxes.Count; i++)
+            {
+                boxes[i].Park();
+            }
         }
 
         private void OnRestarted()

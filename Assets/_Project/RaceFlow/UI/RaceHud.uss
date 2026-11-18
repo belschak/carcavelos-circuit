@@ -2038,3 +2038,59 @@
 .hud--touch .stuck-chip .stuck-title {
     margin: 0 5px;
 }
+
+/* Menus on touch (phone round 17.11): a phone has no keyboard, so no keycaps and no key bars; the menu pills grow to
+   a thumb-sized target (82 HUD px = 38.7 CSS px on an iPhone 15 and 36.4 on an iPhone SE in landscape with the browser bars,
+   phone QA 17.11). */
+.hud--touch .ts-controls,
+.hud--touch .menu-pill .keycap,
+.hud--touch .res-actions > .keycap,
+.hud--touch .menu-keys {
+    display: none;
+}
+
+.hud--touch .menu-pill {
+    height: 82px;
+    padding: 0 26px 6px 26px;
+}
+
+.hud--touch .menu-pill-text {
+    margin-left: 0;
+    font-size: 23px;
+}
+
+/* RETRY on the results card: the same thumb-sized height as the menu pills (phone QA 17.11). */
+.hud--touch .retry-button {
+    height: 82px;
+}
+
+/* Settings on touch (phone QA 17.11): the minus/plus buttons were 28 HUD px (13 CSS px on a phone) and the volume
+   diamonds 10 x 14 CSS px. On touch: taller rows, 56 px round steps, full-height diamonds, a wider card for them,
+   and no "key M" note (a phone has no keys; the SOUND pill on the start screen does it). */
+.hud--touch #settings-card {
+    width: 720px;
+}
+
+.hud--touch .set-row {
+    height: 66px;
+    margin-top: 6px;
+}
+
+.hud--touch .set-step {
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+}
+
+.hud--touch .set-step-bar {
+    width: 18px;
+    height: 4px;
+}
+
+.hud--touch .set-cell {
+    height: 56px;
+}
+
+.hud--touch #set-sound .set-note {
+    display: none;
+}

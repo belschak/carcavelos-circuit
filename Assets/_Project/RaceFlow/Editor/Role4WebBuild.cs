@@ -112,15 +112,32 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         // like DXT, so the phone download stays the same size. Code files must be byte-identical (same hashed names),
         // otherwise the phone .data is left out and phones keep the DXT one (a warning in the build log).
         private const string PhoneFolder = "Build-Web-ETC2";
+        // Unity's build backend (Bee) can delete the first build's files as "no longer in use" while it makes the second
+        // one (CI 18 Nov 2026, Library from the cache: "Delete 5 artifact files ... (like Build-Web/Build)", then the
+        // build failed in LogFileSizes and the phone data was wrongly called different). So a plain copy of the desktop
+        // build waits here during the phone build and is put back afterwards; Bee does not know this folder.
+        public const string DesktopKeepFolder = "Build-Web-DXT-keep";
         private static string phoneDataFile;
 
         private static string AddPhoneData(BuildPlayerOptions desktop)
         {
             FileUtil.DeleteFileOrDirectory(PhoneFolder);
+            FileUtil.DeleteFileOrDirectory(DesktopKeepFolder);
+            FileUtil.CopyFileOrDirectory(OutputFolder, DesktopKeepFolder);
             BuildPlayerOptions phone = desktop;
             phone.locationPathName = PhoneFolder;
             phone.subtarget = (int)WebGLTextureSubtarget.ETC2;
-            BuildSummary report = BuildPipeline.BuildPlayer(phone).summary;
+            BuildSummary report;
+            try
+            {
+                report = BuildPipeline.BuildPlayer(phone).summary;
+            }
+            finally
+            {
+                // the desktop build exactly as it was, whatever the phone build did to Build-Web
+                FileUtil.DeleteFileOrDirectory(OutputFolder);
+                FileUtil.MoveFileOrDirectory(DesktopKeepFolder, OutputFolder);
+            }
             try
             {
                 if (report.result != BuildResult.Succeeded)

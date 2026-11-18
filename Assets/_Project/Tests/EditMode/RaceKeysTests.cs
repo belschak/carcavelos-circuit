@@ -26,6 +26,7 @@ namespace CarcavelosCircuit.Tests.EditMode
         [TestCase(Key.LeftMeta)]  // Windows / Cmd key
         [TestCase(Key.Tab)]
         [TestCase(Key.Escape)]    // leaves fullscreen in the browser
+        [TestCase(Key.Backspace)] // the back key: a second Backspace on the modes must not open the driver select again
         [TestCase(Key.F1)]
         [TestCase(Key.F11)]       // fullscreen in the browser
         [TestCase(Key.F12)]       // browser developer tools

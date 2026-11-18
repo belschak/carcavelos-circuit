@@ -139,6 +139,25 @@ namespace CarcavelosCircuit.RaceFlow
             shownSight = -1;
         }
 
+        // Phone round 17.11: on a phone the tips name the touch buttons (DRIFT, TRICK), not the keys.
+        public static string SightText(int index, bool touch)
+        {
+            if (touch && Sights[index, 0] == "DRIFT BOOST")
+            {
+                return "Hold DRIFT in a corner, let go for a boost";
+            }
+            if (touch && Sights[index, 0] == "AIR TRICKS")
+            {
+                return "Tap TRICK in the air for a trick boost";
+            }
+            return Sights[index, 1];
+        }
+
+        public static int SightCount
+        {
+            get { return Sights.GetLength(0); }
+        }
+
         // Which sight shows: changes every sightSeconds; between two sights the card flips out and back in.
         private void UpdatePostcard()
         {
@@ -151,7 +170,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 shownSight = index;
                 sightTitle.text = Sights[index, 0];
-                sightText.text = Sights[index, 1];
+                sightText.text = SightText(index, WebPage.TouchMode);
                 postcard.EnableInClassList("pc--alt", index % 2 == 1); // the stamp changes colour too
             }
         }
