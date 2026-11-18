@@ -14,6 +14,12 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+    # Minor and patch releases only. A new major version can change how an action works and needs its own migration:
+    # game-ci/unity-builder v6 (PR #151, 18 Nov 2026) expects the build in build/WebGL, while our build method writes
+    # Build-Web, so the Web build failed although Unity built the game. Majors are done by hand in their own PR.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "pip"
     directory: "/tools"
     schedule:
