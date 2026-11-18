@@ -1,0 +1,23 @@
+# Dependabot (docs/security.md): opens a pull request when a GitHub Action we use has a new release or a security fix.
+# The actions stay pinned to commit SHAs; Dependabot updates the SHA and the version comment together, and the PR runs
+# the Tests and Security workflows like any other. Unity packages have no Dependabot support: they are pinned in
+# Packages/manifest.json + packages-lock.json and checked by hand (docs/security.md, section 6).
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "CI"
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: "pip"
+    directory: "/tools"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: "Tools"
