@@ -4,7 +4,8 @@
 # "Scripts have compiler errors" although the code is fine. Here the same tests run in GameCI's Linux Unity image.
 # When: every pull request into main, every push to main (the README badge shows the result on main), every push to a
 # branch called test/... (e.g. test/merge-check-<name>), and by hand (Actions > Tests > Run workflow).
-# Pushes and pull requests that change only docs or Markdown are skipped: they cannot change a test result.
+# Pull requests that change only docs or Markdown are skipped (they cannot change a test result). Pushes always run,
+# so every commit on main, docs-only ones included, has its own finished Tests result.
 # Result: the job summary shows passed / failed per mode; the XML files are in the run's "test-results" artifact.
 # Uses the same three repository secrets as web-build.yml (UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD).
 
@@ -13,16 +14,16 @@ name: Tests
 on:
   push:
     branches: [main, "test/**"]
-    paths-ignore: ["docs/**", "**/*.md"]
   pull_request:
     branches: [main]
     paths-ignore: ["docs/**", "**/*.md"]
   workflow_dispatch: # "Run workflow" button in the Actions tab
 
 concurrency:
-  group: tests-${{ github.ref }}
-  # A newer push to the same test branch or pull request replaces the old run; runs on main always finish, so every
-  # commit on main gets its own result.
+  # On main every commit is its own group, so a run is never cancelled or replaced by a later merge: GitHub keeps only
+  # ONE waiting run per group and drops the older one, which left commits on main without a result (Sherlock 18.11).
+  # On test branches and pull requests one group per branch: a newer push replaces the run of the older one.
+  group: tests-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:

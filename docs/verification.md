@@ -10,9 +10,10 @@ honest list of what no automated test covers.
 ## Running the tests
 
 **On GitHub (the reference).** `.github/workflows/tests.yml` runs every Edit Mode and Play Mode test in Unity
-6000.3.28f1 (GameCI Linux image) on every pull request into `main`, on every push to `main` and on branches named
-`test/...`. A pull request is only merged when this run is green, so `main` is always tested. The run page shows
-"passed / total" per mode; the NUnit XML files are in the run's `test-results` artifact.
+6000.3.28f1 (GameCI Linux image) on every pull request into `main` (except pull requests that change only docs), on
+every push to `main` and on branches named `test/...`. Every commit on `main` gets its own finished run, which is what
+the badge shows. The team merges only pull requests whose run is green; this is our practice, not enforced by a GitHub
+branch rule. The run page shows "passed / total" per mode; the NUnit XML files are in the run's `test-results` artifact.
 All runs: <https://github.com/belschak/carcavelos-circuit/actions/workflows/tests.yml>
 
 **On your computer.** You need Unity 6000.3.28f1 with the **Web Build Support** module (Unity Hub > Installs >
@@ -117,9 +118,10 @@ Test files are in `Assets/_Project/Tests/`; PlayMode files are marked (PM). Coun
 
 ### Totals
 
-18 Nov 2026 (GitHub run on the pull request that added this page): **Edit Mode 1464 / 1464 passed, Play Mode 37 / 37
-passed.** 124 of the Edit Mode runs are new in 6 files (`Verification/*` and `Online/OnlineHostileInputTests`); no
-existing test was changed. The current numbers are always on the newest run of `main` (badge above).
+The exact current numbers are in the summary of the newest Tests run on `main` (the badge above links to it): one
+line per mode, "passed / total". The counts grow with every feature, so this page gives no fixed number. For scale:
+on 18 Nov 2026 about 1500 Edit Mode and 37 Play Mode runs, all passing; 124 of the Edit Mode runs came in 6 files
+added that day for rejected and edge cases (`Verification/*` and `Online/OnlineHostileInputTests`).
 
 ## Not covered by automated tests (and how we check it instead)
 
@@ -152,4 +154,5 @@ existing test was changed. The current numbers are always on the newest run of `
 | Online | Two browsers join the room, race, both see the same order |
 | Fresh clone | Opens in the pinned Unity version with all scenes and prefabs, no missing scripts |
 
-Log each build test in `docs/builds.md`: date, URL, commit, browser, result.
+Every deployed build and its log are in Actions > Web build on `main` ([builds.md](builds.md)); the hand checks for
+the presentation are in [demo-plan.md](demo-plan.md).
