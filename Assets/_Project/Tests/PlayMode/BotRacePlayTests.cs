@@ -70,6 +70,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
         public IEnumerator Restore()
         {
             Time.timeScale = 1f;
+            Time.captureDeltaTime = 0f; // back to real time (see FiveBots_DriveAFullCampusLap_WithoutGettingStuck)
             foreach (KeyValuePair<string, string> pair in savedStrings)
             {
                 if (pair.Value == null) PlayerPrefs.DeleteKey(pair.Key);
@@ -114,11 +115,20 @@ namespace CarcavelosCircuit.Tests.PlayMode
         }
 
         [UnityTest]
+        [Timeout(900000)] // 15 min: one frame per physics step renders ~5000 frames on a CI machine without a GPU
         public IEnumerator FiveBots_DriveAFullCampusLap_WithoutGettingStuck()
         {
             Debug.Log("BotRacePlayTests: racing on " + race.TrackName + ", lap " + roster.Progress.LapLength.ToString("0") + " m.");
             Assert.AreNotEqual("RaceFlow_PlaceholderTrack", race.TrackName, "the bots must race the campus, not the test loop");
-            Time.timeScale = 2f; // same physics per game second, the test just takes half as long
+            // Same lap every run (18 Nov 2026). The bots steer in Update with the frame time and the karts move in
+            // FixedUpdate. With real frame times (and the old timeScale 2) a busy CI machine gave the bots long, uneven
+            // frames, so the race differed from run to run and once in a while a bot touched another and was put back
+            // (CI run 44302978475: Tiago put back 1x, the re-run clean). Now every frame is exactly one physics step
+            // of 0.02 game seconds, the game's normal 50 fps, however slow the machine is, and the item rolls use a
+            // fixed seed. The bots themselves are unchanged; the test only stops depending on the machine's speed.
+            Time.timeScale = 1f;
+            Time.captureDeltaTime = Time.fixedDeltaTime;
+            Random.InitState(20261118);
             race.BeginRace();
             float waited = 0f;
             while (race.State != RaceState.Racing && waited < 10f)
@@ -144,7 +154,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
                 }
                 yield return null;
             }
-            Time.timeScale = 1f;
+            Time.captureDeltaTime = 0f;
 
             for (int i = 0; i < squad.Bots.Count; i++)
             {
