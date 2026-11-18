@@ -29,8 +29,9 @@ namespace CarcavelosCircuit.RaceFlow
         private const float TileWidth = 150f;
         public const float TileHeight = 92f;        // >= 44 CSS px on an iPhone SE in landscape (375 px high: 0.52 px each)
         private const float TileGap = 8f;
-        private const float PictureSize = 76f;
-        private const float BadgeSize = 26f;
+        private const float BadgeSize = 22f;
+        private const int TileShotWidth = 288;       // the tile pictures: about 2x their size on a 1080p screen
+        private const int TileShotHeight = 124;
         private const float DragDegreesPerPixel = 0.6f;
         private const float SpinAgainAfterSeconds = 2.5f;
         private static readonly string[] ColumnTitles = { "DRIVER", "KART", "TYRES" };
@@ -106,6 +107,17 @@ namespace CarcavelosCircuit.RaceFlow
             panel.style.display = DisplayStyle.None;
             panel.pickingMode = PickingMode.Ignore;
 
+            // The world behind: darkened like behind every menu card, so the tiles read on the bright noon map.
+            VisualElement backdrop = new VisualElement();
+            backdrop.AddToClassList("menu-bg");
+            backdrop.style.position = Position.Absolute;
+            backdrop.style.left = 0f;
+            backdrop.style.right = 0f;
+            backdrop.style.top = 0f;
+            backdrop.style.bottom = 0f;
+            backdrop.pickingMode = PickingMode.Ignore;
+            panel.Add(backdrop);
+
             // ---- heading: BUILD YOUR KART + the fairness note ----
             VisualElement head = Row();
             head.style.alignItems = Align.FlexEnd;
@@ -138,8 +150,8 @@ namespace CarcavelosCircuit.RaceFlow
             body.style.alignItems = Align.Stretch;
 
             VisualElement stagePlate = new VisualElement { name = "kart-builder-stage" };
-            stagePlate.AddToClassList("card");
             stagePlate.AddToClassList("plate");
+            stagePlate.AddToClassList("kb-stage");   // UI/FrontEnd.uss: the big glass panel picture
             stagePlate.style.flexGrow = 1f;
             stagePlate.style.flexShrink = 1f;
             stagePlate.style.minWidth = 300f;
@@ -312,18 +324,15 @@ namespace CarcavelosCircuit.RaceFlow
             tile.AddToClassList("plate");
             tile.style.height = TileHeight;
             tile.style.marginBottom = row < KartLoadout.PartCount - 1 ? TileGap : 0f;
-            tile.style.alignItems = Align.Center;
-            tile.style.justifyContent = Justify.FlexEnd;
-            tile.style.paddingBottom = 9f;
             tile.style.transitionProperty = new List<StylePropertyName> { new StylePropertyName("scale") };
             tile.style.transitionDuration = new List<TimeValue> { new TimeValue(120, TimeUnit.Millisecond) };
 
             VisualElement picture = new VisualElement();
             picture.style.position = Position.Absolute;
-            picture.style.top = 2f;
-            picture.style.width = PictureSize;
-            picture.style.height = PictureSize - 12f;
-            picture.style.alignSelf = Align.Center;
+            picture.style.left = 6f;
+            picture.style.right = 6f;
+            picture.style.top = 5f;
+            picture.style.bottom = 26f;
             picture.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Contain);
             picture.pickingMode = PickingMode.Ignore;
             if (column == DriverColumn)
@@ -340,6 +349,11 @@ namespace CarcavelosCircuit.RaceFlow
             tile.Add(picture);
 
             Label name = new Label(PartName(column, row));
+            name.style.position = Position.Absolute;
+            name.style.left = 0f;
+            name.style.right = 0f;
+            name.style.bottom = 8f;
+            name.style.unityTextAlign = TextAnchor.MiddleCenter;
             name.AddToClassList("f-ui");
             name.style.fontSize = 14f;
             name.style.letterSpacing = 1f;
@@ -753,8 +767,8 @@ namespace CarcavelosCircuit.RaceFlow
             for (int i = 0; i < KartLoadout.PartCount; i++)
             {
                 stage.ShowSingle(KartLoadout.Signature(i));
-                RenderTexture kart = stage.Snapshot(192, null, true, -38f, 0.92f);
-                RenderTexture tyre = stage.Snapshot(160, "Wheel_FL", true, 72f, 0.78f);
+                RenderTexture kart = stage.Snapshot(TileShotWidth, TileShotHeight, null, true, -38f, 1.04f);
+                RenderTexture tyre = stage.Snapshot(TileShotWidth, TileShotHeight, "Wheel_FL", true, 64f, 1.0f);
                 if (kart != null)
                 {
                     tileShots.Add(kart);

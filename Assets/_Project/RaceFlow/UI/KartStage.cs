@@ -305,7 +305,7 @@ namespace CarcavelosCircuit.RaceFlow
 
         // Takes one still picture (the builder's kart and tyre tiles) of what is on the turntable now, with only the
         // parts whose names pass the filter visible. Returns a new RenderTexture the caller keeps (and releases).
-        public RenderTexture Snapshot(int size, string onlyUnder, bool hideDriver, float snapshotYaw, float zoom)
+        public RenderTexture Snapshot(int width, int height, string onlyUnder, bool hideDriver, float snapshotYaw, float margin)
         {
             if (karts.Count == 0 || karts[0] == null || karts[0].Model == null)
             {
@@ -354,7 +354,7 @@ namespace CarcavelosCircuit.RaceFlow
                 group.ForceLOD(0);
             }
 
-            var shot = new RenderTexture(size, size, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4, name = "Tile " + onlyUnder };
+            var shot = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4, name = "Tile " + onlyUnder };
             shot.Create();
             RenderTexture before = studioCamera.targetTexture;
             float aspectBefore = studioCamera.aspect;
@@ -367,13 +367,16 @@ namespace CarcavelosCircuit.RaceFlow
             pivot.localRotation = Quaternion.Euler(0f, snapshotYaw, 0f);
             // the bounds were measured before the turn: measure again
             bounds = MeasureVisible(model, focus);
-            float radius = Mathf.Max(bounds.extents.magnitude, 0.05f) * zoom;
-            float back = radius / Mathf.Sin(FieldOfView * 0.5f * Mathf.Deg2Rad);
+            // far enough that the part fits the picture both ways (its depth added, so the near side fits too)
+            float aspect = (float)width / height;
+            float tanV = Mathf.Tan(FieldOfView * 0.5f * Mathf.Deg2Rad);
+            float halfWidth = Mathf.Sqrt(bounds.extents.x * bounds.extents.x + bounds.extents.z * bounds.extents.z);
+            float back = Mathf.Max(bounds.extents.y / tanV, halfWidth / (tanV * aspect)) * margin + halfWidth;
             Vector3 direction = Quaternion.Euler(-12f, 0f, 0f) * Vector3.forward; // in front, a little above
             studioCamera.transform.position = bounds.center + transform.rotation * direction * back;
             studioCamera.transform.LookAt(bounds.center);
             studioCamera.targetTexture = shot;
-            studioCamera.aspect = 1f;
+            studioCamera.aspect = aspect;
             studioCamera.Render();
 
             studioCamera.targetTexture = before;
