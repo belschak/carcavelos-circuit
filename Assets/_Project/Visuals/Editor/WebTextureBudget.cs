@@ -68,21 +68,28 @@ namespace CarcavelosCircuit.Visuals.Editor
                 return 512;
             }
             // V37: the driver fills ~150 px on screen behind the kart, but shipped 2048 px colour (2.7 MB) and 1024 px
-            // normal and gloss maps (1.3 MB each) in the Web build.
-            if (file == "Char_Rookie_BaseColor.png")
+            // normal and gloss maps (1.3 MB each) in the Web build. Load-time pass (17 Nov): the same for every driver
+            // (Char_<Name>_...), so V40's Tiago, Nova and Amara no longer ship 5.3 MB of maps each.
+            Match driver = DriverMap.Match(file);
+            if (driver.Success)
             {
-                return 1024;
+                switch (driver.Groups[1].Value)
+                {
+                    case "BaseColor": return 1024;
+                    case "Normal": return 512;
+                    default: return 256; // MetallicSmoothness
+                }
             }
-            if (file == "Char_Rookie_Normal.png")
+            // Load-time pass (17 Nov): the surfers' Rocketbox maps (1024 px) on the beach, seen from the road 20+ m away.
+            if (SurferMap.IsMatch(file))
             {
                 return 512;
             }
-            if (file == "Char_Rookie_MetallicSmoothness.png")
-            {
-                return 256;
-            }
             return 0;
         }
+
+        private static readonly Regex DriverMap = new Regex(@"^Char_[A-Za-z]+_(BaseColor|Normal|MetallicSmoothness)\.png$", RegexOptions.Compiled);
+        private static readonly Regex SurferMap = new Regex(@"^[fm]\d{3}_(head|body)_(wetsuit|color)\.jpg$", RegexOptions.Compiled);
 
         // Sets (or clears) the WebGL override. Returns true when the importer changed.
         public static bool Apply(TextureImporter importer, string file)

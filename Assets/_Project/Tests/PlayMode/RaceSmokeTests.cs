@@ -83,6 +83,15 @@ namespace CarcavelosCircuit.Tests.PlayMode
             yield return null;
         }
 
+        // Load time (17 Nov): RaceBootstrap loads the track with High loading priority, then must put it back, or a
+        // later async load (none today) would take 50 ms slices out of the race frames.
+        [UnityTest]
+        public IEnumerator Bootstrap_PutsTheLoadingPriorityBack()
+        {
+            Assert.AreNotEqual(ThreadPriority.High, Application.backgroundLoadingPriority);
+            yield return null;
+        }
+
         [UnityTest]
         public IEnumerator CleanLap_FinishesOnce_WithATime_AndFullSpeedAfterTheSlowMotion()
         {

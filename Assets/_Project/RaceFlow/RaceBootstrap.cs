@@ -41,6 +41,12 @@ namespace CarcavelosCircuit.RaceFlow
             string[] candidates = settings.TrackScenesInOrder();
             TrackInfo track = null;
             string trackScene = "";
+
+            // Load time (17 Nov): Unity finishes an async scene load in slices of at most ~10 ms per frame ("Normal").
+            // At the first start nothing else runs yet (the page still shows its loading screen), so the track gets
+            // ~50 ms slices and is ready sooner; afterwards back to Normal so later loads never stutter the race.
+            ThreadPriority loadingPriority = Application.backgroundLoadingPriority;
+            Application.backgroundLoadingPriority = ThreadPriority.High;
             for (int i = 0; i < candidates.Length && track == null; i++)
             {
                 yield return LoadSceneIfNeeded(candidates[i]);
@@ -57,6 +63,7 @@ namespace CarcavelosCircuit.RaceFlow
                     yield return SceneManager.UnloadSceneAsync(candidates[i]);
                 }
             }
+            Application.backgroundLoadingPriority = loadingPriority;
 
             if (track == null)
             {

@@ -1,6 +1,9 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -59,7 +62,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 GraphicsSettings.defaultRenderPipeline = webPipeline;
             }
 
-            BuildReport report;
+            BuildSummary report; // a copy: the phone build below destroys the first BuildReport object
             try
             {
                 // Hashed file names change every build, so old files would pile up next to the new ones.
@@ -70,8 +73,14 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                     locationPathName = OutputFolder,
                     target = BuildTarget.WebGL,
                     options = BuildOptions.None, // release build: no development player, no profiler
+                    subtarget = (int)WebGLTextureSubtarget.DXT, // desktop GPUs; phones get their own .data below
                 };
-                report = BuildPipeline.BuildPlayer(options);
+                report = BuildPipeline.BuildPlayer(options).summary;
+                phoneDataFile = null;
+                if (report.result == BuildResult.Succeeded && !gzipForItch)
+                {
+                    phoneDataFile = AddPhoneData(options);
+                }
             }
             finally
             {
@@ -82,15 +91,71 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             }
 
             LogSettings(webPipeline);
-            Debug.Log("Role4WebBuild: " + report.summary.result + ", " + report.summary.totalErrors + " errors, "
-                + report.summary.totalTime.TotalMinutes.ToString("0.0") + " min.");
-            if (report.summary.result == BuildResult.Succeeded)
+            Debug.Log("Role4WebBuild: " + report.result + ", " + report.totalErrors + " errors, "
+                + report.totalTime.TotalMinutes.ToString("0.0") + " min.");
+            if (report.result == BuildResult.Succeeded)
             {
+                StampBuildVersion(OutputFolder, phoneDataFile);
                 LogFileSizes();
             }
-            if (Application.isBatchMode && report.summary.result != BuildResult.Succeeded)
+            if (Application.isBatchMode && report.result != BuildResult.Succeeded)
             {
                 EditorApplication.Exit(1);
+            }
+        }
+
+        // ---------- Phones: the same game with ETC2 textures (load time, 17 Nov) ----------
+        // Phone GPUs (iPhone, Android) have no DXT, so Unity unpacked every DXT texture on the CPU while loading: measured
+        // +9 s to "Tap to play" and +20 s until the track is there on a 4x slower CPU, and 4-8x the texture memory.
+        // Unity's documented answer (Manual: Web > Texture compression) is a second build with another texture format
+        // whose .data sits next to the first; index.html picks it when the GPU has ETC2 but no DXT. ETC2 can be crunched
+        // like DXT, so the phone download stays the same size. Code files must be byte-identical (same hashed names),
+        // otherwise the phone .data is left out and phones keep the DXT one (a warning in the build log).
+        private const string PhoneFolder = "Build-Web-ETC2";
+        private static string phoneDataFile;
+
+        private static string AddPhoneData(BuildPlayerOptions desktop)
+        {
+            FileUtil.DeleteFileOrDirectory(PhoneFolder);
+            BuildPlayerOptions phone = desktop;
+            phone.locationPathName = PhoneFolder;
+            phone.subtarget = (int)WebGLTextureSubtarget.ETC2;
+            BuildSummary report = BuildPipeline.BuildPlayer(phone).summary;
+            try
+            {
+                if (report.result != BuildResult.Succeeded)
+                {
+                    Debug.LogWarning("Role4WebBuild: the ETC2 build for phones failed (" + report.totalErrors + " errors); phones use the DXT data.");
+                    return null;
+                }
+                string desktopBuild = Path.Combine(OutputFolder, "Build");
+                string phoneBuild = Path.Combine(PhoneFolder, "Build");
+                string phoneData = null;
+                foreach (string file in Directory.GetFiles(phoneBuild))
+                {
+                    string name = Path.GetFileName(file);
+                    if (name.EndsWith(".data"))
+                    {
+                        phoneData = name;
+                    }
+                    else if (!File.Exists(Path.Combine(desktopBuild, name)))
+                    {
+                        Debug.LogWarning("Role4WebBuild: the ETC2 build's " + name + " differs from the desktop build; phones use the DXT data.");
+                        return null;
+                    }
+                }
+                if (phoneData == null || File.Exists(Path.Combine(desktopBuild, phoneData)))
+                {
+                    Debug.LogWarning("Role4WebBuild: no separate ETC2 .data was made; phones use the DXT data.");
+                    return null;
+                }
+                File.Copy(Path.Combine(phoneBuild, phoneData), Path.Combine(desktopBuild, phoneData));
+                Debug.Log("Role4WebBuild: ETC2 data for phones added: " + phoneData);
+                return phoneData;
+            }
+            finally
+            {
+                FileUtil.DeleteFileOrDirectory(PhoneFolder);
             }
         }
 
@@ -98,13 +163,26 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         // track scene that has a track (RaceSettings order: Track_Campus, Track_CampusWorld, Track_NovaCampus, ...), so
         // with the campus world in the build Track_NovaCampus is never reached, yet all its meshes and textures were in
         // the download. The editor and the build list keep it; only the Web player leaves it out.
-        public static readonly string[] WebSkipScenes = { "Assets/_Project/Track/Scenes/Track_NovaCampus.unity" };
+        // Load time (17 Nov): also Role 2's empty Track_Campus (no TrackInfo). RaceBootstrap loaded and unloaded it on
+        // every start before the campus world, about 0.8 s; now that scene is simply not in the Web build and skipped.
+        public static readonly string[] WebSkipScenes =
+        {
+            "Assets/_Project/Track/Scenes/Track_NovaCampus.unity",
+            "Assets/_Project/Track/Scenes/Track_Campus.unity",
+        };
+
+        public const string WorldScene = "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity";
 
         public static string[] WebScenes()
         {
-            string[] all = EditorBuildSettingsScene.GetActiveSceneList(EditorBuildSettings.scenes);
+            return FilterWebScenes(EditorBuildSettingsScene.GetActiveSceneList(EditorBuildSettings.scenes));
+        }
+
+        // The build list minus WebSkipScenes, but only while the campus world is in it (else nothing is skipped).
+        public static string[] FilterWebScenes(string[] all)
+        {
             var kept = new System.Collections.Generic.List<string>();
-            bool hasWorld = System.Array.IndexOf(all, "Assets/_Project/Visuals/Scenes/Track_CampusWorld.unity") >= 0;
+            bool hasWorld = System.Array.IndexOf(all, WorldScene) >= 0;
             for (int i = 0; i < all.Length; i++)
             {
                 if (hasWorld && System.Array.IndexOf(WebSkipScenes, all[i]) >= 0)
@@ -154,6 +232,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             PlayerSettings.WebGL.maximumMemorySize = 2048;
             PlayerSettings.WebGL.powerPreference = WebGLPowerPreference.HighPerformance;
             PlayerSettings.SplashScreen.show = false; // allowed on Unity 6 Personal, saves about 2 s per load
+            PlayerSettings.SplashScreen.showUnityLogo = false; // load time (17 Nov): its 2.7 MB logo texture was still in the build
             // V37: no static batching on the Web. It stored a second, merged copy of every static mesh in the scene data,
             // which doubled the download (Web .data 126 -> 63 MB without it, 16 Nov). The SRP Batcher already keeps
             // the draw calls cheap; set it back to true here if a Web fps check ever shows the CPU as the limit.
@@ -182,8 +261,92 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 + ", splash=" + PlayerSettings.SplashScreen.show
                 + ", staticBatching=" + PlayerSettings.GetStaticBatchingForPlatform(BuildTarget.WebGL)
                 + ", template=" + PlayerSettings.WebGL.template
+                + ", unityLogo=" + PlayerSettings.SplashScreen.showUnityLogo
                 + ", worldTextures=crunch q50, normals max 512 (WebTextureCrunch v" + new WebTextureCrunch().GetVersion() + ")"
                 + ", webPipeline=" + (webPipeline != null ? webPipeline.name : "none (see the error above)"));
+        }
+
+        // ---------- Build id: the page never mixes a new build with cached old page files (load time, 17 Nov) ----------
+        // The game files already have their content hash in the name. The page files (index.html, TemplateData/) do not,
+        // and GitHub Pages lets browsers keep them 10 minutes. So after every build: one id from all the built files,
+        // written into index.html (placeholder __CC_BUILD_ID__) and version.json, and added as ?v=<id> to every
+        // TemplateData address in index.html and style.css. index.html checks version.json and reloads once when a newer
+        // build is out (see "Always the newest build" in the template).
+        public const string BuildIdPlaceholder = "__CC_BUILD_ID__";
+        public const string PhoneDataPlaceholder = "__CC_ETC2_DATA__";
+
+        public static void StampBuildVersion(string folder, string phoneData)
+        {
+            string indexPath = Path.Combine(folder, "index.html");
+            if (!File.Exists(indexPath))
+            {
+                Debug.LogWarning("Role4WebBuild: no index.html to stamp in " + folder);
+                return;
+            }
+            string id = BuildId(folder);
+            File.WriteAllText(indexPath, StampHtml(File.ReadAllText(indexPath), id, phoneData));
+            string cssPath = Path.Combine(folder, "TemplateData", "style.css");
+            if (File.Exists(cssPath))
+            {
+                File.WriteAllText(cssPath, StampCss(File.ReadAllText(cssPath), id));
+            }
+            File.WriteAllText(Path.Combine(folder, "version.json"), VersionJson(id));
+            Debug.Log("Role4WebBuild: build id " + id + " (index.html, version.json, TemplateData ?v=" + id + ")");
+        }
+
+        public static string VersionJson(string id)
+        {
+            return "{\"build\":\"" + id + "\"}\n";
+        }
+
+        // SHA-1 over every file of the build (path + content), first 12 hex digits. Same files = same id.
+        public static string BuildId(string folder)
+        {
+            string[] files = Directory.GetFiles(folder, "*", SearchOption.AllDirectories);
+            Array.Sort(files, StringComparer.Ordinal);
+            using (SHA1 sha = SHA1.Create())
+            {
+                foreach (string file in files)
+                {
+                    string relative = file.Substring(folder.Length).Replace('\\', '/');
+                    if (relative.EndsWith("/version.json"))
+                    {
+                        continue;
+                    }
+                    byte[] name = Encoding.UTF8.GetBytes(relative + "\n");
+                    sha.TransformBlock(name, 0, name.Length, null, 0);
+                    byte[] content = File.ReadAllBytes(file);
+                    sha.TransformBlock(content, 0, content.Length, null, 0);
+                }
+                sha.TransformFinalBlock(new byte[0], 0, 0);
+                var hex = new StringBuilder();
+                for (int i = 0; i < 6; i++)
+                {
+                    hex.Append(sha.Hash[i].ToString("x2"));
+                }
+                return hex.ToString();
+            }
+        }
+
+        // src="TemplateData/x" and href="TemplateData/x" (no query yet) in index.html.
+        private static readonly Regex TemplateDataLink = new Regex("((?:src|href)=\")(TemplateData/[^\"?#]+)(\")");
+        // url(x), url("x"), url('x') in style.css with a relative address (not data:, http(s):, / or #).
+        private static readonly Regex CssUrl = new Regex("(url\\(\\s*[\"']?)(?![\"']|data:|https?:|/|#)([^\"')?#\\s]+)([\"']?\\s*\\))");
+
+        // phoneData: the ETC2 .data file name, or null (the placeholder then stays and the page uses the DXT data).
+        public static string StampHtml(string html, string id, string phoneData)
+        {
+            html = html.Replace(BuildIdPlaceholder, id);
+            if (!string.IsNullOrEmpty(phoneData))
+            {
+                html = html.Replace(PhoneDataPlaceholder, phoneData);
+            }
+            return TemplateDataLink.Replace(html, m => m.Groups[1].Value + m.Groups[2].Value + "?v=" + id + m.Groups[3].Value);
+        }
+
+        public static string StampCss(string css, string id)
+        {
+            return CssUrl.Replace(css, m => m.Groups[1].Value + m.Groups[2].Value + "?v=" + id + m.Groups[3].Value);
         }
 
         // Prints every file in Build-Web/Build with its size and its gzip size (= roughly what GitHub Pages sends).
@@ -196,9 +359,14 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             {
                 long raw = new FileInfo(file).Length;
                 long gzip = file.EndsWith(".gz") ? raw : GzipSize(file);
-                totalRaw += raw;
-                totalGzip += gzip;
-                Debug.Log("Role4WebBuild file: " + Path.GetFileName(file) + "  " + ToMB(raw) + " MB (gzip " + ToMB(gzip) + " MB)");
+                bool phoneOnly = Path.GetFileName(file) == phoneDataFile;
+                if (!phoneOnly)
+                {
+                    totalRaw += raw; // a visitor downloads either the DXT or the ETC2 data, never both
+                    totalGzip += gzip;
+                }
+                Debug.Log("Role4WebBuild file: " + Path.GetFileName(file) + "  " + ToMB(raw) + " MB (gzip " + ToMB(gzip) + " MB)"
+                    + (phoneOnly ? "  [ETC2, phones only]" : ""));
             }
             Debug.Log("Role4WebBuild size: " + ToMB(totalRaw) + " MB on disk, about " + ToMB(totalGzip) + " MB over the wire (gzip).");
         }

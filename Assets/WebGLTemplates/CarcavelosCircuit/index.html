@@ -93,9 +93,9 @@
           <h2>Race with touch controls</h2>
           <p>Steer with the buttons on the left, gas and drift on the right. Turn your phone sideways for the widest view.</p>
           <div class="cc-actions">
-            <button class="cc-button" id="cc-load-anyway" type="button">Load the game</button>
+            <button class="cc-button" id="cc-load-anyway" type="button">Continue</button>
           </div>
-          <p class="cc-small">The game is a big download, so Wi-Fi is best.</p>
+          <p class="cc-small">The game is already loading. It is a big download, so Wi-Fi is best.</p>
         </section>
 
         <section class="cc-panel cc-card" id="cc-panel-error" role="alert" hidden>
@@ -385,7 +385,15 @@
         clearInterval(tipTimer);
         onProgress(1);
         loader.classList.add("cc-ready");
-        showPanel("cc-panel-play");
+        var card = document.getElementById("cc-panel-mobile");
+        if (!card.hidden) {
+          // Phones load behind the touch-controls card (load time, 17 Nov): it stays, its button now starts the game
+          // (any tap on the loader does, see the click listener below), so it is still one tap.
+          document.getElementById("cc-load-anyway").textContent = "Tap to play";
+          card.querySelector(".cc-small").textContent = "Loaded. The tap also turns the sound on.";
+        } else {
+          showPanel("cc-panel-play");
+        }
         if (touchMode) {
           document.querySelector("#cc-play-button span").textContent = "Tap to play";
           document.querySelector(".cc-play-hint").textContent = "sound on";
@@ -720,9 +728,81 @@
         }
       }
 
+      // ---------- Always the newest build (load time + "outdated" reports, 17 Nov) ----------
+      // Role4WebBuild stamps this build's id here and into version.json, and adds ?v=<id> to every TemplateData file,
+      // so a new deploy never mixes with cached page files. GitHub Pages lets browsers keep index.html for 10 minutes:
+      // a page from the cache would load the previous build. So the page asks for version.json (never cached) while
+      // the game loads, and reloads once with ?cc-build=<id> (a new address = a fresh index.html) if a newer build is out.
+      var buildId = "__CC_BUILD_ID__";
+      var buildIsStamped = buildId.indexOf("__") !== 0; // false in a build made without Role4WebBuild
+      (function checkForNewerBuild() {
+        var params = new URLSearchParams(location.search);
+        if (params.get("cc-build") === buildId && window.history && history.replaceState) {
+          params.delete("cc-build"); // we are on the newest build: keep the address clean for sharing
+          var query = params.toString();
+          history.replaceState(null, "", location.pathname + (query ? "?" + query : "") + location.hash);
+        }
+        if (!buildIsStamped || !window.fetch || location.protocol === "file:") {
+          return;
+        }
+        fetch("version.json?t=" + Date.now(), { cache: "no-store" }).then(function (response) {
+          return response.ok ? response.json() : null;
+        }).then(function (version) {
+          var newest = version && version.build;
+          if (!newest || newest === buildId || new URLSearchParams(location.search).get("cc-build") === newest) {
+            return; // up to date (or already reloaded once for it: never loop)
+          }
+          var next = new URLSearchParams(location.search);
+          next.set("cc-build", newest);
+          location.replace(location.pathname + "?" + next.toString() + location.hash);
+        }).catch(function () {
+          // offline or no version.json (an older host): play what we have
+        });
+      })();
+
+      // ---------- Textures the GPU can use as they are ----------
+      // Desktop GPUs read DXT, phone GPUs (iPhone, Android) read ETC2 but no DXT: with the DXT data a phone unpacked every
+      // texture on the CPU (much slower start, 4-8x the memory). Role4WebBuild adds an ETC2 copy of the game data and
+      // stamps its name here. ?cc-tex=etc2 or ?cc-tex=dxt forces one (for testing).
+      var phoneDataFile = "__CC_ETC2_DATA__";
+      function pickDataUrl() {
+        var desktopData = "Build/{{{ DATA_FILENAME }}}";
+        var forced = new URLSearchParams(location.search).get("cc-tex");
+        if (phoneDataFile.indexOf("__") === 0 || forced === "dxt") {
+          return desktopData; // no phone data in this build, or forced
+        }
+        if (forced === "etc2") {
+          return "Build/" + phoneDataFile;
+        }
+        var useEtc2 = false;
+        try {
+          var gl = document.createElement("canvas").getContext("webgl2");
+          if (gl) {
+            useEtc2 = !gl.getExtension("WEBGL_compressed_texture_s3tc") && Boolean(gl.getExtension("WEBGL_compressed_texture_etc"));
+            var lose = gl.getExtension("WEBGL_lose_context");
+            if (lose) {
+              lose.loseContext();
+            }
+          }
+        } catch (e) {
+          // keep the DXT data
+        }
+        return useEtc2 ? "Build/" + phoneDataFile : desktopData;
+      }
+
       // ---------- Start loading the game ----------
+      // Phones start the download at once, behind the touch-controls card (it used to wait for a tap on that card).
+      var downloadStarted = false;
       function loadGame() {
         showPanel("cc-panel-loading");
+        startDownload();
+      }
+
+      function startDownload() {
+        if (downloadStarted) {
+          return;
+        }
+        downloadStarted = true;
         startTips();
         if (testCard === "error") {
           showLoadError("Test error (?test=error in the address).");
@@ -730,7 +810,7 @@
         }
         var config = {
           arguments: [],
-          dataUrl: "Build/{{{ DATA_FILENAME }}}",
+          dataUrl: pickDataUrl(),
           frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
 #if USE_WASM
           codeUrl: "Build/{{{ CODE_FILENAME }}}",
@@ -738,7 +818,13 @@
           streamingAssetsUrl: "StreamingAssets",
           companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
           productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
-          productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+          // The build id as the cache version: Unity's browser cache then deletes the files of older builds on the next visit.
+          productVersion: buildIsStamped ? buildId : {{{ JSON.stringify(PRODUCT_VERSION) }}},
+          // Build files have their content hash in the name (nameFilesAsHashes), so a cached one can never be outdated:
+          // a second visit loads the .data straight from the browser cache without asking the server first.
+          cacheControl: function (url) {
+            return /(^|\/)Build\/[0-9a-f]{32}\.data$/.test(url) ? "immutable" : "no-store";
+          },
           // Sharp on high-DPI laptop screens, but at most 1.5x the window size so the GPU keeps up.
           devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
           showBanner: showBanner
@@ -801,8 +887,11 @@
       } else if (isTouchOnlyDevice()) {
         useTouchMode();
         showPanel("cc-panel-mobile");
+        startDownload();
         document.getElementById("cc-load-anyway").addEventListener("click", function () {
-          loadGame();
+          if (!loader.classList.contains("cc-ready")) {
+            showPanel("cc-panel-loading"); // still loading: show the progress (when ready, the tap starts the game)
+          }
         });
       } else {
         loadGame();
