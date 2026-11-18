@@ -31,6 +31,9 @@ namespace CarcavelosCircuit.RaceFlow
 
         [DllImport("__Internal")]
         private static extern int CarcavelosFirstScreen();
+
+        [DllImport("__Internal")]
+        private static extern int CarcavelosFirstScreenFloor();
 #endif
 
         // 3. TouchMode (phone round 17.11): true while the page shows its touch buttons (phones, tablets, a touch laptop
@@ -156,6 +159,20 @@ namespace CarcavelosCircuit.RaceFlow
                 return CarcavelosFirstScreen();
 #else
                 return FirstScreenGone;
+#endif
+            }
+        }
+
+        // Where the page's controls legend starts on the first screen, as a share of the window height from the top
+        // (1 = no legend). The line-up's names stay above it (UI/StartLineup).
+        public static float FirstScreenFloor
+        {
+            get
+            {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                return CarcavelosFirstScreenFloor() / 1000f;
+#else
+                return 1f;
 #endif
             }
         }

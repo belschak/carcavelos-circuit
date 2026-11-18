@@ -62,5 +62,17 @@ namespace CarcavelosCircuit.Tests.EditMode
                             + 3f * KartBuilder.TileWidth + 2f * KartBuilder.ColumnGap;
             Assert.LessOrEqual(builder, width, "the TYRES column must stay inside a 5:4 window");
         }
+
+        [Test]
+        public void StartLineup_StaysAboveThePageControlsLegend()
+        {
+            // UI/StartLineup (first screen): the page's legend starts at 83 % of the height at 1280 x 720 (two rows).
+            float bottom = StartLineup.BottomPercent(0.83f);
+            Assert.GreaterOrEqual(bottom, 17f + 1f, "the names must end above the legend");
+            Assert.AreEqual(StartLineup.MinBottomPercent, StartLineup.BottomPercent(0.95f), "a low legend keeps the default");
+            Assert.AreEqual(StartLineup.MinBottomPercent, StartLineup.BottomPercent(1f), "no legend: default");
+            Assert.AreEqual(StartLineup.MinBottomPercent, StartLineup.BottomPercent(0f), "bad value: default");
+            Assert.LessOrEqual(StartLineup.BottomPercent(0.2f), 40f, "never squeezed to nothing");
+        }
     }
 }

@@ -22,6 +22,7 @@ namespace CarcavelosCircuit.RaceFlow
         private KartStage stage;
         private bool shown;
         private bool coveringStartScreen;
+        private float bottomPercent = MinBottomPercent;
         private float hiddenAt = -10f;
 
         // The line-up is on screen now (tests, QA).
@@ -38,7 +39,7 @@ namespace CarcavelosCircuit.RaceFlow
             element.style.left = Length.Percent(53f);   // the page's wordmark ends at 50 % of the width
             element.style.right = Length.Percent(1f);
             element.style.top = Length.Percent(30f);    // the karts stand low, just above their names
-            element.style.bottom = Length.Percent(15f);  // above the page's key dock
+            element.style.bottom = Length.Percent(MinBottomPercent);  // above the page's key dock (KeepAboveDock)
             element.style.opacity = 0f;
             element.style.translate = new Translate(Length.Percent(4f), 0f);
             element.style.transitionProperty = new System.Collections.Generic.List<StylePropertyName>
@@ -154,6 +155,10 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 Show();
             }
+            if (shown)
+            {
+                KeepAboveDock();
+            }
             else if (!want && shown)
             {
                 Hide();
@@ -193,6 +198,30 @@ namespace CarcavelosCircuit.RaceFlow
             hiddenAt = Time.unscaledTime;
             element.style.opacity = 0f;
             element.style.translate = new Translate(Length.Percent(-3f), 0f);
+        }
+
+        // The line-up ends at least 15 % above the bottom, and always a little above the page's controls legend, which
+        // wraps to two rows on narrower windows (QA 18 Nov: at 1280 x 720 the names sat behind it).
+        public const float MinBottomPercent = 15f;
+
+        // floor = where the legend starts, as a share of the window height from the top (1 or more = no legend).
+        public static float BottomPercent(float floor)
+        {
+            if (floor <= 0f || floor >= 1f)
+            {
+                return MinBottomPercent;
+            }
+            return Mathf.Clamp((1f - floor) * 100f + 2f, MinBottomPercent, 40f);
+        }
+
+        private void KeepAboveDock()
+        {
+            float bottom = BottomPercent(WebPage.FirstScreenFloor);
+            if (Mathf.Abs(bottom - bottomPercent) > 0.25f)
+            {
+                bottomPercent = bottom;
+                element.style.bottom = Length.Percent(bottom);
+            }
         }
 
         // The picture in the size it is shown at, in real screen pixels.

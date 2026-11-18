@@ -55,5 +55,17 @@ mergeInto(LibraryManager.library, {
       return 0;
     }
     return loader.classList.contains("cc-live") ? 2 : 1;
+  },
+
+  // Where the page's controls legend starts, in thousandths of the window height from the top (1000 = no legend).
+  // The first-screen line-up keeps its names above it (the legend wraps to two rows on narrower windows).
+  CarcavelosFirstScreenFloor: function () {
+    var dock = document.querySelector("#cc-loader .cc-controls");
+    var height = window.innerHeight || 1;
+    if (!dock || dock.offsetParent === null) {
+      return 1000;
+    }
+    var top = dock.getBoundingClientRect().top / height * 1000;
+    return Math.round(Math.max(0, Math.min(1000, top)));
   }
 });
