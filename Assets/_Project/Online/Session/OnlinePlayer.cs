@@ -5,8 +5,9 @@ namespace CarcavelosCircuit.Online
     // One player in the online room, as the session knows them (IOnlineSession.Players). The session owns and
     // updates these objects; everyone else only reads them. FinishSeconds is NaN until the player reports a finish
     // for the current race (RaceControl.RaceId); a new race sets it back to NaN.
-    // DriverIndex = the driver the player picked (RaceFlow's DriverRoster, DriverChoice at join): everyone builds that
-    // player's kart with this driver's own kart model. A number outside the roster (an old or broken client) is the Rookie.
+    // DriverIndex = the player's kart set as one number (RaceFlow's KartLoadout.Code, DriverChoice.Loadout at join):
+    // 0-3 = that driver in their own kart (what builds before the kart builder sent), 100-163 = any driver + kart + tyres.
+    // Everyone builds that player's kart from it. Any other number (an old or broken client) is the Rookie's own set.
     public class OnlinePlayer
     {
         public int Id { get; private set; }
@@ -28,11 +29,14 @@ namespace CarcavelosCircuit.Online
             DriverIndex = SafeDriver(driverIndex);
         }
 
-        // A driver number that is really in the roster; anything else = the Rookie.
+        // A kart set number KartLoadout can read; anything else = the Rookie's own set.
         public static int SafeDriver(int driverIndex)
         {
-            return DriverRoster.IsValid(driverIndex) ? driverIndex : DriverRoster.Rookie;
+            return KartLoadout.IsValidCode(driverIndex) ? driverIndex : DriverRoster.Rookie;
         }
+
+        // The driver, kart and tyres this player races with.
+        public KartLoadout Loadout { get { return KartLoadout.FromCode(DriverIndex); } }
 
         // Has this player a finish time for the given race?
         public bool HasFinished(int raceId)

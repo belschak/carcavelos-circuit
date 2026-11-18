@@ -31,10 +31,10 @@ namespace CarcavelosCircuit.Tests.EditMode
         [Test]
         public void DriverSelectButtons_AreThumbSizedOnTouch_AndKeepTheirSizeOnAComputer()
         {
-            Assert.GreaterOrEqual(DriverPicker.ButtonHeight(true, true), 78f, "READY on touch");
-            Assert.GreaterOrEqual(DriverPicker.ButtonHeight(false, true), 78f, "BACK on touch");
-            Assert.AreEqual(64f, DriverPicker.ButtonHeight(true, false), "READY with a mouse");
-            Assert.AreEqual(48f, DriverPicker.ButtonHeight(false, false), "BACK with a mouse");
+            Assert.GreaterOrEqual(KartBuilder.ButtonHeight(true, true), 78f, "READY on touch");
+            Assert.GreaterOrEqual(KartBuilder.ButtonHeight(false, true), 78f, "BACK on touch");
+            Assert.AreEqual(64f, KartBuilder.ButtonHeight(true, false), "READY with a mouse");
+            Assert.AreEqual(48f, KartBuilder.ButtonHeight(false, false), "BACK with a mouse");
         }
 
         [Test]

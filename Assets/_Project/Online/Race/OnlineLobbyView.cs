@@ -640,7 +640,7 @@ namespace CarcavelosCircuit.Online
             row.style.marginRight = 6f;
             parent.Add(row);
 
-            DriverInfo driver = DriverRoster.Get(player.DriverIndex);
+            DriverInfo driver = DriverRoster.Get(KartLoadout.FromCode(player.DriverIndex).Driver);
             Color colour = OnlineColours.Of(player.ColourIndex);
             VisualElement frame = new VisualElement();
             frame.pickingMode = PickingMode.Ignore;
