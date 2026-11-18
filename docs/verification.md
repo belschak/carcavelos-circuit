@@ -114,8 +114,9 @@ Test files are in `Assets/_Project/Tests/`; PlayMode files are marked (PM). Coun
 
 ### Totals
 
-Before this round: 1339 Edit Mode + 37 Play Mode runs, all green on `main`. This round adds 124 Edit Mode runs
-in 6 new files (`Verification/*` and `Online/OnlineHostileInputTests`); no existing test was changed.
+18 Nov 2026 (GitHub run on the pull request that added this page): **Edit Mode 1464 / 1464 passed, Play Mode 37 / 37
+passed.** 124 of the Edit Mode runs are new in 6 files (`Verification/*` and `Online/OnlineHostileInputTests`); no
+existing test was changed. The current numbers are always on the newest run of `main` (badge above).
 
 ## Not covered by automated tests (and how we check it instead)
 

@@ -83,9 +83,12 @@ database list would need a migration for every addition; a rude name sent past t
 - **Third parties:** Photon and Supabase see the player's IP address, as any web service does. GitHub Pages serves the
   game. Unity Analytics, performance reporting and crash reporting are switched off (`ProjectSettings/UnityConnectSettings.asset`).
 - **The repository:** names and student numbers of the team are in the README because the course requires it.
-  A scan of every file in the history (including binary 3D models) for e-mail addresses, personal folder paths
-  (`C:\Users\...`, `/Users/...`) and phone numbers is recorded in `grading-100` notes; anything found that needs a
-  history rewrite is decided by the team, not done silently.
+  On 18 Nov 2026 every file of every commit, including binary 3D models, was scanned for e-mail addresses, personal
+  folder paths (`C:\Users\...`, `/Users/...`) and phone numbers. No phone numbers and no Windows user folders were
+  found. Exported FBX models keep the exporting computer's file path in their metadata: some contain a teammate's
+  macOS user name, and the item models contain the Google Drive folder path of the teammate who made them, which
+  includes their e-mail address. This metadata is not used by the game. Cleaning it from the models and from the Git
+  history is a team decision, because rewriting history changes every teammate's clone.
 
 ## 6. Dependencies: minimal, pinned, no known vulnerabilities
 
