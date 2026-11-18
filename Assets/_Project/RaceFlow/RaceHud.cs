@@ -129,6 +129,8 @@ namespace CarcavelosCircuit.RaceFlow
 
         // The driver select on the start screen (Play Mode test DriverSelectPlayTests).
         public KartBuilder Builder { get { return kartBuilder; } }
+        private StartLineup startLineup;     // the four drivers on the page's first screen (UI/StartLineup.cs)
+        public StartLineup Lineup { get { return startLineup; } }
 
         // Settings and credits (Play Mode test: Escape closes them). Null before OnEnable.
         public HudMenus Menus { get { return menus; } }
@@ -205,6 +207,7 @@ namespace CarcavelosCircuit.RaceFlow
             modePicker = new ModePicker(root, raceManager);     // after IgnoreClicksDeep, like the menus
             kartBuilder = new KartBuilder(root, raceManager); // after the mode cards: it hides them while it is open
             kartBuilder.SoundRequested += OnMenuSound;
+            startLineup = new StartLineup(root);
             finishOverlay = new FinishOverlay(hudRoot);
             resultsMenu = MakeResultsMenuButton(root);
             retryKeycap = root.Q<VisualElement>("res-actions").Q<VisualElement>(className: "keycap--wide");
@@ -237,7 +240,8 @@ namespace CarcavelosCircuit.RaceFlow
             raceManager.Recovered -= OnRecovered;
             menus.SoundRequested -= OnMenuSound;
             kartBuilder.SoundRequested -= OnMenuSound;
-            kartBuilder.Dispose(); // "any key" starts the race again without the HUD
+            kartBuilder.Dispose();
+            startLineup.Dispose(); // "any key" starts the race again without the HUD
             HudTextures.Destroy(startGradient);
             HudTextures.Destroy(resultsGradient);
             HudTextures.Destroy(glowLeftTexture);
@@ -604,6 +608,7 @@ namespace CarcavelosCircuit.RaceFlow
                 raceManager.MenuUsesInput = true; // this click or key picks a mode, it does not also start the race
             }
             kartBuilder.Update(state, menuHasTheKeys);
+            startLineup.Update(state);
             if (kartBuilder.UsesInput)
             {
                 raceManager.MenuUsesInput = true; // the kart builder owns the keys; only READY starts the race

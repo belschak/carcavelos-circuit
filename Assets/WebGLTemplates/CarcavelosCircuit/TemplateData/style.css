@@ -885,6 +885,13 @@ html.cc-paused #cc-touch #cc-fullscreen { position: static; }
 .cc-shot figcaption span { font-size: 14px; letter-spacing: 0.04em; color: var(--fe-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @keyframes cc-cap { 0%, 3% { opacity: 0; transform: translateX(24px); } 7%, 24% { opacity: 1; transform: none; } 27%, 100% { opacity: 0; transform: translateX(-8px); } }
 
+/* Kart builder (18 Nov): once the game is loaded, the key art gives way to the live game behind the page, where the
+   game draws its four drivers on the right half (index.html updateLive, RaceFlow/UI/StartLineup.cs). */
+#cc-loader.cc-live { background: transparent; }
+.cc-key { transition: opacity 1.2s ease; }
+.cc-live .cc-key { opacity: 0; }
+.cc-live .cc-card.cc-panel { width: min(460px, 46vw); } /* the phone card stays left of the drivers */
+
 /* Cinematic grade: dark fall-off from the left (behind the wordmark) and at the bottom (behind the keys), warm light. */
 .cc-grade { position: absolute; inset: 0; pointer-events: none;
   background:
