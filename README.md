@@ -53,7 +53,7 @@ On a phone the game shows touch buttons instead.
 | Items | Four campus items from boxes on the road; better items when you are behind | `Assets/_Project/RaceFlow/ItemSystem.cs`, `ItemOdds.cs`, `Visuals/ItemFx/` |
 | Positions, minimap, name tags | Live place of every racer | `Assets/_Project/RaceFlow/RaceStandings.cs`, `MinimapPath.cs`, `Driving/NameTagManager.cs` |
 | Ghost and medals | Replay of your best lap, Bronze/Silver/Gold scaled to the track | `Assets/_Project/RaceFlow/Ghost*.cs`, `MedalRules.cs` |
-| Driver select | Four drivers, each in their own kart | `Assets/_Project/RaceFlow/Drivers/` |
+| Kart builder | Driver, kart and tyres in three columns (64 looks-only sets) on a turntable; the four drivers on the first screen | `Assets/_Project/RaceFlow/UI/KartBuilder.cs`, `Assets/_Project/Visuals/Kart/KartAssembler.cs` |
 | Leaderboard | Global top 10 with names, shared by every player (Supabase). Every time is also saved on the device first, so when the internet or the service is down the board shows the device's times and says so | `Assets/_Project/RaceFlow/Leaderboard/`, `backend/supabase/` |
 | Online race | One room for the class (15 players), shared countdown, same finish order on every screen | `Assets/_Project/Online/`, [docs/online.md](docs/online.md) |
 | Menus and HUD | Start screen, settings, credits, results, plain-language errors | `Assets/_Project/RaceFlow/UI/` |
