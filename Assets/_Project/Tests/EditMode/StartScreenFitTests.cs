@@ -38,6 +38,19 @@ namespace CarcavelosCircuit.Tests.EditMode
             string uss = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "StartScreen.uss"));
             StringAssert.Contains(".hud--compact #mode-picker", uss);
             StringAssert.Contains(".hud--compact .lb-host--start", uss);
+            StringAssert.Contains(".hud--compact .lb-host--start .lb-title", uss);
+            StringAssert.Contains(".hud--compact .lb-host--start .lb-source", uss);
+            StringAssert.Contains(".hud--compact #driver-picker", uss);
+        }
+
+        [Test]
+        public void CompactLayout_DriverSelectFitsAtFiveToFour()
+        {
+            // UI/DriverPicker: 4 cards of 184 px + 2 x 6 px margin each; ts-layout padding 64 left / 56 right.
+            // Drawn at 80 % from its left edge (StartScreen.uss), so the row must end inside the narrowest compact window.
+            const float width = 900f;
+            float rowEnd = 64f + 4f * (184f + 12f) * 0.8f;
+            Assert.Less(rowEnd, width - 56f, "the 4th driver card must stay inside a 5:4 window");
         }
     }
 }
