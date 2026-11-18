@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace CarcavelosCircuit.Tests.EditMode
 {
-    // Start screen fit (Sherlock grade 2, 18 Nov 2026): the panel always scales to 720 px height, so a window is
+    // Start screen fit (review on 18 Nov 2026): the panel always scales to 720 px height, so a window is
     // 720 x aspect reference pixels wide. Accepted: 16:9 (1280) and 16:10 (1152) keep the normal layout. Edge: 4:3
     // (960) and 5:4 (900) get "hud--compact", where the mode cards and the start leaderboard must not overlap.
     // How it looks is checked in a real Web build (screenshots at 800x600 ... 1920x1080 and phone landscape).
