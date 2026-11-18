@@ -45,6 +45,7 @@ This part is the kart itself: how it speeds up, brakes, steers, drifts to charge
 - **Input off also ends a boost** (`FixedUpdate`): at the finish or in a pause the kart rolls out instead of being pushed on, and a running drift ends with no boost (Q6 rule).
 
 ## Limits
+- Only the heading turns: on a slope or a bank the physics body stays level and only the `Visual` model leans, so the kart can never roll, also not on purpose.
 - One ground ray from the ball's centre (`CheckGround`, 0.3 m extra): a kart half over a ramp edge counts as airborne a little early.
 - Keys are hard-coded in `ReadKeyboard` (no Input Actions asset): no rebinding and no gamepad. Phones work only because the Web template sends the same key presses.
 - Bots never trick: Shift is read only when `InputSource` is null, and `KartInput` has no trick field.
@@ -66,5 +67,8 @@ This part is the kart itself: how it speeds up, brakes, steers, drifts to charge
 - `Tests/EditMode/Driving/FlyingPoseTests.cs` (10): level on the ground, nose up rising, down falling, clamped at the maximum, NaN stays level, wobble zero at take-off, never above its amplitude, grows in.
 - `Tests/EditMode/Driving/InputPickerTests.cs` (9): keyboard without source, source wins, input off gives nothing and the source is not asked, asked once per pick, too-big, NaN and infinity values clamped.
 - `Tests/EditMode/Driving/NameTagRulesTests.cs` (18): player and empty names get no tag, trimming, new lines removed, long names cut, emoji never cut in half, fade in, full, fade out, bad distances and bad settings hidden.
-- Play Mode (Role 4's tests on `Main.unity`): `RaceSmokeTests` checks the kart cannot drive on the start screen or in the countdown, the chase camera follows the spawned kart after GO, and uses `ResetTo` to teleport a robot lap; `RacersPlayTests` checks one name tag per racer, hidden over the player, in the HUD font; `BotRacePlayTests` checks five bots finish a campus lap on this kart without being put back.
+- Play Mode tests on `Main.unity` (written by other roles, they drive this kart):
+  - `Tests/PlayMode/RaceSmokeTests.cs`: no driving on the start screen or in the countdown, the chase camera follows the spawned kart after GO, and a robot lap teleports the kart with `ResetTo`.
+  - `Tests/PlayMode/RacersPlayTests.cs`: one name tag per racer, hidden over the player, in the HUD font.
+  - `Tests/PlayMode/BotRacePlayTests.cs`: five bots finish a campus lap on this kart (through `IKartDrivable`) without being put back.
 - Not tested: `KartController` physics itself, driving feel, camera smoothness and how tags look. These were checked by hand in `Driving_TestBed.unity` and the race, following the manual "Drift + boost" and "Ramp jump" rows in `docs/verification.md`.

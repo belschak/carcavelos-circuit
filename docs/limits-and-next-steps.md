@@ -8,7 +8,7 @@ What the game does not do, where it can break, and what we would build next. Eac
 - **100 players at once** on the free Photon plan, counted across every open game page (a forgotten tab counts too). Above that Photon refuses and the game says "SERVER FULL (TOO MANY PLAYERS ONLINE), TRY AGAIN IN A MINUTE". One room holds 15 players; the 16th sees "THE ROOM IS FULL (15/15), TRY AGAIN AFTER THIS RACE" (`Online/Rules/OnlineRooms.cs`).
 - **No server decides anything.** Every game drives its own kart and reports its own lap time (Fusion Shared Mode). A modified client could report a fake time. Fine for a class race, not for prizes.
 - **Karts pass through each other online** (no physics between players), on purpose: it keeps every player's own drive honest and simple.
-- **Online has no bots, no items, no ghost, no leaderboard saving.** These modes were built for one player and were switched off online rather than half-synced.
+- **Online has no bots, no ghost, no leaderboard saving.** These were built for one player and were switched off online rather than half-synced (`RaceModeRules`). Items do work online (since 17 Nov 2026), but only on your own kart: boxes are per player, and the others see you speed up through your synced position, not the item effect itself.
 - **The host blocks the room if they walk away**; Q or closing the page hands the host role to the next player.
 - **A browser tab in the background gets no frames**, so it drops out of the room after a few seconds and counts as DNF.
 - **Slow or lossy Wi-Fi** shows as short freezes of other karts (never your own). Joining takes about 8 s and the game waits up to 35 s, retries 3 times, then says what failed. Measured in a 20-bot scale test on 17 Nov 2026: [online.md](online.md#limits).

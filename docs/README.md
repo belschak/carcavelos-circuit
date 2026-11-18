@@ -13,7 +13,7 @@ Start with the first three if you have never seen the project.
 | [online.md](online.md) | The online race: how to play it, how it is built, how it was tested, its limits |
 | [route.md](route.md) | The campus route and its real distances |
 | [decisions.md](decisions.md) | Every decision with its date and reason, newest first |
-| [explain/](explain/) | One walkthrough per role (Role 2, Role 3, Role 4 and the round 2 contracts): how each part works, why, its limits |
+| [explain/](explain/) | One walkthrough per role, all in the same shape (files, how it works, why, limits, how it could change, tests): [Role 1](explain/role1-walkthrough.md) driving + camera, [Role 2](explain/role2-walkthrough.md) track + race rules, [Role 3](explain/role3-walkthrough.md) visuals, bots + web release, [Role 4](explain/role4-walkthrough.md) race flow, UI, sound + online; plus [the round 2 contracts](explain/round2-contracts.md) |
 
 ## Quality
 
