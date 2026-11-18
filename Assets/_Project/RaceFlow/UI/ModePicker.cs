@@ -11,6 +11,9 @@ namespace CarcavelosCircuit.RaceFlow
     // - Click or tap anywhere on a card: that mode is picked and the kart builder opens (UI/KartBuilder).
     //   The cards look like buttons: the mouse on a card lifts it (bigger, glass plate), a press pushes it in, and a
     //   small arrow on every card says "this goes on". The keycaps 1 2 3 stay as a hint for the keyboard.
+    // - The orange follows the mouse (Luc, 18 Nov 2026): the card under the mouse turns orange, the picked card
+    //   waits as glass with an orange edge, and when the mouse leaves the row the picked card is orange again.
+    //   Only one card is orange at a time (RaceModeRules.OrangeCard). Touch and the dimmed Online card: no orange hover.
     // - Keys 1, 2, 3 do the same as a click on that card.
     // - Any other key or click opens the driver select in the highlighted mode (the last one played).
     // - ONLINE RACE (M2): the driver select comes first too; its READY then opens the online lobby (name + join,
@@ -45,6 +48,9 @@ namespace CarcavelosCircuit.RaceFlow
 
         // The card under the mouse (Play Mode test and QA), -1 = none.
         public int Hovered { get { return hovered; } }
+
+        // The card that is orange right now (RaceModeRules.OrangeCard, Play Mode test and QA), -1 = none.
+        public int OrangeCard { get; private set; }
 
         // The refused chip ("ONLINE RACE NEEDS THE ONLINE BUILD") is on screen (Play Mode test).
         public bool IsMessageShown { get { return Time.unscaledTime < messageUntil; } }
@@ -253,6 +259,17 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
+        // Same as the mouse entering (on) or leaving (off) card index 0, 1 or 2. Public for the Play Mode test
+        // (RaceModesPlayTests), the cards call it from their PointerEnter and PointerLeave events.
+        public void HoverCard(int index, bool on)
+        {
+            if (index < 0 || index >= cards.Length)
+            {
+                return; // no such card: nothing to hover
+            }
+            SetHovered(index, on);
+        }
+
         private void SetHovered(int index, bool on)
         {
             if (on)
@@ -276,27 +293,41 @@ namespace CarcavelosCircuit.RaceFlow
             ShowSelected(raceManager.Mode);
         }
 
-        // Picked card orange; the card under the mouse lifted (bigger, and a glass plate if it is not the picked one);
-        // the pressed card pushed in. Inline scale beats the menu-pill hover scale, the USS transition still animates it.
+        // One card orange (RaceModeRules.OrangeCard: the one under the mouse, else the picked one); the picked card
+        // that waits while the mouse is on another card, and a hovered card that cannot turn orange, get the glass
+        // plate with the orange edge. The card under the mouse is lifted (bigger), the pressed card pushed in.
+        // Inline scale beats the menu-pill hover scale, the USS transition still animates it.
         private void ShowSelected(RaceMode mode)
         {
             shownMode = mode;
             bool reduced = hudRoot != null && hudRoot.ClassListContains("reduce-motion");
+            bool touch = hudRoot != null && hudRoot.ClassListContains("hud--touch");
+            int pickedCard = -1;
+            for (int i = 0; i < Modes.Length; i++)
+            {
+                if (Modes[i] == mode)
+                {
+                    pickedCard = i;
+                }
+            }
+            bool hoveredDimmed = hovered >= 0 && RaceModeRules.LooksDimmed(Modes[hovered], shownOnlineAvailable);
+            OrangeCard = RaceModeRules.OrangeCard(pickedCard, hovered, hoveredDimmed, touch);
             for (int i = 0; i < cards.Length; i++)
             {
-                bool picked = Modes[i] == mode;
+                bool orange = i == OrangeCard;
                 bool lifted = i == hovered;
-                cards[i].EnableInClassList("plate--orange", picked);
-                cards[i].EnableInClassList("plate--blue", lifted && !picked);
+                bool glass = !orange && (lifted || i == pickedCard);
+                cards[i].EnableInClassList("plate--orange", orange);
+                cards[i].EnableInClassList("plate--blue", glass);
                 float scale = i == pressed ? PressScale : (lifted ? HoverScale : 1f);
                 if (reduced)
                 {
                     scale = 1f; // reduced motion: the plate colour alone says "hovered"
                 }
                 cards[i].style.scale = new Scale(new Vector3(scale, scale, 1f));
-                arrows[i].SetFill(picked ? HudColors.Ink : (lifted ? HudColors.Orange : HudColors.Cream));
-                titles[i].style.color = picked ? HudColors.Ink : HudColors.Cream;
-                if (picked)
+                arrows[i].SetFill(orange ? HudColors.Ink : (glass ? HudColors.Orange : HudColors.Cream));
+                titles[i].style.color = orange ? HudColors.Ink : HudColors.Cream;
+                if (orange)
                 {
                     titles[i].style.unityTextOutlineWidth = 0f; // ink on orange needs no outline
                 }
@@ -306,7 +337,7 @@ namespace CarcavelosCircuit.RaceFlow
                 }
                 if (!RaceModeRules.LooksDimmed(Modes[i], shownOnlineAvailable))
                 {
-                    subtitles[i].style.color = picked ? HudColors.Ink : HudColors.WithAlpha(HudColors.Cream, 0.8f);
+                    subtitles[i].style.color = orange ? HudColors.Ink : HudColors.WithAlpha(HudColors.Cream, 0.8f);
                 }
             }
         }

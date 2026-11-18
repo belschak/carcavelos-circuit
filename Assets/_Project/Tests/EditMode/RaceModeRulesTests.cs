@@ -42,6 +42,34 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.IsTrue(RaceModeRules.LooksDimmed((RaceMode)7, true));
         }
 
+        // Luc, 18 Nov 2026: the mode card under the mouse turns orange, only one card is orange at a time.
+        [Test]
+        public void OrangeCard_FollowsTheMouse_ElseThePickedCard()
+        {
+            Assert.AreEqual(0, RaceModeRules.OrangeCard(0, -1, false, false), "no mouse on the row: the picked card");
+            Assert.AreEqual(1, RaceModeRules.OrangeCard(0, 1, false, false), "mouse on TIME ATTACK: that card");
+            Assert.AreEqual(2, RaceModeRules.OrangeCard(0, 2, false, false), "mouse on ONLINE RACE (online build): that card");
+            Assert.AreEqual(1, RaceModeRules.OrangeCard(1, 1, false, false), "mouse on the picked card: still that one");
+        }
+
+        [Test]
+        public void OrangeCard_Refused_DimmedCardAndTouchKeepThePickedCard()
+        {
+            Assert.AreEqual(0, RaceModeRules.OrangeCard(0, 2, true, false), "dimmed ONLINE card never turns orange");
+            Assert.AreEqual(1, RaceModeRules.OrangeCard(1, 0, false, true), "touch: a tap leaves the hover behind, no orange");
+            Assert.AreEqual(1, RaceModeRules.OrangeCard(1, 2, true, true));
+        }
+
+        [Test]
+        public void OrangeCard_Edges_OutOfRangeIsIgnored()
+        {
+            Assert.AreEqual(-1, RaceModeRules.OrangeCard(-1, -1, false, false), "nothing picked, nothing hovered");
+            Assert.AreEqual(2, RaceModeRules.OrangeCard(-1, 2, false, false), "nothing picked, mouse on a card");
+            Assert.AreEqual(0, RaceModeRules.OrangeCard(0, 3, false, false), "no 4th card: the picked card");
+            Assert.AreEqual(0, RaceModeRules.OrangeCard(0, -5, false, false));
+            Assert.AreEqual(-1, RaceModeRules.OrangeCard(7, -1, false, false), "a picked card that does not exist");
+        }
+
         [Test]
         public void Remembered_OnlyOfflineModes_SoTheNextVisitNeverStartsInALobby()
         {
