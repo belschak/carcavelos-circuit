@@ -10,4 +10,5 @@ Working documents from building the game (6 to 18 Nov 2026), kept as a record of
 | [plans/2026-11-12-promenade-shortcut.md](plans/2026-11-12-promenade-shortcut.md) | Plan for the promenade shortcut with wave boxes (built, task V19) |
 | [plans/2026-11-14-class-challenge.md](plans/2026-11-14-class-challenge.md) | Spec for a class challenge (whole class qualifies, top 8 race a final). Not built |
 | [builds-manual-tests-2026-11-08.md](builds-manual-tests-2026-11-08.md) | The hand-tested local Web builds of 8 Nov, before GitHub Actions built and deployed every `main` commit. The current deploy log is Actions > Web build ([../builds.md](../builds.md)) |
+| [2026-11-18-load-time.md](2026-11-18-load-time.md) | Load time P8 (18 Nov): sizes and 4 Mbit/s timings before and after the campus world became its own cached file |
 | [role4-file-notes-2026-11-10.md](role4-file-notes-2026-11-10.md) | Role 4's long file-by-file notes as of 10 Nov, before the bots, online race and modes. Replaced by the balanced [../explain/role4-walkthrough.md](../explain/role4-walkthrough.md) |

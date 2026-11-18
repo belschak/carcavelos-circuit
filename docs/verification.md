@@ -111,16 +111,18 @@ Test files are in `Assets/_Project/Tests/`; PlayMode files are marked (PM). Coun
 - **Rejected:** `OnlineAppIdRulesTests.EmptyOrBroken_IsNotValid`, **new** `Verification/BuildKeyAndServiceInputTests` (braces, one digit more or less, a space inside, a dashboard URL, a secret Supabase key with spaces, a JWT whose payload is not base64).
 - **Edge:** blank App ID = single-player build, not an error.
 
-### 11. Web build, load time and repository rules about 50 runs
+### 11. Web build, load time, start screen fit and repository rules about 65 runs
 
 - **Accepted / edge:** `WebBuild/WebLoadTimeTests` (texture and mesh import budgets), `WebPageTests` (page bridge is off outside a Web build).
+- **New** `WebBuild/WorldFileTests` (the campus world as its own file, load time 18 Nov, 7 tests). Accepted: the player build leaves out only the world scene; the world file name is `world-<md5>.bundle` of its content (same world = same name, a changed world = a new name); stamping fills the DXT and ETC2 names and the world's share of the loading bar into `index.html`; the page caches `world-*.bundle` as `immutable`, waits for the track before "Click to play" and listens for the game's `cc-world` events; the page bridge (`CarcavelosWebPage.jslib`) has both world calls. Edge: without an ETC2 world the phone placeholder stays, so phones use the DXT world; an unstamped page (a build with the world inside the `.data`) loads the old way.
+- **New** `StartScreenFitTests` (start screen on boxy windows, 7 runs). Accepted: 16:9, 16:10 and 3:2 keep the normal layout. Edge: 4:3 and 5:4 get the compact layout (`hud--compact`), and at 5:4 the mode cards end before the start leaderboard begins; the compact rules exist in `UI/StartScreen.uss`.
 - **New** `Verification/RepoHygieneTests`: the leaderboard key and address are empty in Git, the Photon SDK and App ID file are ignored, every GitHub Action is pinned to a commit, every Unity package has an exact version equal to the lock file and comes from the Unity registry, every Python tool is pinned.
 
 ### Totals
 
 The exact current numbers are in the summary of the newest Tests run on `main` (the badge above links to it): one
 line per mode, "passed / total". The counts grow with every feature, so this page gives no fixed number. For scale:
-on 18 Nov 2026 about 1500 Edit Mode and 37 Play Mode runs, all passing; 124 of the Edit Mode runs came in 6 files
+on 18 Nov 2026 (`main` at `14f9190`) 1560 Edit Mode and 39 Play Mode runs, all passing; 124 of the Edit Mode runs came in 6 files
 added that day for rejected and edge cases (`Verification/*` and `Online/OnlineHostileInputTests`).
 
 ## Not covered by automated tests (and how we check it instead)
@@ -137,6 +139,7 @@ added that day for rejected and edge cases (`Verification/*` and `Online/OnlineH
   when the tab loses focus, the loading screen) is checked by reading the template text, not by running it in a
   browser. Phones were checked by hand and with Playwright scripts on 7 phone profiles.
 - **Total download size and frame rate on a phone:** need a finished build and a real device.
+- **The campus world download** (`RaceFlow/WorldStream.cs`): the download itself, its one retry, the "The track did not download" card and the browser's IndexedDB cache of the world file run only in a real Web build, so `WorldFileTests` checks the build rules and the page text instead. Checked in a real browser: the 4 Mbit/s runs and a blocked world file on 18 Nov 2026 ([history/2026-11-18-load-time.md](history/2026-11-18-load-time.md)), and a load of the live build on 18 Nov 2026 (loading bar, "Click to play", start screen, 0 console errors).
 - **A bit-identical bot race.** The Play Mode lap with five bots steps the game one physics step per frame and puts
   the frame and physics clocks in the same relation in every run (the bots steer from interpolated kart positions,
   which depend on it), so runs match to the centimetre for the first 15 s. A float-rounding rest remains, because each

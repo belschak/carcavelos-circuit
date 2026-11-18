@@ -141,7 +141,7 @@ SDK proved the game still builds and passes. Kept on purpose:
 | Visual Studio IDE package | Editor only, never in the build: script editing and debugging in Visual Studio / VS Code |
 | Modules: animation, audio, imageconversion, imgui, jsonserialize, particlesystem, physics, ui, uielements, unitywebrequest | Used by the game or required by the packages above |
 | physics2d | The Photon Fusion SDK calls `Physics2D` |
-| assetbundle, unitywebrequestassetbundle | Keep the Photon SDK's compile options unchanged |
+| assetbundle, unitywebrequestassetbundle | The game streams the campus world as an AssetBundle (`RaceFlow/WorldStream.cs`, load time, 18 Nov 2026); the Photon SDK also compiles against them |
 | unityanalytics | The Input System and URP editor code reference it; analytics stays switched off |
 
 The Photon Fusion 2 SDK (2.1.4) is not in this repository (its licence forbids publishing it); CI fetches a fixed

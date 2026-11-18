@@ -21,7 +21,7 @@ on:
 
 concurrency:
   # On main every commit is its own group, so a run is never cancelled or replaced by a later merge: GitHub keeps only
-  # ONE waiting run per group and drops the older one, which left commits on main without a result (Sherlock 18.11).
+  # ONE waiting run per group and drops the older one, which left commits on main without a result (review on 18 Nov 2026).
   # On test branches and pull requests one group per branch: a newer push replaces the run of the older one.
   group: tests-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}

@@ -8,7 +8,7 @@ namespace CarcavelosCircuit.Tests.EditMode
 {
     // Load time P8 (18 Nov 2026): the campus world as its own file next to the Web build (Role4WebBuild world part,
     // RaceFlow/WorldStream.cs, index.html "Campus world as its own file"). The download itself can only be checked in a
-    // real Web build (grading-100/p8-status.md has the browser runs); these guard the build rules and the page hunks.
+    // real Web build (docs/history/2026-11-18-load-time.md has the browser runs); these guard the build rules and the page hunks.
     public class WorldFileTests
     {
         private const string TemplatePath = "Assets/WebGLTemplates/CarcavelosCircuit/index.html";

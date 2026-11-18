@@ -7,7 +7,7 @@ using UnityEngine;
 namespace CarcavelosCircuit.Tests.EditMode
 {
     // Phone QA 17.11: one tap = one click, and the menu targets are thumb-sized on touch. The real taps are checked in
-    // a Web build (team-project qa-scripts phone_check.py / phone_controls_check.py).
+    // a Web build (by hand and with browser scripts on phone profiles, docs/verification.md "Not covered").
     public class PhoneTapTests
     {
         [Test]

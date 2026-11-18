@@ -305,7 +305,7 @@
 
 /* ---------- Compact windows (4:3, 5:4: RaceHud adds hud--compact below 1040 px) ----------
    The three mode cards (ModePicker, 3 x 228 px) and the board do not fit side by side there: the board took the
-   ONLINE RACE card's place (Sherlock grade 2, 800x600). The cards row is drawn at 78 % from its left edge (the cards
+   ONLINE RACE card's place (review on 18 Nov 2026, 800x600). The cards row is drawn at 78 % from its left edge (the cards
    set their size in code, so a scale keeps them identical, just smaller), and the board takes a share of the width
    with a floor and a ceiling instead of a fixed 340 px. 4:3 = 960 px: cards end at 561, board starts at 636. */
 .hud--compact #mode-picker {

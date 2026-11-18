@@ -6,7 +6,7 @@ using UnityEngine;
 namespace CarcavelosCircuit.Tests.EditMode
 {
     // Feedback round 17.11 (Role 4): on a phone the menus talk about taps and touch buttons, not keys, and the menu
-    // buttons are thumb-sized. The look itself is checked in a real Web build (team-project qa-scripts).
+    // buttons are thumb-sized. The look itself is checked in a real Web build (docs/verification.md "Not covered").
     public class TouchMenuTextTests
     {
         [Test]

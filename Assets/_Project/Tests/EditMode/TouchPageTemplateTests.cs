@@ -9,7 +9,7 @@ namespace CarcavelosCircuit.Tests.EditMode
     // (Assets/WebGLTemplates/CarcavelosCircuit), so these tests read the files and check the contract with the game:
     // every button presses a key the page's script knows, every key the game needs on a phone has a button, the
     // home screen manifest is valid and its icons exist, and the HUD has the touch layout the buttons rely on.
-    // How it looks and feels is checked in a real Web build (team-project qa-scripts/phone_controls_check.py).
+    // How it looks and feels is checked in a real Web build (by hand and with browser scripts, docs/verification.md).
     public class TouchPageTemplateTests
     {
         private static string TemplateDir
