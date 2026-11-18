@@ -11,7 +11,7 @@ A 3D kart racer on a model of Nova SBE's Carcavelos campus that runs in the brow
 We picked "start a new application" from the team project page. A game shows every grading point in a way the class can try live: invalid input (names, URL flags, a lost connection), clear feedback, and real multi-user interaction.
 
 **Why Unity and not Python with Streamlit, like the course?**
-The game needs three things the course's stack guide names as Streamlit's weak spots: 3D with physics at 60 frames a second (Streamlit redraws after each click and has no game loop), real-time interaction between users (15 players in one live race), and a mobile layout (touch controls on phones). Unity gives physics, a camera system, a Web export and a test runner. The guide says a language other than Python is agreed with the staff case by case; we asked through the Moodle question form on 7 Nov (task G1). Current status: [architecture.md](architecture.md#stack-approval).
+The game needs three things the course's stack guide names as Streamlit's weak spots: 3D with physics at 60 frames a second (Streamlit redraws after each click and has no game loop), real-time interaction between users (15 players in one live race), and a mobile layout (touch controls on phones). Unity gives physics, a camera system, a Web export and a test runner. The guide says a language other than Python is agreed with the staff case by case; Noah asked the staff on 7 Nov (task G1). Current status: [architecture.md](architecture.md#stack-approval).
 
 ## How it is built
 
@@ -56,7 +56,7 @@ In GitHub Actions secrets only. The build writes them into the game at build tim
 The time is always saved on the device first. If the online request fails or times out (6 s), the board shows the device's list with "LEADERBOARD OFFLINE - YOUR TIME IS SAVED ON THIS DEVICE". The race itself never waits for the leaderboard.
 
 **What if Photon (the online race) is unavailable?**
-Only the Online Race mode needs it; Race vs Bots and Time Attack keep working. The lobby shows what happened in plain words, for example "NO ANSWER FROM THE SERVER (TIMEOUT), CHECK THE WI-FI", "SERVER FULL (TOO MANY PLAYERS ONLINE), TRY AGAIN IN A MINUTE" or "THE ROOM IS FULL (15/15)". A failed or lost connection is retried by itself up to 3 times ("CONNECTING AGAIN (TRY 2 OF 3)"). Our plan B for the presentation is a recorded online race, shown only if Photon is down.
+Only the Online Race mode needs it; Race vs Bots and Time Attack keep working. The lobby shows what happened in plain words, for example "NO ANSWER FROM THE SERVER (TIMEOUT), CHECK THE WI-FI", "SERVER FULL (TOO MANY PLAYERS ONLINE), TRY AGAIN IN A MINUTE" or "THE ROOM IS FULL (15/15)". A failed or lost connection is retried by itself up to 3 times ("CONNECTING AGAIN (TRY 2 OF 3)"). In the presentation we would say what happened, press BACK and continue with Race vs Bots, which needs no internet; the fallback for every service is in [demo-plan.md](demo-plan.md).
 
 **What if the player types something invalid?**
 - A name that is empty, too short, too long, has symbols or emoji, or is on the rude-word list: the save form says so ("TYPE A NAME FIRST", "PLEASE PICK ANOTHER NAME") and nothing is sent.
@@ -69,7 +69,7 @@ The page shows an error card that says why (no WebGL 2, the download failed) and
 ## Tests
 
 **What do the tests cover?**
-Over 1,300 Edit Mode tests on the rules in plain C#: lap validation, race states, timer, medals, item odds, bot decisions, name and time rules, leaderboard fallback, online room rules, pose blending, finish order, URL flags. 37 Play Mode tests start the real game scene and let a robot drive: a clean lap, a skipped checkpoint, recover, retry, bots, items, menus. Each rule has accepted, rejected and edge-case tests. They run on GitHub Actions. Coverage map: [verification.md](verification.md).
+About 1,500 Edit Mode tests on the rules in plain C# (the exact numbers are on the newest Tests run of `main`, badge in [verification.md](verification.md)): lap validation, race states, timer, medals, item odds, bot decisions, name and time rules, leaderboard fallback, online room rules, pose blending, finish order, URL flags. About 40 Play Mode tests start the real game scene and let a robot drive: a clean lap, a skipped checkpoint, recover, retry, bots, items, menus. Each rule has accepted, rejected and edge-case tests. They run on GitHub Actions on every pull request and every push to `main`. Coverage map, workflow by workflow: [verification.md](verification.md).
 
 **What do they not cover?**
 How the driving feels, how the campus looks, sound, frame rate on a slow laptop, and the real Photon connection (the SDK cannot be in the public CI). We checked those by hand and with recorded QA runs, including a 20-bot online scale test.
@@ -87,12 +87,15 @@ Everyone commits their own code from their own account; the roles split the fold
 | Alessandro Rossi | 1 Driving + camera | `KartController`: driving, drift that charges a boost, ramp jump, flying pose, trick after a jump, recover; Cinemachine chase camera; name tags; `IKartDrivable` so bots can drive the kart |
 | Noah Schlag | 2 Campus track + race rules | Route from OpenStreetMap ([route.md](route.md)), `RaceRules` lap validation with tests, `TrackInfo` / `Checkpoint` / `SpawnPoint`, `TrackProgress` (distance along the lap), guardrails, Nova hall interior, atrium piano |
 | Luc Tippmann | 3 Kart, visuals + web release | The campus world (generated from map data, Street View and photo surveys), kart and driver models, the five bots, item effects, three race modes and the finish cinematic, the lean Web build, GitHub Pages deploy, driver select |
-| David Belschak | 4 Race flow, UI + sound | Project setup and contracts, race flow, HUD and menus, sound and music, items, ghost, medals, leaderboard (Supabase + device fallback), positions and minimap, waves and surfers, touch controls, the Web page, CI, the online race |
+| David Belschak | 4 Race flow, UI + sound | Project setup and contracts, race flow, HUD and menus, sound and music, items, ghost, medals, leaderboard (Supabase + device fallback), positions and minimap, waves and surfers, touch controls, the Web page, CI, the online race, the teacher tribute |
 
 Every pull request names its role and task; the full history is in the merged pull requests and [TASKS.md](../TASKS.md).
 
 **How did you work as a team with AI assistants?**
 One rules file for every person and every AI: [AGENTS.md](../AGENTS.md) (Git workflow, who owns which folder, contracts, what never to touch). Every change goes through a pull request that a teammate reviews. Decisions with their reasons are logged in [decisions.md](decisions.md).
+
+**What is the teacher tribute?**
+A thank-you to the course's teaching staff, names only: a SPECIAL THANKS page in the credits (C on the start screen), four thank-you boards beside checkpoint gates on the track, and the line "YOU WON THE GIL PEREIRA CUP" on the results card after a Gold or Dean's List lap. It is added at runtime by `RaceFlow/Tribute/TeacherTribute.cs` (no scene was edited), the boards have no colliders so they can never change a lap, and the rules (which gates, where a board may stand, who wins the cup) are plain C# in `TributeRules.cs` with Edit Mode tests, plus a Play Mode test that checks the boards and the cup line in the real scene.
 
 ## Limits and change
 

@@ -79,7 +79,9 @@ Photon Fusion 2 in Shared Mode. Every player's game drives its own kart exactly 
 
 | Step | How |
 |---|---|
-| Tests | `.github/workflows/tests.yml`: GameCI runs Edit Mode and Play Mode tests in Unity on Linux |
+| Tests | `.github/workflows/tests.yml`: GameCI runs every Edit Mode and Play Mode test in Unity on Linux, on every pull request into `main` and every push to `main` ([verification.md](verification.md)) |
+| Security checks | `.github/workflows/security.yml`: a secret scan over every commit of every branch, and a check that every action, Unity package and Python tool is pinned to an exact version ([security.md](security.md)) |
+| Leaderboard keep-alive | `.github/workflows/leaderboard-keepalive.yml`: one read a day, so the free Supabase project never pauses |
 | Web build | `.github/workflows/web-build.yml` on every push to `main`: fetches the Photon SDK (read-only deploy key), runs `Role4WebBuild.Build`, which sets every Web setting in code (compression, texture and mesh budgets, ETC2 for phones, the keys from secrets) |
 | Deploy | The same workflow publishes the build to this repository's GitHub Pages site; the `github-pages` environment only accepts `main` |
 | Public link | The workflow's `mirror` job copies the same build files to the repository `nova-kart/nova-kart.github.io` (GitHub organisation `nova-kart`), which GitHub serves at the short public link. That repository holds only the built files, replaced by one fresh commit per deploy through a deploy key that can write only to that one repository (secret `NOVA_KART_DEPLOY_KEY`); without the key the mirror step is skipped and the other address still updates |
@@ -113,9 +115,9 @@ So the code on `main` is the code that is deployed, and nobody deploys from a la
 | Phone controls (touch buttons, landscape layout) | `Assets/WebGLTemplates/CarcavelosCircuit/` | Streamlit's layout is form-like; no thumb controls over a game view |
 | A custom interface (menus, HUD, minimap, finish cinematic) | `RaceFlow/UI/` | Streamlit gives standard widgets, not a game interface |
 
-**How the stack decision was handled.** The team project page allows "start a new application" of the team's own choice; the stack guide says a language other than Python is agreed with the teaching staff case by case. The team chose Unity on 6 Nov 2026 ([decisions.md](decisions.md)) and asked the staff on 7 Nov through the Moodle question form (task G1 in [TASKS.md](../TASKS.md)).
+**How the stack decision was handled.** The team project page allows "start a new application" of the team's own choice; the stack guide says a language other than Python is agreed with the teaching staff case by case. The team chose Unity on 6 Nov 2026 ([decisions.md](decisions.md)) and Noah asked the teaching staff for their OK on 7 Nov (task G1 in [TASKS.md](../TASKS.md)).
 
-**Status:** requested 7 Nov 2026 through the Moodle question form; no written answer is recorded in this repository yet.
+**Status:** requested by Noah on 7 Nov 2026, answer pending.
 
 ## Read further
 
