@@ -488,6 +488,15 @@
         clearInterval(tipTimer);
         onProgress(1);
         loader.classList.add("cc-ready");
+        // Kart builder (18 Nov): the key art fades out and the live game shows on the right half, where the game draws
+        // its four drivers in their karts (RaceFlow/UI/StartLineup.cs asks for "cc-live"). Only with room for them:
+        // below 761 px the page is one centred column (style.css), so the key art stays.
+        function updateLive() {
+          var live = window.innerWidth > 760 && !loader.classList.contains("cc-failed") && !loader.classList.contains("cc-done");
+          loader.classList.toggle("cc-live", live);
+        }
+        updateLive();
+        window.addEventListener("resize", updateLive);
         var card = document.getElementById("cc-panel-mobile");
         if (!card.hidden) {
           // Phones load behind the touch-controls card (load time, 17 Nov): it stays, its button now starts the game

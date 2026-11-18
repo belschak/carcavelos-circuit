@@ -303,6 +303,11 @@
     background-color: rgba(4, 6, 10, 0.72);
 }
 
+/* Kart builder (UI/KartBuilder.cs): the turntable sits on the big glass panel. */
+.kb-stage.plate {
+    background-image: url("Art/plate-panel.png");
+}
+
 .menu-card.plate,
 .card.plate {
     background-image: url("Art/plate-panel.png");

@@ -12,6 +12,8 @@ namespace CarcavelosCircuit.Online
     //   name      the player name (checked like a typed name, a bad one opens the name field instead)
     //   driver    the driver for this visit (not saved): a DriverRoster name (rookie, tiago, nova, amara) or index
     //             0..3, so test bots can race with different drivers (17 Nov 2026)
+    //   kart      the kart for this visit (kart builder, 18 Nov 2026): classic, buggy, orbit, streetgt or 0..3
+    //   tyres     the tyres for this visit: slick, offroad, balloon, retro or 0..3
     //   autopilot 1 = the kart drives itself (so one person can fill a room with tabs)
     //   autostart N = the host starts 5 s after N players are in the room (2..15)
     //   render    0 = no 3D drawing (cameras off): a scale-test bot on a machine without a GPU still drives and sends
@@ -27,6 +29,8 @@ namespace CarcavelosCircuit.Online
         public TimeOfDay Light { get; private set; } = TimeOfDay.Noon;
         public string Name { get; private set; } = "";     // as typed in the address, not yet cleaned
         public int Driver { get; private set; } = -1;      // DriverRoster index from ?driver=, -1 = none
+        public int Kart { get; private set; } = -1;        // KartLoadout kart from ?kart=, -1 = none
+        public int Tyres { get; private set; } = -1;       // KartLoadout tyres from ?tyres=, -1 = none
         public bool Autopilot { get; private set; }
         public int AutoStart { get; private set; }         // 0 = off
         public bool NoRender { get; private set; }         // render=0: cameras off (scale-test bots)
@@ -118,6 +122,12 @@ namespace CarcavelosCircuit.Online
                 case "driver":
                     Driver = ParseDriver(value);
                     break;
+                case "kart":
+                    Kart = ParsePart(value, KartLoadout.KartIds);
+                    break;
+                case "tyres":
+                    Tyres = ParsePart(value, KartLoadout.TyreIds);
+                    break;
                 case "autopilot":
                     string on = value.Trim().ToLowerInvariant();
                     Autopilot = on == "1" || on == "true" || on == "yes";
@@ -146,6 +156,25 @@ namespace CarcavelosCircuit.Online
                 return DriverRoster.IsValid(number) ? number : -1;
             }
             return DriverRoster.IndexOf(text);
+        }
+
+        // "Buggy" (any case) or "1" -> the part index in ids; -1 for anything else.
+        public static int ParsePart(string value, string[] ids)
+        {
+            string text = value == null ? "" : value.Trim();
+            int number;
+            if (int.TryParse(text, out number))
+            {
+                return KartLoadout.IsPart(number) ? number : -1;
+            }
+            for (int i = 0; i < ids.Length; i++)
+            {
+                if (string.Equals(ids[i], text, StringComparison.OrdinalIgnoreCase))
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         // Which transport the lobby uses, or null when none fits (then the Online card says it needs the online build).

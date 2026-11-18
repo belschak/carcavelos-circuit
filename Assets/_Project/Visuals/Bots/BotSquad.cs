@@ -35,6 +35,8 @@ namespace CarcavelosCircuit.Visuals
         private bool spawnFailed;       // no prefab or no racing line: do not try again every frame
         private bool keptOut;           // RemoveBots() was called (Play Mode tests): no respawn on the start screen
         private bool driverChanged = true; // a new driver was picked: repaint the player, swap the bots (start screen)
+        private bool loadoutChanged;       // only the kart or tyres changed: rebuild the player's model, keep the bots
+        private bool playerModelPending = true; // the player's own model does not show the pick yet (any race state)
         private BotTrackMap map;        // the racing line, shared by the bots and the finish cruise; null = none
         private FinishCruise cruise;    // drives the player's kart after the line, null = the player drives
 
@@ -51,7 +53,13 @@ namespace CarcavelosCircuit.Visuals
                 raceManager.Restarted += StopCruise;
             }
             DriverChoice.Changed += OnDriverChanged;
+            DriverChoice.LoadoutChanged += OnLoadoutChanged;
             driverChanged = true;
+            playerModelPending = true;
+            // Kart builder (18 Nov 2026): every kart model is now a driver + kart + tyres set built from Luc's four
+            // prefabs (KartComboLibrary); the start screen's builder and line-up get them through RaceFlow's KartModels.
+            KartComboLibrary.Use(settings);
+            KartModels.Template = KartComboLibrary.Template;
         }
 
         private void OnDisable()
@@ -62,6 +70,8 @@ namespace CarcavelosCircuit.Visuals
                 raceManager.Restarted -= StopCruise;
             }
             DriverChoice.Changed -= OnDriverChanged;
+            DriverChoice.LoadoutChanged -= OnLoadoutChanged;
+            KartModels.Template = null;
             StopCruise();
         }
 
@@ -77,6 +87,7 @@ namespace CarcavelosCircuit.Visuals
                 if (settings == null)
                 {
                     settings = ScriptableObject.CreateInstance<BotSettings>(); // the defaults written in BotSettings.cs
+                    KartComboLibrary.Use(settings);
                 }
             }
             FollowMode();
@@ -92,6 +103,12 @@ namespace CarcavelosCircuit.Visuals
         {
             if (raceManager.State != RaceState.Ready)
             {
+                // Online QA 18 Nov: a slow client that joins by link can be counted in before this ran in Ready. Its
+                // own kart still gets the picked set (looks only, safe mid-race); the bots wait for the next Ready.
+                if (playerModelPending && raceManager.KartTransform != null)
+                {
+                    ShowPlayerDriver();
+                }
                 return;
             }
             if (driverChanged && raceManager.KartTransform != null)
@@ -106,6 +123,12 @@ namespace CarcavelosCircuit.Visuals
                     DestroyBots();
                     return;
                 }
+            }
+            else if (loadoutChanged && raceManager.KartTransform != null)
+            {
+                // Only the kart or the tyres changed: the player's model is rebuilt, the bots stay.
+                loadoutChanged = false;
+                ShowPlayerDriver();
             }
             bool wanted = RaceModeRules.HasBots(raceManager.Mode) && !keptOut;
             if (wanted && bots.Count == 0 && !spawnFailed)
@@ -141,7 +164,13 @@ namespace CarcavelosCircuit.Visuals
         private void ShowPlayerDriver()
         {
             GameObject kart = raceManager.KartTransform.gameObject;
-            GameObject model = settings != null ? settings.KartVisual(DriverChoice.Current.KartVisual) : null;
+            loadoutChanged = false;
+            playerModelPending = false;
+            GameObject model = KartComboLibrary.Template(DriverChoice.Loadout);
+            if (model == null && settings != null)
+            {
+                model = settings.KartVisual(DriverChoice.Current.KartVisual); // no set could be built: the driver's own prefab
+            }
             if (model == null)
             {
                 return; // no kart list in BotSettings yet: the player keeps the Rookie's Classic
@@ -162,6 +191,13 @@ namespace CarcavelosCircuit.Visuals
         private void OnDriverChanged(int driver)
         {
             driverChanged = true;
+            playerModelPending = true;
+        }
+
+        private void OnLoadoutChanged(KartLoadout loadout)
+        {
+            loadoutChanged = true;
+            playerModelPending = true;
         }
 
         private void SpawnAll()
@@ -182,7 +218,8 @@ namespace CarcavelosCircuit.Visuals
                 Vector3 slot = spawn.position + spawn.rotation * RacerGrid.OffsetOf(i, 2f, 3f);
                 GameObject kart = Instantiate(kartPrefab, slot, spawn.rotation);
                 kart.name = "Bot " + profile.displayName;
-                KartVisualSwap.Apply(kart, settings.KartVisual(seats[i].KartVisual)); // same frame: before any Start
+                GameObject model = KartComboLibrary.TemplateForPrefab(seats[i].KartVisual);
+                KartVisualSwap.Apply(kart, model != null ? model : settings.KartVisual(seats[i].KartVisual)); // same frame: before any Start
                 if (seats[i].Repaint)
                 {
                     BotKartPaint.Paint(kart, profile.colour); // the two Rookie copies; the roster karts keep their paint

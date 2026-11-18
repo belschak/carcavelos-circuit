@@ -8,7 +8,7 @@ namespace CarcavelosCircuit.RaceFlow
     // Built in code (like HudMenus' panels), so Main.unity and RaceHud.uxml need no change. RaceHud creates it and
     // calls Update() every frame.
     // Mario Kart style (team test 17 Nov 2026): mode -> driver -> go, for EVERY mode.
-    // - Click or tap anywhere on a card: that mode is picked and the driver select opens (UI/DriverPicker).
+    // - Click or tap anywhere on a card: that mode is picked and the kart builder opens (UI/KartBuilder).
     //   The cards look like buttons: the mouse on a card lifts it (bigger, glass plate), a press pushes it in, and a
     //   small arrow on every card says "this goes on". The keycaps 1 2 3 stay as a hint for the keyboard.
     // - Keys 1, 2, 3 do the same as a click on that card.
@@ -227,7 +227,7 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // Pick a mode (a click or tap on its card, or its key) and open the driver select for it. Every mode goes
-        // there first; READY on it starts the countdown, or online opens the lobby (UI/DriverPicker.Ready). The
+        // there first; READY on it starts the countdown, or online opens the lobby (UI/KartBuilder.Ready). The
         // click or key is used up here, so the RaceManager does not see it as "any key" as well.
         // A refused mode (Online without the online build): show the message, nothing else happens.
         // Public for the Play Mode tests (RaceModesPlayTests, DriverSelectPlayTests). byClick only says where it came from.
@@ -241,7 +241,7 @@ namespace CarcavelosCircuit.RaceFlow
                 usedInputThisFrame = true;
                 if (MenuInputRules.OpensDriverSelect(mode, OnlineRaceHooks.Available))
                 {
-                    raceManager.RequestStart(); // opens the driver select (UI/DriverPicker), READY there goes on
+                    raceManager.RequestStart(); // opens the kart builder (UI/KartBuilder), READY there goes on
                 }
                 return;
             }

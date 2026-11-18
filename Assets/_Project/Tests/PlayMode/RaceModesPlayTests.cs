@@ -117,7 +117,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
                 hud.ModePicker.Pick(RaceMode.OnlineRace, true);
                 Assert.IsTrue(hud.ModePicker.IsMessageShown, "the card answers with the refused chip");
                 Assert.AreNotEqual(RaceMode.OnlineRace, race.Mode);
-                Assert.IsFalse(hud.Drivers.IsOpen, "a refused mode never opens the driver select");
+                Assert.IsFalse(hud.Builder.IsOpen, "a refused mode never opens the driver select");
                 yield return null;
                 Assert.AreEqual(RaceState.Ready, race.State);
 
@@ -128,13 +128,13 @@ namespace CarcavelosCircuit.Tests.PlayMode
                 DriverChoice.Select(DriverChoice.Index, false); // a driver is picked, so READY is there
                 hud.ModePicker.Pick(RaceMode.OnlineRace, true);
                 Assert.IsNull(opened, "the lobby waits until a driver is chosen");
-                Assert.IsTrue(hud.Drivers.IsOpen, "picking Online opens the driver select first");
+                Assert.IsTrue(hud.Builder.IsOpen, "picking Online opens the driver select first");
                 Assert.AreEqual(RaceMode.OnlineRace, race.Mode);
                 yield return null;
-                Assert.IsTrue(hud.Drivers.IsOpen, "the driver select stays open (no key started anything)");
-                hud.Drivers.Ready();
+                Assert.IsTrue(hud.Builder.IsOpen, "the driver select stays open (no key started anything)");
+                hud.Builder.Ready();
                 Assert.AreSame(race, opened, "READY opens the lobby for this race");
-                Assert.IsFalse(hud.Drivers.IsOpen, "the driver select is gone behind the lobby");
+                Assert.IsFalse(hud.Builder.IsOpen, "the driver select is gone behind the lobby");
                 Assert.AreEqual((int)RaceMode.TimeAttack, PlayerPrefs.GetInt(ModeKey), "Online is never saved as the last mode");
                 yield return WaitFrames(3);
                 Assert.AreEqual(RaceState.Ready, race.State, "no countdown: the lobby starts the race");

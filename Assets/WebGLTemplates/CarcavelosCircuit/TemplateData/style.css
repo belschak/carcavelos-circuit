@@ -885,6 +885,13 @@ html.cc-paused #cc-touch #cc-fullscreen { position: static; }
 .cc-shot figcaption span { font-size: 14px; letter-spacing: 0.04em; color: var(--fe-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @keyframes cc-cap { 0%, 3% { opacity: 0; transform: translateX(24px); } 7%, 24% { opacity: 1; transform: none; } 27%, 100% { opacity: 0; transform: translateX(-8px); } }
 
+/* Kart builder (18 Nov): once the game is loaded, the key art gives way to the live game behind the page, where the
+   game draws its four drivers on the right half (index.html updateLive, RaceFlow/UI/StartLineup.cs). */
+#cc-loader.cc-live { background: transparent; }
+.cc-key { transition: opacity 1.2s ease; }
+.cc-live .cc-key { opacity: 0; }
+.cc-live .cc-card.cc-panel { width: min(460px, 46vw); } /* the phone card stays left of the drivers */
+
 /* Cinematic grade: dark fall-off from the left (behind the wordmark) and at the bottom (behind the keys), warm light. */
 .cc-grade { position: absolute; inset: 0; pointer-events: none;
   background:
@@ -893,6 +900,13 @@ html.cc-paused #cc-touch #cc-fullscreen { position: static; }
     linear-gradient(0deg, rgba(6, 8, 12, 0.9) 0%, rgba(6, 8, 12, 0.35) 22%, rgba(6, 8, 12, 0) 45%),
     linear-gradient(180deg, rgba(6, 8, 12, 0.45) 0%, rgba(6, 8, 12, 0) 18%); }
 .cc-grade::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 220px rgba(0, 0, 0, 0.55); }
+/* Live first screen (kart builder, 18 Nov): the game's four drivers and their names stand on the right, low. The
+   grade lies over the game canvas, so there it only darkens behind the wordmark (left) and the key dock (bottom 18 %). */
+.cc-live .cc-grade { background:
+    linear-gradient(90deg, rgba(6, 8, 12, 0.86) 0%, rgba(6, 8, 12, 0.6) 30%, rgba(6, 8, 12, 0.08) 52%, rgba(6, 8, 12, 0) 60%),
+    linear-gradient(0deg, rgba(6, 8, 12, 0.8) 0%, rgba(6, 8, 12, 0.3) 14%, rgba(6, 8, 12, 0) 20%),
+    linear-gradient(180deg, rgba(6, 8, 12, 0.45) 0%, rgba(6, 8, 12, 0) 18%); }
+.cc-live .cc-grade::after { box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.35); }
 
 /* ---------- Left column: wordmark, room, one panel ---------- */
 .cc-center { align-items: flex-start; justify-content: center; text-align: left;
@@ -1014,6 +1028,16 @@ kbd { background: rgba(255, 255, 255, 0.08); color: var(--fe-text); border: 1px 
 }
 @media (max-height: 470px) and (max-width: 960px) {
   .cc-shot figcaption { display: none; }
+}
+/* Phone QA 18 Nov: page buttons are thumb targets too (>= 44 CSS px), and on the shortest phones (iPhone SE in Safari,
+   320 px high) the credits line ran over the card's last line: there it goes (the game's Credits screen, key C, keeps it). */
+@media (pointer: coarse) {
+  #cc-load-anyway, #cc-play-button { min-height: 44px; }
+}
+@media (max-height: 360px) {
+  .cc-credits { display: none; }
+  .cc-card { padding-top: 12px; padding-bottom: 10px; } /* phone QA 18 Nov: the card's bottom edge was cut by 4-11 px */
+  .cc-card .cc-small { margin-top: 6px; }
 }
 @media (max-width: 560px) {
   .cc-controls { padding: 8px 12px; gap: 6px 12px; }

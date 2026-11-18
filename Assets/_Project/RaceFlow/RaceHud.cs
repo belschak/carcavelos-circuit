@@ -128,10 +128,12 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly StuckDetector stuckDetector = new StuckDetector();
         private HudMenus menus; // settings, credits, mute, pause overlay, reduced motion (task P7, UI/HudMenus.cs)
         private ModePicker modePicker;       // RACE VS BOTS / TIME ATTACK / ONLINE RACE on the start screen (UI/ModePicker.cs)
-        private DriverPicker driverPicker;   // the driver select after the mode, READY starts the race (UI/DriverPicker.cs)
+        private KartBuilder kartBuilder;     // driver + kart + tyres after the mode, READY starts the race (UI/KartBuilder.cs)
 
         // The driver select on the start screen (Play Mode test DriverSelectPlayTests).
-        public DriverPicker Drivers { get { return driverPicker; } }
+        public KartBuilder Builder { get { return kartBuilder; } }
+        private StartLineup startLineup;     // the four drivers on the page's first screen (UI/StartLineup.cs)
+        public StartLineup Lineup { get { return startLineup; } }
 
         // Settings and credits (Play Mode test: Escape closes them). Null before OnEnable.
         public HudMenus Menus { get { return menus; } }
@@ -206,8 +208,9 @@ namespace CarcavelosCircuit.RaceFlow
             menus = new HudMenus(root, raceManager); // after IgnoreClicksDeep: it switches on the clicks of its own buttons
             menus.SoundRequested += OnMenuSound;
             modePicker = new ModePicker(root, raceManager);     // after IgnoreClicksDeep, like the menus
-            driverPicker = new DriverPicker(root, raceManager); // after the mode cards: it hides them while it is open
-            driverPicker.SoundRequested += OnMenuSound;
+            kartBuilder = new KartBuilder(root, raceManager); // after the mode cards: it hides them while it is open
+            kartBuilder.SoundRequested += OnMenuSound;
+            startLineup = new StartLineup(root);
             finishOverlay = new FinishOverlay(hudRoot);
             resultsMenu = MakeResultsMenuButton(root);
             retryKeycap = root.Q<VisualElement>("res-actions").Q<VisualElement>(className: "keycap--wide");
@@ -239,8 +242,9 @@ namespace CarcavelosCircuit.RaceFlow
             raceManager.Restarted -= OnRestarted;
             raceManager.Recovered -= OnRecovered;
             menus.SoundRequested -= OnMenuSound;
-            driverPicker.SoundRequested -= OnMenuSound;
-            driverPicker.Dispose(); // "any key" starts the race again without the HUD
+            kartBuilder.SoundRequested -= OnMenuSound;
+            kartBuilder.Dispose();
+            startLineup.Dispose(); // "any key" starts the race again without the HUD
             HudTextures.Destroy(startGradient);
             HudTextures.Destroy(resultsGradient);
             HudTextures.Destroy(glowLeftTexture);
@@ -602,15 +606,16 @@ namespace CarcavelosCircuit.RaceFlow
             menus.Update(state == RaceState.Results && !resultsShown ? RaceState.Racing : state);
             // ClosedThisFrame: the Escape that just closed the settings must not also leave the driver select.
             bool menuHasTheKeys = menus.IsMenuOpen || menus.ClosedThisFrame;
-            modePicker.Update(state, menuHasTheKeys || driverPicker.IsOpen);
+            modePicker.Update(state, menuHasTheKeys || kartBuilder.IsOpen);
             if (modePicker.UsesInput)
             {
                 raceManager.MenuUsesInput = true; // this click or key picks a mode, it does not also start the race
             }
-            driverPicker.Update(state, menuHasTheKeys);
-            if (driverPicker.UsesInput)
+            kartBuilder.Update(state, menuHasTheKeys);
+            startLineup.Update(state);
+            if (kartBuilder.UsesInput)
             {
-                raceManager.MenuUsesInput = true; // the driver select owns the keys; only READY starts the race
+                raceManager.MenuUsesInput = true; // the kart builder owns the keys; only READY starts the race
             }
             bool offlineButtons = !RaceModeRules.OpensLobby(raceManager.Mode); // online the room has START AGAIN and Q LEAVE
             HudFx.SetClickable(resultsMenu, resultsShown && !menus.IsMenuOpen && offlineButtons);

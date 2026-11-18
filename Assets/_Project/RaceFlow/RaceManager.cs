@@ -450,7 +450,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        // "Any key" on the start screen. With a driver select listening (the HUD's DriverPicker, Luc 17 Nov 2026)
+        // "Any key" on the start screen. With a driver select listening (the HUD's KartBuilder, since 18 Nov 2026)
         // the key opens it and READY then calls BeginRace; without one (Play Mode tests, a scene without the HUD)
         // the race starts at once as before.
         public void RequestStart()

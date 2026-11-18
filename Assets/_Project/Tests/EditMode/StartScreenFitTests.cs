@@ -48,20 +48,86 @@ namespace CarcavelosCircuit.Tests.EditMode
             StringAssert.Contains(".hud--compact .lb-host--start", uss);
             StringAssert.Contains(".hud--compact .lb-host--start .lb-title", uss);
             StringAssert.Contains(".hud--compact .lb-host--start .lb-source", uss);
-            StringAssert.Contains(".hud--compact #driver-picker", uss);
             StringAssert.Contains(".hud--boxy #mode-picker", uss);
             StringAssert.Contains(".hud--boxy #start-menu", uss);
             StringAssert.Contains(".hud--boxy .ts-footer", uss);
         }
 
         [Test]
-        public void CompactLayout_DriverSelectFitsAtFiveToFour()
+        public void KartBuilder_FitsAtFiveToFour()
         {
-            // UI/DriverPicker: 4 cards of 184 px + 2 x 6 px margin each; ts-layout padding 64 left / 56 right.
-            // Drawn at 80 % from its left edge (StartScreen.uss), so the row must end inside the narrowest compact window.
+            // UI/KartBuilder (18 Nov, replaced the driver select): padding, the turntable at its smallest, three columns.
             const float width = 900f;
-            float rowEnd = 64f + 4f * (184f + 12f) * 0.8f;
-            Assert.Less(rowEnd, width - 56f, "the 4th driver card must stay inside a 5:4 window");
+            float builder = 2f * KartBuilder.SidePadding + KartBuilder.StageMinWidth + KartBuilder.StageGap
+                            + 3f * KartBuilder.TileWidth + 2f * KartBuilder.ColumnGap;
+            Assert.LessOrEqual(builder, width, "the TYRES column must stay inside a 5:4 window");
+        }
+
+        [Test]
+        public void StartLineup_StaysAboveThePageControlsLegend()
+        {
+            // UI/StartLineup (first screen): the page's legend starts at 83 % of the height at 1280 x 720 (two rows).
+            float bottom = StartLineup.BottomPercent(0.83f);
+            Assert.GreaterOrEqual(bottom, 17f + 1f, "the names must end above the legend");
+            Assert.AreEqual(StartLineup.MinBottomPercent, StartLineup.BottomPercent(0.95f), "a low legend keeps the default");
+            Assert.AreEqual(StartLineup.MinBottomPercent, StartLineup.BottomPercent(1f), "no legend: default");
+            Assert.AreEqual(StartLineup.MinBottomPercent, StartLineup.BottomPercent(0f), "bad value: default");
+            Assert.LessOrEqual(StartLineup.BottomPercent(0.2f), 40f, "never squeezed to nothing");
+        }
+
+        [Test]
+        public void StartLineup_NamesShrinkOnNarrowWindows()
+        {
+            // One name cell = 1/4 of 92 % of the line-up (46 % of the HUD width). 1280 x 720: 1280 HUD px wide;
+            // iPad 1024 x 768: 960 HUD px wide (the HUD is 720 high). "ROOKIE" is about 6 letters of ~0.9 em.
+            float wide = StartLineup.NameFontSize(1280f * 0.46f * 0.92f / 4f);
+            float ipad = StartLineup.NameFontSize(960f * 0.46f * 0.92f / 4f);
+            Assert.AreEqual(19.3f, wide, 0.2f);
+            Assert.Less(ipad, wide);
+            Assert.LessOrEqual(6f * 0.9f * ipad + 16f, 960f * 0.46f * 0.92f / 4f, "the names keep a gap on an iPad");
+            Assert.AreEqual(12f, StartLineup.NameFontSize(10f), "never unreadably small");
+        }
+
+        [Test]
+        public void KartBuilder_SetTitleFitsOneLine()
+        {
+            // The longest set name under the turntable at 4:3 (960 HUD px wide; caption = stage minus 2 x 18 px): one line.
+            string longest = "AMARA / BEACH BUGGY / BALLOON";
+            float stage = 960f - 2f * KartBuilder.SidePadding - KartBuilder.StageGap - 3f * KartBuilder.TileWidth - 2f * KartBuilder.ColumnGap;
+            float caption = stage - 36f;
+            float size = KartBuilder.TitleFontSize(caption, longest.Length);
+            Assert.LessOrEqual(longest.Length * 0.8f * size, caption + 0.5f);
+            Assert.GreaterOrEqual(size, 14f, "still readable");
+            Assert.AreEqual(20f, KartBuilder.TitleFontSize(900f, 12), "short names keep the full size");
+            Assert.AreEqual(20f, KartBuilder.TitleFontSize(0f, 12), "no width yet: the default");
+        }
+
+        [Test]
+        public void StartLineup_KartsStandNearThePictureBottom()
+        {
+            Assert.AreEqual(0.5f, KartStage.LineupLookHeight(0.4f), 1e-4f, "a wide picture: the karts' middle");
+            Assert.AreEqual(2f * 0.82f, KartStage.LineupLookHeight(2f), 1e-4f, "a tall picture: look up, the ground drops to the bottom");
+        }
+
+        [Test]
+        public void Turntable_KartKeepsStandingOnItsShadowInTallPictures()
+        {
+            Assert.AreEqual(0.43f, KartStage.SingleLookHeight(1.3f), 1e-4f, "16:9: unchanged");
+            Assert.AreEqual(0.43f * 2f, KartStage.SingleLookHeight(2.6f), 1e-4f, "twice the height: the ground stays at the same share");
+        }
+
+        [Test]
+        public void TileShots_EmptyPicturesAreFound()
+        {
+            var empty = new Color32[100];
+            var drawn = new Color32[100];
+            for (int i = 0; i < 10; i++)
+            {
+                drawn[i] = new Color32(200, 120, 40, 255);
+            }
+            Assert.IsFalse(KartStage.HasDrawnPixels(empty, 0.005f), "only the see-through background");
+            Assert.IsTrue(KartStage.HasDrawnPixels(drawn, 0.005f), "a kart on it");
+            Assert.IsFalse(KartStage.HasDrawnPixels(null, 0.005f));
         }
     }
 }

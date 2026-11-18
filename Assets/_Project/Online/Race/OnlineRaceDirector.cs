@@ -136,6 +136,14 @@ namespace CarcavelosCircuit.Online
             {
                 DriverChoice.Select(flags.Driver, false); // ?driver= (test bots): this visit only, the saved pick stays
             }
+            if (flags.Kart >= 0)
+            {
+                DriverChoice.SelectKart(flags.Kart, false); // ?kart= / ?tyres=: the same, for the kart builder's parts
+            }
+            if (flags.Tyres >= 0)
+            {
+                DriverChoice.SelectTyres(flags.Tyres, false);
+            }
             Application.runInBackground = true;      // a tab in the background must keep sending poses
             raceManager.LapFinished += OnLapFinished;
 
@@ -764,10 +772,18 @@ namespace CarcavelosCircuit.Online
             }
         }
 
-        // The kart model of a driver (Role 3's list in BotSettings), null when the scene has no list.
-        private GameObject DriverModel(int driverIndex)
+        // The kart model of a player's set (driver + kart + tyres, KartComboLibrary from Role 3's list in BotSettings),
+        // null when the scene has no list.
+        private GameObject DriverModel(int loadoutCode)
         {
-            return kartModels != null ? kartModels.KartVisual(DriverRoster.Get(driverIndex).KartVisual) : null;
+            if (kartModels == null)
+            {
+                return null;
+            }
+            KartComboLibrary.Use(kartModels);
+            KartLoadout loadout = KartLoadout.FromCode(loadoutCode);
+            GameObject model = KartComboLibrary.Template(loadout);
+            return model != null ? model : kartModels.KartVisual(DriverRoster.Get(loadout.Driver).KartVisual);
         }
 
         // "id:Driver:model|..." of the other karts on this screen, for the RACE test line (OnlineTestLog.Karts).
@@ -779,7 +795,7 @@ namespace CarcavelosCircuit.Online
             {
                 if (pair.Value != null)
                 {
-                    drivers.Add(new KeyValuePair<int, string>(pair.Key, DriverRoster.Get(pair.Value.DriverIndex).Name));
+                    drivers.Add(new KeyValuePair<int, string>(pair.Key, DriverRoster.Get(KartLoadout.FromCode(pair.Value.DriverIndex).Driver).Name));
                     models[pair.Key] = pair.Value.ModelName;
                 }
             }
@@ -914,7 +930,7 @@ namespace CarcavelosCircuit.Online
             {
                 view.ShowConnecting(attempt > 1 ? OnlineJoinRetry.RetryLine(attempt) : "CONNECTING...");
             }
-            session.Join(OnlineRooms.SessionName, cleanedName, OnlineColours.RandomIndex(new System.Random()), DriverChoice.Index);
+            session.Join(OnlineRooms.SessionName, cleanedName, OnlineColours.RandomIndex(new System.Random()), DriverChoice.Loadout.Code);
             sessionDirty = true;
         }
 

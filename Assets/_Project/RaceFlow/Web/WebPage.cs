@@ -28,6 +28,12 @@ namespace CarcavelosCircuit.RaceFlow
 
         [DllImport("__Internal")]
         private static extern void CarcavelosWorldState(int state, float progress);
+
+        [DllImport("__Internal")]
+        private static extern int CarcavelosFirstScreen();
+
+        [DllImport("__Internal")]
+        private static extern int CarcavelosFirstScreenFloor();
 #endif
 
         // 3. TouchMode (phone round 17.11): true while the page shows its touch buttons (phones, tablets, a touch laptop
@@ -135,6 +141,47 @@ namespace CarcavelosCircuit.RaceFlow
 #if UNITY_WEBGL && !UNITY_EDITOR
             CarcavelosWorldState(state, progress);
 #endif
+        }
+
+        // 5. The page's first screen (kart builder, 18 Nov): FirstScreenGone = the game has the screen (always in the
+        //    Editor and in tests), FirstScreenCovers = the page still covers the game (loading), FirstScreenLive =
+        //    "Click to play" is up and the right half of the screen shows the live game: the HUD draws the four drivers
+        //    there (UI/StartLineup) and keeps its own start screen hidden until the click.
+        public const int FirstScreenGone = 0;
+        public const int FirstScreenCovers = 1;
+        public const int FirstScreenLive = 2;
+
+        // Tests only: pretend the page is in this first-screen state (null = ask the page).
+        public static int? FirstScreenOverride;
+
+        public static int FirstScreen
+        {
+            get
+            {
+                if (FirstScreenOverride.HasValue)
+                {
+                    return FirstScreenOverride.Value;
+                }
+#if UNITY_WEBGL && !UNITY_EDITOR
+                return CarcavelosFirstScreen();
+#else
+                return FirstScreenGone;
+#endif
+            }
+        }
+
+        // Where the page's controls legend starts on the first screen, as a share of the window height from the top
+        // (1 = no legend). The line-up's names stay above it (UI/StartLineup).
+        public static float FirstScreenFloor
+        {
+            get
+            {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                return CarcavelosFirstScreenFloor() / 1000f;
+#else
+                return 1f;
+#endif
+            }
         }
     }
 }

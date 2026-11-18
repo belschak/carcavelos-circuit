@@ -21,6 +21,8 @@ namespace CarcavelosCircuit.Tests.PlayMode
         private const float SetUpTimeoutSeconds = 60f;
         private const string DriverKey = "CarcavelosCircuit.Driver";
         private const string ModeKey = "CarcavelosCircuit.RaceMode";
+        private const string KartKey = "CarcavelosCircuit.Kart";
+        private const string TyresKey = "CarcavelosCircuit.Tyres";
 
         private RaceManager race;
         private RaceHud hud;
@@ -31,6 +33,10 @@ namespace CarcavelosCircuit.Tests.PlayMode
         private int savedDriver;
         private bool hadMode;
         private int savedMode;
+        private bool hadKart;
+        private int savedKart;
+        private bool hadTyres;
+        private int savedTyres;
 
         [UnitySetUp]
         public IEnumerator LoadTheGame()
@@ -39,6 +45,10 @@ namespace CarcavelosCircuit.Tests.PlayMode
             savedDriver = PlayerPrefs.GetInt(DriverKey, DriverRoster.Rookie);
             hadMode = PlayerPrefs.HasKey(ModeKey);
             savedMode = PlayerPrefs.GetInt(ModeKey, 0);
+            hadKart = PlayerPrefs.HasKey(KartKey);
+            savedKart = PlayerPrefs.GetInt(KartKey, 0);
+            hadTyres = PlayerPrefs.HasKey(TyresKey);
+            savedTyres = PlayerPrefs.GetInt(TyresKey, 0);
             DriverChoice.Select(DriverRoster.Rookie, false);
 
             // The test runner's window may not have focus: let the test keyboard's keys through anyway.
@@ -82,7 +92,12 @@ namespace CarcavelosCircuit.Tests.PlayMode
             else PlayerPrefs.DeleteKey(DriverKey);
             if (hadMode) PlayerPrefs.SetInt(ModeKey, savedMode);
             else PlayerPrefs.DeleteKey(ModeKey);
+            if (hadKart) PlayerPrefs.SetInt(KartKey, savedKart);
+            else PlayerPrefs.DeleteKey(KartKey);
+            if (hadTyres) PlayerPrefs.SetInt(TyresKey, savedTyres);
+            else PlayerPrefs.DeleteKey(TyresKey);
             PlayerPrefs.Save();
+            DriverChoice.ReloadForTests();
             yield return null;
         }
 
@@ -91,7 +106,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
         {
             yield return Press(Key.Digit2);
             Assert.AreEqual(RaceMode.TimeAttack, race.Mode, "2 = TIME ATTACK");
-            Assert.IsTrue(hud.Drivers.IsOpen, "the key opens the driver select");
+            Assert.IsTrue(hud.Builder.IsOpen, "the key opens the driver select");
             Assert.AreEqual(RaceState.Ready, race.State, "no countdown before READY");
 
             yield return Press(Key.Enter);
@@ -99,21 +114,65 @@ namespace CarcavelosCircuit.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator FirstScreenLineup_ShowsWhileThePageIsUp_AndGoesAfterTheClick()
+        {
+            if (!KartModels.Available)
+            {
+                Assert.Ignore("no kart models in this scene");
+            }
+            WebPage.FirstScreenOverride = WebPage.FirstScreenLive;
+            try
+            {
+                yield return WaitFrames(3);
+                Assert.IsTrue(hud.Lineup.IsShown, "the page's Click to play screen shows the four drivers");
+                WebPage.FirstScreenOverride = WebPage.FirstScreenGone;
+                yield return WaitFrames(3);
+                Assert.IsFalse(hud.Lineup.IsShown, "after the click they go (phone QA 18 Nov: they stayed over the race)");
+                yield return Press(Key.Space);
+                Assert.IsTrue(hud.Builder.IsOpen);
+                Assert.IsFalse(hud.Lineup.IsShown, "never over the builder");
+            }
+            finally
+            {
+                WebPage.FirstScreenOverride = null;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator Enter_OnTheModes_OnlyOpensTheBuilder_NotReadyToo()
+        {
+            // Desktop QA 18 Nov: Enter on a highlighted mode opened the builder AND counted as READY in that frame.
+            yield return Press(Key.Space);
+            yield return Press(Key.Escape);
+            yield return WaitFrames(3);
+            Assert.IsFalse(hud.Builder.IsOpen);
+
+            yield return Press(Key.Enter);
+            Assert.IsTrue(hud.Builder.IsOpen, "Enter on the modes opens the builder");
+            Assert.AreEqual(RaceState.Ready, race.State, "the same Enter is not READY");
+            yield return WaitFrames(3);
+            Assert.AreEqual(RaceState.Ready, race.State);
+
+            yield return Press(Key.Enter);
+            Assert.AreEqual(RaceState.Countdown, race.State, "the next Enter is READY");
+        }
+
+        [UnityTest]
         public IEnumerator Space_OpensTheDriverSelect_BackspaceGoesBack_AndStaysThere()
         {
             yield return Press(Key.Space);
-            Assert.IsTrue(hud.Drivers.IsOpen, "any key opens the driver select in the highlighted mode");
+            Assert.IsTrue(hud.Builder.IsOpen, "any key opens the driver select in the highlighted mode");
 
             yield return Press(Key.Backspace);
-            Assert.IsFalse(hud.Drivers.IsOpen, "Backspace goes back to the modes");
+            Assert.IsFalse(hud.Builder.IsOpen, "Backspace goes back to the modes");
             yield return WaitFrames(3);
-            Assert.IsFalse(hud.Drivers.IsOpen, "and the same key does not open it again");
+            Assert.IsFalse(hud.Builder.IsOpen, "and the same key does not open it again");
             Assert.AreEqual(RaceState.Ready, race.State);
 
             yield return Press(Key.Space);
-            Assert.IsTrue(hud.Drivers.IsOpen);
+            Assert.IsTrue(hud.Builder.IsOpen);
             yield return Press(Key.Escape);
-            Assert.IsFalse(hud.Drivers.IsOpen, "Escape goes back too");
+            Assert.IsFalse(hud.Builder.IsOpen, "Escape goes back too");
         }
 
         [UnityTest]
@@ -123,7 +182,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
             Assert.IsTrue(hud.Menus.IsMenuOpen, "O opens the settings");
             yield return Press(Key.Escape);
             Assert.IsFalse(hud.Menus.IsMenuOpen, "Escape closes the settings");
-            Assert.IsFalse(hud.Drivers.IsOpen, "and starts nothing");
+            Assert.IsFalse(hud.Builder.IsOpen, "and starts nothing");
 
             yield return Press(Key.C);
             Assert.IsTrue(hud.Menus.IsMenuOpen, "C opens the credits");
@@ -140,12 +199,46 @@ namespace CarcavelosCircuit.Tests.PlayMode
         public IEnumerator Escape_OverTheDriverSelect_OnlyClosesTheSettings()
         {
             yield return Press(Key.Space);
-            Assert.IsTrue(hud.Drivers.IsOpen);
+            Assert.IsTrue(hud.Builder.IsOpen);
             yield return Press(Key.O);
             Assert.IsTrue(hud.Menus.IsMenuOpen, "the settings open over the driver select");
             yield return Press(Key.Escape);
             Assert.IsFalse(hud.Menus.IsMenuOpen, "Escape closes the settings");
-            Assert.IsTrue(hud.Drivers.IsOpen, "the same Escape does not also leave the driver select");
+            Assert.IsTrue(hud.Builder.IsOpen, "the same Escape does not also leave the driver select");
+        }
+
+        // Kart builder keys: A/D = column, W/S = pick inside the column, a new driver keeps kart and tyres, Enter = READY.
+        [UnityTest]
+        public IEnumerator BuilderKeys_MoveBetweenColumns_AndPickParts()
+        {
+            DriverChoice.SelectLoadout(KartLoadout.Default, false);
+            yield return Press(Key.Space);
+            Assert.IsTrue(hud.Builder.IsOpen);
+            Assert.AreEqual(KartBuilder.DriverColumn, hud.Builder.Column, "the keys start in the DRIVER column");
+
+            yield return Press(Key.D);
+            Assert.AreEqual(KartBuilder.KartColumn, hud.Builder.Column, "D = next column");
+            yield return Press(Key.S);
+            Assert.AreEqual(1, DriverChoice.Loadout.Kart, "S = next kart (Beach Buggy)");
+            yield return Press(Key.RightArrow);
+            yield return Press(Key.DownArrow);
+            yield return Press(Key.DownArrow);
+            Assert.AreEqual(2, DriverChoice.Loadout.Tyres, "two down in TYRES = Balloon");
+            yield return Press(Key.D);
+            Assert.AreEqual(KartBuilder.TyreColumn, hud.Builder.Column, "no column after TYRES (stays)");
+
+            yield return Press(Key.A);
+            yield return Press(Key.LeftArrow);
+            yield return Press(Key.W);
+            Assert.AreEqual(KartBuilder.DriverColumn, hud.Builder.Column);
+            Assert.AreEqual(new KartLoadout(3, 1, 2), DriverChoice.Loadout, "W from the Rookie wraps to Amara, kart and tyres stay");
+            Assert.AreEqual(RaceState.Ready, race.State, "no key so far started anything");
+
+            yield return Press(Key.Enter);
+            Assert.AreEqual(RaceState.Countdown, race.State, "Enter = READY");
+            yield return WaitFrames(3);
+            Transform slot = race.KartTransform.Find(CarcavelosCircuit.Visuals.KartVisualSwap.SlotName);
+            Assert.AreEqual("KartVisual_Buggy_Amara_Balloon", CarcavelosCircuit.Visuals.KartVisualSwap.CurrentModel(slot).name);
         }
 
         // Down in one frame (RaceKeys sees wasPressedThisFrame in that frame's Updates), up in the next.
