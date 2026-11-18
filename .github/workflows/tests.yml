@@ -68,11 +68,19 @@ jobs:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          # Read-only token for GitHub API lookups made by the action itself. Without it a lookup is anonymous and
+          # shares the runner IP's limit of 60 calls per hour with other repos (run 44298834875 failed with 403).
+          # It does not create a check run (githubToken below stays empty), so no checks: write is needed.
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           unityVersion: auto
+          # The game-ci CLI the action downloads, pinned instead of "latest": no "which is the latest release?" API call
+          # (the 403 above) and the same tool on every run. v0.1.76 = the version every green run on 18 Nov 2026 used.
+          cliVersion: v0.1.76
           # The Web image (same as web-build.yml's build), because Role4WebBuild.cs uses UnityEditor.WebGL and the
-          # default image has no Web module, so the editor scripts would not compile.
-          customImage: unityci/editor:ubuntu-6000.3.28f1-webgl-3
+          # default image has no Web module, so the editor scripts would not compile. Pinned by digest: the tag could
+          # be pushed again with other contents; the digest cannot (it is the image's SHA-256).
+          customImage: unityci/editor:ubuntu-6000.3.28f1-webgl-3@sha256:78854b2ee7b5111bac4efe0262fa9e74e31b01d3a9736baab84ee551e3158209
           testMode: all
           artifactsPath: test-results
           githubToken: "" # no check run: that needs checks: write; the job summary below shows the counts instead

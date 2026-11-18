@@ -1,9 +1,10 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine.UIElements;
 
 namespace CarcavelosCircuit.RaceFlow
 {
-    // Task P7: the two credit pages (team, then tools and sources). The texts live in RaceHud.uxml.
+    // Task P7: the credit pages (team, then tools and sources, then P4's special thanks). The texts live in RaceHud.uxml.
     // A/D, the arrow keys, Space or the NEXT PAGE button turn the page; the dots jump to a page.
     // Plain C#: HudMenus creates it and calls HandleKeys() every frame while the credits are open.
     public class CreditsPanel
@@ -17,8 +18,8 @@ namespace CarcavelosCircuit.RaceFlow
         public CreditsPanel(VisualElement card, Action pageTurned)
         {
             this.pageTurned = pageTurned;
-            pages = new VisualElement[] { card.Q<VisualElement>("credits-page-1"), card.Q<VisualElement>("credits-page-2") };
-            dots = new VisualElement[] { card.Q<VisualElement>("credits-dot-1"), card.Q<VisualElement>("credits-dot-2") };
+            pages = Numbered(card, "credits-page-");
+            dots = Numbered(card, "credits-dot-");
             nextButton = card.Q<VisualElement>("credits-next");
             nextButton.RegisterCallback<ClickEvent>(evt => Turn(1));
             for (int i = 0; i < dots.Length; i++)
@@ -27,6 +28,19 @@ namespace CarcavelosCircuit.RaceFlow
                 dots[i].RegisterCallback<ClickEvent>(evt => GoTo(target));
             }
             ShowPage(0);
+        }
+
+        // credits-page-1, credits-page-2, ... in RaceHud.uxml, as many as there are (a new page needs no code change).
+        private static VisualElement[] Numbered(VisualElement card, string prefix)
+        {
+            var found = new List<VisualElement>();
+            VisualElement next = card.Q<VisualElement>(prefix + 1);
+            while (next != null)
+            {
+                found.Add(next);
+                next = card.Q<VisualElement>(prefix + (found.Count + 1));
+            }
+            return found.ToArray();
         }
 
         // Always start on the team page.
