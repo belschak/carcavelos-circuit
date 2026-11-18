@@ -61,7 +61,9 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (studioCamera != null)
             {
-                studioCamera.enabled = wantsRendering && picture != null;
+                // Batch mode = the CI test machine (software drawing): a drawing studio camera froze its Play Mode run
+                // for 40+ minutes on 18 Nov, so there the studio builds everything but never draws.
+                studioCamera.enabled = wantsRendering && picture != null && !Application.isBatchMode;
             }
         }
 

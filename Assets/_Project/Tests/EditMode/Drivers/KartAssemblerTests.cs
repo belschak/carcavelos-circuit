@@ -66,10 +66,12 @@ namespace CarcavelosCircuit.Tests.EditMode
                 GameObject go = Build(set);
                 Assert.AreEqual(set.ModelName, go.name);
                 StringAssert.StartsWith(KartVisualSwap.ModelPrefix, go.name, "KartVisualSwap finds it in the slot");
-                int drivers = 0;
+                int drivers = 0; // driver roots only (Luc's driver has parts inside named Driver_ too)
                 foreach (Transform t in go.GetComponentsInChildren<Transform>(true))
                 {
-                    if (t.name.StartsWith(KartAssembler.DriverPrefix)) drivers++;
+                    bool insideAnother = t.parent != null && KartAssembler.FindDriver(go.transform) != t
+                                         && t.IsChildOf(KartAssembler.FindDriver(go.transform));
+                    if (t.name.StartsWith(KartAssembler.DriverPrefix) && !insideAnother) drivers++;
                 }
                 Assert.AreEqual(1, drivers, set.Title + ": exactly one driver");
                 Assert.AreEqual("Driver_" + DriverRoster.Get(set.Driver).Name, KartAssembler.FindDriver(go.transform).name, set.Title);
