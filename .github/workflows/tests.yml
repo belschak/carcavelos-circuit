@@ -2,7 +2,9 @@
 # Why: since 2026-11-13 Windows Smart App Control blocks Unity's script compiler helper (BeeBuildProgramCommon.dll)
 # on David's laptop whenever Unity must re-plan the compile (new scripts, a fresh clone), so local test runs fail with
 # "Scripts have compiler errors" although the code is fine. Here the same tests run in GameCI's Linux Unity image.
-# When: every push to a branch called test/... (e.g. test/merge-check-<name>), and by hand (Actions > Tests > Run workflow).
+# When: every pull request into main, every push to main (the README badge shows the result on main), every push to a
+# branch called test/... (e.g. test/merge-check-<name>), and by hand (Actions > Tests > Run workflow).
+# Pushes and pull requests that change only docs or Markdown are skipped: they cannot change a test result.
 # Result: the job summary shows passed / failed per mode; the XML files are in the run's "test-results" artifact.
 # Uses the same three repository secrets as web-build.yml (UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD).
 
@@ -10,12 +12,18 @@ name: Tests
 
 on:
   push:
-    branches: ["test/**"]
+    branches: [main, "test/**"]
+    paths-ignore: ["docs/**", "**/*.md"]
+  pull_request:
+    branches: [main]
+    paths-ignore: ["docs/**", "**/*.md"]
   workflow_dispatch: # "Run workflow" button in the Actions tab
 
 concurrency:
   group: tests-${{ github.ref }}
-  cancel-in-progress: true # a newer push to the same test branch replaces the old run
+  # A newer push to the same test branch or pull request replaces the old run; runs on main always finish, so every
+  # commit on main gets its own result.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
