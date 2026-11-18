@@ -12,7 +12,7 @@ namespace CarcavelosCircuit.Online.Fusion
     // session name ("carcavelos-noon" / "carcavelos-sunset") in the EU region of the Photon Cloud.
     // How it works:
     // - Join starts a NetworkRunner. Once it runs, every client spawns one FusionPlayerState for itself (it alone
-    //   writes it: name, colour, pose, finish) and the master client spawns one FusionRaceState for the room (the
+    //   writes it: name, colour, driver, pose, finish) and the master client spawns one FusionRaceState for the room (the
     //   RaceControl; Fusion hands it to the next master when the master leaves).
     // - Fusion calls back during its own update. The callbacks and Spawned/Despawned only note what happened; the
     //   real work is in Tick, called once per frame by FusionSessionDriver (order -56, just before the director).
@@ -55,6 +55,7 @@ namespace CarcavelosCircuit.Online.Fusion
         private RaceControl pendingControl;   // set by the master, written as soon as it has authority over the race state
         private string myName = "";
         private int myColour;
+        private int myDriver;
         private float connectStartedAt;
         private float lastRaceSpawnAt = -1000f;
         private bool listChanged;
@@ -97,7 +98,7 @@ namespace CarcavelosCircuit.Online.Fusion
             sessions.Clear();
         }
 
-        public void Join(string room, string name, int colourIndex)
+        public void Join(string room, string name, int colourIndex, int driverIndex)
         {
             if (Status == OnlineStatus.InRoom || Status == OnlineStatus.Connecting)
             {
@@ -124,6 +125,7 @@ namespace CarcavelosCircuit.Online.Fusion
             Application.runInBackground = true;
             myName = SafeName(name);
             myColour = colourIndex;
+            myDriver = OnlinePlayer.SafeDriver(driverIndex);
 
             host = new GameObject(HostName);
             FusionSessionDriver driver = host.AddComponent<FusionSessionDriver>();
@@ -199,10 +201,11 @@ namespace CarcavelosCircuit.Online.Fusion
             double joinedAt = Now;
             string name = myName;
             int colour = myColour;
+            int driverIndex = myDriver;
             try
             {
                 runner.Spawn(NetworkPrefabId.FromRaw(FusionObjectProvider.PlayerTypeId), Vector3.zero, Quaternion.identity, runner.LocalPlayer,
-                    (r, obj) => obj.GetComponent<FusionPlayerState>().Init(id, joinedAt, name, colour),
+                    (r, obj) => obj.GetComponent<FusionPlayerState>().Init(id, joinedAt, name, colour, driverIndex),
                     NetworkSpawnFlags.SharedModeStateAuthLocalPlayer);
             }
             catch (Exception e)
@@ -320,7 +323,7 @@ namespace CarcavelosCircuit.Online.Fusion
                     continue;
                 }
                 FusionPlayerState state = entry.State;
-                entry.Player = new OnlinePlayer(state.OwnerId, SafeName(state.PlayerName.ToString()), state.ColourIndex, state.JoinedAt);
+                entry.Player = new OnlinePlayer(state.OwnerId, SafeName(state.PlayerName.ToString()), state.ColourIndex, state.JoinedAt, state.DriverIndex);
                 InsertInJoinOrder(entry.Player);
                 changed = true;
                 if (state == me)

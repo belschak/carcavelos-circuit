@@ -198,12 +198,12 @@
       // Without this, that same key would also leave the game's start screen, so the map fly-over and the title
       // were skipped. This listener is added here, BEFORE Unity starts, on window in the capture phase: the browser
       // runs it before any key listener Unity adds later, and stopImmediatePropagation keeps the key from them.
-      // Online links (?room=noon or ?room=sunset): say which room the game will open.
+      // Online links (?room=carcavelos, the old ?room=noon / ?room=sunset too): the one room of the class (17 Nov 2026).
       (function () {
-        var room = new URLSearchParams(location.search).get("room");
+        var room = (new URLSearchParams(location.search).get("room") || "").trim().toLowerCase();
         var chip = document.querySelector(".cc-room");
-        if (room === "noon" || room === "sunset") {
-          chip.textContent = (room === "noon" ? "Noon room" : "Sunset room") + " · up to 15 racers online";
+        if (["carcavelos", "noon", "sunset", "room", "class", "1"].indexOf(room) >= 0) {
+          chip.textContent = "Online room · up to 15 racers";
           chip.hidden = false;
         }
       })();

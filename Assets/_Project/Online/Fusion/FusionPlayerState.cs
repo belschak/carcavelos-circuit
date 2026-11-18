@@ -16,20 +16,22 @@ namespace CarcavelosCircuit.Online.Fusion
         [Networked] public double JoinedAt { get; set; }               // shared clock when the player spawned (join order)
         [Networked] public NetworkString<_32> PlayerName { get; set; }
         [Networked] public int ColourIndex { get; set; }
+        [Networked] public int DriverIndex { get; set; }               // DriverRoster index: the kart model everyone builds for me
         [Networked] public int PoseSeq { get; set; }                   // counts up per SendPose, so a copy knows a new pose arrived
         [Networked, Capacity(PoseWordCount)] public NetworkArray<int> PoseWords => default;
         [Networked] public int FinishRaceId { get; set; }              // 0 = no finish reported yet
         [Networked] public double FinishSeconds { get; set; }
 
         // Called by the owner right before the object goes live (Fusion's OnBeforeSpawned), so the first state
-        // everyone receives already carries name and colour.
-        public void Init(int ownerId, double joinedAt, string name, int colourIndex)
+        // everyone receives already carries name, colour and driver.
+        public void Init(int ownerId, double joinedAt, string name, int colourIndex, int driverIndex)
         {
             OwnerId = ownerId;
             JoinedAt = joinedAt;
             string safe = name ?? "";
             PlayerName = safe.Length > MaxNameLength ? safe.Substring(0, MaxNameLength) : safe;
             ColourIndex = colourIndex;
+            DriverIndex = OnlinePlayer.SafeDriver(driverIndex);
             PoseSeq = 0;
             FinishRaceId = 0;
             FinishSeconds = 0.0;

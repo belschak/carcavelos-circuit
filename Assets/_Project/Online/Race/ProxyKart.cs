@@ -5,8 +5,12 @@ using UnityEngine;
 namespace CarcavelosCircuit.Online
 {
     // Another player's kart on my screen (M2 online race). Looks only: no Rigidbody, no collider, no controller,
-    // karts drive through each other. The kart model is a copy of my own kart's "Visual" child (Role 3's KartVisual
-    // with its steering wheel, wheels and arms), painted in the player's colour with BotKartPaint.
+    // karts drive through each other. The body is a copy of my own kart's "Visual" slot with THAT player's driver in it
+    // (feedback round 17 Nov 2026: before, every remote kart was a recoloured copy of my own driver). The driver comes
+    // with the player (OnlinePlayer.DriverIndex), the kart model from Role 3's list (BotSettings.KartVisual), swapped in
+    // with KartVisualSwap like BotSquad does for the bots, and keeps its own paint so Tiago looks like Tiago on every
+    // screen. The player's room colour stays on the name tag and the minimap dot (MapColor), which tells two players
+    // with the same driver apart. Only without a kart model (no BotSettings list) the body is painted in that colour.
     // It implements IKartState so the model reads speed and steer from it like from a real kart, and IRacer so the
     // positions readout, the minimap and the name tags see it like a bot. Where it is comes from the network: the
     // director adds every received KartPose, and Show() draws the pose of "a moment ago" (PoseBuffer: smooth between
@@ -26,6 +30,8 @@ namespace CarcavelosCircuit.Online
         private bool inputEnabled;
 
         public int PlayerId { get; private set; }
+        public int DriverIndex { get; private set; }
+        public string ModelName { get; private set; } = ""; // the KartVisual_* model in the body, "" = a copy or a box
         public int PoseCount { get { return buffer.Count; } }
         public double NewestPoseTime { get { return buffer.NewestTime; } } // shared clock of the newest pose, -1 = none
         public double RenderDelay { get { return delay.Seconds; } }
@@ -56,13 +62,15 @@ namespace CarcavelosCircuit.Online
 
         // Makes one proxy, inactive: the director switches it on with SetVisible (OnlineProxyRules: not before its
         // first pose, not a late joiner mid-race), and OnEnable then registers it with its name and colour set.
-        // visualSource = my kart's "Visual" child to copy (null = a plain box), maxSpeed = my kart's top speed.
-        public static ProxyKart Spawn(OnlinePlayer player, Transform visualSource, float maxSpeed)
+        // visualSource = my kart's "Visual" slot to copy (null = an empty slot), driverModel = the player's driver kart
+        // (BotSettings.KartVisual of DriverRoster.Get(player.DriverIndex).KartVisual; null = keep the copy and paint
+        // it, or a plain box without either), maxSpeed = my kart's top speed.
+        public static ProxyKart Spawn(OnlinePlayer player, Transform visualSource, GameObject driverModel, float maxSpeed)
         {
             GameObject root = new GameObject("Proxy " + (player != null ? player.Name : "?"));
             root.SetActive(false);
             ProxyKart proxy = root.AddComponent<ProxyKart>();
-            proxy.SetUp(player, visualSource, maxSpeed);
+            proxy.SetUp(player, visualSource, driverModel, maxSpeed);
             return proxy;
         }
 
@@ -76,11 +84,12 @@ namespace CarcavelosCircuit.Online
             }
         }
 
-        private void SetUp(OnlinePlayer player, Transform visualSource, float topSpeed)
+        private void SetUp(OnlinePlayer player, Transform visualSource, GameObject driverModel, float topSpeed)
         {
             if (player != null)
             {
                 PlayerId = player.Id;
+                DriverIndex = player.DriverIndex;
                 displayName = string.IsNullOrEmpty(player.Name) ? "PLAYER" : player.Name;
                 colour = OnlineColours.Of(player.ColourIndex);
                 if (player.HasPose)
@@ -92,19 +101,48 @@ namespace CarcavelosCircuit.Online
                 }
             }
             maxSpeed = float.IsNaN(topSpeed) || topSpeed <= 0f ? 30f : topSpeed;
-            BuildBody(visualSource);
-            BotKartPaint.Paint(gameObject, colour);
+            if (!BuildBody(visualSource, driverModel))
+            {
+                BotKartPaint.Paint(gameObject, colour); // no driver model to show: at least the room colour tells karts apart
+            }
         }
 
-        // A copy of the player's kart model under this root, or a box when there is none to copy.
-        private void BuildBody(Transform visualSource)
+        // The body under this root: my kart's Visual slot (its offset, wheels and arms) with the player's driver model
+        // in it. True when the driver's own model is in (keeps its paint); false for a painted copy of mine or a box.
+        private bool BuildBody(Transform visualSource, GameObject driverModel)
         {
+            GameObject visual = null;
             if (visualSource != null)
             {
-                GameObject visual = Instantiate(visualSource.gameObject, transform, false); // false = keep the local offset
+                visual = Instantiate(visualSource.gameObject, transform, false); // false = keep the local offset
                 visual.name = VisualName;
                 visual.transform.localRotation = Quaternion.identity; // not my kart's lean of this moment (KartController tilts it)
-                return;
+            }
+            else if (driverModel != null)
+            {
+                visual = new GameObject(VisualName);
+                visual.transform.SetParent(transform, false);
+            }
+            if (visual != null && driverModel != null)
+            {
+                // My driver out, theirs in, the same way KartVisualSwap does it, but at once: this root is still
+                // inactive, and a model taken out with SetParent(null) would wake up for a frame on its own (without a
+                // kart around it). DestroyImmediate on an inactive copy wakes nothing.
+                Transform slot = visual.transform;
+                Transform old = KartVisualSwap.CurrentModel(slot);
+                if (old != null && old.name != driverModel.name)
+                {
+                    DestroyImmediate(old.gameObject);
+                    old = null;
+                }
+                GameObject model = old != null ? old.gameObject : Instantiate(driverModel, slot, false);
+                model.name = driverModel.name;
+                ModelName = model.name;
+                return true;
+            }
+            if (visual != null)
+            {
+                return false;
             }
             GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Destroy(box.GetComponent<Collider>());
@@ -112,6 +150,7 @@ namespace CarcavelosCircuit.Online
             box.transform.SetParent(transform, false);
             box.transform.localPosition = new Vector3(0f, 0.4f, 0f);
             box.transform.localScale = new Vector3(1.1f, 0.5f, 1.7f);
+            return false;
         }
 
         private void OnEnable()

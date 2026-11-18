@@ -9,11 +9,13 @@ namespace CarcavelosCircuit.Online
 {
     // The online lobby on screen (M2), built in code into RaceHud's document like ModePicker and HudMenus, in the
     // same arcade look (plates, pills, chips, the display and UI faces). One overlay, one card, five pages:
-    //   Rooms       name field + NOON ROOM / SUNSET ROOM cards + BACK
+    //   Rooms       name field + one JOIN RACE button (the one room of the class, 17 Nov 2026) + my light + BACK
     //   Connecting  "CONNECTING..." + BACK
-    //   Room        who is in (colour chip, name, YOU, HOST), "7/15", START RACE for the host or a waiting line
-    //   Message     "this room is full" / "could not connect" + BACK
+    //   Room        who is in (driver portrait in the room colour, name, driver, YOU, HOST), "7/15", START RACE for
+    //               the host or a waiting line, my light
+    //   Message     "the room is full" / "could not connect" + BACK
     //   Results     a small card at the top right next to the HUD's own results: the room's order, START AGAIN / Q
+    // The light button (and T) only changes MY look: noon or sunset is each player's own choice, it never travels.
     // The view only draws and reports clicks (events); OnlineRaceDirector decides everything.
     public class OnlineLobbyView
     {
@@ -22,10 +24,13 @@ namespace CarcavelosCircuit.Online
         private const float CardWidth = 760f;
         private const float SideCardWidth = 360f;
 
-        // The player clicked a room card, pressed Enter on the rooms page: room + the typed name (not cleaned yet).
-        public event Action<TimeOfDay, string> JoinRequested;
+        private const float PortraitSize = 34f;
+
+        // The player clicked JOIN RACE or pressed Enter on the rooms page: the typed name (not cleaned yet).
+        public event Action<string> JoinRequested;
         public event Action BackRequested;    // BACK button on the rooms, connecting and message pages
         public event Action StartRequested;   // START RACE / START AGAIN (the host)
+        public event Action LightRequested;   // the NOON / SUNSET button: my own light, the other way round
 
         private readonly VisualElement root;
         private readonly VisualElement overlay;
@@ -34,10 +39,12 @@ namespace CarcavelosCircuit.Online
         private readonly VisualElement sideCard;
         private TextField nameField;
         private Label problemLabel;
+        private Label lightLabel;             // the text on the light button of the page now showing, null = none
         private string signature = "";
+        private static readonly System.Collections.Generic.Dictionary<string, Texture2D> portraits =
+            new System.Collections.Generic.Dictionary<string, Texture2D>(); // DriverPortraits, loaded once
 
         public Page Current { get; private set; } = Page.None;
-        public TimeOfDay SelectedRoom { get; set; } = TimeOfDay.Noon;
         public bool IsOpen { get { return Current != Page.None; } }
 
         // The pages that sit over the start screen take every game key (O, M, 1, 2, 3, Enter ...): the lobby owns
@@ -103,16 +110,18 @@ namespace CarcavelosCircuit.Online
 
         // ---- Pages ----
 
-        public void ShowRooms(string name, string problem)
+        // light = my look right now (TimeOfDayChoice), on the light button.
+        public void ShowRooms(string name, string problem, TimeOfDay light)
         {
             if (!Open(Page.Rooms, "rooms"))
             {
                 ShowProblem(problem);
+                ShowLight(light);
                 return;
             }
             card.Clear();
             Title("ONLINE RACE", card);
-            Caption("RACE YOUR CLASS LIVE: PICK A ROOM, 15 SEATS EACH, ONE LAP", card);
+            Caption("RACE YOUR CLASS LIVE: ONE ROOM FOR EVERYONE, " + OnlineRooms.MaxPlayers + " SEATS, ONE LAP", card);
 
             VisualElement nameRow = Row(card);
             nameRow.style.marginTop = 18f;
@@ -137,14 +146,17 @@ namespace CarcavelosCircuit.Online
             problemLabel.style.marginTop = 10f;
             ShowProblem(problem);
 
-            VisualElement rooms = Row(card);
-            rooms.style.marginTop = 16f;
-            RoomCard(TimeOfDay.Noon, "HIGH SUN", rooms);
-            RoomCard(TimeOfDay.Sunset, "GOLDEN HOUR", rooms);
+            VisualElement join = Row(card);
+            join.style.marginTop = 16f;
+            JoinCard(join);
+
+            VisualElement look = Row(card);
+            look.style.marginTop = 14f;
+            LightButton(light, look);
 
             VisualElement keys = Row(card);
             keys.style.marginTop = 18f;
-            KeyHint("ENTER", "JOIN " + OnlineRooms.Label(SelectedRoom), keys);
+            KeyHint("ENTER", "JOIN", keys); // no T hint here: the cursor is usually in the name field, where T is a letter
             KeyHint("Q", "BACK", keys);
             Pill("BACK", false, () => Raise(BackRequested), keys).style.marginLeft = 18f;
 
@@ -166,20 +178,24 @@ namespace CarcavelosCircuit.Online
             problemLabel.style.display = text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
-        public void ShowConnecting(TimeOfDay room)
+        // The light button of the page now showing (if it has one) says this light.
+        public void ShowLight(TimeOfDay light)
         {
-            ShowConnecting(room, "CONNECTING...");
+            if (lightLabel != null)
+            {
+                lightLabel.text = LightText(light);
+            }
         }
 
         // text = "CONNECTING..." or the retry line (OnlineJoinRetry.RetryLine).
-        public void ShowConnecting(TimeOfDay room, string text)
+        public void ShowConnecting(string text)
         {
             if (!Open(Page.Connecting, "connecting:" + text))
             {
                 return;
             }
             card.Clear();
-            Title(OnlineRooms.Label(room), card);
+            Title(OnlineRooms.Label, card);
             Label line = Chip(text, false, card);
             line.style.marginTop = 18f;
             VisualElement keys = Row(card);
@@ -189,21 +205,23 @@ namespace CarcavelosCircuit.Online
         }
 
         // The room page. statusLine = the waiting / get ready / race in progress line ("" with the start button).
-        public void ShowRoom(TimeOfDay room, IReadOnlyList<OnlinePlayer> players, int localId, int masterId, string statusLine, bool showStart)
+        // light = my look right now, on the light button (a new light only changes the button's text, see ShowLight).
+        public void ShowRoom(IReadOnlyList<OnlinePlayer> players, int localId, int masterId, string statusLine, bool showStart, TimeOfDay light)
         {
-            string sig = "room|" + (int)room + "|" + localId + "|" + masterId + "|" + statusLine + "|" + showStart;
+            string sig = "room|" + localId + "|" + masterId + "|" + statusLine + "|" + showStart;
             for (int i = 0; players != null && i < players.Count; i++)
             {
-                sig += "|" + players[i].Id + ":" + players[i].Name + ":" + players[i].ColourIndex;
+                sig += "|" + players[i].Id + ":" + players[i].Name + ":" + players[i].ColourIndex + ":" + players[i].DriverIndex;
             }
             if (!Open(Page.Room, sig))
             {
+                ShowLight(light);
                 return;
             }
             card.Clear();
             int count = players == null ? 0 : players.Count;
             VisualElement head = Row(card);
-            Title(OnlineRooms.Label(room), head);
+            Title(OnlineRooms.Label, head);
             Label counter = Chip(OnlineRooms.CountLine(count), false, head);
             counter.style.marginLeft = 16f;
 
@@ -231,12 +249,17 @@ namespace CarcavelosCircuit.Online
                 Chip(statusLine, false, foot);
             }
 
+            VisualElement look = Row(card);
+            look.style.marginTop = 12f;
+            LightButton(light, look);
+
             VisualElement keys = Row(card);
             keys.style.marginTop = 14f;
             if (showStart)
             {
                 KeyHint("ENTER", "START", keys);
             }
+            KeyHint("T", "LIGHT", keys);
             KeyHint("Q", "LEAVE", keys);
         }
 
@@ -307,6 +330,7 @@ namespace CarcavelosCircuit.Online
             signature = "";
             nameField = null;
             problemLabel = null;
+            lightLabel = null;
             overlay.RemoveFromClassList("is-shown");
             overlay.RemoveFromHierarchy();
         }
@@ -324,6 +348,7 @@ namespace CarcavelosCircuit.Online
                 nameField = null;
                 problemLabel = null;
             }
+            lightLabel = null; // the page is built again; its light button (if any) sets this anew
             Current = page;
             signature = contentSignature;
             bool side = page == Page.Results;
@@ -442,99 +467,128 @@ namespace CarcavelosCircuit.Online
             parent.Add(words);
         }
 
-        // NOON ROOM / SUNSET ROOM: a tall card like the mode cards; a click joins that room with the typed name.
-        private void RoomCard(TimeOfDay room, string mood, VisualElement parent)
+        // JOIN RACE: one big orange card for the one room; a click (or tap) joins with the typed name.
+        private void JoinCard(VisualElement parent)
         {
-            VisualElement cardElement = new VisualElement();
+            VisualElement cardElement = new VisualElement { name = "online-join" };
             cardElement.AddToClassList("menu-pill");
             cardElement.AddToClassList("plate");
-            if (room == SelectedRoom)
-            {
-                cardElement.AddToClassList("plate--blue");
-            }
+            cardElement.AddToClassList("plate--orange");
             cardElement.style.flexDirection = FlexDirection.Column;
             cardElement.style.alignItems = Align.Center;
             cardElement.style.justifyContent = Justify.Center;
             cardElement.style.height = 104f;
-            cardElement.style.width = 250f;
-            cardElement.style.marginLeft = 10f;
-            cardElement.style.marginRight = 10f;
+            cardElement.style.width = 420f;
             cardElement.style.paddingBottom = 12f;
-            Label title = new Label(OnlineRooms.Label(room));
+            Label title = new Label("JOIN RACE");
             title.pickingMode = PickingMode.Ignore;
             title.AddToClassList("f-display");
-            title.style.fontSize = 24f;
-            title.style.color = HudColors.Cream;
+            title.style.fontSize = 30f;
+            title.style.color = HudColors.Ink;
+            title.style.unityTextOutlineWidth = 0f; // ink on orange needs no outline
             cardElement.Add(title);
-            Label sub = new Label(mood + "  ·  " + OnlineRooms.MaxPlayers + " SEATS");
+            Label sub = new Label(OnlineRooms.Label + "  ·  " + OnlineRooms.MaxPlayers + " SEATS");
             sub.pickingMode = PickingMode.Ignore;
             sub.AddToClassList("f-ui");
             sub.style.fontSize = 16f;
             sub.style.letterSpacing = 1f;
             sub.style.marginTop = 4f;
-            sub.style.color = HudColors.WithAlpha(HudColors.Cream, 0.8f);
+            sub.style.color = HudColors.WithAlpha(HudColors.Ink, 0.8f);
             cardElement.Add(sub);
-            cardElement.RegisterCallback<ClickEvent>(evt =>
-            {
-                SelectedRoom = room;
-                Raise(JoinRequested, room, TypedName);
-            });
+            cardElement.RegisterCallback<ClickEvent>(evt => Raise(JoinRequested, TypedName));
             parent.Add(cardElement);
         }
 
-        // One player in the room: colour square, name, YOU, HOST.
+        // "LIGHT: NOON" / "LIGHT: SUNSET": a navy pill that flips my own look (the room has no light of its own).
+        private void LightButton(TimeOfDay light, VisualElement parent)
+        {
+            VisualElement pill = Pill(LightText(light), false, () => Raise(LightRequested), parent);
+            pill.name = "online-light";
+            lightLabel = pill.Q<Label>();
+        }
+
+        public static string LightText(TimeOfDay light)
+        {
+            return "LIGHT: " + TimeOfDayChoice.Label(light);
+        }
+
+        // One player in the room: the driver's portrait in a frame of the player's room colour (the colour of their
+        // name tag and map dot), the name, and under it the driver plus YOU / HOST.
         private static void PlayerRow(OnlinePlayer player, bool isMe, bool isHost, VisualElement parent)
         {
             VisualElement row = new VisualElement();
             row.pickingMode = PickingMode.Ignore;
             row.style.flexDirection = FlexDirection.Row;
             row.style.alignItems = Align.Center;
-            row.style.width = 220f;
+            row.style.width = 212f;
             row.style.marginTop = 4f;
             row.style.marginBottom = 4f;
-            row.style.marginLeft = 8f;
-            row.style.marginRight = 8f;
+            row.style.marginLeft = 6f;
+            row.style.marginRight = 6f;
             parent.Add(row);
 
-            VisualElement square = new VisualElement();
-            square.pickingMode = PickingMode.Ignore;
-            square.style.width = 18f;
-            square.style.height = 18f;
-            square.style.borderTopLeftRadius = 5f;
-            square.style.borderTopRightRadius = 5f;
-            square.style.borderBottomLeftRadius = 5f;
-            square.style.borderBottomRightRadius = 5f;
-            square.style.backgroundColor = OnlineColours.Of(player.ColourIndex);
-            square.style.marginRight = 8f;
-            row.Add(square);
+            DriverInfo driver = DriverRoster.Get(player.DriverIndex);
+            Color colour = OnlineColours.Of(player.ColourIndex);
+            VisualElement frame = new VisualElement();
+            frame.pickingMode = PickingMode.Ignore;
+            frame.style.width = PortraitSize;
+            frame.style.height = PortraitSize;
+            frame.style.flexShrink = 0f;
+            frame.style.borderTopLeftRadius = 8f;
+            frame.style.borderTopRightRadius = 8f;
+            frame.style.borderBottomLeftRadius = 8f;
+            frame.style.borderBottomRightRadius = 8f;
+            frame.style.borderTopWidth = 3f;
+            frame.style.borderBottomWidth = 3f;
+            frame.style.borderLeftWidth = 3f;
+            frame.style.borderRightWidth = 3f;
+            frame.style.borderTopColor = colour;
+            frame.style.borderBottomColor = colour;
+            frame.style.borderLeftColor = colour;
+            frame.style.borderRightColor = colour;
+            frame.style.backgroundColor = HudColors.WithAlpha(driver.Colour, 0.55f);
+            frame.style.marginRight = 8f;
+            Texture2D portrait = Portrait(driver);
+            if (portrait != null)
+            {
+                frame.style.backgroundImage = new StyleBackground(portrait);
+                frame.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Contain);
+            }
+            row.Add(frame);
+
+            VisualElement words = new VisualElement();
+            words.pickingMode = PickingMode.Ignore;
+            words.style.flexDirection = FlexDirection.Column;
+            words.style.flexShrink = 1f;
+            row.Add(words);
 
             Label name = new Label(string.IsNullOrEmpty(player.Name) ? "PLAYER" : player.Name);
             name.pickingMode = PickingMode.Ignore;
             name.AddToClassList("f-ui");
-            name.style.fontSize = 22f;
+            name.style.fontSize = 20f;
             name.style.color = isMe ? HudColors.Sun : HudColors.Cream;
-            row.Add(name);
+            words.Add(name);
 
-            if (isMe)
-            {
-                Tag("YOU", row);
-            }
-            if (isHost)
-            {
-                Tag("HOST", row);
-            }
+            string line = driver.Name.ToUpperInvariant() + (isMe ? "  ·  YOU" : "") + (isHost ? "  ·  HOST" : "");
+            Label tags = new Label(line);
+            tags.pickingMode = PickingMode.Ignore;
+            tags.AddToClassList("f-ui");
+            tags.style.fontSize = 13f;
+            tags.style.letterSpacing = 1f;
+            tags.style.color = HudColors.WithAlpha(HudColors.Cream, 0.7f);
+            words.Add(tags);
         }
 
-        private static void Tag(string text, VisualElement parent)
+        // The driver's portrait (Resources/DriverPortraits, the same pictures as the driver select), null if missing.
+        private static Texture2D Portrait(DriverInfo driver)
         {
-            Label tag = new Label(text);
-            tag.pickingMode = PickingMode.Ignore;
-            tag.AddToClassList("f-ui");
-            tag.style.fontSize = 14f;
-            tag.style.letterSpacing = 1f;
-            tag.style.marginLeft = 8f;
-            tag.style.color = HudColors.WithAlpha(HudColors.Cream, 0.7f);
-            parent.Add(tag);
+            Texture2D found;
+            if (!portraits.TryGetValue(driver.PortraitFile, out found))
+            {
+                found = Resources.Load<Texture2D>("DriverPortraits/" + driver.PortraitFile);
+                portraits[driver.PortraitFile] = found;
+            }
+            return found;
         }
 
         // One results line: "1  ANA  1:02.345", "RACING..." or "DNF".
@@ -588,11 +642,11 @@ namespace CarcavelosCircuit.Online
             }
         }
 
-        private static void Raise(Action<TimeOfDay, string> action, TimeOfDay room, string name)
+        private static void Raise(Action<string> action, string name)
         {
             if (action != null)
             {
-                action(room, name);
+                action(name);
             }
         }
     }

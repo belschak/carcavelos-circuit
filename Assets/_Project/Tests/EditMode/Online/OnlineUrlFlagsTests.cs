@@ -26,8 +26,9 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             OnlineUrlFlags flags = OnlineUrlFlags.Parse("http://localhost:8000/index.html?net=local&room=sunset&name=Ana%20B&autopilot=1&autostart=4#top");
             Assert.AreEqual("local", flags.Net);
-            Assert.IsTrue(flags.HasRoom);
-            Assert.AreEqual(TimeOfDay.Sunset, flags.Room);
+            Assert.IsTrue(flags.HasRoom, "the old sunset link opens the one room");
+            Assert.IsTrue(flags.HasLight);
+            Assert.AreEqual(TimeOfDay.Sunset, flags.Light, "and the sunset look for this visit");
             Assert.AreEqual("Ana B", flags.Name, "percent escapes are decoded");
             Assert.IsTrue(flags.Autopilot);
             Assert.AreEqual(4, flags.AutoStart);
@@ -50,7 +51,8 @@ namespace CarcavelosCircuit.Tests.EditMode
             OnlineUrlFlags flags = OnlineUrlFlags.Parse("x?NET=Photon&Room=NOON&name=Jo+Silva&foo=bar&autopilot=yes");
             Assert.AreEqual("photon", flags.Net);
             Assert.IsTrue(flags.HasRoom);
-            Assert.AreEqual(TimeOfDay.Noon, flags.Room);
+            Assert.IsTrue(flags.HasLight);
+            Assert.AreEqual(TimeOfDay.Noon, flags.Light);
             Assert.AreEqual("Jo Silva", flags.Name);
             Assert.IsTrue(flags.Autopilot);
         }
@@ -61,6 +63,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             OnlineUrlFlags flags = OnlineUrlFlags.Parse("x?net=tcp&room=night&autopilot=0&autostart=1&name=");
             Assert.AreEqual("", flags.Net, "an unknown transport is ignored");
             Assert.IsFalse(flags.HasRoom, "an unknown room is ignored");
+            Assert.IsFalse(flags.HasLight);
             Assert.IsFalse(flags.Autopilot);
             Assert.AreEqual(0, flags.AutoStart, "autostart needs at least 2 players");
             Assert.IsFalse(flags.WantsAutoJoin);
@@ -82,7 +85,30 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             OnlineUrlFlags flags = OnlineUrlFlags.Parse("x?room=noon");
             Assert.IsTrue(flags.HasRoom);
-            Assert.IsFalse(flags.WantsAutoJoin, "the lobby only preselects the room");
+            Assert.IsFalse(flags.WantsAutoJoin, "the lobby only opens");
+        }
+
+        [Test]
+        public void Driver_ByNameOrIndex_ElseNone()
+        {
+            Assert.AreEqual(1, OnlineUrlFlags.Parse("x?driver=Tiago").Driver);
+            Assert.AreEqual(3, OnlineUrlFlags.Parse("x?driver=amara").Driver);
+            Assert.AreEqual(2, OnlineUrlFlags.Parse("x?driver=2").Driver);
+            Assert.AreEqual(0, OnlineUrlFlags.Parse("x?driver=rookie").Driver);
+            Assert.AreEqual(-1, OnlineUrlFlags.Parse("x?driver=9").Driver, "outside the roster");
+            Assert.AreEqual(-1, OnlineUrlFlags.Parse("x?driver=bob").Driver);
+            Assert.AreEqual(-1, OnlineUrlFlags.Parse("x?room=carcavelos").Driver, "no flag = the player's own pick");
+            Assert.AreEqual(-1, OnlineUrlFlags.None.Driver);
+        }
+
+        [Test]
+        public void RoomByItsOwnName_LeavesTheLightAlone()
+        {
+            OnlineUrlFlags flags = OnlineUrlFlags.Parse("x?room=carcavelos&name=Ana");
+            Assert.IsTrue(flags.HasRoom);
+            Assert.IsTrue(flags.WantsAutoJoin);
+            Assert.IsFalse(flags.HasLight, "noon or sunset is the player's own look");
+            Assert.IsFalse(OnlineUrlFlags.None.HasLight);
         }
 
         [Test]

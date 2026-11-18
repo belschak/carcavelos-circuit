@@ -35,8 +35,28 @@ namespace CarcavelosCircuit.Tests.EditMode
                 new FinishEntry(4, "Dee", true, true, 61.0),
             };
             List<FinishRow> rows = FinishOrderRules.Order(entries);
-            string line = OnlineTestLog.Result(TimeOfDay.Sunset, 3, "Ana", rows);
-            Assert.AreEqual("RESULT room=sunset race=3 me=Ana order=Dee#4:61.000|Ana#1:65.200|Bo_Li#2:RACING|Cid#3:DNF", line);
+            string line = OnlineTestLog.Result(3, "Ana", rows);
+            Assert.AreEqual("RESULT room=carcavelos race=3 me=Ana order=Dee#4:61.000|Ana#1:65.200|Bo_Li#2:RACING|Cid#3:DNF", line);
+        }
+
+        [Test]
+        public void Karts_ListsEveryOtherKartsDriverAndModel_InIdOrder()
+        {
+            List<KeyValuePair<int, string>> drivers = new List<KeyValuePair<int, string>>
+            {
+                new KeyValuePair<int, string>(9, "Tiago"),
+                new KeyValuePair<int, string>(2, "Amara"),
+                new KeyValuePair<int, string>(5, "Nova")
+            };
+            Dictionary<int, string> models = new Dictionary<int, string>
+            {
+                { 9, "KartVisual_Buggy_Tiago" },
+                { 2, "KartVisual_StreetGT_Amara" }
+            };
+            Assert.AreEqual("2:Amara:KartVisual_StreetGT_Amara|5:Nova:-|9:Tiago:KartVisual_Buggy_Tiago", OnlineTestLog.Karts(drivers, models),
+                "a kart without a model shows -");
+            Assert.AreEqual("-", OnlineTestLog.Karts(new List<KeyValuePair<int, string>>(), models), "nobody else in the room");
+            Assert.AreEqual("-", OnlineTestLog.Karts(null, null));
         }
 
         [Test]

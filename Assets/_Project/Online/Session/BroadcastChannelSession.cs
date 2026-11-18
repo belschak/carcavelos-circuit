@@ -11,8 +11,9 @@ namespace CarcavelosCircuit.Online
     // before the Photon build exists. The JavaScript side is Online/Plugins/OnlineBroadcast.jslib. Outside a Web
     // build the jslib does not exist, so OnlineBootstrap uses LoopbackSession instead (IsSupported says which).
     // Protocol, one text line per message, fields split by "|" (names cannot contain "|": PlayerNameRules):
-    //   hello|id|joinedAt|name|colour              I joined (everyone answers with "here", the master with "control")
-    //   here|id|joinedAt|name|colour|raceId|secs   my record (answer to hello, and every 2 s as a heartbeat)
+    //   hello|id|joinedAt|name|colour|driver              I joined (everyone answers with "here", the master with "control")
+    //   here|id|joinedAt|name|colour|raceId|secs|driver   my record (answer to hello, and every 2 s as a heartbeat)
+    //   (driver = DriverRoster index, 17 Nov 2026; a line without it, from an older page, means the Rookie)
     //   control|id|<RaceControlCodec>              the master's race control
     //   pose|id|<KartPoseCodec base64>             my kart, about 15 times a second
     //   finish|id|raceId|seconds                   I crossed the line
@@ -86,7 +87,7 @@ namespace CarcavelosCircuit.Online
             }
         }
 
-        public void Join(string room, string name, int colourIndex)
+        public void Join(string room, string name, int colourIndex, int driverIndex)
         {
             if (Status == OnlineStatus.InRoom || Status == OnlineStatus.Connecting)
             {
@@ -115,7 +116,7 @@ namespace CarcavelosCircuit.Online
             }
             channelOpen = true;
             LocalId = RandomId();
-            me = new OnlinePlayer(LocalId, SafeName(name), colourIndex, Now);
+            me = new OnlinePlayer(LocalId, SafeName(name), colourIndex, Now, driverIndex);
             players.Clear();
             lastHeard.Clear();
             players.Add(me);
@@ -125,7 +126,7 @@ namespace CarcavelosCircuit.Online
             connectUntil = Now + ConnectSeconds;
             nextHeartbeat = Now + HeartbeatSeconds;
             SetLeaveMessage("leave|" + LocalId);
-            Post("hello|" + LocalId + "|" + Number(me.JoinedAt) + "|" + me.Name + "|" + me.ColourIndex);
+            Post("hello|" + LocalId + "|" + Number(me.JoinedAt) + "|" + me.Name + "|" + me.ColourIndex + "|" + me.DriverIndex);
             RaiseChanged();
         }
 
@@ -259,7 +260,7 @@ namespace CarcavelosCircuit.Online
             switch (parts[0])
             {
                 case "hello":
-                    if (parts.Length == 5 && AddOrUpdate(senderId, parts[2], parts[3], parts[4]))
+                    if ((parts.Length == 5 || parts.Length == 6) && AddOrUpdate(senderId, parts[2], parts[3], parts[4], parts.Length == 6 ? parts[5] : null))
                     {
                         Post(HereLine());
                         if (IsMaster && Control.RaceId > 0)
@@ -269,7 +270,7 @@ namespace CarcavelosCircuit.Online
                     }
                     break;
                 case "here":
-                    if (parts.Length == 7 && AddOrUpdate(senderId, parts[2], parts[3], parts[4]))
+                    if ((parts.Length == 7 || parts.Length == 8) && AddOrUpdate(senderId, parts[2], parts[3], parts[4], parts.Length == 8 ? parts[7] : null))
                     {
                         NoteFinishText(senderId, parts[5], parts[6], false);
                     }
@@ -299,7 +300,8 @@ namespace CarcavelosCircuit.Online
         }
 
         // A player record from hello or here. New = added in join order + Changed; known = only "heard now".
-        private bool AddOrUpdate(int senderId, string joinedAtText, string name, string colourText)
+        // driverText null or not a number = the Rookie (OnlinePlayer.SafeDriver also catches numbers outside the roster).
+        private bool AddOrUpdate(int senderId, string joinedAtText, string name, string colourText, string driverText)
         {
             double joinedAt;
             int colour;
@@ -320,7 +322,12 @@ namespace CarcavelosCircuit.Online
             {
                 return false; // more than a full room plus us: ignore the rest
             }
-            OnlinePlayer player = new OnlinePlayer(senderId, SafeName(name), colour, joinedAt);
+            int driver;
+            if (driverText == null || !int.TryParse(driverText, NumberStyles.Integer, CultureInfo.InvariantCulture, out driver))
+            {
+                driver = 0;
+            }
+            OnlinePlayer player = new OnlinePlayer(senderId, SafeName(name), colour, joinedAt, driver);
             int at = players.Count;
             for (int i = 0; i < players.Count; i++)
             {
@@ -434,7 +441,7 @@ namespace CarcavelosCircuit.Online
         {
             string raceId = me.FinishRaceId.ToString(CultureInfo.InvariantCulture);
             string seconds = double.IsNaN(me.FinishSeconds) ? "0" : Number(me.FinishSeconds);
-            return "here|" + LocalId + "|" + Number(me.JoinedAt) + "|" + me.Name + "|" + me.ColourIndex + "|" + raceId + "|" + seconds;
+            return "here|" + LocalId + "|" + Number(me.JoinedAt) + "|" + me.Name + "|" + me.ColourIndex + "|" + raceId + "|" + seconds + "|" + me.DriverIndex;
         }
 
         // A name from the address bar or from another tab: only a name that passes the player name rules travels
