@@ -52,7 +52,7 @@ On a phone the game shows touch buttons instead.
 | Positions, minimap, name tags | Live place of every racer | `Assets/_Project/RaceFlow/RaceStandings.cs`, `MinimapPath.cs`, `Driving/NameTagManager.cs` |
 | Ghost and medals | Replay of your best lap, Bronze/Silver/Gold scaled to the track | `Assets/_Project/RaceFlow/Ghost*.cs`, `MedalRules.cs` |
 | Driver select | Four drivers, each in their own kart | `Assets/_Project/RaceFlow/Drivers/` |
-| Leaderboard | Top 10 with names: online when the Supabase secrets are set at build time, otherwise on this device. Every time is saved on the device first; if the online service is down the board says so | `Assets/_Project/RaceFlow/Leaderboard/`, `backend/supabase/` |
+| Leaderboard | Global top 10 with names, shared by every player (Supabase). Every time is also saved on the device first, so when the internet or the service is down the board shows the device's times and says so | `Assets/_Project/RaceFlow/Leaderboard/`, `backend/supabase/` |
 | Online race | One room for the class (15 players), shared countdown, same finish order on every screen | `Assets/_Project/Online/`, [docs/online.md](docs/online.md) |
 | Menus and HUD | Start screen, settings, credits, results, plain-language errors | `Assets/_Project/RaceFlow/UI/` |
 | Sound | Engine pitch from speed, drift and boost sounds, music with ducking | `Assets/_Project/Audio/`, `RaceFlow/RaceMusic.cs` |
@@ -72,7 +72,7 @@ git clone https://github.com/belschak/carcavelos-circuit.git
 1. Unity Hub > Projects > Add > Add project from disk > the `carcavelos-circuit` folder. The first import takes several minutes.
 2. Open the scene `Assets/_Project/RaceFlow/Scenes/Main.unity` and press Play.
 
-Race vs Bots, Time Attack and the device leaderboard work on a fresh clone. The Online Race needs the Photon SDK, which its licence keeps out of this repo; without it the mode says "ONLINE RACE NEEDS THE ONLINE BUILD" ([docs/online.md](docs/online.md#for-developers-the-online-race-in-your-local-editor)). The online leaderboard needs two keys that only exist as GitHub secrets ([backend/supabase/README.md](backend/supabase/README.md)).
+Race vs Bots and Time Attack work on a fresh clone; the leaderboard keeps times on your device there. The Online Race needs the Photon SDK, which its licence keeps out of this repo; without it the mode says "ONLINE RACE NEEDS THE ONLINE BUILD" ([docs/online.md](docs/online.md#for-developers-the-online-race-in-your-local-editor)). The global leaderboard needs two keys that exist only as GitHub secrets for the deployed build ([backend/supabase/README.md](backend/supabase/README.md)).
 
 **The Web version on your own machine** (Unity closed). Windows:
 

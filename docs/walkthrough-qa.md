@@ -39,8 +39,8 @@ Every merge into `main` starts a GitHub Actions workflow that builds the Web ver
 ## Data
 
 **Where is the data stored?**
-- On the player's device, in the browser (Unity `PlayerPrefs`): best laps, the ghost of the best lap, settings, chosen mode and driver, the device leaderboard.
-- Online, in one Supabase (Postgres) table `lap_times`: name, time, track, date. Only when the build has the two Supabase secrets; otherwise the board keeps times on the device and its header says "THIS DEVICE".
+- On the player's device, in the browser (Unity `PlayerPrefs`): best laps, the ghost of the best lap, settings, chosen mode and driver, and a copy of every saved time (shown when the online board cannot be reached).
+- Online, in one Supabase (Postgres) table `lap_times`: name, time, track, date. This is the global top 10 every player sees. A daily GitHub Actions read keeps the free project from pausing.
 - Nothing about the online race is stored: Photon only passes messages between the players in the room.
 - No accounts, no emails, no passwords.
 

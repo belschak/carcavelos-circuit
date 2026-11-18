@@ -17,8 +17,8 @@ What the game does not do, where it can break, and what we would build next. Eac
 ### Leaderboard (Supabase)
 - **No accounts.** A name is whatever a player types (2 to 16 allowed characters, a short rude-word list). Two people can use the same name.
 - **Fake but valid times are possible.** The public key can add any row that passes the CHECK rules (5 s to 30 min, clean name), for example from a script. The optional rate limit (`backend/supabase/002_rate_limit.sql`) slows that down; the game also hides times faster than 40 % of the Gold medal time (`LapTimeRules`).
-- **A free Supabase project pauses** after about a week without requests. The game then shows "LEADERBOARD OFFLINE - YOUR TIME IS SAVED ON THIS DEVICE" until someone presses Restore in the dashboard.
-- **Without the two build secrets the board is device-only** ("THIS DEVICE"). Whether the deployed build is online shows in the board's header.
+- **A free Supabase project pauses** after about a week without requests. A daily GitHub Actions read (`.github/workflows/leaderboard-keepalive.yml`) keeps it awake; if it pauses anyway, the game shows "LEADERBOARD OFFLINE - YOUR TIME IS SAVED ON THIS DEVICE" until someone presses Restore in the dashboard.
+- **A local build has no online board.** The two Supabase keys exist only as GitHub secrets, so a build made on a laptop keeps times on that device ("THIS DEVICE"); the deployed build is online.
 
 ### Game and browser
 - **The short link depends on a mirror step.** `nova-kart.github.io` is a copy that the Web build workflow pushes after each `main` build. If that step fails or its deploy key is missing, the short link keeps the previous build while this repository's own Pages address has the new one (same game, one deploy behind).

@@ -22,8 +22,8 @@ flowchart LR
 |---|---|---|
 | Web page | Loading screen, error cards ("The game could not start", "needs WebGL 2"), touch buttons on phones, fullscreen, update check | `Assets/WebGLTemplates/CarcavelosCircuit/index.html` |
 | Game | Everything you see and drive: menus, race, bots, items, HUD, sound | `Assets/_Project/` (one folder per module, below) |
-| Browser storage | Best times, ghost, settings, chosen mode and driver, device leaderboard | Unity `PlayerPrefs` (the browser's IndexedDB) |
-| Supabase | Shared online top 10 (one table), only when the build has the two Supabase secrets; without them the board is device-only and says "THIS DEVICE" | Schema and rules: `backend/supabase/` |
+| Browser storage | Best times, ghost, settings, chosen mode and driver, a copy of every saved time (the offline fallback) | Unity `PlayerPrefs` (the browser's IndexedDB) |
+| Supabase | The global top 10 shared by all players (one table); a daily GitHub Actions read keeps the free project awake (`.github/workflows/leaderboard-keepalive.yml`) | Schema and rules: `backend/supabase/` |
 | Photon Cloud | Relays the online race between players (no data stored) | Code: `Assets/_Project/Online/Fusion/` |
 | GitHub Actions | Runs the tests, builds the Web version, deploys `main` | `.github/workflows/` |
 
@@ -62,8 +62,8 @@ References point one way (read from the `.asmdef` files): `Driving`, `Track`, `A
 | Data | Stored where | Who can read or change it |
 |---|---|---|
 | Best lap per track, ghost of the best lap, settings, last mode, driver, player name, which coach tips were shown | `PlayerPrefs` in the player's browser | Only that browser. Clearing site data removes it |
-| Device leaderboard (fallback) | `PlayerPrefs` (`CarcavelosCircuit.Leaderboard.*`) | Only that browser |
-| Online leaderboard (only when the Supabase secrets are set at build time) | Supabase table `lap_times` (name, seconds, track, created_at) | Public key may only SELECT and INSERT; Row Level Security and CHECK rules in `backend/supabase/001_lap_times.sql`; no UPDATE or DELETE |
+| Device copy of every saved time (fallback when offline) | `PlayerPrefs` (`CarcavelosCircuit.Leaderboard.*`) | Only that browser |
+| Global leaderboard | Supabase table `lap_times` (name, seconds, track, created_at) | Public key may only SELECT and INSERT; Row Level Security and CHECK rules in `backend/supabase/001_lap_times.sql`; no UPDATE or DELETE |
 | Online race state (names, driver, pose, finish) | In memory in each player's game, relayed by Photon | Nothing is stored; it is gone when the room empties |
 | Keys (Photon App ID, Supabase URL + public key, Unity licence) | GitHub Actions secrets only | Written into the build at build time, never committed |
 
