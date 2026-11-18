@@ -395,10 +395,48 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 settings.FindProperty(slot.Key).objectReferenceValue = tiny;
             }
             settings.ApplyModifiedPropertiesWithoutUndo();
+            int slots = before.Count;
+            // The renderers (PC_Renderer, Mobile_Renderer) also point at URP's PostProcessData asset in the package, which
+            // has its own film grain list; round 2 found the 10 noise maps still in the build through it (18 Nov). For the
+            // build only, each renderer points at a copy of that asset whose grain slots hold the same blue noise.
+            AssetDatabase.DeleteAsset(BuildOnlyPostProcessDataPath); // left over by a build that was killed half-way
+            UnityEngine.Object copy = null;
+            foreach (string guid in AssetDatabase.FindAssets("t:ScriptableRendererData", new[] { "Assets/Settings" }))
+            {
+                string rendererPath = AssetDatabase.GUIDToAssetPath(guid);
+                var renderer = new SerializedObject(AssetDatabase.LoadMainAssetAtPath(rendererPath));
+                SerializedProperty postProcess = renderer.FindProperty("postProcessData");
+                if (postProcess == null || postProcess.objectReferenceValue == null)
+                {
+                    continue;
+                }
+                if (copy == null)
+                {
+                    copy = UnityEngine.Object.Instantiate(postProcess.objectReferenceValue);
+                    AssetDatabase.CreateAsset(copy, BuildOnlyPostProcessDataPath);
+                    var copied = new SerializedObject(copy);
+                    SerializedProperty slot = copied.GetIterator();
+                    while (slot.Next(true))
+                    {
+                        if (slot.propertyType == SerializedPropertyType.ObjectReference && slot.propertyPath.Contains("filmGrainTex.Array.data["))
+                        {
+                            slot.objectReferenceValue = tiny;
+                            slots++;
+                        }
+                    }
+                    copied.ApplyModifiedPropertiesWithoutUndo();
+                }
+                before.Add(new System.Collections.Generic.KeyValuePair<string, UnityEngine.Object>(RendererKey + rendererPath, postProcess.objectReferenceValue));
+                postProcess.objectReferenceValue = copy;
+                renderer.ApplyModifiedPropertiesWithoutUndo();
+            }
             AssetDatabase.SaveAssets();
-            Debug.Log("Role4WebBuild: " + before.Count + " film grain textures left out of the Web build (no grain on the Web).");
+            Debug.Log("Role4WebBuild: " + slots + " film grain slots point at a 16 px noise for the Web build (no grain on the Web).");
             return before;
         }
+
+        private const string BuildOnlyPostProcessDataPath = "Assets/Settings/WebBuildOnly_PostProcessData.asset";
+        private const string RendererKey = "renderer:";
 
         private static void RestoreFilmGrainTextures(System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, UnityEngine.Object>> before)
         {
@@ -409,6 +447,13 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             var settings = new SerializedObject(AssetDatabase.LoadMainAssetAtPath(UrpGlobalSettingsPath));
             foreach (System.Collections.Generic.KeyValuePair<string, UnityEngine.Object> slot in before)
             {
+                if (slot.Key.StartsWith(RendererKey, StringComparison.Ordinal))
+                {
+                    var renderer = new SerializedObject(AssetDatabase.LoadMainAssetAtPath(slot.Key.Substring(RendererKey.Length)));
+                    renderer.FindProperty("postProcessData").objectReferenceValue = slot.Value;
+                    renderer.ApplyModifiedPropertiesWithoutUndo();
+                    continue;
+                }
                 SerializedProperty property = settings.FindProperty(slot.Key);
                 if (property != null)
                 {
@@ -416,6 +461,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 }
             }
             settings.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.DeleteAsset(BuildOnlyPostProcessDataPath);
         }
 
         // GraphicsSettings fog stripping, read and written through the settings asset (Unity has no API for it).

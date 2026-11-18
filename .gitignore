@@ -175,3 +175,7 @@ Thumbs.db
 .env.*
 !.env.example
 *.env
+
+# P8: temporary copy of URP PostProcessData, exists only during the Web build
+/Assets/Settings/WebBuildOnly_PostProcessData.asset
+/Assets/Settings/WebBuildOnly_PostProcessData.asset.meta
