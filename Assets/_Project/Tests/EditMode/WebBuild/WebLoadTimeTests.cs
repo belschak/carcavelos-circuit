@@ -23,7 +23,8 @@ namespace CarcavelosCircuit.Tests.EditMode
         [TestCase("f021_head_wetsuit.jpg", 512)]
         [TestCase("m021_body_wetsuit.jpg", 512)]
         [TestCase("KartLOD_Palette_Colour.png", 0)]
-        [TestCase("TyreFar_Normal.png", 0)]
+        [TestCase("TyreFar_Normal.png", 128)]
+        [TestCase("TyreFar_Retro_Colour.png", 128)]
         [TestCase("ground_detail_data.png", 0)]
         [TestCase("C1_hatchback_normal.png", 512)]
         public void MaxWebSize_DriversAndSurfersHaveAWebSize(string file, int expected)

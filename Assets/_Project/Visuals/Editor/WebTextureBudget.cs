@@ -80,6 +80,13 @@ namespace CarcavelosCircuit.Visuals.Editor
                     default: return 256; // MetallicSmoothness
                 }
             }
+            // Load time P8 (18 Nov): the far karts' tyre maps. The far kart only shows while the kart is under 12 % of the
+            // screen height (NovaKartRosterBuilder NearUntil), ~130 px at 1080p, so a tyre is at most ~45 px tall: 128 px
+            // still has more texels than screen pixels. Twelve 512 px maps were 3.4 MB of the game download.
+            if (file.StartsWith("TyreFar_", StringComparison.Ordinal))
+            {
+                return 128;
+            }
             // Load-time pass (17 Nov): the surfers' Rocketbox maps (1024 px) on the beach, seen from the road 20+ m away.
             if (SurferMap.IsMatch(file))
             {
