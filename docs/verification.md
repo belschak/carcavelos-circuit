@@ -137,12 +137,13 @@ added that day for rejected and edge cases (`Verification/*` and `Online/OnlineH
   when the tab loses focus, the loading screen) is checked by reading the template text, not by running it in a
   browser. Phones were checked by hand and with Playwright scripts on 7 phone profiles.
 - **Total download size and frame rate on a phone:** need a finished build and a real device.
-- **A bit-identical bot race.** The Play Mode lap with five bots steps the game one physics step per frame, so
-  it no longer depends on the machine's speed, but PhysX can still resolve a kart-on-wall or kart-on-kart contact a
-  hair differently from run to run (Enhanced Determinism is off in the physics settings, a game-wide choice). Rarely a
-  bot then needs the game's own recovery once. The test therefore checks that every bot finishes and that the field
-  is put back at most once per lap (`BotRacePlayTests`), and logs every bot's position every 5 s so two runs can be
-  compared.
+- **A bit-identical bot race.** The Play Mode lap with five bots steps the game one physics step per frame and puts
+  the frame and physics clocks in the same relation in every run (the bots steer from interpolated kart positions,
+  which depend on it), so runs match to the centimetre for the first 15 s. A float-rounding rest remains, because each
+  run's absolute clock differs, and contacts between karts can grow it; rarely a bot then needs the game's own
+  recovery once. The test therefore checks that every bot finishes and that the field is put back at most once per lap
+  (`BotRacePlayTests`), and logs every bot's position every 5 s so two runs can be compared. A fully identical race
+  would need changes in the game's driving code.
 - **Values that only our own code produces:** a few rule classes do not guard against a NaN lap time
   (for example `PersonalBest.FinishRun`). A lap time always comes from the race timer's timestamps, which cannot be
   NaN, and a NaN read from a save loads as "no record", so this was left as it is.

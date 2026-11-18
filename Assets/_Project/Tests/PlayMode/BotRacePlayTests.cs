@@ -126,12 +126,13 @@ namespace CarcavelosCircuit.Tests.PlayMode
             // (CI run 44302978475: Tiago put back 1x, the re-run clean). Now every frame is exactly one physics step
             // of 0.02 game seconds, the game's normal 50 fps, however slow the machine is, and the item rolls use a
             // fixed seed. The bots themselves are unchanged; the test only stops depending on the machine's speed.
-            // Still not bit-identical (main run 44317019737, 18 Nov: Tiago backed out 7x and was put back once, the other
-            // four bots matched the green runs to 0.1 s). What is left is PhysX itself: Enhanced Determinism is off in
-            // Project Settings > Physics, so contacts (kart on wall, kart on kart) can resolve a hair differently per run,
-            // and Tiago's drifts bring it into many contacts. That is a game-wide setting, not this test's to change.
-            // So the test lets the world settle before GO, logs every bot's position every 5 s (to compare runs), and
-            // accepts the game's own recovery at most ONCE in the whole field (see the end of this test).
+            // That was still not enough (main run 44317019737, 18 Nov: Tiago backed out 7x and was put back once). The
+            // karts' rigidbodies use interpolation and the bots steer from those interpolated positions, which depend on
+            // the gap between the frame clock and the physics clock, a random value per run (see below). The test now
+            // fixes that gap, lets the world settle before GO and logs every bot's position every 5 s: with that, runs
+            // match to the centimetre for the first 15 s. A float-rounding rest remains (each run's absolute clock
+            // differs) and kart contacts can grow it, so the test accepts the game's own recovery at most ONCE in the
+            // whole field (see the end of this test). Making it bit-identical would need game changes (Luc's code).
             Time.timeScale = 1f;
             Time.captureDeltaTime = Time.fixedDeltaTime;
             Random.InitState(20261118);
@@ -139,6 +140,21 @@ namespace CarcavelosCircuit.Tests.PlayMode
             {
                 yield return null; // physics bodies, grid and the streamed-in campus come to rest before the countdown
             }
+            // Before this test the game ran on real frame times, so the gap between the frame clock (Time.time) and the
+            // physics clock (Time.fixedTime) is random in every run. Interpolated kart positions (what the bots steer
+            // from) depend on it. One frame of the right length puts the gap at half a step in every run, far from the
+            // edges where a frame could get 0 or 2 physics steps (the trace counts those; 0 in every run so far).
+            // Measured 18 Nov: without this, the same grid but all five bots 0.2-0.3 m apart after 5 s; with it,
+            // identical positions for the first 15 s.
+            float step = Time.fixedDeltaTime;
+            float gapBefore = Time.time - Time.fixedTime;
+            float shift = Mathf.Repeat(0.5f * step - gapBefore, step);
+            Time.captureDeltaTime = shift < 0.001f ? shift + step : shift;
+            yield return null;
+            Time.captureDeltaTime = step;
+            yield return null;
+            Debug.Log("BotRacePlayTests trace clock gap " + gapBefore.ToString("0.0000") + " -> "
+                + (Time.time - Time.fixedTime).ToString("0.0000") + " s (target " + (0.5f * step).ToString("0.0000") + ")");
             Debug.Log("BotRacePlayTests trace grid: " + Positions());
             race.BeginRace();
             float waited = 0f;
@@ -153,8 +169,15 @@ namespace CarcavelosCircuit.Tests.PlayMode
             float[] lapTimes = new float[squad.Bots.Count];
             int finished = 0;
             int frame = 0;
+            int oddFrames = 0; // frames with 0 or 2+ physics steps (should stay 0)
+            float lastFixedTime = Time.fixedTime;
             while (finished < squad.Bots.Count && Time.time - start < LapTimeoutSeconds)
             {
+                if (Mathf.Abs(Time.fixedTime - lastFixedTime - step) > 0.25f * step && frame > 0)
+                {
+                    oddFrames++;
+                }
+                lastFixedTime = Time.fixedTime;
                 if (frame++ % TraceEveryFrames == 0)
                 {
                     Debug.Log("BotRacePlayTests trace t=" + (Time.time - start).ToString("0") + ": " + Positions());
@@ -171,6 +194,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
                 yield return null;
             }
             Time.captureDeltaTime = 0f;
+            Debug.Log("BotRacePlayTests trace frames with 0 or 2+ physics steps: " + oddFrames + " of " + frame);
 
             for (int i = 0; i < squad.Bots.Count; i++)
             {
