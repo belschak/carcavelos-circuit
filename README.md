@@ -8,7 +8,7 @@ A 3D kart racer on a model of Nova SBE's Carcavelos campus that runs in the brow
 
 Also live at https://belschak.github.io/carcavelos-circuit/: the same build of `main`, published to both addresses by the same workflow ([why](docs/architecture.md#build-and-deploy)).
 
-Built with Unity 6000.3.28f1 (C#), compiled to WebAssembly, deployed from `main` to GitHub Pages by GitHub Actions. The code lives in this repository only. Online services: Supabase (the global leaderboard) and Photon Fusion 2 (the online race); if either is down, the rest of the game keeps working and says what failed.
+Built with Unity 6000.3.28f1 (C#) instead of the course's Python + Streamlit, a stack approved by the teaching staff (18.11.2026) ([why](docs/architecture.md#stack-approval)); compiled to WebAssembly, deployed from `main` to GitHub Pages by GitHub Actions. The code lives in this repository only. Online services: Supabase (the global leaderboard) and Photon Fusion 2 (the online race); if either is down, the rest of the game keeps working and says what failed.
 
 ## Team
 

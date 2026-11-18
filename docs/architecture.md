@@ -94,7 +94,7 @@ So the code on `main` is the code that is deployed, and nobody deploys from a la
 
 | Choice | Why | What it costs |
 |---|---|---|
-| **Unity (C#) instead of the course's Python + Streamlit** | The product is a 3D racing game: 60 frames a second, physics, a camera, a 3D campus. The product needs 3D physics, real-time play between 15 users and phone controls, exactly the cases the course's stack guide lists as Streamlit's weak spots. Unity gives physics, a scene editor, Cinemachine, a Web export and NUnit tests. Details and approval status: "Stack approval" below | A different language and test tool from the course; about 50 MB download; Unity licence needed in CI |
+| **Unity (C#) instead of the course's Python + Streamlit** | The product is a 3D racing game: 60 frames a second, physics, a camera, a 3D campus. The product needs 3D physics, real-time play between 15 users and phone controls, exactly the cases the course's stack guide lists as Streamlit's weak spots. Unity gives physics, a scene editor, Cinemachine, a Web export and NUnit tests. The stack was approved by the teaching staff (18.11.2026); details in "Stack approval" below | A different language and test tool from the course; about 50 MB download; Unity licence needed in CI |
 | **Rule-based bots, no machine learning** | Every decision is a few lines of maths (`BotRules`: pure-pursuit steering, braking before bends, stuck check) that any member can explain and Edit Mode tests can check. Bots use the player's kart physics, so they are fair and can be bumped | Bots do not learn; they follow the racing line and a light rubber band |
 | **Items with campus names** (Espresso, Seagull Delivery, Carcavelos Wave, Dean's List) | Arcade feel and a reason to drive through the boxes. Odds favour the player who is behind | Bots do not use items (yet) |
 | **Supabase for the leaderboard** | Free hosted Postgres with a REST API, so no server of ours. Row Level Security makes a public key safe: it can only read and add rows that pass the CHECK rules | A free project pauses after a week without requests; a script can post fake but valid times (limits page) |
@@ -115,9 +115,9 @@ So the code on `main` is the code that is deployed, and nobody deploys from a la
 | Phone controls (touch buttons, landscape layout) | `Assets/WebGLTemplates/CarcavelosCircuit/` | Streamlit's layout is form-like; no thumb controls over a game view |
 | A custom interface (menus, HUD, minimap, finish cinematic) | `RaceFlow/UI/` | Streamlit gives standard widgets, not a game interface |
 
-**How the stack decision was handled.** The team project page allows "start a new application" of the team's own choice; the stack guide says a language other than Python is agreed with the teaching staff case by case. The team chose Unity on 6 Nov 2026 ([decisions.md](decisions.md)) and Noah asked the teaching staff for their OK on 7 Nov (task G1 in [TASKS.md](../TASKS.md)).
+**How the stack decision was handled.** The team project page allows "start a new application" of the team's own choice; the stack guide says a language other than Python is agreed with the teaching staff case by case. The team chose Unity on 6 Nov 2026 ([decisions.md](decisions.md)) and Noah asked the teaching staff for their OK on 7 Nov (task G1 in [TASKS.md](../TASKS.md)). The staff approved the Unity stack; David confirmed the approval on 18 Nov 2026 ([decisions.md](decisions.md)).
 
-**Status:** requested by Noah on 7 Nov 2026, answer pending.
+**Status:** approved by the teaching staff (18.11.2026). Requested by Noah on 7 Nov 2026 (task G1).
 
 ## Read further
 
