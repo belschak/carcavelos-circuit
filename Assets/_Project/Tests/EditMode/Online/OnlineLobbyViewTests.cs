@@ -77,6 +77,24 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void TimeUpResults_HideTheStartScreenBoard_AndBringItBack()
+        {
+            // Time up: the DNF player is back on the start screen, whose leaderboard showed through the room results
+            // card (live QA 18 Nov 2026).
+            VisualElement board;
+            VisualElement root = DocumentWithBoard(out board);
+            VisualElement startBoard = new VisualElement { name = OnlineLobbyView.StartBoardName };
+            root.Add(startBoard);
+            OnlineLobbyView view = new OnlineLobbyView(root);
+            view.ShowResults(TwoRows(), 2, false, "WAITING FOR THE HOST", "TIME UP: ROOM RESULTS");
+            Assert.IsTrue(view.HidesStartBoard);
+            Assert.AreEqual(Visibility.Hidden, startBoard.style.visibility.value, "no LEADERBOARD TOP 10 under the room results");
+            view.Hide();
+            Assert.IsFalse(view.HidesStartBoard);
+            Assert.AreEqual(StyleKeyword.Null, startBoard.style.visibility.keyword, "the start screen board is back");
+        }
+
+        [Test]
         public void NoBoardInTheDocument_NoProblem()
         {
             OnlineLobbyView view = new OnlineLobbyView(new VisualElement());
