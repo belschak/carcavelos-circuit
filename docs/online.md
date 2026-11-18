@@ -3,7 +3,7 @@
 Everyone in the class joins the live game from the one link, joins the one room and races the others. Decided in the group chat on 16 Nov (Luc proposed Photon Fusion 2), details in `docs/decisions.md` (2026-11-16). Since the team test on 17 Nov there is ONE room for the whole class (it was a noon and a sunset room): see "One room" below.
 
 ## For players
-1. Open https://belschak.github.io/carcavelos-circuit/ and pick **ONLINE RACE** on the start screen.
+1. Open the live link (top of the [README](../README.md)) and pick **ONLINE RACE** on the start screen.
 2. Pick your driver, type a name, then press **JOIN RACE** (or Enter). The room takes 15 players, first come first served; a full room says so: try again after the race that is running. Noon or sunset is your own look (**T** or the LIGHT button in the lobby, T on the start screen); the others see their own light.
 3. Everyone sees everyone else in the driver they picked (Rookie, Tiago, Nova or Amara, each in their own kart). The name tag and the minimap dot carry the player's room colour, so two players with the same driver stay apart.
 4. The host (the first player in the room) presses **START RACE**. Everyone counts down to the same GO. One lap. Your own kart drives exactly as offline; the others are shown as they drive.

@@ -6,13 +6,13 @@ Sources: the course wiki https://2477-introduction-programming.gitlab.io/wiki/ (
 | # | Requirement | How we meet it | Status |
 |---|---|---|---|
 | C1 | 3 to 4 members | 4: see README | done |
-| C2 | New application of the team's own choice (allowed by the wiki: "start a new application") | From-scratch Unity game; Noah's email to the teaching team (G1) is a courtesy, the wiki allows it | ok |
+| C2 | New application of the team's own choice (allowed by the wiki: "start a new application") | From-scratch Unity game. The stack guide says a language other than Python is agreed with the staff case by case: asked via the Moodle question form on 7 Nov (G1), outcome in `docs/decisions.md`; reasons in `docs/architecture.md` | ok |
 | C3 | **Submission: Mon 23 Nov 2026, 23:59, on Moodle.** One member submits the GitHub repo link on the team project assignment. **Commits after the deadline are not graded** | Task G5 | open |
-| C4 | **Every member contributes code to the repository** | Each member commits their own code from their own GitHub account (commit email linked to it; your avatar must show on your commits). AI-written is fine, but you commit it yourself | open |
-| C5 | **Repository is public** (staff open it without an invitation); keys and passwords stay out of it | David switches visibility himself after the final check G4 | open |
-| C6 | **The deployed app's code is on `main`** | Only build from `main`; `docs/builds.md` records the commit of every deployed build | open |
-| C7 | **README.md** with the deployed URL, **all members' names and student numbers**, and the commands to run the app and its tests locally | README sections "Team", "Run the app", "Run the tests" (G2) | open |
-| C8 | Deployed at a public URL | CI Web build; itch.io / GitHub Pages (V6, G5) | open |
+| C4 | **Every member contributes code to the repository** | Each member commits their own code from their own GitHub account (commit email linked to it; your avatar must show on your commits). AI-written is fine, but you commit it yourself. All four have merged pull requests on `main` (`docs/walkthrough-qa.md`, "Who built what") | done |
+| C5 | **Repository is public** (staff open it without an invitation); keys and passwords stay out of it | Public (checked 18 Nov 2026); only David changes the visibility | done |
+| C6 | **The deployed app's code is on `main`** | GitHub Actions builds and deploys every push to `main`; the `github-pages` environment accepts only `main` | done |
+| C7 | **README.md** with the deployed URL, **all members' names and student numbers**, and the commands to run the app and its tests locally | README sections "Team", "Run the app locally", "Run the tests" (G2) | done |
+| C8 | Deployed at a public URL | GitHub Pages, link at the top of the README (V6) | done |
 
 ## Presentation (weeks 11 and 12, in class, TXC 15:30, half the teams each week: Tue 24 Nov or Fri 4 Dec; our day is not published yet)
 1. **Live demo** at the deployed URL. The format is up to us, but the app must really run in front of the class. Slides or recorded videos are not accepted as a replacement.
@@ -38,7 +38,7 @@ Each criterion is scored Low (30 % of its weight), Mid (70 %) or High (100 %). *
 3. **Scope**: kart physics with drift + jumps, items, rule-based bots, positions + minimap, online leaderboard, ghost, touch controls, a recognisable campus: far beyond a solo project. Consistent look (`docs/art-style.md`).
 4. **Verification**: Edit Mode tests for every rule (accepted + rejected + edge cases: e.g. a name with 1 or 17 characters, a time below the possible minimum, a racer registered twice, a lap driven backwards), Play Mode smoke tests for the race, all green on `main` (CI). `docs/verification.md` says what is NOT tested (feel, visuals, browser quirks) and how we checked it by hand.
 5. **Security**: no keys in the repo (gitleaks clean, keys only as CI secrets); the leaderboard database only allows *insert* and *read* for the public key (no update or delete), checks name length/characters and time range itself (not only the game), and the game validates everything it gets back; `Packages/manifest.json` pinned, no extra packages; repo public only after the G4 check.
-6. **Walkthrough**: `docs/explain/` has one walkthrough per role (how, why, limits, what we would change); every member reads all four and can answer the three wiki example questions for our game (data: personal bests in the browser's PlayerPrefs, times in the online database; tests: see 4; leaderboard down: the game keeps the time locally and shows "offline").
+6. **Walkthrough**: `docs/architecture.md` (how + why), `docs/limits-and-next-steps.md` (limits + how it could change) and `docs/walkthrough-qa.md` (answers every member can give) for the whole project; `docs/explain/` has one walkthrough per role (how, why, limits, what we would change); every member reads all four and can answer the three wiki example questions for our game (data: personal bests in the browser's PlayerPrefs, times in the online database; tests: see 4; leaderboard down: the game keeps the time locally and shows "offline").
 
 ## Exam (60 % of the course grade, individual)
 **Sat 19 Dec 2026, 17:30**, on Wiseflow in a locked-down browser, own laptop (room: NOVA SharePoint). **30 multiple-choice questions about the process taught in the course: planning a task, briefing an agent, judging what comes back. It does not ask you to read code.** Make-up exam: 13 Jan 2027, 16:00, same rules. Working on this project the way `AGENTS.md` describes (plan, brief your AI, check what it returns) is good practice for it.
