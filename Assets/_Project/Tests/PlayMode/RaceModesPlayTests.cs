@@ -92,11 +92,15 @@ namespace CarcavelosCircuit.Tests.PlayMode
         }
 
         // M2 online race: without the online build the Online card is refused; with it, picking Online opens the
-        // lobby (OnlineRaceHooks.OpenLobby) instead of a countdown, and Online is never saved as the last mode.
+        // driver select first (team test 17 Nov 2026, Mario Kart style) and its READY opens the lobby
+        // (OnlineRaceHooks.OpenLobby) instead of a countdown. Online is never saved as the last mode.
         [UnityTest]
-        public IEnumerator Online_RefusedWithoutTheOnlineBuild_OpensTheLobbyWithIt_NeverSaved()
+        public IEnumerator Online_RefusedWithoutTheOnlineBuild_DriverSelectThenLobbyWithIt_NeverSaved()
         {
             System.Action<RaceManager> hookBefore = OnlineRaceHooks.OpenLobby;
+            const string DriverKey = "CarcavelosCircuit.Driver";
+            bool hadDriver = PlayerPrefs.HasKey(DriverKey);
+            int savedDriver = PlayerPrefs.GetInt(DriverKey, DriverRoster.Rookie);
             try
             {
                 string message;
@@ -113,6 +117,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
                 hud.ModePicker.Pick(RaceMode.OnlineRace, true);
                 Assert.IsTrue(hud.ModePicker.IsMessageShown, "the card answers with the refused chip");
                 Assert.AreNotEqual(RaceMode.OnlineRace, race.Mode);
+                Assert.IsFalse(hud.Drivers.IsOpen, "a refused mode never opens the driver select");
                 yield return null;
                 Assert.AreEqual(RaceState.Ready, race.State);
 
@@ -120,9 +125,16 @@ namespace CarcavelosCircuit.Tests.PlayMode
                 OnlineRaceHooks.OpenLobby = manager => opened = manager;
                 Assert.IsTrue(OnlineRaceHooks.Available);
                 PlayerPrefs.SetInt(ModeKey, (int)RaceMode.TimeAttack);
+                DriverChoice.Select(DriverChoice.Index, false); // a driver is picked, so READY is there
                 hud.ModePicker.Pick(RaceMode.OnlineRace, true);
-                Assert.AreSame(race, opened, "picking Online opens the lobby for this race");
+                Assert.IsNull(opened, "the lobby waits until a driver is chosen");
+                Assert.IsTrue(hud.Drivers.IsOpen, "picking Online opens the driver select first");
                 Assert.AreEqual(RaceMode.OnlineRace, race.Mode);
+                yield return null;
+                Assert.IsTrue(hud.Drivers.IsOpen, "the driver select stays open (no key started anything)");
+                hud.Drivers.Ready();
+                Assert.AreSame(race, opened, "READY opens the lobby for this race");
+                Assert.IsFalse(hud.Drivers.IsOpen, "the driver select is gone behind the lobby");
                 Assert.AreEqual((int)RaceMode.TimeAttack, PlayerPrefs.GetInt(ModeKey), "Online is never saved as the last mode");
                 yield return WaitFrames(3);
                 Assert.AreEqual(RaceState.Ready, race.State, "no countdown: the lobby starts the race");
@@ -135,6 +147,9 @@ namespace CarcavelosCircuit.Tests.PlayMode
             finally
             {
                 OnlineRaceHooks.OpenLobby = hookBefore;
+                if (hadDriver) PlayerPrefs.SetInt(DriverKey, savedDriver);
+                else PlayerPrefs.DeleteKey(DriverKey);
+                DriverChoice.Select(DriverRoster.IsValid(savedDriver) ? savedDriver : DriverRoster.Rookie, false);
             }
         }
 

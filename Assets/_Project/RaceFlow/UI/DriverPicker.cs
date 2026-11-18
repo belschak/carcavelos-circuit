@@ -7,10 +7,13 @@ namespace CarcavelosCircuit.RaceFlow
 {
     // Driver select on the start screen (Luc, 17 Nov 2026), a kart game's character select between the race mode
     // and the countdown. Built in code like ModePicker, so Main.unity and RaceHud.uxml need no change.
-    // Flow: pick a mode (click a card, or any key) -> this panel replaces the mode cards -> pick a driver -> READY.
+    // Flow (every mode, Mario Kart style): pick a mode (click a card, or any key) -> this panel replaces the mode
+    // cards -> pick a driver -> READY. Offline READY starts the countdown; online READY opens the online lobby
+    // (OnlineRaceHooks.OpenLobby: name + join), which then starts the race for the whole room.
     // - Four cards in a row (Luc's roster, each driver with their own kart): the driver's name above the portrait (Resources/DriverPortraits, made by Role 3's
     //   DriverPortraitBuilder). The mouse on a card makes it bigger and shows the driver's one-line description
-    //   under the row. Click or tap = pick that driver (orange plate); then the READY button appears below.
+    //   under the row. Click or tap = pick that driver (orange plate, a press pushes the card in); then the READY
+    //   button appears below.
     // - Keys: A/D or left/right move the pick, Enter or Space = READY, Escape or Backspace = back to the modes.
     // - The last pick is saved (DriverChoice), so the next visit opens with it picked and READY already there.
     // Looks only: every driver drives the same kart (the Time Attack leaderboard stays fair).
@@ -32,6 +35,8 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly List<Texture2D> portraits = new List<Texture2D>();
         private int hovered = -1;     // the card under the mouse, -1 = none
         private int picked = -1;      // the driver picked in this visit of the panel, -1 = none yet
+        private int pressed = -1;     // the card the mouse button went down on, -1 = none
+        private int closedFrame = -1; // the frame the panel closed in: its key (Backspace, Enter) is used up
         private bool readyThisFrame;  // a click on READY or BACK this frame (handled in Update)
         private bool backThisFrame;
 
@@ -39,7 +44,8 @@ namespace CarcavelosCircuit.RaceFlow
         public bool IsOpen { get; private set; }
 
         // True while a click or key belongs to the panel, so it must not ALSO count as "any key" (MenuUsesInput).
-        public bool UsesInput { get { return IsOpen; } }
+        // Also in the frame it closed: Backspace (back) is a normal start key and would open the panel again at once.
+        public bool UsesInput { get { return IsOpen || closedFrame == Time.frameCount; } }
 
         // The driver whose card is highlighted (Play Mode test), -1 = none.
         public int Picked { get { return picked; } }
@@ -178,10 +184,24 @@ namespace CarcavelosCircuit.RaceFlow
             card.RegisterCallback<PointerEnterEvent>(evt => SetHovered(index));
             card.RegisterCallback<PointerLeaveEvent>(evt =>
             {
+                if (pressed == index)
+                {
+                    pressed = -1; // dragged off the card: no click comes, the card springs back
+                }
                 if (hovered == index)
                 {
                     SetHovered(-1);
                 }
+            });
+            card.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                pressed = index;
+                ShowState();
+            });
+            card.RegisterCallback<PointerUpEvent>(evt =>
+            {
+                pressed = -1;
+                ShowState();
             });
             card.RegisterCallback<ClickEvent>(evt => Pick(index));
             return card;
@@ -233,12 +253,14 @@ namespace CarcavelosCircuit.RaceFlow
         // "Any key" or a mode card on the start screen: show the drivers instead of the modes.
         private void Open()
         {
-            if (IsOpen || raceManager.State != RaceState.Ready || !raceManager.IsSetUp || raceManager.IsPaused)
+            if (IsOpen || raceManager.State != RaceState.Ready || !raceManager.IsSetUp || raceManager.IsPaused
+                || raceManager.ExternalStartOnly)
             {
-                return;
+                return; // ExternalStartOnly: the online lobby is open and owns the start screen
             }
             IsOpen = true;
             hovered = -1;
+            pressed = -1;
             picked = DriverChoice.HasPicked ? DriverChoice.Index : -1;
             panel.style.display = DisplayStyle.Flex;
             for (int i = 0; i < hiddenWhileOpen.Count; i++)
@@ -257,6 +279,8 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
             IsOpen = false;
+            closedFrame = Time.frameCount;
+            pressed = -1;
             SetHovered(-1);
             panel.style.display = DisplayStyle.None;
             for (int i = 0; i < hiddenWhileOpen.Count; i++)
@@ -319,7 +343,8 @@ namespace CarcavelosCircuit.RaceFlow
             PlaySound(MenuSound.Toggle);
         }
 
-        // READY: the countdown begins in the mode picked before.
+        // READY: offline the countdown begins in the mode picked before; online the lobby opens (the driver is
+        // saved first, so the lobby can send it to the room: DriverChoice).
         public void Ready()
         {
             if (picked < 0)
@@ -328,6 +353,14 @@ namespace CarcavelosCircuit.RaceFlow
             }
             DriverChoice.Select(picked);
             Close();
+            if (MenuInputRules.ReadyOpensLobby(raceManager.Mode))
+            {
+                if (OnlineRaceHooks.OpenLobby != null)
+                {
+                    OnlineRaceHooks.OpenLobby(raceManager);
+                }
+                return;
+            }
             raceManager.BeginRace();
         }
 
@@ -347,7 +380,7 @@ namespace CarcavelosCircuit.RaceFlow
                 cards[i].EnableInClassList("plate--orange", isPicked);
                 names[i].style.color = isPicked ? HudColors.Ink : HudColors.Cream;
                 names[i].style.unityTextOutlineWidth = isPicked ? new StyleFloat(0f) : new StyleFloat(StyleKeyword.Null);
-                float scale = i == hovered ? HoverScale : (isPicked ? 1.04f : 1f);
+                float scale = i == pressed ? 0.96f : (i == hovered ? HoverScale : (isPicked ? 1.04f : 1f));
                 cards[i].style.scale = new Scale(new Vector3(scale, scale, 1f));
                 cards[i].style.transitionDuration = new List<TimeValue> { new TimeValue(reduced ? 0 : 120, TimeUnit.Millisecond) };
             }

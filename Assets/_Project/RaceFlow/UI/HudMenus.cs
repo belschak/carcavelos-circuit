@@ -15,7 +15,8 @@ namespace CarcavelosCircuit.RaceFlow
     // - Tells the RaceManager when a menu uses the keys and the mouse, so they do not also start the race.
     // - Says when a menu sound should play (event SoundRequested, audit 10). RaceHud passes it on to RaceSounds,
     //   which picks the clip. So this class stays silent itself and needs no AudioSource.
-    // Plain C# (no MonoBehaviour), so the scene needs no new component. Escape is never used: it leaves browser fullscreen.
+    // Plain C# (no MonoBehaviour), so the scene needs no new component. Escape (or Backspace) closes the settings and the
+    // credits; in browser fullscreen the browser takes Escape, so O / C and the CLOSE button do it too.
     public class HudMenus
     {
         private const float ToastSeconds = 1.4f;
@@ -145,6 +146,10 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 NextMood();
             }
+            else if ((settingsOpen || creditsOpen) && RaceKeys.BackPressed())
+            {
+                CloseMenus(); // Escape or Backspace closes the card, like BACK on the driver select (team test 17 Nov)
+            }
             else if (settingsOpen)
             {
                 settingsPanel.HandleKeys();
@@ -166,9 +171,17 @@ namespace CarcavelosCircuit.RaceFlow
             HudFx.SetClickable(startMood, ready && noMenu);
             HudFx.SetClickable(resultsSettings, state == RaceState.Results && noMenu);
 
-            // While a menu is open, or the mouse points at a menu button on the start screen, the keys and clicks
-            // belong to the menu: "press any key to start" must not fire as well.
-            raceManager.MenuUsesInput = !noMenu || (ready && (MouseOnStartButton() || Time.frameCount - closedFrame <= 1));
+            // While a menu is open, the keys and clicks belong to the menu; on the start screen a mouse PRESS on a
+            // menu button belongs to that button (its ClickEvent comes on release). "Press any key to start" must not
+            // fire as well. A key pressed while the mouse only rests on a button still starts (MenuInputRules).
+            bool clickOnButton = ready && MenuInputRules.ClickBelongsToButton(RaceKeys.ClickPressed(), MouseOnStartButton());
+            raceManager.MenuUsesInput = !noMenu || clickOnButton || (ready && Time.frameCount - closedFrame <= 1);
+        }
+
+        // A card was closed in this frame (CLOSE, a click next to it, O, C, Escape): its key or click is used up.
+        public bool ClosedThisFrame
+        {
+            get { return closedFrame == Time.frameCount; }
         }
 
         // Which HUD element is under the mouse? Only the menu buttons can be picked on the start screen

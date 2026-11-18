@@ -78,6 +78,27 @@ namespace CarcavelosCircuit.Tests.PlayMode
             Assert.IsFalse(hud.Drivers.IsOpen, "the driver select is gone in the countdown");
         }
 
+        // Team test 17 Nov 2026: a click or tap on a mode card is enough (no 1/2/3 needed), and every mode goes
+        // through the driver select: card -> driver -> READY -> countdown.
+        [UnityTest]
+        public IEnumerator ModeCard_OpensTheDriverSelect_InThatMode_ReadyStartsTheCountdown()
+        {
+            Assert.IsFalse(hud.Drivers.IsOpen);
+            hud.ModePicker.Pick(RaceMode.TimeAttack, true); // what the card's ClickEvent does
+            yield return null;
+            Assert.IsTrue(hud.Drivers.IsOpen, "the card opens the driver select");
+            Assert.AreEqual(RaceMode.TimeAttack, race.Mode, "in the mode of the card");
+            Assert.AreEqual(RaceState.Ready, race.State, "no countdown before READY");
+            yield return WaitFrames(3);
+            Assert.IsTrue(hud.Drivers.IsOpen, "and it stays open (the click is used up, nothing starts by itself)");
+
+            hud.Drivers.Pick(DriverRoster.Rookie);
+            hud.Drivers.Ready();
+            yield return null;
+            Assert.AreEqual(RaceState.Countdown, race.State, "READY starts the countdown");
+            Assert.AreEqual(RaceMode.TimeAttack, race.Mode);
+        }
+
         [UnityTest]
         public IEnumerator PickingTiago_GivesThePlayerTheBuggy_AndTheOthersRaceAsBots()
         {
