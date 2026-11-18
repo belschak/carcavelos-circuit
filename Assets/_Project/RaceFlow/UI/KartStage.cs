@@ -37,16 +37,28 @@ namespace CarcavelosCircuit.RaceFlow
         public bool HasKarts { get { return karts.Count > 0; } }
         public int KartCount { get { return karts.Count; } }
 
-        // Draws every frame while true (the menu that shows the picture is open), else the camera rests.
+        // Draws every frame while true (the menu that shows the picture is open), else the camera rests. The wish is
+        // kept apart from the camera: the picture often comes a frame later (its size is known only after layout).
+        private bool wantsRendering;
+
         public bool Rendering
         {
-            get { return studioCamera != null && studioCamera.enabled; }
+            get { return wantsRendering; }
             set
             {
-                if (studioCamera != null)
-                {
-                    studioCamera.enabled = value && picture != null;
-                }
+                wantsRendering = value;
+                ApplyRendering();
+            }
+        }
+
+        // True while the camera really draws (a wish and a picture to draw into).
+        public bool IsDrawing { get { return studioCamera != null && studioCamera.enabled; } }
+
+        private void ApplyRendering()
+        {
+            if (studioCamera != null)
+            {
+                studioCamera.enabled = wantsRendering && picture != null;
             }
         }
 
@@ -141,7 +153,6 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 return picture;
             }
-            bool wasRendering = Rendering;
             ReleasePicture();
             picture = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
             picture.name = name + " Picture";
@@ -150,7 +161,7 @@ namespace CarcavelosCircuit.RaceFlow
             picture.Create();
             studioCamera.targetTexture = picture;
             studioCamera.aspect = (float)width / height;
-            Rendering = wasRendering;
+            ApplyRendering();
             Frame();
             return picture;
         }
