@@ -1,8 +1,8 @@
 # Carcavelos Circuit: rules for every AI assistant (and every human)
 
-Single-player 3D kart time trial on Nova SBE's Carcavelos campus. Unity **6000.3.28f1** (6.3 LTS, never upgrade), C#, Blender models as FBX, Web build on itch.io. Student team project (Intro to Programming): the code must stay simple enough that every teammate can explain any file in the final walkthrough.
+3D kart racer on Nova SBE's Carcavelos campus in the browser: race vs bots, time attack, and an online race for the class. Unity **6000.3.28f1** (6.3 LTS, never upgrade), C#, Blender models as FBX, Web build deployed from `main` to GitHub Pages by GitHub Actions. How it is built: `docs/architecture.md`; every document: `docs/README.md`. Student team project (Intro to Programming): the code must stay simple enough that every teammate can explain any file in the final walkthrough.
 
-Deadlines (round 2, `TASKS.md`): every feature merged **Fri 13 Nov 2026**, map looks like the campus videos Tue 17, feature freeze **Sun 22** (fixes only), **Moodle submission Mon 23 Nov 23:59**, presentations W11/W12 (Tue 24 Nov or Fri 4 Dec). Round 2 tasks per person, with a prompt to paste into your AI: `docs/round2-briefs.md`.
+Deadlines (round 2, `TASKS.md`): every feature merged **Fri 13 Nov 2026**, map looks like the campus videos Tue 17, feature freeze **Sun 22** (fixes only), **Moodle submission Mon 23 Nov 23:59**, presentations W11/W12 (Tue 24 Nov or Fri 4 Dec). Round 2 tasks per person (historical): `docs/history/round2-briefs.md`.
 
 ## Grading: read this before EVERY task (same grade for all four of us, we aim for High = 20/20 everywhere)
 Official rubric from the course wiki (team project page), full Low/Mid/High table and our checklist per criterion: `docs/course-requirements.md`. Every task, PR and review is judged against it.
@@ -72,7 +72,7 @@ The deadline is close, so no PR may sit because one person is busy. The owner ru
 - **David (Role 4) is offline Sat 14 + Sun 15 Nov 2026.** For those two days Role 4 paths (`RaceFlow/`, `Audio/`, `Ambience/`, `Main.unity`) are open to everyone: branch `help/role4-<task>-<name>`, PR, one teammate's OK or 3 h silence, merge. `Main.unity` is never hand-edited: run **Carcavelos Circuit > Build Role 4 Scenes** in Unity and commit the result. Still needs a group OK first: contracts (`Shared/`, `docs/interfaces.md`), `ProjectSettings/`, `Packages/`.
 - **No local Unity tests?** Push your branch also as `test/<your-name>` (`git push origin HEAD:test/<your-name>`) or press "Run workflow" on Actions > Tests: GitHub runs Edit Mode + Play Mode for you.
 - **How to merge:** "Squash and merge". Stacked PRs (B is built on A): merge A with "Create a merge commit", then B. Conflict: merge `main` into your branch (`git merge origin/main`), fix, push; never force-push.
-- **After a merge** Actions > Web build deploys https://belschak.github.io/carcavelos-circuit/ in about 15-20 min. If the build fails or the live game breaks: fix it with a new PR, or press "Revert" on the merged PR and merge that revert. Never leave `main` broken overnight.
+- **After a merge** Actions > Web build deploys the live link (top of `README.md`) in about 15-20 min. If the build fails or the live game breaks: fix it with a new PR, or press "Revert" on the merged PR and merge that revert. Never leave `main` broken overnight.
 
 ## Helping another role (allowed, the owner stays the owner)
 Everyone does their own tasks first. Helping is welcome when the owner asked or agreed (chat or a `TASKS.md` request row):
@@ -115,4 +115,4 @@ Read `docs/interfaces.md`. Kart exposes `IKartState`, the track exposes `TrackIn
 - Never claim "tested" or "works" unless a human actually ran it. Say what still needs a playtest.
 
 ## When unsure
-Stop and ask your human. Don't guess ownership, don't "fix" another module, don't expand scope (out of scope: multiplayer, kart selection; in scope since round 2: items, rule-based AI bots, touch controls, an online leaderboard, see `docs/decisions.md`).
+Stop and ask your human. Don't guess ownership, don't "fix" another module, don't expand scope. In scope (each decided in `docs/decisions.md`): items, rule-based AI bots, touch controls, an online leaderboard, driver select (4 drivers), the online race (Photon, 2026-11-16). Feature freeze Sun 22 Nov: only fixes after that.

@@ -44,4 +44,12 @@ All Web settings are set in code by `Assets/_Project/RaceFlow/Editor/Role4WebBui
 ```
 "C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -buildTarget WebGL -executeMethod CarcavelosCircuit.RaceFlow.Editor.Role4WebBuild.Build -quit -logFile Logs/web-build.log
 ```
-It builds into `Build-Web/` (ignored by Git) with compression Disabled and hashed file names, which works on GitHub Pages (Pages gzips on the fly) and on itch.io. Add `-webHost=itch` for a pre-gzipped itch.io build. The build takes several minutes (link time optimisation). The log lists every file with its size. Test it with `python tools/serve_web_build.py`. For itch.io: zip the folder contents so `index.html` is at the zip root, upload as HTML, "This file will be played in the browser", viewport 1280x720, click-to-play on, SharedArrayBuffer off. Log it in `docs/builds.md`.
+It builds into `Build-Web/` (ignored by Git) with compression Disabled and hashed file names, which works on GitHub Pages (Pages gzips on the fly) and on itch.io. Add `-webHost=itch` for a pre-gzipped itch.io build. The build takes several minutes (link time optimisation). The log lists every file with its size. Test it with `python tools/serve_web_build.py`. For itch.io: zip the folder contents so `index.html` is at the zip root, upload as HTML, "This file will be played in the browser", viewport 1280x720, click-to-play on, SharedArrayBuffer off.
+
+## Working with an AI assistant
+Point Claude Code, Codex, Cursor, Copilot or Gemini CLI at the repo folder. They read `AGENTS.md` (Claude via `CLAUDE.md`, Gemini via `GEMINI.md`, Copilot via `.github/copilot-instructions.md`): the Git workflow, ownership, contracts, what never to touch, definition of done. A chat AI that cannot see the folder (ChatGPT or Claude in the browser) does not know these rules: paste `AGENTS.md` into the chat first.
+
+Start every AI session with this message (copy it as it is):
+```
+Read AGENTS.md and follow its Git workflow section A before anything else: check the hook and my Git identity, pull main, show me in 2-3 lines what the others merged since my last session and how it affects my task, then merge main into my branch. Only work on files my role owns, push after every finished step, never push to main or force-push.
+```
