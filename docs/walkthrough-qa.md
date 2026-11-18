@@ -34,7 +34,7 @@ Five bots, each a normal kart with a `BotDriver` as its "keyboard". Every decisi
 Photon Fusion 2 relays it. Each player's game drives its own kart and sends its position 15 times a second; the other karts are drawn slightly in the past and blended, so they move smoothly. The first player in the room is the host and starts the race; all screens count down to the same start time; the finish order is sorted the same way on every screen. Details: [online.md](online.md).
 
 **How is it deployed?**
-Every merge into `main` starts a GitHub Actions workflow that builds the Web version in Unity and publishes it to GitHub Pages. Only `main` can deploy, so the code on `main` is the code that is live.
+Every merge into `main` starts a GitHub Actions workflow that builds the Web version in Unity and publishes it to GitHub Pages, at the short public link (`nova-kart.github.io`, a copy made by the same workflow) and at this repository's own Pages address. Only `main` can deploy, so the code on `main` is the code that is live.
 
 ## Data
 

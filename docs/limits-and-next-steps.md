@@ -21,6 +21,7 @@ What the game does not do, where it can break, and what we would build next. Eac
 - **Without the two build secrets the board is device-only** ("THIS DEVICE"). Whether the deployed build is online shows in the board's header.
 
 ### Game and browser
+- **The short link depends on a mirror step.** `nova-kart.github.io` is a copy that the Web build workflow pushes after each `main` build. If that step fails or its deploy key is missing, the short link keeps the previous build while this repository's own Pages address has the new one (same game, one deploy behind).
 - **Download about 50 MB** (after the lean-build work of 16 and 17 Nov). The first visit on slow Wi-Fi takes time; later visits come from the browser cache.
 - **WebGL 2 and WebAssembly are required.** Old browsers or switched-off hardware acceleration get an error card that says so, instead of a black screen.
 - **Saved data lives in one browser.** Best laps, ghost and settings are in `PlayerPrefs`; another browser, a private window or clearing site data starts fresh.
@@ -49,4 +50,4 @@ What the game does not do, where it can break, and what we would build next. Eac
 | **Another online service** | Write a new `IOnlineSession` implementation (for example on Supabase Realtime); the lobby, rules and race control in `Online/` stay |
 | **Bots that use items** | `BotDriver` already reads the race; it would call `ItemSystem` the way the E key does, with a rule in `BotRules` for when to use which item |
 | **Class challenge** (whole class qualifies, top 8 race a final) | Specified but not built: [history/plans/2026-11-14-class-challenge.md](history/plans/2026-11-14-class-challenge.md) |
-| **Move the repo to a GitHub organisation** | Transfer the repo, re-run the Web build (Pages URL changes and does not redirect), update the URL in `README.md` |
+| **Change the public address** | The address is a copy target, not where the code lives: point the `mirror` job in `.github/workflows/web-build.yml` at another Pages repository (or a custom domain) and update the link at the top of `README.md`; the repository itself does not move |

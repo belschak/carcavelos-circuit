@@ -4,7 +4,7 @@ This page is for someone who has never opened the project. It explains the parts
 
 ## The big picture
 
-The game is a Unity project compiled to WebAssembly and served as static files from GitHub Pages. It has no server of its own. Two hosted services are used, and both are optional: the game keeps working without them.
+The game is a Unity project compiled to WebAssembly and served as static files from GitHub Pages, at two addresses that carry the same build (see Build and deploy). It has no server of its own. Two hosted services are used, and both are optional: the game keeps working without them.
 
 ```mermaid
 flowchart LR
@@ -12,7 +12,7 @@ flowchart LR
     Page["Web page + loader<br/>(WebGLTemplates)"] --> Game["Unity game<br/>(WebAssembly)"]
     Game --> Prefs[("Browser storage<br/>PlayerPrefs")]
   end
-  Pages["GitHub Pages<br/>(static files)"] -->|download once| Page
+  Pages["GitHub Pages<br/>nova-kart.github.io + mirror<br/>(static files)"] -->|download once| Page
   Game <-->|"lap times (HTTPS REST)<br/>optional"| Supabase[("Supabase Postgres<br/>table lap_times")]
   Game <-->|"online race (WebSocket)<br/>optional"| Photon["Photon Cloud<br/>(Fusion 2 relay)"]
   Repo["GitHub repo, main"] -->|"GitHub Actions:<br/>tests + Web build"| Pages
@@ -81,7 +81,10 @@ Photon Fusion 2 in Shared Mode. Every player's game drives its own kart exactly 
 |---|---|
 | Tests | `.github/workflows/tests.yml`: GameCI runs Edit Mode and Play Mode tests in Unity on Linux |
 | Web build | `.github/workflows/web-build.yml` on every push to `main`: fetches the Photon SDK (read-only deploy key), runs `Role4WebBuild.Build`, which sets every Web setting in code (compression, texture and mesh budgets, ETC2 for phones, the keys from secrets) |
-| Deploy | The same workflow publishes the build to GitHub Pages; the `github-pages` environment only accepts `main` |
+| Deploy | The same workflow publishes the build to this repository's GitHub Pages site; the `github-pages` environment only accepts `main` |
+| Public link | The workflow's `mirror` job copies the same build files to the repository `nova-kart/nova-kart.github.io` (GitHub organisation `nova-kart`), which GitHub serves at the short public link. That repository holds only the built files, replaced by one fresh commit per deploy through a deploy key that can write only to that one repository (secret `NOVA_KART_DEPLOY_KEY`); without the key the mirror step is skipped and the other address still updates |
+
+**Two addresses, one build.** The README's link (`nova-kart.github.io`) is short and carries no personal account name, so it is the one we share. The longer address under this repository keeps working, because it is the same files from the same `main` build. The code did not move: history, pull requests and CI stay in `github.com/belschak/carcavelos-circuit`, and the organisation only serves the public link. Moving the whole repository would have broken the old Pages address (GitHub does not redirect Pages URLs) a few days before submission; a mirror keeps both working.
 
 So the code on `main` is the code that is deployed, and nobody deploys from a laptop.
 

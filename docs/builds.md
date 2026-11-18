@@ -1,6 +1,6 @@
 # Builds and deploys
 
-**Every push to `main` is built and deployed by GitHub Actions.** The complete, always current log is the list of runs of the **Web build** workflow on `main` (repository > Actions > Web build, filter branch `main`): each run shows the date, the commit, the build log with every file size, and whether it was deployed to GitHub Pages. Nobody builds the public version on a laptop, so the live game is always a `main` commit.
+**Every push to `main` is built and deployed by GitHub Actions.** The complete, always current log is the list of runs of the **Web build** workflow on `main` (repository > Actions > Web build, filter branch `main`): each run shows the date, the commit, the build log with every file size, and whether it was deployed to GitHub Pages (this repository's address and the `nova-kart.github.io` mirror, the same files). Nobody builds the public version on a laptop, so the live game is always a `main` commit.
 
 | Where | What it tells you |
 |---|---|
