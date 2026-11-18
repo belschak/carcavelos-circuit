@@ -1,0 +1,126 @@
+# Security checks (grading criterion 5, docs/security.md).
+# 1. Secret scan: gitleaks reads EVERY commit of EVERY branch and tag (not only the newest files) and fails the run if a
+#    key, token or password was ever committed. A secret in an old commit stays public even after it is deleted.
+# 2. Pinning check: every action is pinned to a full commit SHA, every Unity package to an exact version that matches
+#    Packages/packages-lock.json, every Python art tool to an exact version; and the two places where keys are put in
+#    only during a Web build (LeaderboardConfig.asset, the Photon App ID file) are empty or untracked in Git.
+# When: every push, every pull request into main, once a week (new gitleaks rules), and by hand.
+# Needs no secrets and no Unity licence, so it also runs on forks.
+
+name: Security
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * 1" # Mondays 06:17 UTC
+  workflow_dispatch: # "Run workflow" button in the Actions tab
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Pinned gitleaks release and the SHA-256 of its Linux archive, from the release's own checksums file
+      # (https://github.com/gitleaks/gitleaks/releases/tag/v8.30.1). The download is refused if the hash differs.
+      GITLEAKS_VERSION: "8.30.1"
+      GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+    steps:
+      - name: Check out (full history, all branches and tags)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install gitleaks (pinned, hash checked)
+        run: |
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$archive"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$archive" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" version
+
+      # --log-opts=--all: every commit reachable from any branch or tag the checkout fetched. --redact: a finding is
+      # never printed in clear text in the public log.
+      - name: Scan the whole Git history
+        run: |
+          git fetch --no-tags --quiet origin '+refs/heads/*:refs/remotes/origin/*'
+          echo "Commits scanned: $(git rev-list --all --count)" | tee -a "$GITHUB_STEP_SUMMARY"
+          "$RUNNER_TEMP/gitleaks" git --log-opts="--all" --redact --exit-code 1 --no-banner .
+          echo "gitleaks: no secret in any commit of any branch" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Scan the checked-out files
+        run: |
+          "$RUNNER_TEMP/gitleaks" dir --redact --exit-code 1 --no-banner .
+
+  pinning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Check that every dependency is pinned and build-time keys stay out of Git
+        shell: python
+        run: |
+          import json, pathlib, re, subprocess, sys
+
+          problems = []
+
+          # 1. GitHub Actions: owner/repo@<40 hex digits>, or a local ./ action.
+          for wf in sorted(pathlib.Path(".github/workflows").glob("*.y*ml")):
+              for n, line in enumerate(wf.read_text(encoding="utf-8").splitlines(), 1):
+                  m = re.match(r"\s*-?\s*uses:\s*([^\s#]+)", line)
+                  if not m or m.group(1).startswith("./"):
+                      continue
+                  if not re.fullmatch(r"[\w.-]+/[\w./-]+@[0-9a-f]{40}", m.group(1)):
+                      problems.append(f"{wf}:{n}: action not pinned to a commit SHA: {m.group(1)}")
+
+          # 2. Unity packages: exact versions only (no Git URL, local path or range), each one in the lock file.
+          manifest = json.loads(pathlib.Path("Packages/manifest.json").read_text(encoding="utf-8"))["dependencies"]
+          lock = json.loads(pathlib.Path("Packages/packages-lock.json").read_text(encoding="utf-8"))["dependencies"]
+          for name, version in manifest.items():
+              if not re.fullmatch(r"\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?", version):
+                  problems.append(f"Packages/manifest.json: {name} is not an exact version: {version}")
+              elif name not in lock or lock[name].get("version") != version:
+                  problems.append(f"Packages/packages-lock.json: {name} {version} missing or different")
+          for name, entry in lock.items():
+              if entry.get("source") not in ("registry", "builtin"):
+                  problems.append(f"Packages/packages-lock.json: {name} comes from {entry.get('source')}, not the Unity registry")
+
+          # 3. Python art tools: name==exact.version per line.
+          req = pathlib.Path("tools/requirements.txt")
+          for n, line in enumerate(req.read_text(encoding="utf-8").splitlines(), 1):
+              line = line.split("#", 1)[0].strip()
+              if line and not re.fullmatch(r"[A-Za-z0-9_.-]+==\d+(\.\d+)*", line):
+                  problems.append(f"{req}:{n}: not pinned with ==: {line}")
+
+          # 4. Keys that a Web build writes in and removes again must never be committed.
+          config = pathlib.Path("Assets/_Project/RaceFlow/Settings/LeaderboardConfig.asset").read_text(encoding="utf-8")
+          for field in ("projectUrl", "anonKey"):
+              m = re.search(rf"^\s*{field}:(.*)$", config, re.M)
+              if m is None or m.group(1).strip():
+                  problems.append(f"LeaderboardConfig.asset: {field} must be empty in Git (filled only during a build)")
+          tracked = subprocess.run(["git", "ls-files"], capture_output=True, text=True, check=True).stdout.splitlines()
+          for path in tracked:
+              if path.startswith("Assets/Photon/") or path.endswith("CarcavelosPhotonAppId.txt"):
+                  problems.append(f"{path}: Photon SDK / App ID file must not be in Git")
+
+          for p in problems:
+              print(f"::error::{p}")
+          summary = "Pinning check: " + ("all dependencies pinned, no build-time key in Git" if not problems else f"{len(problems)} problem(s)")
+          print(summary)
+          with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write(summary + "\n")
+          sys.exit(1 if problems else 0)

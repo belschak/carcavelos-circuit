@@ -1,12 +1,15 @@
 # Carcavelos Circuit
 
-Single-player 3D kart time trial around a stylised Nova SBE Carcavelos campus: through the beach tunnel, along the promenade, over the ramp between the D and B wings. One kart, one track, one timed lap, drift to charge a boost, retry. Student team project for Intro to Programming (Nova SBE, Fall 2026).
+A 3D kart racer on a model of Nova SBE's Carcavelos campus that runs in the browser. Race five bots through the beach tunnel, along the promenade and over the ramp between the campus wings; chase your own ghost in Time Attack; or race the whole class live in one online room. Team project for Introduction to Programming (2477), Nova SBE, Fall 2026.
 
-Unity **6000.3.28f1** (6.3 LTS) · C# · Blender (FBX) · Web build
+**Play it: https://nova-kart.github.io/** (Chrome, Edge or Firefox on a laptop; phones work with touch buttons)
 
-**Play it: https://belschak.github.io/carcavelos-circuit/** (every build is logged in [docs/builds.md](docs/builds.md))
+Also live at https://belschak.github.io/carcavelos-circuit/: the same build of `main`, published to both addresses by the same workflow ([why](docs/architecture.md#build-and-deploy)).
+
+Built with Unity 6000.3.28f1 (C#), compiled to WebAssembly, deployed from `main` to GitHub Pages by GitHub Actions. The code lives in this repository only. Optional online services: Supabase (leaderboard) and Photon Fusion 2 (online race).
 
 ## Team
+
 | Name | Student number | Role |
 |---|---|---|
 | David Belschak | 78842 | 4 Race flow, UI + sound |
@@ -14,85 +17,123 @@ Unity **6000.3.28f1** (6.3 LTS) · C# · Blender (FBX) · Web build
 | Alessandro Rossi | 78527 | 1 Driving + camera |
 | Noah Schlag | 78142 | 2 Campus track + race rules |
 
-## Run the app
-- **Deployed:** open the URL above in Chrome, Edge or Firefox on a laptop and click to start. Keys: W/A/S/D or arrows to drive and steer, Space to drift, R to recover, Enter to retry after the finish, O settings, C credits, M mute.
-- **Locally:** install Unity Hub + Editor `6000.3.28f1` ([docs/setup.md](docs/setup.md)), then
-  ```
-  git clone https://github.com/belschak/carcavelos-circuit.git
-  ```
-  Unity Hub > Add project from disk > the cloned folder > open `Assets/_Project/RaceFlow/Scenes/Main.unity` > press Play.
+Who built what: [docs/walkthrough-qa.md](docs/walkthrough-qa.md#the-team).
 
-- **Web build locally** (Unity closed, Windows):
-  ```
-  "C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -buildTarget WebGL -executeMethod CarcavelosCircuit.RaceFlow.Editor.Role4WebBuild.Build -quit -logFile Logs/web-build.log
-  python tools/serve_web_build.py
-  ```
-  then open `http://localhost:8000`. All Web settings come from that build script ([docs/setup.md](docs/setup.md#web-build-role-3-or-the-build-backup)).
+## How to play
+
+Pick a mode on the start screen (click it, or press 1, 2 or 3), pick a driver, and drive one lap. A lap only counts if you pass every checkpoint in order.
+
+| Key | Action |
+|---|---|
+| W A S D or arrows | Drive and steer |
+| Space | Drift (hold while steering to charge a boost, release to fire it) |
+| Shift | Trick after a jump |
+| E | Use the item you picked up |
+| R | Recover to the last checkpoint (the timer keeps running) |
+| Enter | Retry |
+| P | Pause |
+| O / C / M | Settings / credits / sound on or off |
+| T | Noon or sunset light |
+| Q | Back to the menu (online: leave the room) |
+
+On a phone the game shows touch buttons instead.
+
+## Features, and where each lives
+
+| Feature | What it does | Code |
+|---|---|---|
+| Kart physics | Driving, drift that charges a two-stage boost, ramp jumps, tricks, recover | `Assets/_Project/Driving/KartController.cs` |
+| Campus track | Route from OpenStreetMap; campus, beach, promenade and Nova hall built from map data and photo surveys | `Assets/_Project/Visuals/CampusWorld/`, `tools/world_gen/`, [docs/route.md](docs/route.md) |
+| Lap rules | Ordered checkpoints; skipped, repeated or backwards crossings are refused | `Assets/_Project/Track/RaceRules.cs` |
+| Race flow | Ready, countdown, race, results; timer, retry, recover, pause | `Assets/_Project/RaceFlow/RaceStateMachine.cs`, `RaceManager.cs` |
+| Three modes | Race vs Bots, Time Attack, Online Race | `Assets/_Project/RaceFlow/RaceModeRules.cs` |
+| Five AI bots | Rule-based drivers on the same kart physics as the player | `Assets/_Project/Visuals/Bots/` |
+| Items | Four campus items from boxes on the road; better items when you are behind | `Assets/_Project/RaceFlow/ItemSystem.cs`, `ItemOdds.cs`, `Visuals/ItemFx/` |
+| Positions, minimap, name tags | Live place of every racer | `Assets/_Project/RaceFlow/RaceStandings.cs`, `MinimapPath.cs`, `Driving/NameTagManager.cs` |
+| Ghost and medals | Replay of your best lap, Bronze/Silver/Gold scaled to the track | `Assets/_Project/RaceFlow/Ghost*.cs`, `MedalRules.cs` |
+| Driver select | Four drivers, each in their own kart | `Assets/_Project/RaceFlow/Drivers/` |
+| Leaderboard | Global top 10 with names, shared by every player (Supabase). Every time is also saved on the device first, so when the internet or the service is down the board shows the device's times and says so | `Assets/_Project/RaceFlow/Leaderboard/`, `backend/supabase/` |
+| Online race | One room for the class (15 players), shared countdown, same finish order on every screen | `Assets/_Project/Online/`, [docs/online.md](docs/online.md) |
+| Menus and HUD | Start screen, settings, credits, results, plain-language errors | `Assets/_Project/RaceFlow/UI/` |
+| Sound | Engine pitch from speed, drift and boost sounds, music with ducking | `Assets/_Project/Audio/`, `RaceFlow/RaceMusic.cs` |
+| Beach life | Waves rolling onto the beach, surfers riding them | `Assets/_Project/Ambience/` |
+| Web page | Loader, error cards, touch controls, update check | `Assets/WebGLTemplates/CarcavelosCircuit/index.html` |
+
+How these parts fit together, and why they were built this way: [docs/architecture.md](docs/architecture.md).
+
+## Run the app locally
+
+You need **Unity Hub** (https://unity.com/download) and **Unity Editor 6000.3.28f1** with the module **Web Build Support**. Use exactly this version. Step-by-step install: [docs/setup.md](docs/setup.md).
+
+```
+git clone https://github.com/belschak/carcavelos-circuit.git
+```
+
+1. Unity Hub > Projects > Add > Add project from disk > the `carcavelos-circuit` folder. The first import takes several minutes.
+2. Open the scene `Assets/_Project/RaceFlow/Scenes/Main.unity` and press Play.
+
+Race vs Bots and Time Attack work on a fresh clone; the leaderboard keeps times on your device there. The Online Race needs the Photon SDK, which its licence keeps out of this repo; without it the mode says "ONLINE RACE NEEDS THE ONLINE BUILD" ([docs/online.md](docs/online.md#for-developers-the-online-race-in-your-local-editor)). The global leaderboard needs two keys that exist only as GitHub secrets for the deployed build ([backend/supabase/README.md](backend/supabase/README.md)).
+
+**The Web version on your own machine** (Unity closed). Windows:
+
+```
+"C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -batchmode -nographics -projectPath . -buildTarget WebGL -executeMethod CarcavelosCircuit.RaceFlow.Editor.Role4WebBuild.Build -quit -logFile Logs/web-build.log
+```
+
+```
+python tools/serve_web_build.py
+```
+
+Then open http://localhost:8000. macOS: the Unity path is `/Applications/Unity/Hub/Editor/6000.3.28f1/Unity.app/Contents/MacOS/Unity`, same arguments. Every Web setting comes from `Role4WebBuild.cs`, so the local build matches the deployed one.
 
 ## Run the tests
-In the Unity Editor: Window > General > Test Runner > EditMode > Run All. Command line (Unity closed), Windows:
+
+In the Unity Editor: Window > General > Test Runner > **EditMode** > Run All, then **PlayMode** > Run All.
+
+From the command line (Unity closed), Windows:
+
 ```
 "C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -runTests -batchmode -projectPath . -testPlatform EditMode -testResults TestResults/editmode.xml
 ```
-Play Mode tests (a robot plays the real game in `Main.unity` on the track it loads: clean lap, skipped checkpoint, recover, retry): Test Runner > PlayMode > Run All, or the same command with `-testPlatform PlayMode -testResults TestResults/playmode.xml`.
 
-macOS: `/Applications/Unity/Hub/Editor/6000.3.28f1/Unity.app/Contents/MacOS/Unity` with the same arguments.
-
-## Quick start
-1. Install [Unity Hub](https://unity.com/download) (official site only), then Editor `6000.3.28f1` with Web Build Support, plus Git, and accept the repo invite: [docs/setup.md](docs/setup.md).
-2. `gh repo clone belschak/carcavelos-circuit`, then once per clone: `git config core.hooksPath .githooks`.
-3. Open [TASKS.md](TASKS.md), pick a `todo` task of your role, follow the claim steps in [AGENTS.md](AGENTS.md).
-
-S1 (the Unity project) is merged: pull `main`, then open the folder in Unity `6000.3.28f1` (no other version, otherwise `.meta` and settings files change).
-
-## Working with an AI assistant
-Point Claude Code, Codex, Cursor, Copilot or Gemini CLI at this folder. They read [AGENTS.md](AGENTS.md) (Claude via `CLAUDE.md`, Gemini via `GEMINI.md`, Copilot via `.github/copilot-instructions.md`): the Git workflow, ownership, contracts, what never to touch, definition of done. A chat AI that cannot see the folder (ChatGPT or Claude in the browser) does not know these rules: paste `AGENTS.md` into the chat first.
-
-Start every AI session with this message (copy it as it is):
 ```
-Read AGENTS.md and follow its Git workflow section A before anything else: check the hook and my Git identity, pull main, show me in 2-3 lines what the others merged since my last session and how it affects my task, then merge main into my branch. Only work on files my role owns, push after every finished step, never push to main or force-push.
+"C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe" -runTests -batchmode -projectPath . -testPlatform PlayMode -testResults TestResults/playmode.xml
 ```
 
-## Where things are
-| File | What |
+macOS: the Unity path above, same arguments. The results are NUnit XML files in `TestResults/`.
+
+On GitHub: Actions > **Tests** > Run workflow runs both modes in Unity on Linux (`.github/workflows/tests.yml`). What the tests cover and what they do not: [docs/verification.md](docs/verification.md).
+
+## Repository map
+
+| Path | What is in it |
 |---|---|
-| [TASKS.md](TASKS.md) | The board: every task, owner role, due date, status |
-| [docs/team.md](docs/team.md) | Roles, owners, folders, scenes |
-| [docs/interfaces.md](docs/interfaces.md) | Contracts between modules (`IKartState`, `TrackInfo`, `RaceRules`, round 2: `IRacer`, `ITrackProgress`, `IKartDrivable`) |
-| [docs/round2-briefs.md](docs/round2-briefs.md) | Round 2: what each person builds, with a prompt to paste into your AI |
-| [docs/explain/](docs/explain/) | Walkthroughs for the presentation: how each part works, why, its limits |
-| [docs/plan.md](docs/plan.md) | Milestones + definition of done per role |
-| [docs/decisions.md](docs/decisions.md) | Why things are the way they are |
-| [docs/route.md](docs/route.md) | The campus route |
-| [docs/verification.md](docs/verification.md) | What we test before each merge and release |
-| [docs/builds.md](docs/builds.md) | Every Web build: URL, commit, result |
-| [THIRD_PARTY.md](THIRD_PARTY.md) | Every external asset and its licence |
-| [docs/course-requirements.md](docs/course-requirements.md) | Official course rules + **grading rubric** (read before every task) |
+| `Assets/_Project/` | All our game code, one folder per module (`Driving`, `Track`, `Visuals`, `RaceFlow`, `Audio`, `Ambience`, `Online`, `Shared`) and `Tests/` (`EditMode`, `PlayMode`) |
+| `Assets/WebGLTemplates/` | The web page around the game |
+| `backend/supabase/` | Leaderboard database: table, access rules, setup steps |
+| `tools/` | Python scripts that generate the campus world, props, textures, sounds and UI art (not needed to run the game) |
+| `.github/workflows/` | CI: tests and the Web build + deploy |
+| `docs/` | How it is built, why, limits, decisions: start at [docs/README.md](docs/README.md) |
+| `AGENTS.md` | The rules for every teammate and every AI assistant (Git workflow, ownership, contracts) |
+| `TASKS.md` | The task board: every task, owner and status |
+| `THIRD_PARTY.md` | Every external asset and its licence |
+| `Packages/`, `ProjectSettings/` | Unity package list (pinned) and project settings |
 
-## Deadlines
-| Date | |
+## Documentation
+
+| Read | For |
 |---|---|
-| Wed 11 Nov | Slower driving (D7) + `TrackProgress` (T8): bots, positions and medals build on them |
-| **Fri 13 Nov** | Every round 2 feature merged into `main` ([TASKS.md](TASKS.md) > Round 2) |
-| Tue 17 Nov | The map looks like the campus videos |
-| Sun 22 Nov | Feature freeze: only fixes after this |
-| **Mon 23 Nov 23:59** | **Moodle submission** (public repo link, see [docs/course-requirements.md](docs/course-requirements.md)) |
-| Tue 24 Nov or Fri 4 Dec | Presentation: live demo + repository walkthrough |
-
-## How we are graded (target: High on all six)
-Official rubric from the course wiki; full Low/Mid/High table and our checklist: [docs/course-requirements.md](docs/course-requirements.md).
-
-| Criterion | Weight | High means |
-|---|---|---|
-| It works | 20 % | All workflows run without errors, including with invalid input |
-| UI and experience | 20 % | Workflows are direct; results and errors are clear |
-| Scope and ambition | 20 % | Substantial features well beyond a solo project, implemented consistently |
-| Verification | 10 % | Tests cover accepted and rejected actions and edge cases, all pass on `main` |
-| Security | 10 % | Access control + input validation enforced; dependencies minimal, pinned, no known vulnerabilities; no credentials in the repo |
-| Repository walkthrough | 20 % | Everyone explains how it is built, why, its limits, and how it could change |
-
-## How to build
-Web build steps: [docs/setup.md#web-build-role-3-or-the-build-backup](docs/setup.md#web-build-role-3-or-the-build-backup). Role 3 makes this reproducible by a second person (task V7).
+| [docs/architecture.md](docs/architecture.md) | The parts, the data flow, where data is stored, why each choice |
+| [docs/walkthrough-qa.md](docs/walkthrough-qa.md) | Short answers to the walkthrough questions |
+| [docs/limits-and-next-steps.md](docs/limits-and-next-steps.md) | What it cannot do and how it could change |
+| [docs/verification.md](docs/verification.md) | What the tests cover and what they do not |
+| [docs/security.md](docs/security.md) | Keys, access control, input validation, dependencies |
+| [docs/README.md](docs/README.md) | Every other document |
 
 ## Credits
-Map data © OpenStreetMap contributors (ODbL). Sound effects: elevenlabs.io (kart engine and drift sounds made by Luc Tippmann, boost by David Belschak), all other sounds and the music are our own synthesised work. Characters: Microsoft Rocketbox Avatar Library (MIT, © 2020 Microsoft). Third-party assets: [THIRD_PARTY.md](THIRD_PARTY.md). Original game, not affiliated with Nintendo or Nova SBE.
+
+Map data © OpenStreetMap contributors (ODbL). Sound effects: elevenlabs.io (kart engine and drift sounds made by Luc Tippmann, boost by David Belschak); all other sounds and the music are our own synthesised work. Characters: Microsoft Rocketbox Avatar Library (MIT, © 2020 Microsoft). All third-party assets and their licences: [THIRD_PARTY.md](THIRD_PARTY.md). Original game, not affiliated with Nintendo or Nova SBE.
+
+## License
+
+Our code (C#, Python, SQL, HTML, CSS, JavaScript) is under the MIT licence: [LICENSE](LICENSE). Our own synthesised sounds and code-drawn art are CC0, as listed in [THIRD_PARTY.md](THIRD_PARTY.md). Every third-party asset (map data, fonts, characters, generated sounds and models) keeps its own licence, listed there. The Photon SDK is not part of this repository.

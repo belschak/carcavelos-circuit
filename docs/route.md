@@ -8,7 +8,7 @@ Status: **final route of round 2 (13 Nov 2026), from Luc's V20 playtest, on `mai
 | What | Value | Where it comes from |
 |---|---|---|
 | Lap length (centreline) | **1,394 m** (was 1,414 m before V20) | `track.json` `length_m`; 697 route points, 2 m apart |
-| Checkpoints | **13** (was 12), checkpoint 0 = start/finish line | `track.json` `checkpoints` + `checkpoint_widths` |
+| Checkpoints | **14** (0 to 13; was 12, then 13), checkpoint 0 = start/finish line, checkpoint 13 at the U-turn apex | `track.json` `checkpoints` + `checkpoint_widths` |
 | Height range of the road | 2.4 m (tunnel, beach side) to 15.6 m (kicker lip) | `track.json` `y` per point |
 | Jump | terrace kicker, lip at route point 82 (164 m into the lap): about 1 m up over 6 m, about 4 m wide, then about 4.8 m down onto the lawn | `track.json` `jump_index`, kicker in `tools/world_gen/env_plaza.py` |
 | Boost pad | one jump pad on the run-up of the courtyard shortcut (jump strength, x1.6) | `track.json` `boost_pads` |
@@ -41,7 +41,7 @@ Width = trigger width across the road. Normal ones are 12-18 m; the very wide on
 | 0 | 0 | 12 | Start/finish line under the start gate |
 | 1 | 28 | 12 | Hall west entrance, door D1 |
 | 2 | 160 | 12 | Foot of the terrace kicker |
-| 3 | 246 | **28** | End of the lawn path, before the avenue (lawn can be crossed anywhere) |
+| 3 | 246 | **44** | End of the lawn path, before the avenue (lawn can be crossed anywhere; widened from 28 m after the jump, task V33) |
 | 4 | 338 | 16 | Roundabout entry, after the zebra |
 | 5 | 412 | 16 | Halfway along the Avenida Marginal |
 | 6 | 470 | 14 | Before the Capricciosa hairpin |
@@ -51,6 +51,7 @@ Width = trigger width across the road. Normal ones are 12-18 m; the very wide on
 | 10 | 1013 | **28** | Upper plaza before the courtyard fork, wall to wall (shortcut and main line) |
 | 11 | 1118 | 14 | Hovione atrium entry, door D4 (main line and shortcut landing meet) |
 | 12 | 1189 | 18 | Atrium exit, door D5 to the north plaza |
+| 13 | 1352 | 25 | U-turn, 2 route points before the apex: stops a cut across the plaza (placed in task V33) |
 
 No checkpoint sits on a shortcut, so both shortcuts are legal and the race line, bots, positions and minimap always follow the main line (`TrackProgress`, task T8).
 

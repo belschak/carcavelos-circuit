@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#13161D"/><stop offset=".6" stop-color="#2A160E"/><stop offset="1" stop-color="#5E2A12"/></linearGradient>
+<radialGradient id="glow" cx=".72" cy=".56" r=".6"><stop offset="0" stop-color="#FF7A2E" stop-opacity=".5"/><stop offset="1" stop-color="#FF7A2E" stop-opacity="0"/></radialGradient>
+<linearGradient id="cream" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F0E4D2"/></linearGradient>
+<linearGradient id="streak" x1="0" x2="1"><stop offset="0" stop-color="#FF5A1F"/><stop offset=".7" stop-color="#FF8A3D"/><stop offset="1" stop-color="#FFA860"/></linearGradient>
+<radialGradient id="sun" cx=".5" cy=".55" r=".6"><stop offset="0" stop-color="#FFE0A8"/><stop offset=".55" stop-color="#FF9A45"/><stop offset="1" stop-color="#FF5A1F"/></radialGradient>
+<clipPath id="sky"><rect width="100" height="55"/></clipPath>
+</defs>
+<rect width="100" height="100" rx="22" fill="url(#bg)"/><rect width="100" height="100" rx="22" fill="url(#glow)"/>
+<circle cx="71" cy="55" r="13" fill="url(#sun)" clip-path="url(#sky)"/>
+<path d="M63.70 68.06 A26 26 0 1 1 63.70 31.94" fill="none" stroke="url(#cream)" stroke-width="17" transform="translate(45 50) skewX(-12) translate(-45 -50)"/>
+<path d="M51 55 H95 L93.5 58.4 H49.5 Z" fill="url(#streak)"/>
+
+</svg>

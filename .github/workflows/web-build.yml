@@ -157,3 +157,68 @@ jobs:
       - name: Publish
         id: deploy
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  # Second public copy of the same build in the nova-kart organisation: https://nova-kart.github.io/ (repo
+  # nova-kart/nova-kart.github.io, Pages from branch main, root /). Each copy points its link previews at itself:
+  # the build fills __CC_SITE_URL__ with this repository's Pages address (RaceFlow/Editor/ShareLinkStamp.cs), and
+  # this job swaps that address for https://nova-kart.github.io/ in the mirror's index.html only. So og:url,
+  # og:image and canonical are right on both copies, and nothing breaks while one of them is still private.
+  # Needs the secret NOVA_KART_DEPLOY_KEY (private half of a WRITE deploy key on the mirror repo). Without it the
+  # job skips with a notice and the run stays green. Each run replaces the mirror's main with ONE fresh commit.
+  mirror:
+    needs: web
+    if: github.ref == 'refs/heads/main' && needs.web.outputs.built == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      HAS_MIRROR_KEY: ${{ secrets.NOVA_KART_DEPLOY_KEY != '' }}
+      MIRROR_REPO: nova-kart/nova-kart.github.io
+      MIRROR_URL: https://nova-kart.github.io/
+    steps:
+      - name: Check the mirror secret
+        run: |
+          if [ "$HAS_MIRROR_KEY" != "true" ]; then
+            echo "::notice::NOVA_KART_DEPLOY_KEY is not set, so the nova-kart.github.io mirror is skipped."
+            echo "### Mirror skipped: NOVA_KART_DEPLOY_KEY is not set." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Download the build
+        if: env.HAS_MIRROR_KEY == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: carcavelos-web-${{ github.sha }}
+          path: site
+
+      - name: Point the link previews at the mirror
+        if: env.HAS_MIRROR_KEY == 'true'
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          name="${GITHUB_REPOSITORY#*/}"
+          if [ "${name,,}" = "${owner}.github.io" ]; then source_url="https://${owner}.github.io/"; else source_url="https://${owner}.github.io/${name}/"; fi
+          count=$(grep -o -F "$source_url" site/index.html | wc -l)
+          sed -i "s|${source_url}|${MIRROR_URL}|g" site/index.html
+          echo "Link previews: ${source_url} -> ${MIRROR_URL} (${count} places)"
+          touch site/.nojekyll # serve the files as they are (no Jekyll step on GitHub Pages)
+
+      - name: Push to the mirror
+        if: env.HAS_MIRROR_KEY == 'true'
+        env:
+          DEPLOY_KEY: ${{ secrets.NOVA_KART_DEPLOY_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/mirror_key
+          chmod 600 ~/.ssh/mirror_key
+          # GitHub's published SSH host key (api.github.com/meta), so the push cannot go to an impostor.
+          echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" > ~/.ssh/known_hosts
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/mirror_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          cd site
+          git init -q -b main
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Web build of ${GITHUB_REPOSITORY}@${GITHUB_SHA::7}"
+          git push --force "git@github.com:${MIRROR_REPO}.git" main
+          echo "### Mirror updated: ${MIRROR_URL} (${GITHUB_SHA::7})" >> "$GITHUB_STEP_SUMMARY"
+          rm -f ~/.ssh/mirror_key
