@@ -73,6 +73,9 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: belschak/carcavelos-photon-sdk
+          # The fixed copy (docs/security.md): Fusion 2.1.4 stable + our weaving config, pinned to one commit so a
+          # push to the SDK repo can never change what goes into a build without a reviewed change here.
+          ref: 69ab93e34edf2cb5ab9d0e4ed96e33f9f47043e8
           ssh-key: ${{ secrets.PHOTON_SDK_DEPLOY_KEY }}
           path: Assets/Photon
           persist-credentials: false
