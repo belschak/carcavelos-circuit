@@ -30,6 +30,9 @@ permissions:
 
 jobs:
   tests:
+    # A pull request from a fork gets no repository secrets, so Unity could not start: such a run is skipped (shown as
+    # skipped, not failed) and a team member re-runs the tests on a test/... branch. CI minutes: free for public repos.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:

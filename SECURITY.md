@@ -12,7 +12,8 @@ days while the course runs (until December 2026). After that the project is not 
 
 ## Supported version
 
-Only the newest commit on `main`, which is the version deployed at <https://belschak.github.io/carcavelos-circuit/>.
+Only the newest commit on `main`, which is the version deployed at <https://nova-kart.github.io/> (and, unchanged, at
+the older address <https://belschak.github.io/carcavelos-circuit/>).
 
 ## What is public on purpose
 

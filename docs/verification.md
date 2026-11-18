@@ -15,10 +15,13 @@ honest list of what no automated test covers.
 "passed / total" per mode; the NUnit XML files are in the run's `test-results` artifact.
 All runs: <https://github.com/belschak/carcavelos-circuit/actions/workflows/tests.yml>
 
-**On your computer.** Open the project in Unity 6000.3.28f1 and use Window > General > Test Runner (Edit Mode tab,
-then Play Mode tab, "Run All"). Or from a terminal in the repository root (Unity closed):
+**On your computer.** You need Unity 6000.3.28f1 with the **Web Build Support** module (Unity Hub > Installs >
+Add modules): the build scripts use `UnityEditor.WebGL`, so the project does not compile without it. Open the project
+and use Window > General > Test Runner (Edit Mode tab, then Play Mode tab, "Run All"). Or from a terminal, with Unity
+closed:
 
 ```bash
+cd carcavelos-circuit
 "<path to Unity 6000.3.28f1>/Unity" -batchmode -projectPath . -runTests -testPlatform EditMode -testResults TestResults/editmode.xml -logFile -
 "<path to Unity 6000.3.28f1>/Unity" -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults TestResults/playmode.xml -logFile -
 ```
