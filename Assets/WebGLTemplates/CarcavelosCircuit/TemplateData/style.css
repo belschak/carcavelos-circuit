@@ -900,6 +900,13 @@ html.cc-paused #cc-touch #cc-fullscreen { position: static; }
     linear-gradient(0deg, rgba(6, 8, 12, 0.9) 0%, rgba(6, 8, 12, 0.35) 22%, rgba(6, 8, 12, 0) 45%),
     linear-gradient(180deg, rgba(6, 8, 12, 0.45) 0%, rgba(6, 8, 12, 0) 18%); }
 .cc-grade::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 220px rgba(0, 0, 0, 0.55); }
+/* Live first screen (kart builder, 18 Nov): the game's four drivers and their names stand on the right, low. The
+   grade lies over the game canvas, so there it only darkens behind the wordmark (left) and the key dock (bottom 18 %). */
+.cc-live .cc-grade { background:
+    linear-gradient(90deg, rgba(6, 8, 12, 0.86) 0%, rgba(6, 8, 12, 0.6) 30%, rgba(6, 8, 12, 0.08) 52%, rgba(6, 8, 12, 0) 60%),
+    linear-gradient(0deg, rgba(6, 8, 12, 0.8) 0%, rgba(6, 8, 12, 0.3) 14%, rgba(6, 8, 12, 0) 20%),
+    linear-gradient(180deg, rgba(6, 8, 12, 0.45) 0%, rgba(6, 8, 12, 0) 18%); }
+.cc-live .cc-grade::after { box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.35); }
 
 /* ---------- Left column: wordmark, room, one panel ---------- */
 .cc-center { align-items: flex-start; justify-content: center; text-align: left;
