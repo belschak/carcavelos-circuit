@@ -37,7 +37,7 @@ namespace CarcavelosCircuit.RaceFlow
             element.style.position = Position.Absolute;
             element.style.left = Length.Percent(53f);   // the page's wordmark ends at 50 % of the width
             element.style.right = Length.Percent(1f);
-            element.style.top = Length.Percent(14f);
+            element.style.top = Length.Percent(30f);    // the karts stand low, just above their names
             element.style.bottom = Length.Percent(15f);  // above the page's key dock
             element.style.opacity = 0f;
             element.style.translate = new Translate(Length.Percent(4f), 0f);
@@ -95,6 +95,7 @@ namespace CarcavelosCircuit.RaceFlow
                 name.style.paddingBottom = 2f;
                 name.style.borderBottomWidth = 3f;
                 name.style.borderBottomColor = DriverRoster.Get(i).Colour;
+                name.style.textShadow = new TextShadow { offset = new Vector2(0f, 2f), blurRadius = 8f, color = new Color(0f, 0f, 0f, 0.85f) };
                 name.pickingMode = PickingMode.Ignore;
                 cell.Add(name);
                 Label kart = new Label(KartLoadout.KartNames[i]);
@@ -102,6 +103,8 @@ namespace CarcavelosCircuit.RaceFlow
                 kart.AddToClassList("f-ui");
                 kart.style.fontSize = 13f;
                 kart.style.marginTop = 3f;
+                kart.style.color = HudColors.Cream;
+                kart.style.textShadow = new TextShadow { offset = new Vector2(0f, 1f), blurRadius = 6f, color = new Color(0f, 0f, 0f, 0.9f) };
                 kart.pickingMode = PickingMode.Ignore;
                 cell.Add(kart);
                 names.Add(cell);

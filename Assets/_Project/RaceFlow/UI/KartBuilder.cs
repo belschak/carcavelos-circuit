@@ -163,8 +163,8 @@ namespace CarcavelosCircuit.RaceFlow
             previewShadow.style.position = Position.Absolute;
             previewShadow.style.left = Length.Percent(18f);
             previewShadow.style.right = Length.Percent(18f);
-            previewShadow.style.bottom = Length.Percent(17f);
-            previewShadow.style.height = Length.Percent(13f);
+            previewShadow.style.bottom = Length.Percent(14f);
+            previewShadow.style.height = Length.Percent(20f);
             previewShadow.style.backgroundImage = new StyleBackground(SoftShadow());
             previewShadow.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
             previewShadow.pickingMode = PickingMode.Ignore;
@@ -510,7 +510,7 @@ namespace CarcavelosCircuit.RaceFlow
                     float dy = (y + 0.5f) / height * 2f - 1f;
                     float d = Mathf.Sqrt(dx * dx + dy * dy);
                     float a = Mathf.Clamp01(1f - d);
-                    softShadow.SetPixel(x, y, new Color(0f, 0f, 0f, a * a * 0.55f));
+                    softShadow.SetPixel(x, y, new Color(1f, 0.82f, 0.62f, a * a * 0.16f)); // a warm pool of light on the floor
                 }
             }
             softShadow.Apply();
@@ -753,7 +753,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 stage = KartStage.Create("Kart Builder Studio", new Vector3(0f, -6000f, 0f));
             }
-            if (stage != null && !tilesShot)
+            if (stage != null && !tilesShot && !Application.isBatchMode) // the CI test machine has no GPU: no stills
             {
                 tilesShot = true;
                 ShootTiles();

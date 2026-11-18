@@ -21,6 +21,9 @@ namespace CarcavelosCircuit.RaceFlow
         private const float SpinDegreesPerSecond = 16f;
         private const float PopSeconds = 0.28f;
 
+        // 4x multisampling for clean edges; none in batch mode (the CI test machine draws in software, llvmpipe).
+        private static int Smoothing { get { return Application.isBatchMode ? 1 : 4; } }
+
         private Camera studioCamera;
         private Transform pivot;                    // turns (turntable) and holds the karts
         private readonly List<StageKart> karts = new List<StageKart>();
@@ -156,7 +159,7 @@ namespace CarcavelosCircuit.RaceFlow
             ReleasePicture();
             picture = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
             picture.name = name + " Picture";
-            picture.antiAliasing = 4;
+            picture.antiAliasing = Smoothing;
             picture.filterMode = FilterMode.Bilinear;
             picture.Create();
             studioCamera.targetTexture = picture;
@@ -200,7 +203,7 @@ namespace CarcavelosCircuit.RaceFlow
             lineup = true;
             yaw = 0f;
             pivot.localRotation = Quaternion.identity;
-            float spacing = 1.18f;
+            float spacing = 1.12f;
             for (int i = 0; i < loadouts.Length; i++)
             {
                 float x = -(i - (loadouts.Length - 1) * 0.5f) * spacing;      // the camera looks along -Z: first on the left
@@ -254,10 +257,10 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (lineup)
             {
-                lookAt = new Vector3(0f, 0.42f, -0.25f);
+                lookAt = new Vector3(0f, 0.5f, -0.25f);
                 float aspect = picture != null ? (float)picture.width / picture.height : 2.2f;
                 // the row is about 4.8 m wide: fit it into the picture's width
-                float halfWidth = 2.65f;
+                float halfWidth = 2.45f;
                 float tanHalf = Mathf.Tan(FieldOfView * 0.5f * Mathf.Deg2Rad) * aspect;
                 distance = Mathf.Max(halfWidth / tanHalf, 5f);
             }
@@ -265,8 +268,8 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 lookAt = new Vector3(0f, 0.43f, 0f);
                 float aspect = picture != null ? (float)picture.width / picture.height : 1.2f;
-                float fit = Mathf.Max(1.05f / Mathf.Tan(FieldOfView * 0.5f * Mathf.Deg2Rad),
-                                      1.2f / (Mathf.Tan(FieldOfView * 0.5f * Mathf.Deg2Rad) * aspect));
+                float fit = Mathf.Max(1.3f / Mathf.Tan(FieldOfView * 0.5f * Mathf.Deg2Rad),
+                                      1.45f / (Mathf.Tan(FieldOfView * 0.5f * Mathf.Deg2Rad) * aspect));
                 distance = fit;
             }
             PlaceCamera();
@@ -365,7 +368,7 @@ namespace CarcavelosCircuit.RaceFlow
                 group.ForceLOD(0);
             }
 
-            var shot = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4, name = "Tile " + onlyUnder };
+            var shot = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32) { antiAliasing = Smoothing, name = "Tile " + onlyUnder };
             shot.Create();
             RenderTexture before = studioCamera.targetTexture;
             float aspectBefore = studioCamera.aspect;
