@@ -44,6 +44,9 @@ namespace CarcavelosCircuit.RaceFlow
         // mode cards and the start leaderboard no longer fit side by side: "hud--compact" (UI/StartScreen.uss) makes
         // the cards smaller and the board narrower. 16:10 (1152) and wider, phones included, are unchanged.
         public const float CompactHudWidth = 1040f;
+        // Below this width only 5:4 (900) is left: there even the compact cards, menu row and key legend run into the
+        // board and the postcard, so "hud--boxy" (UI/StartScreen.uss) draws them a bit smaller and the legend on the left.
+        public const float BoxyHudWidth = 940f;
 
         // ---- Elements (found by name in RaceHud.uxml) ----
         private VisualElement hudRoot;
@@ -263,6 +266,7 @@ namespace CarcavelosCircuit.RaceFlow
         {
             hudRoot.EnableInClassList("hud--narrow", evt.newRect.width < NarrowHudWidth);
             hudRoot.EnableInClassList("hud--compact", evt.newRect.width < CompactHudWidth);
+            hudRoot.EnableInClassList("hud--boxy", evt.newRect.width < BoxyHudWidth);
         }
 
         private void FindElements(VisualElement root)

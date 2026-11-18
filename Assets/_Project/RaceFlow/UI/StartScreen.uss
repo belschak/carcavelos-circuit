@@ -321,6 +321,60 @@
     margin-left: 12px;
 }
 
+/* The narrower board keeps its header on one line: at 19 px LEADERBOARD ran into the ONLINE pill at 4:3
+   (review on 18 Nov 2026, 800x600). Smaller title, gem and pill only here; wide windows keep Leaderboard.uss. */
+.hud--compact .lb-host--start .lb-gem {
+    display: none; /* the 32 px the title needs; the blue plate still marks the header */
+}
+
+.hud--compact .lb-host--start .lb-title {
+    font-size: 15px;
+}
+
+.hud--compact .lb-host--start .lb-sub {
+    font-size: 13px;
+}
+
+.hud--compact .lb-host--start .lb-source {
+    height: 22px;
+    padding: 0 8px 0 6px;
+    border-radius: 11px;
+}
+
+.hud--compact .lb-host--start .lb-source-dot {
+    margin-right: 4px;
+}
+
+.hud--compact .lb-host--start .lb-source-text {
+    font-size: 12px;
+    letter-spacing: 0;
+}
+
+/* The driver select (UI/DriverPicker: 4 cards of 184 px, sizes set in code) is wider than a 4:3 or 5:4 window: the
+   4th card was cut off at 1024x768. Like the mode cards it is drawn smaller from its left edge, so nothing moves
+   relative to the cards and clicks still land on the card that is drawn. */
+.hud--compact #driver-picker {
+    scale: 0.8 0.8;
+    transform-origin: left top;
+}
+
+/* ---------- 5:4 (RaceHud adds hud--boxy below 940 px, so only 900 px wide windows) ----------
+   Checked at 1280x1024: the board covered the end of the ONLINE RACE card and the NOON button, and the postcard
+   covered the end of the key legend. Cards and menu row a bit smaller from their left edge, legend on the left. */
+.hud--boxy #mode-picker {
+    scale: 0.7 0.7;
+}
+
+.hud--boxy #start-menu {
+    scale: 0.85 0.85;
+    transform-origin: left center;
+}
+
+.hud--boxy .ts-footer {
+    align-items: flex-start;
+    padding-left: 64px;
+}
+
 /* ---------- Reduced motion: everything is simply there, nothing moves, nothing flashes ----------
    The start values are set to the end values, so adding "intro-in" changes nothing (the letters' inline delays
    then do nothing either). TitleScreen also skips the light sweep. */
