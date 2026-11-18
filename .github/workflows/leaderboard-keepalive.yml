@@ -1,0 +1,39 @@
+# Keeps the online leaderboard awake (task R10, backend/supabase/README.md).
+#
+# A free Supabase project pauses after about a week without any request; the game then shows
+# "LEADERBOARD OFFLINE" until the owner presses Restore in the dashboard. This workflow reads one row of the
+# public top list once a day, exactly what the game itself does, so the project never sits idle that long.
+#
+# It uses the same two secrets as the Web build (LEADERBOARD_URL, LEADERBOARD_ANON_KEY): only the public
+# publishable key, which can read the top list and nothing else. No secrets set = the run says so and passes.
+# A failed run means the leaderboard did not answer: open the Supabase dashboard and check the project.
+
+name: Leaderboard keep-alive
+
+on:
+  schedule:
+    - cron: "17 6 * * *" # every day at 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      LEADERBOARD_URL: ${{ secrets.LEADERBOARD_URL }}
+      LEADERBOARD_ANON_KEY: ${{ secrets.LEADERBOARD_ANON_KEY }}
+    steps:
+      - name: Read one row of the top list
+        run: |
+          if [ -z "$LEADERBOARD_URL" ] || [ -z "$LEADERBOARD_ANON_KEY" ]; then
+            echo "Online leaderboard is off (no secrets), nothing to keep awake." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 --retry 3 --retry-delay 20 \
+            -H "apikey: $LEADERBOARD_ANON_KEY" \
+            "$LEADERBOARD_URL/rest/v1/lap_times?select=seconds&limit=1")
+          echo "Leaderboard answered HTTP $code" >> "$GITHUB_STEP_SUMMARY"
+          test "$code" = "200"
