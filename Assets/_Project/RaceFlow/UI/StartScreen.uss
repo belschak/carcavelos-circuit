@@ -303,6 +303,24 @@
     scale: 0.85 0.85;
 }
 
+/* ---------- Compact windows (4:3, 5:4: RaceHud adds hud--compact below 1040 px) ----------
+   The three mode cards (ModePicker, 3 x 228 px) and the board do not fit side by side there: the board took the
+   ONLINE RACE card's place (Sherlock grade 2, 800x600). The cards row is drawn at 80 % from its left edge (the cards
+   set their size in code, so a scale keeps them identical, just smaller), and the board takes a share of the width
+   with a floor and a ceiling instead of a fixed 340 px. 4:3 = 960 px: cards end at 575, board starts at 650. */
+.hud--compact #mode-picker {
+    scale: 0.8 0.8;
+    transform-origin: left center;
+}
+
+.hud--compact .lb-host--start {
+    width: 30%;
+    min-width: 260px;
+    max-width: 300px;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
 /* ---------- Reduced motion: everything is simply there, nothing moves, nothing flashes ----------
    The start values are set to the end values, so adding "intro-in" changes nothing (the letters' inline delays
    then do nothing either). TitleScreen also skips the light sweep. */

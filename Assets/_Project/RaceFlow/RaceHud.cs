@@ -40,6 +40,10 @@ namespace CarcavelosCircuit.RaceFlow
         // Below this panel width (reference pixels) the HUD uses the "hud--narrow" layout. The longest hint chip
         // ("Missed a checkpoint! Press R to go back", about 600 px) needs 1230 px to stay clear of the lap time panel.
         private const float NarrowHudWidth = 1230f;
+        // Below this width (4:3 = 960, 5:4 = 900 reference pixels; the panel always scales to 720 px height) the three
+        // mode cards and the start leaderboard no longer fit side by side: "hud--compact" (UI/StartScreen.uss) makes
+        // the cards smaller and the board narrower. 16:10 (1152) and wider, phones included, are unchanged.
+        public const float CompactHudWidth = 1040f;
 
         // ---- Elements (found by name in RaceHud.uxml) ----
         private VisualElement hudRoot;
@@ -258,6 +262,7 @@ namespace CarcavelosCircuit.RaceFlow
         private void OnHudResized(GeometryChangedEvent evt)
         {
             hudRoot.EnableInClassList("hud--narrow", evt.newRect.width < NarrowHudWidth);
+            hudRoot.EnableInClassList("hud--compact", evt.newRect.width < CompactHudWidth);
         }
 
         private void FindElements(VisualElement root)
