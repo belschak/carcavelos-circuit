@@ -98,9 +98,17 @@ jobs:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          # Read-only token for any GitHub API lookup the action makes, so it never runs anonymously on the runner IP's
+          # shared limit of 60 calls per hour (tests.yml run 44298834875 failed with 403). unity-builder v4.8.2 itself
+          # only calls the API in its cloud-runner mode (not used here) and downloads no CLI, so it has no cliVersion
+          # input to pin; the token is a guard.
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           unityVersion: auto
           targetPlatform: WebGL
+          # The same Web image tests.yml uses, pinned by digest: the tag could be pushed again with other contents; the
+          # digest cannot (it is the image's SHA-256). This is the image unityVersion auto + WebGL picked before.
+          customImage: unityci/editor:ubuntu-6000.3.28f1-webgl-3@sha256:78854b2ee7b5111bac4efe0262fa9e74e31b01d3a9736baab84ee551e3158209
           buildMethod: CarcavelosCircuit.RaceFlow.Editor.Role4WebBuild.Build
           # Online leaderboard (task R10, backend/supabase/README.md), optional: empty secrets = times stay on the
           # player's device. Passed as Unity arguments, not as env: lines, because GameCI's Docker container only
