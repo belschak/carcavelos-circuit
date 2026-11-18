@@ -1,6 +1,6 @@
 # Demo plan: Carcavelos Circuit
 
-The live demo of our team project, written along the course guide "Preparing the demo". The app runs at the deployed URL in front of the class: **https://belschak.github.io/carcavelos-circuit/**. Slides or a video never replace it.
+The live demo of our team project, written along the course guide "Preparing the demo". The app runs at the deployed URL in front of the class: **https://belschak.github.io/carcavelos-circuit/**. Slides or a video never replace it. Every main build is also mirrored to **https://nova-kart.github.io/** (once its deploy key is set); if we present from that link, every check below applies to it the same way.
 
 When and where: TXC 15:30, room D-110, Tue 24 Nov 2026 or Fri 4 Dec 2026 (half of the teams each day). Submission (code freeze for grading): Mon 23 Nov 23:59.
 
