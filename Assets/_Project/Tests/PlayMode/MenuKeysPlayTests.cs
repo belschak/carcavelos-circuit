@@ -114,6 +114,31 @@ namespace CarcavelosCircuit.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator FirstScreenLineup_ShowsWhileThePageIsUp_AndGoesAfterTheClick()
+        {
+            if (!KartModels.Available)
+            {
+                Assert.Ignore("no kart models in this scene");
+            }
+            WebPage.FirstScreenOverride = WebPage.FirstScreenLive;
+            try
+            {
+                yield return WaitFrames(3);
+                Assert.IsTrue(hud.Lineup.IsShown, "the page's Click to play screen shows the four drivers");
+                WebPage.FirstScreenOverride = WebPage.FirstScreenGone;
+                yield return WaitFrames(3);
+                Assert.IsFalse(hud.Lineup.IsShown, "after the click they go (phone QA 18 Nov: they stayed over the race)");
+                yield return Press(Key.Space);
+                Assert.IsTrue(hud.Builder.IsOpen);
+                Assert.IsFalse(hud.Lineup.IsShown, "never over the builder");
+            }
+            finally
+            {
+                WebPage.FirstScreenOverride = null;
+            }
+        }
+
+        [UnityTest]
         public IEnumerator Enter_OnTheModes_OnlyOpensTheBuilder_NotReadyToo()
         {
             // Desktop QA 18 Nov: Enter on a highlighted mode opened the builder AND counted as READY in that frame.

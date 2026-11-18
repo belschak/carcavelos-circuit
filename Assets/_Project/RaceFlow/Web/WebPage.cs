@@ -151,10 +151,17 @@ namespace CarcavelosCircuit.RaceFlow
         public const int FirstScreenCovers = 1;
         public const int FirstScreenLive = 2;
 
+        // Tests only: pretend the page is in this first-screen state (null = ask the page).
+        public static int? FirstScreenOverride;
+
         public static int FirstScreen
         {
             get
             {
+                if (FirstScreenOverride.HasValue)
+                {
+                    return FirstScreenOverride.Value;
+                }
 #if UNITY_WEBGL && !UNITY_EDITOR
                 return CarcavelosFirstScreen();
 #else

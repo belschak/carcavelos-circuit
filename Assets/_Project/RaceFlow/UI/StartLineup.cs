@@ -174,13 +174,13 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 Show();
             }
-            if (shown)
-            {
-                KeepAboveDock();
-            }
             else if (!want && shown)
             {
                 Hide();
+            }
+            if (shown)
+            {
+                KeepAboveDock();
             }
             if (stage != null && !shown && Time.unscaledTime - hiddenAt > FadeSeconds + 0.1f)
             {
