@@ -16,6 +16,13 @@
     <meta name="twitter:card" content="summary">
     <!-- Favicon: the diamond tile from the HUD countdown (inline SVG, no extra download). -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23123B5E'/%3E%3Crect x='7' y='7' width='18' height='18' rx='4' transform='rotate(45 16 16)' fill='%23EAEAEC'/%3E%3Crect x='11.5' y='11.5' width='9' height='9' rx='2' transform='rotate(45 16 16)' fill='%23FF8A1F'/%3E%3C/svg%3E">
+    <!-- Home screen (phones): "Add to Home Screen" opens the game full screen and sideways, without browser bars. -->
+    <link rel="manifest" href="TemplateData/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="TemplateData/icon-180.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Carcavelos">
     <link rel="stylesheet" href="TemplateData/style.css">
   </head>
   <body>
@@ -143,34 +150,49 @@
 
     <div id="cc-toast" hidden></div>
 
-    <!-- Touch controls (task P9): only on phones and tablets. Each button "presses" the keyboard key(s) in data-keys,
-         the same keys the game already reads, so no game code knows about touch. Script: "Touch controls" below. -->
+    <!-- Touch controls (task P9, phone round 17.11): only on phones and tablets. Each button "presses" the keyboard
+         key(s) in data-keys, the same keys the game already reads, so no game code knows about touch.
+         Layout (style.css "Touch controls"): sizes are in the HUD's own unit (1/720 of the game's height), so the
+         buttons and the game HUD grow and shrink together and never meet. Used all the time = big and in the corners
+         (steer bottom left, gas bottom right, brake left of gas); used now and then = smaller, a short reach away
+         (drift above gas, item above brake, trick above steer); rare = small and away from the thumbs (recover, retry,
+         fullscreen in a row on the left, pause at the top next to the lap time). Script: "Touch controls" below. -->
     <div id="cc-touch" hidden>
-      <!-- Trick (D11, request Q21): a tap = one Shift press. Above the steer buttons, because in the air the left thumb
-           has little to steer. No data-slide, so a sliding steer thumb never starts a trick by accident. -->
+      <!-- Left thumb. Trick (D11, Q21): a tap = one Shift press, above the steer buttons because in the air the left
+           thumb has little to steer. No data-slide, so a sliding steer thumb never starts a trick by accident. -->
       <div class="cc-touch-steer">
         <button class="cc-touch-button cc-touch-trick" type="button" data-keys="ShiftLeft" aria-label="Trick (in the air)">Trick</button>
-        <button class="cc-touch-button" type="button" data-keys="KeyA" data-slide aria-label="Steer left">
-          <svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <button class="cc-touch-button cc-touch-left" type="button" data-keys="KeyA" data-slide aria-label="Steer left">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4.5l-7.5 7.5 7.5 7.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <button class="cc-touch-button" type="button" data-keys="KeyD" data-slide aria-label="Steer right">
-          <svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <button class="cc-touch-button cc-touch-right" type="button" data-keys="KeyD" data-slide aria-label="Steer right">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.5l7.5 7.5-7.5 7.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
 
-      <!-- Drift also holds the gas, so one thumb can drift while the other steers. -->
+      <!-- Right thumb. Gas in the corner, Brake left of it, Drift above Gas (a thumb rolls up from Gas to Drift without
+           a gap: Drift also holds the gas), Item (R7, the game reads E) above Brake. -->
       <div class="cc-touch-pedals">
-        <!-- Item boxes (R7): the game reads E as "use item". -->
         <button class="cc-touch-button cc-touch-item" type="button" data-keys="KeyE" aria-label="Use item">Item</button>
-        <button class="cc-touch-button cc-touch-brake" type="button" data-keys="KeyS" data-slide aria-label="Brake and reverse">Brake</button>
         <button class="cc-touch-button cc-touch-drift" type="button" data-keys="KeyW Space" data-slide aria-label="Drift">Drift</button>
+        <button class="cc-touch-button cc-touch-brake" type="button" data-keys="KeyS" data-slide aria-label="Brake and reverse">Brake</button>
         <button class="cc-touch-button cc-touch-gas" type="button" data-keys="KeyW" data-slide aria-label="Gas">Gas</button>
       </div>
 
+      <!-- Rare buttons: a row on the left between the lap time and the Trick button (the fullscreen button joins it). -->
       <div class="cc-touch-tools">
-        <button class="cc-touch-pill" type="button" data-keys="KeyR" aria-label="Recover to the last checkpoint">Recover</button>
-        <button class="cc-touch-pill" type="button" data-keys="Enter" aria-label="Retry from the start">Retry</button>
+        <button class="cc-touch-pill" type="button" data-keys="KeyR" aria-label="Recover to the last checkpoint">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4v4.5H9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Recover</span>
+        </button>
+        <button class="cc-touch-pill" type="button" data-keys="Enter" aria-label="Retry from the start">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16M9.5 5.5h9l-2.5 3.5 2.5 3.5h-9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Retry</span>
+        </button>
       </div>
+
+      <!-- Pause (P): top left, just right of the lap time. While paused the driving buttons hide; a tap continues. -->
+      <button class="cc-touch-pill cc-touch-pause" type="button" data-keys="KeyP" aria-label="Pause">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5v14M15.5 5v14" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>
+      </button>
     </div>
 
     <!-- Portrait phones: a small hint to turn the phone (CSS shows it only in portrait). -->
@@ -394,12 +416,15 @@
       // ---------- Fullscreen button (top centre, hides while you drive) ----------
       function showFullscreenButton(unityInstance) {
         var fullscreenButton = document.getElementById("cc-fullscreen");
-        if (touchMode && !pageCanGoFullscreen()) {
-          return; // iPhone Safari has no fullscreen for web pages
+        if (touchMode && runsFromHomeScreen()) {
+          return; // started from the home screen icon: already full screen, nothing to switch
         }
         fullscreenButton.hidden = false;
         fullscreenButton.addEventListener("click", function () {
-          if (touchMode) {
+          if (touchMode && !pageCanGoFullscreen()) {
+            // iPhone Safari has no fullscreen for web pages; the home screen icon opens the game without browser bars.
+            showBanner("Full screen on iPhone: tap Share, then “Add to Home Screen”, and start the game from the new icon.", "warning");
+          } else if (touchMode) {
             togglePageFullscreen(); // the whole page, so the touch buttons stay visible
           } else {
             unityInstance.SetFullscreen(1);
@@ -439,7 +464,8 @@
         KeyR: { key: "r", keyCode: 82 },      // recover
         Enter: { key: "Enter", keyCode: 13 }, // retry
         KeyE: { key: "e", keyCode: 69 },      // use item
-        ShiftLeft: { key: "Shift", keyCode: 16, location: 1 } // trick in the air (left Shift)
+        ShiftLeft: { key: "Shift", keyCode: 16, location: 1 }, // trick in the air (left Shift)
+        KeyP: { key: "p", keyCode: 80 }       // pause
       };
       var touchPanel = document.getElementById("cc-touch");
       var heldCount = {};      // key code -> how many fingers hold it (Gas and Drift both hold W)
@@ -547,12 +573,15 @@
       // The game says when a race runs (countdown or racing, task R10/R11: RaceFlow/Web/WebPage.cs sends the event
       // "cc-race-state"). Outside a race the driving buttons hide (style.css: html:not(.cc-racing)), so they never
       // cover the title, the leaderboard or the name field; every held key is let go first.
+      // While the race is paused the game sends racing: false and paused: true: the driving buttons hide under the
+      // PAUSED card (a tap on the game continues) and the fullscreen button keeps its race spot.
       window.addEventListener("cc-race-state", function (event) {
         var racing = !!(event.detail && event.detail.racing);
         if (!racing) {
           releaseAllFingers();
         }
         document.documentElement.classList.toggle("cc-racing", racing);
+        document.documentElement.classList.toggle("cc-paused", !!(event.detail && event.detail.paused));
       });
       document.addEventListener("visibilitychange", releaseAllFingers);
 
@@ -613,7 +642,8 @@
         document.getElementById("cc-rotate").hidden = false; // style.css shows it only in portrait
       }
 
-      // The fullscreen button moves into the Recover/Retry row (style.css), away from the countdown.
+      // In touch mode the fullscreen button lives in the Recover/Retry row during a race and in the top right corner
+      // on the menus (style.css), never over the title or the countdown.
       var fullscreenButtonElement = document.getElementById("cc-fullscreen");
       function showTouchControls() {
         gameStarted = true;
@@ -644,6 +674,29 @@
       document.getElementById("cc-rotate-close").addEventListener("click", function () {
         document.getElementById("cc-rotate").classList.add("cc-closed");
       });
+
+      // The touch layout uses the HUD's own unit: the game's HUD is made for 1280 x 720 and scales with the height
+      // (RaceHud panel settings, "match height"), so one HUD pixel is canvas height / 720 CSS pixels. style.css reads
+      // --cc-r (that unit) and --cc-w (the canvas width, for the HUD's centred 1600 px safe area).
+      function measureHudUnit() {
+        var rect = canvas.getBoundingClientRect();
+        if (rect.height > 0) {
+          document.documentElement.style.setProperty("--cc-r", (rect.height / 720) + "px");
+          document.documentElement.style.setProperty("--cc-w", rect.width + "px");
+        }
+      }
+      measureHudUnit();
+      window.addEventListener("resize", measureHudUnit);
+      window.addEventListener("orientationchange", function () { setTimeout(measureHudUnit, 300); });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", measureHudUnit); // iPhone Safari bars coming and going
+      }
+
+      // Started from the home screen icon (manifest "display", iPhone "Add to Home Screen"): no browser bars.
+      function runsFromHomeScreen() {
+        return window.navigator.standalone === true ||
+          window.matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches;
+      }
 
       // Fullscreen for the whole page (Android, iPad). iPhone Safari cannot do it for web pages.
       function pageCanGoFullscreen() {

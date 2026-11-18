@@ -37,7 +37,7 @@ namespace CarcavelosCircuit.RaceFlow
         private bool startBoardLoaded;
         private int typingFrame = -10;  // last frame the name field had the cursor (or Enter saved)
         private RaceState lastState = RaceState.Ready;
-        private bool sentRacing;        // what the Web page was last told (its driving buttons show only in a race)
+        private int sentPageState;      // what the Web page was last told (its driving buttons show only in a race)
 
         // The service in use (made on first use). Public so a Play Mode test can read it.
         public ILeaderboardService Service
@@ -82,8 +82,8 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 form.UseNamePrompt(); // phone browser: the name is typed in the browser's own text box
             }
-            sentRacing = false;
-            WebPage.SendRaceState(false);
+            sentPageState = WebPage.PageMenus;
+            WebPage.SendRaceState(WebPage.PageMenus);
             playerName = SettingsStore.LoadPlayerName();
             startBoardLoaded = false;
             raceManager.LapFinished += OnLapFinished;
@@ -120,12 +120,13 @@ namespace CarcavelosCircuit.RaceFlow
             }
             lastState = state;
 
-            // The page's touch buttons for driving only during a race, so on a phone they never cover the boards.
-            bool racing = state == RaceState.Countdown || state == RaceState.Racing;
-            if (racing != sentRacing)
+            // The page's touch buttons for driving only during a race (not while paused), so on a phone they never
+            // cover the boards or the PAUSED card.
+            int pageState = WebPage.PageRaceState(state, raceManager.IsPaused);
+            if (pageState != sentPageState)
             {
-                sentRacing = racing;
-                WebPage.SendRaceState(racing);
+                sentPageState = pageState;
+                WebPage.SendRaceState(pageState);
             }
 
             // The form takes clicks only while the results card is really there (RaceHud adds st-results then).

@@ -111,11 +111,12 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // The text in the hint chip. Constant strings: nothing is built at runtime.
-        public static string TextFor(CoachHint hint)
+        // touch = the page shows touch buttons (WebPage.TouchMode): name the button, not the key.
+        public static string TextFor(CoachHint hint, bool touch = false)
         {
             switch (hint)
             {
-                case CoachHint.HowToDrift: return "Hold SPACE while steering to drift";
+                case CoachHint.HowToDrift: return touch ? "Hold DRIFT while steering to drift" : "Hold SPACE while steering to drift";
                 case CoachHint.HoldLonger: return "Hold longer: let go when sparks fly";
                 case CoachHint.BigBoost: return "Nice! Orange sparks = the big boost";
                 default: return "";

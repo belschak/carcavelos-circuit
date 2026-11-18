@@ -33,5 +33,30 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.DoesNotThrow(() => WebPage.SendRaceState(true));
             Assert.DoesNotThrow(() => WebPage.SendRaceState(false));
         }
+        [Test]
+        public void TouchMode_IsOffOutsideAWebBuild()
+        {
+            Assert.IsFalse(WebPage.TouchMode, "Editor and desktop: the HUD keeps its keyboard layout");
+        }
+
+        // Phone round 17.11: the page's touch buttons show in the countdown and the race, but not while paused
+        // (the PAUSED card stays free, a tap continues), and never on the start screen or the results.
+        [TestCase(RaceState.Ready, false, WebPage.PageMenus)]
+        [TestCase(RaceState.Ready, true, WebPage.PageMenus)]
+        [TestCase(RaceState.Countdown, false, WebPage.PageRacing)]
+        [TestCase(RaceState.Racing, false, WebPage.PageRacing)]
+        [TestCase(RaceState.Countdown, true, WebPage.PagePaused)]
+        [TestCase(RaceState.Racing, true, WebPage.PagePaused)]
+        [TestCase(RaceState.Results, false, WebPage.PageMenus)]
+        public void PageRaceState_ButtonsOnlyInARunningRace(RaceState state, bool paused, int expected)
+        {
+            Assert.AreEqual(expected, WebPage.PageRaceState(state, paused));
+        }
+
+        [Test]
+        public void SendRaceState_WithAPageState_OutsideAWebBuild_DoesNothing()
+        {
+            Assert.DoesNotThrow(() => WebPage.SendRaceState(WebPage.PagePaused));
+        }
     }
 }

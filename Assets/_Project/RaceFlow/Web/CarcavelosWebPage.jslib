@@ -1,10 +1,17 @@
 // The game's two messages to the Web page (task R10/R11). C# side: RaceFlow/Web/WebPage.cs.
 // Unity puts every .jslib into the Web build; these functions run in the browser, not in C#.
 mergeInto(LibraryManager.library, {
-  // racing: 1 while a race runs (countdown or racing), 0 on the start screen and the results.
-  // The page template listens for "cc-race-state" and shows its driving buttons only during a race.
-  CarcavelosRaceState: function (racing) {
-    window.dispatchEvent(new CustomEvent("cc-race-state", { detail: { racing: racing !== 0 } }));
+  // state: 1 while a race runs (countdown or racing), 2 while that race is paused, 0 on the start screen and the
+  // results (WebPage.PageRaceState). The page template listens for "cc-race-state" and shows its driving buttons
+  // only during a running race.
+  CarcavelosRaceState: function (state) {
+    window.dispatchEvent(new CustomEvent("cc-race-state", { detail: { racing: state === 1, paused: state === 2 } }));
+  },
+
+  // 1 while the page shows its touch buttons (phone or tablet, index.html useTouchMode adds "cc-touch-mode"), else 0.
+  // The HUD then makes room for the thumbs (RaceHud.uss ".hud--touch") and the hints name buttons instead of keys.
+  CarcavelosTouchMode: function () {
+    return document.documentElement.classList.contains("cc-touch-mode") ? 1 : 0;
   },
 
   // The browser's own text box for the leaderboard name (phones: their keyboard opens reliably there).
