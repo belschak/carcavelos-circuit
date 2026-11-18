@@ -114,6 +114,25 @@ namespace CarcavelosCircuit.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Enter_OnTheModes_OnlyOpensTheBuilder_NotReadyToo()
+        {
+            // Desktop QA 18 Nov: Enter on a highlighted mode opened the builder AND counted as READY in that frame.
+            yield return Press(Key.Space);
+            yield return Press(Key.Escape);
+            yield return WaitFrames(3);
+            Assert.IsFalse(hud.Builder.IsOpen);
+
+            yield return Press(Key.Enter);
+            Assert.IsTrue(hud.Builder.IsOpen, "Enter on the modes opens the builder");
+            Assert.AreEqual(RaceState.Ready, race.State, "the same Enter is not READY");
+            yield return WaitFrames(3);
+            Assert.AreEqual(RaceState.Ready, race.State);
+
+            yield return Press(Key.Enter);
+            Assert.AreEqual(RaceState.Countdown, race.State, "the next Enter is READY");
+        }
+
+        [UnityTest]
         public IEnumerator Space_OpensTheDriverSelect_BackspaceGoesBack_AndStaysThere()
         {
             yield return Press(Key.Space);

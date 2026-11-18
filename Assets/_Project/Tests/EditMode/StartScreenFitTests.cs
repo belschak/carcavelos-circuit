@@ -87,5 +87,40 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.LessOrEqual(6f * 0.9f * ipad + 16f, 960f * 0.46f * 0.92f / 4f, "the names keep a gap on an iPad");
             Assert.AreEqual(12f, StartLineup.NameFontSize(10f), "never unreadably small");
         }
+
+        [Test]
+        public void KartBuilder_SetTitleFitsOneLine()
+        {
+            // The longest set name under the turntable at 4:3 (960 HUD px wide; caption = stage minus 2 x 18 px): one line.
+            string longest = "AMARA / BEACH BUGGY / BALLOON";
+            float stage = 960f - 2f * KartBuilder.SidePadding - KartBuilder.StageGap - 3f * KartBuilder.TileWidth - 2f * KartBuilder.ColumnGap;
+            float caption = stage - 36f;
+            float size = KartBuilder.TitleFontSize(caption, longest.Length);
+            Assert.LessOrEqual(longest.Length * 0.8f * size, caption + 0.5f);
+            Assert.GreaterOrEqual(size, 14f, "still readable");
+            Assert.AreEqual(20f, KartBuilder.TitleFontSize(900f, 12), "short names keep the full size");
+            Assert.AreEqual(20f, KartBuilder.TitleFontSize(0f, 12), "no width yet: the default");
+        }
+
+        [Test]
+        public void StartLineup_KartsStandNearThePictureBottom()
+        {
+            Assert.AreEqual(0.5f, KartStage.LineupLookHeight(0.4f), 1e-4f, "a wide picture: the karts' middle");
+            Assert.AreEqual(2f * 0.82f, KartStage.LineupLookHeight(2f), 1e-4f, "a tall picture: look up, the ground drops to the bottom");
+        }
+
+        [Test]
+        public void TileShots_EmptyPicturesAreFound()
+        {
+            var empty = new Color32[100];
+            var drawn = new Color32[100];
+            for (int i = 0; i < 10; i++)
+            {
+                drawn[i] = new Color32(200, 120, 40, 255);
+            }
+            Assert.IsFalse(KartStage.HasDrawnPixels(empty, 0.005f), "only the see-through background");
+            Assert.IsTrue(KartStage.HasDrawnPixels(drawn, 0.005f), "a kart on it");
+            Assert.IsFalse(KartStage.HasDrawnPixels(null, 0.005f));
+        }
     }
 }

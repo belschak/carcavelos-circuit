@@ -63,11 +63,15 @@ namespace CarcavelosCircuit.RaceFlow
 
         private KartStage stage;
         private bool tilesShot;
+        private readonly bool[,] tileOk = new bool[ColumnCount, KartLoadout.PartCount];
+        private int tileRetries;
+        private int nextRetryFrame;
         private KartLoadout shownOnStage;
         private bool stageHasKart;
         private int hoveredColumn = -1, hoveredRow = -1;
         private int pressedColumn = -1, pressedRow = -1;
         private int closedFrame = -1;
+        private int openedFrame = -1;
         private bool readyThisFrame;
         private bool backThisFrame;
         private bool dragging;
@@ -195,12 +199,13 @@ namespace CarcavelosCircuit.RaceFlow
             caption.style.bottom = 14f;
             caption.style.alignItems = Align.Center;
             caption.pickingMode = PickingMode.Ignore;
+            caption.RegisterCallback<GeometryChangedEvent>(evt => FitTitle());
             previewTitle = new Label(" ") { name = "kart-builder-set" };
             previewTitle.AddToClassList("f-display");
             previewTitle.style.fontSize = 20f;
             previewTitle.style.color = HudColors.Cream;
             previewTitle.style.unityTextAlign = TextAnchor.MiddleCenter;
-            previewTitle.style.whiteSpace = WhiteSpace.Normal;
+            previewTitle.style.whiteSpace = WhiteSpace.NoWrap; // one line, shrunk to fit (FitTitle)
             previewTitle.pickingMode = PickingMode.Ignore;
             caption.Add(previewTitle);
             previewNote = new Label(" ") { name = "kart-builder-note" };
@@ -534,6 +539,7 @@ namespace CarcavelosCircuit.RaceFlow
                 return; // ExternalStartOnly: the online lobby is open and owns the start screen
             }
             IsOpen = true;
+            openedFrame = Time.frameCount;
             hoveredColumn = -1;
             hoveredRow = -1;
             pressedColumn = -1;
@@ -614,9 +620,15 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 stage.Rendering = IsOpen;
                 stage.Spins = !dragging && Time.unscaledTime - lastDragTime > SpinAgainAfterSeconds;
+                if (IsOpen)
+                {
+                    RetryMissingTiles();
+                }
             }
-            if (!active)
+            if (!active || Time.frameCount == openedFrame)
             {
+                // Desktop QA 18 Nov: the Enter/Space that opened the builder (ONLINE highlighted on the start screen)
+                // also counted as READY in the same frame and went straight to the lobby. That key only opens it.
                 readyThisFrame = false;
                 backThisFrame = false;
                 return;
@@ -751,6 +763,7 @@ namespace CarcavelosCircuit.RaceFlow
             int lineRow = hoveredColumn >= 0 ? hoveredRow : PickedRow(Column);
             line.text = PartLine(lineColumn, lineRow);
             previewTitle.text = set.Title;
+            FitTitle();
             previewNote.text = set.IsSignature ? DriverRoster.Get(set.Driver).Name.ToUpperInvariant() + "'S OWN SET"
                 : "DRAG TO TURN";
         }
@@ -770,27 +783,111 @@ namespace CarcavelosCircuit.RaceFlow
             SizePicture();
         }
 
-        // The kart and tyre tiles: one still picture of each, taken once in the studio (Luc's real models, 3/4 view).
+        // The kart and tyre tiles: one still picture of each, taken in the studio (Luc's real models, 3/4 view).
+        // Desktop QA 18 Nov: in about half the fresh loads 1-3 pictures came out empty and stayed empty, so every
+        // picture is checked (any drawn pixel?) and a missing one is shot again on later frames (TileShotsPending).
         private void ShootTiles()
         {
             for (int i = 0; i < KartLoadout.PartCount; i++)
             {
-                stage.ShowSingle(KartLoadout.Signature(i));
-                RenderTexture kart = stage.Snapshot(TileShotWidth, TileShotHeight, null, true, -38f, 1.04f);
-                RenderTexture tyre = stage.Snapshot(TileShotWidth, TileShotHeight, "Wheel_FL", true, 64f, 1.0f);
-                if (kart != null)
+                ShootPart(i);
+            }
+            stageHasKart = false;
+            ShowOnStage();
+        }
+
+        private void ShootPart(int part)
+        {
+            if (tileOk[KartColumn, part] && tileOk[TyreColumn, part])
+            {
+                return;
+            }
+            stage.ShowSingle(KartLoadout.Signature(part));
+            if (!tileOk[KartColumn, part])
+            {
+                tileOk[KartColumn, part] = Keep(KartColumn, part, stage.Snapshot(TileShotWidth, TileShotHeight, null, true, -38f, 1.04f));
+            }
+            if (!tileOk[TyreColumn, part])
+            {
+                tileOk[TyreColumn, part] = Keep(TyreColumn, part, stage.Snapshot(TileShotWidth, TileShotHeight, "Wheel_FL", true, 64f, 1.0f));
+            }
+        }
+
+        private bool Keep(int column, int part, RenderTexture shot)
+        {
+            if (shot == null)
+            {
+                return false;
+            }
+            if (KartStage.IsEmpty(shot))
+            {
+                shot.Release();
+                UnityEngine.Object.Destroy(shot);
+                return false;
+            }
+            tileShots.Add(shot);
+            tilePictures[column, part].style.backgroundImage = new StyleBackground(Background.FromRenderTexture(shot));
+            return true;
+        }
+
+        // The set's name in one line under the turntable (desktop QA 18 Nov: it wrapped into two at 4:3 and 5:4).
+        // Archivo Expanded capitals are about 0.8 em wide.
+        public static float TitleFontSize(float width, int letters)
+        {
+            if (letters <= 0 || width <= 0f)
+            {
+                return 20f;
+            }
+            return Mathf.Clamp(width / (letters * 0.8f), 12f, 20f);
+        }
+
+        private void FitTitle()
+        {
+            VisualElement caption = previewTitle.parent;
+            float width = caption != null ? caption.contentRect.width : 0f;
+            if (float.IsNaN(width) || width < 4f)
+            {
+                return;
+            }
+            previewTitle.style.fontSize = TitleFontSize(width, previewTitle.text != null ? previewTitle.text.Length : 0);
+        }
+
+        // Tiles whose picture came out empty (shot again on later frames, a few times at most).
+        public int TileShotsPending
+        {
+            get
+            {
+                int pending = 0;
+                for (int i = 0; i < KartLoadout.PartCount; i++)
                 {
-                    tileShots.Add(kart);
-                    tilePictures[KartColumn, i].style.backgroundImage = new StyleBackground(Background.FromRenderTexture(kart));
+                    pending += (tileOk[KartColumn, i] ? 0 : 1) + (tileOk[TyreColumn, i] ? 0 : 1);
                 }
-                if (tyre != null)
+                return pending;
+            }
+        }
+
+        private void RetryMissingTiles()
+        {
+            if (!tilesShot || stage == null || tileRetries >= MaxTileRetries || Time.frameCount < nextRetryFrame
+                || TileShotsPending == 0)
+            {
+                return;
+            }
+            tileRetries++;
+            nextRetryFrame = Time.frameCount + 20;
+            for (int i = 0; i < KartLoadout.PartCount; i++)
+            {
+                if (!tileOk[KartColumn, i] || !tileOk[TyreColumn, i])
                 {
-                    tileShots.Add(tyre);
-                    tilePictures[TyreColumn, i].style.backgroundImage = new StyleBackground(Background.FromRenderTexture(tyre));
+                    ShootPart(i);
+                    break; // one part per try, then the turntable gets its set back in the same frame
                 }
             }
             stageHasKart = false;
+            ShowOnStage();
         }
+
+        private const int MaxTileRetries = 24;
 
         private void ShowOnStage()
         {

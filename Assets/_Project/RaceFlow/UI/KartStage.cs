@@ -265,6 +265,9 @@ namespace CarcavelosCircuit.RaceFlow
                 float halfWidth = 2.45f;
                 float tanHalf = Mathf.Tan(FieldOfView * 0.5f * Mathf.Deg2Rad) * aspect;
                 distance = Mathf.Max(halfWidth / tanHalf, 5f);
+                // The karts stand on the picture's bottom edge, right above their names (desktop QA 18 Nov: on taller
+                // windows the row floated in the middle, up to 250 px above the names).
+                lookAt.y = LineupLookHeight(distance * Mathf.Tan(FieldOfView * 0.5f * Mathf.Deg2Rad));
             }
             else
             {
@@ -275,6 +278,13 @@ namespace CarcavelosCircuit.RaceFlow
                 distance = fit;
             }
             PlaceCamera();
+        }
+
+        // halfHeight = half the picture's height in metres at the karts: look that high that the ground lands near the
+        // bottom edge (18 % margin), never lower than the karts' middle (0.5 m).
+        public static float LineupLookHeight(float halfHeight)
+        {
+            return Mathf.Max(0.5f, halfHeight * 0.82f);
         }
 
         private void PlaceCamera()
@@ -321,6 +331,43 @@ namespace CarcavelosCircuit.RaceFlow
 
         // Takes one still picture (the builder's kart and tyre tiles) of what is on the turntable now, with only the
         // parts whose names pass the filter visible. Returns a new RenderTexture the caller keeps (and releases).
+        // A still with nothing drawn on it (only the see-through background)? Reads the picture back once (small, so
+        // cheap); used to shoot an empty tile picture again (KartBuilder, desktop QA 18 Nov).
+        public static bool IsEmpty(RenderTexture shot)
+        {
+            if (shot == null)
+            {
+                return true;
+            }
+            RenderTexture before = RenderTexture.active;
+            var probe = new Texture2D(shot.width, shot.height, TextureFormat.RGBA32, false);
+            RenderTexture.active = shot;
+            probe.ReadPixels(new Rect(0, 0, shot.width, shot.height), 0, 0, false);
+            probe.Apply(false);
+            RenderTexture.active = before;
+            Color32[] pixels = probe.GetPixels32();
+            Object.Destroy(probe);
+            return !HasDrawnPixels(pixels, 0.005f);
+        }
+
+        // At least this share of the pixels is drawn (alpha above 10 %).
+        public static bool HasDrawnPixels(Color32[] pixels, float share)
+        {
+            if (pixels == null || pixels.Length == 0)
+            {
+                return false;
+            }
+            int drawn = 0;
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                if (pixels[i].a > 25)
+                {
+                    drawn++;
+                }
+            }
+            return drawn >= Mathf.Max(1, Mathf.RoundToInt(pixels.Length * share));
+        }
+
         public RenderTexture Snapshot(int width, int height, string onlyUnder, bool hideDriver, float snapshotYaw, float margin)
         {
             if (karts.Count == 0 || karts[0] == null || karts[0].Model == null)
