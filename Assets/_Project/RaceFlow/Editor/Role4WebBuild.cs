@@ -64,6 +64,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
 
             BuildSummary report; // a copy: the phone build below destroys the first BuildReport object
             FogStripping fogBefore = FogStripping.Read();
+            System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, UnityEngine.Object>> grainBefore = SwapFilmGrainTextures();
             try
             {
                 // Hashed file names change every build, so old files would pile up next to the new ones.
@@ -111,6 +112,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             finally
             {
                 fogBefore.Write();
+                RestoreFilmGrainTextures(grainBefore);
                 LeaderboardBuildConfig.Clear(); // the asset in the repo stays empty
                 OnlineBuildConfig.Clear(); // no App ID file and no CARCAVELOS_FUSION define left behind
                 GraphicsSettings.defaultRenderPipeline = AssetDatabase.LoadAssetAtPath<RenderPipelineAsset>(editorPipelinePath);
@@ -346,6 +348,74 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 html = html.Replace(WorldEtc2Placeholder, files.Etc2);
             }
             return html.Replace(WorldSharePlaceholder, files.Share.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        // ---------- Film grain noise out of the Web download (load time P8, 18 Nov) ----------
+        // URP ships its ten film grain noise textures (512 px Alpha8, 2.5 MB of noise that gzip cannot shrink) with every
+        // build through its global settings. On the Web no film grain is ever drawn: the grain is only in the HighEnd camera
+        // profile, which CameraLookRules.IsHighEnd never picks on the "Web" quality level, and the default profile's grain
+        // intensity is 0. For the build only, every grain slot points at URP's own 16 px blue noise texture (a texture, so
+        // URP's resource check stays happy); afterwards the asset is put back exactly as it was.
+        private const string UrpGlobalSettingsPath = "Assets/Settings/UniversalRenderPipelineGlobalSettings.asset";
+
+        private static System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, UnityEngine.Object>> SwapFilmGrainTextures()
+        {
+            var before = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, UnityEngine.Object>>();
+            UnityEngine.Object asset = AssetDatabase.LoadMainAssetAtPath(UrpGlobalSettingsPath);
+            if (asset == null)
+            {
+                return before;
+            }
+            var settings = new SerializedObject(asset);
+            UnityEngine.Object tiny = null;
+            SerializedProperty property = settings.GetIterator();
+            while (property.Next(true))
+            {
+                if (property.propertyType != SerializedPropertyType.ObjectReference)
+                {
+                    continue;
+                }
+                if (property.propertyPath.Contains("filmGrainTex.Array.data["))
+                {
+                    before.Add(new System.Collections.Generic.KeyValuePair<string, UnityEngine.Object>(property.propertyPath, property.objectReferenceValue));
+                }
+                else if (tiny == null && property.propertyPath.Contains("blueNoise16LTex.Array.data["))
+                {
+                    tiny = property.objectReferenceValue;
+                }
+            }
+            if (tiny == null || before.Count == 0)
+            {
+                Debug.LogWarning("Role4WebBuild: film grain textures not found in " + UrpGlobalSettingsPath + "; they stay in the build.");
+                before.Clear();
+                return before;
+            }
+            foreach (System.Collections.Generic.KeyValuePair<string, UnityEngine.Object> slot in before)
+            {
+                settings.FindProperty(slot.Key).objectReferenceValue = tiny;
+            }
+            settings.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssets();
+            Debug.Log("Role4WebBuild: " + before.Count + " film grain textures left out of the Web build (no grain on the Web).");
+            return before;
+        }
+
+        private static void RestoreFilmGrainTextures(System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, UnityEngine.Object>> before)
+        {
+            if (before == null || before.Count == 0)
+            {
+                return;
+            }
+            var settings = new SerializedObject(AssetDatabase.LoadMainAssetAtPath(UrpGlobalSettingsPath));
+            foreach (System.Collections.Generic.KeyValuePair<string, UnityEngine.Object> slot in before)
+            {
+                SerializedProperty property = settings.FindProperty(slot.Key);
+                if (property != null)
+                {
+                    property.objectReferenceValue = slot.Value;
+                }
+            }
+            settings.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // GraphicsSettings fog stripping, read and written through the settings asset (Unity has no API for it).
