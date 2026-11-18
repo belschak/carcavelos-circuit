@@ -22,7 +22,7 @@ Start with the first three if you have never seen the project.
 | [verification.md](verification.md) | What the tests cover, what they do not, how to run them |
 | [security.md](security.md) | Keys, access control, input validation, dependencies |
 | [demo-plan.md](demo-plan.md) | The live demo: order, who does what, fallback for each service |
-| [builds.md](builds.md) | Web builds that were tested by hand: commit, browser, result |
+| [builds.md](builds.md) | Where every deployed build is logged (GitHub Actions) and how to check what is live |
 | [course-requirements.md](course-requirements.md) | The official course rules and grading rubric, and how we meet each one |
 
 ## Working on the project

@@ -50,7 +50,7 @@ On a phone the game shows touch buttons instead.
 | Positions, minimap, name tags | Live place of every racer | `Assets/_Project/RaceFlow/RaceStandings.cs`, `MinimapPath.cs`, `Driving/NameTagManager.cs` |
 | Ghost and medals | Replay of your best lap, Bronze/Silver/Gold scaled to the track | `Assets/_Project/RaceFlow/Ghost*.cs`, `MedalRules.cs` |
 | Driver select | Four drivers, each in their own kart | `Assets/_Project/RaceFlow/Drivers/` |
-| Leaderboard | Online top 10 with names, saved on the device first, shows "offline" when the service is down | `Assets/_Project/RaceFlow/Leaderboard/`, `backend/supabase/` |
+| Leaderboard | Top 10 with names: online when the Supabase secrets are set at build time, otherwise on this device. Every time is saved on the device first; if the online service is down the board says so | `Assets/_Project/RaceFlow/Leaderboard/`, `backend/supabase/` |
 | Online race | One room for the class (15 players), shared countdown, same finish order on every screen | `Assets/_Project/Online/`, [docs/online.md](docs/online.md) |
 | Menus and HUD | Start screen, settings, credits, results, plain-language errors | `Assets/_Project/RaceFlow/UI/` |
 | Sound | Engine pitch from speed, drift and boost sounds, music with ducking | `Assets/_Project/Audio/`, `RaceFlow/RaceMusic.cs` |
@@ -131,3 +131,7 @@ On GitHub: Actions > **Tests** > Run workflow runs both modes in Unity on Linux 
 ## Credits
 
 Map data © OpenStreetMap contributors (ODbL). Sound effects: elevenlabs.io (kart engine and drift sounds made by Luc Tippmann, boost by David Belschak); all other sounds and the music are our own synthesised work. Characters: Microsoft Rocketbox Avatar Library (MIT, © 2020 Microsoft). All third-party assets and their licences: [THIRD_PARTY.md](THIRD_PARTY.md). Original game, not affiliated with Nintendo or Nova SBE.
+
+## License
+
+Our code (C#, Python, SQL, HTML, CSS, JavaScript) is under the MIT licence: [LICENSE](LICENSE). Our own synthesised sounds and code-drawn art are CC0, as listed in [THIRD_PARTY.md](THIRD_PARTY.md). Every third-party asset (map data, fonts, characters, generated sounds and models) keeps its own licence, listed there. The Photon SDK is not part of this repository.

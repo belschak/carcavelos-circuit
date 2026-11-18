@@ -11,7 +11,7 @@ A 3D kart racer on a model of Nova SBE's Carcavelos campus that runs in the brow
 We picked "start a new application" from the team project page. A game shows every grading point in a way the class can try live: invalid input (names, URL flags, a lost connection), clear feedback, and real multi-user interaction.
 
 **Why Unity and not Python with Streamlit, like the course?**
-Streamlit reruns a script on every click and has no game loop, so it cannot draw 3D at 60 frames a second; the course's stack guide itself says games do not suit Streamlit. Unity gives physics, a camera system, a Web export and a test runner. The wiki says a different language is agreed with the staff case by case; we asked through the Moodle question form on 7 Nov (task G1), and the outcome is in [decisions.md](decisions.md). See [architecture.md](architecture.md#stack-approval).
+The game needs three things the course's stack guide names as Streamlit's weak spots: 3D with physics at 60 frames a second (Streamlit redraws after each click and has no game loop), real-time interaction between users (15 players in one live race), and a mobile layout (touch controls on phones). Unity gives physics, a camera system, a Web export and a test runner. The guide says a language other than Python is agreed with the staff case by case; we asked through the Moodle question form on 7 Nov (task G1). Current status: [architecture.md](architecture.md#stack-approval).
 
 ## How it is built
 
@@ -40,7 +40,7 @@ Every merge into `main` starts a GitHub Actions workflow that builds the Web ver
 
 **Where is the data stored?**
 - On the player's device, in the browser (Unity `PlayerPrefs`): best laps, the ghost of the best lap, settings, chosen mode and driver, the device leaderboard.
-- Online, in one Supabase (Postgres) table `lap_times`: name, time, track, date. Only when the build has the two leaderboard secrets.
+- Online, in one Supabase (Postgres) table `lap_times`: name, time, track, date. Only when the build has the two Supabase secrets; otherwise the board keeps times on the device and its header says "THIS DEVICE".
 - Nothing about the online race is stored: Photon only passes messages between the players in the room.
 - No accounts, no emails, no passwords.
 

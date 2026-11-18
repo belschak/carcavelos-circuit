@@ -23,7 +23,7 @@ flowchart LR
 | Web page | Loading screen, error cards ("The game could not start", "needs WebGL 2"), touch buttons on phones, fullscreen, update check | `Assets/WebGLTemplates/CarcavelosCircuit/index.html` |
 | Game | Everything you see and drive: menus, race, bots, items, HUD, sound | `Assets/_Project/` (one folder per module, below) |
 | Browser storage | Best times, ghost, settings, chosen mode and driver, device leaderboard | Unity `PlayerPrefs` (the browser's IndexedDB) |
-| Supabase | Shared online top 10 (one table) | Schema and rules: `backend/supabase/` |
+| Supabase | Shared online top 10 (one table), only when the build has the two Supabase secrets; without them the board is device-only and says "THIS DEVICE" | Schema and rules: `backend/supabase/` |
 | Photon Cloud | Relays the online race between players (no data stored) | Code: `Assets/_Project/Online/Fusion/` |
 | GitHub Actions | Runs the tests, builds the Web version, deploys `main` | `.github/workflows/` |
 
@@ -61,9 +61,9 @@ References point one way (read from the `.asmdef` files): `Driving`, `Track`, `A
 
 | Data | Stored where | Who can read or change it |
 |---|---|---|
-| Best lap per mode and track, ghost of the best lap, settings, mode, driver, name, coach tips done | `PlayerPrefs` in the player's browser | Only that browser. Clearing site data removes it |
+| Best lap per track, ghost of the best lap, settings, last mode, driver, player name, which coach tips were shown | `PlayerPrefs` in the player's browser | Only that browser. Clearing site data removes it |
 | Device leaderboard (fallback) | `PlayerPrefs` (`CarcavelosCircuit.Leaderboard.*`) | Only that browser |
-| Online leaderboard | Supabase table `lap_times` (name, seconds, track, created_at) | Public key may only SELECT and INSERT; Row Level Security and CHECK rules in `backend/supabase/001_lap_times.sql`; no UPDATE or DELETE |
+| Online leaderboard (only when the Supabase secrets are set at build time) | Supabase table `lap_times` (name, seconds, track, created_at) | Public key may only SELECT and INSERT; Row Level Security and CHECK rules in `backend/supabase/001_lap_times.sql`; no UPDATE or DELETE |
 | Online race state (names, driver, pose, finish) | In memory in each player's game, relayed by Photon | Nothing is stored; it is gone when the room empties |
 | Keys (Photon App ID, Supabase URL + public key, Unity licence) | GitHub Actions secrets only | Written into the build at build time, never committed |
 
@@ -89,7 +89,7 @@ So the code on `main` is the code that is deployed, and nobody deploys from a la
 
 | Choice | Why | What it costs |
 |---|---|---|
-| **Unity (C#) instead of the course's Python + Streamlit** | The product is a 3D racing game: 60 frames a second, physics, a camera, a 3D campus. Streamlit reruns a script on every click and has no game loop, and the course's stack guide itself lists games as something Streamlit does not suit. Unity gives physics, a scene editor, Cinemachine, a Web export and NUnit tests. The wiki allows a new application of the team's choice and says a different language is decided with the staff: see "Stack approval" below | A different language and test tool from the course; about 50 MB download; Unity licence needed in CI |
+| **Unity (C#) instead of the course's Python + Streamlit** | The product is a 3D racing game: 60 frames a second, physics, a camera, a 3D campus. The product needs 3D physics, real-time play between 15 users and phone controls, exactly the cases the course's stack guide lists as Streamlit's weak spots. Unity gives physics, a scene editor, Cinemachine, a Web export and NUnit tests. Details and approval status: "Stack approval" below | A different language and test tool from the course; about 50 MB download; Unity licence needed in CI |
 | **Rule-based bots, no machine learning** | Every decision is a few lines of maths (`BotRules`: pure-pursuit steering, braking before bends, stuck check) that any member can explain and Edit Mode tests can check. Bots use the player's kart physics, so they are fair and can be bumped | Bots do not learn; they follow the racing line and a light rubber band |
 | **Items with campus names** (Espresso, Seagull Delivery, Carcavelos Wave, Dean's List) | Arcade feel and a reason to drive through the boxes. Odds favour the player who is behind | Bots do not use items (yet) |
 | **Supabase for the leaderboard** | Free hosted Postgres with a REST API, so no server of ours. Row Level Security makes a public key safe: it can only read and add rows that pass the CHECK rules | A free project pauses after a week without requests; a script can post fake but valid times (limits page) |
@@ -101,7 +101,18 @@ So the code on `main` is the code that is deployed, and nobody deploys from a la
 
 ### Stack approval
 
-The course guide says moving away from Python is decided case by case with the teaching staff. The team chose Unity on 6 Nov 2026 and asked the teaching staff on 7 Nov through the Moodle question form (task G1 in [TASKS.md](../TASKS.md)). The wiki's "start a new application" option allows a project of the team's own choice. The answer and its date are recorded in [decisions.md](decisions.md).
+**Why not Streamlit.** The course's stack guide names the cases where Streamlit is the wrong tool: "a custom interface, a mobile-friendly layout, or real-time interaction between users", and it says games "usually do not" suit Streamlit because it "reruns the script for each user separately, which makes shared live state difficult". Our product needs all of them at once:
+
+| What the product needs | Where it is in the code | Why Streamlit cannot do it |
+|---|---|---|
+| 3D at 60 frames a second with physics (a kart, jumps, collisions) | `Driving/KartController.cs`, `Visuals/CampusWorld/` | A Streamlit page redraws after each click; it has no game loop and no physics |
+| Real-time interaction between users (15 players in one live race) | `Online/` | Each Streamlit user runs a separate script; there is no shared state at 15 updates a second |
+| Phone controls (touch buttons, landscape layout) | `Assets/WebGLTemplates/CarcavelosCircuit/` | Streamlit's layout is form-like; no thumb controls over a game view |
+| A custom interface (menus, HUD, minimap, finish cinematic) | `RaceFlow/UI/` | Streamlit gives standard widgets, not a game interface |
+
+**How the stack decision was handled.** The team project page allows "start a new application" of the team's own choice; the stack guide says a language other than Python is agreed with the teaching staff case by case. The team chose Unity on 6 Nov 2026 ([decisions.md](decisions.md)) and asked the staff on 7 Nov through the Moodle question form (task G1 in [TASKS.md](../TASKS.md)).
+
+**Status:** requested 7 Nov 2026 through the Moodle question form; no written answer is recorded in this repository yet.
 
 ## Read further
 
