@@ -1,0 +1,7 @@
+# Python packages for the offline art tools in tools/ (they make textures, UI art and icons that are then committed).
+# The game, its tests and its Web build need none of this. Exact versions on purpose; checked against the OSV / GitHub
+# advisory database on 2026-11-18 (docs/security.md). The Blender scripts (bpy, bmesh, mathutils, numpy) run inside
+# Blender 5.3 with its own bundled Python and need no install.
+# Install: python -m pip install -r tools/requirements.txt
+pillow==13.0.0      # tools/textures, tools/ui_art (12.x has 40+ advisories fixed in 13.0.0)
+playwright==1.63.0  # tools/ui_art/export_wordmark.py (renders the wordmark HTML to PNG)
