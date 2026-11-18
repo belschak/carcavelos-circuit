@@ -64,6 +64,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
 
             BuildSummary report; // a copy: the phone build below destroys the first BuildReport object
             FogStripping fogBefore = FogStripping.Read();
+            System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, UnityEngine.Object>> grainBefore = SwapFilmGrainTextures();
             try
             {
                 // Hashed file names change every build, so old files would pile up next to the new ones.
@@ -111,6 +112,7 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             finally
             {
                 fogBefore.Write();
+                RestoreFilmGrainTextures(grainBefore);
                 LeaderboardBuildConfig.Clear(); // the asset in the repo stays empty
                 OnlineBuildConfig.Clear(); // no App ID file and no CARCAVELOS_FUSION define left behind
                 GraphicsSettings.defaultRenderPipeline = AssetDatabase.LoadAssetAtPath<RenderPipelineAsset>(editorPipelinePath);
@@ -346,6 +348,121 @@ namespace CarcavelosCircuit.RaceFlow.Editor
                 html = html.Replace(WorldEtc2Placeholder, files.Etc2);
             }
             return html.Replace(WorldSharePlaceholder, files.Share.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        // ---------- Film grain noise out of the Web download (load time P8, 18 Nov) ----------
+        // URP ships its ten film grain noise textures (512 px Alpha8, 2.5 MB of noise that gzip cannot shrink) with every
+        // build through its global settings. On the Web no film grain is ever drawn: the grain is only in the HighEnd camera
+        // profile, which CameraLookRules.IsHighEnd never picks on the "Web" quality level, and the default profile's grain
+        // intensity is 0. For the build only, every grain slot points at URP's own 16 px blue noise texture (a texture, so
+        // URP's resource check stays happy); afterwards the asset is put back exactly as it was.
+        private const string UrpGlobalSettingsPath = "Assets/Settings/UniversalRenderPipelineGlobalSettings.asset";
+
+        private static System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, UnityEngine.Object>> SwapFilmGrainTextures()
+        {
+            var before = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, UnityEngine.Object>>();
+            UnityEngine.Object asset = AssetDatabase.LoadMainAssetAtPath(UrpGlobalSettingsPath);
+            if (asset == null)
+            {
+                return before;
+            }
+            var settings = new SerializedObject(asset);
+            UnityEngine.Object tiny = null;
+            SerializedProperty property = settings.GetIterator();
+            while (property.Next(true))
+            {
+                if (property.propertyType != SerializedPropertyType.ObjectReference)
+                {
+                    continue;
+                }
+                if (property.propertyPath.Contains("filmGrainTex.Array.data["))
+                {
+                    before.Add(new System.Collections.Generic.KeyValuePair<string, UnityEngine.Object>(property.propertyPath, property.objectReferenceValue));
+                }
+                else if (tiny == null && property.propertyPath.Contains("blueNoise16LTex.Array.data["))
+                {
+                    tiny = property.objectReferenceValue;
+                }
+            }
+            if (tiny == null || before.Count == 0)
+            {
+                Debug.LogWarning("Role4WebBuild: film grain textures not found in " + UrpGlobalSettingsPath + "; they stay in the build.");
+                before.Clear();
+                return before;
+            }
+            foreach (System.Collections.Generic.KeyValuePair<string, UnityEngine.Object> slot in before)
+            {
+                settings.FindProperty(slot.Key).objectReferenceValue = tiny;
+            }
+            settings.ApplyModifiedPropertiesWithoutUndo();
+            int slots = before.Count;
+            // The renderers (PC_Renderer, Mobile_Renderer) also point at URP's PostProcessData asset in the package, which
+            // has its own film grain list; round 2 found the 10 noise maps still in the build through it (18 Nov). For the
+            // build only, each renderer points at a copy of that asset whose grain slots hold the same blue noise.
+            AssetDatabase.DeleteAsset(BuildOnlyPostProcessDataPath); // left over by a build that was killed half-way
+            UnityEngine.Object copy = null;
+            foreach (string guid in AssetDatabase.FindAssets("t:ScriptableRendererData", new[] { "Assets/Settings" }))
+            {
+                string rendererPath = AssetDatabase.GUIDToAssetPath(guid);
+                var renderer = new SerializedObject(AssetDatabase.LoadMainAssetAtPath(rendererPath));
+                SerializedProperty postProcess = renderer.FindProperty("postProcessData");
+                if (postProcess == null || postProcess.objectReferenceValue == null)
+                {
+                    continue;
+                }
+                if (copy == null)
+                {
+                    copy = UnityEngine.Object.Instantiate(postProcess.objectReferenceValue);
+                    AssetDatabase.CreateAsset(copy, BuildOnlyPostProcessDataPath);
+                    var copied = new SerializedObject(copy);
+                    SerializedProperty slot = copied.GetIterator();
+                    while (slot.Next(true))
+                    {
+                        if (slot.propertyType == SerializedPropertyType.ObjectReference && slot.propertyPath.Contains("filmGrainTex.Array.data["))
+                        {
+                            slot.objectReferenceValue = tiny;
+                            slots++;
+                        }
+                    }
+                    copied.ApplyModifiedPropertiesWithoutUndo();
+                }
+                before.Add(new System.Collections.Generic.KeyValuePair<string, UnityEngine.Object>(RendererKey + rendererPath, postProcess.objectReferenceValue));
+                postProcess.objectReferenceValue = copy;
+                renderer.ApplyModifiedPropertiesWithoutUndo();
+            }
+            AssetDatabase.SaveAssets();
+            Debug.Log("Role4WebBuild: " + slots + " film grain slots point at a 16 px noise for the Web build (no grain on the Web).");
+            return before;
+        }
+
+        private const string BuildOnlyPostProcessDataPath = "Assets/Settings/WebBuildOnly_PostProcessData.asset";
+        private const string RendererKey = "renderer:";
+
+        private static void RestoreFilmGrainTextures(System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, UnityEngine.Object>> before)
+        {
+            if (before == null || before.Count == 0)
+            {
+                return;
+            }
+            var settings = new SerializedObject(AssetDatabase.LoadMainAssetAtPath(UrpGlobalSettingsPath));
+            foreach (System.Collections.Generic.KeyValuePair<string, UnityEngine.Object> slot in before)
+            {
+                if (slot.Key.StartsWith(RendererKey, StringComparison.Ordinal))
+                {
+                    var renderer = new SerializedObject(AssetDatabase.LoadMainAssetAtPath(slot.Key.Substring(RendererKey.Length)));
+                    renderer.FindProperty("postProcessData").objectReferenceValue = slot.Value;
+                    renderer.ApplyModifiedPropertiesWithoutUndo();
+                    continue;
+                }
+                SerializedProperty property = settings.FindProperty(slot.Key);
+                if (property != null)
+                {
+                    property.objectReferenceValue = slot.Value;
+                }
+            }
+            settings.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.DeleteAsset(BuildOnlyPostProcessDataPath);
         }
 
         // GraphicsSettings fog stripping, read and written through the settings asset (Unity has no API for it).
