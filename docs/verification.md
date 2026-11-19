@@ -99,6 +99,7 @@ Test files are in `Assets/_Project/Tests/`; PlayMode files are marked (PM). Coun
 - **Accepted:** `TouchPageTemplateTests` (every touch button sends a key the game knows), `PhoneTapTests` (thumb-sized buttons), `TouchMenuTextTests`, `Driving/InputPickerTests`, `MenuInputRulesTests`.
 - **Rejected:** menu keys and system keys do not start a race (`RaceKeysTests`), no input while input is off, the page does not turn taps into mouse clicks.
 - **Edge:** NaN or out-of-range touch input becomes 0 or is clamped, empty menu lists.
+- **Touch hold stress test** (`python tools/qa/touch_hold_check.py`, outside Unity, real CDP touch in headless Chrome, 19 Nov after the gas-hold bug): a held button never lets go while the finger is down (still, 1-3 px wobble, wobble over the edge, the strip the pressed shrink gives up, for Gas, Brake, Drift, Steer), slides Gas -> Drift keep W without a gap, two thumbs, and the release cases (finger up, pointercancel, tab hidden, blur, race end, pause) leave no key stuck. `--patch-from <branch>` tests a fix on the live build before CI, `--game` also reads the kart's real speed from its `?net=local` pose messages.
 
 ### 9. Address flags (`?net=`, `?room=`, `?name=`, `?autostart=`, `?driver=`, test flags) about 70 runs
 
@@ -144,7 +145,7 @@ added that day for rejected and edge cases (`Verification/*` and `Online/OnlineH
   SQL was run once in the Supabase dashboard; `backend/supabase/README.md` lists the steps.
 - **How driving feels and looks:** drift timing, camera, jumps, audio, art. Checked by playing (table below).
 - **Browser specifics:** the JavaScript in `Assets/WebGLTemplates/CarcavelosCircuit/index.html` (touch release
-  when the tab loses focus, the loading screen) is checked by reading the template text, not by running it in a
+  when the tab loses focus, the loading screen) is checked by reading the template text; the touch buttons also by `tools/qa/touch_hold_check.py` in a real
   browser. Phones were checked by hand and with Playwright scripts on 7 phone profiles.
 - **Total download size and frame rate on a phone:** need a finished build and a real device.
 - **The campus world download** (`RaceFlow/WorldStream.cs`): the download itself, its one retry, the "The track did not download" card and the browser's IndexedDB cache of the world file run only in a real Web build, so `WorldFileTests` checks the build rules and the page text instead. Checked in a real browser: the 4 Mbit/s runs and a blocked world file on 18 Nov 2026 ([history/2026-11-18-load-time.md](history/2026-11-18-load-time.md)), and a load of the live build on 18 Nov 2026 (loading bar, "Click to play", start screen, 0 console errors).
