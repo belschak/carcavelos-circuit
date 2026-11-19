@@ -28,12 +28,21 @@ namespace CarcavelosCircuit.Online
         // The newest pose time, -1 when empty.
         public double NewestTime { get { return count == 0 ? -1.0 : poses[count - 1].Time; } }
 
+        // A pose this much OLDER than the newest one is not a late packet (those are a fraction of a second late): the
+        // newest pose had a broken or faked time far in the future, or the sender's clock restarted. Then we start over
+        // from this pose; before (G-audit, 19 Nov) one pose stamped 1e15 s froze that kart for the rest of the race.
+        public const double RestartGapSeconds = 5.0;
+
         // Adds a pose. False (nothing added) if it is not newer than the newest pose we have.
         public bool Add(KartPose pose)
         {
             if (count > 0 && pose.Time <= poses[count - 1].Time)
             {
-                return false;
+                if (poses[count - 1].Time - pose.Time < RestartGapSeconds)
+                {
+                    return false;
+                }
+                count = 0; // far in the past of a bad newest pose: forget the buffer, keep this one
             }
             if (count == Capacity)
             {

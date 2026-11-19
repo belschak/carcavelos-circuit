@@ -124,5 +124,41 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual("RACE CLOSES IN 42 S", OnlineRaceLimitRules.ClosesLine(42));
             Assert.AreEqual("RACE CLOSES IN 0 S", OnlineRaceLimitRules.ClosesLine(-3));
         }
+    
+        // G-audit (19 Nov): a finish faster than any real lap (a changed game) does not count.
+        [TestCase(0.01)]
+        [TestCase(4.99)]
+        [TestCase(1800.5)]
+        [TestCase(double.NaN)]
+        [TestCase(double.PositiveInfinity)]
+        [TestCase(-1.0)]
+        public void UnbelievableFinish_IsRefused(double seconds)
+        {
+            Assert.IsFalse(OnlinePlayer.IsBelievableFinish(seconds));
+            OnlinePlayer player = new OnlinePlayer(1, "Ana", 0, 0.0);
+            Assert.IsFalse(player.NoteFinish(1, seconds));
+            Assert.IsFalse(player.HasFinished(1));
+        }
+
+        [TestCase(5.0)]      // edge: the floor itself
+        [TestCase(61.2)]
+        [TestCase(1800.0)]   // edge: the ceiling itself
+        public void BelievableFinish_IsKept(double seconds)
+        {
+            OnlinePlayer player = new OnlinePlayer(1, "Ana", 0, 0.0);
+            Assert.IsTrue(player.NoteFinish(1, seconds));
+            Assert.IsTrue(player.HasFinished(1));
+        }
+
+        [Test]
+        public void TooFastEntry_IsNotFinishedAfterTheLimit()
+        {
+            List<FinishEntry> entries = new List<FinishEntry> { new FinishEntry(1, "Ana", true, true, 0.01) };
+            Assert.IsNaN(OnlineRaceLimitRules.FirstFinishSeconds(entries), "a 0.01 s lap opens no grace window");
+            bool timeUp;
+            double end;
+            List<FinishEntry> limited = OnlineRaceLimitRules.Apply(entries, StartAt + 20.0, StartAt, out timeUp, out end);
+            Assert.IsFalse(limited[0].HasFinished);
+        }
     }
 }

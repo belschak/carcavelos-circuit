@@ -44,7 +44,7 @@ Every module is a folder under `Assets/_Project/` with its own assembly definiti
 | `Online/Fusion/` | Role 4 | The Photon Fusion 2 implementation of `IOnlineSession` (compiled only when the Photon SDK is present) |
 | `Tests/` | everyone | Edit Mode and Play Mode tests (see [verification.md](verification.md)) |
 
-References point one way (read from the `.asmdef` files): `Driving`, `Track`, `Audio`, `Ambience` -> `Shared`; `RaceFlow` -> `Shared`, `Track`, `Audio`; `Visuals` -> `Shared`, `Track`, `RaceFlow` (the bots read the race roster, decision 2026-11-13); `Online` -> `Shared`, `Track`, `RaceFlow`, `Visuals`; `Online.Fusion` -> `Online` + the Photon SDK. No cycles: the race code never knows the bots, the bots read the race. Details at the top of [interfaces.md](interfaces.md).
+References point one way (read from the `.asmdef` files): `Driving`, `Track`, `Audio`, `Ambience` -> `Shared`; `RaceFlow` -> `Shared`, `Track`, `Audio`; `Visuals` -> `Shared`, `Track`, `RaceFlow` (the bots read the race roster, decision 2026-11-13); `Online` -> `Shared`, `Track`, `RaceFlow`, `Visuals`; `Online.Fusion` -> `Online`, `Shared`, `RaceFlow` + the Photon SDK. No cycles: the race code never knows the bots, the bots read the race. Details at the top of [interfaces.md](interfaces.md).
 
 **Why:** four people pushed into one repo every day for three weeks. Unity scenes merge badly, so every role owns its own folder and scene, and `Main.unity` is rebuilt by code (Carcavelos Circuit > Build Role 4 Scenes) instead of by hand. The contracts let each role build against placeholders on day one without waiting for the others, and let a bot drive the same kart as the player.
 

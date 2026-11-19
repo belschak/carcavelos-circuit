@@ -22,9 +22,9 @@ namespace CarcavelosCircuit.RaceFlow
         // levelSeconds: within +- this the lap counts as level. farBehindSeconds: from here the best odds.
         public static int[] WeightsFor(bool knowsGap, float behindSeconds, float levelSeconds, float farBehindSeconds)
         {
-            if (!knowsGap)
+            if (!knowsGap || float.IsNaN(behindSeconds))
             {
-                return Level;
+                return Level; // no gap, or a broken one (NaN): the plain odds
             }
             if (behindSeconds < -levelSeconds)
             {
@@ -47,24 +47,45 @@ namespace CarcavelosCircuit.RaceFlow
         // roll01 = a random number from 0 (inclusive) to 1 (exclusive), e.g. UnityEngine.Random.value.
         // Passed in from outside so a test can pick the exact number.
         // Walks along the weights: the roll lands in one item's share (a weight of 0 never wins).
+        // Rejected input (G-audit, 19 Nov): no weights, too many, negative or all zero weights give the Espresso; a roll
+        // outside 0..1 or NaN is clamped. UnityEngine.Random.value CAN return exactly 1, and that used to fall through
+        // to the last item even with weight 0 (a Dean's List while ahead): now 1 lands in the last item that can win.
         public static ItemKind Pick(int[] weights, float roll01)
         {
+            if (weights == null || weights.Length == 0 || weights.Length > Order.Length)
+            {
+                return ItemKind.Espresso;
+            }
             int total = 0;
+            int lastWinner = -1;
             for (int i = 0; i < weights.Length; i++)
             {
-                total += weights[i];
+                if (weights[i] > 0)
+                {
+                    total += weights[i];
+                    lastWinner = i;
+                }
             }
-            float target = roll01 * total;
+            if (total <= 0)
+            {
+                return ItemKind.Espresso;
+            }
+            float roll = float.IsNaN(roll01) ? 0f : (roll01 < 0f ? 0f : roll01);
+            float target = roll * total;
             int upTo = 0;
             for (int i = 0; i < weights.Length; i++)
             {
+                if (weights[i] <= 0)
+                {
+                    continue; // a weight of 0 (or less) never wins
+                }
                 upTo += weights[i];
                 if (target < upTo)
                 {
                     return Order[i];
                 }
             }
-            return Order[weights.Length - 1]; // roll01 = 1 exactly (should not happen): the last item
+            return Order[lastWinner]; // roll01 = 1 (or more): the last item that can win
         }
     }
 }

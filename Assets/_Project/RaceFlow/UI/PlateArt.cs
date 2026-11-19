@@ -7,7 +7,7 @@ namespace CarcavelosCircuit.RaceFlow
     // colour gradient, a light stroke round it, a thin bright line under the top edge (the "bevel") and a hard shadow
     // (or a coloured "lip") straight below it. The USS shows them 9-sliced (-unity-slice-*), so one image fits any size.
     // Editor/HudArtBuilder writes the PNGs once with these methods; the game only loads the finished images.
-    // Plain C# without Unity objects, so Edit Mode tests can check the shapes (PlateArtTests).
+    // Plain C# without Unity objects, so Edit Mode tests can check the shapes (ArcadeUiTests).
     // Pixel rows go from the TOP down here (row 0 = top), like the picture you look at; HudArtBuilder flips them for Texture2D.
     public static class PlateArt
     {

@@ -60,7 +60,7 @@ namespace CarcavelosCircuit.Online
                 return false;
             }
             pose.Time = time;
-            pose.Position = new Vector3(ReadInt32(bytes, 9) / 100f, ReadInt32(bytes, 13) / 100f, ReadInt32(bytes, 17) / 100f);
+            pose.Position = new Vector3(Metres(ReadInt32(bytes, 9)), Metres(ReadInt32(bytes, 13)), Metres(ReadInt32(bytes, 17)));
             pose.Rotation = Quaternion.Euler(ReadInt16(bytes, 21) / 10f, ReadInt16(bytes, 23) / 10f, ReadInt16(bytes, 25) / 10f);
             pose.Speed = ReadInt16(bytes, 27) / 100f;
             pose.Steer = Mathf.Clamp((sbyte)bytes[29] / 127f, -1f, 1f);
@@ -105,6 +105,12 @@ namespace CarcavelosCircuit.Online
         private static int Centimetres(float metres)
         {
             return Mathf.RoundToInt(Mathf.Clamp(Safe(metres), -MaxMetres, MaxMetres) * 100f);
+        }
+
+        // A received position, clamped like a sent one: a hand-made packet cannot put a kart 20 000 km away.
+        private static float Metres(int centimetres)
+        {
+            return Mathf.Clamp(centimetres / 100f, -MaxMetres, MaxMetres);
         }
 
         private static int ClampShort(int value)

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace CarcavelosCircuit.RaceFlow
 {
     // The leaderboard kept on this device for one track (task R10): the best 10 lap times with names.
-    // Plain C# with a save text in and out, so it is unit tested (LocalLeaderboardListTests) without PlayerPrefs.
+    // Plain C# with a save text in and out, so it is unit tested (LeaderboardRankingTests) without PlayerPrefs.
     // The save is JSON ({"rows":[...]}). A save that was edited by hand or broken is read row by row like an answer
     // from the internet: bad rows are dropped, a broken text gives an empty list.
     public class LocalLeaderboardList

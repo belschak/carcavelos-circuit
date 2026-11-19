@@ -45,15 +45,23 @@ namespace CarcavelosCircuit.Online
         }
 
         // Records a finish. Only the first report per race counts (a doubled packet changes nothing).
+        // A time outside the leaderboard's window (under 5 s or over 30 min, LapTimeRules) is refused: no real lap is that
+        // fast, so a changed game that reports 0.01 s cannot win the race on everyone's screen (G-audit, 19 Nov).
         public bool NoteFinish(int raceId, double seconds)
         {
-            if (raceId == 0 || double.IsNaN(seconds) || double.IsInfinity(seconds) || seconds < 0.0 || HasFinished(raceId))
+            if (raceId == 0 || !IsBelievableFinish(seconds) || HasFinished(raceId))
             {
                 return false;
             }
             FinishRaceId = raceId;
             FinishSeconds = seconds;
             return true;
+        }
+
+        public static bool IsBelievableFinish(double seconds)
+        {
+            return !double.IsNaN(seconds) && !double.IsInfinity(seconds)
+                && seconds >= LapTimeRules.AbsoluteMinSeconds && seconds <= LapTimeRules.MaxSeconds;
         }
 
         // Joined earlier wins; the same moment (two Loopback sessions in one tick): the lower id first.

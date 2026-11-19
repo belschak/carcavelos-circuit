@@ -80,7 +80,33 @@ namespace CarcavelosCircuit.RaceFlow
             introStart = -1f;
             // Photo mode (?photo=1 in the web page address): no menus and no HUD, only the game world, so we can
             // take clean screenshots of our own map for the key art of the web page and the menus.
-            photoMode = Application.absoluteURL.Contains("photo=1");
+            photoMode = IsPhotoMode(Application.absoluteURL);
+        }
+
+        // True only for photo=1 as its own query pair (?photo=1 or &photo=1). Before (G-audit, 19 Nov) a plain
+        // "contains" also matched ?photo=10, ?nophoto=1 or #photo=1.
+        public static bool IsPhotoMode(string url)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                return false;
+            }
+            int hash = url.IndexOf('#');
+            string beforeHash = hash >= 0 ? url.Substring(0, hash) : url;
+            int query = beforeHash.IndexOf('?');
+            if (query < 0)
+            {
+                return false;
+            }
+            string[] pairs = beforeHash.Substring(query + 1).Split('&');
+            for (int i = 0; i < pairs.Length; i++)
+            {
+                if (pairs[i] == "photo=1")
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private bool photoMode;
