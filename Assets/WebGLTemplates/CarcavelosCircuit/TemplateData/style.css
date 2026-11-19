@@ -30,6 +30,13 @@ html, body {
   font-family: var(--font-ui);
 }
 
+/* iPhone/iPad home screen app (WebKit 301108, see the script in index.html's head): the page is at least as tall as
+   the physical screen, so iOS lays the app out to the bottom edge instead of leaving a black bar. When iOS already
+   does it right, the window is the screen and nothing changes (overflow stays hidden, nothing scrolls). */
+html.cc-ios-app {
+  min-height: max(100lvh, var(--cc-screen-h, 0px));
+}
+
 /* The game: always the whole window. Unity matches its render size to this (times the capped pixel ratio). */
 #cc-canvas {
   position: fixed;
@@ -434,6 +441,23 @@ html, body {
 .cc-button:focus-visible { outline: 3px solid var(--boost-orange); outline-offset: 4px; }
 
 .cc-card .cc-small { margin-top: 12px; font-size: 12px; color: rgba(234, 234, 236, 0.6); }
+
+/* "Add to Home Screen" steps on the phone card (19 Nov): a quiet box with an orange share arrow, left-aligned. */
+.cc-homescreen {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 420px;
+  margin: 12px auto 0;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(7, 9, 13, 0.45);
+  box-shadow: 0 0 0 1px rgba(255, 138, 31, 0.45);
+  text-align: left;
+}
+.cc-homescreen-icon { flex: none; margin-top: 1px; color: var(--kart-white); }
+.cc-card .cc-homescreen p { font-size: 13px; line-height: 1.35; }
+.cc-homescreen b { color: var(--kart-white); }
 
 .cc-details { margin-top: 14px; font-size: 12px; color: rgba(234, 234, 236, 0.6); text-align: left; }
 .cc-details summary { cursor: pointer; text-align: center; }
