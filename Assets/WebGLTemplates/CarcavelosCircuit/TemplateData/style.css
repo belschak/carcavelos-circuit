@@ -463,7 +463,9 @@ html.cc-ios-app {
    700 px: the mode list and the controls dock go, they covered the card's button. */
 @media (max-height: 470px) {
   #cc-panel-mobile:has(.cc-homescreen:not([hidden])) > p:not(.cc-small) { display: none; }
+  #cc-panel-mobile:has(.cc-homescreen:not([hidden])) { padding-top: 12px; padding-bottom: 10px; }
   #cc-panel-mobile:has(.cc-homescreen:not([hidden])) .cc-actions { margin-top: 12px; }
+  #cc-panel-mobile:has(.cc-homescreen:not([hidden])) .cc-small { margin-top: 8px; }
   .cc-homescreen { margin-top: 8px; padding: 6px 10px; }
   .cc-homescreen-icon { display: none; }
   .cc-card .cc-homescreen p { font-size: 12px; }
