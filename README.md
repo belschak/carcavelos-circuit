@@ -92,7 +92,7 @@ Then open http://localhost:8000. macOS: the Unity path is `/Applications/Unity/H
 
 ## Run the tests
 
-**On GitHub (the reference):** `.github/workflows/tests.yml` runs every Edit Mode and Play Mode test in Unity on Linux on every pull request into `main` and every push to `main` that changes code; docs-only changes skip it (badge at the top). Actions > **Tests** > Run workflow starts it by hand.
+**On GitHub (the reference):** `.github/workflows/tests.yml` runs every Edit Mode and Play Mode test in Unity on Linux on every push to `main` and on every pull request into `main` that changes code; docs-only pull requests skip it (badge at the top). Actions > **Tests** > Run workflow starts it by hand.
 
 **On your computer** (needs the **Web Build Support** module, see above): in the Unity Editor, Window > General > Test Runner > **EditMode** > Run All, then **PlayMode** > Run All.
 
