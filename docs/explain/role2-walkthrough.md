@@ -47,8 +47,8 @@ This part decides where the player drives and when a lap counts. It holds the st
 - One lap only: `RaceManager.LapCount` returns 1, and `RaceRules` refuses everything after `TryFinish` until `StartLap` or `Reset`.
 - Bots do not go through `RaceRules`; their laps are counted from jumps in `TrackProgress` distance (decision 2026-11-11).
 - Distances are flat (x/z): a road over another road would confuse the closest-point search (the route has none). Fewer than 3 road points = `LapLength` 0 and the checkpoint fallback.
-- Lap time not measured: 1,394 m at the 18 m/s top speed takes at least about 77 s, above the first target of 35-60 s (`docs/route.md`, task T6 still todo). T2 and T3 (grey box in `Track_Campus`) and T11 (volleyball) are todo.
-- `hall_route.py` spreads 12 checkpoints; `pin_checkpoints.py` must run after `hall_join.py` (`docs/route.md`).
+- Lap time not measured: 1,394 m at the 18 m/s top speed takes at least about 77 s, above the first target of 35-60 s (`docs/route.md`, task T6 still open). T2 and T3 (grey box in `Track_Campus`) were replaced by Role 3's campus world built from map data; T11 (volleyball) was not built before the feature freeze.
+- `hall_route.py` spreads 12 checkpoints; `pin_checkpoints.py` must run after `hall_join.py` to put the 14 fixed ones back (`docs/route.md`).
 - The piano position is a constant in `AtriumPianoBuilder`; it moved once already when the hall changed.
 - `WhiteGuardrailBuilder.cs` is 675 lines with later additions from other roles, the hardest file in the folder to read.
 
