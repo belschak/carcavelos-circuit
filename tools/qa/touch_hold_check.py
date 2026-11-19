@@ -550,15 +550,14 @@ async def game_cases(browser, args, profile, res):
     rim = min(rects["Gas"][2] - rects["Gas"][0], rects["Gas"][3] - rects["Gas"][1]) * 0.025
     for mode, anchor in (("still", gas), ("wobble", gas), ("rim", edge_point(rects["Gas"], side, rim * 0.5)),
                          ("edge", edge_point(rects["Gas"], side, 0.5))):
-        # Recover (back to the last checkpoint, facing the track) and brake to a stop, so every case starts the
-        # same way. The hold is GAME_HOLD s: driving straight with no steering, the kart meets a wall after ~4 s
-        # (a 10 s hold then reads 0 km/h with the key still held), so the speed is judged before that; the
-        # 10 s holds are covered key by key in page mode.
+        # Recover (back to the last checkpoint) and a short brake, so every case starts near standstill. The hold is
+        # GAME_HOLD s: driving straight with no steering, the kart meets a wall after a few seconds (a 10 s hold then
+        # reads 0 km/h with the key still held); the 10 s holds are covered key by key in page mode.
         if "Recover to the last checkpoint" in rects:
             await touch.down(0, *centre(rects["Recover to the last checkpoint"])); await asyncio.sleep(0.1); await touch.up(0)
             await asyncio.sleep(2.0)
         s = centre(rects["Brake and reverse"])
-        await touch.down(0, *s); await asyncio.sleep(1.5); await touch.up(0); await asyncio.sleep(1.0)
+        await touch.down(0, *s); await asyncio.sleep(0.6); await touch.up(0); await asyncio.sleep(1.0)
         p0 = len(await page.evaluate("window.__poses"))
         n0 = await key_count(page)
         t0 = await page.evaluate("window.__now()")
@@ -596,9 +595,12 @@ async def game_cases(browser, args, profile, res):
         for ms, v in speeds:
             best = max(best, v)
             worst = max(worst, best - v)
-        ok = top * 3.6 > 30 and worst < 0.15 * top and not w_drops
+        # Pass = the game kept the gas: W never went up and the kart got past 30 km/h (with the bug it stops at
+        # 5-12 km/h because W goes up after ~0.1 s). A drop AFTER the top with W still held is the kart meeting a
+        # wall (driving straight from the checkpoint, no steering), so it is reported but does not fail the case.
+        ok = top * 3.6 > 30 and not w_drops
         res.add(f"game: hold gas {GAME_HOLD}s {mode}, kart speed", ok,
-                "W never up while held, speed above 30 km/h and never drops more than 15 % while held",
+                "W never up while held and the kart passes 30 km/h (a later drop with W held = a wall, info)",
                 f"W drops {w_drops}, top {top * 3.6:.0f} km/h, biggest drop {worst * 3.6:.0f} km/h, last 0.8 s avg "
                 f"{(sum(last) / len(last) * 3.6 if last else 0):.0f} km/h, {len(speeds)} poses")
     await page.screenshot(path=str(SHOTS / "touch-hold-game.png"))
