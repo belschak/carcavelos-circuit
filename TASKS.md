@@ -26,7 +26,7 @@ Order matters: **S1 first**, nobody opens Unity on the shared repo before S1 is 
 ## Role 2: Campus track + race rules (Noah)
 | ID | Task | Due | Status |
 |---|---|---|---|
-| T1 | Final route in `docs/route.md` from the campus walk (sketch, sections, lengths, ramp size) | Sat 7 | in review (Noah, 2026-11-13): final V20 route, 1,394 m, 13 checkpoints; no sketch image yet |
+| T1 | Final route in `docs/route.md` from the campus walk (sketch, sections, lengths, ramp size) | Sat 7 | done (Noah, #12): final route, 1,394 m, 14 checkpoints (13 from V20 + Luc's U-turn checkpoint V33); no sketch image, the minimap shows the layout |
 | T2 | Grey-box loop in `Track_Campus` at real scale: road, walls, main buildings as blocks, elevation | Mon 9 | superseded by the campus world built from map data (V4 #33, V21 #99) |
 | T3 | Ramp D/B wing, tunnel, beach promenade in grey | Wed 11 | superseded by the campus world (ramp, tunnel and promenade in V14-V21, #99) |
 | T4 | `Checkpoint`, `SpawnPoint`, respawn points, `TrackInfo` | Tue 10 | done (Noah, #48) |
@@ -85,7 +85,7 @@ Deadlines: **Wed 11** slower driving (D7) + `TrackProgress` (T8) · **Fri 13** e
 | T7 | Barriers / guardrails along the road (your draft #63) so karts cannot fall off or cut corners | Fri 13 | done (Noah, #63) |
 | T8 | **`TrackProgress` implements `ITrackProgress`** on the `TrackInfo` root: racing line in driving order (start line first), `DistanceAlongLap`, `PointAt`, `DirectionAt`. May wrap `Shared/TrackPolyline`. Positions, minimap and bots read it | Wed 11 | done (Noah, #76) |
 | T9 | Realistic main building inside: atrium, KPMG gallery, staircase (from your help PRs #44/#45), made by your own builder under `Track/` as a prefab; Luc places it in the campus world (request Q18) | Tue 17 | done (Noah, #80): the hall is built by Noah's generator in help PR #45 and placed in the campus world by Luc's V12 #77 |
-| T10 | Piano in the atrium + piano sounds when a kart drives past or hits it (clip + script in your folder, CC0 or own recording, listed in `THIRD_PARTY.md`) | Tue 17 | in review (Noah, 2026-11-11) |
+| T10 | Piano in the atrium + piano sounds when a kart drives past or hits it (clip + script in your folder, CC0 or own recording, listed in `THIRD_PARTY.md`) | Tue 17 | done (Noah, #82): notes made in code (no clip file), placed in the campus world by Luc (Q18, #108) |
 | T11 | Volleyball fields on the beach (nets, lines, posts; colliders, placed beside the racing line, not on it) | Tue 17 | not built (feature freeze 22 Nov) |
 
 ### Role 3: Luc

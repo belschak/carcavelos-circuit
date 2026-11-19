@@ -63,7 +63,7 @@ No checkpoint sits on a shortcut, so both shortcuts are legal and the race line,
 
 ### Limits and open points
 - **Lap time not measured yet.** At the D7 top speed of 18 m/s, 1,394 m takes at least about 77 s, so the first target of 35-60 s (600-1000 m) is no longer realistic. Task T6 (lap time check with the real kart) needs a playtest; medal times come with R13 (Role 4).
-- `tools/world_gen/hall_route.py` still spreads 12 checkpoints; `pin_checkpoints.py` must run after `hall_join.py` to put the 13 back. If someone runs only `hall_route.py`, the checkpoints are wrong.
+- `tools/world_gen/hall_route.py` still spreads 12 checkpoints; `pin_checkpoints.py` must run after `hall_join.py` to put the 14 back (anchors in `checkpoint_anchors.json`). If someone runs only `hall_route.py`, the checkpoints are wrong.
 - The atrium piano (T10) is a trigger at the piano's spot; when the atrium changes, its position has to be checked again.
 
 ## History: first plan before the campus walk (kept for the walkthrough)
