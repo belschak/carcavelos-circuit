@@ -653,12 +653,20 @@
         fingerButton = {};
       }
 
-      // The touch button under a finger, or null. Only buttons with data-slide count while a finger slides,
-      // so a thumb can roll from Gas to Drift but never slide onto Retry by accident.
+      // The sliding touch button clearly under a finger (at least SLIDE_MARGIN px inside it), or null. Only buttons
+      // with data-slide count while a finger slides, so a thumb can roll from Gas to Drift but never slide onto Retry
+      // by accident. The margin keeps a thumb resting on the line between two buttons from flicking between them.
+      var SLIDE_MARGIN = 6;
       function slideButtonAt(x, y) {
         var element = document.elementFromPoint(x, y);
         var button = element ? element.closest("#cc-touch [data-slide]") : null;
-        return button && !button.hidden ? button : null;
+        if (!button || button.hidden) {
+          return null;
+        }
+        var box = button.getBoundingClientRect();
+        var inside = x >= box.left + SLIDE_MARGIN && x <= box.right - SLIDE_MARGIN
+          && y >= box.top + SLIDE_MARGIN && y <= box.bottom - SLIDE_MARGIN;
+        return inside ? button : null;
       }
 
       touchPanel.addEventListener("pointerdown", function (event) {
@@ -672,12 +680,24 @@
         setFingerButton(event.pointerId, button);
       });
 
-      touchPanel.addEventListener("pointermove", function (event) {
+      // Gas-hold fix (phone report 19.11: holding Gas gave gas only for a moment, tapping fast kept the kart going).
+      // A held finger used to let go of its key as soon as one move landed off the button: a thumb wobbles by a pixel
+      // all the time, and the pressed button shrinks (style.css .cc-pressed, scale 0.95), so a thumb near the edge was
+      // "off" at the first move and the key stayed up until the next tap. Now a finger keeps its key while it is down,
+      // wherever it wanders, and only switches when it lands clearly on ANOTHER sliding button (new key down first,
+      // old key up after, no gap). Keys go up only on finger up, a cancelled touch, the page losing focus or going to
+      // the background, or the race ending. The move/up listeners sit on the window (capture phase), so a finger
+      // whose pointer capture got lost on the way still reaches them and can never leave a key stuck down.
+      window.addEventListener("pointermove", function (event) {
         var current = fingerButton[event.pointerId];
-        if (current && current.hasAttribute("data-slide")) {
-          setFingerButton(event.pointerId, slideButtonAt(event.clientX, event.clientY));
+        if (!current || !current.hasAttribute("data-slide")) {
+          return;
         }
-      });
+        var next = slideButtonAt(event.clientX, event.clientY);
+        if (next && next !== current) {
+          setFingerButton(event.pointerId, next);
+        }
+      }, true);
 
       function onFingerUp(event) {
         if (event.pointerId in fingerButton) {
@@ -685,8 +705,18 @@
           delete fingerButton[event.pointerId];
         }
       }
-      touchPanel.addEventListener("pointerup", onFingerUp);
-      touchPanel.addEventListener("pointercancel", onFingerUp);
+      window.addEventListener("pointerup", onFingerUp, true);
+      window.addEventListener("pointercancel", onFingerUp, true);
+
+      // Safety net (19.11): when the last finger leaves the screen no key can still be held, even if a browser lost
+      // a pointerup on the way (for example when a system gesture at the screen edge takes the touch over).
+      function onTouchEnd(event) {
+        if (event.touches.length === 0) {
+          releaseAllFingers();
+        }
+      }
+      window.addEventListener("touchend", onTouchEnd, { capture: true, passive: true });
+      window.addEventListener("touchcancel", onTouchEnd, { capture: true, passive: true });
       touchPanel.addEventListener("contextmenu", function (event) { event.preventDefault(); }); // long press
       window.addEventListener("blur", releaseAllFingers);
 
