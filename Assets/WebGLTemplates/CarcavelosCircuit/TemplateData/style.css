@@ -458,6 +458,24 @@ html.cc-ios-app {
 .cc-homescreen-icon { flex: none; margin-top: 1px; color: var(--kart-white); }
 .cc-card .cc-homescreen p { font-size: 13px; line-height: 1.35; }
 .cc-homescreen b { color: var(--kart-white); }
+/* Phone QA 19 Nov: with the hint the card ran past short screens. Landscape phones (Safari 320-390 px high): the hint
+   loses its icon and the card's controls sentence goes (the race shows labelled buttons anyway). Portrait phones below
+   700 px: the mode list and the controls dock go, they covered the card's button. */
+@media (max-height: 470px) {
+  #cc-panel-mobile:has(.cc-homescreen:not([hidden])) > p:not(.cc-small) { display: none; }
+  #cc-panel-mobile:has(.cc-homescreen:not([hidden])) .cc-actions { margin-top: 12px; }
+  .cc-homescreen { margin-top: 8px; padding: 6px 10px; }
+  .cc-homescreen-icon { display: none; }
+  .cc-card .cc-homescreen p { font-size: 12px; }
+}
+@media (max-height: 360px) {
+  .cc-homescreen { margin-top: 6px; padding: 5px 10px; }
+  #cc-panel-mobile:has(.cc-homescreen:not([hidden])) .cc-actions { margin-top: 8px; }
+}
+@media (max-height: 700px) {
+  #cc-loader:has(#cc-homescreen:not([hidden])) .cc-modes,
+  #cc-loader:has(#cc-homescreen:not([hidden])) .cc-dock { display: none; }
+}
 
 .cc-details { margin-top: 14px; font-size: 12px; color: rgba(234, 234, 236, 0.6); text-align: left; }
 .cc-details summary { cursor: pointer; text-align: center; }

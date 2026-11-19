@@ -174,7 +174,7 @@
                the steps fit the phone (showHomeScreenHint in the script below). -->
           <div class="cc-homescreen" id="cc-homescreen" hidden>
             <svg class="cc-homescreen-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3.5v11M8 7.5l4-4 4 4" fill="none" stroke="#FF8A1F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 10.5H6.5v10h11v-10h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <p><b>Play full screen, no address bar:</b> <span class="cc-homescreen-steps">tap Share, then “Add to Home Screen”, and start the game from the new icon.</span></p>
+            <p><b>Full screen, no address bar:</b> <span class="cc-homescreen-steps">tap Share, then “Add to Home Screen”, and play from the new icon.</span></p>
           </div>
           <div class="cc-actions">
             <button class="cc-button" id="cc-load-anyway" type="button">Continue</button>
@@ -1005,8 +1005,8 @@
         var ua = navigator.userAgent;
         var apple = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
         var steps = apple
-          ? "tap Share (on newer iPhones it is under the ··· button), then “Add to Home Screen”, and start the game from the new icon."
-          : "open the browser menu (⋮), tap “Add to Home screen” or “Install app”, and start the game from the new icon.";
+          ? "tap Share (under ··· on newer iPhones), then “Add to Home Screen”, and play from the new icon."
+          : "open the browser menu (⋮), then “Add to Home screen” or “Install app”, and play from the new icon.";
         document.querySelector("#cc-homescreen .cc-homescreen-steps").textContent = steps;
         document.getElementById("cc-homescreen").hidden = false;
       }
