@@ -93,7 +93,7 @@ namespace CarcavelosCircuit.Online
 
         private static bool IsValidTime(FinishEntry entry)
         {
-            return entry.HasFinished && !double.IsNaN(entry.Seconds) && !double.IsInfinity(entry.Seconds) && entry.Seconds >= 0.0;
+            return entry.HasFinished && OnlinePlayer.IsBelievableFinish(entry.Seconds);
         }
     }
 }

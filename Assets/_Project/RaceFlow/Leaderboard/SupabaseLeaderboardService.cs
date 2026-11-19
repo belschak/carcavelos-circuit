@@ -30,9 +30,11 @@ namespace CarcavelosCircuit.RaceFlow
             this.timeoutSeconds = timeoutSeconds;
         }
 
+        // Track, name and time are checked again here (G-audit, 19 Nov): whoever calls this, a bad row never leaves the
+        // game. The database would refuse it too (CHECK), but then we would have sent it.
         public void SubmitTime(string track, string name, float seconds, Action<LeaderboardReply> done)
         {
-            if (!LapTimeRules.IsValidTrack(track))
+            if (!IsSendable(track, name, seconds))
             {
                 done(LeaderboardReply.Failed());
                 return;
@@ -52,6 +54,12 @@ namespace CarcavelosCircuit.RaceFlow
                 }
                 FetchRank(track, seconds, done); // saved: now ask for our place
             });
+        }
+
+        public static bool IsSendable(string track, string name, float seconds)
+        {
+            return LapTimeRules.IsValidTrack(track) && PlayerNameRules.IsValidStoredName(name)
+                && LapTimeRules.IsAcceptable(seconds, 0f); // 0 = no medal times here: the 5 s .. 30 min window
         }
 
         public void FetchTop(string track, int count, Action<LeaderboardReply> done)

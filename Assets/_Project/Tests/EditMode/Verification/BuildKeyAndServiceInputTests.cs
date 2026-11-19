@@ -99,5 +99,32 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.IsNotNull(saved);
             Assert.IsFalse(saved.Success);
         }
+    
+        // G-audit (19 Nov): the service checks name and time itself, so a bad row never leaves the game.
+        [TestCase("<b>", 61.5f)]
+        [TestCase("A", 61.5f)]                 // too short
+        [TestCase(" Ana", 61.5f)]              // not clean (what Check would save is "Ana")
+        [TestCase(null, 61.5f)]
+        [TestCase("Ana", float.NaN)]
+        [TestCase("Ana", float.PositiveInfinity)]
+        [TestCase("Ana", 4.99f)]               // under the 5 s floor of the database
+        [TestCase("Ana", 1800.5f)]             // over 30 minutes
+        [TestCase("Ana", -1f)]
+        public void Service_BadNameOrTime_FailsAtOnce_WithoutARequest(string name, float seconds)
+        {
+            SupabaseLeaderboardService service = new SupabaseLeaderboardService(Url, PublishableKey, 5);
+            LeaderboardReply saved = null;
+            service.SubmitTime("Track_CampusWorld", name, seconds, reply => saved = reply);
+            Assert.IsNotNull(saved, "answered at once (synchronously), so no request was started");
+            Assert.IsFalse(saved.Success);
+        }
+
+        [TestCase("Ana", 61.5f)]
+        [TestCase("Ana", 5f)]                  // edge: exactly the floor
+        [TestCase("Bo Li", 1800f)]             // edge: exactly 30 minutes
+        public void IsSendable_AcceptsAGoodRow(string name, float seconds)
+        {
+            Assert.IsTrue(SupabaseLeaderboardService.IsSendable("Track_CampusWorld", name, seconds));
+        }
     }
 }

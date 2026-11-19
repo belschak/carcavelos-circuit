@@ -5,7 +5,7 @@ namespace CarcavelosCircuit.RaceFlow
     // The small round avatar in front of every leaderboard name (task R15): a colour made from the name, so the list
     // reads as racers, not as a table, and the same name always gets the same colour (on every device, every day).
     // A name is turned into a number (a simple hash, the same idea as a checksum) and that number picks one of the
-    // kart colours below. Plain C#, tested in LeaderboardAvatarTests.
+    // kart colours below. Plain C#, tested in ResultsCopyTests.
     public static class LeaderboardAvatar
     {
         // Kart-like colours, all bright enough to read on the navy rows. Orange is left out on purpose:

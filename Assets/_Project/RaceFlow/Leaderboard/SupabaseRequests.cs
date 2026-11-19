@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace CarcavelosCircuit.RaceFlow
 {
-    // The web addresses the online leaderboard calls (task R10). Plain C#, unit tested (SupabaseRequestsTests), so
+    // The web addresses the online leaderboard calls (task R10). Plain C#, unit tested (LeaderboardServiceTests), so
     // the exact requests can be read and checked without a server. Supabase puts a REST API (PostgREST) in front of
     // the database table: GET reads rows, POST adds one. Filters are part of the address, e.g. track=eq.Track_Campus.
     // The track is checked by LapTimeRules.IsValidTrack before it goes in (letters, digits, _ and - only), so it

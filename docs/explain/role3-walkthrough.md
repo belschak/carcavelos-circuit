@@ -54,7 +54,7 @@ Role 3 makes everything the player sees: the Carcavelos campus at real scale, th
 - Without static batching the frame rate in a visible browser was not measured (V37); one line in `Role4WebBuild` turns it back on.
 - Item effect lengths are copied into `ItemFx` (wave 3 s, Espresso 2 s); the kart is not lifted onto the wave.
 - All checkpoint gates look the same; highlighting the next one needs a `Shared` contract (V13).
-- V6 (a full race at the deployed build) is still marked todo in `TASKS.md`; the live build is checked by hand before the presentation (`docs/demo-plan.md`), and every deploy is logged in Actions > Web build (`docs/builds.md`).
+- V6 (a full race at the deployed build) is done; the live build is checked by hand before the presentation (`docs/demo-plan.md`), and every deploy is logged in Actions > Web build (`docs/builds.md`).
 
 ## How it could change
 

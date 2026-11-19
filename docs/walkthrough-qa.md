@@ -39,7 +39,7 @@ Every merge into `main` starts a GitHub Actions workflow that builds the Web ver
 ## Data
 
 **Where is the data stored?**
-- On the player's device, in the browser (Unity `PlayerPrefs`): best laps, the ghost of the best lap, settings, chosen mode and driver, and a copy of every saved time (shown when the online board cannot be reached).
+- On the player's device, in the browser (Unity `PlayerPrefs`): best laps, the ghost of the best lap, settings, chosen mode, driver, kart and tyres, and a copy of every saved time (shown when the online board cannot be reached).
 - Online, in one Supabase (Postgres) table `lap_times`: name, time, track, date. This is the global top 10 every player sees. A daily GitHub Actions read keeps the free project from pausing.
 - Nothing about the online race is stored: Photon only passes messages between the players in the room.
 - No accounts, no emails, no passwords.
@@ -60,8 +60,8 @@ Only the Online Race mode needs it; Race vs Bots and Time Attack keep working. T
 
 **What if the player types something invalid?**
 - A name that is empty, too short, too long, has symbols or emoji, or is on the rude-word list: the save form says so ("TYPE A NAME FIRST", "PLEASE PICK ANOTHER NAME") and nothing is sent.
-- Odd values in the page address (`?room=`, `?name=`, `?autostart=`): unknown ones are ignored, every value is cut to 200 characters, a bad name opens the name field instead (`Online/Rules/OnlineUrlFlags.cs`).
-- An impossible lap time (a teleport or a bug): not saved.
+- Odd values in the page address (`?room=`, `?name=`, `?driver=`, `?kart=`, `?tyres=`, `?autostart=`, `?photo=`): unknown ones are ignored, every value is cut to 200 characters, a bad name opens the name field instead (`Online/Rules/OnlineUrlFlags.cs`).
+- An impossible lap time (a teleport or a bug): not saved, and an online finish under 5 s does not count (`OnlinePlayer.IsBelievableFinish`).
 
 **What if the browser cannot run the game?**
 The page shows an error card that says why (no WebGL 2, the download failed) and what to try, instead of a black screen.
@@ -69,7 +69,7 @@ The page shows an error card that says why (no WebGL 2, the download failed) and
 ## Tests
 
 **What do the tests cover?**
-About 1,500 Edit Mode tests on the rules in plain C# (the exact numbers are on the newest Tests run of `main`, badge in [verification.md](verification.md)): lap validation, race states, timer, medals, item odds, bot decisions, name and time rules, leaderboard fallback, online room rules, pose blending, finish order, URL flags. About 40 Play Mode tests start the real game scene and let a robot drive: a clean lap, a skipped checkpoint, recover, retry, bots, items, menus. Each rule has accepted, rejected and edge-case tests. They run on GitHub Actions on every pull request and every push to `main`. Coverage map, workflow by workflow: [verification.md](verification.md).
+About 1,600 Edit Mode tests on the rules in plain C# (the exact numbers are on the newest Tests run of `main`, badge in [verification.md](verification.md)): lap validation, race states, timer, medals, item odds, bot decisions, name and time rules, leaderboard fallback, online room rules, pose blending, finish order, URL flags. About 45 Play Mode tests start the real game scene and let a robot drive: a clean lap, a skipped checkpoint, recover, retry, bots, items, menus. Each rule has accepted, rejected and edge-case tests. They run on GitHub Actions on every pull request and every push to `main` that changes code (docs-only changes skip the Unity run). Coverage map, workflow by workflow: [verification.md](verification.md).
 
 **What do they not cover?**
 How the driving feels, how the campus looks, sound, frame rate on a slow laptop, and the real Photon connection (the SDK cannot be in the public CI). We checked those by hand and with recorded QA runs, including a 20-bot online scale test.
@@ -86,8 +86,8 @@ Everyone commits their own code from their own account; the roles split the fold
 |---|---|---|
 | Alessandro Rossi | 1 Driving + camera | `KartController`: driving, drift that charges a boost, ramp jump, flying pose, trick after a jump, recover; Cinemachine chase camera; name tags; `IKartDrivable` so bots can drive the kart |
 | Noah Schlag | 2 Campus track + race rules | Route from OpenStreetMap ([route.md](route.md)), `RaceRules` lap validation with tests, `TrackInfo` / `Checkpoint` / `SpawnPoint`, `TrackProgress` (distance along the lap), guardrails, Nova hall interior, atrium piano |
-| Luc Tippmann | 3 Kart, visuals + web release | The campus world (generated from map data, Street View and photo surveys), kart and driver models, the five bots, item effects, three race modes and the finish cinematic, the lean Web build, GitHub Pages deploy, driver select |
-| David Belschak | 4 Race flow, UI + sound | Project setup and contracts, race flow, HUD and menus, sound and music, items, ghost, medals, leaderboard (Supabase + device fallback), positions and minimap, waves and surfers, touch controls, the Web page, CI, the online race, the teacher tribute |
+| Luc Tippmann | 3 Kart, visuals + web release | The campus world (generated from map data, Street View and photo surveys), kart and driver models, the five bots, item effects, three race modes and the finish cinematic, the lean Web build, GitHub Pages deploy, the four drivers, karts and tyres and `KartAssembler` behind the kart builder |
+| David Belschak | 4 Race flow, UI + sound | Project setup and contracts, race flow, HUD and menus, sound and music, items, ghost, medals, leaderboard (Supabase + device fallback), positions and minimap, waves and surfers, touch controls, the Web page, CI, the online race, the kart builder screen, the teacher tribute |
 
 Every pull request names its role and task; the full history is in the merged pull requests and [TASKS.md](../TASKS.md).
 

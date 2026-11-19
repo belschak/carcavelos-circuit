@@ -88,12 +88,13 @@ separate test build. They stay in the live build on purpose, because a test buil
 | Switch | What it does | Why it is harmless |
 |---|---|---|
 | `?net=local` | Online race between tabs of the same browser (BroadcastChannel), no Photon | Never leaves the visitor's browser |
-| `?room=`, `?name=`, `?driver=`, `?autostart=N` | Join the room with this name and driver; host starts at N players | Same checks as typing the name or clicking; the room cap of 15 still holds |
+| `?room=`, `?name=`, `?driver=`, `?kart=`, `?tyres=`, `?autostart=N` | Join the room with this name and kart set; host starts at N players | Same checks as typing the name or clicking; the room cap of 15 still holds |
 | `?autopilot=1` | The kart drives itself (online only) | Online races are not saved anywhere: no leaderboard, record or ghost |
 | `?render=0` | Cameras off, HUD only (scale-test bots on machines without a GPU) | Only changes what this browser draws |
 | `?test=itemrows`, `itemlog`, `uirects` | Camera tour of the item boxes; extra lines in the browser console | Only this browser; nothing is sent or stored |
 | `?test=mobile`, `nowebgl`, `error` | Shows the loader's phone / no-WebGL / error card | Only the loading page of this browser |
-| `?photo=1` | No menus or HUD (screenshots) | Only this browser |
+| `?photo=1` | No menus or HUD (screenshots); only `photo=1` as its own pair counts (`PhotoModeFlagTests`) | Only this browser |
+| `?dpr=1..4` (only with `?photo=1`) | Sharper screenshots; any other value is ignored by the page | Only this browser |
 
 Every switch only changes the visitor's own browser. None gives more rights at Supabase or Photon: those use the
 same public keys and the same server-side rules (section 3) as a normal visit, so anything a switch could do, a
@@ -168,10 +169,10 @@ copy from a private repository with a read-only key.
 - Private vulnerability reporting: anyone can report a problem privately under Security > Report a vulnerability
   (see `SECURITY.md`).
 
-**No known vulnerabilities (checked 18 Nov 2026).**
-- GitHub Advisory Database: no advisory for any of the 8 actions we use.
+**No known vulnerabilities (checked 18 Nov 2026; Python pins and Dependabot re-checked 19 Nov 2026).**
+- GitHub Advisory Database: no advisory for any of the 9 actions we use (checkout, cache, upload-artifact, download-artifact, upload-pages-artifact, configure-pages, deploy-pages, game-ci/unity-builder, game-ci/unity-test-runner).
 - OSV / GitHub advisories for Python: Pillow 12.3.0 had 40+ advisories (image parsing), all fixed in 13.0.0, which
-  is what `tools/requirements.txt` pins now (no known advisory). Playwright 1.63.0: none.
+  is what `tools/requirements.txt` pins now (no known advisory). Playwright 1.65.2: none (OSV, 19 Nov 2026). GitHub Dependabot: 0 open alerts (19 Nov 2026).
 - Unity editor 6000.3.28f1 is newer than every fix Unity has published for the 6.3 line:
   CVE-2025-59489 (runtime argument injection on Android, Windows, macOS and Linux players; fixed in 6000.3.0b4; Web
   builds were never affected, [advisory](https://unity.com/security/sept-2025-01)) and the October 2026 Brotli decoder

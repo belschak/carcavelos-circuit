@@ -92,5 +92,18 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(1f, back.Steer, 0.01f);
             Assert.Less(Quaternion.Angle(Quaternion.identity, back.Rotation), 0.01f);
         }
+    
+        // G-audit (19 Nov): a hand-made packet with a huge position is clamped like a sent one.
+        [Test]
+        public void HugePositionInAPacket_IsClampedOnDecode()
+        {
+            byte[] bytes = KartPoseCodec.Encode(Sample());
+            bytes[9] = 0xFF; bytes[10] = 0xFF; bytes[11] = 0xFF; bytes[12] = 0x7F;   // x = int.MaxValue cm
+            bytes[17] = 0x00; bytes[18] = 0x00; bytes[19] = 0x00; bytes[20] = 0x80;  // z = int.MinValue cm
+            KartPose pose;
+            Assert.IsTrue(KartPoseCodec.TryDecode(bytes, out pose));
+            Assert.AreEqual(KartPoseCodec.MaxMetres, pose.Position.x);
+            Assert.AreEqual(-KartPoseCodec.MaxMetres, pose.Position.z);
+        }
     }
 }

@@ -23,10 +23,11 @@ Who built what: [docs/walkthrough-qa.md](docs/walkthrough-qa.md#the-team).
 
 ## How to play
 
-Pick a mode on the start screen (click it, or press 1, 2 or 3), pick a driver, and drive one lap. A lap only counts if you pass every checkpoint in order.
+Pick a mode on the start screen (click it, or press 1, 2 or 3), build your kart (driver, kart, tyres), press READY and drive one lap. A lap only counts if you pass every checkpoint in order.
 
 | Key | Action |
 |---|---|
+| A/D, W/S or arrows (kart builder) | Column, then the tile inside it; Enter or Space = READY, Esc = back |
 | W A S D or arrows | Drive and steer |
 | Space | Drift (hold while steering to charge a boost, release to fire it) |
 | Shift | Trick after a jump |
@@ -91,7 +92,7 @@ Then open http://localhost:8000. macOS: the Unity path is `/Applications/Unity/H
 
 ## Run the tests
 
-**On GitHub (the reference):** `.github/workflows/tests.yml` runs every Edit Mode and Play Mode test in Unity on Linux on every pull request into `main` and every push to `main` (badge at the top). Actions > **Tests** > Run workflow starts it by hand.
+**On GitHub (the reference):** `.github/workflows/tests.yml` runs every Edit Mode and Play Mode test in Unity on Linux on every pull request into `main` and every push to `main` that changes code; docs-only changes skip it (badge at the top). Actions > **Tests** > Run workflow starts it by hand.
 
 **On your computer** (needs the **Web Build Support** module, see above): in the Unity Editor, Window > General > Test Runner > **EditMode** > Run All, then **PlayMode** > Run All.
 

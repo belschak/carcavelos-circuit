@@ -110,5 +110,55 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(ItemKind.Espresso, ItemOdds.PickForBox(false, level, 0.1f));
             Assert.AreEqual(ItemKind.DeansList, ItemOdds.PickForBox(false, level, 0.95f));
         }
+    
+        // G-audit (19 Nov): rejected input. UnityEngine.Random.value can return exactly 1.
+        [Test]
+        public void RollOfExactlyOne_NeverGivesAnItemWithWeightZero()
+        {
+            int[] ahead = ItemOdds.WeightsFor(true, -3f, Level, Far);
+            Assert.AreEqual(0, ahead[3], "no Dean's List when ahead");
+            Assert.AreEqual(ItemKind.CarcavelosWave, ItemOdds.Pick(ahead, 1f));
+            Assert.AreEqual(ItemKind.CarcavelosWave, ItemOdds.Pick(ahead, 7f), "a roll above 1 too");
+        }
+
+        [TestCase(-0.1f)]
+        [TestCase(float.NegativeInfinity)]
+        [TestCase(float.NaN)]
+        public void RollBelowZeroOrNaN_GivesTheFirstItem(float roll)
+        {
+            Assert.AreEqual(ItemKind.Espresso, ItemOdds.Pick(new[] { 40, 30, 22, 8 }, roll));
+        }
+
+        [Test]
+        public void NoUsableWeights_GiveTheEspresso()
+        {
+            Assert.AreEqual(ItemKind.Espresso, ItemOdds.Pick(null, 0.5f));
+            Assert.AreEqual(ItemKind.Espresso, ItemOdds.Pick(new int[0], 0.5f));
+            Assert.AreEqual(ItemKind.Espresso, ItemOdds.Pick(new[] { 0, 0, 0, 0 }, 0.5f));
+            Assert.AreEqual(ItemKind.Espresso, ItemOdds.Pick(new[] { -5, -5, 0, 0 }, 0.5f));
+            Assert.AreEqual(ItemKind.Espresso, ItemOdds.Pick(new[] { 1, 1, 1, 1, 1 }, 0.5f), "more weights than items");
+        }
+
+        [Test]
+        public void NegativeWeight_NeverWins()
+        {
+            for (int i = 0; i < 100; i++)
+            {
+                Assert.AreNotEqual(ItemKind.Espresso, ItemOdds.Pick(new[] { -50, 50, 50, 0 }, i / 100f));
+            }
+        }
+
+        [TestCase(float.NaN)]
+        public void BrokenGap_UsesTheLevelOdds(float gap)
+        {
+            Assert.AreEqual(new[] { 40, 30, 22, 8 }, ItemOdds.WeightsFor(true, gap, Level, Far));
+        }
+
+        [Test]
+        public void InfiniteGaps_AreAheadOrFarBehind()
+        {
+            Assert.AreEqual(0, ItemOdds.WeightsFor(true, float.NegativeInfinity, Level, Far)[3]);
+            Assert.AreEqual(30, ItemOdds.WeightsFor(true, float.PositiveInfinity, Level, Far)[3]);
+        }
     }
 }

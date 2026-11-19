@@ -131,5 +131,26 @@ namespace CarcavelosCircuit.Tests.EditMode
             buffer.Clear();
             Assert.AreEqual(0, buffer.Count);
         }
+    
+        // G-audit (19 Nov): one pose stamped far in the future used to block every later pose (the kart froze).
+        [Test]
+        public void PoseFarInTheFuture_DoesNotFreezeTheKart()
+        {
+            PoseBuffer buffer = new PoseBuffer();
+            buffer.Add(At(10.0, 0f));
+            Assert.IsTrue(buffer.Add(At(1e15, 99f)), "a faked time is newer, so it is taken first");
+            Assert.IsTrue(buffer.Add(At(10.1, 1f)), "the next real pose starts the buffer over");
+            Assert.AreEqual(1, buffer.Count);
+            Assert.AreEqual(10.1, buffer.NewestTime);
+        }
+
+        [Test]
+        public void LatePacket_JustUnderTheRestartGap_IsStillDropped()
+        {
+            PoseBuffer buffer = new PoseBuffer();
+            buffer.Add(At(10.0, 0f));
+            Assert.IsFalse(buffer.Add(At(10.0 - PoseBuffer.RestartGapSeconds + 0.01, 0f)));
+            Assert.AreEqual(1, buffer.Count);
+        }
     }
 }
