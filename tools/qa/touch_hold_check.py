@@ -49,6 +49,7 @@ BUTTONS = {  # aria-label -> short name, keys it must hold
     "Steer right": ("right", ["KeyD"]),
 }
 FRAME = 1 / 60  # a phone sends about one touch move per display frame
+GAME_HOLD = 3.5  # --game: seconds of gas per case (see game_cases)
 SHOTS = Path(tempfile.gettempdir()) / "touch_hold_check"  # --game screenshots (throwaway; --shots to change)
 
 # Records every key the touch buttons send to the canvas (type, code, ms) plus the pointer events on the touch panel.
@@ -61,6 +62,7 @@ INIT = r"""(() => {
   ['pointerdown','pointerup','pointercancel','lostpointercapture','contextmenu','touchcancel'].forEach(n =>
     document.addEventListener(n, () => { window.__ptr[n] = (window.__ptr[n] || 0) + 1; }, true));
   window.__now = () => Math.round(performance.now() - t0);
+  document.addEventListener('pointerdown', e => { window.__lastPointer = [e.pointerId, e.target]; }, true);
   // --game: the kart's own pose messages (?net=local test transport) -> speed timeline
   window.__poses = [];
   const post = BroadcastChannel.prototype.postMessage;
@@ -474,6 +476,20 @@ async def break_cases(page, touch, res, rects, rng):
             "no double press, no release without press, nothing held whenever all fingers are off (and at the end)",
             f"{len(ev)} key events, {idle_checks} all-fingers-off checks, problems {bad[:4] or 'none'}, stuck {held_after(ev) or 'none'}")
     await page.evaluate(FORCE_RACE)
+    # Pointer capture lost mid-hold (browsers drop it, e.g. when the element re-renders), then the thumb slides onto
+    # the game and lifts there: the key must still go up (the up event no longer arrives at the touch panel)
+    n0 = await key_count(page)
+    await touch.down(0, *gas); await asyncio.sleep(0.2)
+    await page.evaluate("() => { const [id, el] = window.__lastPointer; const b = el.closest('[data-keys]') || el;"
+                        " if (b.hasPointerCapture(id)) b.releasePointerCapture(id); }")
+    vw, vh = page.viewport_size["width"], page.viewport_size["height"]
+    await slide(touch, 0, gas, (vw / 2, vh / 2), 12); await asyncio.sleep(0.2)
+    await touch.up(0); await asyncio.sleep(0.2)
+    ev = await keys_since(page, n0)
+    res.add("pointer capture lost, thumb lifts over the game", not held_after(ev),
+            "every key up after the lift, nothing stuck", f"events {[(t[3:], c) for t, c, _ in ev]}, stuck {held_after(ev) or 'none'}")
+    await page.evaluate("() => window.dispatchEvent(new Event('blur'))")  # clean up a stuck key for the next cases
+    await page.evaluate(FORCE_RACE)
     # Three fingers at once on gas, drift, brake; lift in a mixed order
     n0 = await key_count(page)
     await touch.down(0, *gas); await touch.down(1, *centre(rects["Drift"])); await touch.down(2, *centre(rects["Brake and reverse"]))
@@ -534,13 +550,20 @@ async def game_cases(browser, args, profile, res):
     rim = min(rects["Gas"][2] - rects["Gas"][0], rects["Gas"][3] - rects["Gas"][1]) * 0.025
     for mode, anchor in (("still", gas), ("wobble", gas), ("rim", edge_point(rects["Gas"], side, rim * 0.5)),
                          ("edge", edge_point(rects["Gas"], side, 0.5))):
-        # brake to a stop first, so every case starts at 0 km/h
+        # Recover (back to the last checkpoint, facing the track) and brake to a stop, so every case starts the
+        # same way. The hold is GAME_HOLD s: driving straight with no steering, the kart meets a wall after ~4 s
+        # (a 10 s hold then reads 0 km/h with the key still held), so the speed is judged before that; the
+        # 10 s holds are covered key by key in page mode.
+        if "Recover to the last checkpoint" in rects:
+            await touch.down(0, *centre(rects["Recover to the last checkpoint"])); await asyncio.sleep(0.1); await touch.up(0)
+            await asyncio.sleep(2.0)
         s = centre(rects["Brake and reverse"])
-        await touch.down(0, *s); await asyncio.sleep(2.5); await touch.up(0); await asyncio.sleep(1.5)
+        await touch.down(0, *s); await asyncio.sleep(1.5); await touch.up(0); await asyncio.sleep(1.0)
         p0 = len(await page.evaluate("window.__poses"))
+        n0 = await key_count(page)
         t0 = await page.evaluate("window.__now()")
         await touch.down(0, *anchor)
-        end = time.perf_counter() + args.seconds
+        end = time.perf_counter() + GAME_HOLD
         while time.perf_counter() < end:
             if mode == "still":
                 await asyncio.sleep(0.05); continue
@@ -555,28 +578,29 @@ async def game_cases(browser, args, profile, res):
                 await touch.move(0, anchor[0] + (ac if side in ("left", "right") else al),
                                  anchor[1] + (al if side in ("left", "right") else ac))
             await asyncio.sleep(FRAME)
+        t_lift = await page.evaluate("window.__now()")
         await touch.up(0)
+        await asyncio.sleep(0.15)
+        ev = await keys_since(page, n0)
+        w_drops = drops(ev, "KeyW", t_lift)
         poses = (await page.evaluate("window.__poses"))[p0:]
         speeds = [(ms - t0, decode_speed(b)) for ms, b in poses]
-        speeds = [(ms, v[0]) for ms, v in speeds if v]
+        speeds = [(ms, v[0]) for ms, v in speeds if v and ms <= t_lift - t0]
         if not speeds:
-            res.add(f"game: hold gas {args.seconds:.0f}s {mode}, kart speed", False, "pose messages with speed", "no pose messages")
+            res.add(f"game: hold gas {GAME_HOLD}s {mode}, kart speed", False, "pose messages with speed", "no pose messages")
             continue
         top = max(v for _, v in speeds)
-        late = [v for ms, v in speeds if ms > args.seconds * 1000 * 0.6]
-        # the kart must not lose speed while gas is held: after the first 2 s, any drop > 15 % of the top speed fails
-        worst = 0.0
-        best = 0.0
+        last = [v for ms, v in speeds if ms > GAME_HOLD * 1000 - 800]
+        # the kart must not lose speed while gas is held: any drop > 15 % of the best speed so far fails
+        worst = best = 0.0
         for ms, v in speeds:
-            if ms < 2000:
-                best = max(best, v); continue
             best = max(best, v)
             worst = max(worst, best - v)
-        ok = top > 5 and worst < 0.15 * top
-        res.add(f"game: hold gas {args.seconds:.0f}s {mode}, kart speed", ok,
-                "speed rises and never drops more than 15 % of its top while held",
-                f"top {top * 3.6:.0f} km/h, biggest drop {worst * 3.6:.0f} km/h, last 40 % avg "
-                f"{(sum(late) / len(late) * 3.6 if late else 0):.0f} km/h, {len(speeds)} poses")
+        ok = top * 3.6 > 30 and worst < 0.15 * top and not w_drops
+        res.add(f"game: hold gas {GAME_HOLD}s {mode}, kart speed", ok,
+                "W never up while held, speed above 30 km/h and never drops more than 15 % while held",
+                f"W drops {w_drops}, top {top * 3.6:.0f} km/h, biggest drop {worst * 3.6:.0f} km/h, last 0.8 s avg "
+                f"{(sum(last) / len(last) * 3.6 if last else 0):.0f} km/h, {len(speeds)} poses")
     await page.screenshot(path=str(SHOTS / "touch-hold-game.png"))
     await ctx.close()
 
