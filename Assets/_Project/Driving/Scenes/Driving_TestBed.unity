@@ -151,7 +151,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a825b713a5cd4d4bb309bd4c2861e8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.Driving::CarcavelosCircuit.Driving.NameTagTestRacer
-  displayName: Tiago
+  displayName: "Cláudio"
   mapColor: {r: 0, g: 0, b: 1, a: 1}
   isPlayer: 0
 --- !u!65 &54981414
@@ -673,7 +673,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a825b713a5cd4d4bb309bd4c2861e8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CarcavelosCircuit.Driving::CarcavelosCircuit.Driving.NameTagTestRacer
-  displayName: Rita
+  displayName: Paulo
   mapColor: {r: 0.95, g: 0.55, b: 0.1, a: 1}
   isPlayer: 0
 --- !u!65 &972069777

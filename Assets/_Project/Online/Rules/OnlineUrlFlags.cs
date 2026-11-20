@@ -146,7 +146,7 @@ namespace CarcavelosCircuit.Online
             }
         }
 
-        // "Tiago" (any case) or "1" -> the DriverRoster index; -1 for anything else.
+        // "Cláudio", "claudio" or Luc's model name "Tiago" (any case), or "1" -> the DriverRoster index; -1 for anything else.
         public static int ParseDriver(string value)
         {
             string text = value == null ? "" : value.Trim();

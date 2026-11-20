@@ -52,13 +52,14 @@ namespace CarcavelosCircuit.Tests.EditMode
             for (int i = 0; i < KartLoadout.PartCount; i++)
             {
                 // Luc's prefab KartVisual_<Kart>_<Driver>: index i of the kart list is driver i's own kart
-                Assert.AreEqual("KartVisual_" + KartLoadout.KartIds[i] + "_" + DriverRoster.Get(i).Name, DriverRoster.Get(i).KartVisual);
+                Assert.AreEqual("KartVisual_" + KartLoadout.KartIds[i] + "_" + DriverRoster.Get(i).Model, DriverRoster.Get(i).KartVisual);
                 Assert.AreEqual(DriverRoster.Get(i).KartVisual, KartLoadout.Signature(i).ModelName, "the own set keeps Luc's prefab name");
                 Assert.IsTrue(KartLoadout.KartLines[i].EndsWith(".") && KartLoadout.KartLines[i].Length <= 80);
+                StringAssert.StartsWith(DriverRoster.Get(i).Name + "'s ", KartLoadout.KartLines[i], "the kart line names its driver");
                 Assert.IsTrue(KartLoadout.TyreLines[i].EndsWith(".") && KartLoadout.TyreLines[i].Length <= 80);
             }
             Assert.AreEqual("KartVisual_Orbit_Tiago_Retro", new KartLoadout(1, 2, 3).ModelName);
-            Assert.AreEqual("TIAGO  /  ORBIT  /  RETRO", new KartLoadout(1, 2, 3).Title);
+            Assert.AreEqual("CLÁUDIO  /  ORBIT  /  RETRO", new KartLoadout(1, 2, 3).Title, "the shown name is the teacher's, the model name is Luc's");
         }
 
         [Test]
@@ -186,7 +187,7 @@ namespace CarcavelosCircuit.Tests.EditMode
                 Assert.AreEqual(0, driverEvents, "kart and tyres are no new driver (the bots stay)");
                 Assert.AreEqual(2, setEvents);
                 Assert.IsTrue(DriverChoice.Select(3, false));
-                Assert.AreEqual(new KartLoadout(3, 1, 2), DriverChoice.Loadout, "Amara takes the buggy on balloon tyres");
+                Assert.AreEqual(new KartLoadout(3, 1, 2), DriverChoice.Loadout, "Paulo takes the buggy on balloon tyres");
                 Assert.AreEqual(1, driverEvents);
                 Assert.AreEqual(3, setEvents);
                 Assert.IsTrue(DriverChoice.SelectKart(1, false), "the same kart again is accepted");

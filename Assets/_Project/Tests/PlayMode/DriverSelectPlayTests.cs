@@ -114,11 +114,12 @@ namespace CarcavelosCircuit.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator PickingTiago_GivesThePlayerTheBuggy_AndTheOthersRaceAsBots()
+        public IEnumerator PickingClaudio_GivesThePlayerTheBuggy_AndTheOthersRaceAsBots()
         {
             race.RequestStart();
             yield return null;
-            int tiago = DriverRoster.IndexOf("Tiago");
+            int tiago = DriverRoster.IndexOf("Cláudio"); // Cláudio drives Luc's Tiago model (the beach buggy)
+            Assert.AreEqual(1, tiago);
             hud.Builder.PickDriver(tiago);
             Assert.AreEqual(new KartLoadout(tiago, 0, 0), DriverChoice.Loadout, "a new driver keeps the kart and tyres");
             hud.Builder.Pick(KartBuilder.KartColumn, tiago);
@@ -127,22 +128,25 @@ namespace CarcavelosCircuit.Tests.PlayMode
 
             Assert.AreEqual(tiago, DriverChoice.Index);
             Transform slot = race.KartTransform.Find(KartVisualSwap.SlotName);
-            Assert.AreEqual("KartVisual_Buggy_Tiago", KartVisualSwap.CurrentModel(slot).name, "the player drives Tiago's buggy");
+            Assert.AreEqual("KartVisual_Buggy_Tiago", KartVisualSwap.CurrentModel(slot).name, "the player drives Cláudio's buggy");
             Assert.AreEqual(1, CountModels(slot), "only one kart model in the slot");
-            Assert.AreEqual(DriverRoster.Get(tiago).Colour, RacerRegistry.FindPlayer().MapColor, "the player takes Tiago's colour");
+            Assert.AreEqual(DriverRoster.Get(tiago).Colour, RacerRegistry.FindPlayer().MapColor, "the player takes Cláudio's colour");
             Assert.AreEqual(5, squad.Bots.Count, "still five bots");
             for (int i = 0; i < squad.Bots.Count; i++)
             {
-                Assert.AreNotEqual("Tiago", squad.Bots[i].DisplayName, "no second Tiago on the grid");
+                CollectionAssert.Contains(TributeRules.GivenNames, squad.Bots[i].DisplayName, "every bot is a teacher's first name");
+                Assert.AreNotEqual("KartVisual_Buggy_Tiago", BotModel(squad.Bots[i].DisplayName), "no second buggy: the player has it");
             }
-            Assert.IsTrue(HasBot("Rookie") && HasBot("Nova") && HasBot("Amara") && HasBot("Gaivota") && HasBot("Sardinha"));
-            Assert.AreEqual("KartVisual_StreetGT_Amara", BotModel("Amara"), "Amara races in her own kart");
+            Assert.IsTrue(HasBot("Ricardo") && HasBot("Luís") && HasBot("Paulo") && HasBot("Cláudio") && HasBot("João"));
+            Assert.AreEqual("KartVisual_StreetGT_Amara", BotModel("Paulo"), "Paulo races in the Street GT");
+            Assert.AreEqual("KartVisual_Classic_Rookie", BotModel("Cláudio"), "Cláudio lent the player the buggy and drives a Classic");
 
             hud.Builder.PickDriver(DriverRoster.Rookie);
             yield return WaitFrames(4);
             Assert.AreEqual("KartVisual_Buggy_Rookie_Offroad", KartVisualSwap.CurrentModel(slot).name,
-                "the Rookie takes over Tiago's buggy and tyres (a new driver keeps the kart)");
-            Assert.IsTrue(HasBot("Tiago"), "Tiago is a bot again");
+                "Ricardo takes over the buggy and tyres (a new driver keeps the kart)");
+            Assert.AreEqual("KartVisual_Buggy_Tiago", BotModel("Cláudio"), "Cláudio is back in the buggy");
+            Assert.AreEqual("KartVisual_Classic_Rookie", BotModel("Ricardo"), "and Ricardo's bot drives a repainted Classic");
             Assert.AreEqual(PlayerRacer.PlayerColour, RacerRegistry.FindPlayer().MapColor);
         }
 
@@ -157,10 +161,10 @@ namespace CarcavelosCircuit.Tests.PlayMode
             Assert.AreEqual(5, squad.Bots.Count);
             BotDriver firstBot = squad.Bots[0];
 
-            int tiago = DriverRoster.IndexOf("Tiago");
+            int tiago = DriverRoster.IndexOf("Cláudio");
             hud.Builder.PickDriver(tiago);
             yield return WaitFrames(4);
-            firstBot = squad.Bots[0]; // a new driver lines the bots up again (Tiago sits out)
+            firstBot = squad.Bots[0]; // a new driver lines the bots up again (Cláudio moves to a Classic)
             hud.Builder.Pick(KartBuilder.KartColumn, 2);  // Orbit
             hud.Builder.Pick(KartBuilder.TyreColumn, 3);  // Retro
             yield return WaitFrames(4);
@@ -168,7 +172,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
             KartLoadout set = new KartLoadout(tiago, 2, 3);
             Assert.AreEqual(set, DriverChoice.Loadout);
             Transform slot = race.KartTransform.Find(KartVisualSwap.SlotName);
-            Assert.AreEqual("KartVisual_Orbit_Tiago_Retro", KartVisualSwap.CurrentModel(slot).name, "Tiago in the Orbit on Retro tyres");
+            Assert.AreEqual("KartVisual_Orbit_Tiago_Retro", KartVisualSwap.CurrentModel(slot).name, "Cláudio in the Orbit on Retro tyres");
             Assert.AreEqual(1, CountModels(slot), "only one kart model in the slot");
             Assert.AreSame(firstBot, squad.Bots[0], "kart and tyres leave the bots alone");
             Assert.AreEqual(set.Code, KartLoadout.FromCode(set.Code).Code, "the online code carries the whole set");

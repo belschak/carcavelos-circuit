@@ -36,6 +36,44 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void GivenNames_AreFirstNamesOfTheStaff_FirstNameIsTheFirstWord()
+        {
+            Assert.AreEqual(new[] { "Ricardo", "João", "Cláudio", "Luís", "Paulo" }, TributeRules.GivenNames);
+            for (int i = 0; i < TributeRules.GivenNames.Length; i++)
+            {
+                bool found = false;
+                for (int t = 0; t < TributeRules.Teachers.Length; t++)
+                {
+                    string[] words = TributeRules.Teachers[t].Split(' ');
+                    // Portuguese names: given names first, the last two words are the family names (Gil Pereira).
+                    int given = words.Length > 2 ? words.Length - 2 : 1;
+                    for (int w = 0; w < given; w++)
+                    {
+                        found |= words[w] == TributeRules.GivenNames[i];
+                    }
+                }
+                Assert.IsTrue(found, TributeRules.GivenNames[i] + " is a given name of one of the teachers");
+            }
+            Assert.AreEqual("Ricardo", TributeRules.FirstName(0));
+            Assert.AreEqual("Cláudio", TributeRules.FirstName(1));
+            Assert.AreEqual("Luís", TributeRules.FirstName(2));
+            Assert.AreEqual("Paulo", TributeRules.FirstName(3));
+            Assert.AreEqual("", TributeRules.FirstName(4));
+            Assert.AreEqual("", TributeRules.FirstName(-1));
+        }
+
+        [Test]
+        public void CreditsPage4_ThanksTheTeachersByTheirFirstNames()
+        {
+            string uxml = File.ReadAllText(Path.Combine(Application.dataPath, "_Project/RaceFlow/UI/RaceHud.uxml"));
+            StringAssert.Contains("name=\"credits-page-4\"", uxml);
+            StringAssert.Contains("name=\"credits-dot-4\"", uxml);
+            StringAssert.Contains("THANK YOU, TEACHERS", uxml);
+            StringAssert.Contains("Ricardo, Cláudio, Luís and Paulo", uxml);
+            Assert.IsFalse(uxml.IndexOf((char)0x2014) >= 0 || uxml.IndexOf((char)0x2013) >= 0, "no long dashes in the credits");
+        }
+
+        [Test]
         public void BoardPicture_DrawsTheNamesInTheSameOrder()
         {
             string script = File.ReadAllText(Path.Combine(Application.dataPath, "../tools/textures/make_tribute_boards.py"));
