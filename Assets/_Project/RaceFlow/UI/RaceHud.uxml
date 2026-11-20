@@ -123,8 +123,8 @@
             <ui:VisualElement name="controls-hint" class="controls-hint plate">
                 <ui:VisualElement class="keycap"><ui:Label text="R" class="f-ui" /></ui:VisualElement>
                 <ui:Label text="RECOVER" class="key-text f-ui" />
-                <ui:VisualElement class="keycap keycap--wide"><ui:Label text="ENTER" class="f-ui" /></ui:VisualElement>
-                <ui:Label text="RETRY" class="key-text f-ui" />
+                <ui:VisualElement class="keycap keycap--wide key--retry"><ui:Label text="ENTER" class="f-ui" /></ui:VisualElement>
+                <ui:Label text="RETRY" class="key-text key--retry f-ui" />
                 <ui:VisualElement class="keycap key--pause"><ui:Label text="P" class="f-ui" /></ui:VisualElement>
                 <ui:Label text="PAUSE" class="key-text key-text--last key--pause f-ui" />
             </ui:VisualElement>
@@ -275,7 +275,7 @@
                 <ui:Label text="PAUSED" class="pause-title f-display" />
                 <ui:VisualElement name="pause-wave-host" class="wave-host wave-host--small" />
                 <ui:Label name="pause-hint" text="PRESS P, ANY KEY OR CLICK TO CONTINUE" class="pill pause-pill f-ui" />
-                <ui:Label text="THE CLOCK IS STOPPED" class="pause-note f-ui" />
+                <ui:Label name="pause-note" text="THE CLOCK IS STOPPED" class="pause-note f-ui" />
             </ui:VisualElement>
         </ui:VisualElement>
 

@@ -138,17 +138,22 @@ namespace CarcavelosCircuit.RaceFlow
             }
             if (reply.Rank == 0)
             {
-                return "SAVED";
+                return reply.Source == LeaderboardSource.OfflineFallback ? "SAVED ON THIS DEVICE" : "SAVED";
             }
             return reply.Source == LeaderboardSource.Online ? "YOU ARE #" + reply.Rank : "#" + reply.Rank + " ON THIS DEVICE";
         }
 
-        // The small line under it. Offline says nothing here: the card's coral note already says it, once.
+        // The small line under it. Kept only on this device because the online save failed: say so here, because the
+        // list beside it may still come from online (the read can work while the save did not, 20 Nov 2026).
         public static string ResultLine(LeaderboardReply reply)
         {
             if (!reply.Success)
             {
                 return "THIS TIME COULD NOT BE SAVED";
+            }
+            if (reply.Source == LeaderboardSource.OfflineFallback)
+            {
+                return "THE ONLINE SAVE FAILED"; // with or without a place on this device
             }
             if (reply.Rank == 0)
             {

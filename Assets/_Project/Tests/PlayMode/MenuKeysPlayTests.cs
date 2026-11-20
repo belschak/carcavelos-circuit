@@ -242,6 +242,37 @@ namespace CarcavelosCircuit.Tests.PlayMode
         }
 
         // Down in one frame (RaceKeys sees wasPressedThisFrame in that frame's Updates), up in the next.
+        // Q with the real key (20 Nov 2026): in the countdown it goes straight back to the start screen; mid-race the
+        // first Q only pauses (the PAUSED card says Q = menu) and the second Q leaves. Nothing stays frozen or muted.
+        [UnityTest]
+        public IEnumerator Q_LeavesTheCountdown_PausesTheRaceFirst_SecondQLeaves()
+        {
+            race.BeginRace();
+            yield return null;
+            Assert.AreEqual(RaceState.Countdown, race.State);
+            yield return Press(Key.Q);
+            Assert.AreEqual(RaceState.Ready, race.State, "Q in the countdown: back to the start screen");
+            Assert.IsFalse(hud.Builder.IsOpen, "the same Q does not also count as 'any key' on the start screen");
+
+            race.BeginRace();
+            float waited = 0f;
+            while (race.State != RaceState.Racing && waited < 10f)
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+            Assert.AreEqual(RaceState.Racing, race.State);
+            yield return Press(Key.Q);
+            Assert.AreEqual(RaceState.Racing, race.State, "one Q mid-race never throws the lap away");
+            Assert.IsTrue(race.IsPaused, "it pauses, and the PAUSED card names Q");
+            yield return Press(Key.Q);
+            Assert.AreEqual(RaceState.Ready, race.State, "the second Q leaves for the start screen");
+            Assert.IsFalse(race.IsPaused, "the pause ended with it");
+            Assert.AreEqual(1f, Time.timeScale, "the game runs again");
+            Assert.IsFalse(AudioListener.pause, "the sound is not left paused");
+            Assert.IsFalse(race.Kart.InputEnabled, "nobody drives on the start screen");
+        }
+
         private IEnumerator Press(Key key)
         {
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(key));

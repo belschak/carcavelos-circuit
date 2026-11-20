@@ -52,7 +52,8 @@ namespace CarcavelosCircuit.RaceFlow
             { "NOVA KART WALL", "Between the plaza and the home straight" },
             { "DRIFT BOOST", "Hold SPACE in a corner, let go for a boost" },
             { "AIR TRICKS", "Press SHIFT in the air for a trick boost" },
-            { "NOON OR SUNSET", "Online rooms for up to 15 racers" },
+            { "ONLINE RACE", "One room for the whole class, up to 15 racers" },
+            { "NOON OR SUNSET", "Press T to switch the light over the beach" },
         };
 
         [SerializeField, Tooltip("Seconds each sight stays on the start screen's postcard")]
@@ -176,6 +177,10 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 return "Tap TRICK in the air for a trick boost";
             }
+            if (touch && Sights[index, 0] == "NOON OR SUNSET")
+            {
+                return "Tap the light button to switch noon and sunset";
+            }
             return Sights[index, 1];
         }
 
@@ -192,6 +197,7 @@ namespace CarcavelosCircuit.RaceFlow
             int index = Mathf.FloorToInt(onScreen / sightSeconds) % count;
             float inSight = onScreen % sightSeconds;
             postcard.EnableInClassList("pc--out", inSight > sightSeconds - 0.25f);
+            postcard.EnableInClassList("pc--live", onScreen >= sightSeconds); // after the first sight: no intro delay
             if (index != shownSight)
             {
                 shownSight = index;
@@ -223,6 +229,7 @@ namespace CarcavelosCircuit.RaceFlow
             if (!onStart)
             {
                 introStart = -1f;
+                postcard.RemoveFromClassList("pc--live"); // the next visit starts with the intro delay again
                 StopSweep();
                 return;
             }

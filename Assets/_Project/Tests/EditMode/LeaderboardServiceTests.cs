@@ -164,6 +164,9 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual("#4 ON THIS DEVICE", SaveTimeForm.RankLine(reply));
             reply.Rank = 0;
             Assert.AreEqual("SAVED", SaveTimeForm.RankLine(reply));
+            reply.Source = LeaderboardSource.OfflineFallback;
+            Assert.AreEqual("SAVED ON THIS DEVICE", SaveTimeForm.RankLine(reply), "kept here, outside this device's top 10");
+            Assert.AreEqual("THE ONLINE SAVE FAILED", SaveTimeForm.ResultLine(reply), "the failed online save is said even without a place");
             Assert.AreEqual("NOT SAVED", SaveTimeForm.RankLine(LeaderboardReply.Failed()));
         }
 
@@ -212,6 +215,54 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(0, LocalLeaderboardService.SavedHere(track).Count);
         }
 
+        // 20 Nov 2026: the online save failed but the online read worked. The time is kept on this device with a DEVICE
+        // place; the online list beside it must not flash the row with that number (it is somebody else's time).
+        [Test]
+        public void SaveFailsReadWorks_TheDevicePlaceNeverFlashesAnOnlineRow()
+        {
+            SaveFailsReadWorks online = new SaveFailsReadWorks();
+            FallbackLeaderboardService service = new FallbackLeaderboardService(online);
+            service.SubmitTime(Track, "Ana", 70f, reply => last = reply);
+            Assert.IsTrue(last.Success, "kept on this device");
+            Assert.AreEqual(LeaderboardSource.OfflineFallback, last.Source);
+            Assert.AreEqual(1, last.Rank, "#1 on this device");
+            LeaderboardReply list = null;
+            service.FetchTop(Track, 10, reply => list = reply);
+            Assert.AreEqual(LeaderboardSource.Online, list.Source, "the read still comes from online");
+            Assert.AreEqual(0, LeaderboardRanking.RowToFlash(last.Source, last.Rank, list.Source), "the online #1 is somebody else");
+            Assert.AreEqual("THE ONLINE SAVE FAILED", SaveTimeForm.ResultLine(last));
+        }
+
+        [Test]
+        public void RowToFlash_OnlyInTheListTheTimeWasSavedTo()
+        {
+            Assert.AreEqual(4, LeaderboardRanking.RowToFlash(LeaderboardSource.Online, 4, LeaderboardSource.Online));
+            Assert.AreEqual(2, LeaderboardRanking.RowToFlash(LeaderboardSource.OfflineFallback, 2, LeaderboardSource.OfflineFallback), "full outage: the device list");
+            Assert.AreEqual(3, LeaderboardRanking.RowToFlash(LeaderboardSource.ThisDevice, 3, LeaderboardSource.ThisDevice));
+            Assert.AreEqual(0, LeaderboardRanking.RowToFlash(LeaderboardSource.OfflineFallback, 1, LeaderboardSource.Online), "device place, online list");
+            Assert.AreEqual(0, LeaderboardRanking.RowToFlash(LeaderboardSource.Online, 1, LeaderboardSource.OfflineFallback), "online place, device list");
+            Assert.AreEqual(0, LeaderboardRanking.RowToFlash(LeaderboardSource.Online, 0, LeaderboardSource.Online), "place unknown");
+            Assert.AreEqual(0, LeaderboardRanking.RowToFlash(LeaderboardSource.Online, -3, LeaderboardSource.Online), "a broken place");
+        }
+
+        // An online leaderboard whose save fails while its read works (a refused insert, a blip on the POST only).
+        private class SaveFailsReadWorks : ILeaderboardService
+        {
+            public void SubmitTime(string track, string name, float seconds, System.Action<LeaderboardReply> done)
+            {
+                done(LeaderboardReply.Failed());
+            }
+
+            public void FetchTop(string track, int count, System.Action<LeaderboardReply> done)
+            {
+                LeaderboardReply reply = new LeaderboardReply();
+                reply.Success = true;
+                reply.Source = LeaderboardSource.Online;
+                reply.Entries = new System.Collections.Generic.List<LeaderboardEntry> { new LeaderboardEntry("Rui", 60f) };
+                done(reply);
+            }
+        }
+
         [Test]
         public void ResultLine_SaysWhereTheTimeIs()
         {
@@ -221,7 +272,9 @@ namespace CarcavelosCircuit.Tests.EditMode
             reply.Source = LeaderboardSource.Online;
             Assert.AreEqual("ON THE ONLINE LEADERBOARD", SaveTimeForm.ResultLine(reply));
             reply.Source = LeaderboardSource.OfflineFallback;
-            Assert.AreEqual("", SaveTimeForm.ResultLine(reply), "offline is said once, by the card's note");
+            Assert.AreEqual("THE ONLINE SAVE FAILED", SaveTimeForm.ResultLine(reply), "the list beside it may still be the online one");
+            reply.Source = LeaderboardSource.ThisDevice;
+            Assert.AreEqual("", SaveTimeForm.ResultLine(reply), "no online leaderboard set up: nothing failed");
             reply.Source = LeaderboardSource.ThisDevice;
             reply.Rank = 0;
             Assert.AreEqual("OUTSIDE THE TOP 10 ON THIS DEVICE", SaveTimeForm.ResultLine(reply));

@@ -17,6 +17,14 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void PauseNote_NamesQForTheMenu_OnlyWhereThereIsAKeyboard()
+        {
+            StringAssert.Contains("Q  BACK TO THE MENU", HudMenus.PauseNoteText(false));
+            StringAssert.Contains("CLOCK IS STOPPED", HudMenus.PauseNoteText(false));
+            Assert.AreEqual("THE CLOCK IS STOPPED", HudMenus.PauseNoteText(true), "a phone has no Q key");
+        }
+
+        [Test]
         public void StartScreenTips_NameTheTouchButtons_OnTouch()
         {
             for (int i = 0; i < TitleScreen.SightCount; i++)
@@ -34,6 +42,38 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void StartScreenPostcard_ComesBackWithoutTheIntroDelay()
+        {
+            // The 1.5 s intro delay is only for the first sight; later sights flip straight back in.
+            string uss = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "FrontEnd.uss"));
+            int live = uss.IndexOf(".intro-in .pc--live {");
+            Assert.Greater(live, 0, "the live postcard rule exists");
+            string rule = uss.Substring(live, System.Math.Min(80, uss.Length - live));
+            StringAssert.Contains("transition-delay: 0s;", rule.Substring(0, rule.IndexOf('}')), "the rule sets no delay");
+        }
+
+        [Test]
+        public void StartScreenTips_SpeakOfOneOnlineRoom_AndNameTheLightButton()
+        {
+            // Since the team test on 17 Nov 2026 the class races in ONE room (it was a noon and a sunset room).
+            bool oneRoom = false;
+            for (int i = 0; i < TitleScreen.SightCount; i++)
+            {
+                for (int touch = 0; touch < 2; touch++)
+                {
+                    string tip = TitleScreen.SightText(i, touch == 1);
+                    StringAssert.DoesNotContain("rooms", tip, "tip " + i + ": there is only one online room");
+                    oneRoom |= tip.Contains("One room");
+                    if (touch == 1)
+                    {
+                        StringAssert.DoesNotContain("Press T", tip, "tip " + i + ": a phone has no T key");
+                    }
+                }
+            }
+            Assert.IsTrue(oneRoom, "a tip says the class races in one room");
+        }
+
+        [Test]
         public void Hud_HidesKeycapsAndGrowsMenuPills_OnTouch()
         {
             string uss = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "RaceHud.uss"));
@@ -43,6 +83,20 @@ namespace CarcavelosCircuit.Tests.EditMode
             StringAssert.Contains(".hud--touch .menu-pill {", uss);
             string uxml = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "RaceHud.uxml"));
             StringAssert.Contains("name=\"pause-hint\"", uxml);
+        }
+
+        [Test]
+        public void Hud_FooterHint_ShowsNoRetryOrPauseKey_Online()
+        {
+            // Online the room owns Enter and P (ExternalStartRules), so the footer hint must not offer them.
+            Assert.IsFalse(ExternalStartRules.MayRetryOrLeave(true));
+            Assert.IsFalse(ExternalStartRules.MayPauseByHand(true));
+            string uss = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "RaceHud.uss"));
+            StringAssert.Contains(".hud--online .controls-hint .key--retry", uss);
+            StringAssert.Contains(".hud--online .controls-hint .key--pause", uss);
+            string uxml = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "RaceHud.uxml"));
+            StringAssert.Contains("keycap keycap--wide key--retry", uxml);
+            StringAssert.Contains("key-text key--retry", uxml);
         }
     }
 }

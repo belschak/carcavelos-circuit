@@ -419,6 +419,12 @@
     transition-duration: 200ms, 200ms;
 }
 
+/* After the first sight (TitleScreen "pc--live"): the next sight comes straight back. The 1.5 s intro delay above
+   also held every later sight back, so the card was hidden almost half of the time (20 Nov 2026). */
+.intro-in .pc--live {
+    transition-delay: 0s;
+}
+
 .pc-stamp {
     width: 4px;
     height: 34px;

@@ -725,6 +725,17 @@
     display: none;
 }
 
+/* Online (20 Nov 2026): Enter and P do nothing while the room owns the race (ExternalStartRules), so the footer hint
+   shows only R RECOVER there. RaceHud sets "hud--online" while the mode opens the lobby. */
+.hud--online .controls-hint .key--retry,
+.hud--online .controls-hint .key--pause {
+    display: none;
+}
+
+.hud--online .controls-hint .key-text {
+    margin-right: 0;
+}
+
 /* Keycaps (also used on the start and results screens). */
 .keycap {
     min-width: 32px;

@@ -178,7 +178,8 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // The line above the rows. An empty board (a fresh browser, or nobody saved yet) invites the first time;
-        // offline is said here and only here. Public and static so an Edit Mode test can check the words.
+        // offline is said here (the save form adds "THE ONLINE SAVE FAILED" under the player's own place, because the read
+        // can work when the save did not). Public and static so an Edit Mode test can check the words.
         public static string NoteFor(LeaderboardSource source, int entryCount, bool onResults)
         {
             if (source == LeaderboardSource.OfflineFallback)

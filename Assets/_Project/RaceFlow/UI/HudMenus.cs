@@ -44,6 +44,7 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly VisualElement creditsClose;
         private readonly VisualElement pauseScreen;
         private readonly Label pauseHint;
+        private readonly Label pauseNote;
         private readonly VisualElement toast;
         private readonly Label toastText;
 
@@ -88,6 +89,7 @@ namespace CarcavelosCircuit.RaceFlow
             creditsClose = root.Q<VisualElement>("credits-close");
             pauseScreen = root.Q<VisualElement>("pause-screen");
             pauseHint = root.Q<Label>("pause-hint");
+            pauseNote = root.Q<Label>("pause-note");
             toast = root.Q<VisualElement>("toast");
             toastText = root.Q<Label>("toast-text");
 
@@ -166,6 +168,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 // Phone round 17.11: no keyboard on a phone, so the card says what a thumb does.
                 SetText(pauseHint, PauseHintText(WebPage.TouchMode));
+                SetText(pauseNote, PauseNoteText(WebPage.TouchMode));
             }
 
             // The online lobby's LIGHT button also changes the time of day: the start pill follows it.
@@ -281,6 +284,12 @@ namespace CarcavelosCircuit.RaceFlow
         public static string PauseHintText(bool touch)
         {
             return touch ? "TAP TO CONTINUE" : "PRESS P, ANY KEY OR CLICK TO CONTINUE";
+        }
+
+        // The small line under it: the clock, and on a computer the way out (Q = back to the menu, 20 Nov 2026).
+        public static string PauseNoteText(bool touch)
+        {
+            return touch ? "THE CLOCK IS STOPPED" : "THE CLOCK IS STOPPED  ·  Q  BACK TO THE MENU";
         }
 
         private static void SetText(Label label, string text)

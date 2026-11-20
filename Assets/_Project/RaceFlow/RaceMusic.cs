@@ -103,6 +103,7 @@ namespace CarcavelosCircuit.RaceFlow
             raceManager.CountdownStep += OnCountdownStep;
             raceManager.CheckpointPassed += OnCheckpointPassed;
             raceManager.LapFinished += OnLapFinished;
+            raceManager.Restarted += OnRestarted;
         }
 
         private void OnDisable()
@@ -110,6 +111,7 @@ namespace CarcavelosCircuit.RaceFlow
             raceManager.CountdownStep -= OnCountdownStep;
             raceManager.CheckpointPassed -= OnCheckpointPassed;
             raceManager.LapFinished -= OnLapFinished;
+            raceManager.Restarted -= OnRestarted;
         }
 
         private void Start()
@@ -170,6 +172,35 @@ namespace CarcavelosCircuit.RaceFlow
             engineLevel.FadeTo(0f, goFadeSeconds);
             effectsLevel.FadeTo(0f, goFadeSeconds);
             ambienceLevel.FadeTo(ambienceRacingDb, ambienceFadeSeconds);
+        }
+
+        // Back on the start screen (Q, MENU, or leaving the online room): the title mix again, as after loading.
+        // A retry also fires Restarted, but its state is already Countdown, and OnCountdownStep sets that mix.
+        private void OnRestarted()
+        {
+            if (raceManager.State != RaceState.Ready)
+            {
+                return;
+            }
+            onFinalStretch = false;
+            duck.Clear();
+            if (resultsMusic != null)
+            {
+                resultsMusic.Stop();
+            }
+            if (raceMusic != null)
+            {
+                raceMusic.pitch = 1f;
+                if (!raceMusic.isPlaying)
+                {
+                    raceMusic.Play();
+                }
+            }
+            raceLevel.FadeTo(titleDb, countdownFadeSeconds);
+            resultsLevel.FadeTo(Decibels.Silent, countdownFadeSeconds);
+            engineLevel.FadeTo(Decibels.Silent, countdownFadeSeconds); // the kart is silent on the title (Luc, 16 Nov)
+            effectsLevel.FadeTo(Decibels.Silent, countdownFadeSeconds);
+            ambienceLevel.FadeTo(ambienceTitleDb, ambienceFadeSeconds);
         }
 
         private void OnCheckpointPassed(int index)

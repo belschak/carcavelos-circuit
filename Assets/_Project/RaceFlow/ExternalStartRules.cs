@@ -26,6 +26,23 @@ namespace CarcavelosCircuit.RaceFlow
             return !externalStartOnly;
         }
 
+        // Q = back to the start screen to pick another mode (RaceManager.BackToMenu). From the countdown, the race,
+        // the pause and the results (20 Nov 2026: before it worked only on the results card, so a player in the wrong
+        // mode had to finish a whole lap first). Never on the start screen itself (there Q is a normal "any key")
+        // and never while the lobby owns the race (online, Q leaves the room instead: OnlineRaceDirector).
+        public static bool MayGoBackToMenu(RaceState state, bool externalStartOnly)
+        {
+            return state != RaceState.Ready && MayRetryOrLeave(externalStartOnly);
+        }
+
+        // Mid-race one Q only PAUSES (the PAUSED card then says "Q  BACK TO THE MENU"), a second Q leaves: Q sits
+        // beside W and E, and a slip of the finger must never throw a lap away (review, 20 Nov 2026).
+        // The countdown and the results lose nothing, so there Q leaves at once.
+        public static bool QPausesFirst(RaceState state)
+        {
+            return state == RaceState.Racing;
+        }
+
         // The P key pause. Not while the lobby owns the race: the others keep driving on the shared clock, and a
         // paused countdown would make this player's GO late.
         public static bool MayPauseByHand(bool externalStartOnly)
