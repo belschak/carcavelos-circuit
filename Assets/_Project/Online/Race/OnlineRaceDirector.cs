@@ -82,7 +82,6 @@ namespace CarcavelosCircuit.Online
         private string roomName = OnlineRooms.SessionName;
         private int overRaceId;           // the race whose end this screen saw (room auto start after a race)
         private double overSince = double.NaN;
-        private bool autoStartLogged;
         private float nextBuildCheckAt;   // OnlineBuildCheck: unscaled time of the next look, -1 = done
         private float reloadAt = -1f;     // a newer build is out: reload at this unscaled time
         private string reloadBuild = "";
@@ -269,7 +268,7 @@ namespace CarcavelosCircuit.Online
                     break;
                 case OnlineStatus.Failed:
                     string why = session.FailReason ?? "";
-                    FailOrRetry(why, "failed", why.Length > 0 ? "CONNECTION FAILED: " + why : "CONNECTION FAILED");
+                    FailOrRetry(why, "failed", FailedLine(why));
                     break;
                 case OnlineStatus.InRoom:
                     UpdateInRoom();
@@ -296,6 +295,19 @@ namespace CarcavelosCircuit.Online
             }
             OnlineTestLog.Write("STATUS " + kind + " room=" + OnlineTestLog.Room() + " reason=" + OnlineTestLog.Clean(reason));
             ShowMessage(message, true);
+        }
+
+        // The message for a failed join: the session's own words when they already say what happened (no
+        // "CONNECTION FAILED: CONNECTION FAILED (Error)", live check 20 Nov 2026).
+        private static string FailedLine(string why)
+        {
+            if (string.IsNullOrEmpty(why))
+            {
+                return "CONNECTION FAILED";
+            }
+            string upper = why.ToUpperInvariant();
+            return upper.StartsWith("CONNECTION") || upper.StartsWith("CAN'T") || upper.StartsWith("NO ") || upper.StartsWith("COULD")
+                ? why : "CONNECTION FAILED: " + why;
         }
 
         // The room has no seat left: on to the next room (overflow, OnlineRooms) without a click; after the last room
