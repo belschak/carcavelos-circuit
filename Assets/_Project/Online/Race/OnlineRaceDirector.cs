@@ -286,7 +286,7 @@ namespace CarcavelosCircuit.Online
                 int next = joinAttempt + 1;
                 OnlineTestLog.Write("STATUS retry room=" + OnlineTestLog.Room() + " attempt=" + next + " after=" + kind
                     + " reason=" + OnlineTestLog.Clean(reason));
-                retryAt = Time.unscaledTime + OnlineJoinRetry.RetryDelaySeconds;
+                retryAt = Time.unscaledTime + OnlineJoinRetry.DelayAfter(joinAttempt < 1 ? 1 : joinAttempt);
                 if (view != null)
                 {
                     view.ShowConnecting(OnlineJoinRetry.RetryLine(next), true);
