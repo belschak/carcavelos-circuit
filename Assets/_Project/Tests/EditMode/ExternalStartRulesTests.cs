@@ -56,6 +56,15 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void Q_MidRace_OnlyPausesFirst_CountdownAndResultsLeaveAtOnce()
+        {
+            Assert.IsTrue(ExternalStartRules.QPausesFirst(RaceState.Racing), "a slip of the finger never throws the lap away");
+            Assert.IsFalse(ExternalStartRules.QPausesFirst(RaceState.Countdown), "nothing to lose yet");
+            Assert.IsFalse(ExternalStartRules.QPausesFirst(RaceState.Results), "the lap is already over");
+            Assert.IsFalse(ExternalStartRules.QPausesFirst(RaceState.Ready));
+        }
+
+        [Test]
         public void Q_IsRefused_OnTheStartScreen_AndWhileTheLobbyOwnsTheRace()
         {
             Assert.IsFalse(ExternalStartRules.MayGoBackToMenu(RaceState.Ready, false), "already on the start screen: Q is any key");

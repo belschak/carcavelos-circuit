@@ -164,6 +164,9 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual("#4 ON THIS DEVICE", SaveTimeForm.RankLine(reply));
             reply.Rank = 0;
             Assert.AreEqual("SAVED", SaveTimeForm.RankLine(reply));
+            reply.Source = LeaderboardSource.OfflineFallback;
+            Assert.AreEqual("SAVED ON THIS DEVICE", SaveTimeForm.RankLine(reply), "kept here, outside this device's top 10");
+            Assert.AreEqual("THE ONLINE SAVE FAILED", SaveTimeForm.ResultLine(reply), "the failed online save is said even without a place");
             Assert.AreEqual("NOT SAVED", SaveTimeForm.RankLine(LeaderboardReply.Failed()));
         }
 

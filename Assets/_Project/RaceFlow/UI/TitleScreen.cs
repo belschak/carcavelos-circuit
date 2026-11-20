@@ -53,7 +53,7 @@ namespace CarcavelosCircuit.RaceFlow
             { "DRIFT BOOST", "Hold SPACE in a corner, let go for a boost" },
             { "AIR TRICKS", "Press SHIFT in the air for a trick boost" },
             { "ONLINE RACE", "One room for the whole class, up to 15 racers" },
-            { "NOON OR SUNSET", "Press T for the golden hour over the beach" },
+            { "NOON OR SUNSET", "Press T to switch the light over the beach" },
         };
 
         [SerializeField, Tooltip("Seconds each sight stays on the start screen's postcard")]
@@ -179,7 +179,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             if (touch && Sights[index, 0] == "NOON OR SUNSET")
             {
-                return "Tap NOON for the golden hour over the beach";
+                return "Tap the light button to switch noon and sunset";
             }
             return Sights[index, 1];
         }

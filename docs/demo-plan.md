@@ -112,9 +112,7 @@ If something fails during the demo: say what happened, point at the message, con
 
 Found in the failure QA on 18 Nov 2026; none freezes the game. Remove a line once its fix is live.
 - Name fields (results and online lobby): after typing, Esc does not leave the field and Q does nothing. Use the mouse (SAVE, BACK).
-- Online race on a laptop: the key hint bar still shows ENTER RETRY and P PAUSE, which do nothing online. Do not press them.
 - When Photon cannot be reached the message reads "CONNECTION FAILED: CONNECTION FAILED (Error)". Say: "Photon is not reachable from this network, the game tells you and offers BACK".
-- A race has no way back to the start screen before the finish (Q MENU is only on the results card, P only pauses). To switch modes mid-race: F5, the page comes back from the cache in a few seconds.
 
 ## 7. Checklists
 

@@ -237,8 +237,12 @@ namespace CarcavelosCircuit.RaceFlow
                     return;
                 }
                 List<LeaderboardEntry> mine = LocalLeaderboardService.SavedHere(raceManager.TrackName); // saved from this browser
-                int flash = LeaderboardRanking.RowToFlash(savedTo, newRank, reply.Source);
-                board.Show(LeaderboardRanking.WithoutTooFast(reply.Entries, minSeconds), reply.Source, mine, flash);
+                List<LeaderboardEntry> shown = LeaderboardRanking.WithoutTooFast(reply.Entries, minSeconds);
+                // The row to flash is the saved line as found in the list ON SCREEN: the server's place counts rows
+                // the game hides (too fast) and orders ties its own way, so its number can point at someone else.
+                int found = newRank > 0 ? LeaderboardRanking.RankOf(shown, playerName, lapSeconds) : 0;
+                int flash = LeaderboardRanking.RowToFlash(savedTo, found, reply.Source);
+                board.Show(shown, reply.Source, mine, flash);
             });
         }
 

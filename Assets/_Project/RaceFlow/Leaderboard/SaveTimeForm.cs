@@ -138,7 +138,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
             if (reply.Rank == 0)
             {
-                return "SAVED";
+                return reply.Source == LeaderboardSource.OfflineFallback ? "SAVED ON THIS DEVICE" : "SAVED";
             }
             return reply.Source == LeaderboardSource.Online ? "YOU ARE #" + reply.Rank : "#" + reply.Rank + " ON THIS DEVICE";
         }
@@ -151,13 +151,13 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 return "THIS TIME COULD NOT BE SAVED";
             }
+            if (reply.Source == LeaderboardSource.OfflineFallback)
+            {
+                return "THE ONLINE SAVE FAILED"; // with or without a place on this device
+            }
             if (reply.Rank == 0)
             {
                 return reply.Source == LeaderboardSource.Online ? "OUTSIDE THE ONLINE TOP 10" : "OUTSIDE THE TOP 10 ON THIS DEVICE";
-            }
-            if (reply.Source == LeaderboardSource.OfflineFallback)
-            {
-                return "THE ONLINE SAVE FAILED";
             }
             return reply.Source == LeaderboardSource.Online ? "ON THE ONLINE LEADERBOARD" : "";
         }

@@ -35,6 +35,14 @@ namespace CarcavelosCircuit.RaceFlow
             return state != RaceState.Ready && MayRetryOrLeave(externalStartOnly);
         }
 
+        // Mid-race one Q only PAUSES (the PAUSED card then says "Q  BACK TO THE MENU"), a second Q leaves: Q sits
+        // beside W and E, and a slip of the finger must never throw a lap away (review, 20 Nov 2026).
+        // The countdown and the results lose nothing, so there Q leaves at once.
+        public static bool QPausesFirst(RaceState state)
+        {
+            return state == RaceState.Racing;
+        }
+
         // The P key pause. Not while the lobby owns the race: the others keep driving on the shared clock, and a
         // paused countdown would make this player's GO late.
         public static bool MayPauseByHand(bool externalStartOnly)

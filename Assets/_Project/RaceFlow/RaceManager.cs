@@ -440,10 +440,18 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
 
-            // Q = back to the start screen from the countdown, the race or the results (offline; online the lobby owns Q).
+            // Q = back to the start screen from the countdown or the results; mid-race the first Q only pauses and the
+            // PAUSED card's Q leaves (offline; online the lobby owns Q). ExternalStartRules has the rules.
             if (!MenuUsesInput && RaceKeys.BackToMenuPressed() && ExternalStartRules.MayGoBackToMenu(State, ExternalStartOnly))
             {
-                BackToMenu();
+                if (ExternalStartRules.QPausesFirst(State))
+                {
+                    StartPause(pause.OnPauseKey(State));
+                }
+                else
+                {
+                    BackToMenu();
+                }
                 return;
             }
 
