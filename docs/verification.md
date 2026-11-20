@@ -131,8 +131,9 @@ Test files are in `Assets/_Project/Tests/`; PlayMode files are marked (PM). Coun
 
 The exact current numbers are in the summary of the newest Tests run on `main` (the badge above links to it): one
 line per mode, "passed / total". The counts grow with every feature, so this page gives no fixed number. For scale:
-on 18 Nov 2026 (`main` at `14f9190`) 1560 Edit Mode and 39 Play Mode runs, all passing; 124 of the Edit Mode runs came in 6 files
-added that day for rejected and edge cases (`Verification/*` and `Online/OnlineHostileInputTests`).
+on 20 Nov 2026 (`main` plus the polish pull request #179) 1697 Edit Mode and 46 Play Mode runs, all passing (18 Nov,
+`main` at `14f9190`: 1560 and 39; 124 of those Edit Mode runs came in 6 files added that day for rejected and edge
+cases, `Verification/*` and `Online/OnlineHostileInputTests`).
 
 ## Not covered by automated tests (and how we check it instead)
 
