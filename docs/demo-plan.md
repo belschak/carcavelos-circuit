@@ -2,7 +2,41 @@
 
 The live demo of our team project, written along the course guide "Preparing the demo". The app runs at the deployed URL in front of the class: **https://nova-kart.github.io/** (the demo link). The old address https://belschak.github.io/carcavelos-circuit/ serves the same build (every merge to `main` publishes both). Slides or a video never replace the live app.
 
-When and where: TXC 15:30, room D-110, Tue 24 Nov 2026 or Fri 4 Dec 2026 (half of the teams each day). Submission (code freeze for grading): Mon 23 Nov 23:59.
+When and where: class TXC, 15:30, room D-110, on **Tue 24 Nov 2026** (presentations 1/2) or **Fri 4 Dec 2026** (2/2); half of the teams present each day. Which day is ours was not published yet when we last checked (course wiki "Course info" and the Moodle announcements, 20 Nov 2026): prepare for 24 Nov. Submission (code freeze for grading): Mon 23 Nov 23:59.
+
+## 0. Presenter runbook (one page)
+
+The rule of the course: the demo runs at the deployed URL. So we always start on the live site (plan A). Everything below exists so that no single failure ends the demo; each fallback was tried for real on 20 Nov 2026 (section 4).
+
+**The presenter kit** on the demo laptop (and on the backup laptop): `python tools/preflight/presenter.py install` makes a folder with a copy of the deployed build (the exact files of the live site, from the GitHub Pages mirror, about 140 MB), a separate "demo Chrome" profile and three desktop shortcuts:
+
+| Shortcut | What it does | When |
+|---|---|---|
+| **Carcavelos PREFLIGHT** | `tools/preflight/preflight.py`: GREEN / AMBER / RED for every dependency, each red line says the fix. About 10 s once the game is cached (the first run downloads the game: up to a minute) | 15 min before our turn, on the room's network |
+| **Carcavelos LIVE** | The demo Chrome on https://nova-kart.github.io/ (own profile: no extensions, no bookmarks bar, no pop-ups, sound allowed before the first click) | Plan A, always first |
+| **Carcavelos OFFLINE** | Starts a small local server and opens the same build from the laptop (http://127.0.0.1:8642/). Needs no internet. With internet it still has the online race and the online leaderboard (both tested from the laptop copy) | Plan B, when the live site or the network fails |
+
+After the last merge (the day before): `presenter.py update` (newest build into the copy) and `presenter.py warm` (loads the live site once in the demo Chrome, so it opens from the cache). `presenter.py status` compares the copy with the live site. The plan D videos go into the kit folder too (`plan-b-video/`), so they play without internet.
+
+**15 minutes before:** run PREFLIGHT. GREEN: open LIVE, click to play, leave it on the start screen. AMBER or RED: do what the line under it says, run PREFLIGHT again.
+
+**If something fails during the demo** (say what happened, then switch; never restart in silence):
+
+| What fails | What we see | Plan B | Plan C | Plan D |
+|---|---|---|---|---|
+| Classroom network slow or blocked | Loader stuck, online race "CONNECTING AGAIN", board OFFLINE | David's phone hotspot for the demo laptop | Carcavelos OFFLINE: race vs bots and time attack need no internet | The online race video (plan D) while we explain |
+| GitHub Pages down, or a broken deploy | Error card, "THE GAME COULD NOT START", "The track did not download" | Carcavelos OFFLINE (same build from the laptop; say "the host is down, this is the same build served from this laptop") | Luc's laptop (preloaded tab or his own kit) | Video |
+| Photon (online race) | "CONNECTION FAILED" after 3 tries, BACK | Phone hotspot, join again | Skip the online race, show race vs bots | The online race video |
+| Supabase (leaderboard) | Badge OFFLINE, "TIMES FROM THIS DEVICE" | Nothing to do: SAVE still works on the device; say so | | |
+| Demo laptop dies or freezes | | Luc continues at the same step on his laptop | | |
+| Projector | Picture cut or tiny | Win+P > Duplicate or Extend; a 16:9 mode of at least 1280x720 | Press 1, 2, 3 for the modes (keys work even when a card is hidden) | |
+| No sound | | Taskbar speaker: unmute, pick the speakers the room hears; in the game M = SOUND ON | Laptop speakers | |
+| Stuck in a race we want to leave | A race has no MENU button before the finish | F5 (reload): back on the start screen in about 5-10 s from the cache | | |
+| Slow frame rate | | Charger in, close other apps (the GPU slows down on battery) | Luc's laptop | |
+
+Plan D (last resort, it does not count as the demo): the recorded online race of 17 Nov 2026 (`plan-b-video/` in the kit: the grid of all screens and a single screen, 1920x1080).
+
+**The backup laptop (Luc):** the same kit (`presenter.py install`; on a Mac without shortcuts: `presenter.py live` / `presenter.py offline`), rehearsed once.
 
 ## 1. What we show, in this order (about 8 minutes)
 
@@ -39,6 +73,17 @@ Rules for the demo: one Chrome window, only the game tab (and the backup tab on 
 
 Every row was tried on purpose on the live site on 18 Nov 2026 (blocked hosts, network off before and during a race, slow 3G, WebGL off, blocked build files) in a separate test browser; the messages in the third column are what the app showed.
 
+Tried again on 20 Nov 2026 on the laptop copy of build `20cb18328164` (main `b0b3376`) with `tools/preflight/fallback_check.py` (its own headless Chrome, a fresh profile per case, screenshots read by hand):
+
+| Case | How it was simulated | Result |
+|---|---|---|
+| No internet at all | Chrome resolves no host name; only the laptop server (an address, not a name) answers | Game loads in 10-18 s with a cold cache, board OFFLINE + "TIMES FROM THIS DEVICE", race vs bots runs, a reload comes back, ONLINE RACE: 3 tries, message, BACK, race vs bots runs again; no request left the laptop except the failed board read |
+| Photon blocked, rest of the internet fine | Photon's host names resolve to nothing | Same message + BACK within about 10 s, race vs bots afterwards |
+| Leaderboard database down | Every Supabase request answers HTTP 500 | Badge OFFLINE, race runs, 0 game errors |
+| Live site down, internet fine | Two players on the laptop copy (http://127.0.0.1:8642/) | Both joined the class room on Photon, same GO (skew 12-21 ms), "1ST / 2" on screen, the other player gone from the room after its tab closed; the online board answers from the laptop copy too |
+| A player loses the network mid-race | Two players racing, one goes offline | The other keeps racing; the dropped one retries 3 times, then the message |
+| Preflight with no internet | `preflight.py --simulate-no-internet` | Live site RED, then it boots plan B by itself: game GREEN, board AMBER (expected offline), online race RED with "phone hotspot" |
+
 | Dependency | What goes wrong | What the app shows (tested) | Check before | Fallback |
 |---|---|---|---|---|
 | **GitHub Pages** (host) | Old version deployed; the first visit downloads 52.7 MB: about 15 s at 50 Mbit/s, 48 s at 10 Mbit/s, measured 2-7 min on a weak 1-3 Mbit/s Wi-Fi, 4.4 min on fast 3G, 14 min on slow 3G | Loader with progress, tips and the key card; a failed download shows an error card with RELOAD THE PAGE | Actions > Web build: the run for the last merge on `main` is green incl. the `pages` and `mirror` jobs; `https://nova-kart.github.io/version.json` (and `https://belschak.github.io/carcavelos-circuit/version.json`) show the build id that the deploy log printed (an open page with an older build reloads itself once) | Preload the tab before our turn: a second visit loads from the browser cache in 8-20 s. Never cold-load on the classroom Wi-Fi. Right after a deploy the old page can point at removed files for up to 10 min ("THE GAME COULD NOT START"): no merges on the day; if it appears, reload after a minute |
@@ -69,6 +114,7 @@ Found in the failure QA on 18 Nov 2026; none freezes the game. Remove a line onc
 - Name fields (results and online lobby): after typing, Esc does not leave the field and Q does nothing. Use the mouse (SAVE, BACK).
 - Online race on a laptop: the key hint bar still shows ENTER RETRY and P PAUSE, which do nothing online. Do not press them.
 - When Photon cannot be reached the message reads "CONNECTION FAILED: CONNECTION FAILED (Error)". Say: "Photon is not reachable from this network, the game tells you and offers BACK".
+- A race has no way back to the start screen before the finish (Q MENU is only on the results card, P only pauses). To switch modes mid-race: F5, the page comes back from the cache in a few seconds.
 
 ## 7. Checklists
 
@@ -88,9 +134,11 @@ Found in the failure QA on 18 Nov 2026; none freezes the game. Remove a line onc
 - [ ] Reset the starting data (section 3) on both laptops after the rehearsal.
 - [ ] Stop merging. Nothing new goes to `main` after the rehearsal (after Mon 23 Nov 23:59 it would not be graded anyway).
 - [ ] Charge both laptops and the phones; David's phone hotspot works.
+- [ ] Presenter kit on both laptops: `presenter.py update`, then `presenter.py warm`; PREFLIGHT all green at home; open Carcavelos OFFLINE once with Wi-Fi off (it must reach the start screen and race vs bots).
+- [ ] Restart Chrome once (a waiting update otherwise installs itself at the worst moment).
 
 ### On the day
-- [ ] 15 min before: open the URL on both laptops and click to play once, so the game is loaded and cached; leave it on the start screen.
+- [ ] 15 min before: Carcavelos PREFLIGHT on the room's network (both laptops). Then Carcavelos LIVE, click to play once, so the game is loaded and cached; leave it on the start screen.
 - [ ] Join the online room from one laptop and one phone, then leave again (the room is empty for the demo).
 - [ ] One Chrome window, only the game tab, full screen (the button top right), sound on. Close dashboards, `.env` files and the agent.
 - [ ] Hand out the link (QR card, link on the board) at the very start, so phones download while we show steps 1-5.
