@@ -1,0 +1,98 @@
+# Online race scale test (M2). Lives only on the branch ci/scale-test (an orphan branch with just these files).
+# Every push to that branch runs it: one job per runner in scale/config.json, each a separate GitHub machine that
+# downloads the game build of another workflow run, serves it on localhost and opens its clients in headless Chromium
+# (software WebGL). Results: artifact "scale-<runner>" per job (logs, fps, screenshots) + a table in the job summary.
+#   gh run download <run id> -R belschak/carcavelos-circuit -D scale-results
+name: Scale test
+
+on:
+  push:
+    branches: [ci/scale-test]
+
+permissions:
+  contents: read
+  actions: read # download the build artifact of the other run with GITHUB_TOKEN
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      runners: ${{ steps.read.outputs.runners }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - id: read
+        run: |
+          echo "runners=$(jq -c '[.runners[].name]' scale/config.json)" >> "$GITHUB_OUTPUT"
+          start=$(jq -r '.start_at_epoch // 0' scale/config.json)
+          now=$(date +%s)
+          echo "start_at_epoch=$start, now=$now, in $(( ${start%.*} - now )) s"
+          if [ "${start%.*}" -gt 0 ] && [ $(( ${start%.*} - now )) -gt 1800 ]; then
+            echo "::error::start_at_epoch is more than 30 min away; set it about 4 min after the push"; exit 1
+          fi
+
+  client:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: ${{ fromJSON(needs.plan.outputs.runners) }}
+    env:
+      SCALE_RUNNER: ${{ matrix.runner }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Download the game build
+        run: |
+          run_id=$(jq -r '.build.run_id' scale/config.json)
+          name=$(jq -r '.build.artifact' scale/config.json)
+          gh run download "$run_id" -R "$GITHUB_REPOSITORY" -n "$name" -D build
+          ls build build/Build
+
+      - name: Install Playwright + Chromium (this runner only)
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet playwright==1.63.0
+          .venv/bin/python -m playwright install --with-deps chromium
+          # Mesa software drivers for renderer lavapipe (Vulkan) / llvmpipe (EGL); SwiftShader ships with Chromium.
+          sudo apt-get install -y -qq mesa-vulkan-drivers libgl1-mesa-dri libegl1 > /dev/null
+          nproc; free -h
+
+      - name: Serve the build on localhost
+        run: |
+          nohup python3 scale/serve_web_build.py build 8000 > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:8000/ && break; sleep 1; done
+          curl -sI http://127.0.0.1:8000/ | head -1
+
+      - name: Extra latency (netem)
+        run: |
+          netem=$(jq -r --arg r "$SCALE_RUNNER" '.runners[] | select(.name == $r) | .netem // ""' scale/config.json)
+          echo "NETEM=$netem" >> "$GITHUB_ENV"
+          if [ -z "$netem" ]; then echo "no netem for $SCALE_RUNNER"; exit 0; fi
+          dev=$(ip route get 1.1.1.1 | awk '{for (i = 1; i < NF; i++) if ($i == "dev") print $(i + 1)}')
+          sudo modprobe sch_netem || sudo apt-get install -y -qq "linux-modules-extra-$(uname -r)" && sudo modprobe sch_netem
+          # Outgoing traffic only, so the round trip to Photon gets the delay once; localhost (lo) stays untouched.
+          sudo tc qdisc add dev "$dev" root netem $netem
+          tc qdisc show dev "$dev"
+          ping -c 3 1.1.1.1 || true
+
+      - name: Run the clients
+        run: set -o pipefail; .venv/bin/python scale/client.py --config scale/config.json --runner "$SCALE_RUNNER" --netem "$NETEM" --out "out/$SCALE_RUNNER" 2>&1 | tee "out-$SCALE_RUNNER.log"
+
+      - name: Job summary
+        if: always()
+        run: |
+          cat "out/$SCALE_RUNNER/summary.md" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "### $SCALE_RUNNER: no summary (client.py failed)" >> "$GITHUB_STEP_SUMMARY"
+          cp "out-$SCALE_RUNNER.log" server.log "out/$SCALE_RUNNER/" 2>/dev/null || true
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: scale-${{ matrix.runner }}
+          path: out/${{ matrix.runner }}
+          if-no-files-found: warn
+          retention-days: 7

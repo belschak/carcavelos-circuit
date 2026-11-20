@@ -1,0 +1,204 @@
+{
+  "comment": "w4 unbreakable scale test (make_config_w4.py in the team-project brain): 28 CI bots + 4 local, real 15-seat rooms, overflow to rooms 2 and 3, room auto start, leaver, late joiner, phone sleep, same name, netem.",
+  "build": {
+    "run_id": 44658142683,
+    "artifact": "carcavelos-web-93035db6bafa43d91399fcb1a2f99c6b9377ef14"
+  },
+  "start_at_epoch": 1795141545,
+  "duration_s": 900,
+  "viewport": [
+    960,
+    540
+  ],
+  "fps_every_s": 10,
+  "screenshot_every_s": 60,
+  "runners": [
+    {
+      "name": "r01",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "",
+      "clients": [
+        "?room=carcavelos&name=C01&autopilot=1&render=0",
+        "?room=carcavelos&name=C02&autopilot=1&render=0"
+      ]
+    },
+    {
+      "name": "r02",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "delay 150ms 50ms distribution normal",
+      "clients": [
+        {
+          "url": "?room=carcavelos&name=C03-LEAVER&autopilot=1&render=0",
+          "leave_at_s": 300
+        },
+        "?room=carcavelos&name=C04&autopilot=1&render=0"
+      ]
+    },
+    {
+      "name": "r03",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "",
+      "clients": [
+        {
+          "url": "?room=carcavelos&name=C05-SLEEP&autopilot=1&render=0",
+          "freeze_at_s": 360,
+          "freeze_for_s": 45
+        },
+        "?room=carcavelos&name=C06&autopilot=1&render=0"
+      ]
+    },
+    {
+      "name": "r04",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "",
+      "clients": [
+        "?room=carcavelos&name=C07&autopilot=1&render=0",
+        "?room=carcavelos&name=C08&autopilot=1&render=0"
+      ]
+    },
+    {
+      "name": "r05",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "",
+      "clients": [
+        "?room=carcavelos&name=C09&autopilot=1&render=0",
+        "?room=carcavelos&name=C10&autopilot=1&render=0"
+      ]
+    },
+    {
+      "name": "r06",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "delay 300ms 80ms distribution normal loss 1%",
+      "clients": [
+        "?room=carcavelos&name=C11&autopilot=1&render=0",
+        "?room=carcavelos&name=C12&autopilot=1&render=0"
+      ]
+    },
+    {
+      "name": "r07",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "",
+      "clients": [
+        "?room=carcavelos&name=C13&autopilot=1&render=0",
+        "?room=carcavelos&name=C14&autopilot=1&render=0"
+      ]
+    },
+    {
+      "name": "r08",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "",
+      "clients": [
+        "?room=carcavelos&name=C15&autopilot=1&render=0",
+        {
+          "url": "?room=carcavelos&name=C16-LATE&autopilot=1&render=0",
+          "join_delay_s": 330
+        }
+      ]
+    },
+    {
+      "name": "r09",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "",
+      "clients": [
+        {
+          "url": "?room=carcavelos&name=O17-LEAVER&autopilot=1&render=0",
+          "join_delay_s": 60,
+          "leave_at_s": 420
+        },
+        {
+          "url": "?room=carcavelos&name=DUP&autopilot=1&render=0",
+          "join_delay_s": 60
+        }
+      ]
+    },
+    {
+      "name": "r10",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "delay 150ms 50ms distribution normal",
+      "clients": [
+        {
+          "url": "?room=carcavelos&name=DUP&autopilot=1&render=0",
+          "join_delay_s": 60
+        },
+        {
+          "url": "?room=carcavelos&name=O20&autopilot=1&render=0",
+          "join_delay_s": 60
+        }
+      ]
+    },
+    {
+      "name": "r11",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "",
+      "clients": [
+        {
+          "url": "?room=carcavelos&name=O21&autopilot=1&render=0",
+          "join_delay_s": 60
+        },
+        {
+          "url": "?room=carcavelos&name=O22&autopilot=1&render=0",
+          "join_delay_s": 60
+        }
+      ]
+    },
+    {
+      "name": "r12",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "",
+      "clients": [
+        {
+          "url": "?room=carcavelos&name=O23&autopilot=1&render=0",
+          "join_delay_s": 60
+        },
+        {
+          "url": "?room=carcavelos&name=O24&autopilot=1&render=0",
+          "join_delay_s": 60
+        }
+      ]
+    },
+    {
+      "name": "r13",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "",
+      "clients": [
+        {
+          "url": "?room=carcavelos&name=O25&autopilot=1&render=0",
+          "join_delay_s": 60
+        },
+        {
+          "url": "?room=carcavelos&name=O26&autopilot=1&render=0",
+          "join_delay_s": 60
+        }
+      ]
+    },
+    {
+      "name": "r14",
+      "renderer": "swiftshader",
+      "dpr": 0.25,
+      "netem": "",
+      "clients": [
+        {
+          "url": "?room=carcavelos&name=O27&autopilot=1&render=0",
+          "join_delay_s": 60
+        },
+        {
+          "url": "?room=carcavelos&name=X31-ROOM3&autopilot=1&render=0",
+          "join_delay_s": 200
+        }
+      ]
+    }
+  ]
+}
