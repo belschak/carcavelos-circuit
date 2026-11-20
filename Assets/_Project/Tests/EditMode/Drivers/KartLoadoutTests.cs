@@ -232,7 +232,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.GreaterOrEqual(KartBuilder.TileHeight * cssPerHud, 44f, "every tile of the three columns");
             Assert.AreEqual("NOVA CLASSIC", KartBuilder.PartName(KartBuilder.KartColumn, 0));
             Assert.AreEqual("BALLOON", KartBuilder.PartName(KartBuilder.TyreColumn, 2));
-            Assert.AreEqual("TIAGO", KartBuilder.PartName(KartBuilder.DriverColumn, 1));
+            Assert.AreEqual("CLÁUDIO", KartBuilder.PartName(KartBuilder.DriverColumn, 1));
         }
     }
 }
