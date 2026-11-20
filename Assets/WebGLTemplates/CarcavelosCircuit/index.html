@@ -450,6 +450,25 @@
       }
 
       // ---------- Progress: 0 to 0.9 = downloading, 0.9 to 1 = starting the engine ----------
+      // "about N s left" from how fast the bar moved over the last 10 s, so a slow line never looks frozen.
+      var etaSamples = [];
+      function timeLeft(progress) {
+        var now = Date.now();
+        etaSamples.push([now, progress]);
+        while (etaSamples.length > 2 && now - etaSamples[0][0] > 10000) {
+          etaSamples.shift();
+        }
+        var first = etaSamples[0];
+        if (progress >= 0.97 || now - first[0] < 4000 || progress <= first[1]) {
+          return "";
+        }
+        var left = (1 - progress) / ((progress - first[1]) / ((now - first[0]) / 1000));
+        if (left < 10) {
+          return "";
+        }
+        return left < 90 ? "about " + Math.round(left / 5) * 5 + " s left" : "about " + Math.round(left / 60) + " min left";
+      }
+
       function onProgress(progress, phase) {
         var percent = Math.round(progress * 100);
         fill.style.transform = "scaleX(" + progress + ")";
@@ -457,7 +476,14 @@
         loader.style.setProperty("--cc-progress", String(progress)); // the sun rises with the progress (style.css)
         road.setAttribute("aria-valuenow", String(percent));
         percentText.textContent = percent + "%";
-        phaseText.textContent = phase || (progress < 0.9 ? "Loading the track" : "Starting the engine");
+        phase = phase || (progress < 0.9 ? "Loading the track" : "Starting the engine");
+        if (typeof ccDownloads !== "undefined" && ccDownloads.state().retriedRecently) {
+          phase = "Connection dropped, picking up where it stopped";
+        } else if (progress < 1) {
+          var left = timeLeft(progress);
+          phase += left ? " · " + left : "";
+        }
+        phaseText.textContent = phase;
       }
 
       // ---------- Campus world as its own file (load time P8, 18 Nov) ----------
@@ -468,6 +494,11 @@
       // good (its name changes when the world changes), so a deploy that did not touch the world keeps it.
       var worldFiles = { dxt: "__CC_WORLD_DXT__", etc2: "__CC_WORLD_ETC2__" };
       var worldShare = 0/*__CC_WORLD_SHARE__*/;
+      var worldBytes = { dxt: 0/*__CC_WORLD_DXT_BYTES__*/, etc2: 0/*__CC_WORLD_ETC2_BYTES__*/ };
+      // Since 20 Nov the page starts the world download together with the game files (ccDownloads below), so the bar
+      // counts the world bytes as they come in, not only once the game asks for the file.
+      var gameProgress = 0;
+      var worldProgress = 0;
       var worldStreamed = worldFiles.dxt.indexOf("__") !== 0;
       var worldReady = false;
       var waitingInstance = null; // the game is up, "Click to play" waits for the world
@@ -484,8 +515,21 @@
           onProgress(progress);
           return;
         }
-        var gamePart = 1 - worldShare;
-        showProgress(Math.min(progress / 0.9, 1) * gamePart, progress < 0.9 ? "Loading the game" : "Starting the engine");
+        gameProgress = Math.max(gameProgress, progress);
+        refreshBar();
+      }
+
+      function refreshBar() {
+        if (!worldStreamed || worldReady) {
+          return;
+        }
+        var size = window.ccWorldBundleBytes || 0;
+        if (size > 0 && typeof ccDownloads !== "undefined") {
+          worldProgress = Math.max(worldProgress, Math.min(ccDownloads.received(window.ccWorldBundleUrl) / size, 1));
+        }
+        var gameDone = gameProgress >= 0.9;
+        var phase = !gameDone ? "Loading the game" : worldProgress < 0.99 ? "Loading the track" : "Starting the engine";
+        showProgress(Math.min(gameProgress / 0.9, 1) * (1 - worldShare) + worldShare * 0.98 * worldProgress, phase);
       }
 
       window.addEventListener("cc-world", function (event) {
@@ -494,9 +538,11 @@
         }
         var state = event.detail.state;
         if (state === 0) {
-          showProgress(1 - worldShare + worldShare * 0.98 * event.detail.progress, "Loading the track");
+          worldProgress = Math.max(worldProgress, event.detail.progress);
+          refreshBar();
         } else if (state === 1) {
           worldReady = true;
+          ccDownloads.dropUnclaimed(window.ccWorldBundleUrl); // it came from Unity's own cache
           if (waitingInstance) {
             showPlayScreen(waitingInstance);
           }
@@ -912,6 +958,7 @@
           // the world file in the same texture format (phones use the DXT world only when there is no ETC2 one)
           var world = useEtc2 && worldFiles.etc2.indexOf("__") !== 0 ? worldFiles.etc2 : worldFiles.dxt;
           window.ccWorldBundleUrl = new URL("Build/" + world, location.href).href;
+          window.ccWorldBundleBytes = world === worldFiles.etc2 ? worldBytes.etc2 : worldBytes.dxt;
         }
         return useEtc2 ? "Build/" + phoneDataFile : "Build/{{{ DATA_FILENAME }}}";
       }
@@ -939,6 +986,255 @@
         }
         return useEtc2;
       }
+
+      // ---------- Downloads: all at once, from the first second, and never stuck (load time, 20 Nov) ----------
+      // Before, the campus world (half the download) only started after the game files were in and the engine had
+      // started, and a dropped or stalled connection ended in an error card or a bar that never moved (live test 18 Nov:
+      // ERR_CONNECTION_RESET at 52 %). Now the page itself starts the engine code, the game data and the world file at
+      // once and hands each one to Unity when Unity asks for it (Unity loads every Build/ file through fetch: its loader,
+      // its cache and UnityWebRequest). A file Unity already keeps in its browser cache is not downloaded again. A download
+      // that drops or gets no bytes for STALL_MS carries on where it stopped (an HTTP range request; GitHub Pages answers
+      // those uncompressed), up to MAX_TRIES times, and Unity never notices.
+      var ccDownloads = (function () {
+        var STALL_MS = 15000;
+        var MAX_TRIES = 6;
+        var nativeFetch = window.fetch ? window.fetch.bind(window) : null;
+        var list = {}; // absolute URL -> download
+        var retried = 0;
+        var supported = Boolean(nativeFetch && window.ReadableStream && window.AbortController && window.Response);
+
+        function absolute(url) {
+          return new URL(url, location.href).href;
+        }
+
+        function isBuildFile(url) {
+          return /\/Build\/[^\/?#]+\.(data|wasm|bundle)$/.test(url.split("?")[0]);
+        }
+
+        function start(url) {
+          var d = { url: url, chunks: [], received: 0, tries: 0, head: null, done: false, error: null, sink: null,
+            claimed: false, cancelled: false, ctrl: null, lastByte: Date.now(), headWaiters: [], timer: 0 };
+          list[url] = d;
+          attempt(d);
+          return d;
+        }
+
+        function attempt(d) {
+          d.tries++;
+          var token = d.tries;
+          var offset = d.received;
+          var ctrl = new AbortController();
+          d.ctrl = ctrl;
+          d.lastByte = Date.now();
+          clearInterval(d.timer);
+          d.timer = setInterval(function () {
+            if (Date.now() - d.lastByte > STALL_MS) {
+              ctrl.abort(); // no bytes for too long: try again
+            }
+          }, 1000);
+          var init = { credentials: "same-origin", signal: ctrl.signal };
+          if (offset > 0) {
+            init.headers = { Range: "bytes=" + offset + "-" };
+          }
+          nativeFetch(d.url, init).then(function (response) {
+            var skip = 0;
+            if (offset > 0) {
+              var range = response.headers.get("Content-Range") || "";
+              var encoding = (response.headers.get("Content-Encoding") || "identity").toLowerCase();
+              if (response.status === 206 && range.indexOf("bytes " + offset + "-") === 0 && encoding === "identity") {
+                skip = 0; // exactly the rest of the file
+              } else if (response.status === 200) {
+                skip = offset; // no range: the whole file again, the part we have is skipped
+              } else {
+                throw new Error("resume refused (" + response.status + ")");
+              }
+            } else if (!response.ok) {
+              throw new Error("HTTP " + response.status);
+            }
+            if (!response.body) {
+              throw new Error("no stream");
+            }
+            if (!d.head) {
+              d.head = response;
+              d.headWaiters.forEach(function (w) { w[0](response); });
+              d.headWaiters = [];
+            }
+            var reader = response.body.getReader();
+            function pump() {
+              return reader.read().then(function (r) {
+                if (token !== d.tries || d.cancelled) {
+                  return;
+                }
+                if (r.done) {
+                  d.done = true;
+                  clearInterval(d.timer);
+                  if (d.sink) {
+                    d.sink.close();
+                  }
+                  return;
+                }
+                d.lastByte = Date.now();
+                var chunk = r.value;
+                if (skip > 0) {
+                  if (chunk.length <= skip) {
+                    skip -= chunk.length;
+                    return pump();
+                  }
+                  chunk = chunk.subarray(skip);
+                  skip = 0;
+                }
+                d.received += chunk.length;
+                if (d.sink) {
+                  d.sink.enqueue(chunk);
+                } else {
+                  d.chunks.push(chunk);
+                }
+                return pump();
+              });
+            }
+            return pump();
+          }).catch(function (error) {
+            if (token !== d.tries || d.cancelled) {
+              return;
+            }
+            clearInterval(d.timer);
+            if (d.tries >= MAX_TRIES) {
+              fail(d, error);
+              return;
+            }
+            console.log("[cc-download] " + d.url.split("/").pop() + ": " + (error && error.name === "AbortError" ? "stalled" : error)
+              + " after " + d.received + " bytes, try " + (d.tries + 1) + " of " + MAX_TRIES);
+            retried = Date.now();
+            setTimeout(function () { attempt(d); }, Math.min(1000 * d.tries, 5000));
+          });
+        }
+
+        function fail(d, error) {
+          d.error = error || new Error("download failed");
+          d.headWaiters.forEach(function (w) { w[1](d.error); });
+          d.headWaiters = [];
+          if (d.sink) {
+            d.sink.error(d.error);
+          }
+        }
+
+        function cancel(d) {
+          d.cancelled = true;
+          clearInterval(d.timer);
+          if (d.ctrl) {
+            d.ctrl.abort();
+          }
+          d.chunks = [];
+          if (list[d.url] === d) {
+            delete list[d.url];
+          }
+        }
+
+        // What Unity gets: a normal response whose body replays what came in so far and then goes on.
+        function claim(d, signal) {
+          d.claimed = true;
+          var head = d.head ? Promise.resolve(d.head) : d.error ? Promise.reject(d.error) : new Promise(function (resolve, reject) {
+            d.headWaiters.push([resolve, reject]);
+          });
+          if (signal) {
+            signal.addEventListener("abort", function () {
+              if (d.sink) {
+                d.sink.error(new DOMException("The download was aborted.", "AbortError"));
+              }
+              cancel(d);
+            });
+          }
+          return head.then(function (response) {
+            var body = new ReadableStream({
+              start: function (controller) {
+                for (var i = 0; i < d.chunks.length; i++) {
+                  controller.enqueue(d.chunks[i]);
+                }
+                d.chunks = [];
+                if (d.done) {
+                  controller.close();
+                } else if (d.error) {
+                  controller.error(d.error);
+                } else {
+                  d.sink = controller;
+                }
+              },
+              cancel: function () {
+                cancel(d);
+              }
+            });
+            return new Response(body, { status: 200, statusText: "OK", headers: response.headers });
+          });
+        }
+
+        if (supported) {
+          window.fetch = function (input, init) {
+            var url = typeof input === "string" ? input : input && input.url;
+            var method = ((init && init.method) || (input && input.method) || "GET").toUpperCase();
+            var headers = init && init.headers;
+            var plain = !headers || (typeof headers === "object" && !(headers instanceof Headers) && Object.keys(headers).length === 0);
+            if (url && method === "GET" && plain) {
+              var full = absolute(url);
+              if (isBuildFile(full)) {
+                var d = list[full] && !list[full].claimed && !list[full].error ? list[full] : start(full);
+                return claim(d, init && init.signal);
+              }
+            }
+            return nativeFetch(input, init);
+          };
+        }
+
+        // Unity keeps the .data and the world file in Cache Storage ("UnityCache_<company>_<product>"): no download.
+        function inUnityCache(url, cacheName) {
+          if (!window.caches) {
+            return Promise.resolve(false);
+          }
+          return caches.has(cacheName).then(function (has) {
+            return has ? caches.open(cacheName).then(function (cache) { return cache.match(url); }).then(Boolean) : false;
+          }).catch(function () {
+            return false;
+          });
+        }
+
+        return {
+          // Starts every file that is not in Unity's cache yet, all at once.
+          begin: function (urls, cacheName) {
+            if (!supported) {
+              return;
+            }
+            urls.forEach(function (url) {
+              if (!url) {
+                return;
+              }
+              var full = absolute(url);
+              inUnityCache(full, cacheName).then(function (cached) {
+                if (!cached && !list[full]) {
+                  start(full);
+                }
+              });
+            });
+          },
+          received: function (url) {
+            var d = url && list[absolute(url)];
+            return d ? d.received : 0;
+          },
+          // Bytes in so far (all downloads) and whether a connection just dropped.
+          state: function () {
+            var total = 0;
+            for (var key in list) {
+              total += list[key].received;
+            }
+            return { received: total, retriedRecently: Date.now() - retried < 6000 };
+          },
+          // The world came from Unity's own cache after all: drop a download nobody will read.
+          dropUnclaimed: function (url) {
+            var d = url && list[absolute(url)];
+            if (d && !d.claimed) {
+              cancel(d);
+            }
+          }
+        };
+      })();
 
       // ---------- Start loading the game ----------
       // Phones start the download at once, behind the touch-controls card (it used to wait for a tap on that card).
@@ -982,6 +1278,17 @@
           devicePixelRatio: canvasPixelRatio(),
           showBanner: showBanner
         };
+
+        // Engine code, game data and campus world all start now (see ccDownloads); Unity picks them up when it asks.
+        ccDownloads.begin([config.codeUrl, config.dataUrl, worldStreamed ? window.ccWorldBundleUrl : null],
+          "UnityCache_" + config.companyName + "_" + config.productName);
+        var barTimer = setInterval(function () {
+          if (!worldStreamed || worldReady || loader.classList.contains("cc-ready") || loader.classList.contains("cc-failed")) {
+            clearInterval(barTimer);
+            return;
+          }
+          refreshBar(); // world bytes and "about N s left" move on between Unity's own progress calls
+        }, 500);
 
         var script = document.createElement("script");
         script.src = "Build/{{{ LOADER_FILENAME }}}";
