@@ -186,4 +186,7 @@ added that day for rejected and edge cases (`Verification/*` and `Online/OnlineH
 | Fresh clone | Opens in the pinned Unity version with all scenes and prefabs, no missing scripts |
 
 Every deployed build and its log are in Actions > Web build on `main` ([builds.md](builds.md)); the hand checks for
-the presentation are in [demo-plan.md](demo-plan.md).
+the presentation are in [demo-plan.md](demo-plan.md). Two scripts outside Unity check the demo itself in a real
+headless Chrome: `tools/preflight/preflight.py` (GREEN/RED for the live site, the deploy, the game boot, the
+leaderboard, a real Photon join and the laptop's sound, power and screen) and `tools/preflight/fallback_check.py`
+(no internet, Photon blocked, leaderboard down, two players on the laptop copy, a player dropping mid-race).
