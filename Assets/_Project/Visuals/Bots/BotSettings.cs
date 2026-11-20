@@ -7,15 +7,17 @@ namespace CarcavelosCircuit.Visuals
     [CreateAssetMenu(menuName = "Carcavelos Circuit/Bot Settings", fileName = "BotSettings")]
     public class BotSettings : ScriptableObject
     {
-        [Header("The five bot drivers (made-up cartoon characters: 3 locals, the Dean, a professor)")]
+        [Header("The five bot seats (driving style per grid seat; DriverSwap gives each seat a teacher's name and kart)")]
         [SerializeField, Tooltip("One bot per entry, in grid order (the first starts in the front row)")]
         private BotProfile[] bots =
         {
-            new BotProfile("Gaivota", new Color(0.88f, 0.16f, 0.16f), 0.97f, 0.94f, -0.8f, true),        // seagull: bold, drifts
-            new BotProfile("Bica", new Color(0.56f, 0.27f, 0.86f), 0.99f, 0.90f, 0.7f, true),            // espresso: fast on straights
-            new BotProfile("Sardinha", new Color(0.16f, 0.66f, 0.36f), 0.95f, 0.96f, 0f, false),         // sardine: steady
-            new BotProfile("The Dean", new Color(0.98f, 0.80f, 0.12f), 0.98f, 0.95f, -0.3f, false),      // the Dean: clean lines
-            new BotProfile("Prof. Pastel", new Color(0.16f, 0.46f, 0.96f), 0.94f, 0.97f, 1.0f, false)    // professor: careful
+            // Names = the teaching staff's given names (RaceFlow's TributeRules.GivenNames), used only if a bot is
+            // ever spawned without DriverSwap; in a race DriverSwap sets the name, colour and kart of each seat.
+            new BotProfile("Ricardo", new Color(0.88f, 0.16f, 0.16f), 0.97f, 0.94f, -0.8f, true),        // bold, drifts
+            new BotProfile("João", new Color(0.56f, 0.27f, 0.86f), 0.99f, 0.90f, 0.7f, true),            // fast on straights
+            new BotProfile("Cláudio", new Color(0.16f, 0.66f, 0.36f), 0.95f, 0.96f, 0f, false),          // steady
+            new BotProfile("Luís", new Color(0.98f, 0.80f, 0.12f), 0.98f, 0.95f, -0.3f, false),          // clean lines
+            new BotProfile("Paulo", new Color(0.16f, 0.46f, 0.96f), 0.94f, 0.97f, 1.0f, false)           // careful
         };
 
         [Header("The kart (copy of Role 1's KartTuning: the bot plans with these, the kart drives with the real ones)")]

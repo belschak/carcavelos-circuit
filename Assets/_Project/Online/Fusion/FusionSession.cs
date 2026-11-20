@@ -9,7 +9,10 @@ using UnityEngine;
 namespace CarcavelosCircuit.Online.Fusion
 {
     // IOnlineSession over Photon Fusion 2 in Shared Mode ("photon", registered by FusionBootstrap). One room per
-    // session name ("carcavelos-noon" / "carcavelos-sunset") in the EU region of the Photon Cloud.
+    // session name ("carcavelos", overflow "carcavelos-2".., OnlineRooms) in the EU region of the Photon Cloud.
+    // In the browser every connection is a secure WebSocket on port 443 (checked 20 Nov 2026: name server
+    // wss://ns.photonengine.io, master + game server wss://gcams*.exitgames.com, no other port), so a campus network
+    // that blocks UDP or unusual ports still lets the online race through like any HTTPS page.
     // How it works:
     // - Join starts a NetworkRunner. Once it runs, every client spawns one FusionPlayerState for itself (it alone
     //   writes it: name, colour, driver, pose, finish) and the master client spawns one FusionRaceState for the room (the
@@ -152,7 +155,7 @@ namespace CarcavelosCircuit.Online.Fusion
             {
                 GameMode = GameMode.Shared,
                 SessionName = room,
-                PlayerCount = OnlineRooms.MaxPlayers,
+                PlayerCount = OnlineRooms.SeatsOf(room),
                 CustomPhotonAppSettings = settings,
                 SceneManager = sceneManager,
                 ObjectProvider = provider

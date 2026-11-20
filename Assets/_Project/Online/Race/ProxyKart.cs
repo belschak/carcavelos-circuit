@@ -8,7 +8,7 @@ namespace CarcavelosCircuit.Online
     // karts drive through each other. The body is a copy of my own kart's "Visual" slot with THAT player's driver in it
     // (feedback round 17 Nov 2026: before, every remote kart was a recoloured copy of my own driver). The driver comes
     // with the player (OnlinePlayer.DriverIndex), the kart model from Role 3's list (BotSettings.KartVisual), swapped in
-    // with KartVisualSwap like BotSquad does for the bots, and keeps its own paint so Tiago looks like Tiago on every
+    // with KartVisualSwap like BotSquad does for the bots, and keeps its own paint so Cláudio looks like Cláudio on every
     // screen. The player's room colour stays on the name tag and the minimap dot (MapColor), which tells two players
     // with the same driver apart. Only without a kart model (no BotSettings list) the body is painted in that colour.
     // It implements IKartState so the model reads speed and steer from it like from a real kart, and IRacer so the
@@ -90,7 +90,7 @@ namespace CarcavelosCircuit.Online
             {
                 PlayerId = player.Id;
                 DriverIndex = player.DriverIndex;
-                displayName = string.IsNullOrEmpty(player.Name) ? "PLAYER" : player.Name;
+                displayName = string.IsNullOrEmpty(player.DisplayName) ? "PLAYER" : player.DisplayName; // "ANA 2" (OnlineNames)
                 colour = OnlineColours.Of(player.ColourIndex);
                 if (player.HasPose)
                 {

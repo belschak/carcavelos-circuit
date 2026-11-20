@@ -42,7 +42,7 @@ namespace CarcavelosCircuit.RaceFlow
         [SerializeField, Tooltip("After its lap the ghost rolls on and fades out over this many seconds")]
         private float endFadeSeconds = 0.8f;
 
-        // Read by RaceHud's ghost chip ("GHOST: DEAN 1:02.4", audit 13).
+        // Read by RaceHud's ghost chip ("GHOST: CLÁUDIO 1:02.4", audit 13).
         public bool HasGhost { get { return ghost != null; } }
         public bool IsShippedGhost { get; private set; }
         public float GhostLapSeconds { get { return ghost == null ? -1f : ghost.LapSeconds; } }

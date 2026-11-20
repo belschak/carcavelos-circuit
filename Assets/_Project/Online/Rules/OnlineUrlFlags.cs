@@ -18,6 +18,8 @@ namespace CarcavelosCircuit.Online
     //   autostart N = the host starts 5 s after N players are in the room (2..15)
     //   render    0 = no 3D drawing (cameras off): a scale-test bot on a machine without a GPU still drives and sends
     //             at full speed; the screen shows only the HUD over black (17 Nov 2026, CI runners drew 3 fps)
+    //   room=2..4 joins that overflow room straight away (OnlineRooms, 20 Nov 2026)
+    //   seats     N = test rooms with N seats (2..15) and their own names, so a few tabs can fill and overflow a room
     // Anything else in the address is ignored; every value is cut to 200 characters before it is looked at.
     public class OnlineUrlFlags
     {
@@ -34,6 +36,8 @@ namespace CarcavelosCircuit.Online
         public bool Autopilot { get; private set; }
         public int AutoStart { get; private set; }         // 0 = off
         public bool NoRender { get; private set; }         // render=0: cameras off (scale-test bots)
+        public int RoomNumber { get; private set; } = 1;   // 1..OnlineRooms.MaxRooms (?room=2 = the first overflow room)
+        public int Seats { get; private set; }             // ?seats=N test rooms, 0 = the real 15-seat rooms
 
         // Room and name both given: the lobby joins by itself.
         public bool WantsAutoJoin { get { return HasRoom && Name.Length > 0; } }
@@ -112,7 +116,9 @@ namespace CarcavelosCircuit.Online
                 case "room":
                     bool setsLight;
                     TimeOfDay light;
-                    HasRoom = OnlineRooms.TryParseRoom(value, out setsLight, out light);
+                    int number;
+                    HasRoom = OnlineRooms.TryParseRoom(value, out setsLight, out light, out number);
+                    RoomNumber = HasRoom ? number : 1;
                     HasLight = HasRoom && setsLight;
                     Light = HasLight ? light : TimeOfDay.Noon;
                     break;
@@ -136,6 +142,9 @@ namespace CarcavelosCircuit.Online
                     string draw = value.Trim().ToLowerInvariant();
                     NoRender = draw == "0" || draw == "false" || draw == "no" || draw == "off";
                     break;
+                case "seats":
+                    Seats = OnlineRooms.ParseSeats(value);
+                    break;
                 case "autostart":
                     int wanted;
                     if (int.TryParse(value.Trim(), out wanted) && wanted >= 2)
@@ -146,7 +155,7 @@ namespace CarcavelosCircuit.Online
             }
         }
 
-        // "Tiago" (any case) or "1" -> the DriverRoster index; -1 for anything else.
+        // "Cláudio", "claudio" or Luc's model name "Tiago" (any case), or "1" -> the DriverRoster index; -1 for anything else.
         public static int ParseDriver(string value)
         {
             string text = value == null ? "" : value.Trim();

@@ -7,7 +7,7 @@ namespace CarcavelosCircuit.RaceFlow
     // at run time (Visuals/Kart/KartAssembler). Looks only: every combination drives exactly the same kart (Role 1's
     // KartController), so the Time Attack leaderboard stays fair and online races stay identical on every screen.
     // Index i of each part list belongs to driver i of DriverRoster: driver i's own ("signature") kart and tyres are
-    // KartNames[i] and TyreNames[i] (Rookie = Nova Classic + Slick, Tiago = Beach Buggy + Offroad, ...).
+    // KartNames[i] and TyreNames[i] (Ricardo = Nova Classic + Slick, Cláudio = Beach Buggy + Offroad, ...).
     // Plain C# (no MonoBehaviour), so every rule here has Edit Mode tests (Tests/EditMode/Drivers/KartLoadoutTests).
     public struct KartLoadout : IEquatable<KartLoadout>
     {
@@ -20,10 +20,10 @@ namespace CarcavelosCircuit.RaceFlow
         // One line per part, shown under the builder's columns while the part is highlighted.
         public static readonly string[] KartLines =
         {
-            "The Rookie's racer: a long nose and a big rear wing.",
-            "Tiago's beach buggy, with a surfboard in the roll cage.",
-            "Nova's rocket kart, fins and a little satellite dish.",
-            "Amara's hot rod, built from spare parts in her garage."
+            "Ricardo's racer: a long nose and a big rear wing.",
+            "Cláudio's beach buggy, with a surfboard in the roll cage.",
+            "Luís's rocket kart, fins and a little satellite dish.",
+            "Paulo's hot rod, built from spare parts in the garage."
         };
         public static readonly string[] TyreLines =
         {
@@ -115,6 +115,7 @@ namespace CarcavelosCircuit.RaceFlow
         }
 
         // Model name: the signature set keeps Luc's prefab name (KartVisual_Buggy_Tiago), any other set adds the tyres.
+        // Built from Luc's model names (DriverInfo.Model), never the shown names, so the asset names stay as they are.
         public string ModelName
         {
             get
@@ -123,12 +124,12 @@ namespace CarcavelosCircuit.RaceFlow
                 {
                     return Default.ModelName;
                 }
-                string name = "KartVisual_" + KartIds[Kart] + "_" + DriverRoster.Get(Driver).Name;
+                string name = "KartVisual_" + KartIds[Kart] + "_" + DriverRoster.Get(Driver).Model;
                 return IsSignature ? name : name + "_" + TyreIds[Tyres];
             }
         }
 
-        // "TIAGO  /  BEACH BUGGY  /  BALLOON": the builder's combo line.
+        // "CLÁUDIO  /  BEACH BUGGY  /  BALLOON": the builder's combo line.
         public string Title
         {
             get

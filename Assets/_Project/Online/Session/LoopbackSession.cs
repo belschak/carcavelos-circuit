@@ -25,7 +25,7 @@ namespace CarcavelosCircuit.Online
         public event Action<int, KartPose> PoseReceived;
         public event Action Changed;
 
-        // Joins at once: InRoom, or Full when the room already has OnlineRooms.MaxPlayers players.
+        // Joins at once: InRoom, or Full when the room already has all its seats taken (OnlineRooms.SeatsOf).
         public void Join(string roomName, string name, int colourIndex, int driverIndex)
         {
             if (Status == OnlineStatus.InRoom || Status == OnlineStatus.Connecting)

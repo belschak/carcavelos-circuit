@@ -74,7 +74,7 @@ namespace CarcavelosCircuit.Tests.EditMode
                     if (t.name.StartsWith(KartAssembler.DriverPrefix) && !insideAnother) drivers++;
                 }
                 Assert.AreEqual(1, drivers, set.Title + ": exactly one driver");
-                Assert.AreEqual("Driver_" + DriverRoster.Get(set.Driver).Name, KartAssembler.FindDriver(go.transform).name, set.Title);
+                Assert.AreEqual("Driver_" + DriverRoster.Get(set.Driver).Model, KartAssembler.FindDriver(go.transform).name, set.Title);
                 Assert.IsNotNull(KartAssembler.FindPart(go.transform, "Kart_" + KartLoadout.KartIds[set.Kart]), set.Title + ": the kart body");
                 foreach (string wheel in KartAssembler.WheelNames)
                 {

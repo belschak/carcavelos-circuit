@@ -10,10 +10,10 @@ namespace CarcavelosCircuit.Online
     // The online lobby on screen (M2), built in code into RaceHud's document like ModePicker and HudMenus, in the
     // same arcade look (plates, pills, chips, the display and UI faces). One overlay, one card, five pages:
     //   Rooms       name field + one JOIN RACE button (the one room of the class, 17 Nov 2026) + my light + BACK
-    //   Connecting  "CONNECTING..." + BACK
+    //   Connecting  "CONNECTING..." + BACK (+ RACE THE BOTS while it tries again)
     //   Room        who is in (driver portrait in the room colour, name, driver, YOU, HOST), "7/15", START RACE for
     //               the host or a waiting line, my light
-    //   Message     "the room is full" / "could not connect" + BACK
+    //   Message     "the room is full" / "could not connect" + TRY AGAIN + RACE THE BOTS + BACK (never a dead end)
     //   Results     a small card at the top right next to the HUD's own results: the room's order, START AGAIN / Q
     // The light button (and T) only changes MY look: noon or sunset is each player's own choice, it never travels.
     // The view only draws and reports clicks (events); OnlineRaceDirector decides everything.
@@ -43,6 +43,14 @@ namespace CarcavelosCircuit.Online
         public event Action BackRequested;    // BACK (rooms, connecting, message pages) and LEAVE (room page, results)
         public event Action StartRequested;   // START RACE / START AGAIN (the host)
         public event Action LightRequested;   // the NOON / SUNSET button: my own light, the other way round
+        public event Action RetryRequested;   // TRY AGAIN on the message page (= Enter there)
+        public event Action BotsRequested;    // RACE THE BOTS: out of the lobby into a race against the bots
+
+        // The room this screen is in or joins (OnlineRooms.LabelFor, overflow rooms) and its seats ("7/15").
+        public string RoomLabel { get; set; } = OnlineRooms.Label;
+        public int Seats { get; set; } = OnlineRooms.MaxPlayers;
+        // Does the message page now showing offer TRY AGAIN? (Enter means TRY AGAIN there)
+        public bool OffersRetry { get; private set; }
 
         private readonly VisualElement root;
         private readonly VisualElement overlay;
@@ -152,7 +160,7 @@ namespace CarcavelosCircuit.Online
             }
             card.Clear();
             Title("ONLINE RACE", card);
-            Caption("RACE YOUR CLASS LIVE: ONE ROOM FOR EVERYONE, " + OnlineRooms.MaxPlayers + " SEATS, ONE LAP", card);
+            Caption("RACE YOUR CLASS LIVE: ONE ROOM FOR EVERYONE, " + Seats + " SEATS, ONE LAP", card);
 
             VisualElement nameRow = Row(card);
             nameRow.style.marginTop = 18f;
@@ -218,31 +226,41 @@ namespace CarcavelosCircuit.Online
             }
         }
 
-        // text = "CONNECTING..." or the retry line (OnlineJoinRetry.RetryLine).
+        // text = "CONNECTING..." or the retry line (OnlineJoinRetry.RetryLine). offerBots = also RACE THE BOTS (while the
+        // lobby tries again, so nobody has to wait for the last try to play).
         public void ShowConnecting(string text)
         {
-            if (!Open(Page.Connecting, "connecting:" + text))
+            ShowConnecting(text, false);
+        }
+
+        public void ShowConnecting(string text, bool offerBots)
+        {
+            if (!Open(Page.Connecting, "connecting:" + RoomLabel + ":" + text + ":" + offerBots))
             {
                 return;
             }
             card.Clear();
-            Title(OnlineRooms.Label, card);
+            Title(RoomLabel, card);
             Label line = Chip(text, false, card);
             line.style.marginTop = 18f;
             VisualElement keys = Row(card);
             keys.style.marginTop = 18f;
             KeyHint("Q", "BACK", keys);
             Pill("BACK", false, () => Raise(BackRequested), keys).style.marginLeft = 18f;
+            if (offerBots)
+            {
+                BotsButton(keys, 18f);
+            }
         }
 
         // The room page. statusLine = the waiting / get ready / race in progress line ("" with the start button).
         // light = my look right now, on the light button (a new light only changes the button's text, see ShowLight).
         public void ShowRoom(IReadOnlyList<OnlinePlayer> players, int localId, int masterId, string statusLine, bool showStart, TimeOfDay light)
         {
-            string sig = "room|" + localId + "|" + masterId + "|" + statusLine + "|" + showStart;
+            string sig = "room|" + RoomLabel + "|" + Seats + "|" + localId + "|" + masterId + "|" + statusLine + "|" + showStart;
             for (int i = 0; players != null && i < players.Count; i++)
             {
-                sig += "|" + players[i].Id + ":" + players[i].Name + ":" + players[i].ColourIndex + ":" + players[i].DriverIndex;
+                sig += "|" + players[i].Id + ":" + players[i].DisplayName + ":" + players[i].ColourIndex + ":" + players[i].DriverIndex;
             }
             if (!Open(Page.Room, sig))
             {
@@ -252,8 +270,8 @@ namespace CarcavelosCircuit.Online
             card.Clear();
             int count = players == null ? 0 : players.Count;
             VisualElement head = Row(card);
-            Title(OnlineRooms.Label, head);
-            Label counter = Chip(OnlineRooms.CountLine(count), false, head);
+            Title(RoomLabel, head);
+            Label counter = Chip(OnlineRooms.CountLine(count, Seats), false, head);
             counter.style.marginLeft = 16f;
 
             VisualElement list = new VisualElement();
@@ -274,6 +292,10 @@ namespace CarcavelosCircuit.Online
             if (showStart)
             {
                 Pill("START RACE", true, () => Raise(StartRequested), foot);
+                if (!string.IsNullOrEmpty(statusLine))
+                {
+                    Chip(statusLine, false, foot).style.marginLeft = 14f; // the host's auto start line
+                }
             }
             else if (!string.IsNullOrEmpty(statusLine))
             {
@@ -297,19 +319,47 @@ namespace CarcavelosCircuit.Online
 
         public void ShowMessage(string text)
         {
-            if (!Open(Page.Message, "message|" + text))
+            ShowMessage(text, false);
+        }
+
+        // offerRetry = TRY AGAIN (Enter) for a problem that may go away (full room, no connection); RACE THE BOTS and
+        // BACK are always there, so the online card is never a dead end (20 Nov 2026).
+        public void ShowMessage(string text, bool offerRetry)
+        {
+            if (!Open(Page.Message, "message|" + text + "|" + offerRetry))
             {
                 return;
             }
+            OffersRetry = offerRetry;
             card.Clear();
             Title("ONLINE RACE", card);
             Label line = Chip(text ?? "", true, card);
             line.style.marginTop = 18f;
             Caption("RACE VS BOTS AND TIME ATTACK WORK WITHOUT THE INTERNET", card).style.marginTop = 10f;
+            VisualElement actions = Row(card);
+            actions.style.marginTop = 18f;
+            if (offerRetry)
+            {
+                VisualElement retry = Pill("TRY AGAIN", true, () => Raise(RetryRequested), actions);
+                retry.name = "online-retry";
+            }
+            BotsButton(actions, offerRetry ? 14f : 0f);
             VisualElement keys = Row(card);
-            keys.style.marginTop = 18f;
+            keys.style.marginTop = 14f;
+            if (offerRetry)
+            {
+                KeyHint("ENTER", "TRY AGAIN", keys);
+            }
             KeyHint("Q", "BACK", keys);
             Pill("BACK", false, () => Raise(BackRequested), keys).style.marginLeft = 18f;
+        }
+
+        // RACE THE BOTS: straight into an offline race (the five bots need no internet).
+        private void BotsButton(VisualElement parent, float marginLeft)
+        {
+            VisualElement pill = Pill("RACE THE BOTS", false, () => Raise(BotsRequested), parent);
+            pill.name = "online-bots";
+            pill.style.marginLeft = marginLeft;
         }
 
         // The room's order beside the HUD's results card. rows come from FinishOrderRules (same on every screen).
@@ -337,6 +387,12 @@ namespace CarcavelosCircuit.Online
             if (showStart)
             {
                 Pill("START AGAIN", true, () => Raise(StartRequested), foot);
+                if (!string.IsNullOrEmpty(waitLine))
+                {
+                    VisualElement autoRow = Row(sideCard); // the host's auto start line under the button
+                    autoRow.style.marginTop = 8f;
+                    Chip(waitLine, false, autoRow).style.fontSize = 16f;
+                }
             }
             else
             {
@@ -600,7 +656,7 @@ namespace CarcavelosCircuit.Online
             title.style.color = HudColors.Ink;
             title.style.unityTextOutlineWidth = 0f; // ink on orange needs no outline
             cardElement.Add(title);
-            Label sub = new Label(OnlineRooms.Label + "  ·  " + OnlineRooms.MaxPlayers + " SEATS");
+            Label sub = new Label(RoomLabel + "  ·  " + Seats + " SEATS");
             sub.pickingMode = PickingMode.Ignore;
             sub.AddToClassList("f-ui");
             sub.style.fontSize = 16f;
@@ -675,7 +731,7 @@ namespace CarcavelosCircuit.Online
             words.style.flexShrink = 1f;
             row.Add(words);
 
-            Label name = new Label(string.IsNullOrEmpty(player.Name) ? "PLAYER" : player.Name);
+            Label name = new Label(string.IsNullOrEmpty(player.DisplayName) ? "PLAYER" : player.DisplayName);
             name.pickingMode = PickingMode.Ignore;
             name.AddToClassList("f-ui");
             name.style.fontSize = 20f;
