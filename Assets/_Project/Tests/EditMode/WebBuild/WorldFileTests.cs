@@ -59,7 +59,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             // The download layer (index.html "Downloads: all at once"): every Build/ file Unity fetches goes through it.
             string html = File.ReadAllText(TemplatePath);
             StringAssert.Contains("var worldBytes = { dxt: " + Role4WebBuild.WorldDxtBytesPlaceholder + ", etc2: " + Role4WebBuild.WorldEtc2BytesPlaceholder + " };", html);
-            StringAssert.Contains("ccDownloads.begin([config.codeUrl, config.dataUrl,", html);
+            StringAssert.Contains("ccDownloads.begin(config.codeUrl, config.dataUrl,", html);
             StringAssert.Contains("Range: \"bytes=\" + offset + \"-\"", html, "a dropped download carries on where it stopped");
             StringAssert.Contains("\"UnityCache_\" + config.companyName + \"_\" + config.productName", html, "files in Unity's cache are not fetched again");
             Assert.Less(html.IndexOf("var ccDownloads", System.StringComparison.Ordinal), html.IndexOf("function startDownload()", System.StringComparison.Ordinal));

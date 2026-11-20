@@ -1001,6 +1001,7 @@
         var nativeFetch = window.fetch ? window.fetch.bind(window) : null;
         var list = {}; // absolute URL -> download
         var retried = 0;
+        var codeDecided = Promise.resolve(); // see begin(): whether the page or Unity itself fetches the engine code
         var supported = Boolean(nativeFetch && window.ReadableStream && window.AbortController && window.Response);
 
         function absolute(url) {
@@ -1175,6 +1176,13 @@
             var plain = !headers || (typeof headers === "object" && !(headers instanceof Headers) && Object.keys(headers).length === 0);
             if (url && method === "GET" && plain) {
               var full = absolute(url);
+              if (isBuildFile(full) && /\.wasm$/.test(full)) {
+                // The engine code goes through here only on a first visit (begin): a returning player gets it from the
+                // browser cache as before, where Chrome also keeps the compiled code (only for the original response).
+                return codeDecided.then(function () {
+                  return list[full] && !list[full].claimed ? claim(list[full], init && init.signal) : nativeFetch(input, init);
+                });
+              }
               if (isBuildFile(full)) {
                 var d = list[full] && !list[full].claimed && !list[full].error ? list[full] : start(full);
                 return claim(d, init && init.signal);
@@ -1197,22 +1205,30 @@
         }
 
         return {
-          // Starts every file that is not in Unity's cache yet, all at once.
-          begin: function (urls, cacheName) {
+          // Starts every file that is not in Unity's cache yet, all at once. The engine code only when the game data is
+          // not cached either (a first visit, or a new build): otherwise the browser cache has it.
+          begin: function (codeUrl, dataUrl, worldUrl, cacheName) {
             if (!supported) {
               return;
             }
-            urls.forEach(function (url) {
-              if (!url) {
-                return;
+            function startNew(url) {
+              if (url && !list[absolute(url)]) {
+                start(absolute(url));
               }
-              var full = absolute(url);
-              inUnityCache(full, cacheName).then(function (cached) {
-                if (!cached && !list[full]) {
-                  start(full);
+            }
+            codeDecided = inUnityCache(absolute(dataUrl), cacheName).then(function (dataCached) {
+              if (!dataCached) {
+                startNew(dataUrl);
+                startNew(codeUrl);
+              }
+            });
+            if (worldUrl) {
+              inUnityCache(absolute(worldUrl), cacheName).then(function (cached) {
+                if (!cached) {
+                  startNew(worldUrl);
                 }
               });
-            });
+            }
           },
           received: function (url) {
             var d = url && list[absolute(url)];
@@ -1280,7 +1296,7 @@
         };
 
         // Engine code, game data and campus world all start now (see ccDownloads); Unity picks them up when it asks.
-        ccDownloads.begin([config.codeUrl, config.dataUrl, worldStreamed ? window.ccWorldBundleUrl : null],
+        ccDownloads.begin(config.codeUrl, config.dataUrl, worldStreamed ? window.ccWorldBundleUrl : null,
           "UnityCache_" + config.companyName + "_" + config.productName);
         var barTimer = setInterval(function () {
           if (!worldStreamed || worldReady || loader.classList.contains("cc-ready") || loader.classList.contains("cc-failed")) {
