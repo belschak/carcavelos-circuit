@@ -114,7 +114,7 @@ namespace CarcavelosCircuit.Visuals
             if (driverChanged && raceManager.KartTransform != null)
             {
                 // Driver select: the player gets the picked driver's kart, and the bots are lined up again (the three
-                // drivers not picked + two repainted Rookies, DriverSwap). The old bots go this frame and the new
+                // drivers not picked + two repainted Nova Classics, DriverSwap). The old bots go this frame and the new
                 // ones come next frame (Destroy finishes at the frame's end).
                 driverChanged = false;
                 ShowPlayerDriver();
@@ -222,7 +222,7 @@ namespace CarcavelosCircuit.Visuals
                 KartVisualSwap.Apply(kart, model != null ? model : settings.KartVisual(seats[i].KartVisual)); // same frame: before any Start
                 if (seats[i].Repaint)
                 {
-                    BotKartPaint.Paint(kart, profile.colour); // the two Rookie copies; the roster karts keep their paint
+                    BotKartPaint.Paint(kart, profile.colour); // the two Classic copies; the roster karts keep their paint
                 }
                 BotDriver driver = kart.AddComponent<BotDriver>(); // registers itself (OnEnable)
                 driver.SetUp(profile, settings, map);

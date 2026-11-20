@@ -220,7 +220,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
         private const int SettleFrames = 100;      // 2 game seconds before the countdown
         private const int TraceEveryFrames = 250;  // one trace line per 5 game seconds
 
-        // "Tiago 12.3,45.6 | Nova ..." (x and z in metres): the same line in two runs = the same race so far.
+        // "Cláudio 12.3,45.6 | Luís ..." (x and z in metres): the same line in two runs = the same race so far.
         private string Positions()
         {
             System.Text.StringBuilder line = new System.Text.StringBuilder();

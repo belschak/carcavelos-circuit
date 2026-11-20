@@ -39,7 +39,7 @@ JPEG_QUALITY = 84
 
 # shot name -> (raw file, crop box in raw pixels or None). Crops keep 16:9.
 SHOTS = {
-    "grid": ("grid-sunset-6400.png", None),            # the start grid: Rookie, Tiago, Nova, Amara + two rivals
+    "grid": ("grid-sunset-6400.png", None),            # the start grid: the four drivers (Luc's Rookie, Tiago, Nova, Amara models) + two rivals
     "beach": ("beach-sunset-6400.png", (320, 360, 6080, 3600)),  # sunset over the Atlantic; top strip of cloud cut
     "campus": ("campus-pack-6400.png", None),          # the pack bursting into the atrium under the START arch
     "items": ("itemboxes-sunset-6400.png", None),      # a kart through the azulejo item boxes

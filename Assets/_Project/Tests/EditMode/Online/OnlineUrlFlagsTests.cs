@@ -91,7 +91,11 @@ namespace CarcavelosCircuit.Tests.EditMode
         [Test]
         public void Driver_ByNameOrIndex_ElseNone()
         {
-            Assert.AreEqual(1, OnlineUrlFlags.Parse("x?driver=Tiago").Driver);
+            Assert.AreEqual(1, OnlineUrlFlags.Parse("x?driver=Tiago").Driver, "Luc's model name still works");
+            Assert.AreEqual(1, OnlineUrlFlags.Parse("x?driver=Claudio").Driver, "the teacher's name without the accent");
+            Assert.AreEqual(1, OnlineUrlFlags.Parse("x?driver=Cl%C3%A1udio").Driver, "and with it, as a link writes it");
+            Assert.AreEqual(2, OnlineUrlFlags.Parse("x?driver=luis").Driver);
+            Assert.AreEqual(-1, OnlineUrlFlags.Parse("x?driver=Joao").Driver, "João is a bot, not a driver");
             Assert.AreEqual(3, OnlineUrlFlags.Parse("x?driver=amara").Driver);
             Assert.AreEqual(2, OnlineUrlFlags.Parse("x?driver=2").Driver);
             Assert.AreEqual(0, OnlineUrlFlags.Parse("x?driver=rookie").Driver);

@@ -78,10 +78,13 @@ namespace CarcavelosCircuit.RaceFlow
             return new string(Buffer, 0, n);
         }
 
-        // The ghost chip's words: the team's shipped Dean's ghost, or your own best lap.
+        // The ghost chip's words: the team's shipped ghost lap, or your own best lap. Like every rival in the game the
+        // shipped ghost carries a teacher's first name (David, 20 Nov 2026): Cláudio (TributeRules.FirstName(1)).
+        public const string ShippedGhostDriver = "Cláudio";
+
         public static string GhostName(bool isDeansGhost)
         {
-            return isDeansGhost ? "GHOST: DEAN" : "GHOST: YOUR BEST";
+            return isDeansGhost ? "GHOST: " + ShippedGhostDriver.ToUpperInvariant() : "GHOST: YOUR BEST";
         }
 
         // 87 -> "87" with fixed-width digits (speed).

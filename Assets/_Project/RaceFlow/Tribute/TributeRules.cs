@@ -17,6 +17,23 @@ namespace CarcavelosCircuit.RaceFlow
             "Paulo Marques",
         };
 
+        // David, 20 Nov 2026: every driver and every bot carries a first name of the teaching staff. These are the
+        // given names in Teachers, in the same order (Ricardo João Gil Pereira has two, Ricardo and João). The four
+        // drivers of DriverRoster are the first given name of each teacher; João is the fifth bot (DriverSwap).
+        public static readonly string[] GivenNames = { "Ricardo", "João", "Cláudio", "Luís", "Paulo" };
+
+        // The first given name of teacher i ("Cláudio Vieira" -> "Cláudio"), "" outside the list.
+        public static string FirstName(int teacher)
+        {
+            if (teacher < 0 || teacher >= Teachers.Length)
+            {
+                return "";
+            }
+            string full = Teachers[teacher];
+            int space = full.IndexOf(' ');
+            return space > 0 ? full.Substring(0, space) : full;
+        }
+
         public const string CupLine = "YOU WON THE GIL PEREIRA CUP";
 
         // A gold lap or better (the Dean's List) wins the cup.
