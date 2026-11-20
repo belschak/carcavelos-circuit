@@ -197,6 +197,7 @@ namespace CarcavelosCircuit.RaceFlow
             int index = Mathf.FloorToInt(onScreen / sightSeconds) % count;
             float inSight = onScreen % sightSeconds;
             postcard.EnableInClassList("pc--out", inSight > sightSeconds - 0.25f);
+            postcard.EnableInClassList("pc--live", onScreen >= sightSeconds); // after the first sight: no intro delay
             if (index != shownSight)
             {
                 shownSight = index;
@@ -228,6 +229,7 @@ namespace CarcavelosCircuit.RaceFlow
             if (!onStart)
             {
                 introStart = -1f;
+                postcard.RemoveFromClassList("pc--live"); // the next visit starts with the intro delay again
                 StopSweep();
                 return;
             }

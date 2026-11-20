@@ -42,6 +42,17 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void StartScreenPostcard_ComesBackWithoutTheIntroDelay()
+        {
+            // The 1.5 s intro delay is only for the first sight; later sights flip straight back in.
+            string uss = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "FrontEnd.uss"));
+            int live = uss.IndexOf(".intro-in .pc--live {");
+            Assert.Greater(live, 0, "the live postcard rule exists");
+            StringAssert.StartsWith(".intro-in .pc--live {
+    transition-delay: 0s;", uss.Substring(live).Replace("", ""));
+        }
+
+        [Test]
         public void StartScreenTips_SpeakOfOneOnlineRoom_AndNameTheLightButton()
         {
             // Since the team test on 17 Nov 2026 the class races in ONE room (it was a noon and a sunset room).
