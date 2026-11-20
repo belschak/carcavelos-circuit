@@ -1139,8 +1139,15 @@
           });
           if (signal) {
             signal.addEventListener("abort", function () {
-              if (d.sink) {
-                d.sink.error(new DOMException("The download was aborted.", "AbortError"));
+              if (d.done) {
+                return; // already complete: nothing to stop
+              }
+              try {
+                if (d.sink) {
+                  d.sink.error(new DOMException("The download was aborted.", "AbortError"));
+                }
+              } catch (e) {
+                // the reader is gone already
               }
               cancel(d);
             });
