@@ -126,7 +126,8 @@ def check_copy(copy_dir, live_build):
         return None
     if live_build and version != live_build:
         report(AMBER, "laptop copy", f"holds build {version}, the live site is {live_build}",
-               "Carcavelos OFFLINE would show an older build: python tools/preflight/presenter.py update")
+               "right after a merge the copy can be newer than the site for a few minutes (GitHub Pages publishes "
+               "last): run again in 5 minutes; still different: python tools/preflight/presenter.py update")
     else:
         report(GREEN, "laptop copy", f"plan B ready, build {version}" + ("" if live_build else " (live site unknown)"))
     return version
