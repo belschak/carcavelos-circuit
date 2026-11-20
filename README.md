@@ -60,7 +60,7 @@ On a phone the game shows touch buttons instead.
 | Menus and HUD | Start screen, settings, credits, results, plain-language errors | `Assets/_Project/RaceFlow/UI/` |
 | Sound | Engine pitch from speed, drift and boost sounds, music with ducking | `Assets/_Project/Audio/`, `RaceFlow/RaceMusic.cs` |
 | Beach life | Waves rolling onto the beach, surfers riding them | `Assets/_Project/Ambience/` |
-| Teacher tribute | A thank-you to the course's teaching staff: a SPECIAL THANKS page in the credits, four thank-you boards beside checkpoint gates on the track, and "YOU WON THE GIL PEREIRA CUP" on a Gold or Dean's List lap | `Assets/_Project/RaceFlow/Tribute/`, art from `tools/textures/make_tribute_boards.py` |
+| Teacher tribute | A thank-you to the course's teaching staff: every driver and every bot carries one of their first names (Ricardo, Cláudio, Luís and Paulo drive, João joins the bots), SPECIAL THANKS and THANK YOU, TEACHERS pages in the credits, four thank-you boards beside checkpoint gates on the track, and "YOU WON THE GIL PEREIRA CUP" on a Gold or Dean's List lap | `Assets/_Project/RaceFlow/Tribute/`, art from `tools/textures/make_tribute_boards.py` |
 | Web page | Loader, error cards, touch controls, update check | `Assets/WebGLTemplates/CarcavelosCircuit/index.html` |
 
 How these parts fit together, and why they were built this way: [docs/architecture.md](docs/architecture.md).

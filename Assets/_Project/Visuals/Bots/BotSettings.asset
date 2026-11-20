@@ -13,31 +13,31 @@ MonoBehaviour:
   m_Name: BotSettings
   m_EditorClassIdentifier: CarcavelosCircuit.Visuals::CarcavelosCircuit.Visuals.BotSettings
   bots:
-  - displayName: Gaivota
+  - displayName: Ricardo
     colour: {r: 0.88, g: 0.16, b: 0.16, a: 1}
     pace: 0.97
     cornering: 0.94
     lane: -0.8
     drifts: 1
-  - displayName: Bica
+  - displayName: "João"
     colour: {r: 0.56, g: 0.27, b: 0.86, a: 1}
     pace: 0.99
     cornering: 0.9
     lane: 0.7
     drifts: 1
-  - displayName: Sardinha
+  - displayName: "Cláudio"
     colour: {r: 0.16, g: 0.66, b: 0.36, a: 1}
     pace: 0.95
     cornering: 0.96
     lane: 0
     drifts: 0
-  - displayName: The Dean
+  - displayName: "Luís"
     colour: {r: 0.98, g: 0.8, b: 0.12, a: 1}
     pace: 0.98
     cornering: 0.95
     lane: -0.3
     drifts: 0
-  - displayName: Prof. Pastel
+  - displayName: Paulo
     colour: {r: 0.16, g: 0.46, b: 0.96, a: 1}
     pace: 0.94
     cornering: 0.97

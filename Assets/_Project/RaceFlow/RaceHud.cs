@@ -101,7 +101,7 @@ namespace CarcavelosCircuit.RaceFlow
         private VisualElement medalTarget;     // next-medal chip under the time panel (task P5)
         private Label medalTargetName;
         private Label medalTargetTime;
-        private VisualElement ghostChip;       // "GHOST: DEAN 1:02.4" under the medal chip (audit 13)
+        private VisualElement ghostChip;       // "GHOST: CLÁUDIO 1:02.4" under the medal chip (audit 13)
         private Label ghostChipName;
         private Label ghostChipTime;
         private Label hintIcon;
@@ -916,7 +916,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        // Ghost chip (audit 13): "GHOST: DEAN 1:02.4" or "GHOST: YOUR BEST 0:58.1" during the countdown and the race,
+        // Ghost chip (audit 13): "GHOST: CLÁUDIO 1:02.4" or "GHOST: YOUR BEST 0:58.1" during the countdown and the race,
         // hidden when there is no ghost. GhostPlayer loads the ghost itself; we only read which one it is.
         // One number holds both facts (lap in ms x 2, +1 for Dean's), so the texts are written only when one changes.
         private void UpdateGhostChip(RaceState state)

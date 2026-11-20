@@ -16,7 +16,7 @@ namespace CarcavelosCircuit.RaceFlow
     // - Keys: A/D or left/right = column, W/S or up/down = pick inside the column, Enter or Space = READY,
     //   Escape or Backspace = back to the modes.
     // - Picking another driver keeps the kart and tyres (like the original). The tiles of the driver's own kart and
-    //   tyres carry the driver's face in a small orange ring, so "Tiago's buggy" is easy to find again.
+    //   tyres carry the driver's face in a small orange ring, so "Cláudio's buggy" is easy to find again.
     // - The set is saved at once (DriverChoice), so the next visit opens with it.
     // Built in code like ModePicker, so Main.unity and RaceHud.uxml need no change.
     public class KartBuilder

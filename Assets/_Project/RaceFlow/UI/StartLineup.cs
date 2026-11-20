@@ -6,7 +6,7 @@ namespace CarcavelosCircuit.RaceFlow
     // The four drivers on the first screen (Luc's wish, 18 Nov 2026: "show off our characters"). The first thing a
     // player sees is the web page's "Click to play" screen (Assets/WebGLTemplates/.../index.html). As soon as the game is
     // loaded, the page fades its key art out on the right half and shows the live game there ("cc-live"); this class then
-    // draws Rookie, Tiago, Nova and Amara in their own karts side by side in that half, gently alive (the karts idle and
+    // draws Ricardo, Cláudio, Luís and Paulo in their own karts side by side in that half, gently alive (the karts idle and
     // steer, KartStage/StageKart), with each name under the kart. The page keeps its title, CLICK TO PLAY and tips on the
     // left half, so nothing covers them. While the page covers the game, the game's own start screen stays hidden (it
     // would show through twice); after the click the line-up fades out and the start screen fades in.
@@ -243,7 +243,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        // Names shrink on narrow windows (iPad 1024 x 768: ROOKIE and TIAGO touched at 20 px), never below 12 px.
+        // Names shrink on narrow windows (iPad 1024 x 768: the first two names touched at 20 px), never below 12 px.
         public static float NameFontSize(float cellWidth)
         {
             return Mathf.Clamp(cellWidth / 7f, 12f, 20f);

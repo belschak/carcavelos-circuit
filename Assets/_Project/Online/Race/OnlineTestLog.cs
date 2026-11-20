@@ -47,9 +47,12 @@ namespace CarcavelosCircuit.Online
         }
 
         // The room token of every line. One room for the whole class since 17 Nov 2026 (OnlineRooms).
+        // The session name of the room this screen joined last (the director sets it; overflow rooms, 20 Nov 2026).
+        public static string CurrentRoom = OnlineRooms.SessionName;
+
         public static string Room()
         {
-            return OnlineRooms.SessionName;
+            return string.IsNullOrEmpty(CurrentRoom) ? OnlineRooms.SessionName : CurrentRoom;
         }
 
         // Which driver each other player's kart shows on this screen, for the RACE line: "id:Driver:model|..." in id

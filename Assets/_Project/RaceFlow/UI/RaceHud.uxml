@@ -44,7 +44,7 @@
                         <!-- The ghost you race (audit 13): whose lap and its time, dot in the ghost's colour. Hidden without a ghost -->
                         <ui:VisualElement name="ghost-chip" class="ghost-chip plate">
                             <ui:VisualElement class="ghost-dot" />
-                            <ui:Label name="ghost-chip-name" text="GHOST: DEAN" class="ghost-chip-name f-ui" />
+                            <ui:Label name="ghost-chip-name" text="GHOST: CLÁUDIO" class="ghost-chip-name f-ui" />
                             <ui:Label name="ghost-chip-time" text="1:02.4" class="ghost-chip-time f-num" />
                         </ui:VisualElement>
                     </ui:VisualElement>
@@ -367,7 +367,7 @@
                             <ui:VisualElement class="credit-person">
                                 <ui:VisualElement class="credit-badge"><ui:Label text="2" class="credit-badge-num f-display" /></ui:VisualElement>
                                 <ui:VisualElement class="credit-words">
-                                    <ui:Label text="NOAH" class="credit-name f-ui" />
+                                    <ui:Label text="NOAH SCHLAG" class="credit-name f-ui" />
                                     <ui:Label text="CAMPUS TRACK + RACE RULES" class="credit-role f-ui" />
                                 </ui:VisualElement>
                             </ui:VisualElement>
@@ -404,18 +404,27 @@
                     <!-- Page 3 (task P4): special thanks to the teaching staff. Names only; TeacherTribute adds the boards and the cup -->
                     <ui:VisualElement name="credits-page-3" class="credits-page" style="justify-content: center;">
                         <ui:Label text="SPECIAL THANKS" class="credits-head f-ui" />
-                        <ui:Label text="This game exists because of Introduction to Programming 2026 at Nova SBE. Thank you for teaching us how to build it." class="credit-text f-ui" style="margin-bottom: 10px;" />
+                        <ui:Label text="This game exists because of Introduction to Programming 2026 at Nova SBE. Every driver and every rival on the track carries one of your first names." class="credit-text f-ui" style="margin-bottom: 10px;" />
                         <ui:Label text="RICARDO JOÃO GIL PEREIRA" class="credit-name f-ui" style="font-size: 25px; margin-top: 10px;" />
                         <ui:Label text="CLÁUDIO VIEIRA" class="credit-name f-ui" style="font-size: 25px; margin-top: 10px;" />
                         <ui:Label text="LUÍS CARVALHO" class="credit-name f-ui" style="font-size: 25px; margin-top: 10px;" />
                         <ui:Label text="PAULO MARQUES" class="credit-name f-ui" style="font-size: 25px; margin-top: 10px;" />
                         <ui:Label text="Teaching staff, Introduction to Programming, Nova SBE, Fall 2026." class="credits-foot f-ui" />
                     </ui:VisualElement>
+                    <!-- Page 4 (David, 20 Nov 2026): why the teachers get the drivers' names. Short, student voice -->
+                    <ui:VisualElement name="credits-page-4" class="credits-page" style="justify-content: center;">
+                        <ui:Label text="THANK YOU, TEACHERS" class="credits-head f-ui" />
+                        <ui:Label name="credits-tribute-1" text="Most first programming courses hand out exercises. Yours gave us a coding agent, a real product to build and one rule: you can't ship what you can't explain." class="credit-text f-ui" style="margin-top: 8px;" />
+                        <ui:Label name="credits-tribute-2" text="So four Nova students built a kart racer with online races and more than 1,600 tests, and we can explain every part of it." class="credit-text f-ui" style="margin-top: 14px;" />
+                        <ui:Label name="credits-tribute-3" text="Obrigado for trusting us with that, Ricardo, Cláudio, Luís and Paulo." class="credit-name f-ui" style="margin-top: 18px; white-space: normal; -unity-text-align: middle-center;" />
+                        <ui:Label text="Introduction to Programming, Nova SBE, Fall 2026." class="credits-foot f-ui" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="credits-footer">
                     <ui:VisualElement name="credits-dot-1" class="credits-dot" />
                     <ui:VisualElement name="credits-dot-2" class="credits-dot" />
                     <ui:VisualElement name="credits-dot-3" class="credits-dot" />
+                    <ui:VisualElement name="credits-dot-4" class="credits-dot" />
                     <ui:VisualElement name="credits-next" class="menu-pill plate menu-pill--next">
                         <ui:VisualElement class="keycap keycap--small"><ui:Label text="D" class="f-ui" /></ui:VisualElement>
                         <ui:Label text="NEXT PAGE" class="menu-pill-text f-ui" />

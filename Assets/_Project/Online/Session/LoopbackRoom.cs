@@ -28,7 +28,7 @@ namespace CarcavelosCircuit.Online
 
         public bool IsFull
         {
-            get { return !OnlineRooms.HasSpace(sessions.Count); }
+            get { return !OnlineRooms.HasSpace(sessions.Count, OnlineRooms.SeatsOf(Name)); }
         }
 
         // Adds the session (false when the room is full) and tells everyone.

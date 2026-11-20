@@ -47,6 +47,7 @@ namespace CarcavelosCircuit.Online
         private double connectUntil;
         private double nextHeartbeat;
         private bool channelOpen;
+        private int seats = OnlineRooms.MaxPlayers; // of the room joined last (OnlineRooms.SeatsOf, ?seats= test rooms)
 
         public OnlineStatus Status { get; private set; } = OnlineStatus.Idle;
         public string FailReason { get; private set; } = "";
@@ -115,6 +116,7 @@ namespace CarcavelosCircuit.Online
                 return;
             }
             channelOpen = true;
+            seats = OnlineRooms.SeatsOf(room);
             LocalId = RandomId();
             me = new OnlinePlayer(LocalId, SafeName(name), colourIndex, Now, driverIndex);
             players.Clear();
@@ -218,24 +220,37 @@ namespace CarcavelosCircuit.Online
                 Post(HereLine());
             }
             DropSilent(now);
+            if (Status == OnlineStatus.InRoom && now - me.JoinedAt < LateFullSeconds && players.IndexOf(me) >= seats)
+            {
+                LeaveAsFull(); // a slow tab answered late: the room was full before we came (20 Nov 2026)
+            }
         }
 
-        // After listening for a moment we know who is in: full = we never were; else we are in.
+        // How long after joining a late answer can still show the room was full (the first `seats` in join order stay).
+        public const double LateFullSeconds = 5.0;
+
+        // After listening for a moment we know who is in: full = we are not among the first `seats` in join order
+        // (like Photon, the room keeps who came first); else we are in.
         private void FinishConnecting()
         {
-            if (players.Count > OnlineRooms.MaxPlayers)
+            if (players.Count > seats && players.IndexOf(me) >= seats)
             {
-                Post("leave|" + LocalId);
-                Close();
-                channelOpen = false;
-                players.Clear();
-                lastHeard.Clear();
-                Status = OnlineStatus.Full;
-                FailReason = "ROOM FULL";
-                RaiseChanged();
+                LeaveAsFull();
                 return;
             }
             Status = OnlineStatus.InRoom;
+            RaiseChanged();
+        }
+
+        private void LeaveAsFull()
+        {
+            Post("leave|" + LocalId);
+            Close();
+            channelOpen = false;
+            players.Clear();
+            lastHeard.Clear();
+            Status = OnlineStatus.Full;
+            FailReason = "ROOM FULL";
             RaiseChanged();
         }
 
@@ -318,7 +333,7 @@ namespace CarcavelosCircuit.Online
             {
                 return true;
             }
-            if (players.Count >= OnlineRooms.MaxPlayers + 1)
+            if (players.Count >= seats + 1)
             {
                 return false; // more than a full room plus us: ignore the rest
             }

@@ -55,10 +55,10 @@ namespace CarcavelosCircuit.Tests.EditMode
         {
             LoopbackSession old = new LoopbackSession();
             LoopbackSession me = new LoopbackSession();
-            old.Join(OnlineRooms.SessionName, "Old", 0, 1); // a build from before the builder sends only Tiago (1)
+            old.Join(OnlineRooms.SessionName, "Old", 0, 1); // a build from before the builder sends only driver 1 (Cláudio)
             clock += 1.0;
             me.Join(OnlineRooms.SessionName, "New", 1, new KartLoadout(2, 0, 3).Code);
-            Assert.AreEqual(KartLoadout.Signature(1), me.Players[0].Loadout, "Tiago in his own buggy on offroad tyres");
+            Assert.AreEqual(KartLoadout.Signature(1), me.Players[0].Loadout, "Cláudio in the Beach Buggy on offroad tyres");
         }
 
         [TestCase(99)]

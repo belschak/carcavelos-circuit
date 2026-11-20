@@ -43,7 +43,8 @@ namespace CarcavelosCircuit.Tests.EditMode
         [Test]
         public void GhostName_SaysWhoseLapItIs()
         {
-            Assert.AreEqual("GHOST: DEAN", HudFormat.GhostName(true));
+            Assert.AreEqual("GHOST: CLÁUDIO", HudFormat.GhostName(true), "the shipped ghost carries a teacher's first name");
+            Assert.AreEqual(TributeRules.FirstName(1), HudFormat.ShippedGhostDriver);
             Assert.AreEqual("GHOST: YOUR BEST", HudFormat.GhostName(false));
         }
 
