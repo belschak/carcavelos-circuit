@@ -37,7 +37,7 @@ Pick a mode on the start screen (click it, or press 1, 2 or 3), build your kart 
 | P | Pause |
 | O / C / M | Settings / credits / sound on or off |
 | T | Noon or sunset light |
-| Q | Back to the menu (online: leave the room) |
+| Q | Back to the menu, also mid-race or paused (online: leave the room) |
 
 On a phone the game shows touch buttons instead.
 

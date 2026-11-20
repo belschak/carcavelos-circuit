@@ -157,8 +157,8 @@ namespace CarcavelosCircuit.RaceFlow
             return keyboard != null && keyboard.mKey.wasPressedThisFrame;
         }
 
-        // Q = back to the main menu from the results (pick another mode). Only read in Results, so on the start
-        // screen Q is a normal "any key".
+        // Q = back to the main menu (pick another mode): from the countdown, the race, the pause and the results
+        // (ExternalStartRules.MayGoBackToMenu). Never read on the start screen, so there Q is a normal "any key".
         public static bool BackToMenuPressed()
         {
             Keyboard keyboard = GameKeyboard();

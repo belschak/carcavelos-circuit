@@ -54,8 +54,8 @@ Test files are in `Assets/_Project/Tests/`; PlayMode files are marked (PM). Coun
 
 ### 1. Time attack (lap timing, checkpoints, wrong way, recovery, retry, medals, personal best, ghost) about 240 runs
 
-- **Accepted:** `RaceRulesTests` (in order then finish), `RaceTimerTests` (lap time from timestamps), `RaceStateMachineTests` (3-2-1-GO, retry), `MedalRulesTests`, `PersonalBestTests`, `GhostRecordingTests`, `GhostLoaderTests`, `WrongWayDetectorTests`, `StuckDetectorTests`, `FallCheckTests`; (PM) `RaceSmokeTests.CleanLap_FinishesOnce_WithATime_...`, `Retry_ResetsTimerAndCheckpoints_...`.
-- **Rejected:** finish right after the start, missed or backwards checkpoints, same checkpoint twice, anything after the finish (`RaceRulesTests`); finish outside Racing (`RaceStateMachineTests`); negative frame times (`RaceTimerTests`); broken or foreign-road saves give "no record" (`PersonalBestTests.BrokenSave_MeansNoRecord`, `RecordFromAnotherRoad_IsDropped_...`); broken ghosts fall back to the shipped one (`GhostLoaderTests`); (PM) `SkippedCheckpoint_DoesNotFinish_AndRecoverKeepsTimeAndProgress`.
+- **Accepted:** `RaceRulesTests` (in order then finish), `RaceTimerTests` (lap time from timestamps), `RaceStateMachineTests` (3-2-1-GO, retry), `MedalRulesTests`, `PersonalBestTests`, `GhostRecordingTests`, `GhostLoaderTests`, `WrongWayDetectorTests`, `StuckDetectorTests`, `FallCheckTests`; (PM) `RaceSmokeTests.CleanLap_FinishesOnce_WithATime_...`, `Retry_ResetsTimerAndCheckpoints_...`, `RaceModesPlayTests.BackToMenu_FromTheCountdownTheRaceAndThePause` (Q leaves an unfinished lap for the start screen, nothing stays frozen; `ExternalStartRulesTests.Q_GoesBackToTheMenu_...`).
+- **Rejected:** finish right after the start, missed or backwards checkpoints, same checkpoint twice, anything after the finish (`RaceRulesTests`); Q on the start screen or while the online lobby owns the race (`ExternalStartRulesTests.Q_IsRefused_...`); finish outside Racing (`RaceStateMachineTests`); negative frame times (`RaceTimerTests`); broken or foreign-road saves give "no record" (`PersonalBestTests.BrokenSave_MeansNoRecord`, `RecordFromAnotherRoad_IsDropped_...`); broken ghosts fall back to the shipped one (`GhostLoaderTests`); (PM) `SkippedCheckpoint_DoesNotFinish_AndRecoverKeepsTimeAndProgress`.
 - **Edge:** exactly on a medal time, one millisecond slower; a 1-checkpoint track; long frames during the countdown; NaN, infinity and zero lap length (`LapProgressTests`); a save written on a Portuguese laptop (comma); a lap longer than the ghost budget.
 
 ### 2. Race against bots (grid, standings, bot driving, finish order) about 150 runs
@@ -114,18 +114,18 @@ Test files are in `Assets/_Project/Tests/`; PlayMode files are marked (PM). Coun
 - **Rejected:** `OnlineAppIdRulesTests.EmptyOrBroken_IsNotValid`, **new** `Verification/BuildKeyAndServiceInputTests` (braces, one digit more or less, a space inside, a dashboard URL, a secret Supabase key with spaces, a JWT whose payload is not base64).
 - **Edge:** blank App ID = single-player build, not an error.
 
-### 12. Kart builder, race modes and teacher tribute
-
-- **Accepted:** `Drivers/KartLoadoutTests` (every one of the 64 sets has a code and back), `KartAssemblerTests` (the right driver, kart and tyres are built), `Online/OnlineLoadoutTests` (a set travels online), `RaceModeRulesTests` (three modes, saved mode), `TributeRulesTests`; (PM) `DriverSelectPlayTests.PickingKartAndTyres_RebuildsOnlyThePlayersKart`, `TeacherTributePlayTests`.
-- **Rejected:** a broken set code is refused and read as the Rookie's set (`KartLoadoutTests.BrokenCodes_AreRefused_AndReadAsTheRookiesSet`), parts outside the lists are refused (`Choice_RefusesPartsOutsideTheLists`), bad saved numbers fall back part by part (`Choice_BadSavedNumbers_FallBackPartByPart`); a saved mode of -1, 3 or `int.MaxValue` starts the default mode (`RaceModeRulesTests.FromSaved_AcceptsKnownNumbers_RejectsTheRest`).
-- **Edge:** the first and last code of each range, the builder fitting a 5:4 window (`StartScreenFitTests.KartBuilder_FitsAtFiveToFour`).
-
 ### 11. Web build, load time, start screen fit and repository rules about 65 runs
 
 - **Accepted / edge:** `WebBuild/WebLoadTimeTests` (texture and mesh import budgets), `WebPageTests` (page bridge is off outside a Web build).
 - **New** `WebBuild/WorldFileTests` (the campus world as its own file, load time 18 Nov, 7 tests). Accepted: the player build leaves out only the world scene; the world file name is `world-<md5>.bundle` of its content (same world = same name, a changed world = a new name); stamping fills the DXT and ETC2 names and the world's share of the loading bar into `index.html`; the page caches `world-*.bundle` as `immutable`, waits for the track before "Click to play" and listens for the game's `cc-world` events; the page bridge (`CarcavelosWebPage.jslib`) has both world calls. Edge: without an ETC2 world the phone placeholder stays, so phones use the DXT world; an unstamped page (a build with the world inside the `.data`) loads the old way.
 - **New** `StartScreenFitTests` (start screen on boxy windows, 15 runs incl. the kart builder and the start line-up). Accepted: 16:9, 16:10 and 3:2 keep the normal layout. Edge: 4:3 and 5:4 get the compact layout (`hud--compact`), and at 5:4 the mode cards end before the start leaderboard begins; the compact rules exist in `UI/StartScreen.uss`.
 - **New** `Verification/RepoHygieneTests`: the leaderboard key and address are empty in Git, the Photon SDK and App ID file are ignored, every GitHub Action is pinned to a commit, every Unity package has an exact version equal to the lock file and comes from the Unity registry, every Python tool is pinned.
+
+### 12. Kart builder, race modes and teacher tribute
+
+- **Accepted:** `Drivers/KartLoadoutTests` (every one of the 64 sets has a code and back), `KartAssemblerTests` (the right driver, kart and tyres are built), `Online/OnlineLoadoutTests` (a set travels online), `RaceModeRulesTests` (three modes, saved mode), `TributeRulesTests`; (PM) `DriverSelectPlayTests.PickingKartAndTyres_RebuildsOnlyThePlayersKart`, `TeacherTributePlayTests`.
+- **Rejected:** a broken set code is refused and read as the Rookie's set (`KartLoadoutTests.BrokenCodes_AreRefused_AndReadAsTheRookiesSet`), parts outside the lists are refused (`Choice_RefusesPartsOutsideTheLists`), bad saved numbers fall back part by part (`Choice_BadSavedNumbers_FallBackPartByPart`); a saved mode of -1, 3 or `int.MaxValue` starts the default mode (`RaceModeRulesTests.FromSaved_AcceptsKnownNumbers_RejectsTheRest`).
+- **Edge:** the first and last code of each range, the builder fitting a 5:4 window (`StartScreenFitTests.KartBuilder_FitsAtFiveToFour`).
 
 ### Totals
 

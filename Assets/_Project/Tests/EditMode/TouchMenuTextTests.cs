@@ -17,6 +17,14 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void PauseNote_NamesQForTheMenu_OnlyWhereThereIsAKeyboard()
+        {
+            StringAssert.Contains("Q  BACK TO THE MENU", HudMenus.PauseNoteText(false));
+            StringAssert.Contains("CLOCK IS STOPPED", HudMenus.PauseNoteText(false));
+            Assert.AreEqual("THE CLOCK IS STOPPED", HudMenus.PauseNoteText(true), "a phone has no Q key");
+        }
+
+        [Test]
         public void StartScreenTips_NameTheTouchButtons_OnTouch()
         {
             for (int i = 0; i < TitleScreen.SightCount; i++)
@@ -31,6 +39,27 @@ namespace CarcavelosCircuit.Tests.EditMode
                 keysOnComputer |= TitleScreen.SightText(i, false).Contains("SPACE");
             }
             Assert.IsTrue(keysOnComputer, "the computer tips still name the keys");
+        }
+
+        [Test]
+        public void StartScreenTips_SpeakOfOneOnlineRoom_AndNameTheLightButton()
+        {
+            // Since the team test on 17 Nov 2026 the class races in ONE room (it was a noon and a sunset room).
+            bool oneRoom = false;
+            for (int i = 0; i < TitleScreen.SightCount; i++)
+            {
+                for (int touch = 0; touch < 2; touch++)
+                {
+                    string tip = TitleScreen.SightText(i, touch == 1);
+                    StringAssert.DoesNotContain("rooms", tip, "tip " + i + ": there is only one online room");
+                    oneRoom |= tip.Contains("One room");
+                    if (touch == 1)
+                    {
+                        StringAssert.DoesNotContain("Press T", tip, "tip " + i + ": a phone has no T key");
+                    }
+                }
+            }
+            Assert.IsTrue(oneRoom, "a tip says the class races in one room");
         }
 
         [Test]

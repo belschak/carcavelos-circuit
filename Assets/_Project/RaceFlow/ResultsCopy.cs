@@ -18,7 +18,7 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 return "TIED YOUR BEST";
             }
-            return "OFF YOUR BEST";
+            return "BEHIND YOUR BEST"; // not "OFF YOUR BEST": "+55 s off" read like 55 s taken off (20 Nov 2026)
         }
 
         // The line under the results: what this lap's medal means and what to aim for next.

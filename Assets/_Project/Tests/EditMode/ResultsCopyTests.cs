@@ -18,7 +18,8 @@ namespace CarcavelosCircuit.Tests.EditMode
         [Test]
         public void DeltaWords_SlowerIsShortAndCalm()
         {
-            Assert.AreEqual("OFF YOUR BEST", ResultsCopy.DeltaWords(504));
+            Assert.AreEqual("BEHIND YOUR BEST", ResultsCopy.DeltaWords(504));
+            Assert.AreEqual("BEHIND YOUR BEST", ResultsCopy.DeltaWords(1), "one millisecond slower is still behind");
         }
 
         [Test]

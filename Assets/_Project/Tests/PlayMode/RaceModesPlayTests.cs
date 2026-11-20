@@ -178,6 +178,9 @@ namespace CarcavelosCircuit.Tests.PlayMode
                 race.Retry();
                 yield return null;
                 Assert.AreEqual(RaceState.Racing, race.State, "Enter-retry does nothing while the lobby owns the race");
+                race.BackToMenu();
+                yield return null;
+                Assert.AreEqual(RaceState.Racing, race.State, "Q-menu does nothing either: online Q leaves the room");
 
                 race.SetExternalPlace(3, 7);
                 Assert.AreEqual(3, race.PlayerPlace, "the room's place is shown");
@@ -321,6 +324,41 @@ namespace CarcavelosCircuit.Tests.PlayMode
             Assert.IsFalse(squad.IsCruising);
             Assert.IsFalse(race.Kart.InputEnabled, "nobody drives on the start screen");
             Assert.AreEqual(0, race.CheckpointsPassed);
+        }
+
+        // Q mid-race (20 Nov 2026): back to the start screen from the countdown, the race and the pause, not only
+        // from the results card. The unfinished lap is forgotten and nothing stays frozen.
+        [UnityTest]
+        public IEnumerator BackToMenu_FromTheCountdownTheRaceAndThePause()
+        {
+            race.BackToMenu();
+            yield return null;
+            Assert.AreEqual(RaceState.Ready, race.State, "on the start screen Q changes nothing");
+
+            race.BeginRace();
+            yield return null;
+            Assert.AreEqual(RaceState.Countdown, race.State);
+            race.BackToMenu();
+            yield return null;
+            Assert.AreEqual(RaceState.Ready, race.State, "out of the countdown");
+            Assert.IsFalse(race.Kart.InputEnabled, "nobody drives on the start screen");
+
+            race.BeginRace();
+            yield return WaitForState(RaceState.Racing, 10f);
+            Assert.AreEqual(RaceState.Racing, race.State);
+            yield return DriveIntoNextCheckpoint();
+            Assert.AreEqual(1, race.CheckpointsPassed, "one checkpoint of the lap counted");
+            race.PauseOnFocusLoss = true;
+            race.SendMessage("OnApplicationFocus", false); // the tab lost focus: the race pauses
+            yield return null;
+            Assert.IsTrue(race.IsPaused, "paused");
+            race.BackToMenu();
+            yield return null;
+            Assert.AreEqual(RaceState.Ready, race.State, "out of the pause");
+            Assert.IsFalse(race.IsPaused, "the pause ended with it");
+            Assert.AreEqual(1f, Time.timeScale, "the game runs again");
+            Assert.AreEqual(0, race.CheckpointsPassed, "the unfinished lap is forgotten");
+            Assert.IsFalse(race.Kart.InputEnabled, "nobody drives on the start screen");
         }
 
         // ---------- helpers (as in RaceSmokeTests) ----------

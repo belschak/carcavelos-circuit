@@ -48,6 +48,24 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void Q_GoesBackToTheMenu_FromTheCountdownTheRaceAndTheResults()
+        {
+            Assert.IsTrue(ExternalStartRules.MayGoBackToMenu(RaceState.Countdown, false), "wrong mode picked: out before GO");
+            Assert.IsTrue(ExternalStartRules.MayGoBackToMenu(RaceState.Racing, false), "mid-race, no lap needed");
+            Assert.IsTrue(ExternalStartRules.MayGoBackToMenu(RaceState.Results, false), "the results card, as before");
+        }
+
+        [Test]
+        public void Q_IsRefused_OnTheStartScreen_AndWhileTheLobbyOwnsTheRace()
+        {
+            Assert.IsFalse(ExternalStartRules.MayGoBackToMenu(RaceState.Ready, false), "already on the start screen: Q is any key");
+            Assert.IsFalse(ExternalStartRules.MayGoBackToMenu(RaceState.Racing, true), "online, Q leaves the room instead");
+            Assert.IsFalse(ExternalStartRules.MayGoBackToMenu(RaceState.Countdown, true), "online countdown on the shared clock");
+            Assert.IsFalse(ExternalStartRules.MayGoBackToMenu(RaceState.Results, true), "online results belong to the lobby");
+            Assert.IsFalse(ExternalStartRules.MayGoBackToMenu(RaceState.Ready, true));
+        }
+
+        [Test]
         public void TheLobby_StartsOnlyFromTheStartScreen_InAPlayableMode()
         {
             Assert.IsTrue(ExternalStartRules.MayBeginExternal(RaceState.Ready, RaceMode.OnlineRace));

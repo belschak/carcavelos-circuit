@@ -388,6 +388,12 @@ namespace CarcavelosCircuit.RaceFlow
                 {
                     AudioListener.pause = true; // RaceMusic unpauses the sound when focus comes back; we are still paused
                 }
+                // Q on the PAUSED card = back to the menu (the card says so); every other key or click continues.
+                if (RaceKeys.BackToMenuPressed() && ExternalStartRules.MayGoBackToMenu(State, ExternalStartOnly))
+                {
+                    BackToMenu();
+                    return;
+                }
                 if (pause.TryResume(RaceKeys.AnyKeyOrClickPressed() || RaceKeys.PausePressed()))
                 {
                     EndPause();
@@ -434,7 +440,8 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
 
-            if (State == RaceState.Results && !MenuUsesInput && RaceKeys.BackToMenuPressed())
+            // Q = back to the start screen from the countdown, the race or the results (offline; online the lobby owns Q).
+            if (!MenuUsesInput && RaceKeys.BackToMenuPressed() && ExternalStartRules.MayGoBackToMenu(State, ExternalStartOnly))
             {
                 BackToMenu();
                 return;
@@ -619,11 +626,12 @@ namespace CarcavelosCircuit.RaceFlow
             return true;
         }
 
-        // Results -> start screen, so the player can pick another mode. Public for the HUD's MENU button.
-        // Does nothing while the online lobby owns the race (ExternalStartOnly).
+        // Countdown, race, pause or results -> start screen, so the player can pick another mode (Q, and the results
+        // card's MENU button). Nothing is saved: a lap that was not finished never counts. Does nothing on the start
+        // screen or while the online lobby owns the race (ExternalStartRules.MayGoBackToMenu).
         public void BackToMenu()
         {
-            if (!IsSetUp || State != RaceState.Results || !ExternalStartRules.MayRetryOrLeave(ExternalStartOnly))
+            if (!IsSetUp || !ExternalStartRules.MayGoBackToMenu(State, ExternalStartOnly))
             {
                 return;
             }
@@ -631,7 +639,7 @@ namespace CarcavelosCircuit.RaceFlow
             StopSlowMotion();
             ClearRunForNewStart();
             ForgetAttempt();
-            stateMachine.BackToReady();
+            stateMachine.ResetToReady(); // from any state (BackToReady only knew Results)
             kart.InputEnabled = false;
             // Everyone who resets on Retry (grid, items, ghost, leaderboard form, camera, finish autopilot) resets
             // here too; the state is Ready, so no countdown starts.
