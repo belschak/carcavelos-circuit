@@ -143,7 +143,8 @@ namespace CarcavelosCircuit.RaceFlow
             return reply.Source == LeaderboardSource.Online ? "YOU ARE #" + reply.Rank : "#" + reply.Rank + " ON THIS DEVICE";
         }
 
-        // The small line under it. Offline says nothing here: the card's coral note already says it, once.
+        // The small line under it. Kept only on this device because the online save failed: say so here, because the
+        // list beside it may still come from online (the read can work while the save did not, 20 Nov 2026).
         public static string ResultLine(LeaderboardReply reply)
         {
             if (!reply.Success)
@@ -153,6 +154,10 @@ namespace CarcavelosCircuit.RaceFlow
             if (reply.Rank == 0)
             {
                 return reply.Source == LeaderboardSource.Online ? "OUTSIDE THE ONLINE TOP 10" : "OUTSIDE THE TOP 10 ON THIS DEVICE";
+            }
+            if (reply.Source == LeaderboardSource.OfflineFallback)
+            {
+                return "THE ONLINE SAVE FAILED";
             }
             return reply.Source == LeaderboardSource.Online ? "ON THE ONLINE LEADERBOARD" : "";
         }

@@ -110,7 +110,7 @@ namespace CarcavelosCircuit.RaceFlow
                 startBoardLoaded = true;
                 startBoard.SetTrack(raceManager.TrackName, TopCount);
                 resultsBoard.SetTrack(raceManager.TrackName, TopCount);
-                Fetch(startBoard, lapNumber, 0);
+                Fetch(startBoard, lapNumber, 0, LeaderboardSource.Online);
             }
 
             RaceState state = raceManager.State;
@@ -177,7 +177,7 @@ namespace CarcavelosCircuit.RaceFlow
                 form.Hide();
             }
             resultsBoard.ShowLoading();
-            Fetch(resultsBoard, lapNumber, 0);
+            Fetch(resultsBoard, lapNumber, 0, LeaderboardSource.Online);
         }
 
         private void OnRestarted()
@@ -214,13 +214,14 @@ namespace CarcavelosCircuit.RaceFlow
                     return; // the scene closed or a new lap started while we waited
                 }
                 form.ShowSaved(reply);
-                Fetch(resultsBoard, lap, reply.Success ? reply.Rank : 0);
-                Fetch(startBoard, lap, 0); // the start screen shows the new list after a page reload too
+                Fetch(resultsBoard, lap, reply.Success ? reply.Rank : 0, reply.Source);
+                Fetch(startBoard, lap, 0, reply.Source); // the start screen shows the new list after a page reload too
             });
         }
 
-        // Loads the top list into a board. newRank = the row to flash (just saved), 0 = none.
-        private void Fetch(LeaderboardPanel board, int lap, int newRank)
+        // Loads the top list into a board. newRank = the place just saved (0 = none) in the list it was saved to
+        // (savedTo); it only flashes when the fetched list is that same list (LeaderboardRanking.RowToFlash).
+        private void Fetch(LeaderboardPanel board, int lap, int newRank, LeaderboardSource savedTo)
         {
             float minSeconds = MinLapSeconds;
             Service.FetchTop(raceManager.TrackName, TopCount, reply =>
@@ -236,7 +237,8 @@ namespace CarcavelosCircuit.RaceFlow
                     return;
                 }
                 List<LeaderboardEntry> mine = LocalLeaderboardService.SavedHere(raceManager.TrackName); // saved from this browser
-                board.Show(LeaderboardRanking.WithoutTooFast(reply.Entries, minSeconds), reply.Source, mine, newRank);
+                int flash = LeaderboardRanking.RowToFlash(savedTo, newRank, reply.Source);
+                board.Show(LeaderboardRanking.WithoutTooFast(reply.Entries, minSeconds), reply.Source, mine, flash);
             });
         }
 

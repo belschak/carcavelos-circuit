@@ -73,5 +73,19 @@ namespace CarcavelosCircuit.Tests.EditMode
             string uxml = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "RaceHud.uxml"));
             StringAssert.Contains("name=\"pause-hint\"", uxml);
         }
+
+        [Test]
+        public void Hud_FooterHint_ShowsNoRetryOrPauseKey_Online()
+        {
+            // Online the room owns Enter and P (ExternalStartRules), so the footer hint must not offer them.
+            Assert.IsFalse(ExternalStartRules.MayRetryOrLeave(true));
+            Assert.IsFalse(ExternalStartRules.MayPauseByHand(true));
+            string uss = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "RaceHud.uss"));
+            StringAssert.Contains(".hud--online .controls-hint .key--retry", uss);
+            StringAssert.Contains(".hud--online .controls-hint .key--pause", uss);
+            string uxml = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "RaceHud.uxml"));
+            StringAssert.Contains("keycap keycap--wide key--retry", uxml);
+            StringAssert.Contains("key-text key--retry", uxml);
+        }
     }
 }

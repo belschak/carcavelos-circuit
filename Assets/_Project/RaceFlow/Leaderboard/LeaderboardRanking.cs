@@ -80,6 +80,15 @@ namespace CarcavelosCircuit.RaceFlow
             return RankOf(mine, entry.name, entry.seconds) > 0;
         }
 
+        // Which row of a fetched list to flash as "just saved" (1-based, 0 = none). Only when the list comes from the
+        // same place the time was saved to: a time kept only on this device (the online save failed) has a DEVICE
+        // place, and that number must never light up somebody else's row on the ONLINE list (found 20 Nov 2026: the
+        // save failed, the read worked, and the online #1 row showed "YOU").
+        public static int RowToFlash(LeaderboardSource savedTo, int savedRank, LeaderboardSource listFrom)
+        {
+            return savedTo == listFrom && savedRank > 0 ? savedRank : 0;
+        }
+
         private static void Cut(List<LeaderboardEntry> list, int keep)
         {
             if (keep < 0)

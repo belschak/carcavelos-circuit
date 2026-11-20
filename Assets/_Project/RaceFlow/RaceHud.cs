@@ -618,6 +618,7 @@ namespace CarcavelosCircuit.RaceFlow
                 raceManager.MenuUsesInput = true; // the kart builder owns the keys; only READY starts the race
             }
             bool offlineButtons = !RaceModeRules.OpensLobby(raceManager.Mode); // online the room has START AGAIN and Q LEAVE
+            hudRoot.EnableInClassList("hud--online", !offlineButtons); // footer hint: no RETRY / PAUSE keys online (USS)
             HudFx.SetClickable(resultsMenu, resultsShown && !menus.IsMenuOpen && offlineButtons);
             if (resultsShown && !menus.IsMenuOpen && offlineButtons && MouseOn(resultsMenu))
             {

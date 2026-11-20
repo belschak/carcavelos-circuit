@@ -123,8 +123,8 @@
             <ui:VisualElement name="controls-hint" class="controls-hint plate">
                 <ui:VisualElement class="keycap"><ui:Label text="R" class="f-ui" /></ui:VisualElement>
                 <ui:Label text="RECOVER" class="key-text f-ui" />
-                <ui:VisualElement class="keycap keycap--wide"><ui:Label text="ENTER" class="f-ui" /></ui:VisualElement>
-                <ui:Label text="RETRY" class="key-text f-ui" />
+                <ui:VisualElement class="keycap keycap--wide key--retry"><ui:Label text="ENTER" class="f-ui" /></ui:VisualElement>
+                <ui:Label text="RETRY" class="key-text key--retry f-ui" />
                 <ui:VisualElement class="keycap key--pause"><ui:Label text="P" class="f-ui" /></ui:VisualElement>
                 <ui:Label text="PAUSE" class="key-text key-text--last key--pause f-ui" />
             </ui:VisualElement>
