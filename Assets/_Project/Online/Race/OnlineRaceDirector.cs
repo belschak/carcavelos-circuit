@@ -17,7 +17,10 @@ namespace CarcavelosCircuit.Online
     // - sends my kart's pose 15 times a second and moves the other players' ProxyKarts (each in its player's own
     //   driver kart: the driver travels with the player, DriverChoice at join),
     // - reports my finish, builds the room's results (FinishOrderRules) and shows my place through RaceManager,
-    // - as the master (host): starts the race, moves the phase on, starts again (rematch), ?autostart=N.
+    // - as the master (host): starts the race, moves the phase on, starts again (rematch), ?autostart=N, and starts
+    //   by itself when nobody presses START (OnlineStartRules.RoomAutoStartAt),
+    // - never a dead end (20 Nov 2026): a full room goes on to the next room (OnlineRooms), a failed join tries
+    //   again by itself, and every message offers TRY AGAIN and RACE THE BOTS; an old page loads the newest build.
     // RaceManager stays the race brain; it only gets ExternalStartOnly (no key starts, no Enter-retry, no Q, no P)
     // and the external calls A1 built (BeginRaceExternal, ResetToReadyExternal, SetExternalPlace, LeaveOnlineMode).
     // Order -55: after LeaderboardHud (-60) wrote RaceKeys.TextEntryActive for this frame and before RaceHud (-50)
@@ -75,6 +78,14 @@ namespace CarcavelosCircuit.Online
         private float nextStatAt;
         private readonly ProxySmoothness statSmooth = new ProxySmoothness(); // since the last STAT line
         private readonly ProxySmoothness raceSmooth = new ProxySmoothness(); // during the current race
+        private int roomNumber = 1;       // the room this screen joins / is in (1 = the class room, 2.. = overflow)
+        private string roomName = OnlineRooms.SessionName;
+        private int overRaceId;           // the race whose end this screen saw (room auto start after a race)
+        private double overSince = double.NaN;
+        private bool autoStartLogged;
+        private float nextBuildCheckAt;   // OnlineBuildCheck: unscaled time of the next look, -1 = done
+        private float reloadAt = -1f;     // a newer build is out: reload at this unscaled time
+        private string reloadBuild = "";
 
         public static OnlineRaceDirector Current { get { return current; } }
         public IOnlineSession Session { get { return session; } }
@@ -154,7 +165,12 @@ namespace CarcavelosCircuit.Online
                 view.BackRequested += Close;
                 view.StartRequested += OnStartRequested;
                 view.LightRequested += OnLightToggled;
+                view.RetryRequested += OnRetryRequested;
+                view.BotsRequested += OnBotsRequested;
             }
+            roomNumber = flags.RoomNumber;
+            OnlineBuildCheck.Start();
+            nextBuildCheckAt = Time.unscaledTime + 1f;
 
             if (transportName == null)
             {
@@ -227,6 +243,10 @@ namespace CarcavelosCircuit.Online
                 RaceKeys.TextEntryActive = true; // the lobby owns the keyboard this frame (see the class comment)
             }
             ReadKeys();
+            if (CheckForNewerBuild())
+            {
+                return;
+            }
             if (session == null)
             {
                 if (retryAt >= 0f && Time.unscaledTime >= retryAt)
@@ -245,9 +265,7 @@ namespace CarcavelosCircuit.Online
                     }
                     break;
                 case OnlineStatus.Full:
-                    OnlineTestLog.Write("STATUS full room=" + OnlineTestLog.Room());
-                    DropSession();
-                    ShowMessage(OnlineRooms.FullMessage());
+                    OnRoomFull();
                     break;
                 case OnlineStatus.Failed:
                     string why = session.FailReason ?? "";
@@ -272,12 +290,73 @@ namespace CarcavelosCircuit.Online
                 retryAt = Time.unscaledTime + OnlineJoinRetry.RetryDelaySeconds;
                 if (view != null)
                 {
-                    view.ShowConnecting(OnlineJoinRetry.RetryLine(next));
+                    view.ShowConnecting(OnlineJoinRetry.RetryLine(next), true);
                 }
                 return;
             }
             OnlineTestLog.Write("STATUS " + kind + " room=" + OnlineTestLog.Room() + " reason=" + OnlineTestLog.Clean(reason));
-            ShowMessage(message);
+            ShowMessage(message, true);
+        }
+
+        // The room has no seat left: on to the next room (overflow, OnlineRooms) without a click; after the last room
+        // the message with TRY AGAIN and RACE THE BOTS.
+        private void OnRoomFull()
+        {
+            OnlineTestLog.Write("STATUS full room=" + OnlineTestLog.Room());
+            DropSession();
+            int next = OnlineRooms.NextRoom(roomNumber);
+            if (next > 0)
+            {
+                OnlineTestLog.Write("STATUS overflow room=" + OnlineTestLog.Room() + " next=" + OnlineRooms.SessionNameFor(next, flags.Seats));
+                string line = OnlineRooms.OverflowLine(roomNumber, next);
+                roomNumber = next;
+                JoinRoom(myName, 1, line);
+                return;
+            }
+            ShowMessage(OnlineRooms.MaxRooms > 1 ? OnlineRooms.AllFullMessage() : OnlineRooms.FullMessage(), true);
+        }
+
+        // A newer build is online (OnlineBuildCheck): leave the room, say so, and reload into it with the same name
+        // (back in the lobby by itself). True while that happens (nothing else runs then).
+        private bool CheckForNewerBuild()
+        {
+            if (reloadAt >= 0f)
+            {
+                if (Time.unscaledTime >= reloadAt)
+                {
+                    reloadAt = float.MaxValue; // once
+                    string name = myName.Length > 0 ? myName : (view != null ? view.TypedName : "");
+                    string cleaned;
+                    string room = roomNumber > 1 ? roomNumber.ToString() : "carcavelos";
+                    OnlineBuildCheck.Reload(reloadBuild, room, PlayerNameRules.Check(name, out cleaned) == NameProblem.None ? cleaned : "");
+                }
+                return true;
+            }
+            if (nextBuildCheckAt < 0f || Time.unscaledTime < nextBuildCheckAt)
+            {
+                return false;
+            }
+            nextBuildCheckAt = Time.unscaledTime + 1f;
+            string newer = OnlineBuildCheck.Newer();
+            if (newer.Length == 0)
+            {
+                return false;
+            }
+            bool racing = raceManager != null && (raceManager.State == RaceState.Countdown || raceManager.State == RaceState.Racing);
+            if (racing && session != null && session.Status == OnlineStatus.InRoom)
+            {
+                return false; // never in the middle of a lap (asked again after it): this build races fine with the room
+            }
+            nextBuildCheckAt = -1f;
+            OnlineTestLog.Write("STATUS newer-build room=" + OnlineTestLog.Room() + " build=" + OnlineTestLog.Clean(newer));
+            reloadBuild = newer;
+            reloadAt = Time.unscaledTime + OnlineBuildCheck.ReloadDelaySeconds;
+            DropSession();
+            if (view != null)
+            {
+                view.ShowConnecting(OnlineBuildCheck.ReloadLine);
+            }
+            return true;
         }
 
         // ?render=0 (scale-test bot): no 3D drawing at all, so a machine without a GPU keeps a normal frame rate and
@@ -339,6 +418,10 @@ namespace CarcavelosCircuit.Online
                 {
                     OnJoinRequested(view.TypedName);
                 }
+                else if (view.Current == OnlineLobbyView.Page.Message && view.OffersRetry)
+                {
+                    OnRetryRequested();
+                }
                 else if (session != null && session.Status == OnlineStatus.InRoom)
                 {
                     OnStartRequested();
@@ -355,12 +438,14 @@ namespace CarcavelosCircuit.Online
             if (sessionDirty)
             {
                 sessionDirty = false;
+                OnlineNames.Assign(session.Players); // before the proxies: a second ANA's tag says ANA 2
                 RememberPlayers();
                 SyncProxies();
                 rows = BuildRows(session.Control);
             }
             RaceControl control = session.Control;
             ApplyControl(control);
+            NoteRaceOver(control);
             if (control.RaceId == 0 && roster != null)
             {
                 // Lobby: stand on the slot the first race will give me (no pile-up in box 1). The setter re-places the
@@ -600,7 +685,13 @@ namespace CarcavelosCircuit.Online
                     return; // Changed fired: next frame works with the new control
                 }
             }
-            if (flags.AutoStart <= 0 || !CanStartNow(control))
+            if (flags.AutoStart <= 0)
+            {
+                autoStartReachedAt = -1.0;
+                RoomAutoStart(control);
+                return;
+            }
+            if (!CanStartNow(control))
             {
                 autoStartReachedAt = -1.0;
                 return;
@@ -622,6 +713,57 @@ namespace CarcavelosCircuit.Online
                 autoStartReachedAt = -1.0;
                 StartRace();
             }
+        }
+
+        // The room starts by itself when nobody presses START (OnlineStartRules.RoomAutoStartAt): the host's screen
+        // does it, and after a host change the next host does (same moment in the lobby on every screen).
+        private void RoomAutoStart(RaceControl control)
+        {
+            if (!CanStartNow(control))
+            {
+                return;
+            }
+            double at = AutoStartAt(control);
+            if (!double.IsNaN(at) && session.Now >= at)
+            {
+                OnlineTestLog.Write("AUTOSTART room=" + OnlineTestLog.Room() + " race=" + (control.RaceId + 1) + " players=" + session.Players.Count);
+                StartRace();
+            }
+        }
+
+        // When this room starts by itself (NaN = it does not: fewer than 2 players, a race still running, or the
+        // ?autostart test flag runs the start instead).
+        private double AutoStartAt(RaceControl control)
+        {
+            if (flags.AutoStart > 0 || session == null)
+            {
+                return double.NaN;
+            }
+            IReadOnlyList<OnlinePlayer> players = session.Players;
+            double over = control.RaceId > 0 && overRaceId == control.RaceId ? overSince : double.NaN;
+            return OnlineStartRules.RoomAutoStartAt(players.Count, OnlineStartRules.LastJoinedAt(players), control.RaceId, over);
+        }
+
+        // Remembers when this screen saw the current race end for everyone (the rematch wait counts from there).
+        private void NoteRaceOver(RaceControl control)
+        {
+            if (control.RaceId > 0 && control.RaceId == appliedRaceId && overRaceId != control.RaceId && FinishOrderRules.AllDone(rows))
+            {
+                overRaceId = control.RaceId;
+                overSince = session.Now;
+            }
+        }
+
+        // "RACE STARTS BY ITSELF IN 45 S", or "" when the room does not start by itself now.
+        private string AutoStartText(RaceControl control)
+        {
+            double at = AutoStartAt(control);
+            if (double.IsNaN(at))
+            {
+                return "";
+            }
+            bool over = control.RaceId <= 0 || FinishOrderRules.AllDone(rows);
+            return over ? OnlineStartRules.AutoStartLine(at - session.Now) : "";
         }
 
         // May the host start (again) right now? In the lobby from the start screen; after a race only once it is
@@ -657,6 +799,7 @@ namespace CarcavelosCircuit.Online
                 return;
             }
             bool canStart = CanStartNow(control);
+            string autoLine = AutoStartText(control);
             if (state == RaceState.Results || timedOut)
             {
                 view.ShowResults(rows, session.LocalId, canStart, ResultsWaitLine(control, canStart), timedOut ? "TIME UP: ROOM RESULTS" : "ROOM RESULTS");
@@ -675,7 +818,11 @@ namespace CarcavelosCircuit.Online
             }
             else if (!canStart)
             {
-                status = "WAITING FOR THE HOST";
+                status = autoLine.Length > 0 ? autoLine : "WAITING FOR THE HOST";
+            }
+            else
+            {
+                status = autoLine; // the host: next to START RACE
             }
             view.ShowRoom(players, session.LocalId, masterId, status, canStart, TimeOfDayChoice.Current);
         }
@@ -684,15 +831,16 @@ namespace CarcavelosCircuit.Online
         // else the wait for the host.
         private string ResultsWaitLine(RaceControl control, bool canStart)
         {
-            if (canStart)
-            {
-                return "";
-            }
             if (control.RaceId > 0 && !FinishOrderRules.AllDone(rows))
             {
-                return OnlineRaceLimitRules.ClosesLine(OnlineRaceLimitRules.SecondsLeft(session.Now, control.StartAt, raceEndSeconds));
+                return canStart ? "" : OnlineRaceLimitRules.ClosesLine(OnlineRaceLimitRules.SecondsLeft(session.Now, control.StartAt, raceEndSeconds));
             }
-            return "WAITING FOR THE HOST";
+            string autoLine = AutoStartText(control);
+            if (canStart)
+            {
+                return autoLine; // under START AGAIN
+            }
+            return autoLine.Length > 0 ? autoLine : "WAITING FOR THE HOST";
         }
 
         // ---- Session events (main thread, see IOnlineSession) ----
@@ -843,7 +991,7 @@ namespace CarcavelosCircuit.Online
                 {
                     knownPlayers.TryGetValue(id, out known);
                 }
-                string name = known != null ? known.Name : "PLAYER";
+                string name = known != null ? known.DisplayName : "PLAYER";
                 bool finished = known != null && known.HasFinished(control.RaceId);
                 double seconds = finished ? known.FinishSeconds : double.NaN;
                 entries.Add(new FinishEntry(id, name, present != null, finished, seconds));
@@ -884,6 +1032,38 @@ namespace CarcavelosCircuit.Online
             }
         }
 
+        // TRY AGAIN on the message page: from the room the address asked for (room 1 normally), with the last name.
+        private void OnRetryRequested()
+        {
+            if (session != null || reloadAt >= 0f)
+            {
+                return;
+            }
+            string name = myName.Length > 0 ? myName : SettingsStore.LoadPlayerName();
+            string cleaned;
+            if (PlayerNameRules.Check(name, out cleaned) != NameProblem.None)
+            {
+                ShowRooms(name, "");
+                return;
+            }
+            roomNumber = flags.RoomNumber;
+            OnlineTestLog.Write("STATUS try-again room=" + OnlineRooms.SessionNameFor(roomNumber, flags.Seats));
+            JoinRoom(cleaned);
+        }
+
+        // RACE THE BOTS: out of the online lobby, Race vs Bots picked, the start screen ready (no internet needed).
+        private void OnBotsRequested()
+        {
+            RaceManager manager = raceManager;
+            OnlineTestLog.Write("STATUS bots room=" + OnlineTestLog.Room());
+            Close();
+            if (manager != null)
+            {
+                string refused;
+                manager.TrySelectMode(RaceMode.RaceVsBots, out refused);
+            }
+        }
+
         private void OnStartRequested()
         {
             if (session != null && session.Status == OnlineStatus.InRoom && CanStartNow(session.Control))
@@ -893,7 +1073,7 @@ namespace CarcavelosCircuit.Online
         }
 
         // Into the one room (OnlineRooms) with my name, a room colour and my picked driver. The light stays mine.
-        private void JoinRoom(string cleanedName, int attempt = 1)
+        private void JoinRoom(string cleanedName, int attempt = 1, string connectingLine = null)
         {
             joinAttempt = attempt;
             retryAt = -1f;
@@ -907,6 +1087,15 @@ namespace CarcavelosCircuit.Online
             resultLoggedRace = 0;
             lastLoggedState = RaceState.Ready;
             nextStatAt = 0f;
+            overRaceId = 0;
+            overSince = double.NaN;
+            roomName = OnlineRooms.SessionNameFor(roomNumber, flags.Seats);
+            OnlineTestLog.CurrentRoom = roomName;
+            if (view != null)
+            {
+                view.RoomLabel = OnlineRooms.LabelFor(roomNumber);
+                view.Seats = OnlineRooms.SeatsOf(roomName);
+            }
             statSmooth.Reset();
             raceSmooth.Reset();
             session = OnlineSessions.Create(transportName);
@@ -928,9 +1117,9 @@ namespace CarcavelosCircuit.Online
             nextPoseAt = 0f;
             if (view != null)
             {
-                view.ShowConnecting(attempt > 1 ? OnlineJoinRetry.RetryLine(attempt) : "CONNECTING...");
+                view.ShowConnecting(connectingLine ?? (attempt > 1 ? OnlineJoinRetry.RetryLine(attempt) : "CONNECTING..."), attempt > 1);
             }
-            session.Join(OnlineRooms.SessionName, cleanedName, OnlineColours.RandomIndex(new System.Random()), DriverChoice.Loadout.Code);
+            session.Join(roomName, cleanedName, OnlineColours.RandomIndex(new System.Random()), DriverChoice.Loadout.Code);
             sessionDirty = true;
         }
 
@@ -959,7 +1148,7 @@ namespace CarcavelosCircuit.Online
             view.ShowRooms(name, problem, TimeOfDayChoice.Current);
         }
 
-        private void ShowMessage(string text)
+        private void ShowMessage(string text, bool offerRetry = false)
         {
             if (view == null)
             {
@@ -967,7 +1156,7 @@ namespace CarcavelosCircuit.Online
                 Close();
                 return;
             }
-            view.ShowMessage(text);
+            view.ShowMessage(text, offerRetry);
         }
 
         // Out of the room: proxies gone, autopilot off, my grid slot back to normal, the session closed.

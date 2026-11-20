@@ -12,6 +12,11 @@ namespace CarcavelosCircuit.Online
     {
         public int Id { get; private set; }
         public string Name { get; private set; }
+        // The name on screen: Name, or "ANA 2" when someone who joined earlier already shows that name (OnlineNames,
+        // given once by the director the first time it sees the player, so a name tag never changes mid-race).
+        public string DisplayName { get { return string.IsNullOrEmpty(displayName) ? Name : displayName; } }
+        public bool HasDisplayName { get { return !string.IsNullOrEmpty(displayName); } }
+        private string displayName;
         public int ColourIndex { get; private set; }
         public int DriverIndex { get; private set; }
         public double JoinedAt { get; private set; }    // shared clock when the player joined (join order = roster order)
@@ -27,6 +32,11 @@ namespace CarcavelosCircuit.Online
             ColourIndex = colourIndex;
             JoinedAt = joinedAt;
             DriverIndex = SafeDriver(driverIndex);
+        }
+
+        public void SetDisplayName(string name)
+        {
+            displayName = name;
         }
 
         // A kart set number KartLoadout can read; anything else = the Rookie's own set.

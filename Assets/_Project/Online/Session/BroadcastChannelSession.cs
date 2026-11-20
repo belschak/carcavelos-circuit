@@ -47,6 +47,7 @@ namespace CarcavelosCircuit.Online
         private double connectUntil;
         private double nextHeartbeat;
         private bool channelOpen;
+        private int seats = OnlineRooms.MaxPlayers; // of the room joined last (OnlineRooms.SeatsOf, ?seats= test rooms)
 
         public OnlineStatus Status { get; private set; } = OnlineStatus.Idle;
         public string FailReason { get; private set; } = "";
@@ -115,6 +116,7 @@ namespace CarcavelosCircuit.Online
                 return;
             }
             channelOpen = true;
+            seats = OnlineRooms.SeatsOf(room);
             LocalId = RandomId();
             me = new OnlinePlayer(LocalId, SafeName(name), colourIndex, Now, driverIndex);
             players.Clear();
@@ -223,7 +225,7 @@ namespace CarcavelosCircuit.Online
         // After listening for a moment we know who is in: full = we never were; else we are in.
         private void FinishConnecting()
         {
-            if (players.Count > OnlineRooms.MaxPlayers)
+            if (players.Count > seats)
             {
                 Post("leave|" + LocalId);
                 Close();
@@ -318,7 +320,7 @@ namespace CarcavelosCircuit.Online
             {
                 return true;
             }
-            if (players.Count >= OnlineRooms.MaxPlayers + 1)
+            if (players.Count >= seats + 1)
             {
                 return false; // more than a full room plus us: ignore the rest
             }

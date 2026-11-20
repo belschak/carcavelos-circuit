@@ -12,6 +12,13 @@ namespace CarcavelosCircuit.Online
         public const float MinCountdownStepSeconds = 0.05f; // the quickest step for a client that is very late
         public const double AutoStartSeconds = 5.0;    // ?autostart=N: the host waits this long after the Nth player
         public const double AutoRematchSeconds = 8.0;  // ?autostart=N: results stay this long before the next round
+        // The room never waits for ever (20 Nov 2026, presentation safety): the host may be a student whose phone went
+        // into a pocket. With 2+ players the host's screen starts the race by itself RoomStartSeconds after the last
+        // player came in (every new player gives the class the full wait again), and the next round RoomRematchSeconds
+        // after a race is over for everyone (or after the last join, whichever is later). The host can always start earlier.
+        public const double RoomStartSeconds = 90.0;
+        public const double RoomRematchSeconds = 45.0;
+        public const int RoomAutoStartPlayers = 2;
 
         // The moment of GO for a race the master starts now.
         public static double StartAtFor(double now)
@@ -99,6 +106,57 @@ namespace CarcavelosCircuit.Online
         public static bool AutoStartHasEnough(int wanted, int players)
         {
             return wanted >= 2 && players >= wanted;
+        }
+
+        // The moment the room starts by itself (shared clock), or NaN when it does not (fewer than 2 players).
+        // lastJoinedAt = the latest JoinedAt in the room; overSince = when the last race was over on this screen
+        // (NaN before the first race). The same players give the same moment on every screen in the lobby; after a
+        // race each screen counts from when it saw the race end (a fraction of a second apart).
+        public static double RoomAutoStartAt(int players, double lastJoinedAt, int raceId, double overSince)
+        {
+            if (players < RoomAutoStartPlayers || double.IsNaN(lastJoinedAt))
+            {
+                return double.NaN;
+            }
+            if (raceId <= 0)
+            {
+                return lastJoinedAt + RoomStartSeconds;
+            }
+            if (double.IsNaN(overSince))
+            {
+                return double.NaN; // the race is not over yet
+            }
+            // a player who came in while the results showed gets the same rematch wait from their join
+            return (overSince > lastJoinedAt ? overSince : lastJoinedAt) + RoomRematchSeconds;
+        }
+
+        // The latest JoinedAt in the room (NaN for nobody).
+        public static double LastJoinedAt(IReadOnlyList<OnlinePlayer> players)
+        {
+            double latest = double.NaN;
+            for (int i = 0; players != null && i < players.Count; i++)
+            {
+                if (players[i] != null && (double.IsNaN(latest) || players[i].JoinedAt > latest))
+                {
+                    latest = players[i].JoinedAt;
+                }
+            }
+            return latest;
+        }
+
+        // "RACE STARTS BY ITSELF IN 45 S" (whole 5 s steps above 10 s, so the lobby is not rebuilt every second).
+        public static string AutoStartLine(double secondsLeft)
+        {
+            if (double.IsNaN(secondsLeft))
+            {
+                return "";
+            }
+            int s = secondsLeft <= 0.0 ? 0 : (int)System.Math.Ceiling(secondsLeft);
+            if (s > 10)
+            {
+                s = ((s + 4) / 5) * 5;
+            }
+            return "RACE STARTS BY ITSELF IN " + s + " S";
         }
     }
 }
