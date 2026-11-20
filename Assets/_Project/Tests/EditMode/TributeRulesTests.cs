@@ -74,6 +74,20 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void CreditsPage1_ShowsEveryTeamMemberWithTheFullNameFromTheReadme()
+        {
+            // The 2026-11-08 rule: credits names exactly as docs/team.md, which now has every surname (Noah Schlag).
+            string uxml = File.ReadAllText(Path.Combine(Application.dataPath, "_Project/RaceFlow/UI/RaceHud.uxml"));
+            string readme = File.ReadAllText(Path.Combine(Application.dataPath, "../README.md"));
+            string[] team = { "David Belschak", "Luc Tippmann", "Alessandro Rossi", "Noah Schlag" };
+            for (int i = 0; i < team.Length; i++)
+            {
+                StringAssert.Contains("| " + team[i] + " |", readme, "the README team table");
+                StringAssert.Contains("text=\"" + team[i].ToUpperInvariant() + "\"", uxml, "credits page 1");
+            }
+        }
+
+        [Test]
         public void BoardPicture_DrawsTheNamesInTheSameOrder()
         {
             string script = File.ReadAllText(Path.Combine(Application.dataPath, "../tools/textures/make_tribute_boards.py"));

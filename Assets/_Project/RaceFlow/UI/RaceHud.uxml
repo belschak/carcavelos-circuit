@@ -367,7 +367,7 @@
                             <ui:VisualElement class="credit-person">
                                 <ui:VisualElement class="credit-badge"><ui:Label text="2" class="credit-badge-num f-display" /></ui:VisualElement>
                                 <ui:VisualElement class="credit-words">
-                                    <ui:Label text="NOAH" class="credit-name f-ui" />
+                                    <ui:Label text="NOAH SCHLAG" class="credit-name f-ui" />
                                     <ui:Label text="CAMPUS TRACK + RACE RULES" class="credit-role f-ui" />
                                 </ui:VisualElement>
                             </ui:VisualElement>
