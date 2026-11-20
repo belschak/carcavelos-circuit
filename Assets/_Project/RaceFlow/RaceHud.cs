@@ -892,7 +892,8 @@ namespace CarcavelosCircuit.RaceFlow
             Medal target = raceManager.NextMedalTarget;
             bool topTier = target == Medal.None && raceManager.BestMedal == Medal.DeansList;
             float seconds = raceManager.MedalSeconds(target);
-            bool hasChip = raceManager.IsSetUp && (topTier || seconds > 0f);
+            // Online laps earn no medals (RaceModeRules.KeepsRecords), so no medal target there (20 Nov 2026).
+            bool hasChip = raceManager.IsSetUp && RaceModeRules.KeepsRecords(raceManager.Mode) && (topTier || seconds > 0f);
             if (shownTarget.Changed(hasChip ? (int)target : -1))
             {
                 SetMedalClass(medalTarget, topTier ? Medal.DeansList : target);
@@ -920,7 +921,8 @@ namespace CarcavelosCircuit.RaceFlow
         // One number holds both facts (lap in ms x 2, +1 for Dean's), so the texts are written only when one changes.
         private void UpdateGhostChip(RaceState state)
         {
-            bool hasGhost = ghostPlayer != null && ghostPlayer.HasGhost;
+            // Online there is no ghost on the road (RaceModeRules.HasGhost): the chip said "GHOST: YOUR BEST" anyway.
+            bool hasGhost = ghostPlayer != null && ghostPlayer.HasGhost && RaceModeRules.HasGhost(raceManager.Mode);
             int key = -1;
             if (hasGhost)
             {
