@@ -90,7 +90,7 @@ namespace CarcavelosCircuit.Online
             {
                 PlayerId = player.Id;
                 DriverIndex = player.DriverIndex;
-                displayName = string.IsNullOrEmpty(player.Name) ? "PLAYER" : player.Name;
+                displayName = string.IsNullOrEmpty(player.DisplayName) ? "PLAYER" : player.DisplayName; // "ANA 2" (OnlineNames)
                 colour = OnlineColours.Of(player.ColourIndex);
                 if (player.HasPose)
                 {

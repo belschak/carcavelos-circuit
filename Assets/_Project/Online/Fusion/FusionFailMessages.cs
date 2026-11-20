@@ -9,6 +9,8 @@ namespace CarcavelosCircuit.Online.Fusion
     // which the player sees as "server full".
     public static class FusionFailMessages
     {
+        public const string NoServerMessage = "CAN'T REACH THE GAME SERVER: TRY ANOTHER WI-FI OR A PHONE HOTSPOT";
+
         public static OnlineStatus StatusOf(ShutdownReason reason)
         {
             return reason == ShutdownReason.GameIsFull ? OnlineStatus.Full : OnlineStatus.Failed;
@@ -46,6 +48,9 @@ namespace CarcavelosCircuit.Online.Fusion
                     return "CONNECTING WAS CANCELLED";
                 case ShutdownReason.Ok:
                     return "DISCONNECTED";
+                case ShutdownReason.Error:
+                    // the browser could not open the connection at all (20 Nov 2026: Photon host names blocked)
+                    return NoServerMessage;
                 default:
                     return "CONNECTION FAILED (" + reason + ")";
             }
