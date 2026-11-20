@@ -48,8 +48,8 @@ namespace CarcavelosCircuit.Tests.EditMode
             string uss = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "FrontEnd.uss"));
             int live = uss.IndexOf(".intro-in .pc--live {");
             Assert.Greater(live, 0, "the live postcard rule exists");
-            StringAssert.StartsWith(".intro-in .pc--live {
-    transition-delay: 0s;", uss.Substring(live).Replace("", ""));
+            string rule = uss.Substring(live, System.Math.Min(80, uss.Length - live));
+            StringAssert.Contains("transition-delay: 0s;", rule.Substring(0, rule.IndexOf('}')), "the rule sets no delay");
         }
 
         [Test]
