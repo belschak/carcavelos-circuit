@@ -215,6 +215,10 @@ namespace CarcavelosCircuit.RaceFlow.Editor
         public const string WorldDxtPlaceholder = "__CC_WORLD_DXT__";
         public const string WorldEtc2Placeholder = "__CC_WORLD_ETC2__";
         public const string WorldSharePlaceholder = "0/*__CC_WORLD_SHARE__*/";
+        // Unpacked sizes of the two world files: the page counts the bytes of the world download it starts itself
+        // (load time, 20 Nov), so its bar and "about N s left" follow the world from the first second.
+        public const string WorldDxtBytesPlaceholder = "0/*__CC_WORLD_DXT_BYTES__*/";
+        public const string WorldEtc2BytesPlaceholder = "0/*__CC_WORLD_ETC2_BYTES__*/";
         private const string WorldBundleFolder = "Build-WorldBundles";
         private const string WorldBundleName = "world";
         private static WorldFiles worldFiles;
@@ -224,6 +228,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             public string Dxt;   // file name in Build/, world-<md5>.bundle
             public string Etc2;  // null when phones use the DXT files (no ETC2 .data either)
             public float Share;  // the world's part of a desktop download (gzip), for the page's loading bar
+            public long DxtBytes;  // file sizes (what the page counts while downloading)
+            public long Etc2Bytes;
         }
 
         private static bool WorldAsOwnFile(string[] scenes, bool gzipForItch)
@@ -294,6 +300,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             {
                 files.Etc2 = CopyHashed(Path.Combine(WorldBundleFolder, "etc2", WorldBundleName), build);
             }
+            files.DxtBytes = new FileInfo(Path.Combine(build, files.Dxt)).Length;
+            files.Etc2Bytes = files.Etc2 != null ? new FileInfo(Path.Combine(build, files.Etc2)).Length : 0;
             long world = GzipSize(Path.Combine(build, files.Dxt));
             long game = 0;
             foreach (string file in Directory.GetFiles(build))
@@ -347,6 +355,8 @@ namespace CarcavelosCircuit.RaceFlow.Editor
             {
                 html = html.Replace(WorldEtc2Placeholder, files.Etc2);
             }
+            html = html.Replace(WorldDxtBytesPlaceholder, files.DxtBytes.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            html = html.Replace(WorldEtc2BytesPlaceholder, files.Etc2Bytes.ToString(System.Globalization.CultureInfo.InvariantCulture));
             return html.Replace(WorldSharePlaceholder, files.Share.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture));
         }
 

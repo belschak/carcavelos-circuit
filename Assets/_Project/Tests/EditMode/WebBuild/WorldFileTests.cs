@@ -43,6 +43,29 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void StampWorldHtml_FillsTheWorldSizes()
+        {
+            // Load time 20 Nov: the page counts the world bytes of its own early download against these sizes.
+            string html = File.ReadAllText(TemplatePath);
+            var files = new Role4WebBuild.WorldFiles { Dxt = "world-aa.bundle", Etc2 = "world-bb.bundle", Share = 0.5f, DxtBytes = 30574697, Etc2Bytes = 42000000 };
+            string stamped = Role4WebBuild.StampWorldHtml(html, files);
+            StringAssert.Contains("var worldBytes = { dxt: 30574697, etc2: 42000000 };", stamped);
+            StringAssert.DoesNotContain(Role4WebBuild.WorldDxtBytesPlaceholder, stamped);
+        }
+
+        [Test]
+        public void Template_StartsAllDownloadsAtOnce_AndResumesThem()
+        {
+            // The download layer (index.html "Downloads: all at once"): every Build/ file Unity fetches goes through it.
+            string html = File.ReadAllText(TemplatePath);
+            StringAssert.Contains("var worldBytes = { dxt: " + Role4WebBuild.WorldDxtBytesPlaceholder + ", etc2: " + Role4WebBuild.WorldEtc2BytesPlaceholder + " };", html);
+            StringAssert.Contains("ccDownloads.begin(config.codeUrl, config.dataUrl,", html);
+            StringAssert.Contains("Range: \"bytes=\" + offset + \"-\"", html, "a dropped download carries on where it stopped");
+            StringAssert.Contains("\"UnityCache_\" + config.companyName + \"_\" + config.productName", html, "files in Unity's cache are not fetched again");
+            Assert.Less(html.IndexOf("var ccDownloads", System.StringComparison.Ordinal), html.IndexOf("function startDownload()", System.StringComparison.Ordinal));
+        }
+
+        [Test]
         public void StampWorldHtml_WithoutEtc2_PhonesUseTheDxtWorld()
         {
             string html = File.ReadAllText(TemplatePath);
