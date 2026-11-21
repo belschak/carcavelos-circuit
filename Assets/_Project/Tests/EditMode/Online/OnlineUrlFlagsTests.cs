@@ -94,8 +94,9 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(1, OnlineUrlFlags.Parse("x?driver=Tiago").Driver, "Luc's model name still works");
             Assert.AreEqual(1, OnlineUrlFlags.Parse("x?driver=Claudio").Driver, "the teacher's name without the accent");
             Assert.AreEqual(1, OnlineUrlFlags.Parse("x?driver=Cl%C3%A1udio").Driver, "and with it, as a link writes it");
-            Assert.AreEqual(2, OnlineUrlFlags.Parse("x?driver=luis").Driver);
-            Assert.AreEqual(-1, OnlineUrlFlags.Parse("x?driver=Joao").Driver, "João is a bot, not a driver");
+            Assert.AreEqual(2, OnlineUrlFlags.Parse("x?driver=nova").Driver);
+            Assert.AreEqual(-1, OnlineUrlFlags.Parse("x?driver=luis").Driver, "Luís drives a Classic bot, not a roster driver");
+            Assert.AreEqual(-1, OnlineUrlFlags.Parse("x?driver=Joao").Driver, "João does not race");
             Assert.AreEqual(3, OnlineUrlFlags.Parse("x?driver=amara").Driver);
             Assert.AreEqual(2, OnlineUrlFlags.Parse("x?driver=2").Driver);
             Assert.AreEqual(0, OnlineUrlFlags.Parse("x?driver=rookie").Driver);

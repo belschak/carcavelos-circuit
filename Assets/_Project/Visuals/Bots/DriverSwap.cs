@@ -7,24 +7,25 @@ namespace CarcavelosCircuit.Visuals
     // Driver select (Luc, 17 Nov 2026): who the five bots are once the player picked a driver (RaceFlow's
     // DriverChoice). Luc's rule: the three drivers the player did not pick race in their own karts, plus two
     // repainted Nova Classics (red and green), so the grid stays at six karts.
-    // Names (David, 20 Nov 2026): every bot is a first name of the teaching staff (RaceFlow's TributeRules.GivenNames)
-    // and no name races twice. The teacher whose kart the player took drives the red Classic, and João (the second
-    // given name of Ricardo João Gil Pereira) the green one, so the five bots are always Ricardo, João, Cláudio, Luís
-    // and Paulo. The driving style of seat i is BotSettings' profile i (pace, cornering, lane, drifting); only name,
-    // colour and kart change.
+    // Names (David, 20 Nov 2026; Luc, 21 Nov 2026): the roster drivers race under their own names (Ricardo, Cláudio,
+    // Nova, Amara) and the two repainted Classics are always Luís (red) and Paulo (green), the two teachers without a
+    // roster driver. The Classic is Luc's male Rookie model, so it only ever carries a man's name (before, the picked
+    // driver's name went on the red Classic, which put "Nova" or "Amara" on the Rookie). No name races twice. The
+    // driving style of seat i is BotSettings' profile i (pace, cornering, lane, drifting); only name, colour and kart
+    // change.
     public static class DriverSwap
     {
-        // The green Classic's driver: the one given name of the staff that is not a driver in DriverRoster.
-        public const string ExtraName = "João";
+        // The Classics' drivers, red then green: the teachers Luís and Paulo (RaceFlow's TributeRules, credits order).
+        public static readonly string[] ClassicNames = { TributeRules.FirstName(2), TributeRules.FirstName(3) };
         public static readonly Color[] CopyColours = { new Color(0.88f, 0.16f, 0.16f), new Color(0.16f, 0.66f, 0.36f) };
 
-        // Who drives the repainted Classics for this pick: the picked teacher (red), then João (green). A pick outside
-        // the roster (never happens, DriverChoice checks it) leaves all four teachers in their own karts, so only João.
+        // Who drives the repainted Classics for this pick: Luís (red) and Paulo (green). A pick outside the roster
+        // (never happens, DriverChoice checks it) leaves all four drivers in their own karts, so only Luís (green).
         public static string[] CopyNames(int picked)
         {
             return DriverRoster.IsValid(picked)
-                ? new[] { DriverRoster.Get(picked).Name, ExtraName }
-                : new[] { ExtraName };
+                ? new[] { ClassicNames[0], ClassicNames[1] }
+                : new[] { ClassicNames[0] };
         }
 
         // One bot on the grid: its profile (name, colour, style), its kart model, and whether the kart gets repainted.
