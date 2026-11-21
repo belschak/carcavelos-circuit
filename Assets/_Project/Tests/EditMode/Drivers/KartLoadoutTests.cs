@@ -187,7 +187,7 @@ namespace CarcavelosCircuit.Tests.EditMode
                 Assert.AreEqual(0, driverEvents, "kart and tyres are no new driver (the bots stay)");
                 Assert.AreEqual(2, setEvents);
                 Assert.IsTrue(DriverChoice.Select(3, false));
-                Assert.AreEqual(new KartLoadout(3, 1, 2), DriverChoice.Loadout, "Paulo takes the buggy on balloon tyres");
+                Assert.AreEqual(new KartLoadout(3, 1, 2), DriverChoice.Loadout, "Amara takes the buggy on balloon tyres");
                 Assert.AreEqual(1, driverEvents);
                 Assert.AreEqual(3, setEvents);
                 Assert.IsTrue(DriverChoice.SelectKart(1, false), "the same kart again is accepted");

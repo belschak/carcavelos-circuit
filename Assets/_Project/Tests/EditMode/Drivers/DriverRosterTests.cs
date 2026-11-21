@@ -8,7 +8,8 @@ namespace CarcavelosCircuit.Tests.EditMode
 {
     // Driver select (Luc, 17 Nov 2026): the four roster drivers with their karts, the bot lineup (the three drivers
     // not picked + two repainted Nova Classics) and the wrap-around of the arrow keys.
-    // Names (David, 20 Nov 2026): every driver and every bot carries a first name of the teaching staff.
+    // Names (David, 20 Nov 2026; Luc, 21 Nov 2026): Ricardo and Cláudio carry teachers' first names, Luc's two female
+    // characters keep their own (Nova, Amara), and the teachers Luís and Paulo drive the two repainted Classics.
     public class DriverRosterTests
     {
         [Test]
@@ -33,14 +34,18 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
-        public void Drivers_AreTheTeachersFirstNames_InTheCreditsOrder()
+        public void Drivers_TwoTeachersFirstNames_ThenLucsTwoWomenUnderTheirOwnNames()
         {
-            Assert.AreEqual(new[] { "Ricardo", "Cláudio", "Luís", "Paulo" },
+            Assert.AreEqual(new[] { "Ricardo", "Cláudio", "Nova", "Amara" },
                 new[] { DriverRoster.Get(0).Name, DriverRoster.Get(1).Name, DriverRoster.Get(2).Name, DriverRoster.Get(3).Name });
-            for (int i = 0; i < DriverRoster.Count; i++)
+            for (int i = 0; i < 2; i++)
             {
                 Assert.AreEqual(TributeRules.FirstName(i), DriverRoster.Get(i).Name, "driver " + i + " = teacher " + i + " of the credits");
-                CollectionAssert.Contains(TributeRules.GivenNames, DriverRoster.Get(i).Name);
+            }
+            for (int i = 2; i < DriverRoster.Count; i++)
+            {
+                Assert.AreEqual(DriverRoster.Get(i).Model, DriverRoster.Get(i).Name, "Luc's female characters race under their own names");
+                CollectionAssert.DoesNotContain(TributeRules.GivenNames, DriverRoster.Get(i).Name, "no woman drives under a teacher's (man's) name");
             }
             Assert.AreEqual(new[] { "Rookie", "Tiago", "Nova", "Amara" },
                 new[] { DriverRoster.Get(0).Model, DriverRoster.Get(1).Model, DriverRoster.Get(2).Model, DriverRoster.Get(3).Model },
@@ -48,7 +53,7 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
-        public void Lineup_TheThreeOthersInTheirKarts_ThenThePickedTeacherAndJoaoInRepaintedClassics()
+        public void Lineup_TheThreeOthersInTheirKarts_ThenLuisAndPauloInRepaintedClassics()
         {
             BotSettings settings = ScriptableObject.CreateInstance<BotSettings>();
             try
@@ -61,10 +66,17 @@ namespace CarcavelosCircuit.Tests.EditMode
                     for (int i = 0; i < seats.Count; i++)
                     {
                         Assert.IsTrue(names.Add(seats[i].Profile.displayName), "no name twice on the grid");
-                        CollectionAssert.Contains(TributeRules.GivenNames, seats[i].Profile.displayName, "every bot is a teacher's first name");
                         Assert.AreEqual(settings.Bot(i).pace, seats[i].Profile.pace, "seat " + i + " keeps that bot's driving style");
                     }
-                    CollectionAssert.AreEquivalent(TributeRules.GivenNames, names, "all five first names of the staff race, each once");
+                    var expected = new List<string>(DriverSwap.ClassicNames);
+                    for (int d = 0; d < DriverRoster.Count; d++)
+                    {
+                        if (d != picked)
+                        {
+                            expected.Add(DriverRoster.Get(d).Name);
+                        }
+                    }
+                    CollectionAssert.AreEquivalent(expected, names, "the three drivers not picked, plus Luís and Paulo");
                     for (int i = 0; i < 3; i++)
                     {
                         int driver = DriverRoster.IndexOf(seats[i].Profile.displayName);
@@ -73,11 +85,12 @@ namespace CarcavelosCircuit.Tests.EditMode
                         Assert.AreEqual(DriverRoster.Get(driver).KartVisual, seats[i].KartVisual, "a roster driver races in their own kart");
                         Assert.IsFalse(seats[i].Repaint, "roster karts keep their own paint");
                     }
-                    string[] copies = { DriverRoster.Get(picked).Name, DriverSwap.ExtraName };
+                    string[] copies = { "Luís", "Paulo" };
                     for (int c = 0; c < 2; c++)
                     {
                         DriverSwap.Seat copy = seats[3 + c];
-                        Assert.AreEqual(copies[c], copy.Profile.displayName);
+                        Assert.AreEqual(copies[c], copy.Profile.displayName, "the Classic (Luc's male Rookie model) only carries a man's name");
+                        Assert.AreEqual(-1, DriverRoster.IndexOf(copy.Profile.displayName), "a Classic driver is never a roster driver");
                         Assert.AreEqual(DriverSwap.CopyColours[c], copy.Profile.colour);
                         Assert.AreEqual(DriverRoster.Get(DriverRoster.Rookie).KartVisual, copy.KartVisual, "the copies drive the Nova Classic");
                         Assert.IsTrue(copy.Repaint, "repainted, so they do not look like the player's Classic");
@@ -91,7 +104,7 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
-        public void Lineup_PickOutsideTheRoster_FourTeachersAndJoao()
+        public void Lineup_PickOutsideTheRoster_FourDriversAndLuis()
         {
             List<DriverSwap.Seat> seats = DriverSwap.Lineup(-1, null);
             Assert.AreEqual(5, seats.Count, "still five bots");
@@ -100,8 +113,9 @@ namespace CarcavelosCircuit.Tests.EditMode
             {
                 names.Add(seats[i].Profile.displayName);
             }
-            CollectionAssert.AreEquivalent(TributeRules.GivenNames, names);
-            Assert.AreEqual(DriverSwap.ExtraName, seats[4].Profile.displayName);
+            CollectionAssert.AreEquivalent(new[] { "Ricardo", "Cláudio", "Nova", "Amara", "Luís" }, names);
+            Assert.AreEqual("Luís", seats[4].Profile.displayName);
+            Assert.AreEqual(DriverSwap.CopyColours[1], seats[4].Profile.colour, "the one Classic is the green one");
         }
 
         [Test]
@@ -127,11 +141,13 @@ namespace CarcavelosCircuit.Tests.EditMode
         [TestCase("Tiago", 1)]   // Luc's model name: old ?driver=Tiago links keep their driver
         [TestCase("Ricardo", 0)]
         [TestCase("Rookie", 0)]
-        [TestCase("LUIS", 2)]
+        [TestCase("NOVA", 2)]
         [TestCase("Nova", 2)]
-        [TestCase("paulo", 3)]
+        [TestCase("amara", 3)]
         [TestCase("Amara", 3)]
-        [TestCase("João", -1)]   // a bot, not a driver
+        [TestCase("Luís", -1)]   // drives a Classic, not a roster driver
+        [TestCase("paulo", -1)]  // drives a Classic, not a roster driver
+        [TestCase("João", -1)]   // not in the race any more
         [TestCase("", -1)]
         [TestCase(null, -1)]
         [TestCase("Claud", -1)]

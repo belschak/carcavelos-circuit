@@ -17,9 +17,10 @@ namespace CarcavelosCircuit.RaceFlow
             "Paulo Marques",
         };
 
-        // David, 20 Nov 2026: every driver and every bot carries a first name of the teaching staff. These are the
-        // given names in Teachers, in the same order (Ricardo João Gil Pereira has two, Ricardo and João). The four
-        // drivers of DriverRoster are the first given name of each teacher; João is the fifth bot (DriverSwap).
+        // David, 20 Nov 2026: the drivers and bots carry first names of the teaching staff. These are the given names
+        // in Teachers, in the same order (Ricardo João Gil Pereira has two, Ricardo and João). Luc, 21 Nov 2026: Ricardo
+        // and Cláudio are roster drivers, Luís and Paulo drive the two repainted Classics (DriverSwap), and Luc's two
+        // female characters keep their own names (Nova, Amara). João stays only as a BotSettings default name.
         public static readonly string[] GivenNames = { "Ricardo", "João", "Cláudio", "Luís", "Paulo" };
 
         // The first given name of teacher i ("Cláudio Vieira" -> "Cláudio"), "" outside the list.

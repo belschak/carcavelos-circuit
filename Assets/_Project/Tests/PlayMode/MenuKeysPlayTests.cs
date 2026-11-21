@@ -231,7 +231,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
             yield return Press(Key.LeftArrow);
             yield return Press(Key.W);
             Assert.AreEqual(KartBuilder.DriverColumn, hud.Builder.Column);
-            Assert.AreEqual(new KartLoadout(3, 1, 2), DriverChoice.Loadout, "W from Ricardo wraps to Paulo, kart and tyres stay");
+            Assert.AreEqual(new KartLoadout(3, 1, 2), DriverChoice.Loadout, "W from Ricardo wraps to Amara, kart and tyres stay");
             Assert.AreEqual(RaceState.Ready, race.State, "no key so far started anything");
 
             yield return Press(Key.Enter);

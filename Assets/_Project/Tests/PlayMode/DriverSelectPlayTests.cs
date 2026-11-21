@@ -134,19 +134,22 @@ namespace CarcavelosCircuit.Tests.PlayMode
             Assert.AreEqual(5, squad.Bots.Count, "still five bots");
             for (int i = 0; i < squad.Bots.Count; i++)
             {
-                CollectionAssert.Contains(TributeRules.GivenNames, squad.Bots[i].DisplayName, "every bot is a teacher's first name");
                 Assert.AreNotEqual("KartVisual_Buggy_Tiago", BotModel(squad.Bots[i].DisplayName), "no second buggy: the player has it");
             }
-            Assert.IsTrue(HasBot("Ricardo") && HasBot("Luís") && HasBot("Paulo") && HasBot("Cláudio") && HasBot("João"));
-            Assert.AreEqual("KartVisual_StreetGT_Amara", BotModel("Paulo"), "Paulo races in the Street GT");
-            Assert.AreEqual("KartVisual_Classic_Rookie", BotModel("Cláudio"), "Cláudio lent the player the buggy and drives a Classic");
+            Assert.IsTrue(HasBot("Ricardo") && HasBot("Nova") && HasBot("Amara") && HasBot("Luís") && HasBot("Paulo"));
+            Assert.IsFalse(HasBot("Cláudio"), "Cláudio is the player's driver, so no Cláudio bot");
+            Assert.AreEqual("KartVisual_StreetGT_Amara", BotModel("Amara"), "Amara races in the Street GT");
+            Assert.AreEqual("KartVisual_Orbit_Nova", BotModel("Nova"), "Nova races in the Orbit");
+            Assert.AreEqual("KartVisual_Classic_Rookie", BotModel("Luís"), "Luís drives the red Classic (Luc's male Rookie model)");
+            Assert.AreEqual("KartVisual_Classic_Rookie", BotModel("Paulo"), "Paulo drives the green Classic");
 
             hud.Builder.PickDriver(DriverRoster.Rookie);
             yield return WaitFrames(4);
             Assert.AreEqual("KartVisual_Buggy_Rookie_Offroad", KartVisualSwap.CurrentModel(slot).name,
                 "Ricardo takes over the buggy and tyres (a new driver keeps the kart)");
             Assert.AreEqual("KartVisual_Buggy_Tiago", BotModel("Cláudio"), "Cláudio is back in the buggy");
-            Assert.AreEqual("KartVisual_Classic_Rookie", BotModel("Ricardo"), "and Ricardo's bot drives a repainted Classic");
+            Assert.IsFalse(HasBot("Ricardo"), "Ricardo is the player's driver now");
+            Assert.AreEqual("KartVisual_Classic_Rookie", BotModel("Luís"), "Luís and Paulo stay in the repainted Classics");
             Assert.AreEqual(PlayerRacer.PlayerColour, RacerRegistry.FindPlayer().MapColor);
         }
 
@@ -164,7 +167,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
             int tiago = DriverRoster.IndexOf("Cláudio");
             hud.Builder.PickDriver(tiago);
             yield return WaitFrames(4);
-            firstBot = squad.Bots[0]; // a new driver lines the bots up again (Cláudio moves to a Classic)
+            firstBot = squad.Bots[0]; // a new driver lines the bots up again (Ricardo moves into his own Classic)
             hud.Builder.Pick(KartBuilder.KartColumn, 2);  // Orbit
             hud.Builder.Pick(KartBuilder.TyreColumn, 3);  // Retro
             yield return WaitFrames(4);

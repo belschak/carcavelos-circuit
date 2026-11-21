@@ -41,7 +41,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual(a.LocalId, b.Players[0].Id);
             Assert.AreEqual("Bo", a.Players[1].Name);
             Assert.AreEqual(1, a.Players[1].ColourIndex);
-            Assert.AreEqual(3, a.Players[1].DriverIndex, "Bo's driver travels with Bo: Ana's screen builds Paulo's kart for Bo");
+            Assert.AreEqual(3, a.Players[1].DriverIndex, "Bo's driver travels with Bo: Ana's screen builds Amara's kart for Bo");
             Assert.AreEqual(2, b.Players[0].DriverIndex, "and Bo's screen builds Nova's kart for Ana");
             Assert.AreNotEqual(a.LocalId, b.LocalId);
             Assert.AreEqual(101.0, a.Now, 0.0, "the shared clock");
