@@ -406,6 +406,20 @@ def covers_cell(cx, cy, half=2.5):
 SINK_UNDER_CORRIDOR = 0.35   # as in build_world.build_ground: the 5 m ground sinks this much under the corridor
 PATCH_BELOW_ROAD = 0.3       # m: a gap patch lies this far under the lowest road point near it
 PATCH_OVERLAP = 1.0          # m: and reaches this far under its neighbours
+PLAZA_PATCH_BELOW_FLOOR0 = 0.02   # m: V42, a patch beside the plaza stairs lies this far under Floor 0 (see below)
+
+
+def _plaza_floor_patch(cx, cy, near_points):
+    """V42 (Luc, 21 Nov 2026): the cell right of the plaza stairs' foot (lower plaza, about (117, -8)) is a gap cell,
+    but its "road" is the level Floor-0 paving of the stairs' landing, not a road bed. With the usual rule (0.3 m
+    under the lowest road point and the sunk corners) its floor lay 0.8 m under the plaza with walls round it, and a
+    kart that slid in at the stair foot could not drive out (stuck, WRONG WAY). Here the floor lies flush with Floor 0
+    instead. True for cells inside the lower plaza whose nearby route points belong to the stairs or the deck."""
+    import campus_plan
+    import plaza_plan
+    if not campus_plan.inside(cx, cy, campus_plan.LOWER_PLAZA):
+        return False
+    return any(plaza_plan.owns_route_point(p) for p in near_points)
 
 
 def build_gap_patches():
@@ -444,16 +458,22 @@ def build_gap_patches():
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new("UVMap")
     count = 0
+    plaza_patches = []
     for j in range(E.ROWS - 1):
         for i in range(E.COLS - 1):
             cx, cy = gx(i) + E.STEP / 2, gy(j) + E.STEP / 2
             portal = env_terrain.in_portal_hole(cx, cy)        # the headwall closes these; a floor catches slivers
             if not portal and cell_state(cx, cy) != "road":
                 continue
-            near = [p["track_z"] for p in _state["pts"]
-                    if math.hypot(p["x"] - cx, p["y"] - cy) < E.STEP + E.half_width(p) + ROAD_CLEAR + 2.0]
+            near_points = [p for p in _state["pts"]
+                           if math.hypot(p["x"] - cx, p["y"] - cy) < E.STEP + E.half_width(p) + ROAD_CLEAR + 2.0]
+            near = [p["track_z"] for p in near_points]
             corners = [vertex_z(i, j), vertex_z(i + 1, j), vertex_z(i + 1, j + 1), vertex_z(i, j + 1)]
             floor = min(corners + near) - PATCH_BELOW_ROAD
+            if not portal and _plaza_floor_patch(cx, cy, near_points):
+                import campus_plan
+                floor = campus_plan.LOWER_PLAZA_Z - PLAZA_PATCH_BELOW_FLOOR0
+                plaza_patches.append((round(cx, 1), round(cy, 1), round(floor, 2)))
             e = PATCH_OVERLAP
             quad = [(gx(i) - e, gy(j) - e), (gx(i + 1) + e, gy(j) - e), (gx(i + 1) + e, gy(j + 1) + e), (gx(i) - e, gy(j + 1) + e)]
             faces = [bm.faces.new([bm.verts.new((x, y, floor)) for x, y in quad])]
@@ -490,6 +510,7 @@ def build_gap_patches():
     mesh.materials.append(E.material("ground_map", "#A6AA82", roughness=0.95))
     E.new_object("World_GroundGapPatches", mesh, E.collection("World_Ground"))
     print(f"  ground gaps: {count} cells beside the kicker and the portals get a low floor")
+    print(f"  ground gaps (V42): {len(plaza_patches)} cell(s) at the plaza stairs lie flush with Floor 0: {plaza_patches}")
 
 
 def is_cut_face(p, o0, o1):

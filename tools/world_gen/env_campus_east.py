@@ -462,7 +462,7 @@ def build_paving(col):
     rim = P.rim_path_ring()
     north = P.GRID_SPLIT + [(P.GRID_SPLIT[-1][0], 25.0), (P.GRID_SPLIT[0][0], 25.0)]
     gratings = [_grating_ring(c) for c in P.GRATINGS]
-    cutters = [r for r in (list(C.MAIN_ROOF), _g_solid(), list(P.G_TOWER), f_foot_ring(), _f_ring(), P.PLAZA_PIT) if r]
+    cutters = [r for r in (list(C.MAIN_ROOF), _g_solid(), list(P.G_TOWER), f_foot_ring(), _f_ring()) if r]   # V42: no pit
     slopes = P.ramp_slope_rings()                   # the plaza's paving ends at the cutting's rims
     rings = [P.PLAZA_RING, rim, north] + gratings + cutters + slopes
     soup = ST.overlay([{"name": str(k), "ring": r, "mat": "concrete", "uv": None} for k, r in enumerate(rings)])
@@ -487,7 +487,7 @@ def build_paving(col):
     soup.clip_route()
     counts.append(len(soup.tris))
 
-    level = [r for r in (_g_deck(), P.PLAZA_LEVEL) if r]
+    level = [r for r in (_g_deck(), P.PLAZA_LEVEL, P.PLAZA_PIT) if r]   # V42: the filled pit is Floor 0 too
 
     def zf(x, y):
         d = S.route_distance(x, y)

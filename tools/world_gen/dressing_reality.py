@@ -147,6 +147,9 @@ PROPS = [
     ("Prop_PlanterTapered", 125.4, -10.4, None, "lower plaza: tapered planter at G's corner"),
     ("Prop_PlanterTapered", 124.9, -16.6, None, "lower plaza: tapered planter at G's corner"),
 ]
+# V42 (Luc, 21 Nov 2026): the plant in each tapered planter (prototype, scale): about 0.7 m high, 1.2 m across, so
+# it fills the 1.2 m rim and spills a little over it, like the clipped shrubs in the real pots
+PLANTER_SHRUB = ("Veg_Shrub_B", 0.62)
 # survey 3.3: court between D and E: pale paving, parasols, cafe tables. (centre x, y, turn of the chair ring)
 COURT_CAFE = [(29.5, -9.5, 0.4), (37.5, -5.0, 1.7), (46.0, -1.5, 2.9)]
 
@@ -221,6 +224,7 @@ def apply(veg, props, stage=None):
     dressing_freeze.apply(); all items if that did not run)."""
     import env_campus
     import env_common as E
+    import env_props
     import env_vegetation
     import dressing_freeze
     stage = stage or dressing_freeze.STAGE
@@ -297,6 +301,11 @@ def apply(veg, props, stage=None):
         new_p.append({"proto": proto, "x": round(x, 3), "y": round(y, 3), "z": round(E.ground_z(x, y) + 0.02, 3),
                       "rot_z": round((k * 1.9) % 6.283 if rot is None else rot, 4), "scale": 1.0})
         notes.append((what, proto, x, y, gap, 0.0))
+        if proto == "Prop_PlanterTapered":
+            # V42: the planter's plant is a leafy shrub of the vegetation set, standing on the pot's soil
+            new_v.append({"proto": PLANTER_SHRUB[0], "x": round(x, 3), "y": round(y, 3),
+                          "z": round(new_p[-1]["z"] + env_props.PLANTER_SOIL_Z - 0.03, 3),
+                          "rot_z": round((k * 2.3) % 6.283, 4), "scale": PLANTER_SHRUB[1]})
         return True
 
     for k, (proto, x, y, rot, what) in enumerate(PROPS):

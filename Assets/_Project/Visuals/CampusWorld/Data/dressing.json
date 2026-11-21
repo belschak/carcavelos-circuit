@@ -16951,6 +16951,39 @@
 "roll": -0.0,
 "pitch": -0.0,
 "scale": 1.0
+},
+{
+"name": "Veg_Shrub_B.V42_0",
+"proto": "Veg_Shrub_B",
+"x": 120.3,
+"y": 11.749,
+"z": -11.2,
+"yaw": -273.186,
+"roll": -0.0,
+"pitch": -0.0,
+"scale": 0.62
+},
+{
+"name": "Veg_Shrub_B.V42_1",
+"proto": "Veg_Shrub_B",
+"x": 125.4,
+"y": 11.756,
+"z": -10.4,
+"yaw": -44.977,
+"roll": -0.0,
+"pitch": -0.0,
+"scale": 0.62
+},
+{
+"name": "Veg_Shrub_B.V42_2",
+"proto": "Veg_Shrub_B",
+"x": 124.9,
+"y": 11.862,
+"z": -16.6,
+"yaw": -176.757,
+"roll": -0.0,
+"pitch": -0.0,
+"scale": 0.62
 }
 ]
 }

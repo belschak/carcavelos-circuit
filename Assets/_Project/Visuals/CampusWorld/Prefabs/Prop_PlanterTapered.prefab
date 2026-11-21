@@ -68,7 +68,6 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 66c915b8d95c9407c9b72948e4a3f255, type: 2}
   - {fileID: 2100000, guid: 9e3c7c759ff3a4232adffc134095331e, type: 2}
-  - {fileID: 2100000, guid: 898dbd33f9541461e9146dbb24fabd5a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -145,8 +144,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.2, y: 1.1046286, z: 1.1412678}
-  m_Center: {x: 0, y: 0.5023143, z: 0}
+  m_Size: {x: 1.2100406, y: 0.7750406, z: 1.2100406}
+  m_Center: {x: 0, y: 0.3375, z: 0}
 --- !u!205 &6216663038057398412
 LODGroup:
   m_ObjectHideFlags: 0
@@ -155,8 +154,8 @@ LODGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4694309557843686374}
   serializedVersion: 2
-  m_LocalReferencePoint: {x: 0, y: 0.5023143, z: 0}
-  m_Size: 1.2
+  m_LocalReferencePoint: {x: 0, y: 0.33749998, z: 0}
+  m_Size: 1.2100406
   m_FadeMode: 0
   m_AnimateCrossFading: 0
   m_LastLODIsBillboard: 0

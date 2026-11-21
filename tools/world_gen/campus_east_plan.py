@@ -94,8 +94,10 @@ PLAZA_RING = [(98.5, -29.2), (103.6, -27.2), (106.5, -26.0), (108.4, -17.0), (11
               (131.6, -27.6), (122.0, -32.4), (109.6, -35.4), (104.5, -37.2)]
 # north of this line the panels follow the stairs' axis, south of it the ramp's (two skew grids, survey F 2.2)
 GRID_SPLIT = [(96.0, -22.5), (112.0, -19.5), (128.0, -14.0), (152.0, -9.0)]
-# the terrain has a 0.8 m deep hole at the stairs' east foot (between the road bed and env_plaza's Floor-0 paving,
-# there since V10i): the paving, which has no collider, leaves it open instead of hiding it
+# the terrain had a 0.8 m deep hole at the stairs' east foot (between the road bed and env_plaza's Floor-0 paving,
+# there since V10i), and the paving, which has no collider, left it open instead of hiding it. V42 (21 Nov): the hole
+# (a gap patch, env_corridor.build_gap_patches) now lies flush with Floor 0, so the paving covers it again at the
+# plaza's level (env_campus_east.build_paving: PLAZA_PIT counts as level ground, not as a cutter)
 PLAZA_PIT = [(114.8, -11.0), (120.4, -11.0), (120.4, -5.2), (114.8, -8.3)]
 PLAZA_LEVEL = [(113.0, -1.5), (120.4, -5.4), (120.4, -9.6), (124.8, -9.6), (126.0, -3.0), (124.0, 5.0),
                (113.0, 2.5)]       # level floor in front of G (see env_campus_east.build_paving)

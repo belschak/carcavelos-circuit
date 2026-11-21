@@ -49,7 +49,7 @@ TRI_BUDGET = {"Prop_LampCampus": 120, "Prop_LampRoad": 150, "Prop_Bench": 60, "P
               # beach pass V10b 2026-11-10: straw parasols, loungers, lifeguard post, stone heaps
               "Prop_ParasolThatch": 80, "Prop_SunLounger": 64, "Prop_LifeguardTower": 260, "Prop_StonePile": 330,
               # V16f dressing pass: potted olive, tapered planter, picnic table
-              "Prop_PotOlive": 260, "Prop_PlanterTapered": 90, "Prop_PicnicTable": 110}
+              "Prop_PotOlive": 260, "Prop_PlanterTapered": 220, "Prop_PicnicTable": 110}
 FOOTPRINT = {"Prop_LampCampus": 0.3, "Prop_LampRoad": 0.3, "Prop_Bench": 1.0, "Prop_LoungeChair": 0.6,
              "Prop_Bollard": 0.15, "Prop_RailingSegment": 0.0, "Prop_Bin": 0.3, "Prop_Parasol": 1.6,
              "Prop_BistroTable": 0.4, "Prop_BistroChair": 0.3, "Prop_TroughBloom": 0.85, "Prop_PlanterRound": 0.45,
@@ -270,15 +270,48 @@ def pot_olive(name, pot, soil, trunk, crown, crown_top, col):
     return mb.build(name, [pot, soil, trunk, crown, crown_top], col)
 
 
-def planter_tapered(name, pot, soil, crown, col):
-    """Black round tapered planter, 0.7 m high (0.7 m across at the foot, 1.2 m at the rim), with a low green mound
-    (V16f, survey V15 3.6 / App. F 2.2: '2-3 black round tapered planters' at G's corner on the lower plaza)."""
-    rng = random.Random(name)
+PLANTER_SOIL_Z = 0.62        # m: top of the soil in Prop_PlanterTapered; its shrub (dressing_reality) stands on it
+PLANTER_SIDES = 24
+
+
+def planter_tapered(name, pot, soil, col):
+    """Black round tapered planter, 0.72 m high (0.7 m across at the foot, 1.2 m at the rim), filled with soil
+    (V16f, survey V15 3.6 / App. F 2.2: '2-3 black round tapered planters' at G's corner on the lower plaza).
+    V42 (Luc, 21 Nov 2026: "the little trees right beside it look low quality"): the pot was a 10-sided flat-shaded
+    cone with a faceted green lump on top. Now 24 sides with a smooth-shaded wall and a rounded lip; the plant is a
+    real leafy shrub of the vegetation set (Veg_Shrub_B, leaf atlas, wind), placed on the soil by dressing_reality."""
     mb = MeshBuilder()
-    POT, SOIL, CROWN = 0, 1, 2
-    lathe(mb, [(0.35, -0.05), (0.6, 0.7), (0.54, 0.7), (0.54, 0.64), (0.0, 0.64)], 10, [POT, POT, POT, SOIL])
-    puff_lobe(mb, (0.0, 0.0, 0.8), (0.42, 0.42, 0.26), rng, lambda z: CROWN, (0.0, 0.0, 0.64), subdiv=1, floor=-0.6)
-    return mb.build(name, [pot, soil, crown], col)
+    POT, SOIL = 0, 1
+    n = PLANTER_SIDES
+    foot_r, rim_r, top_z = 0.35, 0.6, 0.7
+    slope = math.atan2(rim_r - foot_r, top_z + 0.05)               # the wall leans out by this angle
+
+    def ring(r, z, normal_of=None):
+        out = []
+        for j in range(n):
+            a = 2 * math.pi * j / n
+            c, s = math.cos(a), math.sin(a)
+            nrm = None if normal_of is None else normal_of(c, s)
+            out.append(mb.v((c * r, s * r, z), normal=nrm))
+        return out
+
+    wall = lambda c, s: (c * math.cos(slope), s * math.cos(slope), -math.sin(slope))      # noqa: E731
+    lip = lambda c, s: (c * 0.6, s * 0.6, 0.8)                                            # noqa: E731
+    up = lambda c, s: (0.0, 0.0, 1.0)                                                     # noqa: E731
+    foot = ring(foot_r, -0.05, wall)
+    upper = ring(rim_r, top_z, wall)
+    lip_out = ring(rim_r + 0.005, top_z + 0.005, lip)
+    lip_top = ring(rim_r - 0.035, top_z + 0.025, up)
+    lip_in = ring(rim_r - 0.07, top_z + 0.01)
+    soil_ring = ring(rim_r - 0.08, PLANTER_SOIL_Z)
+    centre = mb.v((0.0, 0.0, PLANTER_SOIL_Z + 0.03))                # the soil heaps a little in the middle
+    for a_ring, b_ring, m in ((foot, upper, POT), (lip_out, lip_top, POT), (lip_top, lip_in, POT), (lip_in, soil_ring, POT)):
+        for j in range(n):
+            k = (j + 1) % n
+            mb.f((a_ring[j], a_ring[k], b_ring[k], b_ring[j]), m)
+    for j in range(n):
+        mb.f((soil_ring[j], soil_ring[(j + 1) % n], centre), SOIL)
+    return mb.build(name, [pot, soil], col)
 
 
 def picnic_table(name, wood, col):
@@ -620,8 +653,7 @@ def build_prototypes():
                                    m("olive_crown_top_b", "#9DB06E", roughness=0.9), col),
         "Prop_PlanterTapered": planter_tapered("Prop_PlanterTapered",
                                                m("lamp_foot", "#3A3D42", roughness=0.6, metallic=0.4),
-                                               m("soil", "#5E4A3A", roughness=1.0),
-                                               m("olive_crown_b", "#5F7F4F", roughness=0.9), col),
+                                               m("soil", "#5E4A3A", roughness=1.0), col),
         "Prop_PicnicTable": picnic_table("Prop_PicnicTable", m("bench_wood", "#A27E58", roughness=0.8), col),
     }
     for name, obj in protos.items():
