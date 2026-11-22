@@ -7,10 +7,11 @@ namespace CarcavelosCircuit.Visuals
     // Driver select (Luc, 17 Nov 2026): who the five bots are once the player picked a driver (RaceFlow's
     // DriverChoice). Luc's rule: the three drivers the player did not pick race in their own karts, plus two
     // repainted Nova Classics (red and green), so the grid stays at six karts.
-    // Names (David, 20 Nov 2026; Luc, 21 Nov 2026): the roster drivers race under their own names (Ricardo, Cláudio,
-    // Nova, Amara) and the two repainted Classics are always Luís (red) and Paulo (green), the two teachers without a
-    // roster driver. The Classic is Luc's male Rookie model, so it only ever carries a man's name (before, the picked
-    // driver's name went on the red Classic, which put "Nova" or "Amara" on the Rookie). No name races twice. The
+    // Names (David, 20 Nov 2026; Luc, 21 Nov; David + Luc, 22 Nov): the roster drivers race under their own names
+    // (Ricardo, Cláudio, Luísa, Paula) and the two repainted Classics are always Luís (red) and Paulo (green), the
+    // two teachers whose names the female drivers carry in the female form. The Classic is Luc's male Rookie model,
+    // so it only ever carries a man's name (before, the picked driver's name went on the red Classic, which put a
+    // woman's name on the Rookie). No name races twice. The
     // driving style of seat i is BotSettings' profile i (pace, cornering, lane, drifting); only name, colour and kart
     // change.
     public static class DriverSwap

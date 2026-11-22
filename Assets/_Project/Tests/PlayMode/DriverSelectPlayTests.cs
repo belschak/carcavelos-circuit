@@ -136,10 +136,10 @@ namespace CarcavelosCircuit.Tests.PlayMode
             {
                 Assert.AreNotEqual("KartVisual_Buggy_Tiago", BotModel(squad.Bots[i].DisplayName), "no second buggy: the player has it");
             }
-            Assert.IsTrue(HasBot("Ricardo") && HasBot("Nova") && HasBot("Amara") && HasBot("Luís") && HasBot("Paulo"));
+            Assert.IsTrue(HasBot("Ricardo") && HasBot("Luísa") && HasBot("Paula") && HasBot("Luís") && HasBot("Paulo"));
             Assert.IsFalse(HasBot("Cláudio"), "Cláudio is the player's driver, so no Cláudio bot");
-            Assert.AreEqual("KartVisual_StreetGT_Amara", BotModel("Amara"), "Amara races in the Street GT");
-            Assert.AreEqual("KartVisual_Orbit_Nova", BotModel("Nova"), "Nova races in the Orbit");
+            Assert.AreEqual("KartVisual_StreetGT_Amara", BotModel("Paula"), "Paula races in the Street GT");
+            Assert.AreEqual("KartVisual_Orbit_Nova", BotModel("Luísa"), "Luísa races in the Orbit");
             Assert.AreEqual("KartVisual_Classic_Rookie", BotModel("Luís"), "Luís drives the red Classic (Luc's male Rookie model)");
             Assert.AreEqual("KartVisual_Classic_Rookie", BotModel("Paulo"), "Paulo drives the green Classic");
 

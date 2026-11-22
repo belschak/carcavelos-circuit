@@ -45,15 +45,15 @@ namespace CarcavelosCircuit.Tests.EditMode
             List<KeyValuePair<int, string>> drivers = new List<KeyValuePair<int, string>>
             {
                 new KeyValuePair<int, string>(9, "Cláudio"),
-                new KeyValuePair<int, string>(2, "Amara"),
-                new KeyValuePair<int, string>(5, "Nova")
+                new KeyValuePair<int, string>(2, "Paula"),
+                new KeyValuePair<int, string>(5, "Luísa")
             };
             Dictionary<int, string> models = new Dictionary<int, string>
             {
                 { 9, "KartVisual_Buggy_Tiago" },
                 { 2, "KartVisual_StreetGT_Amara" }
             };
-            Assert.AreEqual("2:Amara:KartVisual_StreetGT_Amara|5:Nova:-|9:Cláudio:KartVisual_Buggy_Tiago", OnlineTestLog.Karts(drivers, models),
+            Assert.AreEqual("2:Paula:KartVisual_StreetGT_Amara|5:Luísa:-|9:Cláudio:KartVisual_Buggy_Tiago", OnlineTestLog.Karts(drivers, models),
                 "a kart without a model shows -");
             Assert.AreEqual("-", OnlineTestLog.Karts(new List<KeyValuePair<int, string>>(), models), "nobody else in the room");
             Assert.AreEqual("-", OnlineTestLog.Karts(null, null));
