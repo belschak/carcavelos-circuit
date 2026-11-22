@@ -63,6 +63,18 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
+        public void FemaleFirstName_LuisaAndPaula_OnlyForLuisAndPaulo()
+        {
+            // David + Luc, 22 Nov 2026: Luc's two female characters carry the female form of a teacher's name.
+            Assert.AreEqual("", TributeRules.FemaleFirstName(0), "Ricardo has no female form here: he drives himself");
+            Assert.AreEqual("", TributeRules.FemaleFirstName(1), "nor Cláudio");
+            Assert.AreEqual("Luísa", TributeRules.FemaleFirstName(2));
+            Assert.AreEqual("Paula", TributeRules.FemaleFirstName(3));
+            Assert.AreEqual("", TributeRules.FemaleFirstName(4));
+            Assert.AreEqual("", TributeRules.FemaleFirstName(-1));
+        }
+
+        [Test]
         public void CreditsPage4_ThanksTheTeachersByTheirFirstNames()
         {
             string uxml = File.ReadAllText(Path.Combine(Application.dataPath, "_Project/RaceFlow/UI/RaceHud.uxml"));

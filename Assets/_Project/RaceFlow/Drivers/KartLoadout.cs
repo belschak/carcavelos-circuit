@@ -22,8 +22,8 @@ namespace CarcavelosCircuit.RaceFlow
         {
             "Ricardo's racer: a long nose and a big rear wing.",
             "Cláudio's beach buggy, with a surfboard in the roll cage.",
-            "Nova's rocket kart, fins and a little satellite dish.",
-            "Amara's hot rod, built from spare parts in the garage."
+            "Luísa's rocket kart, fins and a little satellite dish.",
+            "Paula's hot rod, built from spare parts in the garage."
         };
         public static readonly string[] TyreLines =
         {

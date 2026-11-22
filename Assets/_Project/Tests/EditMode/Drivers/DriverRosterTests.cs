@@ -8,8 +8,9 @@ namespace CarcavelosCircuit.Tests.EditMode
 {
     // Driver select (Luc, 17 Nov 2026): the four roster drivers with their karts, the bot lineup (the three drivers
     // not picked + two repainted Nova Classics) and the wrap-around of the arrow keys.
-    // Names (David, 20 Nov 2026; Luc, 21 Nov 2026): Ricardo and Cláudio carry teachers' first names, Luc's two female
-    // characters keep their own (Nova, Amara), and the teachers Luís and Paulo drive the two repainted Classics.
+    // Names (David, 20 Nov 2026; Luc, 21 Nov; David + Luc, 22 Nov): Ricardo and Cláudio carry teachers' first names,
+    // Luc's two female characters the female form of the other two (Luísa, Paula), and the teachers Luís and Paulo
+    // themselves drive the two repainted Classics.
     public class DriverRosterTests
     {
         [Test]
@@ -34,9 +35,9 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
-        public void Drivers_TwoTeachersFirstNames_ThenLucsTwoWomenUnderTheirOwnNames()
+        public void Drivers_TwoTeachersFirstNames_ThenLucsTwoWomenAsLuisaAndPaula()
         {
-            Assert.AreEqual(new[] { "Ricardo", "Cláudio", "Nova", "Amara" },
+            Assert.AreEqual(new[] { "Ricardo", "Cláudio", "Luísa", "Paula" },
                 new[] { DriverRoster.Get(0).Name, DriverRoster.Get(1).Name, DriverRoster.Get(2).Name, DriverRoster.Get(3).Name });
             for (int i = 0; i < 2; i++)
             {
@@ -44,8 +45,10 @@ namespace CarcavelosCircuit.Tests.EditMode
             }
             for (int i = 2; i < DriverRoster.Count; i++)
             {
-                Assert.AreEqual(DriverRoster.Get(i).Model, DriverRoster.Get(i).Name, "Luc's female characters race under their own names");
+                Assert.AreEqual(TributeRules.FemaleFirstName(i), DriverRoster.Get(i).Name, "driver " + i + " = teacher " + i + "'s name in the female form");
+                StringAssert.StartsWith(TributeRules.FirstName(i).Substring(0, TributeRules.FirstName(i).Length - 1), DriverRoster.Get(i).Name, "recognisably that teacher's name");
                 CollectionAssert.DoesNotContain(TributeRules.GivenNames, DriverRoster.Get(i).Name, "no woman drives under a teacher's (man's) name");
+                Assert.AreNotEqual(DriverRoster.Get(i).Model, DriverRoster.Get(i).Name, "the shown name is no longer Luc's model name");
             }
             Assert.AreEqual(new[] { "Rookie", "Tiago", "Nova", "Amara" },
                 new[] { DriverRoster.Get(0).Model, DriverRoster.Get(1).Model, DriverRoster.Get(2).Model, DriverRoster.Get(3).Model },
@@ -113,7 +116,7 @@ namespace CarcavelosCircuit.Tests.EditMode
             {
                 names.Add(seats[i].Profile.displayName);
             }
-            CollectionAssert.AreEquivalent(new[] { "Ricardo", "Cláudio", "Nova", "Amara", "Luís" }, names);
+            CollectionAssert.AreEquivalent(new[] { "Ricardo", "Cláudio", "Luísa", "Paula", "Luís" }, names);
             Assert.AreEqual("Luís", seats[4].Profile.displayName);
             Assert.AreEqual(DriverSwap.CopyColours[1], seats[4].Profile.colour, "the one Classic is the green one");
         }
@@ -141,13 +144,19 @@ namespace CarcavelosCircuit.Tests.EditMode
         [TestCase("Tiago", 1)]   // Luc's model name: old ?driver=Tiago links keep their driver
         [TestCase("Ricardo", 0)]
         [TestCase("Rookie", 0)]
-        [TestCase("NOVA", 2)]
+        [TestCase("Luísa", 2)]
+        [TestCase("LUISA", 2)]   // without the accent, as a link writes it
+        [TestCase("NOVA", 2)]    // Luc's model name: old ?driver=nova links keep their driver
         [TestCase("Nova", 2)]
-        [TestCase("amara", 3)]
+        [TestCase("paula", 3)]
+        [TestCase("Paula", 3)]
+        [TestCase("amara", 3)]   // Luc's model name
         [TestCase("Amara", 3)]
         [TestCase("Luís", -1)]   // drives a Classic, not a roster driver
         [TestCase("paulo", -1)]  // drives a Classic, not a roster driver
         [TestCase("João", -1)]   // not in the race any more
+        [TestCase("Luis a", -1)]
+        [TestCase("Paul", -1)]
         [TestCase("", -1)]
         [TestCase(null, -1)]
         [TestCase("Claud", -1)]

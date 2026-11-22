@@ -8,11 +8,12 @@ namespace CarcavelosCircuit.RaceFlow
     // Time Attack leaderboard stays fair. The pick changes the player's kart model (Visuals/Bots/BotSquad swaps it),
     // the player's colour on the minimap and name tag, and the bots: the three drivers not picked race in their own
     // karts, plus two repainted Nova Classics (Visuals/Bots/DriverSwap).
-    // Names (David, 20 Nov 2026): the two male drivers carry the first name of an Introduction to Programming teacher
-    // (Tribute/TributeRules.Teachers, credits order): Ricardo and Cláudio. Luc, 21 Nov 2026: the two female
-    // characters keep their own names, Nova (the space cadet) and Amara (the kart mechanic), so no woman drives under
-    // a man's name; Luís and Paulo now drive the two repainted Classics (DriverSwap). Luc's models keep their own
-    // names (Rookie, Tiago, Nova, Amara: prefabs, portraits, textures), see DriverInfo.Model.
+    // Names (David, 20 Nov 2026; Luc, 21 Nov; David + Luc, 22 Nov): every driver carries a name of an Introduction to
+    // Programming teacher (Tribute/TributeRules.Teachers, credits order). The two male drivers have the first name:
+    // Ricardo and Cláudio. Luc's two female characters (the space cadet, the kart mechanic) have the female form of
+    // the other two teachers' names, Luísa and Paula, so no woman drives under a man's name; Luís and Paulo themselves
+    // drive the two repainted Classics (DriverSwap). Luc's models keep their own names (Rookie, Tiago, Nova, Amara:
+    // prefabs, portraits, textures, old ?driver= links), see DriverInfo.Model.
     public static class DriverRoster
     {
         // Index of the first driver (Ricardo, on Luc's Rookie model): the kart's own orange paint, the player's
@@ -25,9 +26,9 @@ namespace CarcavelosCircuit.RaceFlow
                 "Responsible teacher. Drives the Nova Classic, the kart everyone starts in."),
             new DriverInfo(TributeRules.FirstName(1), "Tiago", "KartVisual_Buggy_Tiago", new Color(0.10f, 0.72f, 0.68f),
                 "Wrote most of the course. Takes the beach buggy straight off the sand."),
-            new DriverInfo("Nova", "Nova", "KartVisual_Orbit_Nova", new Color(0.30f, 0.55f, 1.00f),
+            new DriverInfo(TributeRules.FemaleFirstName(2), "Nova", "KartVisual_Orbit_Nova", new Color(0.30f, 0.55f, 1.00f),
                 "A space cadet who flies her rocket kart a little too close to the ground."),
-            new DriverInfo("Amara", "Amara", "KartVisual_StreetGT_Amara", new Color(0.62f, 0.32f, 0.95f),
+            new DriverInfo(TributeRules.FemaleFirstName(3), "Amara", "KartVisual_StreetGT_Amara", new Color(0.62f, 0.32f, 0.95f),
                 "The kart mechanic who built her own hot rod from spare parts.")
         };
 
@@ -100,7 +101,7 @@ namespace CarcavelosCircuit.RaceFlow
     // One driver: name above the portrait, map colour, kart model, one line under the portrait on hover.
     public class DriverInfo
     {
-        public string Name { get; private set; }         // shown name (Ricardo, Cláudio, Nova, Amara): card, name tag, bots, results, lobby
+        public string Name { get; private set; }         // shown name (Ricardo, Cláudio, Luísa, Paula): card, name tag, bots, results, lobby
         public string Model { get; private set; }        // Luc's character model (Rookie, Tiago, Nova, Amara): asset names only
         public string PortraitFile { get; private set; } // Resources/DriverPortraits/<this>.png (DriverPortraitBuilder)
         public string KartVisual { get; private set; }   // Role 3's prefab name in Visuals/Kart/Prefabs (kart + driver)

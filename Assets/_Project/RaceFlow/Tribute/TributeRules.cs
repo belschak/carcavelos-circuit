@@ -18,9 +18,10 @@ namespace CarcavelosCircuit.RaceFlow
         };
 
         // David, 20 Nov 2026: the drivers and bots carry first names of the teaching staff. These are the given names
-        // in Teachers, in the same order (Ricardo João Gil Pereira has two, Ricardo and João). Luc, 21 Nov 2026: Ricardo
-        // and Cláudio are roster drivers, Luís and Paulo drive the two repainted Classics (DriverSwap), and Luc's two
-        // female characters keep their own names (Nova, Amara). João stays only as a BotSettings default name.
+        // in Teachers, in the same order (Ricardo João Gil Pereira has two, Ricardo and João). Since 22 Nov 2026 (David +
+        // Luc): Ricardo and Cláudio are roster drivers, Luc's two female characters race as Luísa and Paula
+        // (FemaleFirstName), and Luís and Paulo drive the two repainted Classics (DriverSwap). João stays only as a
+        // BotSettings default name.
         public static readonly string[] GivenNames = { "Ricardo", "João", "Cláudio", "Luís", "Paulo" };
 
         // The first given name of teacher i ("Cláudio Vieira" -> "Cláudio"), "" outside the list.
@@ -33,6 +34,21 @@ namespace CarcavelosCircuit.RaceFlow
             string full = Teachers[teacher];
             int space = full.IndexOf(' ');
             return space > 0 ? full.Substring(0, space) : full;
+        }
+
+        // The female form of teacher i's first name, for Luc's two female characters (David + Luc, 22 Nov 2026):
+        // "Luís" -> "Luísa", "Paulo" -> "Paula". "" for a teacher without one in this table and outside the list.
+        public static string FemaleFirstName(int teacher)
+        {
+            switch (FirstName(teacher))
+            {
+                case "Luís":
+                    return "Luísa";
+                case "Paulo":
+                    return "Paula";
+                default:
+                    return "";
+            }
         }
 
         public const string CupLine = "YOU WON THE GIL PEREIRA CUP";
