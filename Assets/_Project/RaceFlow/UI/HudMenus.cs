@@ -10,7 +10,10 @@ namespace CarcavelosCircuit.RaceFlow
     // - Mute (key M or the SOUND button, any time) with a short "SOUND OFF" / "SOUND ON" toast.
     // - V28 time of day (key T or the NOON/SUNSET button, start screen): TimeOfDayChoice; the campus world (Role 3)
     //   switches its light, MapFlyover shows it from above the sea.
-    // - "PAUSED" overlay while RaceManager.IsPaused (the RaceManager does the pausing, this only shows it).
+    // - "PAUSED" card while RaceManager.IsPaused (the RaceManager does the pausing, this only shows it), with real
+    //   buttons RESUME, RETRY and BACK TO MENU (pause menu, 23 Nov 2026: a phone had no way back to the menu).
+    //   Online the same card is the small LEAVE THE RACE? card (CONTINUE, LEAVE RACE) while RaceManager.LeaveAskOpen;
+    //   the race keeps running under it.
     // - The "reduce-motion" class on the HUD root (the USS removes slides, shakes and punches).
     // - Tells the RaceManager when a menu uses the keys and the mouse, so they do not also start the race.
     // - Says when a menu sound should play (event SoundRequested, audit 10). RaceHud passes it on to RaceSounds,
@@ -45,6 +48,10 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly VisualElement pauseScreen;
         private readonly Label pauseHint;
         private readonly Label pauseNote;
+        private readonly Label pauseTitle;
+        private readonly VisualElement pauseResume;  // RESUME (offline) / CONTINUE (online), the orange main button
+        private readonly VisualElement pauseRetry;   // RETRY, offline only
+        private readonly VisualElement pauseMenu;    // BACK TO MENU (offline) / LEAVE RACE (online)
         private readonly VisualElement toast;
         private readonly Label toastText;
 
@@ -90,6 +97,7 @@ namespace CarcavelosCircuit.RaceFlow
             pauseScreen = root.Q<VisualElement>("pause-screen");
             pauseHint = root.Q<Label>("pause-hint");
             pauseNote = root.Q<Label>("pause-note");
+            pauseTitle = pauseScreen.Q<Label>(className: "pause-title");
             toast = root.Q<VisualElement>("toast");
             toastText = root.Q<Label>("toast-text");
 
@@ -98,6 +106,21 @@ namespace CarcavelosCircuit.RaceFlow
             root.Q<VisualElement>("credits-wave-host").Add(new CalcadaWave());
             root.Q<VisualElement>("pause-wave-host").Add(new CalcadaWave());
             root.Q<VisualElement>("pause-pattern-host").Add(new AzulejoPattern());
+
+            // Pause menu (23 Nov 2026): the card's buttons, built in code like the results card's MENU pill. They sit
+            // between the title and the note; the old one-line hint ("TAP TO CONTINUE") is gone, the buttons say it.
+            VisualElement pauseActions = new VisualElement { name = "pause-actions" };
+            pauseActions.AddToClassList("pause-actions");
+            pauseResume = MakePauseButton(pauseActions, "pause-resume", "P", PauseResumeText(false), true);
+            pauseRetry = MakePauseButton(pauseActions, "pause-retry", "ENTER", "RETRY", false);
+            pauseMenu = MakePauseButton(pauseActions, "pause-menu", "Q", PauseMenuText(false), false);
+            VisualElement pauseContent = pauseScreen.Q<VisualElement>(className: "pause-content");
+            pauseContent.Insert(pauseContent.IndexOf(pauseHint), pauseActions);
+            // The row itself never catches clicks: the hidden card lies over the start screen's mode cards, and a
+            // clickable row there swallowed the mouse click on ONLINE RACE (QA 23 Nov 2026: READY then started a bots
+            // race). Only the buttons switch their clicks on, and only while the card shows (UpdatePauseCard).
+            pauseActions.pickingMode = PickingMode.Ignore;
+            pauseHint.style.display = DisplayStyle.None;
 
             // Load the saved settings and use them at once (volume and reduced motion are right from the first frame).
             settings = SettingsStore.Load();
@@ -118,6 +141,9 @@ namespace CarcavelosCircuit.RaceFlow
             settingsBg.RegisterCallback<ClickEvent>(evt => CloseMenus()); // a click next to the card closes it
             creditsClose.RegisterCallback<ClickEvent>(evt => CloseMenus());
             creditsBg.RegisterCallback<ClickEvent>(evt => CloseMenus());
+            pauseResume.RegisterCallback<ClickEvent>(evt => OnPauseResume());
+            pauseRetry.RegisterCallback<ClickEvent>(evt => raceManager.Retry());
+            pauseMenu.RegisterCallback<ClickEvent>(evt => OnPauseMenu());
             ShowMenus();
         }
 
@@ -163,13 +189,7 @@ namespace CarcavelosCircuit.RaceFlow
                 creditsPanel.HandleKeys();
             }
 
-            HudFx.SetShown(pauseScreen, raceManager.IsPaused);
-            if (raceManager.IsPaused)
-            {
-                // Phone round 17.11: no keyboard on a phone, so the card says what a thumb does.
-                SetText(pauseHint, PauseHintText(WebPage.TouchMode));
-                SetText(pauseNote, PauseNoteText(WebPage.TouchMode));
-            }
+            UpdatePauseCard();
 
             // The online lobby's LIGHT button also changes the time of day: the start pill follows it.
             SetText(startMoodText, TimeOfDayChoice.Label(TimeOfDayChoice.Current));
@@ -189,6 +209,95 @@ namespace CarcavelosCircuit.RaceFlow
             // fire as well. A key pressed while the mouse only rests on a button still starts (MenuInputRules).
             bool clickOnButton = ready && MenuInputRules.ClickBelongsToButton(RaceKeys.ClickPressed(), MouseOnStartButton());
             raceManager.MenuUsesInput = !noMenu || clickOnButton || (ready && Time.frameCount - closedFrame <= 1);
+        }
+
+        // The PAUSED card offline, the LEAVE THE RACE? card online (same place, same buttons, other words). Its buttons
+        // only catch clicks while it shows (an invisible button must never be pressed).
+        private void UpdatePauseCard()
+        {
+            bool paused = raceManager.IsPaused;
+            bool online = !paused && raceManager.LeaveAskOpen;
+            bool shown = paused || online;
+            HudFx.SetShown(pauseScreen, shown);
+            if (shown)
+            {
+                pauseScreen.EnableInClassList("pause-screen--online", online);
+                SetText(pauseTitle, PauseTitleText(online));
+                SetText(pauseNote, PauseNoteText(WebPage.TouchMode, online));
+                SetButtonText(pauseResume, PauseResumeText(online));
+                SetButtonText(pauseMenu, PauseMenuText(online));
+                DisplayStyle retryShown = online ? DisplayStyle.None : DisplayStyle.Flex;
+                if (pauseRetry.style.display.value != retryShown)
+                {
+                    pauseRetry.style.display = retryShown;
+                }
+            }
+            HudFx.SetClickable(pauseResume, shown);
+            HudFx.SetClickable(pauseRetry, paused);
+            HudFx.SetClickable(pauseMenu, shown);
+        }
+
+        // RESUME offline, CONTINUE online (the race never stopped there).
+        private void OnPauseResume()
+        {
+            if (raceManager.IsPaused)
+            {
+                raceManager.ResumeFromPause();
+            }
+            else
+            {
+                raceManager.CloseLeaveAsk();
+            }
+        }
+
+        // BACK TO MENU offline, LEAVE RACE online (the room goes on, this kart counts as DNF).
+        private void OnPauseMenu()
+        {
+            if (raceManager.IsPaused)
+            {
+                raceManager.BackToMenu();
+            }
+            else if (raceManager.LeaveAskOpen)
+            {
+                raceManager.LeaveOnlineRace();
+            }
+        }
+
+        // One button of the pause card: a menu pill with its key (the keycap hides on touch, USS). main = the orange one.
+        private static VisualElement MakePauseButton(VisualElement parent, string name, string key, string text, bool main)
+        {
+            VisualElement button = new VisualElement { name = name };
+            button.AddToClassList("menu-pill");
+            button.AddToClassList("plate");
+            button.AddToClassList("pause-button");
+            if (main)
+            {
+                button.AddToClassList("plate--orange");
+                button.AddToClassList("pause-button--main");
+            }
+            VisualElement keycap = new VisualElement();
+            keycap.AddToClassList("keycap");
+            keycap.AddToClassList("keycap--small");
+            if (key.Length > 1)
+            {
+                keycap.AddToClassList("keycap--wide");
+            }
+            Label keyLabel = new Label(key);
+            keyLabel.AddToClassList("f-ui");
+            keycap.Add(keyLabel);
+            button.Add(keycap);
+            Label label = new Label(text);
+            label.AddToClassList("menu-pill-text");
+            label.AddToClassList("f-ui");
+            button.Add(label);
+            HudFx.IgnoreClicksDeep(button); // UpdatePauseCard switches the button itself on while the card shows
+            parent.Add(button);
+            return button;
+        }
+
+        private static void SetButtonText(VisualElement button, string text)
+        {
+            SetText(button.Q<Label>(className: "menu-pill-text"), text);
         }
 
         // A card was closed in this frame (CLOSE, a click next to it, O, C, Escape): its key or click is used up.
@@ -280,16 +389,32 @@ namespace CarcavelosCircuit.RaceFlow
             creditsPanel.SetClickable(creditsOpen);
         }
 
-        // The PAUSED card's hint: keys and mouse on a computer, a tap on a phone (the page's touch buttons).
-        public static string PauseHintText(bool touch)
+        // The pause card's words (pause menu, 23 Nov 2026). Offline the race is frozen ("PAUSED"); online it runs on,
+        // so the card asks first and says what leaving costs. Public and static for the Edit Mode tests.
+        public static string PauseTitleText(bool online)
         {
-            return touch ? "TAP TO CONTINUE" : "PRESS P, ANY KEY OR CLICK TO CONTINUE";
+            return online ? "LEAVE THE RACE?" : "PAUSED";
         }
 
-        // The small line under it: the clock, and on a computer the way out (Q = back to the menu, 20 Nov 2026).
-        public static string PauseNoteText(bool touch)
+        public static string PauseResumeText(bool online)
         {
-            return touch ? "THE CLOCK IS STOPPED" : "THE CLOCK IS STOPPED  ·  Q  BACK TO THE MENU";
+            return online ? "CONTINUE" : "RESUME";
+        }
+
+        public static string PauseMenuText(bool online)
+        {
+            return online ? "LEAVE RACE" : "BACK TO MENU";
+        }
+
+        // The small line under the buttons. A computer also hears about Escape (the buttons show P, Enter and Q);
+        // a phone has no keys, so only the facts.
+        public static string PauseNoteText(bool touch, bool online)
+        {
+            if (online)
+            {
+                return "THE RACE KEEPS RUNNING  ·  LEAVING COUNTS AS DNF";
+            }
+            return touch ? "THE CLOCK IS STOPPED" : "THE CLOCK IS STOPPED  ·  ESC ALSO RESUMES";
         }
 
         private static void SetText(Label label, string text)
