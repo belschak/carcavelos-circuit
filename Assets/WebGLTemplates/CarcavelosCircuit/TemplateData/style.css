@@ -820,6 +820,13 @@ html:not(.cc-racing) #cc-touch #cc-fullscreen {
 /* Paused: the HUD stays on screen under the PAUSED card, so the button keeps its race spot (the hidden Recover and
    Retry still hold their places in the row). */
 html.cc-paused #cc-touch #cc-fullscreen { position: static; }
+/* Online results (phone QA 23.11): the ROOM RESULTS card fills the top right corner (its times were under the button
+   and a tap there left full screen), so the button moves to the free top centre. The game says "online" only then. */
+html.cc-online:not(.cc-racing):not(.cc-paused) #cc-touch #cc-fullscreen {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
 
 /* "Turn your phone" hint: only in portrait, until closed. */
 #cc-rotate {
@@ -852,6 +859,8 @@ html.cc-paused #cc-touch #cc-fullscreen { position: static; }
   #cc-rotate { display: flex; }
 }
 #cc-rotate.cc-closed { display: none; }
+/* Phone QA 23.11: in a race the hint lay on Steer right and Brake (it took their touches). It shows on the menus only. */
+html.cc-racing #cc-rotate { display: none; }
 
 /* ---------- Animations (all switched off for "reduce motion", see the end) ---------- */
 @keyframes cc-rise { from { opacity: 0; transform: translateY(14px); } }

@@ -84,7 +84,7 @@ namespace CarcavelosCircuit.Tests.EditMode
         [TestCase(RaceState.Racing, false, WebPage.PageRacing + WebPage.PageOnline)]
         [TestCase(RaceState.Countdown, false, WebPage.PageRacing + WebPage.PageOnline)]
         [TestCase(RaceState.Ready, false, WebPage.PageMenus)]
-        [TestCase(RaceState.Results, false, WebPage.PageMenus)]
+        [TestCase(RaceState.Results, false, WebPage.PageMenus + WebPage.PageOnline)] // 23.11: ROOM RESULTS on screen
         public void PageRaceState_TellsThePageAnOnlineRace(RaceState state, bool paused, int expected)
         {
             Assert.AreEqual(expected, WebPage.PageRaceState(state, paused, true));
