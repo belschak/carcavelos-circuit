@@ -661,6 +661,46 @@ async def refresh_case(page, touch, res, rects):
             "4 to 7 refreshes in 1.1 s of Gas, 0 for a held Item and after the lift", f"{held} while Gas held, {after} after")
 
 
+async def long_press_cases(page, touch, res, rects, ua):
+    """Pixel report 23.11 round 2: Android's long press cancelled a held Gas. CDP touch does not run Android's
+    long-press recognizer, so its events are sent by hand: touchstart on a button must be cancelled (Android only),
+    a contextmenu and a pointercancel mid-hold must not drop the key while the finger stays, the real lift must."""
+    apple = "iPhone" in ua or "iPad" in ua
+    await page.evaluate("""() => { window.__tsPrevented = null; window.addEventListener('touchstart', e => {
+        window.__tsPrevented = e.defaultPrevented; }, { once: true }); }""")
+    gas = centre(rects["Gas"])
+    n0 = await key_count(page)
+    await touch.down(0, *gas); await asyncio.sleep(0.6)
+    prevented = await page.evaluate("window.__tsPrevented")
+    res.add("long press: touchstart on a button cancelled on Android, untouched on Apple", prevented == (not apple),
+            "Android true, Apple false", f"defaultPrevented {prevented} ({'Apple' if apple else 'Android'} profile)")
+    menu = await page.evaluate("""() => { const b = document.querySelector('[aria-label="Gas"]');
+        const e = new MouseEvent('contextmenu', { bubbles: true, cancelable: true }); b.dispatchEvent(e); return e.defaultPrevented; }""")
+    await page.evaluate("""() => { const id = window.__lastPointer[0];
+        window.dispatchEvent(new PointerEvent('pointercancel', { pointerId: id, pointerType: 'touch', bubbles: true })); }""")
+    for _ in range(40):  # 0.7 s more with the finger still down
+        await touch.move(0, gas[0] + random.uniform(-2, 2), gas[1] + random.uniform(-2, 2)); await asyncio.sleep(FRAME)
+    mid = await keys_since(page, n0)
+    t_lift = await page.evaluate("window.__now()")
+    await touch.up(0); await asyncio.sleep(0.2)
+    ev = await keys_since(page, n0)
+    ups = sum(1 for t, c, _ in ev if t == "keyup" and c == "KeyW")
+    res.add("long press: contextmenu + pointercancel mid-hold keep Gas until the real lift",
+            menu and not drops(mid, "KeyW", t_lift) and not held_after(mid) == {} and ups == 1 and not held_after(ev),
+            "menu prevented, W held through the cancel, exactly one W up at the lift",
+            f"menu prevented {menu}, W ups before lift {sum(1 for t, c, _ in mid if t == 'keyup' and c == 'KeyW')}, after {ups}, held at end {held_after(ev) or 'none'}")
+    # A cancel the touch itself confirms (pointercancel, then the browser's touchcancel) must still let go.
+    n0 = await key_count(page)
+    await touch.down(0, *gas); await asyncio.sleep(0.3)
+    await page.evaluate("""() => { const id = window.__lastPointer[0];
+        window.dispatchEvent(new PointerEvent('pointercancel', { pointerId: id, pointerType: 'touch', bubbles: true })); }""")
+    await asyncio.sleep(0.2)
+    await touch.cancel(); await asyncio.sleep(0.3)
+    ev = await keys_since(page, n0)
+    res.add("long press: pointercancel + touchcancel lets go (nothing stuck)", not held_after(ev),
+            "W down then up, nothing held", f"{[(t, c) for t, c, _ in ev]}")
+
+
 async def install_patch(page, args):
     if args.patch_from:
         if Path(args.patch_from).is_dir():  # a worktree folder: its files on disk, committed or not
@@ -732,6 +772,8 @@ async def page_cases(browser, args, profile, res):
         await break_cases(page, touch, res, rects, rng)
     if want("refresh"):
         await refresh_case(page, touch, res, rects)
+    if want("long press"):
+        await long_press_cases(page, touch, res, rects, ua)
     all_ev = await page.evaluate("window.__keys")
     res.add("no key stuck at the very end", not held_after(all_ev), "every keydown has its keyup", f"{held_after(all_ev) or 'none'}")
     print("  pointer events seen:", await page.evaluate("window.__ptr"), flush=True)

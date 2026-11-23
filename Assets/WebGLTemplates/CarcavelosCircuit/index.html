@@ -748,6 +748,9 @@
           setFingerButton(fingerId, null);
         }
         fingerButton = {};
+        fingerDownAt = {};
+        fingerTouch = {};
+        keptAfterCancel = {};
       }
 
       // The sliding touch button clearly under a finger (at least SLIDE_MARGIN px inside it), or null. Only buttons
@@ -777,8 +780,65 @@
           canvas.focus({ preventScroll: true }); // 23.11: keys only count while the game has the keyboard focus
         }
         button.setPointerCapture(event.pointerId); // this finger's move and up events still arrive here when it slides off
+        fingerDownAt[event.pointerId] = [event.clientX, event.clientY];
         setFingerButton(event.pointerId, button);
       });
+
+      // ---------- Android long press (Pixel 9 Pro report 23.11, round 2) ----------
+      // On the Pixel a held Gas let go at once: Android Chrome's long-press gesture (the haptic "click") took the
+      // touch over and cancelled it for the page. preventDefault on POINTERdown does not stop that gesture; only a
+      // non-passive TOUCHstart that calls preventDefault does (it also stops Android's extra mouse events and click).
+      // Only on the buttons (taps on the game itself stay Unity's), and not on Apple devices, whose tested path
+      // (iPhone holds, 19.11) stays exactly as it was.
+      if (!isAppleDevice()) {
+        touchPanel.addEventListener("touchstart", function (event) {
+          if (event.target.closest && event.target.closest("[data-keys]")) {
+            event.preventDefault();
+          }
+        }, { passive: false });
+      }
+
+      // Backstop: if the browser still cancels the POINTER while the finger stays on the glass (its touch goes on),
+      // the key stays held until that touch really ends (touchend or touchcancel of the same finger). Pointer and touch
+      // of one finger are matched by where they went down (pointerdown comes first, at the same spot).
+      var fingerDownAt = {};     // pointerId -> [x, y] where it went down
+      var fingerTouch = {};      // pointerId -> the touch identifier of the same finger
+      var keptAfterCancel = {};  // touch identifier -> pointerId whose key is still held after a pointer cancel
+      window.addEventListener("touchstart", function (event) {
+        for (var i = 0; i < event.changedTouches.length; i++) {
+          var t = event.changedTouches[i];
+          for (var pointerId in fingerDownAt) {
+            var at = fingerDownAt[pointerId];
+            if (!(pointerId in fingerTouch) && Math.abs(at[0] - t.clientX) <= 2 && Math.abs(at[1] - t.clientY) <= 2) {
+              fingerTouch[pointerId] = t.identifier;
+              break;
+            }
+          }
+        }
+      }, { capture: true, passive: true });
+
+      function onFingerCancel(event) {
+        var touchId = fingerTouch[event.pointerId];
+        if (event.pointerType === "touch" && touchId !== undefined && fingerButton[event.pointerId]) {
+          keptAfterCancel[touchId] = event.pointerId;
+          touchLog("kept after cancel", "#" + event.pointerId);
+          return;
+        }
+        onFingerUp(event);
+      }
+
+      function onTouchFingerEnd(event) {
+        for (var i = 0; i < event.changedTouches.length; i++) {
+          var touchId = event.changedTouches[i].identifier;
+          if (touchId in keptAfterCancel) {
+            var pointerId = keptAfterCancel[touchId];
+            delete keptAfterCancel[touchId];
+            onFingerUp({ pointerId: pointerId });
+          }
+        }
+      }
+      window.addEventListener("touchend", onTouchFingerEnd, { capture: true, passive: true });
+      window.addEventListener("touchcancel", onTouchFingerEnd, { capture: true, passive: true });
 
       // Gas-hold fix (phone report 19.11: holding Gas gave gas only for a moment, tapping fast kept the kart going).
       // A held finger used to let go of its key as soon as one move landed off the button: a thumb wobbles by a pixel
@@ -804,9 +864,11 @@
           setFingerButton(event.pointerId, null);
           delete fingerButton[event.pointerId];
         }
+        delete fingerDownAt[event.pointerId];
+        delete fingerTouch[event.pointerId];
       }
       window.addEventListener("pointerup", onFingerUp, true);
-      window.addEventListener("pointercancel", onFingerUp, true);
+      window.addEventListener("pointercancel", onFingerCancel, true);
 
       // Safety net (19.11): when the last finger leaves the screen no key can still be held, even if a browser lost
       // a pointerup on the way (for example when a system gesture at the screen edge takes the touch over).
@@ -832,6 +894,9 @@
       setInterval(function () {
         for (var code in heldCount) {
           if (heldCount[code] > 0 && repeatKeys[code]) {
+            if (document.activeElement !== canvas) {
+              canvas.focus({ preventScroll: true }); // keys only count while the game has the keyboard focus
+            }
             sendKey("keydown", code, true);
           }
         }
@@ -886,7 +951,9 @@
         if (touchLogLines.length > 14) {
           touchLogLines.shift();
         }
-        touchLogBox.textContent = touchLogLines.join("\n") + "\nfocus " + document.hasFocus() + " held " + JSON.stringify(heldCount);
+        var active = document.activeElement ? (document.activeElement.id || document.activeElement.tagName) : "none";
+        touchLogBox.textContent = touchLogLines.join("\n") + "\nfocus " + document.hasFocus() + " on " + active +
+          " held " + JSON.stringify(heldCount);
       }
       window.addEventListener("blur", releaseAllFingers);
 
