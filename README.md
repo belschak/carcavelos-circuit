@@ -4,6 +4,8 @@
 
 A 3D kart racer on a model of Nova SBE's Carcavelos campus that runs in the browser. Race five bots through the beach tunnel, along the promenade and over the ramp between the campus wings; chase your own ghost in Time Attack; or race the whole class live in one online room. Team project for Introduction to Programming (2477), Nova SBE, Fall 2026.
 
+**Goal:** a game anyone in our class can open in a browser and play right away, on a track that looks like our own campus, with the lap rules, leaderboard and online race checked by automated tests.
+
 **Play it: https://nova-kart.github.io/** (Chrome, Edge or Firefox on a laptop; phones work with touch buttons)
 
 Also live at https://belschak.github.io/carcavelos-circuit/: the same build of `main`, published to both addresses by the same workflow ([why](docs/architecture.md#build-and-deploy)).
