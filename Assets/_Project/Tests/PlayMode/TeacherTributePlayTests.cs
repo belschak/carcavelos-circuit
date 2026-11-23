@@ -11,7 +11,7 @@ namespace CarcavelosCircuit.Tests.PlayMode
 {
     // Task P4 (teacher tribute) in the real game (Main.unity + the campus world it loads):
     // - one thank-you board per teacher stands beside a checkpoint gate (never the start gate), without colliders,
-    // - the results card shows the Gil Pereira Cup line for a gold or Dean's List medal, and hides it otherwise.
+    // - the results card shows the Introduction to Racing Cup line for a gold or Dean's List medal, and hides it otherwise.
     public class TeacherTributePlayTests
     {
         private const float SetUpTimeoutSeconds = 60f;

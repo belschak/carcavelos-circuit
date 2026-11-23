@@ -6,7 +6,7 @@ using UnityEngine;
 namespace CarcavelosCircuit.Tests.EditMode
 {
     // Task P4 tests (teacher tribute): the four names with their accents, which gates get a thank-you board,
-    // where a board may stand, which part of the picture each board shows, and who wins the Gil Pereira Cup.
+    // where a board may stand, which part of the picture each board shows, and who wins the Introduction to Racing Cup.
     public class TributeRulesTests
     {
         private static readonly string[] UpperNames =
@@ -136,7 +136,8 @@ namespace CarcavelosCircuit.Tests.EditMode
         [Test]
         public void CupLine_NamesTheCup()
         {
-            StringAssert.Contains("GIL PEREIRA CUP", TributeRules.CupLine);
+            StringAssert.Contains("INTRODUCTION TO RACING CUP", TributeRules.CupLine);
+            StringAssert.DoesNotContain("PEREIRA", TributeRules.CupLine, "the prize is named after the course, not one teacher");
         }
 
         // ---------- Gate names ----------
