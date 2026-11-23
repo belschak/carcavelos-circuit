@@ -81,6 +81,7 @@ Test files are in `Assets/_Project/Tests/`; PlayMode files are marked (PM). Coun
 - **Accepted:** `PlayerNameRulesTests.GoodNames_AreAccepted` (exactly 2 and 16 characters, accents, "Dickens"); (PM) the cleaned name is saved and remembered.
 - **Rejected:** empty, 1 or 17 characters, emoji, HTML and rich text, SQL-like text, tabs, other scripts' digits, rude words incl. "Sh1t" and "s-h-i-t" (`PlayerNameRulesTests`); (PM) `<b>` keeps the form open with a message and sends nothing; **new** a tampered saved name is never offered (`Verification/StoredDataTamperTests.TamperedName_IsNotOffered`).
 - **Edge:** spaces trimmed and doubled spaces joined, 5000-character input, a name tag never cuts an emoji in half.
+- **Phones (23 Nov, Android name fix):** the name is typed in a real page text box over the game's field (`RaceFlow/Web/PageNameBox.cs`, jslib `CarcavelosNameBox*`), because a Pixel 9 Pro never showed the old `window.prompt`. `WebPageTests.NameBox_*` (no page: nothing happens, never a made-up name); `PlayerNameRulesTests.AutoName_IsAFriendlyValidName` (an empty name in the online lobby joins as "RACER 7", 1 to 99, always passes the rules). Real tap + typing checked in headless Chrome as Android and iPhone; the real keyboard needs a real phone.
 
 ### 6. Settings about 55 runs
 

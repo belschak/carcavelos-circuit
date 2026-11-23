@@ -1023,6 +1023,12 @@ namespace CarcavelosCircuit.Online
             }
             string cleaned;
             NameProblem problem = PlayerNameRules.Check(typedName, out cleaned);
+            if (problem == NameProblem.Empty)
+            {
+                // No name typed (or the phone keyboard never came up): join anyway with a friendly made-up name.
+                cleaned = PlayerNameRules.AutoName(UnityEngine.Random.Range(1, 100));
+                problem = NameProblem.None;
+            }
             if (problem != NameProblem.None)
             {
                 if (view != null)

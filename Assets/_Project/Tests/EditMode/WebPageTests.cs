@@ -1,5 +1,7 @@
 using CarcavelosCircuit.RaceFlow;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace CarcavelosCircuit.Tests.EditMode
 {
@@ -26,18 +28,30 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.IsFalse(WebPage.UsesNamePrompt, "Editor and desktop keep the game's own name field");
         }
 
+        // Android name fix (23 Nov): the page's name box. Outside a Web build every call does nothing and reads "".
         [TestCase("Ana")]
         [TestCase("")]
-        [TestCase("a name far longer than the sixteen letters the board allows")]
-        public void PromptName_OutsideAWebBuild_KeepsTheName(string current)
+        [TestCase(null)]
+        public void NameBox_OutsideAWebBuild_DoesNothing(string current)
         {
-            Assert.AreEqual(current, WebPage.PromptName(current));
+            Rect field = new Rect(10f, 10f, 300f, 52f);
+            Rect screen = new Rect(0f, 0f, 1280f, 720f);
+            Assert.DoesNotThrow(() => WebPage.ShowNameBox(1, field, screen, current, 16, true));
+            Assert.AreEqual("", WebPage.NameBoxValue(1), "no page: never a made-up name");
+            Assert.IsFalse(WebPage.NameBoxFocused(1));
+            Assert.DoesNotThrow(() => WebPage.HideNameBox(1));
         }
 
         [Test]
-        public void PromptName_Null_StaysNull()
+        public void NameBox_FieldNotOnScreen_KeepsTheFieldAsItWas()
         {
-            Assert.IsNull(WebPage.PromptName(null), "no name yet: nothing is made up");
+            // A field that is not on any panel (no screen yet): the box stays away, the typed name is untouched.
+            TextField field = new TextField();
+            field.value = "Ana";
+            PageNameBox box = new PageNameBox(field);
+            Assert.IsFalse(box.HasFocus);
+            Assert.AreEqual("Ana", field.value);
+            Assert.IsTrue(field.focusable, "desktop and Editor keep the game's own field");
         }
 
         [Test]
@@ -70,7 +84,7 @@ namespace CarcavelosCircuit.Tests.EditMode
         [TestCase(RaceState.Racing, false, WebPage.PageRacing + WebPage.PageOnline)]
         [TestCase(RaceState.Countdown, false, WebPage.PageRacing + WebPage.PageOnline)]
         [TestCase(RaceState.Ready, false, WebPage.PageMenus)]
-        [TestCase(RaceState.Results, false, WebPage.PageMenus)]
+        [TestCase(RaceState.Results, false, WebPage.PageMenus + WebPage.PageOnline)] // 23.11: ROOM RESULTS on screen
         public void PageRaceState_TellsThePageAnOnlineRace(RaceState state, bool paused, int expected)
         {
             Assert.AreEqual(expected, WebPage.PageRaceState(state, paused, true));
