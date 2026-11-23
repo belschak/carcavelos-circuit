@@ -16,19 +16,84 @@ mergeInto(LibraryManager.library, {
     return document.documentElement.classList.contains("cc-touch-mode") ? 1 : 0;
   },
 
-  // The browser's own text box for the leaderboard name (phones: their keyboard opens reliably there).
-  // Returns the typed text, or the old name when the player cancels. The game checks the answer itself.
-  CarcavelosPromptName: function (currentPointer) {
-    var current = UTF8ToString(currentPointer);
-    var answer = window.prompt("Your name for the leaderboard (2 to 16 letters, digits, space, - or _)", current);
-    if (answer === null) {
-      answer = current;
+  // Android name fix (23 Nov): on phones the name is typed in a real text box of the page, laid exactly over the
+  // game's name field (C# side: RaceFlow/Web/PageNameBox.cs). A real finger tap on a real <input> opens the phone
+  // keyboard in every phone browser; the game's own field and window.prompt did not on a Pixel 9 Pro (Chrome Android).
+  // owner: which game field uses the box (one box for the whole page). left/top/width/height: the field's place as a
+  // share (0 to 1) of the game canvas. current: the text to start with, used when reset is 1 (the box opens, or the
+  // game changed the field itself) or the box changes owner.
+  CarcavelosNameBoxShow: function (owner, left, top, width, height, currentPointer, maxLength, reset) {
+    var box = window.ccNameBox;
+    if (!box) {
+      box = document.createElement("input");
+      box.type = "text";
+      box.id = "cc-name-box";
+      box.setAttribute("autocomplete", "off");
+      box.setAttribute("autocorrect", "off");
+      box.setAttribute("autocapitalize", "characters");
+      box.setAttribute("spellcheck", "false");
+      box.setAttribute("enterkeyhint", "done");
+      box.setAttribute("aria-label", "Your name");
+      box.placeholder = "TAP TO TYPE";
+      // Same look as the game's name field (Leaderboard.uss .lb-name-field): cream box, dark ink, orange edge.
+      box.style.cssText = "position:fixed;z-index:2147483000;box-sizing:border-box;margin:0;padding:0 12px;" +
+        "border:3px solid #FF7A1A;border-radius:10px;background:#FFF8EC;color:#0E2238;font-weight:800;" +
+        "font-family:var(--font-ui, sans-serif);text-transform:uppercase;outline:none;touch-action:manipulation;" +
+        "-webkit-appearance:none;appearance:none;-webkit-user-select:text;user-select:text;pointer-events:auto;";
+      // Typed keys belong to the box only: the game and the page's own key listeners (touch mode off on a key,
+      // "Click to play") never see them. Enter or the keyboard's Done closes the keyboard.
+      var keep = function (event) {
+        event.stopPropagation();
+        if (event.type === "keydown" && event.key === "Enter") {
+          event.preventDefault();
+          box.blur();
+        }
+      };
+      box.addEventListener("keydown", keep);
+      box.addEventListener("keypress", keep);
+      box.addEventListener("keyup", keep);
+      document.body.appendChild(box);
+      window.ccNameBox = box;
     }
-    answer = String(answer).slice(0, 200); // the game refuses anything longer anyway
-    var size = lengthBytesUTF8(answer) + 1;
+    var canvas = document.getElementById("cc-canvas") || document.querySelector("canvas");
+    var rect = canvas ? canvas.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+    if (reset || box.ccOwner !== owner || box.hidden) {
+      box.ccOwner = owner;
+      box.value = UTF8ToString(currentPointer);
+      box.maxLength = maxLength;
+    }
+    var h = height * rect.height;
+    box.style.left = (rect.left + left * rect.width) + "px";
+    box.style.top = (rect.top + top * rect.height) + "px";
+    box.style.width = (width * rect.width) + "px";
+    box.style.height = h + "px";
+    box.style.fontSize = Math.max(16, Math.round(h * 0.45)) + "px"; // 16 px or more: iPhone Safari never zooms in on it
+    box.hidden = false;
+  },
+
+  // Takes the box away when this owner's field is gone or hidden (a newer owner keeps it).
+  CarcavelosNameBoxHide: function (owner) {
+    var box = window.ccNameBox;
+    if (box && box.ccOwner === owner && !box.hidden) {
+      box.blur();
+      box.hidden = true;
+    }
+  },
+
+  // What is in the box right now ("" when the box belongs to another field or is closed).
+  CarcavelosNameBoxValue: function (owner) {
+    var box = window.ccNameBox;
+    var text = box && box.ccOwner === owner && !box.hidden ? String(box.value).slice(0, 200) : "";
+    var size = lengthBytesUTF8(text) + 1;
     var buffer = _malloc(size);
-    stringToUTF8(answer, buffer, size);
-    return buffer; // Unity turns this into a C# string and frees the memory
+    stringToUTF8(text, buffer, size);
+    return buffer;
+  },
+
+  // 1 while the phone keyboard types into the box (the game keeps its keys off then).
+  CarcavelosNameBoxFocused: function (owner) {
+    var box = window.ccNameBox;
+    return box && box.ccOwner === owner && !box.hidden && document.activeElement === box ? 1 : 0;
   },
 
   // Load time P8 (18 Nov): the address of the campus world file the page picked for this GPU, "" when there is none
