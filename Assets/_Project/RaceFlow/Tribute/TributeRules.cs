@@ -5,7 +5,7 @@ namespace CarcavelosCircuit.RaceFlow
 {
     // Task P4, teacher tribute: this game exists because of Introduction to Programming 2026 at Nova SBE.
     // Plain C# rules (Edit Mode tested), used by TeacherTribute: who is thanked, which checkpoint gates get a
-    // thank-you board, where a board may stand, and who wins the Gil Pereira Cup. Names only, no photos.
+    // thank-you board, where a board may stand, and who wins the Introduction to Racing Cup. Names only, no photos.
     public static class TributeRules
     {
         // The teaching staff, in the order of the boards in TributeBoards.png (tools/textures/make_tribute_boards.py).
@@ -51,7 +51,7 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        public const string CupLine = "YOU WON THE GIL PEREIRA CUP";
+        public const string CupLine = "YOU WON THE INTRODUCTION TO RACING CUP";
 
         // A gold lap or better (the Dean's List) wins the cup.
         public static bool WinsCup(Medal medal)

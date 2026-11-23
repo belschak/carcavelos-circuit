@@ -11,7 +11,7 @@ namespace CarcavelosCircuit.RaceFlow
     //    The gates' banner poles stand where Role 3's campus builder already checked ground and walls, so a board goes
     //    right beside one. A spot is only used when there is ground under it and nothing solid in the way; otherwise
     //    the next spot or the next gate is tried, and a board that finds no place is logged, never forced.
-    // 2. A gold lap or better shows "YOU WON THE GIL PEREIRA CUP" under the medal on the results card.
+    // 2. A gold lap or better shows "YOU WON THE INTRODUCTION TO RACING CUP" under the medal on the results card.
     // It creates itself when the game starts (no scene edit) and never touches the race, the karts or the bots.
     // Boards are pure decoration: no colliders, layer "Ignore Raycast", materials copied from the gate banner.
     public class TeacherTribute : MonoBehaviour
