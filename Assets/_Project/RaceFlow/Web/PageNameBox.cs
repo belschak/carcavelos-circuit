@@ -96,9 +96,12 @@ namespace CarcavelosCircuit.RaceFlow
             {
                 return "no screen size";
             }
-            if (element.pickingMode == PickingMode.Ignore || !element.enabledInHierarchy)
+            // The inner text box takes the taps (the field itself may ignore them). The save form switches it off
+            // while its card slides in and after SAVE (SaveTimeForm.SetClickable).
+            VisualElement input = element.Q(className: TextField.inputUssClassName);
+            if ((input != null ? input.pickingMode : element.pickingMode) == PickingMode.Ignore || !element.enabledInHierarchy)
             {
-                return "not clickable"; // e.g. the save form after SAVE (SaveTimeForm.SetClickable)
+                return "not clickable";
             }
             if (element.worldBound.width < 1f || element.worldBound.height < 1f)
             {
