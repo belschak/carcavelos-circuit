@@ -765,6 +765,9 @@
         }
         event.preventDefault(); // no text selection, no zoom, no extra mouse events
         unlockSound();          // the first tap may come before the sound is on
+        if (document.activeElement !== canvas) {
+          canvas.focus({ preventScroll: true }); // 23.11: keys only count while the game has the keyboard focus
+        }
         button.setPointerCapture(event.pointerId); // this finger's move and up events still arrive here when it slides off
         setFingerButton(event.pointerId, button);
       });
