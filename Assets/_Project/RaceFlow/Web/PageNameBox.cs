@@ -1,3 +1,4 @@
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace CarcavelosCircuit.RaceFlow
@@ -17,6 +18,7 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly int owner;   // one box for the whole page: the field that showed it last owns it
         private bool shown;
         private string synced = ""; // the text the box and the field last agreed on
+        private string lastReason;  // why the box was hidden the last time ("" = shown), for the console
 
         public PageNameBox(TextField field)
         {
@@ -38,13 +40,24 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (!WebPage.UsesNamePrompt)
             {
+                if (lastReason != "not a phone")
+                {
+                    lastReason = "not a phone";
+                    Debug.Log("PageNameBox " + owner + ": not used (no phone, no touch mode)");
+                }
                 Hide();
                 field.focusable = true; // a touch laptop after a key press: the game's own field again
                 return;
             }
             field.focusable = false; // the finger types in the page box, never in the game's field
             VisualElement screen = field.panel == null ? null : field.panel.visualTree;
-            if (screen == null || !IsShown(field) || screen.worldBound.width < 1f || screen.worldBound.height < 1f)
+            string hiddenBecause = screen == null ? "no panel" : WhyHidden(field, screen);
+            if (hiddenBecause != lastReason)
+            {
+                lastReason = hiddenBecause;
+                Debug.Log("PageNameBox " + owner + ": " + (hiddenBecause.Length == 0 ? "shown" : "hidden (" + hiddenBecause + ")"));
+            }
+            if (hiddenBecause.Length > 0)
             {
                 Hide();
                 return;
@@ -75,26 +88,36 @@ namespace CarcavelosCircuit.RaceFlow
             }
         }
 
-        // The field is on screen and can be used: attached, not hidden by itself or a parent, not switched off.
-        private static bool IsShown(VisualElement element)
+        // "" when the field is on screen and can be used, else why not (written to the console once per change, so a
+        // phone report can be checked in the browser console).
+        private static string WhyHidden(VisualElement element, VisualElement screen)
         {
+            if (screen.worldBound.width < 1f || screen.worldBound.height < 1f)
+            {
+                return "no screen size";
+            }
             if (element.pickingMode == PickingMode.Ignore || !element.enabledInHierarchy)
             {
-                return false; // e.g. the save form after SAVE (SaveTimeForm.SetClickable)
+                return "not clickable"; // e.g. the save form after SAVE (SaveTimeForm.SetClickable)
             }
             if (element.worldBound.width < 1f || element.worldBound.height < 1f)
             {
-                return false;
+                return "no size";
             }
+            if (element.resolvedStyle.visibility == Visibility.Hidden)
+            {
+                return "invisible"; // the field's own value already includes what its parents pass on
+            }
+            float opacity = 1f;
             for (VisualElement current = element; current != null; current = current.parent)
             {
-                IResolvedStyle style = current.resolvedStyle;
-                if (style.display == DisplayStyle.None || style.visibility == Visibility.Hidden || style.opacity < 0.05f)
+                if (current.resolvedStyle.display == DisplayStyle.None)
                 {
-                    return false;
+                    return "display none";
                 }
+                opacity *= current.resolvedStyle.opacity;
             }
-            return true;
+            return opacity < 0.05f ? "faded out" : "";
         }
     }
 }

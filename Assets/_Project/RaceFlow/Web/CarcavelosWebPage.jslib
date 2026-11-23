@@ -54,6 +54,7 @@ mergeInto(LibraryManager.library, {
       box.addEventListener("keyup", keep);
       document.body.appendChild(box);
       window.ccNameBox = box;
+      console.log("cc-name-box: the page's name box is ready");
     }
     var canvas = document.getElementById("cc-canvas") || document.querySelector("canvas");
     var rect = canvas ? canvas.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
