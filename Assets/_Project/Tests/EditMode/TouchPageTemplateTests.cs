@@ -85,6 +85,23 @@ namespace CarcavelosCircuit.Tests.EditMode
             StringAssert.Contains("var(--cc-r", css, "touch buttons are sized in the HUD's own unit");
         }
 
+        // Pixel report 23.11: a held Gas from the countdown acted like one short tap. Held driving keys are sent again.
+        [Test]
+        public void HeldDrivingKeys_AreSentAgain_SinglePressButtonsAreNot()
+        {
+            string html = IndexHtml();
+            StringAssert.Contains("var repeatKeys = { KeyW: true, KeyS: true, KeyA: true, KeyD: true, Space: true };", html);
+            // Rejected: Item (E), Trick (Shift), Recover (R), Retry (Enter) and Pause (P) must never repeat.
+            Match keys = Regex.Match(html, "var repeatKeys = \\{([^}]*)\\}");
+            foreach (string single in new[] { "KeyE", "ShiftLeft", "KeyR", "Enter", "KeyP" })
+            {
+                StringAssert.DoesNotContain(single, keys.Groups[1].Value, single + " is a single press");
+            }
+            // Edge: only keys still held (count > 0) repeat, and the on-screen log is opt-in (?test=touchlog).
+            StringAssert.Contains("if (heldCount[code] > 0 && repeatKeys[code])", html);
+            StringAssert.Contains("test=[^&#]*touchlog", html);
+        }
+
         // iPhone report 23.11: fast taps on ITEM zoomed the page in (iOS ignores user-scalable=no).
         [TestCase("gesturestart")]
         [TestCase("gesturechange")]
