@@ -116,6 +116,10 @@ namespace CarcavelosCircuit.RaceFlow
             pauseMenu = MakePauseButton(pauseActions, "pause-menu", "Q", PauseMenuText(false), false);
             VisualElement pauseContent = pauseScreen.Q<VisualElement>(className: "pause-content");
             pauseContent.Insert(pauseContent.IndexOf(pauseHint), pauseActions);
+            // The row itself never catches clicks: the hidden card lies over the start screen's mode cards, and a
+            // clickable row there swallowed the mouse click on ONLINE RACE (QA 23 Nov 2026: READY then started a bots
+            // race). Only the buttons switch their clicks on, and only while the card shows (UpdatePauseCard).
+            pauseActions.pickingMode = PickingMode.Ignore;
             pauseHint.style.display = DisplayStyle.None;
 
             // Load the saved settings and use them at once (volume and reduced motion are right from the first frame).

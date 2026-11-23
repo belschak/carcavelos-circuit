@@ -402,6 +402,36 @@ namespace CarcavelosCircuit.Tests.PlayMode
             }
         }
 
+        // QA 23 Nov 2026 (live regression): the hidden pause card lies over the start screen's mode cards. Nothing in it
+        // may catch a mouse click there, or a click on ONLINE RACE opened the builder in the wrong mode and READY started
+        // a bots race. Checked with the panel's own picking, the same test a real mouse click goes through.
+        [UnityTest]
+        public IEnumerator HiddenPauseCard_NeverCatchesAClick_OnTheModeCards()
+        {
+            yield return WaitFrames(3);
+            VisualElement root = hud.GetComponent<UIDocument>().rootVisualElement;
+            VisualElement pauseScreen = root.Q<VisualElement>("pause-screen");
+            Assert.IsNotNull(pauseScreen);
+            int clickable = 0;
+            pauseScreen.Query<VisualElement>().ForEach(e => { if (e.pickingMode == PickingMode.Position) clickable++; });
+            Assert.AreEqual(0, clickable, "no element of the hidden pause card catches clicks");
+
+            VisualElement actions = root.Q<VisualElement>("pause-actions");
+            Assert.IsNotNull(actions);
+            IPanel panel = root.panel;
+            Rect area = actions.worldBound;
+            Assert.Greater(area.width, 0f, "the row is laid out (it lies over the start screen even while hidden)");
+            for (int i = 1; i <= 9; i++)
+            {
+                Vector2 point = new Vector2(area.xMin + area.width * i / 10f, area.center.y);
+                VisualElement picked = panel.Pick(point);
+                for (VisualElement e = picked; e != null; e = e.parent)
+                {
+                    Assert.AreNotEqual(pauseScreen, e, "a click at " + point + " lands on the hidden pause card");
+                }
+            }
+        }
+
         // The same ClickEvent UI Toolkit sends after a mouse click or a tap on the element.
         private static void Click(VisualElement element)
         {
