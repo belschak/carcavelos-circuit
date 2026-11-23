@@ -34,12 +34,15 @@ TEMPLATE = "Assets/WebGLTemplates/CarcavelosCircuit/index.html"
 STYLE = "Assets/WebGLTemplates/CarcavelosCircuit/TemplateData/style.css"
 ANDROID_UA = ("Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) "
               "Chrome/130.0.0.0 Mobile Safari/537.36")
+PIXEL_UA = ("Mozilla/5.0 (Linux; Android 15; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/131.0.0.0 Mobile Safari/537.36")
 IPHONE_UA = ("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) "
              "Version/18.0 Mobile/15E148 Safari/604.1")
 PROFILES = {  # CSS px of the page area, user agent
     "android": (915, 412, ANDROID_UA),        # Pixel 7 full screen / home screen
     "android-bars": (800, 336, ANDROID_UA),   # Galaxy S Chrome with browser bars (smallest buttons)
     "iphone": (844, 340, IPHONE_UA),          # iPhone 14/15 Safari with bars
+    "pixel": (914, 360, PIXEL_UA),            # Pixel 9 Pro Chrome with bars (report 23.11: hold at the race start)
 }
 BUTTONS = {  # aria-label -> short name, keys it must hold
     "Gas": ("gas", ["KeyW"]),
@@ -56,8 +59,11 @@ SHOTS = Path(tempfile.gettempdir()) / "touch_hold_check"  # --game screenshots (
 INIT = r"""(() => {
   window.__keys = []; window.__ptr = {};
   const t0 = performance.now();
-  const rec = e => { if (e.target && e.target.id === 'cc-canvas' && !e.isTrusted)
-    window.__keys.push([e.type, e.code, Math.round(performance.now() - t0)]); };
+  // A held key is sent again every 200 ms (index.html, 23.11: ccRefresh); those are counted apart, not as presses.
+  window.__refresh = 0;
+  const rec = e => { if (e.target && e.target.id === 'cc-canvas' && !e.isTrusted) {
+    if (e.ccRefresh) { window.__refresh++; return; }
+    window.__keys.push([e.type, e.code, Math.round(performance.now() - t0)]); } };
   document.addEventListener('keydown', rec, true); document.addEventListener('keyup', rec, true);
   ['pointerdown','pointerup','pointercancel','lostpointercapture','contextmenu','touchcancel'].forEach(n =>
     document.addEventListener(n, () => { window.__ptr[n] = (window.__ptr[n] || 0) + 1; }, true));
@@ -542,7 +548,11 @@ async def game_cases(browser, args, profile, res):
         res.add("game: local online race starts", False, "cc-racing within 90 s", f"no race (screenshot {shot}); console tail {log[-8:]}")
         await ctx.close()
         return
-    await asyncio.sleep(5)  # countdown
+    # Start case (Pixel report 23.11): the thumb goes on Gas during the countdown and stays through GO for
+    # START_HOLD s after it, with a 2 px jitter. W must never go up and the kart must get going.
+    rects = await page.evaluate(RECTS)
+    gas = centre(rects["Gas"])
+    await start_hold_case(page, touch, res, gas)
     rects = await page.evaluate(RECTS)
     gas = centre(rects["Gas"])
     rng = random.Random(7)
@@ -605,6 +615,50 @@ async def game_cases(browser, args, profile, res):
                 f"{(sum(last) / len(last) * 3.6 if last else 0):.0f} km/h, {len(speeds)} poses")
     await page.screenshot(path=str(SHOTS / "touch-hold-game.png"))
     await ctx.close()
+
+
+START_HOLD = 10.0  # s of gas after GO in the start case
+
+
+async def start_hold_case(page, touch, res, gas):
+    rng = random.Random(23112026)
+    p0 = len(await page.evaluate("window.__poses"))
+    n0 = await key_count(page)
+    t0 = await page.evaluate("window.__now()")
+    await touch.down(0, *gas)
+    end = time.perf_counter() + 4.0 + START_HOLD  # the countdown is about 4 s
+    while time.perf_counter() < end:
+        await touch.move(0, gas[0] + rng.uniform(-2, 2), gas[1] + rng.uniform(-2, 2))
+        await asyncio.sleep(FRAME)
+    t_lift = await page.evaluate("window.__now()")
+    await touch.up(0)
+    await asyncio.sleep(0.15)
+    ev = await keys_since(page, n0)
+    w_drops = drops(ev, "KeyW", t_lift)
+    poses = (await page.evaluate("window.__poses"))[p0:]
+    speeds = [(ms - t0, decode_speed(b)) for ms, b in poses]
+    speeds = [(ms, v[0]) for ms, v in speeds if v and ms <= t_lift - t0]
+    top = max((v for _, v in speeds), default=0.0)
+    first_fast = next((ms for ms, v in speeds if v * 3.6 > 30), None)
+    res.add(f"game: hold gas from the countdown through {START_HOLD:.0f} s after GO", not w_drops and top * 3.6 > 30,
+            "W never up while held, the kart passes 30 km/h",
+            f"W drops {w_drops}, top {top * 3.6:.0f} km/h, past 30 km/h at {first_fast} ms after the finger went down, "
+            f"{len(speeds)} poses, {await page.evaluate('window.__refresh')} key refreshes so far")
+    # Recover to the start area is not needed: the later cases recover to the last checkpoint themselves.
+
+
+async def refresh_case(page, touch, res, rects):
+    """23.11: a held driving key is sent again every 200 ms; a tapped Item key and a lifted finger never repeat."""
+    r0 = await page.evaluate("window.__refresh")
+    await touch.down(0, *centre(rects["Gas"])); await asyncio.sleep(1.1)
+    held = await page.evaluate("window.__refresh") - r0
+    await touch.up(0); await asyncio.sleep(0.1)
+    r1 = await page.evaluate("window.__refresh")
+    await touch.down(0, *centre(rects["Use item"])); await asyncio.sleep(1.1); await touch.up(0)
+    await asyncio.sleep(0.6)
+    after = await page.evaluate("window.__refresh") - r1
+    res.add("held Gas is sent again, Item and lifted fingers are not", 4 <= held <= 7 and after == 0,
+            "4 to 7 refreshes in 1.1 s of Gas, 0 for a held Item and after the lift", f"{held} while Gas held, {after} after")
 
 
 async def install_patch(page, args):
@@ -676,6 +730,8 @@ async def page_cases(browser, args, profile, res):
         await release_cases(page, touch, res, rects)
     if want("break"):
         await break_cases(page, touch, res, rects, rng)
+    if want("refresh"):
+        await refresh_case(page, touch, res, rects)
     all_ev = await page.evaluate("window.__keys")
     res.add("no key stuck at the very end", not held_after(all_ev), "every keydown has its keyup", f"{held_after(all_ev) or 'none'}")
     print("  pointer events seen:", await page.evaluate("window.__ptr"), flush=True)

@@ -677,12 +677,16 @@
       var fingerButton = {};   // finger (pointerId) -> the button under it, or null
       var gameStarted = false; // set by showTouchControls; a touch before that is for the loading screen
 
-      function sendKey(type, code) {
-        canvas.dispatchEvent(new KeyboardEvent(type, {
+      // refresh = true: the same key again while it is held (see "Held keys are sent again" below).
+      function sendKey(type, code, refresh) {
+        var keyEvent = new KeyboardEvent(type, {
           code: code, key: KEYS[code].key, keyCode: KEYS[code].keyCode, which: KEYS[code].keyCode,
           location: KEYS[code].location || 0, shiftKey: code === "ShiftLeft" && type === "keydown",
           bubbles: true, cancelable: true
-        }));
+        });
+        keyEvent.ccRefresh = refresh === true; // lets tools/qa/touch_hold_check.py tell a refresh from a new press
+        canvas.dispatchEvent(keyEvent);
+        touchLog(type + (refresh ? " again" : ""), code);
       }
 
       // A key goes down with the first finger that holds it and up with the last one that lets go.
@@ -803,6 +807,76 @@
       window.addEventListener("touchend", onTouchEnd, { capture: true, passive: true });
       window.addEventListener("touchcancel", onTouchEnd, { capture: true, passive: true });
       touchPanel.addEventListener("contextmenu", function (event) { event.preventDefault(); }); // long press
+
+      // ---------- Android start-of-race hold (Pixel report 23.11) ----------
+      // On a Pixel 9 Pro a held Gas from the countdown acted like one short tap for the first 10 to 20 s of a race.
+      // Headless Chrome with the same phone profile holds fine, so two safety nets cover both possible causes:
+      // 1. Held keys are sent again every 200 ms (like a real keyboard repeating a held key): if anything in the
+      //    browser or the engine forgets a held key, it is back within a fifth of a second. Only the sliding driving
+      //    buttons (Gas, Brake, Drift, Steer) repeat; Item, Trick, Recover, Retry and Pause are single presses.
+      // 2. In touch mode a long press can never become a context menu, text selection or drag anywhere on the page
+      //    (Android hands such a touch to the browser and cancels it for the page).
+      var REPEAT_MS = 200;
+      var repeatKeys = { KeyW: true, KeyS: true, KeyA: true, KeyD: true, Space: true };
+      setInterval(function () {
+        for (var code in heldCount) {
+          if (heldCount[code] > 0 && repeatKeys[code]) {
+            sendKey("keydown", code, true);
+          }
+        }
+      }, REPEAT_MS);
+      ["contextmenu", "selectstart", "dragstart"].forEach(function (name) {
+        document.addEventListener(name, function (event) {
+          if (touchMode) {
+            event.preventDefault();
+          }
+        }, true);
+      });
+
+      // ?test=touchlog (23.11): a small log on screen of what the touch controls see, for testing on a real phone
+      // (no developer tools there). Off for everyone else; it never takes a touch (pointer-events: none).
+      var touchLogBox = null;
+      var touchLogStart = Date.now();
+      if (/[?&]test=[^&#]*touchlog/i.test(window.location.search)) {
+        touchLogBox = document.createElement("pre");
+        touchLogBox.id = "cc-touchlog";
+        touchLogBox.style.cssText = "position:fixed;left:50%;top:0;transform:translateX(-50%);margin:0;padding:4px 8px;" +
+          "font:11px/1.25 ui-monospace,monospace;color:#fff;background:rgba(0,0,0,0.6);z-index:10;pointer-events:none;" +
+          "white-space:pre;max-width:60vw;overflow:hidden";
+        document.body.appendChild(touchLogBox);
+        ["pointerdown", "pointerup", "pointercancel", "lostpointercapture", "touchcancel", "contextmenu",
+         "selectstart", "dragstart"].forEach(function (name) {
+          document.addEventListener(name, function (event) {
+            var target = event.target && event.target.getAttribute ? (event.target.getAttribute("aria-label") || event.target.id) : "";
+            touchLog(name, (event.pointerId !== undefined ? "#" + event.pointerId + " " : "") + target);
+          }, true);
+        });
+        window.addEventListener("touchend", function (event) { touchLog("touchend", "left " + event.touches.length); }, true);
+        window.addEventListener("blur", function () { touchLog("blur", ""); });
+        window.addEventListener("focus", function () { touchLog("focus", ""); });
+        document.addEventListener("visibilitychange", function () { touchLog("visibility", document.visibilityState); });
+        window.addEventListener("resize", function () { touchLog("resize", window.innerWidth + "x" + window.innerHeight); });
+        window.addEventListener("cc-race-state", function (event) { touchLog("race", JSON.stringify(event.detail)); });
+      }
+      var touchLogLines = [];
+      var lastLoggedAgain = {};
+      function touchLog(what, detail) {
+        if (!touchLogBox) {
+          return;
+        }
+        if (what === "keydown again") {
+          if (Date.now() - (lastLoggedAgain[detail] || 0) < 2000) {
+            return; // one "again" line every 2 s per key is enough to see it is still held
+          }
+          lastLoggedAgain[detail] = Date.now();
+        }
+        var seconds = ((Date.now() - touchLogStart) / 1000).toFixed(2);
+        touchLogLines.push(seconds + " " + what + " " + detail);
+        if (touchLogLines.length > 14) {
+          touchLogLines.shift();
+        }
+        touchLogBox.textContent = touchLogLines.join("\n") + "\nfocus " + document.hasFocus() + " held " + JSON.stringify(heldCount);
+      }
       window.addEventListener("blur", releaseAllFingers);
 
       // The game says when a race runs (countdown or racing, task R10/R11: RaceFlow/Web/WebPage.cs sends the event
