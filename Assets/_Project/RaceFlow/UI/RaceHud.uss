@@ -2104,8 +2104,8 @@
 
 /* ---------- Pause menu (23 Nov 2026): RESUME, RETRY, BACK TO MENU as real buttons on the PAUSED card; online the
    same card asks LEAVE THE RACE? (CONTINUE, LEAVE RACE) while the race keeps running, so its veil is light.
-   Built in UI/HudMenus.cs. Desktop 60 HUD px tall (60 px at 1280x720, 90 px at 1080p); touch 100 HUD px
-   (about 47 CSS px on a phone in landscape, above the 44 px thumb target). ---------- */
+   Built in UI/HudMenus.cs. Desktop 60 HUD px tall (60 px at 1280x720, 90 px at 1080p); touch 112 HUD px
+   (100 measured 42 CSS px on an iPhone profile, so 112 = about 47, above the 44 px thumb target). ---------- */
 .pause-actions {
     flex-direction: row;
     flex-wrap: wrap;
@@ -2129,7 +2129,7 @@
 }
 
 .hud--touch .menu-pill.pause-button {
-    height: 100px;
+    height: 112px;
     margin: 8px 12px;
     padding: 0 36px 6px 36px;
 }
@@ -2145,4 +2145,10 @@
 .pause-screen--online .pause-title {
     font-size: 56px;
     letter-spacing: 4px;
+}
+
+/* The note on the light online veil: white with a shadow, the muted grey was unreadable over a bright road. */
+.pause-screen--online .pause-note {
+    color: var(--cc-white);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
 }
