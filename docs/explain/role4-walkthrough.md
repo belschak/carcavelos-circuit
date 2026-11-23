@@ -53,8 +53,7 @@ Everything around the track is Role 4: the loading page, the start screen with i
 - **Online behind `IOnlineSession`**: Photon's licence forbids the SDK in a public repo, so a fresh clone still compiles and plays single player; Shared Mode because Photon recommends it for WebGL (2026-11-16, M2).
 - **Ambience finds the sea at runtime**: Luc's scene is never edited, and his sea is one flat 8 km plane, so the beach is found from the ground height (2026-11-11, R12).
 - **Web settings in code** (`Role4WebBuild`): some settings are saved per machine in `Library/`, so every laptop built differently (2026-11-08). No compression plus hashed file names because GitHub Pages gzips on the fly (2026-11-08); no static batching and crunched textures to cut the download (2026-11-13, 2026-11-16).
-- **Keys**: P pauses (2026-11-08, 2026-11-10); since the pause menu (2026-11-23) Escape pauses and resumes too, but P stays the key the HUD names, because in browser fullscreen the browser takes the first Escape. Touch controls are HTML buttons that send keys, so no C# changed (2026-11-10).
-- **Pause menu** (2026-11-23): the PAUSED card has RESUME, RETRY and BACK TO MENU buttons (`UI/HudMenus.cs`, rules `RacePause.PausedKey`). Online one player cannot stop the room, so the same card becomes LEAVE THE RACE? (CONTINUE / LEAVE RACE) over the running race (`RacePause.OnlineKey`); LEAVE RACE calls `OnlineRaceHooks.LeaveRace`, the online director's `Close`, because RaceFlow must not reference the Online assembly. Limit: leaving is final, there is no rejoin into a running race.
+- **Keys**: P pauses, never Escape, because Escape leaves browser fullscreen (2026-11-08, 2026-11-10). Touch controls are HTML buttons that send keys, so no C# changed (2026-11-10).
 
 ## Limits
 

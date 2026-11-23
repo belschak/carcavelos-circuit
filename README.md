@@ -36,12 +36,12 @@ Pick a mode on the start screen (click it, or press 1, 2 or 3), build your kart 
 | E | Use the item you picked up |
 | R | Recover to the last checkpoint (the timer keeps running) |
 | Enter | Retry |
-| P or Esc | Pause: the PAUSED card has RESUME, RETRY and BACK TO MENU buttons (P or Esc again = resume). Online the race cannot pause for everyone: P opens LEAVE THE RACE? (CONTINUE / LEAVE RACE) and the race keeps running |
+| P | Pause |
 | O / C / M | Settings / credits / sound on or off |
 | T | Noon or sunset light |
-| Q | Back to the menu (mid-race the first Q pauses, Q again leaves; online mid-race the first Q asks, Q again leaves the race as DNF; in the lobby and on the results: leave the room) |
+| Q | Back to the menu (mid-race the first Q pauses, Q again leaves; online: leave the room) |
 
-On a phone the game shows touch buttons instead. The pause button (top left, next to the lap time) opens the same card with tappable buttons, online too.
+On a phone the game shows touch buttons instead.
 
 ## Features, and where each lives
 

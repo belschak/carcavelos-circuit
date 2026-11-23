@@ -13,10 +13,6 @@ namespace CarcavelosCircuit.RaceFlow
 
         public static bool Available => OpenLobby != null;
 
-        // Set by the online director while a room is open, null otherwise (pause menu, 23 Nov 2026): LEAVE RACE on the
-        // small in-race card (RaceManager.LeaveOnlineRace) leaves the room through it, exactly like Q in the lobby.
-        public static Action LeaveRace;
-
         public const string UnavailableMessage = "ONLINE RACE NEEDS THE ONLINE BUILD";
     }
 }
