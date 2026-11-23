@@ -102,6 +102,22 @@ namespace CarcavelosCircuit.Tests.EditMode
             StringAssert.Contains("test=[^&#]*touchlog", html);
         }
 
+        // Pixel report 23.11 round 2: Android's long press cancelled a held Gas.
+        [Test]
+        public void AndroidLongPress_IsBlockedOnTheButtons_AndACancelKeepsTheKeyWhileTheFingerStays()
+        {
+            string html = IndexHtml().Replace("\r\n", "\n");
+            // Accepted: a non-passive touchstart on the buttons, Android only (Apple's tested path unchanged).
+            StringAssert.Contains("if (!isAppleDevice()) {\n        touchPanel.addEventListener(\"touchstart\"", html);
+            StringAssert.Contains("}, { passive: false });\n      }\n\n      // Backstop", html);
+            // Edge: a pointer cancel keeps the key only while the same finger's touch goes on ...
+            StringAssert.Contains("window.addEventListener(\"pointercancel\", onFingerCancel, true);", html);
+            // Rejected: ... and its touchend or touchcancel still lets go, so nothing can stay stuck.
+            StringAssert.Contains("window.addEventListener(\"touchend\", onTouchFingerEnd", html);
+            StringAssert.Contains("window.addEventListener(\"touchcancel\", onTouchFingerEnd", html);
+            StringAssert.Contains("keptAfterCancel = {};", html, "releaseAllFingers forgets kept keys too");
+        }
+
         // iPhone report 23.11: fast taps on ITEM zoomed the page in (iOS ignores user-scalable=no).
         [TestCase("gesturestart")]
         [TestCase("gesturechange")]
