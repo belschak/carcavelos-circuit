@@ -611,6 +611,15 @@ kbd.cc-wide { padding: 0 11px; font-size: 12px; letter-spacing: 0.08em; }
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 }
+/* iPhone zoom fix (23.11): Safari takes touch-action from the element under the finger (the game canvas, the gaps
+   between the buttons), not from html/body, so a fast double tap there zoomed the page. Every element says none.
+   The only scrolling box in touch mode (the error details) keeps vertical scrolling. */
+.cc-touch-mode * {
+  touch-action: none;
+}
+.cc-touch-mode .cc-details p {
+  touch-action: pan-y;
+}
 
 /* The panel itself lets touches through to the game; only the buttons catch them.
    Sizes (phone round 17.11): everything is measured in the game HUD's own unit --cc-r (1/720 of the canvas height,

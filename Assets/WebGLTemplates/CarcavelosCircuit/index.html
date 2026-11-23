@@ -887,6 +887,54 @@
         window.visualViewport.addEventListener("resize", measureHudUnit); // iPhone Safari bars coming and going
       }
 
+      // ---------- No page zoom (iPhone report 23.11) ----------
+      // Tapping ITEM fast in iPhone Safari zoomed the whole page in (HUD and minimap half off screen, no way back):
+      // iOS ignores user-scalable=no since iOS 10, so a quick double tap or a second finger near the buttons zoomed.
+      // Three guards, none of them touches the key presses above (pointer events) or Unity's own touch reading:
+      // 1. style.css gives every element touch-action: none in touch mode (WebKit does not pass the html/body value on).
+      // 2. Safari's pinch (gesture events, iOS only) and the double tap (dblclick) are cancelled, as is a two-finger
+      //    touch move that changes the scale (event.scale exists only on iOS). Only default actions are cancelled:
+      //    the events still reach every other listener.
+      // 3. If the page is zoomed anyway, it is zoomed back out as soon as no finger is on the screen.
+      function noZoom(event) {
+        event.preventDefault();
+      }
+      document.addEventListener("gesturestart", noZoom, { passive: false });
+      document.addEventListener("gesturechange", noZoom, { passive: false });
+      document.addEventListener("gestureend", noZoom, { passive: false });
+      document.addEventListener("dblclick", noZoom, { passive: false });
+      document.addEventListener("touchmove", function (event) {
+        if (typeof event.scale === "number" && event.scale !== 1) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+
+      // iOS jumps back to 100 % when the viewport tag asks for at most 100 %; the tag is put back right after.
+      var viewportTag = document.querySelector('meta[name="viewport"]');
+      var viewportContent = viewportTag ? viewportTag.getAttribute("content") : "";
+      var lastUnzoom = 0;
+      function undoZoom() {
+        if (!touchMode || !viewportTag || !window.visualViewport || window.visualViewport.scale <= 1.01) {
+          return;
+        }
+        if (Date.now() - lastUnzoom < 1000) {
+          return; // at most once a second, so it can never loop
+        }
+        lastUnzoom = Date.now();
+        viewportTag.setAttribute("content", viewportContent + ", minimum-scale=1, maximum-scale=1");
+        setTimeout(function () {
+          viewportTag.setAttribute("content", viewportContent);
+        }, 400);
+      }
+      window.addEventListener("touchend", function (event) {
+        if (event.touches.length === 0) {
+          setTimeout(undoZoom, 150); // after the finger is up, never in the middle of a race touch
+        }
+      }, { capture: true, passive: true });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", function () { setTimeout(undoZoom, 300); });
+      }
+
       // Started from the home screen icon (manifest "display", iPhone "Add to Home Screen"): no browser bars.
       function runsFromHomeScreen() {
         return window.navigator.standalone === true ||

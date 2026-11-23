@@ -147,7 +147,8 @@ cases, `Verification/*` and `Online/OnlineHostileInputTests`).
 - **How driving feels and looks:** drift timing, camera, jumps, audio, art. Checked by playing (table below).
 - **Browser specifics:** the JavaScript in `Assets/WebGLTemplates/CarcavelosCircuit/index.html` (touch release
   when the tab loses focus, the loading screen) is checked by reading the template text; the touch buttons also by `tools/qa/touch_hold_check.py` in a real
-  browser. Phones were checked by hand and with Playwright scripts on 7 phone profiles.
+  browser. The page-zoom guards for iPhone Safari (23 Nov: fast taps on ITEM zoomed the page; iOS ignores `user-scalable=no`) are
+  checked by reading the template (`TouchPageTemplateTests`); headless Chrome cannot zoom like Safari, so the real check is an iPhone. Phones were checked by hand and with Playwright scripts on 7 phone profiles.
 - **Total download size and frame rate on a phone:** need a finished build and a real device.
 - **The campus world download** (`RaceFlow/WorldStream.cs`): the download itself, its one retry, the "The track did not download" card and the browser's IndexedDB cache of the world file run only in a real Web build, so `WorldFileTests` checks the build rules and the page text instead. Checked in a real browser: the 4 Mbit/s runs and a blocked world file on 18 Nov 2026 ([history/2026-11-18-load-time.md](history/2026-11-18-load-time.md)), and a load of the live build on 18 Nov 2026 (loading bar, "Click to play", start screen, 0 console errors).
 - **A bit-identical bot race.** The Play Mode lap with five bots steps the game one physics step per frame and puts

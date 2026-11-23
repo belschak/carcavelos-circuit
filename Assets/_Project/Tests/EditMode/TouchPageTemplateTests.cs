@@ -85,6 +85,36 @@ namespace CarcavelosCircuit.Tests.EditMode
             StringAssert.Contains("var(--cc-r", css, "touch buttons are sized in the HUD's own unit");
         }
 
+        // iPhone report 23.11: fast taps on ITEM zoomed the page in (iOS ignores user-scalable=no).
+        [TestCase("gesturestart")]
+        [TestCase("gesturechange")]
+        [TestCase("dblclick")]
+        public void TouchPage_CancelsSafarisZoomGestures(string eventName)
+        {
+            StringAssert.Contains("addEventListener(\"" + eventName + "\", noZoom, { passive: false })", IndexHtml(),
+                eventName + " must be cancelled (a passive listener cannot cancel it)");
+        }
+
+        [Test]
+        public void TouchPage_EveryElementSaysNoTouchZoom_ButErrorDetailsStillScroll()
+        {
+            string css = File.ReadAllText(Path.Combine(TemplateDir, "TemplateData", "style.css"));
+            StringAssert.IsMatch("\\.cc-touch-mode \\* \\{\\s*touch-action: none;", css, "the canvas and the gaps, not only html/body");
+            StringAssert.IsMatch("\\.cc-touch-mode \\.cc-details p \\{\\s*touch-action: pan-y;", css, "the error text can still scroll");
+        }
+
+        [Test]
+        public void TouchPage_ZoomGuards_LeaveNormalTouchesAlone()
+        {
+            string html = IndexHtml();
+            // Rejected case: two thumbs moving on Android/Chrome have no event.scale, so their moves are never cancelled.
+            StringAssert.Contains("typeof event.scale === \"number\" && event.scale !== 1", html);
+            // Edge cases: the unzoom runs only in touch mode, only when zoomed, at most once a second, after the last finger.
+            StringAssert.Contains("window.visualViewport.scale <= 1.01", html);
+            StringAssert.Contains("Date.now() - lastUnzoom < 1000", html);
+            StringAssert.Contains("if (event.touches.length === 0) {\n          setTimeout(undoZoom", html.Replace("\r\n", "\n"));
+        }
+
         [System.Serializable]
         private class Manifest
         {
