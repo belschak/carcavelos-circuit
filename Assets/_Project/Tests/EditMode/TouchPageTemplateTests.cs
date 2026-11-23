@@ -115,6 +115,41 @@ namespace CarcavelosCircuit.Tests.EditMode
             StringAssert.Contains("if (event.touches.length === 0) {\n          setTimeout(undoZoom", html.Replace("\r\n", "\n"));
         }
 
+        // Android report 23.11: Chrome offered "Install app" with no word from the game, iPhones had steps on the card.
+        [Test]
+        public void AndroidInstall_ChromesOfferBecomesOneButtonOnThePhoneCard()
+        {
+            string html = IndexHtml().Replace("\r\n", "\n");
+            // Accepted: the offer is kept and shown as the card's button; installing (button or menu) says where the icon is.
+            StringAssert.Contains("window.addEventListener(\"beforeinstallprompt\"", html);
+            StringAssert.Contains("installOffer = event;", html);
+            StringAssert.Contains("offer.prompt();", html);
+            StringAssert.Contains("window.addEventListener(\"appinstalled\", showInstalled);", html);
+            // Rejected: computers and the installed game keep the browser's own offer, the button starts hidden.
+            StringAssert.Contains("if (!touchMode || runsFromHomeScreen()) {\n          return;", html);
+            StringAssert.Contains("id=\"cc-install\" type=\"button\" hidden", html);
+            // Edge: each offer is used once, and a tap on the button does not also start the game behind the card.
+            StringAssert.Contains("installOffer = null; // Chrome shows each offer only once", html);
+            StringAssert.Contains("event.stopPropagation(); // a tap on the card would also start the game", html);
+        }
+
+        [TestCase("SamsungBrowser", "“Add page to”, then “Home screen”")]
+        [TestCase("Chrome", "menu (⋮), then “Install app” or “Add to Home screen”")]
+        [TestCase("iPhone", "tap Share (under ··· on newer iPhones), then “Add to Home Screen”")]
+        public void HomeScreenHint_HasTheStepsOfEachPhoneBrowser(string browser, string steps)
+        {
+            StringAssert.Contains(steps, IndexHtml(), browser + " needs its own steps on the phone card");
+        }
+
+        [Test]
+        public void AndroidTapToPlay_GoesFullscreenOnlyWhereItCan()
+        {
+            string html = IndexHtml();
+            // Only phones and tablets, never Apple devices (no page fullscreen on iPhone), never twice or in the installed game.
+            StringAssert.Contains("if (touchMode && !isAppleDevice() && pageCanGoFullscreen() && !runsFromHomeScreen() &&", html);
+            StringAssert.Contains("!(document.fullscreenElement || document.webkitFullscreenElement)) {", html);
+        }
+
         [System.Serializable]
         private class Manifest
         {
