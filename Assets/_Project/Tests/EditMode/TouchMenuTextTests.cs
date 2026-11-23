@@ -9,32 +9,19 @@ namespace CarcavelosCircuit.Tests.EditMode
     // buttons are thumb-sized. The look itself is checked in a real Web build (docs/verification.md "Not covered").
     public class TouchMenuTextTests
     {
-        // Pause menu (23 Nov 2026): the card has buttons now (the keys sit on them as keycaps on a computer), so the
-        // old "TAP TO CONTINUE" line is gone. Offline the card says the clock stopped; online it asks first.
         [Test]
-        public void PauseCard_Offline_ResumeAndBackToMenu()
+        public void PauseHint_SaysTapOnTouch_AndKeysOnAComputer()
         {
-            Assert.AreEqual("PAUSED", HudMenus.PauseTitleText(false));
-            Assert.AreEqual("RESUME", HudMenus.PauseResumeText(false));
-            Assert.AreEqual("BACK TO MENU", HudMenus.PauseMenuText(false));
+            Assert.AreEqual("TAP TO CONTINUE", HudMenus.PauseHintText(true));
+            StringAssert.Contains("PRESS P", HudMenus.PauseHintText(false));
         }
 
         [Test]
-        public void PauseCard_Online_AsksAndSaysWhatLeavingCosts()
+        public void PauseNote_NamesQForTheMenu_OnlyWhereThereIsAKeyboard()
         {
-            Assert.AreEqual("LEAVE THE RACE?", HudMenus.PauseTitleText(true));
-            Assert.AreEqual("CONTINUE", HudMenus.PauseResumeText(true));
-            Assert.AreEqual("LEAVE RACE", HudMenus.PauseMenuText(true));
-            StringAssert.Contains("DNF", HudMenus.PauseNoteText(false, true));
-            StringAssert.Contains("KEEPS RUNNING", HudMenus.PauseNoteText(true, true));
-        }
-
-        [Test]
-        public void PauseNote_NamesEscape_OnlyWhereThereIsAKeyboard()
-        {
-            StringAssert.Contains("CLOCK IS STOPPED", HudMenus.PauseNoteText(false, false));
-            StringAssert.Contains("ESC", HudMenus.PauseNoteText(false, false));
-            Assert.AreEqual("THE CLOCK IS STOPPED", HudMenus.PauseNoteText(true, false), "a phone has no Escape key");
+            StringAssert.Contains("Q  BACK TO THE MENU", HudMenus.PauseNoteText(false));
+            StringAssert.Contains("CLOCK IS STOPPED", HudMenus.PauseNoteText(false));
+            Assert.AreEqual("THE CLOCK IS STOPPED", HudMenus.PauseNoteText(true), "a phone has no Q key");
         }
 
         [Test]
@@ -99,16 +86,14 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
-        public void Hud_FooterHint_ShowsNoRetryKey_ButThePauseKey_Online()
+        public void Hud_FooterHint_ShowsNoRetryOrPauseKey_Online()
         {
-            // Online the room owns Enter (ExternalStartRules), so the footer hint must not offer it. P stays: since the
-            // pause menu (23 Nov 2026) it opens the LEAVE THE RACE? card online (it still never pauses the room).
+            // Online the room owns Enter and P (ExternalStartRules), so the footer hint must not offer them.
             Assert.IsFalse(ExternalStartRules.MayRetryOrLeave(true));
             Assert.IsFalse(ExternalStartRules.MayPauseByHand(true));
-            Assert.AreEqual(PauseAction.Open, RacePause.OnlineKey(false, true, false), "online P opens the card");
             string uss = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "RaceHud.uss"));
             StringAssert.Contains(".hud--online .controls-hint .key--retry", uss);
-            StringAssert.DoesNotContain(".hud--online .controls-hint .key--pause", uss);
+            StringAssert.Contains(".hud--online .controls-hint .key--pause", uss);
             string uxml = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "RaceHud.uxml"));
             StringAssert.Contains("keycap keycap--wide key--retry", uxml);
             StringAssert.Contains("key-text key--retry", uxml);

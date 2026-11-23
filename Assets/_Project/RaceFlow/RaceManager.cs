@@ -52,9 +52,6 @@ namespace CarcavelosCircuit.RaceFlow
 
         // ---- Pause and menus (task P7) ----
         public bool IsPaused { get { return pause.IsPaused; } } // the HUD shows "PAUSED" while this is true
-        // Online only (pause menu, 23 Nov 2026): the small LEAVE RACE / CONTINUE card is open. The race keeps running
-        // underneath (one player cannot pause the room); the HUD shows the card while this is true.
-        public bool LeaveAskOpen { get { return leaveAskOpen; } }
         // Set by the HUD while a menu (settings, credits) is open or the mouse points at a menu button.
         // That key or click belongs to the menu, so it must not also start the race.
         public bool MenuUsesInput { get; set; }
@@ -98,8 +95,6 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly ShownPlace shownPlace = new ShownPlace();
         private bool pauseOnFocusLossFromScene = true; // the Inspector value, put back by LeaveOnlineMode
         private int leftOnlineFrame = -1; // Time.frameCount of the last LeaveOnlineMode, -1 = never (its key must not start a race)
-        private int leftToMenuFrame = -1; // Time.frameCount of the last BackToMenu: a tap on BACK TO MENU must not also start
-        private bool leaveAskOpen;        // online: the LEAVE RACE / CONTINUE card is open (LeaveAskOpen)
         private float timeScaleBeforePause = 1f;
         private bool frozen; // true while this script holds Time.timeScale at 0
         private float slowMotionStart = -1f; // Time.unscaledTime when the finish slow motion began, -1 = none (task P6b)
@@ -393,48 +388,22 @@ namespace CarcavelosCircuit.RaceFlow
                 {
                     AudioListener.pause = true; // RaceMusic unpauses the sound when focus comes back; we are still paused
                 }
-                // The PAUSED card's keys (RacePause.PausedKey): Q = back to the menu, Enter = retry, P, Escape or any
-                // other key = resume. A click or tap only counts on the card's buttons (HudMenus: RESUME calls
-                // ResumeFromPause, RETRY Retry, BACK TO MENU BackToMenu), so a tap on BACK TO MENU never resumes first.
-                PauseAction action = RacePause.PausedKey(RaceKeys.PausePressed() || RaceKeys.EscapePressed(),
-                    RaceKeys.BackToMenuPressed(), RaceKeys.RetryPressed(), RaceKeys.AnyStartKeyPressed());
-                if (action == PauseAction.BackToMenu && ExternalStartRules.MayGoBackToMenu(State, ExternalStartOnly))
+                // Q on the PAUSED card = back to the menu (the card says so); every other key or click continues.
+                if (RaceKeys.BackToMenuPressed() && ExternalStartRules.MayGoBackToMenu(State, ExternalStartOnly))
                 {
                     BackToMenu();
                     return;
                 }
-                if (action == PauseAction.Retry && ExternalStartRules.MayRetryOrLeave(ExternalStartOnly))
+                if (pause.TryResume(RaceKeys.AnyKeyOrClickPressed() || RaceKeys.PausePressed()))
                 {
-                    Retry();
-                    return;
-                }
-                if (action == PauseAction.Resume)
-                {
-                    ResumeFromPause();
+                    EndPause();
                 }
                 return;
             }
 
-            // Online (pause menu, 23 Nov 2026): one player cannot pause the room, so P, Escape or Q (and the page's
-            // pause button, which sends P) open the small LEAVE RACE / CONTINUE card while the race keeps running.
-            // Q on the open card leaves (RacePause.OnlineKey). The card closes by itself when this race is over.
-            if (ExternalStartOnly)
-            {
-                UpdateLeaveAsk();
-                if (!ExternalStartOnly)
-                {
-                    return; // we just left the room (LeaveOnlineRace): the start screen takes over next frame
-                }
-            }
-            else
-            {
-                leaveAskOpen = false;
-            }
-
-            // P (or Escape) pauses the countdown or the race by hand (audit 9): the same pause as a lost focus.
+            // P pauses the countdown or the race by hand (audit 9): the same pause as a lost focus.
             // Not while the online lobby owns the race (the shared clock goes on without us).
-            bool pauseKey = RaceKeys.PausePressed() || RaceKeys.EscapePressed();
-            if (ExternalStartRules.MayPauseByHand(ExternalStartOnly) && pauseKey && StartPause(pause.OnPauseKey(State)))
+            if (ExternalStartRules.MayPauseByHand(ExternalStartOnly) && RaceKeys.PausePressed() && StartPause(pause.OnPauseKey(State)))
             {
                 return;
             }
@@ -447,9 +416,7 @@ namespace CarcavelosCircuit.RaceFlow
             // Not while the settings or credits use the keys and the mouse, and never online (the host starts).
             if (State == RaceState.Ready)
             {
-                bool leftOnlineNow = ExternalStartRules.IsLeavingFrame(Time.frameCount, leftOnlineFrame) // Q or BACK just left the room
-                    || ExternalStartRules.IsLeavingFrame(Time.frameCount, leftToMenuFrame)          // BACK TO MENU was just tapped
-                    || ExternalStartRules.IsLeavingFrame(Time.frameCount - 1, leftToMenuFrame);
+                bool leftOnlineNow = ExternalStartRules.IsLeavingFrame(Time.frameCount, leftOnlineFrame); // Q or BACK just left the room
                 if (ExternalStartRules.MayStartFromKeys(ExternalStartOnly, Mode, MenuUsesInput || leftOnlineNow) && RaceKeys.AnyKeyOrClickPressed())
                 {
                     RequestStart();
@@ -495,74 +462,6 @@ namespace CarcavelosCircuit.RaceFlow
                 {
                     Recover();
                 }
-            }
-        }
-
-        // The online LEAVE RACE / CONTINUE card's keys (see Update). Only in a running race (countdown or racing).
-        private void UpdateLeaveAsk()
-        {
-            if (!RacePause.OnlineMayAsk(State))
-            {
-                leaveAskOpen = false;
-                return;
-            }
-            PauseAction action = RacePause.OnlineKey(leaveAskOpen, RaceKeys.PausePressed() || RaceKeys.EscapePressed(),
-                RaceKeys.BackToMenuPressed());
-            if (action == PauseAction.Open)
-            {
-                leaveAskOpen = true;
-            }
-            else if (action == PauseAction.Resume)
-            {
-                leaveAskOpen = false;
-            }
-            else if (action == PauseAction.Leave)
-            {
-                LeaveOnlineRace();
-            }
-        }
-
-        // The PAUSED card's RESUME button (and P, Escape or any other key, see Update). Nothing when not paused.
-        public void ResumeFromPause()
-        {
-            if (pause.TryResume(true))
-            {
-                EndPause();
-            }
-        }
-
-        // Online: opens the LEAVE RACE / CONTINUE card (as P does). Only while this player's race runs.
-        public void OpenLeaveAsk()
-        {
-            if (IsSetUp && ExternalStartOnly && RacePause.OnlineMayAsk(State))
-            {
-                leaveAskOpen = true;
-            }
-        }
-
-        // Online: the card's CONTINUE button (and P or Escape again). The race never stopped, so nothing else changes.
-        public void CloseLeaveAsk()
-        {
-            leaveAskOpen = false;
-        }
-
-        // Online: LEAVE RACE (or Q on the card). The room's own door does it (OnlineRaceHooks.LeaveRace = the online
-        // director's Close: leave the room, so the others keep racing and see this kart as DNF, then the start screen).
-        // Without a director (a test scene) this screen still leaves the online mode, so the button is never dead.
-        public void LeaveOnlineRace()
-        {
-            leaveAskOpen = false;
-            if (!ExternalStartOnly)
-            {
-                return;
-            }
-            if (OnlineRaceHooks.LeaveRace != null)
-            {
-                OnlineRaceHooks.LeaveRace();
-            }
-            if (ExternalStartOnly)
-            {
-                LeaveOnlineMode(); // the hook did not (or there is none): leave anyway
             }
         }
 
@@ -619,7 +518,6 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
             EndPause();
-            leaveAskOpen = false;
             StopSlowMotion();
             ClearRunForNewStart();
             ForgetAttempt();
@@ -647,7 +545,6 @@ namespace CarcavelosCircuit.RaceFlow
         public void LeaveOnlineMode()
         {
             leftOnlineFrame = Time.frameCount; // the Q or click that left the room does not also start a race this frame
-            leaveAskOpen = false;
             ExternalStartOnly = false;
             pauseOnFocusLoss = pauseOnFocusLossFromScene;
             ClearExternalPlace();
@@ -747,7 +644,6 @@ namespace CarcavelosCircuit.RaceFlow
                 return;
             }
             EndPause();
-            leftToMenuFrame = Time.frameCount; // the tap on BACK TO MENU must not also count as "any key" (see Update)
             StopSlowMotion();
             ClearRunForNewStart();
             ForgetAttempt();

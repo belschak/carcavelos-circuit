@@ -36,13 +36,11 @@ namespace CarcavelosCircuit.RaceFlow
         // Not every key: Alt-Tab, Ctrl, F11 (fullscreen) or Escape should not start the countdown by accident.
         public static bool AnyKeyOrClickPressed()
         {
-            return ClickPressed() || AnyStartKeyPressed();
-        }
+            if (ClickPressed())
+            {
+                return true;
+            }
 
-        // The same normal keys without the click: the pause card resumes on a key, but a click or tap there only
-        // counts on its buttons (pause menu, 23 Nov 2026).
-        public static bool AnyStartKeyPressed()
-        {
             Keyboard keyboard = GameKeyboard();
             if (keyboard == null || !keyboard.anyKey.wasPressedThisFrame)
             {
@@ -150,14 +148,6 @@ namespace CarcavelosCircuit.RaceFlow
         {
             Keyboard keyboard = GameKeyboard();
             return keyboard != null && keyboard.pKey.wasPressedThisFrame;
-        }
-
-        // Escape = pause / continue in the race too (pause menu, 23 Nov 2026). In browser fullscreen the browser takes
-        // Escape to leave fullscreen first, so P stays the key the HUD names first.
-        public static bool EscapePressed()
-        {
-            Keyboard keyboard = GameKeyboard();
-            return keyboard != null && keyboard.escapeKey.wasPressedThisFrame;
         }
 
         // M = sound on/off, at any time (also during the race and the pause).

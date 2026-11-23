@@ -10,7 +10,7 @@ Everyone in the class joins the live game from the one link, joins the one room 
 5. The finish order is the same on every screen (lap times, leavers count as DNF). After the first player crosses the line the others have 60 s to finish (180 s after GO if nobody finishes); then everyone still driving is DNF and the results are final. The host can start the next round only once the race is over for everyone; **Q** leaves the room.
 6. Keep the tab in front: a browser tab in the background gets no frames from the browser (the kart stops, nothing is sent) and drops out of the room after a few seconds.
 
-Online mode has no bots, no ghost, no leaderboard saving and no pause when the window loses focus. One player cannot pause the room: P, Esc, Q or the pause button open a small LEAVE THE RACE? card (CONTINUE / LEAVE RACE) while the race keeps running; LEAVE RACE (or a second Q) leaves the room, the others keep racing and see that kart as DNF (23 Nov 2026). Items work online since 17 Nov 2026 (PR #140): every player has their own boxes, and every item acts only on the player's own kart (boost, rings, shield), so the others see the speed-up through the synced position.
+Online mode has no bots, no ghost, no leaderboard saving and no pause when the window loses focus. Items work online since 17 Nov 2026 (PR #140): every player has their own boxes, and every item acts only on the player's own kart (boost, rings, shield), so the others see the speed-up through the synced position.
 
 ## One room (17 Nov 2026)
 - We run no servers: Photon Cloud hosts the room, and the free plan counts players (100 at once), not rooms, so one room or two cost the same.
