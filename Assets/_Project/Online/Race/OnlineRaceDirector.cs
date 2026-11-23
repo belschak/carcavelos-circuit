@@ -132,6 +132,7 @@ namespace CarcavelosCircuit.Online
             kartModels = squad != null ? squad.Settings : null;
 
             raceManager.ExternalStartOnly = true;    // the room starts the race, not a key
+            OnlineRaceHooks.LeaveRace = Close;       // LEAVE RACE on the in-race card (pause menu, 23 Nov 2026) = this door
             raceManager.PauseOnFocusLoss = false;    // the others keep driving on the shared clock
             runInBackgroundBefore = Application.runInBackground;
             lightBefore = TimeOfDayChoice.Current;
@@ -1205,6 +1206,10 @@ namespace CarcavelosCircuit.Online
                 return;
             }
             open = false;
+            if (OnlineRaceHooks.LeaveRace == (System.Action)Close)
+            {
+                OnlineRaceHooks.LeaveRace = null; // no room any more: nothing to leave
+            }
             if (joinLogged)
             {
                 OnlineTestLog.Write("LEAVE room=" + OnlineTestLog.Room());

@@ -725,15 +725,11 @@
     display: none;
 }
 
-/* Online (20 Nov 2026): Enter and P do nothing while the room owns the race (ExternalStartRules), so the footer hint
-   shows only R RECOVER there. RaceHud sets "hud--online" while the mode opens the lobby. */
-.hud--online .controls-hint .key--retry,
-.hud--online .controls-hint .key--pause {
+/* Online (20 Nov 2026): Enter does nothing while the room owns the race (ExternalStartRules), so the footer hint
+   shows R RECOVER and P PAUSE there; online P opens the LEAVE THE RACE? card (pause menu, 23 Nov 2026).
+   RaceHud sets "hud--online" while the mode opens the lobby. */
+.hud--online .controls-hint .key--retry {
     display: none;
-}
-
-.hud--online .controls-hint .key-text {
-    margin-right: 0;
 }
 
 /* Keycaps (also used on the start and results screens). */
@@ -2104,4 +2100,49 @@
 
 .hud--touch #set-sound .set-note {
     display: none;
+}
+
+/* ---------- Pause menu (23 Nov 2026): RESUME, RETRY, BACK TO MENU as real buttons on the PAUSED card; online the
+   same card asks LEAVE THE RACE? (CONTINUE, LEAVE RACE) while the race keeps running, so its veil is light.
+   Built in UI/HudMenus.cs. Desktop 60 HUD px tall (60 px at 1280x720, 90 px at 1080p); touch 100 HUD px
+   (about 47 CSS px on a phone in landscape, above the 44 px thumb target). ---------- */
+.pause-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    margin-top: 28px;
+}
+
+.menu-pill.pause-button {
+    height: 60px;
+    margin: 6px 8px;
+    padding: 0 22px 6px 12px;
+}
+
+.pause-button .menu-pill-text {
+    font-size: 22px;
+}
+
+.pause-button--main .menu-pill-text {
+    color: var(--ink);
+}
+
+.hud--touch .menu-pill.pause-button {
+    height: 100px;
+    margin: 8px 12px;
+    padding: 0 36px 6px 36px;
+}
+
+.hud--touch .pause-button .menu-pill-text {
+    font-size: 28px;
+}
+
+.pause-screen--online .pause-bg {
+    background-color: rgba(4, 6, 10, 0.38);
+}
+
+.pause-screen--online .pause-title {
+    font-size: 56px;
+    letter-spacing: 4px;
 }

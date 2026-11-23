@@ -788,8 +788,8 @@ html:not(.cc-racing) .cc-touch-pause {
   pointer-events: none;
 }
 
-/* Online race (phone QA 17.11): the room runs on, so Pause and Retry would do nothing there: hidden. Recover stays. */
-html.cc-online .cc-touch-pause,
+/* Online race (phone QA 17.11): the room runs on, so Retry would do nothing there: hidden. Recover stays. Pause stays
+   too (pause menu, 23 Nov 2026): online it opens the game's LEAVE THE RACE? card (CONTINUE / LEAVE RACE). */
 html.cc-online .cc-touch-tools [data-keys="Enter"] {
   display: none;
 }

@@ -9,19 +9,32 @@ namespace CarcavelosCircuit.Tests.EditMode
     // buttons are thumb-sized. The look itself is checked in a real Web build (docs/verification.md "Not covered").
     public class TouchMenuTextTests
     {
+        // Pause menu (23 Nov 2026): the card has buttons now (the keys sit on them as keycaps on a computer), so the
+        // old "TAP TO CONTINUE" line is gone. Offline the card says the clock stopped; online it asks first.
         [Test]
-        public void PauseHint_SaysTapOnTouch_AndKeysOnAComputer()
+        public void PauseCard_Offline_ResumeAndBackToMenu()
         {
-            Assert.AreEqual("TAP TO CONTINUE", HudMenus.PauseHintText(true));
-            StringAssert.Contains("PRESS P", HudMenus.PauseHintText(false));
+            Assert.AreEqual("PAUSED", HudMenus.PauseTitleText(false));
+            Assert.AreEqual("RESUME", HudMenus.PauseResumeText(false));
+            Assert.AreEqual("BACK TO MENU", HudMenus.PauseMenuText(false));
         }
 
         [Test]
-        public void PauseNote_NamesQForTheMenu_OnlyWhereThereIsAKeyboard()
+        public void PauseCard_Online_AsksAndSaysWhatLeavingCosts()
         {
-            StringAssert.Contains("Q  BACK TO THE MENU", HudMenus.PauseNoteText(false));
-            StringAssert.Contains("CLOCK IS STOPPED", HudMenus.PauseNoteText(false));
-            Assert.AreEqual("THE CLOCK IS STOPPED", HudMenus.PauseNoteText(true), "a phone has no Q key");
+            Assert.AreEqual("LEAVE THE RACE?", HudMenus.PauseTitleText(true));
+            Assert.AreEqual("CONTINUE", HudMenus.PauseResumeText(true));
+            Assert.AreEqual("LEAVE RACE", HudMenus.PauseMenuText(true));
+            StringAssert.Contains("DNF", HudMenus.PauseNoteText(false, true));
+            StringAssert.Contains("KEEPS RUNNING", HudMenus.PauseNoteText(true, true));
+        }
+
+        [Test]
+        public void PauseNote_NamesEscape_OnlyWhereThereIsAKeyboard()
+        {
+            StringAssert.Contains("CLOCK IS STOPPED", HudMenus.PauseNoteText(false, false));
+            StringAssert.Contains("ESC", HudMenus.PauseNoteText(false, false));
+            Assert.AreEqual("THE CLOCK IS STOPPED", HudMenus.PauseNoteText(true, false), "a phone has no Escape key");
         }
 
         [Test]
