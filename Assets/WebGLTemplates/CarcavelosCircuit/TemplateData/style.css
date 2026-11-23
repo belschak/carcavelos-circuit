@@ -458,6 +458,12 @@ html.cc-ios-app {
 .cc-homescreen-icon { flex: none; margin-top: 1px; color: var(--kart-white); }
 .cc-card .cc-homescreen p { font-size: 13px; line-height: 1.35; }
 .cc-homescreen b { color: var(--kart-white); }
+/* Android Install app button (23 Nov): right of the steps, the orange of the play button, small enough for the card. */
+.cc-homescreen p { flex: 1; }
+.cc-install { flex: none; align-self: center; padding: 8px 12px; border: 0; border-radius: 8px; background: var(--boost-orange);
+  color: #07090D; font-family: var(--font-ui); font-size: 13px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.cc-install:active { transform: translateY(1px); }
+.cc-install:focus-visible { outline: 3px solid var(--kart-white); outline-offset: 2px; }
 /* Phone QA 19 Nov: with the hint the card ran past short screens. Landscape phones (Safari 320-390 px high): the hint
    loses its icon and the card's controls sentence goes (the race shows labelled buttons anyway). Portrait phones below
    700 px: the mode list and the controls dock go, they covered the card's button. */

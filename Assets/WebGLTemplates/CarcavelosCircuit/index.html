@@ -171,10 +171,12 @@
           <p>Steer with the buttons on the left, gas and drift on the right. Turn your phone sideways for the widest view.</p>
           <!-- Full screen without the address bar (David, 19 Nov): only a home screen icon opens the game without browser
                bars on an iPhone. Shown in the browser only, never when the game already runs from the home screen;
-               the steps fit the phone (showHomeScreenHint in the script below). -->
+               the steps fit the phone (showHomeScreenHint in the script below). Android (23 Nov): the Install app button
+               appears when Chrome offers to install the game (installOffer in the script below). -->
           <div class="cc-homescreen" id="cc-homescreen" hidden>
             <svg class="cc-homescreen-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3.5v11M8 7.5l4-4 4 4" fill="none" stroke="#FF8A1F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 10.5H6.5v10h11v-10h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <p><b>Full screen, no address bar:</b> <span class="cc-homescreen-steps">tap Share, then “Add to Home Screen”, and play from the new icon.</span></p>
+            <p><b class="cc-homescreen-title">Full screen, no address bar:</b> <span class="cc-homescreen-steps">tap Share, then “Add to Home Screen”, and play from the new icon.</span></p>
+            <button class="cc-install" id="cc-install" type="button" hidden>Install app</button>
           </div>
           <div class="cc-actions">
             <button class="cc-button" id="cc-load-anyway" type="button">Continue</button>
@@ -607,6 +609,12 @@
           canvas.focus();
           loader.classList.add("cc-done");
           setTimeout(function () { loader.hidden = true; }, 450);
+          // Android (23 Nov): the tap that starts the game also hides the address bar and turns the screen sideways, so
+          // nobody has to find the fullscreen button. iPhone cannot (no page fullscreen); the iPad stays as it was tested.
+          if (touchMode && !isAppleDevice() && pageCanGoFullscreen() && !runsFromHomeScreen() &&
+              !(document.fullscreenElement || document.webkitFullscreenElement)) {
+            togglePageFullscreen();
+          }
           showFullscreenButton(unityInstance);
           if (touchMode) {
             showTouchControls();
@@ -1481,20 +1489,93 @@
         return true;
       }
 
-      // The phone card's "Add to Home Screen" steps (19 Nov): iPhone and iPad (an iPad says "Macintosh" but has touch)
-      // add it through Share, Android through the browser menu. Not shown when the game already runs from the icon.
+      // iPhone, iPad or iPod (an iPad says "Macintosh" but has touch).
+      function isAppleDevice() {
+        var ua = navigator.userAgent;
+        return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+      }
+
+      // The phone card's full screen steps (19 Nov, Android 23 Nov). iPhone and iPad add the game through Share.
+      // Android: tapping play already goes full screen (startGame); for an app icon the steps of the phone's browser,
+      // or the Install app button once Chrome offers it (below). Not shown when the game already runs from the icon.
+      function androidHomeScreenSteps() {
+        var first = pageCanGoFullscreen() ? "tapping play hides it. For an app icon: " : "";
+        if (/SamsungBrowser/.test(navigator.userAgent)) {
+          return first + "menu (≡), then “Add page to”, then “Home screen”.";
+        }
+        return first + "menu (⋮), then “Install app” or “Add to Home screen”.";
+      }
+
+      function setHomeScreenHint(title, steps) {
+        document.querySelector("#cc-homescreen .cc-homescreen-title").textContent = title;
+        document.querySelector("#cc-homescreen .cc-homescreen-steps").textContent = steps;
+      }
+
       function showHomeScreenHint() {
         if (runsFromHomeScreen()) {
           return;
         }
-        var ua = navigator.userAgent;
-        var apple = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-        var steps = apple
-          ? "tap Share (under ··· on newer iPhones), then “Add to Home Screen”, and play from the new icon."
-          : "open the browser menu (⋮), then “Add to Home screen” or “Install app”, and play from the new icon.";
-        document.querySelector("#cc-homescreen .cc-homescreen-steps").textContent = steps;
+        if (isAppleDevice()) {
+          setHomeScreenHint("Full screen, no address bar:", "tap Share (under ··· on newer iPhones), then “Add to Home Screen”, and play from the new icon.");
+        } else if (installOffer) {
+          showInstallButton();
+        } else {
+          setHomeScreenHint("Full screen, no address bar:", androidHomeScreenSteps());
+        }
         document.getElementById("cc-homescreen").hidden = false;
       }
+
+      // ---------- Install as an app (Android, 23 Nov) ----------
+      // Chrome (also Edge and Samsung Internet) fires "beforeinstallprompt" when the game can be installed (manifest +
+      // icons + https). The page keeps that offer and shows it as one Install app button on the phone card, instead of
+      // Chrome's own pop-up, so the class sees one way only. iPhones never fire it. After installing, the home screen
+      // icon opens the game full screen and sideways (manifest "display" and "orientation").
+      var installOffer = null;
+      var installButton = document.getElementById("cc-install");
+
+      function showInstallButton() {
+        setHomeScreenHint("Full screen, no address bar:", "tapping play hides it. Or install the game as an app:");
+        installButton.hidden = false;
+      }
+
+      function showInstalled() {
+        installOffer = null;
+        installButton.hidden = true;
+        setHomeScreenHint("Installed:", "open “Carcavelos” from your home screen, it starts full screen and sideways.");
+      }
+
+      window.addEventListener("beforeinstallprompt", function (event) {
+        if (!touchMode || runsFromHomeScreen()) {
+          return; // computers keep the browser's own install icon in the address bar
+        }
+        event.preventDefault(); // no second offer from Chrome itself: the button on the card is the one way
+        installOffer = event;
+        if (!document.getElementById("cc-homescreen").hidden) {
+          showInstallButton();
+        }
+      });
+
+      installButton.addEventListener("click", function (event) {
+        event.stopPropagation(); // a tap on the card would also start the game (the loader's click listener)
+        if (!installOffer) {
+          return;
+        }
+        var offer = installOffer;
+        installOffer = null; // Chrome shows each offer only once
+        installButton.hidden = true;
+        offer.prompt();
+        offer.userChoice.then(function (choice) {
+          if (choice.outcome === "accepted") {
+            showInstalled();
+          } else {
+            setHomeScreenHint("Full screen, no address bar:", androidHomeScreenSteps()); // said no: the menu still works later
+          }
+        }).catch(function () {
+          setHomeScreenHint("Full screen, no address bar:", androidHomeScreenSteps());
+        });
+      });
+
+      window.addEventListener("appinstalled", showInstalled); // also when installed through the browser menu
 
       // Phone or tablet without a mouse or trackpad ("coarse" pointer only).
       function isTouchOnlyDevice() {
