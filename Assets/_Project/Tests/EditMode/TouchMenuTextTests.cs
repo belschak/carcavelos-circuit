@@ -99,14 +99,16 @@ namespace CarcavelosCircuit.Tests.EditMode
         }
 
         [Test]
-        public void Hud_FooterHint_ShowsNoRetryOrPauseKey_Online()
+        public void Hud_FooterHint_ShowsNoRetryKey_ButThePauseKey_Online()
         {
-            // Online the room owns Enter and P (ExternalStartRules), so the footer hint must not offer them.
+            // Online the room owns Enter (ExternalStartRules), so the footer hint must not offer it. P stays: since the
+            // pause menu (23 Nov 2026) it opens the LEAVE THE RACE? card online (it still never pauses the room).
             Assert.IsFalse(ExternalStartRules.MayRetryOrLeave(true));
             Assert.IsFalse(ExternalStartRules.MayPauseByHand(true));
+            Assert.AreEqual(PauseAction.Open, RacePause.OnlineKey(false, true, false), "online P opens the card");
             string uss = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "RaceHud.uss"));
             StringAssert.Contains(".hud--online .controls-hint .key--retry", uss);
-            StringAssert.Contains(".hud--online .controls-hint .key--pause", uss);
+            StringAssert.DoesNotContain(".hud--online .controls-hint .key--pause", uss);
             string uxml = File.ReadAllText(Path.Combine(Application.dataPath, "_Project", "RaceFlow", "UI", "RaceHud.uxml"));
             StringAssert.Contains("keycap keycap--wide key--retry", uxml);
             StringAssert.Contains("key-text key--retry", uxml);
