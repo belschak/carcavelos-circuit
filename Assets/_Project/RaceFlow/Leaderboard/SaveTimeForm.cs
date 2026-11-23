@@ -22,6 +22,7 @@ namespace CarcavelosCircuit.RaceFlow
         private readonly VisualElement resultBox;
         private readonly Label timeLabel;
         private readonly TextField field;
+        private PageNameBox nameBox; // phones only (UseNamePrompt)
         private readonly Label placeholder;
         private readonly Label counter;
         private readonly Button saveButton;
@@ -170,20 +171,16 @@ namespace CarcavelosCircuit.RaceFlow
             return length + "/" + PlayerNameRules.MaxLength;
         }
 
-        // Phones in a Web build (WebPage.UsesNamePrompt): a tap on the field opens the browser's own text box instead
-        // of focusing the game's field, because only that one reliably brings up the phone keyboard. The key hints
-        // (Tab, Enter) are hidden: there are no keys.
+        // Phones in a Web build (WebPage.UsesNamePrompt): a real text box of the page lies over the field, so a tap
+        // brings up the phone keyboard (PageNameBox, Android name fix 23 Nov). It only shows while the form is
+        // clickable (Editing). The key hints (Tab, Enter) are hidden: there are no keys.
         public void UseNamePrompt()
         {
-            field.focusable = false;
             root.AddToClassList("lb-form--touch");
-            field.RegisterCallback<ClickEvent>(evt =>
+            if (nameBox == null)
             {
-                if (State == SaveFormState.Editing)
-                {
-                    field.value = WebPage.PromptName(field.value);
-                }
-            });
+                nameBox = new PageNameBox(field);
+            }
         }
 
         // The key hint follows what the keys do right now: Tab to start typing, Enter to save while typing.
@@ -213,6 +210,10 @@ namespace CarcavelosCircuit.RaceFlow
         // Is the cursor in the name field? UI Toolkit focuses an element inside the TextField, so we look up the parents.
         public bool HasFocus()
         {
+            if (nameBox != null && nameBox.HasFocus)
+            {
+                return true; // the phone keyboard types into the page's box
+            }
             IPanel panel = field.panel;
             if (panel == null || panel.focusController == null)
             {

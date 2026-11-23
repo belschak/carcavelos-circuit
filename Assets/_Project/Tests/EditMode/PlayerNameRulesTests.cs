@@ -53,6 +53,23 @@ namespace CarcavelosCircuit.Tests.EditMode
             Assert.AreEqual("", Cleaned(null));
         }
 
+        // Android name fix (23 Nov): no name typed in the online lobby = join as "RACER 7".
+        [TestCase(7, "RACER 7")]
+        [TestCase(1, "RACER 1")]
+        [TestCase(99, "RACER 99")]
+        [TestCase(0, "RACER 1")]
+        [TestCase(-5, "RACER 1")]
+        [TestCase(100, "RACER 99")]
+        [TestCase(int.MaxValue, "RACER 99")]
+        public void AutoName_IsAFriendlyValidName(int number, string expected)
+        {
+            string name = PlayerNameRules.AutoName(number);
+            Assert.AreEqual(expected, name);
+            string cleaned;
+            Assert.AreEqual(NameProblem.None, PlayerNameRules.Check(name, out cleaned), "the made-up name passes every rule");
+            Assert.AreEqual(name, cleaned);
+        }
+
         [Test]
         public void OneCharacter_IsTooShort()
         {

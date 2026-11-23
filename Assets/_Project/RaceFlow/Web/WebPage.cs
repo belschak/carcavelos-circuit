@@ -8,9 +8,9 @@ namespace CarcavelosCircuit.RaceFlow
     // (Assets/WebGLTemplates/CarcavelosCircuit). In the Editor and in tests every call does nothing.
     // 1. SendRaceState: is a race running (countdown or racing) or paused? The page's touch buttons for driving only show in a running race,
     //    so on a phone they never cover the title, the leaderboard or the name field.
-    // 2. PromptName: on a phone the name is asked with the browser's own text box (window.prompt). A phone browser
-    //    only opens its keyboard for a text field when a real finger tap focuses it; the game's tap is passed on by
-    //    the page a moment later, so a game text field would not always get the keyboard (iPhones never).
+    // 2. Name box: on a phone the name is typed in a real text box of the page laid over the game's name field
+    //    (PageNameBox). A phone browser only opens its keyboard for a page text box that a real finger tapped; the
+    //    game's own field never gets that tap, and window.prompt (until 23 Nov) did nothing on an Android phone.
     public static class WebPage
     {
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -18,7 +18,16 @@ namespace CarcavelosCircuit.RaceFlow
         private static extern void CarcavelosRaceState(int racing);
 
         [DllImport("__Internal")]
-        private static extern string CarcavelosPromptName(string current);
+        private static extern void CarcavelosNameBoxShow(int owner, float left, float top, float width, float height, string current, int maxLength, int reset);
+
+        [DllImport("__Internal")]
+        private static extern void CarcavelosNameBoxHide(int owner);
+
+        [DllImport("__Internal")]
+        private static extern string CarcavelosNameBoxValue(int owner);
+
+        [DllImport("__Internal")]
+        private static extern int CarcavelosNameBoxFocused(int owner);
 
         [DllImport("__Internal")]
         private static extern int CarcavelosTouchMode();
@@ -78,13 +87,14 @@ namespace CarcavelosCircuit.RaceFlow
             return (paused ? PagePaused : PageRacing) + (online ? PageOnline : 0);
         }
 
-        // True in a Web build on a phone or tablet: then the name is typed in the browser's own text box.
+        // True in a Web build on a phone or tablet (or a touch laptop in touch mode): then the name is typed in the
+        // page's own text box (PageNameBox). An iPad says it is a Mac, so touch mode counts too.
         public static bool UsesNamePrompt
         {
             get
             {
 #if UNITY_WEBGL && !UNITY_EDITOR
-                return Application.isMobilePlatform;
+                return Application.isMobilePlatform || TouchMode;
 #else
                 return false;
 #endif
@@ -104,17 +114,46 @@ namespace CarcavelosCircuit.RaceFlow
 #endif
         }
 
-        // Shows the browser's text box filled with "current". Returns what was typed, or "current" when cancelled.
-        // The answer is checked by PlayerNameRules like any typed name.
-        public static string PromptName(string current)
+        // Lays the page's name box over a game field. field and screen are in the HUD's own units (worldBound);
+        // the page gets the field's place as a share of the screen, so it fits whatever size the canvas has.
+        // reset = the box takes "current" (it opens, or the game changed the field). owner: PageNameBox.
+        public static void ShowNameBox(int owner, Rect field, Rect screen, string current, int maxLength, bool reset)
         {
 #if UNITY_WEBGL && !UNITY_EDITOR
-            string answer = CarcavelosPromptName(current == null ? "" : current);
-            return answer == null ? current : answer;
-#else
-            return current;
+            WebGLInput.captureAllKeyboardInput = false; // keys go to the page's box (the game only hears its own canvas)
+            CarcavelosNameBoxShow(owner, (field.x - screen.x) / screen.width, (field.y - screen.y) / screen.height,
+                field.width / screen.width, field.height / screen.height, current == null ? "" : current, maxLength, reset ? 1 : 0);
 #endif
         }
+
+        public static void HideNameBox(int owner)
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            CarcavelosNameBoxHide(owner);
+            WebGLInput.captureAllKeyboardInput = true; // the box is gone: every key is the game's again
+#endif
+        }
+
+        // The text in the page's name box ("" in the Editor, in tests, or when the box is closed).
+        public static string NameBoxValue(int owner)
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            string text = CarcavelosNameBoxValue(owner);
+            return text == null ? "" : text;
+#else
+            return "";
+#endif
+        }
+
+        public static bool NameBoxFocused(int owner)
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            return CarcavelosNameBoxFocused(owner) != 0;
+#else
+            return false;
+#endif
+        }
+
         // 4. The campus world as its own download (load time P8, 18 Nov). The page picks the world file that fits the GPU
         //    (DXT or ETC2, like the .data) and gives its full address here; "" = no separate world file (the Editor,
         //    tests, or a build where the world is inside the .data). See RaceFlow/WorldStream.cs.

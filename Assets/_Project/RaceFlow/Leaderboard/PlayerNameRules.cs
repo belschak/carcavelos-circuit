@@ -38,6 +38,21 @@ namespace CarcavelosCircuit.RaceFlow
             "kut", "lul", "hoer", "tering",
         };
 
+        // Online race (Android name fix, 23 Nov): a player who types no name still joins, as "RACER 7", so nobody is
+        // ever stuck in the lobby. number is kept between 1 and 99; the result always passes Check.
+        public static string AutoName(int number)
+        {
+            if (number < 1)
+            {
+                number = 1;
+            }
+            if (number > 99)
+            {
+                number = 99;
+            }
+            return "RACER " + number;
+        }
+
         // Trims the ends and turns every run of spaces into one space. Null becomes "".
         public static string Clean(string raw)
         {

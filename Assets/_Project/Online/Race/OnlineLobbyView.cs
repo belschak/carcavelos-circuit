@@ -58,6 +58,7 @@ namespace CarcavelosCircuit.Online
         private readonly VisualElement card;
         private readonly VisualElement sideCard;
         private TextField nameField;
+        private PageNameBox nameBox; // phones: the page's own text box over nameField (Android name fix, 23 Nov)
         private Label problemLabel;
         private Label lightLabel;             // the text on the light button of the page now showing, null = none
         private VisualElement hiddenBoard;    // the local leaderboard while the room results hide it, null = shown
@@ -130,6 +131,10 @@ namespace CarcavelosCircuit.Online
                 {
                     return false;
                 }
+                if (nameBox != null && nameBox.HasFocus)
+                {
+                    return true; // the phone keyboard types into the page's box
+                }
                 IPanel panel = nameField.panel;
                 if (panel == null || panel.focusController == null)
                 {
@@ -173,12 +178,8 @@ namespace CarcavelosCircuit.Online
             nameField.style.width = 300f;
             nameField.style.height = touch ? TouchNameFieldHeight : 52f;
             nameRow.Add(nameField);
-            if (WebPage.UsesNamePrompt)
-            {
-                // Phones: the browser's own text box brings the keyboard up reliably (same as the leaderboard form).
-                nameField.focusable = false;
-                nameField.RegisterCallback<ClickEvent>(evt => nameField.value = WebPage.PromptName(nameField.value));
-            }
+            // Phones: a real text box of the page lies over this field, so a tap opens the phone keyboard (PageNameBox).
+            nameBox = new PageNameBox(nameField);
             nameField.RegisterValueChangedCallback(evt => ShowProblem(""));
 
             problemLabel = Chip("", true, card);
