@@ -40,13 +40,35 @@ mergeInto(LibraryManager.library, {
         "border:3px solid #FF7A1A;border-radius:10px;background:#FFF8EC;color:#0E2238;font-weight:800;" +
         "font-family:var(--font-ui, sans-serif);text-transform:uppercase;outline:none;touch-action:manipulation;" +
         "-webkit-appearance:none;appearance:none;-webkit-user-select:text;user-select:text;pointer-events:auto;";
-      // Typed keys belong to the box only: the game and the page's own key listeners (touch mode off on a key,
-      // "Click to play") never see them. Enter or the keyboard's Done closes the keyboard.
+      // Typed keys belong to the box only: the page's own key listeners (touch mode off on a key) never see them.
+      // Enter or the keyboard's Done closes the keyboard. The game is told to leave keys alone while the box is up
+      // (WebPage.ShowNameBox: WebGLInput.captureAllKeyboardInput off); if a key still arrives cancelled, the box
+      // types it itself, so a letter is never lost.
+      var typeInto = function (text) {
+        var start = box.selectionStart === null ? box.value.length : box.selectionStart;
+        var end = box.selectionEnd === null ? start : box.selectionEnd;
+        if (text === "" && start === end && start > 0) {
+          start = start - 1; // Backspace
+        }
+        var next = box.value.slice(0, start) + text + box.value.slice(end);
+        if (box.maxLength > 0 && next.length > box.maxLength) {
+          return;
+        }
+        box.value = next;
+        box.setSelectionRange(start + text.length, start + text.length);
+      };
       var keep = function (event) {
         event.stopPropagation();
+        var printable = event.key && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey;
         if (event.type === "keydown" && event.key === "Enter") {
           event.preventDefault();
           box.blur();
+        } else if (event.defaultPrevented && !event.isComposing && event.type !== "keyup") {
+          if (printable && (event.type === "keypress" || event.type === "keydown")) {
+            typeInto(event.key);
+          } else if (event.type === "keydown" && event.key === "Backspace") {
+            typeInto("");
+          }
         }
       };
       box.addEventListener("keydown", keep);

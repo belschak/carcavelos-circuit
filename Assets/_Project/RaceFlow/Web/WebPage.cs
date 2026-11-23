@@ -118,6 +118,7 @@ namespace CarcavelosCircuit.RaceFlow
         public static void ShowNameBox(int owner, Rect field, Rect screen, string current, int maxLength, bool reset)
         {
 #if UNITY_WEBGL && !UNITY_EDITOR
+            WebGLInput.captureAllKeyboardInput = false; // keys go to the page's box (the game only hears its own canvas)
             CarcavelosNameBoxShow(owner, (field.x - screen.x) / screen.width, (field.y - screen.y) / screen.height,
                 field.width / screen.width, field.height / screen.height, current == null ? "" : current, maxLength, reset ? 1 : 0);
 #endif
@@ -127,6 +128,7 @@ namespace CarcavelosCircuit.RaceFlow
         {
 #if UNITY_WEBGL && !UNITY_EDITOR
             CarcavelosNameBoxHide(owner);
+            WebGLInput.captureAllKeyboardInput = true; // the box is gone: every key is the game's again
 #endif
         }
 
