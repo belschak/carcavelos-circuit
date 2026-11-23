@@ -71,7 +71,9 @@ namespace CarcavelosCircuit.RaceFlow
         {
             if (state != RaceState.Countdown && state != RaceState.Racing)
             {
-                return PageMenus;
+                // Online results (phone QA 23.11): the ROOM RESULTS card sits top right, where the page puts its
+                // fullscreen button on the menus, so the page moves the button while this says "online results".
+                return online && state == RaceState.Results ? PageMenus + PageOnline : PageMenus;
             }
             return (paused ? PagePaused : PageRacing) + (online ? PageOnline : 0);
         }
